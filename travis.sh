@@ -13,6 +13,7 @@ linux_32_before_install() {
 	sudo dpkg --add-architecture i386
 
 	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+	sudo add-apt-repository -y ppa:vbernat/haproxy-1.6 # contains lua5.3 binaries for trusty
 
 	# Compilers
 	if [ "${CXX}" = "clang++" ]; then
@@ -48,6 +49,7 @@ linux_32_before_install() {
 		libgl1-mesa-dev:i386 \
 		libglu1-mesa-dev:i386 \
 		libgtk2.0-dev:i386 \
+		liblua5.3-dev:i386 \
 		liblzma-dev:i386 \
 		libpango1.0-dev:i386 \
 		libpng12-dev:i386 \
