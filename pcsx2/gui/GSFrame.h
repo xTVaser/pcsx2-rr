@@ -59,7 +59,6 @@ public:
 	virtual ~GSPanel();
 
 	virtual void DoResize();
-	void DoResize();
 	void DoShowMouse();
 	void DirectKeyCommand( wxKeyEvent& evt );
 	virtual void DirectKeyCommand( const KeyAcceleratorCode& kac );
