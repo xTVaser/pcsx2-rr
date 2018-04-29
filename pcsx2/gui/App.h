@@ -27,6 +27,10 @@
 #include "AppCoreThread.h"
 #include "RecentIsoList.h"
 
+#include "TAS/KeyEditor.h"
+#include "TAS/VirtualPad.h"
+#include "TAS/KeyMovieFrame.h"
+
 class DisassemblyDialog;
 
 #include "System.h"
@@ -103,6 +107,9 @@ enum MenuIdentifiers
 	MenuId_EnableCheats,
 	MenuId_EnableWideScreenPatches,
 	MenuId_EnableHostFs,
+	MenuId_Sys_Movie,
+	MenuId_Sys_AVIWAV,
+	MenuId_Sys_Screenshot,
 
 	MenuId_State_Load,
 	MenuId_State_LoadOther,
@@ -158,6 +165,31 @@ enum MenuIdentifiers
 	MenuId_Debug_Logging,		// dialog for selection additional log options
 	MenuId_Debug_CreateBlockdump,
 	MenuId_Config_ResetAll,
+
+	// TAS Subsection
+	MenuId_KeyMovie_Record,
+	MenuId_KeyMovie_Play,
+	MenuId_KeyMovie_Stop,
+	MenuId_KeyMovie_ConvertV2ToV3,
+	MenuId_KeyMovie_ConvertV1_XToV2,
+	MenuId_KeyMovie_ConvertV1ToV2,
+	MenuId_KeyMovie_ConvertLegacy,
+	MenuId_KeyMovie_OpenKeyEditor,
+
+	// Lua Engine
+	MenuId_Lua_Open,
+
+	// VirtualPad
+	MenuId_VirtualPad_Port0,
+	MenuId_VirtualPad_Port1,
+
+	// AVI/WAV
+	MenuId_AVIWAV_Record,
+	MenuId_AVIWAV_Stop,
+
+	// Screenshot
+	MenuId_Screenshot_Shot,
+	MenuId_Screenshot_SaveAs
 };
 
 namespace Exception
@@ -494,6 +526,11 @@ protected:
 	wxWindowID			m_id_ProgramLogBox;
 	wxWindowID			m_id_Disassembler;
 
+	wxWindowID			m_id_LuaFrame;
+	wxWindowID			m_id_KeyEditor;
+	wxWindowID			m_id_VirtualPad[2];
+	wxWindowID			m_id_KeyMovieFrame;
+
 	wxKeyEvent			m_kevt;
 
 public:
@@ -517,7 +554,17 @@ public:
 	GSFrame*			GetGsFramePtr() const		{ return (GSFrame*)wxWindow::FindWindowById( m_id_GsFrame ); }
 	MainEmuFrame*		GetMainFramePtr() const		{ return (MainEmuFrame*)wxWindow::FindWindowById( m_id_MainFrame ); }
 	DisassemblyDialog*	GetDisassemblyPtr() const	{ return (DisassemblyDialog*)wxWindow::FindWindowById(m_id_Disassembler); }
-	
+
+	LuaFrame*			GetLuaFramePtr() const { return (LuaFrame*)wxWindow::FindWindowById(m_id_LuaFrame); }
+	KeyEditor *			GetKeyEditorPtr() const { return (KeyEditor*)wxWindow::FindWindowById(m_id_KeyEditor); }
+	VirtualPad *		GetVirtualPadPtr(int port) const {
+							if (port < 0 || port > 1) return NULL;
+							return (VirtualPad*)wxWindow::FindWindowById(m_id_VirtualPad[port]);
+						}
+	KeyMovieFrame *		GetKeyMovieFramePtr() const {
+								return (KeyMovieFrame*)wxWindow::FindWindowById(m_id_KeyMovieFrame);
+						}
+
 	void enterDebugMode();
 	void leaveDebugMode();
 	void resetDebugger();
@@ -614,7 +661,12 @@ protected:
 	void CleanupOnExit();
 	void OpenWizardConsole();
 	void PadKeyDispatch( const keyEvent& ev );
-	
+
+	// TAS
+public:
+	void TAS_PadKeyDispatch(const keyEvent& ev) { PadKeyDispatch(ev); }
+
+protected:
 	void HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent& event) const;
 	void HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent& event);
 

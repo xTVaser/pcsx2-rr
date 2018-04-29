@@ -929,6 +929,7 @@ AppConfig::UiTemplateOptions::UiTemplateOptions()
 	OutputInterlaced	= L"Interlaced";
 	Paused				= L"<PAUSED> ";
 	TitleTemplate		= L"Slot: ${slot} | Speed: ${speed} (${vfps}) | ${videomode} | Limiter: ${limiter} | ${gsdx} | ${omodei} | ${cpuusage}";
+	TASTemplate			= L"Slot: ${slot} | Frame: ${frame}/${maxFrame} | Rec. Mode: ${mode} | Speed: ${speed} (${vfps}) | Limiter: ${limiter}";
 }
 
 void AppConfig::UiTemplateOptions::LoadSave(IniInterface& ini)
@@ -945,6 +946,7 @@ void AppConfig::UiTemplateOptions::LoadSave(IniInterface& ini)
 	IniEntry(OutputInterlaced);
 	IniEntry(Paused);
 	IniEntry(TitleTemplate);
+	IniEntry(TASTemplate);
 }
 
 int AppConfig::GetMaxPresetIndex()
