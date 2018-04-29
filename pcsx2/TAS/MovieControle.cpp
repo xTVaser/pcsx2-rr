@@ -2,6 +2,7 @@
 
 #include "GSFrame.h"
 
+#include "MemoryTypes.h"
 #include "App.h"	// use "CoreThread"
 #include "Counters.h"	// use"g_FrameCount"
 

@@ -1,7 +1,6 @@
 #include "PrecompiledHeader.h"
 
-
-#include "app.h"	// Counters.h
+#include "MemoryTypes.h"
 #include "Counters.h"	// use"g_FrameCount"
 
 #include "KeyEditor.h"

@@ -77,7 +77,7 @@ private:
 	//--------------------
 	// block 
 	//--------------------
-	long KeyMovieOnFile::_getBlockSeekPoint(const long & frame);
+	long _getBlockSeekPoint(const long & frame);
 
 
 public:

@@ -371,6 +371,20 @@ set(pcsx2GuiResources
     ${res_bin}/Breakpoint_Inactive.h
     )
 
+# Lua sources
+set(pcsx2LuaSources
+	lua/LuaEngine.cpp
+	lua/LuaFrame.cpp
+	lua/LuaFunctions.cpp
+	lua/LuaManager.cpp)
+
+# Lua headers
+set(pcsx2LuaHeaders
+	lua/LuaEngine.h
+	lua/LuaFrame.h
+	lua/LuaFunctions.h
+	lua/LuaManager.h)
+
 # IPU sources
 set(pcsx2IPUSources
 	IPU/IPU.cpp
@@ -462,6 +476,28 @@ set(pcsx2SystemSources
 set(pcsx2SystemHeaders
 	System/RecTypes.h
 	System/SysThreads.h)
+
+# TAS sources
+set(pcsx2TASSources
+	TAS/KeyEditor.cpp
+	TAS/KeyMovie.cpp
+	TAS/KeyMovieFrame.cpp
+	TAS/KeyMovieOnFile.cpp
+	TAS/MovieControle.cpp
+	TAS/PadData.cpp
+	TAS/TASInputManager.cpp
+	TAS/VirtualPad.cpp)
+
+# TAS headers
+set(pcsx2TASHeaders
+	TAS/KeyEditor.h
+	TAS/KeyMovie.h
+	TAS/KeyMovieFrame.h
+	TAS/KeyMovieOnFile.h
+	TAS/MovieControle.h
+	TAS/PadData.h
+	TAS/TASInputManager.h
+	TAS/VirtualPad.h)
 
 # Utilities sources
 set(pcsx2UtilitiesSources
@@ -606,12 +642,16 @@ set(Common
 	${pcsx2GuiSources}
 	${pcsx2GuiResources}
 	${pcsx2GuiHeaders}
+	${pcsx2LuaSources}
+	${pcsx2LuaHeaders}
 	${pcsx2IPUSources}
 	${pcsx2IPUHeaders}
 	${pcsx2ps2Sources}
 	${pcsx2ps2Headers}
 	${pcsx2SystemSources}
 	${pcsx2SystemHeaders}
+	${pcsx2TASSources}
+	${pcsx2TASHeaders}
 	${pcsx2UtilitiesSources}
 	${pcsx2UtilitiesHeaders}
 	${pcsx2x86Sources}
@@ -661,6 +701,7 @@ set(pcsx2FinalLibs
     ${ZLIB_LIBRARIES}
     ${AIO_LIBRARIES}
     ${GCOV_LIBRARIES}
+	${LUA_LIBRARIES}
 )
 
 if(BUILTIN_GS)

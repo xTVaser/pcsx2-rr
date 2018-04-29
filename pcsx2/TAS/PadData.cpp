@@ -93,7 +93,7 @@ void PadData::setNormalKeys(int port, std::map<wxString, int> key)
 void PadData::setNormalButton(int port, wxString button, int fpushed)
 {
 	if (port < 0 || 1 < port)return;
-	byte keybit[2];
+	wxByte keybit[2];
 	getKeyBit(keybit, button);
 	int pressureByteIndex = getPressureByte(button);
 
@@ -125,7 +125,7 @@ void PadData::setNormalButton(int port, wxString button, int fpushed)
 int PadData::getNormalButton(int port, wxString button)const
 {
 	if (port < 0 || 1 < port)return false;
-	byte keybit[2];
+	wxByte keybit[2];
 	getKeyBit(keybit, button);
 	int pressureByteIndex = getPressureByte(button);
 
@@ -149,7 +149,7 @@ int PadData::getNormalButton(int port, wxString button)const
 	return 0;
 }
 
-void PadData::getKeyBit(byte keybit[2], wxString button)const
+void PadData::getKeyBit(wxByte keybit[2], wxString button)const
 {
 	if (button == L"up") { keybit[0] = 0b00010000; keybit[1] = 0b00000000; }
 	else if (button == L"left") { keybit[0] = 0b10000000; keybit[1] = 0b00000000; }

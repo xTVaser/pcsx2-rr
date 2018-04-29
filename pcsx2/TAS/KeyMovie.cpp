@@ -1,6 +1,6 @@
 #include "PrecompiledHeader.h"
 
-#include "app.h"	// Counters.h
+#include "MemoryTypes.h"
 #include "Common.h"
 #include "Counters.h"	// use"g_FrameCount"
 #include "SaveState.h"	// create "SaveStateBase::keymovieFreeze()"
@@ -151,7 +151,7 @@ void KeyMovie::Start(wxString FileName,bool fReadOnly, VmStateBuffer* ss)
 	{
 		// backup
 		wxString bpfile = wxString::Format(L"%s_backup", FileName);
-		if (CopyFile( FileName , bpfile, false)) {
+		if (wxCopyFile( FileName , bpfile, false)) {
 			tasConLog(wxString::Format(L"[TAS]: Created backup movie file - [%s]\n", bpfile));
 		}
 		// create

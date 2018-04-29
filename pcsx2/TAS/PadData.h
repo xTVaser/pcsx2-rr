@@ -72,7 +72,7 @@ public:
 private:
 	void setNormalButton(int port, wxString button, int pressure);
 	int getNormalButton(int port, wxString button)const;
-	void getKeyBit(byte keybit[2], wxString button)const;
+	void getKeyBit(wxByte keybit[2], wxString button)const;
 	int getPressureByte(wxString button)const;
 
 	void setAnalogButton(int port, wxString button, int push);

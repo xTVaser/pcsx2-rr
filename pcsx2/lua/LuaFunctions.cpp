@@ -360,10 +360,10 @@ static wxColor buildColorFromInt(lua_State *L, int base, bool alpha = false)
 }
 
 // pair: color built and last argument read
-static std::pair<wxColor, int> buildColor(lua_State *L, int base, wxColor default = *wxBLACK)
+static std::pair<wxColor, int> buildColor(lua_State *L, int base, wxColor defaultColor = *wxBLACK)
 {
 	if (lua_isnone(L, base))
-		return std::make_pair(default, base-1);
+		return std::make_pair(defaultColor, base-1);
 	else if (lua_isinteger(L, base) && lua_isinteger(L, base + 1) && lua_isinteger(L, base + 2)) {
 		if (lua_isinteger(L, base + 3))
 			return std::make_pair(buildColorFromInt(L, base, true), base + 3);
