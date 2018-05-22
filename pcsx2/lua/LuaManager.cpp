@@ -23,7 +23,10 @@ void LuaManager::SetCanModifyController(bool can)
 
 void LuaManager::ControllerInterrupt(u8 &data, u8 &port, u16 & BufCount, u8 buf[])
 {
-	if (port < 0 || 1 < port)return;
+	if (1 < port)
+	{
+		return;
+	}
 	int bufIndex = BufCount - 3;
 	if (bufIndex < 0 || 6 < bufIndex)return;
 

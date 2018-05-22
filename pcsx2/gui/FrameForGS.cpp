@@ -91,26 +91,26 @@ void GSPanel::InitDefaultAccelerators()
 	m_Accels->Map(AAC(wxKeyCode('r')).Shift(), "KeyMovieModeToggle");
 
 	// Save state management keybindings
-	m_Accels->Map(AAC(wxKeyCode('num1')).Shift(), "States_SaveSlot0");
-	m_Accels->Map(AAC(wxKeyCode('num2')).Shift(), "States_SaveSlot1");
-	m_Accels->Map(AAC(wxKeyCode('num3')).Shift(), "States_SaveSlot2");
-	m_Accels->Map(AAC(wxKeyCode('num4')).Shift(), "States_SaveSlot3");
-	m_Accels->Map(AAC(wxKeyCode('num5')).Shift(), "States_SaveSlot4");
-	m_Accels->Map(AAC(wxKeyCode('num6')).Shift(), "States_SaveSlot5");
-	m_Accels->Map(AAC(wxKeyCode('num7')).Shift(), "States_SaveSlot6");
-	m_Accels->Map(AAC(wxKeyCode('num8')).Shift(), "States_SaveSlot7");
-	m_Accels->Map(AAC(wxKeyCode('num9')).Shift(), "States_SaveSlot8");
-	m_Accels->Map(AAC(wxKeyCode('num0')).Shift(), "States_SaveSlot9");
-	m_Accels->Map(AAC(wxKeyCode('num1')), "States_LoadSlot0");
-	m_Accels->Map(AAC(wxKeyCode('num2')), "States_LoadSlot1");
-	m_Accels->Map(AAC(wxKeyCode('num3')), "States_LoadSlot2");
-	m_Accels->Map(AAC(wxKeyCode('num4')), "States_LoadSlot3");
-	m_Accels->Map(AAC(wxKeyCode('num5')), "States_LoadSlot4");
-	m_Accels->Map(AAC(wxKeyCode('num6')), "States_LoadSlot5");
-	m_Accels->Map(AAC(wxKeyCode('num7')), "States_LoadSlot6");
-	m_Accels->Map(AAC(wxKeyCode('num8')), "States_LoadSlot7");
-	m_Accels->Map(AAC(wxKeyCode('num9')), "States_LoadSlot8");
-	m_Accels->Map(AAC(wxKeyCode('num0')), "States_LoadSlot9");
+	m_Accels->Map(AAC( WXK_NUMPAD0 ).Shift(), "States_SaveSlot0");
+	m_Accels->Map(AAC( WXK_NUMPAD1 ).Shift(), "States_SaveSlot1");
+	m_Accels->Map(AAC( WXK_NUMPAD2 ).Shift(), "States_SaveSlot2");
+	m_Accels->Map(AAC( WXK_NUMPAD3 ).Shift(), "States_SaveSlot3");
+	m_Accels->Map(AAC( WXK_NUMPAD4 ).Shift(), "States_SaveSlot4");
+	m_Accels->Map(AAC( WXK_NUMPAD5 ).Shift(), "States_SaveSlot5");
+	m_Accels->Map(AAC( WXK_NUMPAD6 ).Shift(), "States_SaveSlot6");
+	m_Accels->Map(AAC( WXK_NUMPAD7 ).Shift(), "States_SaveSlot7");
+	m_Accels->Map(AAC( WXK_NUMPAD8 ).Shift(), "States_SaveSlot8");
+	m_Accels->Map(AAC( WXK_NUMPAD9 ).Shift(), "States_SaveSlot9");
+	m_Accels->Map(AAC( WXK_NUMPAD0 ), "States_LoadSlot0");
+	m_Accels->Map(AAC( WXK_NUMPAD1 ), "States_LoadSlot1");
+	m_Accels->Map(AAC( WXK_NUMPAD2 ), "States_LoadSlot2");
+	m_Accels->Map(AAC( WXK_NUMPAD3 ), "States_LoadSlot3");
+	m_Accels->Map(AAC( WXK_NUMPAD4 ), "States_LoadSlot4");
+	m_Accels->Map(AAC( WXK_NUMPAD5 ), "States_LoadSlot5");
+	m_Accels->Map(AAC( WXK_NUMPAD6 ), "States_LoadSlot6");
+	m_Accels->Map(AAC( WXK_NUMPAD7 ), "States_LoadSlot7");
+	m_Accels->Map(AAC( WXK_NUMPAD8 ), "States_LoadSlot8");
+	m_Accels->Map(AAC( WXK_NUMPAD9 ), "States_LoadSlot9");
 }
 
 GSPanel::GSPanel( wxWindow* parent )

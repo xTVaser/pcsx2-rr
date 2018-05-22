@@ -1,7 +1,9 @@
 #include "PrecompiledHeader.h"
 
+#include "MemoryTypes.h"
 #include "App.h"
 #include "Common.h"
+#include "Counters.h"
 
 #include "KeyMovieOnFile.h"
 
@@ -25,6 +27,17 @@ long KeyMovieOnFile::_getBlockSeekPoint(const long & frame)
 	else {
 		return HEADER_SIZE + sizeof(bool) + (frame)*BLOCK_SIZE;
 	}
+}
+
+// Temporary Shim, probably a better cross-platform way to correct usages of
+// fopen_s
+int fopen_s(FILE **f, const char *name, const char *mode) {
+	int ret = 0;
+	assert(f);
+	*f = fopen(name, mode);
+	if (!*f)
+		ret = errno;
+	return ret;
 }
 
 //----------------------------------
