@@ -5,7 +5,7 @@
 
 #include "KeyEditor.h"
 #include "KeyMovie.h"
-#include "MovieControle.h"
+#include "MovieControls.h"
 
 #include <string>
 #include <wx/joystick.h>
@@ -151,7 +151,7 @@ void KeyEditor::FrameUpdate()
 {
 	if (g_FrameCount == 0)return;
 
-	wxString pauseMessage = g_MovieControle.getStopFlag() ? L"[pause]" : L"[run]";
+	wxString pauseMessage = g_MovieControls.getStopFlag() ? L"[pause]" : L"[run]";
 	wxString recordMessage = "";
 	if (g_KeyMovie.getModeState() == KeyMovie::RECORD) {
 		recordMessage = L"[record]";

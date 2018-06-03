@@ -3,7 +3,7 @@
 #include "App.h"
 #include "GSFrame.h"
 
-#include "TAS/MovieControle.h"
+#include "TAS/MovieControls.h"
 
 #include "LuaManager.h"
 #include "LuaEngine.h"

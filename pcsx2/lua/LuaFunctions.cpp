@@ -7,7 +7,7 @@
 
 #include "AppSaveStates.h"
 
-#include "TAS/MovieControle.h"
+#include "TAS/MovieControls.h"
 #include "TAS/KeyMovie.h"
 
 #include "LuaManager.h"
@@ -32,7 +32,7 @@ static int emu_frameadvance(lua_State *L)
 	if (pLua == NULL)return 0;
 	if (pLua->getState() != LuaEngine::RUNNING)return 0;
 
-	g_MovieControle.FrameAdvance();
+	g_MovieControls.FrameAdvance();
 	pLua->setState(LuaEngine::RESUME);
 	return lua_yield(L, 0);
 }
@@ -43,12 +43,12 @@ static int emu_frameadvance(lua_State *L)
 //=============================================
 static int emu_pause(lua_State *L)
 {
-	g_MovieControle.Pause();
+	g_MovieControls.Pause();
 	return 0;
 }
 static int emu_unpause(lua_State *L)
 {
-	g_MovieControle.UnPause();
+	g_MovieControls.UnPause();
 	return 0;
 }
 static int emu_getframecount(lua_State *L)

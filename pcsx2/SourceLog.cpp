@@ -94,7 +94,7 @@ static const TraceLogDescriptor
 TLD_ELF = {
 	L"ELF",			L"E&LF",
 	pxDt("Dumps detailed information for PS2 executables (ELFs).")
-}, 
+},
 
 TLD_eeRecPerf = {
 	L"EErecPerf",	L"EErec &Performance",
@@ -121,9 +121,11 @@ TLD_tasConsole = {
 	pxDt("Shows TAS related logs and information")
 },
 
+// TODO Lua Console log filter
+
 TLD_controlInfo = {
 	L"Controller Info",			L"Controller Info",
-	pxDt("Shows detailed info on controller input values every frame on controller port 1")
+	pxDt("Shows detailed controller input values for controller port 1 every frame")
 };
 
 SysConsoleLogPack::SysConsoleLogPack()

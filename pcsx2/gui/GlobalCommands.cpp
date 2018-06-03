@@ -30,8 +30,7 @@
 #include "DebugTools/Debug.h"
 #include "R3000A.h"
 
-// TODO TAS - pretty sure this should be refactored to MovieControl, but its fine for now
-#include "TAS/MovieControle.h"
+#include "TAS/MovieControls.h"
 #include "TAS/KeyMovie.h"
 
 // renderswitch - tells GSdx to go into dx9 sw if "renderswitch" is set.
@@ -465,14 +464,13 @@ namespace Implementations
 			gsframe->ShowFullScreen( !gsframe->IsFullScreen() );
 	}
 
-	//--TAS--//
 	void FrameAdvance()
 	{
-		g_MovieControle.FrameAdvance();
+		g_MovieControls.FrameAdvance();
 	}
 	void TogglePause()
 	{
-		g_MovieControle.TogglePause();
+		g_MovieControls.TogglePause();
 	}
 	void KeyMovieModeToggle()
 	{
@@ -508,7 +506,6 @@ namespace Implementations
 	void States_LoadSlot7() { States_LoadSlot(7); }
 	void States_LoadSlot8() { States_LoadSlot(8); }
 	void States_LoadSlot9() { States_LoadSlot(9); }
-	//-------//
 }
 
 // --------------------------------------------------------------------------------------
@@ -670,32 +667,29 @@ static const GlobalCommandDescriptor CommandDeclarations[] =
 		false,
 	},
 
-	//--TAS--//
-	// TODO TAS, adding false to all of these, not sure what it does at the moment
-	{ "FrameAdvance",Implementations::FrameAdvance,NULL,NULL, false },
-	{ "TogglePause",Implementations::TogglePause,NULL,NULL, false },
-	{ "KeyMovieModeToggle",Implementations::KeyMovieModeToggle,NULL,NULL, false },
-	{ "States_SaveSlot0",Implementations::States_SaveSlot0,NULL,NULL, false },
-	{ "States_SaveSlot1",Implementations::States_SaveSlot1,NULL,NULL, false },
-	{ "States_SaveSlot2",Implementations::States_SaveSlot2,NULL,NULL, false },
-	{ "States_SaveSlot3",Implementations::States_SaveSlot3,NULL,NULL, false },
-	{ "States_SaveSlot4",Implementations::States_SaveSlot4,NULL,NULL, false },
-	{ "States_SaveSlot5",Implementations::States_SaveSlot5,NULL,NULL, false },
-	{ "States_SaveSlot6",Implementations::States_SaveSlot6,NULL,NULL, false },
-	{ "States_SaveSlot7",Implementations::States_SaveSlot7,NULL,NULL, false },
-	{ "States_SaveSlot8",Implementations::States_SaveSlot8,NULL,NULL, false },
-	{ "States_SaveSlot9",Implementations::States_SaveSlot9,NULL,NULL, false },
-	{ "States_LoadSlot0",Implementations::States_LoadSlot0,NULL,NULL, false },
-	{ "States_LoadSlot1",Implementations::States_LoadSlot1,NULL,NULL, false },
-	{ "States_LoadSlot2",Implementations::States_LoadSlot2,NULL,NULL, false },
-	{ "States_LoadSlot3",Implementations::States_LoadSlot3,NULL,NULL, false },
-	{ "States_LoadSlot4",Implementations::States_LoadSlot4,NULL,NULL, false },
-	{ "States_LoadSlot5",Implementations::States_LoadSlot5,NULL,NULL, false },
-	{ "States_LoadSlot6",Implementations::States_LoadSlot6,NULL,NULL, false },
-	{ "States_LoadSlot7",Implementations::States_LoadSlot7,NULL,NULL, false },
-	{ "States_LoadSlot8",Implementations::States_LoadSlot8,NULL,NULL, false },
-	{ "States_LoadSlot9",Implementations::States_LoadSlot9,NULL,NULL, false },
-	//-------//
+	{ "FrameAdvance"		, Implementations::FrameAdvance,		NULL, NULL, false },
+	{ "TogglePause"			, Implementations::TogglePause,			NULL, NULL, false },
+	{ "KeyMovieModeToggle"	, Implementations::KeyMovieModeToggle,	NULL, NULL, false },
+	{ "States_SaveSlot0"	, Implementations::States_SaveSlot0,	NULL, NULL, false },
+	{ "States_SaveSlot1"	, Implementations::States_SaveSlot1,	NULL, NULL, false },
+	{ "States_SaveSlot2"	, Implementations::States_SaveSlot2,	NULL, NULL, false },
+	{ "States_SaveSlot3"	, Implementations::States_SaveSlot3,	NULL, NULL, false },
+	{ "States_SaveSlot4"	, Implementations::States_SaveSlot4,	NULL, NULL, false },
+	{ "States_SaveSlot5"	, Implementations::States_SaveSlot5,	NULL, NULL, false },
+	{ "States_SaveSlot6"	, Implementations::States_SaveSlot6,	NULL, NULL, false },
+	{ "States_SaveSlot7"	, Implementations::States_SaveSlot7,	NULL, NULL, false },
+	{ "States_SaveSlot8"	, Implementations::States_SaveSlot8,	NULL, NULL, false },
+	{ "States_SaveSlot9"	, Implementations::States_SaveSlot9,	NULL, NULL, false },
+	{ "States_LoadSlot0"	, Implementations::States_LoadSlot0,	NULL, NULL, false },
+	{ "States_LoadSlot1"	, Implementations::States_LoadSlot1,	NULL, NULL, false },
+	{ "States_LoadSlot2"	, Implementations::States_LoadSlot2,	NULL, NULL, false },
+	{ "States_LoadSlot3"	, Implementations::States_LoadSlot3,	NULL, NULL, false },
+	{ "States_LoadSlot4"	, Implementations::States_LoadSlot4,	NULL, NULL, false },
+	{ "States_LoadSlot5"	, Implementations::States_LoadSlot5,	NULL, NULL, false },
+	{ "States_LoadSlot6"	, Implementations::States_LoadSlot6,	NULL, NULL, false },
+	{ "States_LoadSlot7"	, Implementations::States_LoadSlot7,	NULL, NULL, false },
+	{ "States_LoadSlot8"	, Implementations::States_LoadSlot8,	NULL, NULL, false },
+	{ "States_LoadSlot9"	, Implementations::States_LoadSlot9,	NULL, NULL, false },
 
 	// Command Declarations terminator:
 	// (must always be last in list!!)

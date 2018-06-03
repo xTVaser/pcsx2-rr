@@ -496,6 +496,21 @@ void MainEmuFrame::Menu_EnableWideScreenPatches_Click( wxCommandEvent& )
 	AppSaveSettings();
 }
 
+void MainEmuFrame::Menu_EnableRecordingTools_Click( wxCommandEvent& )
+{
+	// TODO Dialog Boxo
+	g_Conf->EmuOptions.EnableRecordingTools  = GetMenuBar()->IsChecked( MenuId_EnableRecordingTools );
+	AppApplySettings();
+	AppSaveSettings();
+}
+
+void MainEmuFrame::Menu_EnableLuaTools_Click( wxCommandEvent& )
+{
+	g_Conf->EmuOptions.EnableLuaTools  = GetMenuBar()->IsChecked( MenuId_EnableLuaTools );
+	AppApplySettings();
+	AppSaveSettings();
+}
+
 void MainEmuFrame::Menu_EnableHostFs_Click( wxCommandEvent& )
 {
 	g_Conf->EmuOptions.HostFs = GetMenuBar()->IsChecked( MenuId_EnableHostFs );
@@ -655,16 +670,13 @@ void MainEmuFrame::Menu_ShowAboutBox(wxCommandEvent &event)
 	AppOpenDialog<AboutBoxDialog>( this );
 }
 
-//--LuaEngine--//
 void MainEmuFrame::Menu_Lua_Open_Click(wxCommandEvent &event)
 {
 	LuaFrame* dlg = wxGetApp().GetLuaFramePtr();
 	if (dlg)
 		dlg->Show();
 }
-//------------//
 
-//--TAS--//
 void MainEmuFrame::Menu_KeyMovie_Record(wxCommandEvent &event)
 {
 	g_KeyMovie.Stop();
@@ -751,9 +763,7 @@ void MainEmuFrame::Menu_KeyMovie_OpenKeyEditor(wxCommandEvent &event)
 	if (dlg)dlg->Show();
 }
 
-//------//
 
-// Virtual Pad
 void MainEmuFrame::Menu_VirtualPad_Open(wxCommandEvent &event)
 {
 	VirtualPad *vp;
@@ -765,7 +775,6 @@ void MainEmuFrame::Menu_VirtualPad_Open(wxCommandEvent &event)
 		vp->Show();
 }
 
-// AVI/WAV
 void MainEmuFrame::Menu_AVIWAV_Record(wxCommandEvent &event)
 {
 	ScopedCoreThreadPause paused_core;
@@ -833,7 +842,6 @@ void MainEmuFrame::AVIWAVUpdate()
 	}
 }
 
-// Screenshot
 void MainEmuFrame::Menu_Screenshot_Shot(wxCommandEvent & event)
 {
 	GSmakeSnapshot(g_Conf->Folders.Snapshots.ToAscii());

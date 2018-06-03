@@ -483,7 +483,7 @@ set(pcsx2TASSources
 	TAS/KeyMovie.cpp
 	TAS/KeyMovieFrame.cpp
 	TAS/KeyMovieOnFile.cpp
-	TAS/MovieControle.cpp
+	TAS/MovieControls.cpp
 	TAS/PadData.cpp
 	TAS/TASInputManager.cpp
 	TAS/VirtualPad.cpp)
@@ -494,7 +494,7 @@ set(pcsx2TASHeaders
 	TAS/KeyMovie.h
 	TAS/KeyMovieFrame.h
 	TAS/KeyMovieOnFile.h
-	TAS/MovieControle.h
+	TAS/MovieControls.h
 	TAS/PadData.h
 	TAS/TASInputManager.h
 	TAS/VirtualPad.h)

@@ -210,7 +210,7 @@
     <ClCompile Include="..\..\TAS\KeyMovie.cpp" />
     <ClCompile Include="..\..\TAS\KeyMovieFrame.cpp" />
     <ClCompile Include="..\..\TAS\KeyMovieOnFile.cpp" />
-    <ClCompile Include="..\..\TAS\MovieControle.cpp" />
+    <ClCompile Include="..\..\TAS\MovieControls.cpp" />
     <ClCompile Include="..\..\TAS\PadData.cpp" />
     <ClCompile Include="..\..\TAS\TASInputManager.cpp" />
     <ClCompile Include="..\..\TAS\VirtualPad.cpp" />
@@ -469,7 +469,7 @@
     <ClInclude Include="..\..\TAS\KeyMovie.h" />
     <ClInclude Include="..\..\TAS\KeyMovieFrame.h" />
     <ClInclude Include="..\..\TAS\KeyMovieOnFile.h" />
-    <ClInclude Include="..\..\TAS\MovieControle.h" />
+    <ClInclude Include="..\..\TAS\MovieControls.h" />
     <ClInclude Include="..\..\TAS\PadData.h" />
     <ClInclude Include="..\..\TAS\TASInputManager.h" />
     <ClInclude Include="..\..\TAS\VirtualPad.h" />

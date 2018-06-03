@@ -1,5 +1,7 @@
 #include "PrecompiledHeader.h"
 
+#include "Common.h"
+#include "ConsoleLogger.h"
 #include "PadData.h"
 
 PadData::PadData()
@@ -12,6 +14,27 @@ PadData::PadData()
 		buf[port][3] = 127;
 		buf[port][4] = 127;
 		buf[port][5] = 127;
+	}
+}
+
+void PadData::logPadData(u8 port, u16 bufCount, u8 buf[512]) {
+	// skip first two bytes because they dont seem to matter
+	if (port == 0 && bufCount > 2) 
+	{
+		if (bufCount == 3)
+		{
+			controlLog(wxString::Format("\nController Port %d", port));
+			controlLog(wxString::Format("\nPressed Flags - "));
+		}
+		if (bufCount == 5) // analog sticks
+		{
+			controlLog(wxString::Format("\nAnalog Sticks - "));
+		}
+		if (bufCount == 9) // pressure sensitive bytes
+		{
+			controlLog(wxString::Format("\nPressure Bytes - "));
+		}
+		controlLog(wxString::Format("%3d ", buf[bufCount]));
 	}
 }
 
@@ -32,6 +55,7 @@ std::vector<wxString> split(const wxString &s, char delim) {
 		elems.push_back(item);
 	return elems;
 }
+
 void deserializeConvert(u8 & n, wxString s)
 {
 	try {
@@ -40,6 +64,7 @@ void deserializeConvert(u8 & n, wxString s)
 	catch (std::invalid_argument e) {/*none*/ }
 	catch (std::out_of_range e) {/*none*/ }
 }
+
 wxString PadData::serialize()const
 {
 	if (!fExistKey)return L"";
@@ -54,6 +79,7 @@ wxString PadData::serialize()const
 	}
 	return s;
 }
+
 void PadData::deserialize(wxString s)
 {
 	std::vector<wxString> v = split(s, L',');

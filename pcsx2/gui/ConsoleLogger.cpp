@@ -295,7 +295,7 @@ static ConsoleLogSource* const ConLogSources[] =
 	(ConsoleLogSource*)&pxConLog_Event,
 	(ConsoleLogSource*)&pxConLog_Thread,
 	NULL,
-	(ConsoleLogSource*)&SysConsole.tasConsole,
+	(ConsoleLogSource*)&SysConsole.tasConsole, // TODO probably rename to recording and make a Lua one
 	(ConsoleLogSource*)&SysConsole.controlInfo,
 };
 
@@ -311,7 +311,7 @@ static const bool ConLogDefaults[] =
 	false,
 	false,
 	false,
-	true,
+	false, // TODO disable by default because recording is disabled by default, but need to find a way to enable it when gui is flipped on
 	false
 };
 
@@ -341,15 +341,6 @@ void ConLog_LoadSaveSettings( IniInterface& ini )
 	}
 
 	ConLogInitialized = true;
-}
-
-bool isSourceEnabled(int index)
-{
-	if (ConsoleLogSource* log = ConLogSources[index])
-	{
-		return log->Enabled;
-	}
-	return false;
 }
 
 // --------------------------------------------------------------------------------------

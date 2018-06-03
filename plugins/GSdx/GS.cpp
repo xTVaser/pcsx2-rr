@@ -757,6 +757,7 @@ EXPORT_C_(uint32) GSmakeSnapshot(char* path)
 
 		if (!s.empty())
 		{
+			// TODO find out the reasoning for this change
 			if (s.substr(s.size() - 4, 4) == ".bmp")
 			{
 				return s_gs->MakeSnapshot(s);

@@ -179,6 +179,8 @@ protected:
 	void Menu_EnablePatches_Click(wxCommandEvent &event);
 	void Menu_EnableCheats_Click(wxCommandEvent &event);
 	void Menu_EnableWideScreenPatches_Click(wxCommandEvent &event);
+	void Menu_EnableRecordingTools_Click(wxCommandEvent &event); // TODO here is where i would hook in the event for prompting the dialog box i assume
+	void Menu_EnableLuaTools_Click(wxCommandEvent &event);
 	void Menu_EnableHostFs_Click(wxCommandEvent &event);
 
 	void Menu_BootCdvd_Click(wxCommandEvent &event);
@@ -209,7 +211,6 @@ protected:
 	void Menu_ShowConsole_Stdio(wxCommandEvent &event);
 	void Menu_ShowAboutBox(wxCommandEvent &event);
 
-	//--TAS--//
 	void Menu_KeyMovie_Record(wxCommandEvent &event);
 	void Menu_KeyMovie_Stop(wxCommandEvent &event);
 	void Menu_KeyMovie_Play(wxCommandEvent &event);
@@ -218,21 +219,15 @@ protected:
 	void Menu_KeyMovie_ConvertV1ToV2(wxCommandEvent &event);
 	void Menu_KeyMovie_ConvertLegacy(wxCommandEvent &event);
 	void Menu_KeyMovie_OpenKeyEditor(wxCommandEvent &event);
-	//-------//
 
-	//--LuaEngine--//
 	void Menu_Lua_Open_Click(wxCommandEvent &event);
-	//------------//
 
-	// Virtual Pad
 	void Menu_VirtualPad_Open(wxCommandEvent &event);
 
-	// AVI/WAV
 	void Menu_AVIWAV_Record(wxCommandEvent &event);
 	void Menu_AVIWAV_Stop(wxCommandEvent &event);
 	void AVIWAVUpdate();
 
-	// Screenshot
 	void Menu_Screenshot_Shot(wxCommandEvent &event);
 	void Menu_Screenshot_SaveAs(wxCommandEvent &event);
 

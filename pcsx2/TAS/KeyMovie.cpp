@@ -6,7 +6,7 @@
 #include "SaveState.h"	// create "SaveStateBase::keymovieFreeze()"
 #include "AppSaveStates.h"	// use "States_GetCurrentSlot()"
 
-#include "TAS/MovieControle.h"
+#include "TAS/MovieControls.h"
 #include "KeyMovie.h"
 
 #include <vector>
@@ -96,7 +96,7 @@ void KeyMovie::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 buf[])
 		if (keyMovieData.getMaxFrame() <= g_FrameCount)
 		{
 			// Pause the emulation but the movie is not closed
-			g_MovieControle.Pause();
+			g_MovieControls.Pause();
 			return;
 		}
 		u8 tmp = 0;
@@ -122,7 +122,7 @@ void KeyMovie::Stop() {
 //----------------------------------
 void KeyMovie::Start(wxString FileName,bool fReadOnly, VmStateBuffer* ss)
 {
-	g_MovieControle.Pause();
+	g_MovieControls.Pause();
 	Stop();
 
 	if (fReadOnly)

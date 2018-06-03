@@ -106,6 +106,8 @@ enum MenuIdentifiers
 	MenuId_EnablePatches,
 	MenuId_EnableCheats,
 	MenuId_EnableWideScreenPatches,
+	MenuId_EnableRecordingTools,
+	MenuId_EnableLuaTools,
 	MenuId_EnableHostFs,
 	MenuId_Sys_Movie,
 	MenuId_Sys_AVIWAV,
@@ -558,12 +560,10 @@ public:
 	LuaFrame*			GetLuaFramePtr() const { return (LuaFrame*)wxWindow::FindWindowById(m_id_LuaFrame); }
 	KeyEditor *			GetKeyEditorPtr() const { return (KeyEditor*)wxWindow::FindWindowById(m_id_KeyEditor); }
 	VirtualPad *		GetVirtualPadPtr(int port) const {
-							if (port < 0 || port > 1) return NULL;
+							if (port < 0 || port > 1) return NULL; // TODO i believe this is always false, linter errors picked it up, double check
 							return (VirtualPad*)wxWindow::FindWindowById(m_id_VirtualPad[port]);
 						}
-	KeyMovieFrame *		GetKeyMovieFramePtr() const {
-								return (KeyMovieFrame*)wxWindow::FindWindowById(m_id_KeyMovieFrame);
-						}
+	KeyMovieFrame *		GetKeyMovieFramePtr() const { return (KeyMovieFrame*)wxWindow::FindWindowById(m_id_KeyMovieFrame); }
 
 	void enterDebugMode();
 	void leaveDebugMode();
@@ -662,7 +662,6 @@ protected:
 	void OpenWizardConsole();
 	void PadKeyDispatch( const keyEvent& ev );
 
-	// TAS
 public:
 	void TAS_PadKeyDispatch(const keyEvent& ev) { PadKeyDispatch(ev); }
 

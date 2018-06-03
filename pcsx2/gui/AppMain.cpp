@@ -32,7 +32,7 @@
 #include "Debugger/DisassemblyDialog.h"
 
 #include "lua/LuaManager.h"
-#include "TAS/MovieControle.h"
+#include "TAS/MovieControls.h"
 #include "TAS/KeyMovie.h"
 
 #include "Utilities/IniInterface.h"
@@ -613,22 +613,24 @@ void Pcsx2App::HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent&
 {
 	try
 	{
-		// TAS
-		if (g_MovieControle.isStop())
+		if (EmuConfig.EnableRecordingTools)
 		{
-			// While stopping, GSFrame key event also stops, so get key input from here
-      		// Along with that, you can not use the shortcut keys set in GSFrame
-			if (PADkeyEvent != NULL)
+			if (g_MovieControls.isStop())
 			{
-				// Acquire key information, possibly calling it only once per frame
-				const keyEvent* ev = PADkeyEvent();
-				if (ev != NULL)
+				// While stopping, GSFrame key event also stops, so get key input from here
+				// Along with that, you can not use the shortcut keys set in GSFrame
+				if (PADkeyEvent != NULL)
 				{
-					sApp.TAS_PadKeyDispatch(*ev);
+					// Acquire key information, possibly calling it only once per frame
+					const keyEvent* ev = PADkeyEvent();
+					if (ev != NULL)
+					{
+						sApp.TAS_PadKeyDispatch(*ev);
+					}
 				}
 			}
+			g_MovieControls.StartCheck();
 		}
-		g_MovieControle.StartCheck();
 		(handler->*func)(event);
 	}
 	// ----------------------------------------------------------------------------
@@ -1051,10 +1053,14 @@ void Pcsx2App::OnProgramLogClosed( wxWindowID id )
 
 void Pcsx2App::OnMainFrameClosed( wxWindowID id )
 {
-	// TAS
-	g_KeyMovie.Stop();
-	// LuaEngine
-	g_Lua.Stop();
+	if (EmuConfig.EnableRecordingTools)
+	{
+		g_KeyMovie.Stop();
+	}
+	if (EmuConfig.EnableLuaTools)
+	{
+		g_Lua.Stop();
+	}
 
 	// Nothing threaded depends on the mainframe (yet) -- it all passes through the main wxApp
 	// message handler.  But that might change in the future.

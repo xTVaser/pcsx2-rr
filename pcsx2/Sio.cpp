@@ -22,6 +22,7 @@
 #include "sio_internal.h"
 
 #include "TAS/KeyMovie.h"
+#include "TAS/PadData.h"
 #include "TAS/TASInputManager.h"
 
 _sio sio;
@@ -211,34 +212,15 @@ SIO_WRITE sioWriteController(u8 data)
 	default:
 		sio.buf[sio.bufCount] = PADpoll(data);
 
-		//--TAS--//
-		g_KeyMovie.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
-
-		//--LuaEngine--//
-		if (g_KeyMovie.isInterruptFrame())
+		if (EmuConfig.EnableRecordingTools)
 		{
-			g_TASInput.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
-		}
-		//------------//
+			g_KeyMovie.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+			if (g_KeyMovie.isInterruptFrame())
+			{
+				g_TASInput.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+			}
 
-		// -- TAS Debugging Helpful -- //
-		// Prints controlller data every frame to the Controller Log filter, disabled by default //
-		if (sio.port == 0 && sio.bufCount > 2) // skip first two bytes because they dont seem to matter
-		{
-			if (sio.bufCount == 3)
-			{
-				controlLog(wxString::Format("\nController Port %d", sio.port));
-				controlLog(wxString::Format("\nPressed Flags - "));
-			}
-			if (sio.bufCount == 5) // analog sticks
-			{
-				controlLog(wxString::Format("\nAnalog Sticks - "));
-			}
-			if (sio.bufCount == 9) // pressure sensitive bytes
-			{
-				controlLog(wxString::Format("\nPressure Bytes - "));
-			}
-			controlLog(wxString::Format("%3d ", sio.buf[sio.bufCount]));
+			PadData::logPadData(sio.port, sio.bufCount, sio.buf);
 		}
 
 		break;

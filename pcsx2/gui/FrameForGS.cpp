@@ -85,12 +85,11 @@ void GSPanel::InitDefaultAccelerators()
 
 	m_Accels->Map( FULLSCREEN_TOGGLE_ACCELERATOR_GSPANEL,		"FullscreenToggle" );
 
-	// TAS recording / playback
+	// TODO if this runs when the GS window is opened, then we can probably wrap these in if statements as well
 	m_Accels->Map(AAC(WXK_SPACE), "FrameAdvance");
 	m_Accels->Map(AAC(wxKeyCode('p')).Shift(), "TogglePause");
 	m_Accels->Map(AAC(wxKeyCode('r')).Shift(), "KeyMovieModeToggle");
 
-	// Save state management keybindings
 	m_Accels->Map(AAC( WXK_NUMPAD0 ).Shift(), "States_SaveSlot0");
 	m_Accels->Map(AAC( WXK_NUMPAD1 ).Shift(), "States_SaveSlot1");
 	m_Accels->Map(AAC( WXK_NUMPAD2 ).Shift(), "States_SaveSlot2");
@@ -129,6 +128,7 @@ GSPanel::GSPanel( wxWindow* parent )
 	InitDefaultAccelerators();
 
 	// Retrieving FrameAdvance Key
+	// TODO this can probably be improved
 	for (auto itr = m_Accels->begin(); itr != m_Accels->end(); ++itr) {
 		if (itr->second->Id == "FrameAdvance") {
 			m_frameAdvanceKey = itr->first;
@@ -364,8 +364,17 @@ void GSPanel::OnKeyDownOrUp( wxKeyEvent& evt )
 		evt.m_keyCode += (int)'a' - 'A';
 #endif
 
-	if ( (PADopen != NULL) && CoreThread.IsOpen() && evt.GetKeyCode() != m_frameAdvanceKey ) return;
-	if (evt.GetKeyCode() == m_frameAdvanceKey && evt.GetEventType() == wxEVT_KEY_UP) return;
+	if (EmuConfig.EnableRecordingTools)
+	{
+		if ( (PADopen != NULL) && CoreThread.IsOpen() && evt.GetKeyCode() != m_frameAdvanceKey )
+		{
+			return;
+		}
+		if (evt.GetKeyCode() == m_frameAdvanceKey && evt.GetEventType() == wxEVT_KEY_UP)
+		{
+			return;
+		}
+	}
 	DirectKeyCommand( evt );
 }
 
@@ -381,7 +390,7 @@ void GSPanel::DirectKeyCommand( const KeyAcceleratorCode& kac )
 
 	DbgCon.WriteLn( "(gsFrame) Invoking command: %s", cmd->Id );
 	cmd->Invoke();
-	
+
 	if( cmd->AlsoApplyToGui && !g_ConfigPanelChanged)
 		AppApplySettings();
 }
@@ -493,11 +502,6 @@ GSGUIPanel::~GSGUIPanel()
 void GSGUIPanel::DoResize()
 {
 	s_guiMutex.Lock();
-	// TODO TAS - this is crashing the emulator when opening ISO
-	//if (m_gc)
-	//	delete m_gc;
-	//if (m_dc)
-		//delete m_dc;
 	GSPanel::DoResize();
 	Create();
 	s_guiMutex.Unlock();
@@ -596,8 +600,8 @@ void GSGUIPanel::Create()
 //  GSFrame Implementation
 // --------------------------------------------------------------------------------------
 
-static const uint TitleBarUpdateMs = 100;
-
+// TODO this may not work, might want an if/else
+static const uint TitleBarUpdateMs = (EmuConfig.EnableRecordingTools) ? 100 : 333;
 
 GSFrame::GSFrame( const wxString& title)
 	: wxFrame(NULL, wxID_ANY, title, g_Conf->GSWindow.WindowPos)
@@ -798,8 +802,8 @@ void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 	const u64& smode2 = *(u64*)PS2GS_BASE(GS_SMODE2);
 	wxString omodef = (smode2 & 2) ? templates.OutputFrame : templates.OutputField;
 	wxString omodei = (smode2 & 1) ? templates.OutputInterlaced : templates.OutputProgressive;
-	wxString movieMode;
 	wxString title;
+	wxString movieMode;
 	switch (g_KeyMovie.getModeState()) {
 	case KeyMovie::KEY_MOVIE_MODE::RECORD:
 			movieMode = "Recording";
@@ -815,9 +819,9 @@ void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 			break;
 	}
 
-	title.Replace(L"${frame}", 		pxsFmt(L"%d", g_FrameCount));	//--TAS--//
-	title.Replace(L"${maxFrame}", 	pxsFmt(L"%d", g_KeyMovie.getKeyMovieData().getMaxFrame())); //--TAS--//
-	title.Replace(L"${mode}", 		movieMode); //--TAS--//
+	title.Replace(L"${frame}", 		pxsFmt(L"%d", g_FrameCount));
+	title.Replace(L"${maxFrame}", 	pxsFmt(L"%d", g_KeyMovie.getKeyMovieData().getMaxFrame()));
+	title.Replace(L"${mode}", 		movieMode);
 	title.Replace(L"${slot}",		pxsFmt(L"%d", States_GetCurrentSlot()));
 	title.Replace(L"${limiter}",	limiterStr);
 	title.Replace(L"${speed}",		pxsFmt(L"%3d%%", lround(percentage)));

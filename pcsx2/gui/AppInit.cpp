@@ -75,23 +75,25 @@ void Pcsx2App::OpenMainFrame()
 	DisassemblyDialog* disassembly = new DisassemblyDialog( mainFrame );
 	m_id_Disassembler = disassembly->GetId();
 
-	// LuaEngine
-	LuaFrame *luaFrame = new LuaFrame(mainFrame);
-	m_id_LuaFrame = luaFrame->GetId();
+	if (EmuConfig.EnableRecordingTools)
+	{
+		KeyEditor* keyEditor = new KeyEditor(mainFrame);
+		m_id_KeyEditor = keyEditor->GetId();
 
-	// TAS
-	KeyEditor* keyEditor = new KeyEditor(mainFrame);
-	m_id_KeyEditor = keyEditor->GetId();
+		VirtualPad* virtualPad0 = new VirtualPad(mainFrame, 0);
+		m_id_VirtualPad[0] = virtualPad0->GetId();
+		VirtualPad *virtualPad1 = new VirtualPad(mainFrame, 1);
+		m_id_VirtualPad[1] = virtualPad1->GetId();
 
-	// VirtualPad
-	VirtualPad* virtualPad0 = new VirtualPad(mainFrame, 0);
-	m_id_VirtualPad[0] = virtualPad0->GetId();
-	VirtualPad *virtualPad1 = new VirtualPad(mainFrame, 1);
-	m_id_VirtualPad[1] = virtualPad1->GetId();
+		KeyMovieFrame *keyMovieFrame = new KeyMovieFrame(mainFrame);
+		m_id_KeyMovieFrame = keyMovieFrame->GetId();
+	}
 
-	// Movie Frame
-	KeyMovieFrame *keyMovieFrame = new KeyMovieFrame(mainFrame);
-	m_id_KeyMovieFrame = keyMovieFrame->GetId();
+	if (EmuConfig.EnableLuaTools)
+	{
+		LuaFrame *luaFrame = new LuaFrame(mainFrame);
+		m_id_LuaFrame = luaFrame->GetId();
+	}
 
 	if (g_Conf->EmuOptions.Debugger.ShowDebuggerOnStart)
 		disassembly->Show();

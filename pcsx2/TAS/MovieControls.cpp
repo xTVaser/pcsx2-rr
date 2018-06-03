@@ -6,10 +6,10 @@
 #include "App.h"	// use "CoreThread"
 #include "Counters.h"	// use"g_FrameCount"
 
-#include "MovieControle.h"
+#include "MovieControls.h"
 
 
-MovieControle g_MovieControle;
+MovieControls g_MovieControls;
 
 
 //-----------------------------------------------
@@ -21,14 +21,14 @@ MovieControle g_MovieControle;
 // CoreThread����~���Ă���Ԃ�wxFrame�̓��͂������d�g�݂��ۂ�
 //-----------------------------------------------
 
-bool MovieControle::isStop()
+bool MovieControls::isStop()
 {
 	return (fPauseState && CoreThread.IsOpen() && CoreThread.IsPaused());
 }
 //-----------------------------------------------
 // Counters(CoreThread)��̒�~����p (For stop judgment in)
 //-----------------------------------------------
-void MovieControle::StartCheck()
+void MovieControls::StartCheck()
 {
 	if (fStart && CoreThread.IsOpen() && CoreThread.IsPaused()) {
 		CoreThread.Resume();
@@ -37,7 +37,7 @@ void MovieControle::StartCheck()
 	}
 }
 
-void MovieControle::StopCheck()
+void MovieControls::StopCheck()
 {
 	if (fFrameAdvance) {
 		if (stopFrameCount < g_FrameCount) {
@@ -72,26 +72,26 @@ void MovieControle::StopCheck()
 //----------------------------------
 // shortcut key
 //----------------------------------
-void MovieControle::FrameAdvance()
+void MovieControls::FrameAdvance()
 {
 	stopFrameCount = g_FrameCount;
 	fFrameAdvance = true;
 	fStop = false;
 	fStart = true;
 }
-void MovieControle::TogglePause()
+void MovieControls::TogglePause()
 {
 	fStop = !fStop;
 	if (fStop == false) {
 		fStart = true;
 	}
 }
-void MovieControle::Pause()
+void MovieControls::Pause()
 {
 	fStop = true;
 	fFrameAdvance = true;
 }
-void MovieControle::UnPause()
+void MovieControls::UnPause()
 {
 	fStop = false;
 	fStart = true;
