@@ -30,8 +30,8 @@
 #include "DebugTools/Debug.h"
 #include "R3000A.h"
 
-#include "TAS/MovieControls.h"
-#include "TAS/KeyMovie.h"
+#include "Recording/MovieControls.h"
+#include "Recording/KeyMovie.h"
 
 // renderswitch - tells GSdx to go into dx9 sw if "renderswitch" is set.
 bool renderswitch = false;

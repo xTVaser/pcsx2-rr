@@ -33,8 +33,8 @@
 #include "Sio.h"
 
 #include "lua/LuaManager.h"
-#include "TAS/MovieControls.h"
-#include "TAS/KeyEditor.h"
+#include "Recording/MovieControls.h"
+#include "Recording/KeyEditor.h"
 
 using namespace Threading;
 

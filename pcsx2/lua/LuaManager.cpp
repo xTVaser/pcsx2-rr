@@ -3,7 +3,7 @@
 #include "App.h"
 #include "GSFrame.h"
 
-#include "TAS/MovieControls.h"
+#include "Recording/MovieControls.h"
 
 #include "LuaManager.h"
 #include "LuaEngine.h"
@@ -83,7 +83,7 @@ void LuaManager::Restart() {
 	Run();
 }
 
-// lua script‚ğ•¡”“®‚©‚¹‚é‚æ‚¤‚ÉŠg’£‚·‚é—p
+// lua scriptï¿½ğ•¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½æ‚¤ï¿½ÉŠgï¿½ï¿½ï¿½ï¿½ï¿½éï¿½p
 LuaEngine * LuaManager::getLuaEnginPtr(lua_State* l)
 {
 	if (lua.isSelf(l)) {

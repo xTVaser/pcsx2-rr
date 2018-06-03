@@ -27,9 +27,9 @@
 #include "AppCoreThread.h"
 #include "RecentIsoList.h"
 
-#include "TAS/KeyEditor.h"
-#include "TAS/VirtualPad.h"
-#include "TAS/KeyMovieFrame.h"
+#include "Recording/KeyEditor.h"
+#include "Recording/VirtualPad.h"
+#include "Recording/KeyMovieFrame.h"
 
 class DisassemblyDialog;
 
@@ -168,7 +168,7 @@ enum MenuIdentifiers
 	MenuId_Debug_CreateBlockdump,
 	MenuId_Config_ResetAll,
 
-	// TAS Subsection
+	// Recording Subsection
 	MenuId_KeyMovie_Record,
 	MenuId_KeyMovie_Play,
 	MenuId_KeyMovie_Stop,

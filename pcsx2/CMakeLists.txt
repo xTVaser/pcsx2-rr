@@ -373,17 +373,17 @@ set(pcsx2GuiResources
 
 # Lua sources
 set(pcsx2LuaSources
-	lua/LuaEngine.cpp
-	lua/LuaFrame.cpp
-	lua/LuaFunctions.cpp
-	lua/LuaManager.cpp)
+	Lua/LuaEngine.cpp
+	Lua/LuaFrame.cpp
+	Lua/LuaFunctions.cpp
+	Lua/LuaManager.cpp)
 
 # Lua headers
 set(pcsx2LuaHeaders
-	lua/LuaEngine.h
-	lua/LuaFrame.h
-	lua/LuaFunctions.h
-	lua/LuaManager.h)
+	Lua/LuaEngine.h
+	Lua/LuaFrame.h
+	Lua/LuaFunctions.h
+	Lua/LuaManager.h)
 
 # IPU sources
 set(pcsx2IPUSources
@@ -477,27 +477,27 @@ set(pcsx2SystemHeaders
 	System/RecTypes.h
 	System/SysThreads.h)
 
-# TAS sources
-set(pcsx2TASSources
-	TAS/KeyEditor.cpp
-	TAS/KeyMovie.cpp
-	TAS/KeyMovieFrame.cpp
-	TAS/KeyMovieOnFile.cpp
-	TAS/MovieControls.cpp
-	TAS/PadData.cpp
-	TAS/TASInputManager.cpp
-	TAS/VirtualPad.cpp)
+# Recording sources
+set(pcsx2RecordingSources
+	Recording/KeyEditor.cpp
+	Recording/KeyMovie.cpp
+	Recording/KeyMovieFrame.cpp
+	Recording/KeyMovieOnFile.cpp
+	Recording/MovieControls.cpp
+	Recording/PadData.cpp
+	Recording/RecordingInputManager.cpp
+	Recording/VirtualPad.cpp)
 
-# TAS headers
-set(pcsx2TASHeaders
-	TAS/KeyEditor.h
-	TAS/KeyMovie.h
-	TAS/KeyMovieFrame.h
-	TAS/KeyMovieOnFile.h
-	TAS/MovieControls.h
-	TAS/PadData.h
-	TAS/TASInputManager.h
-	TAS/VirtualPad.h)
+# Recording headers
+set(pcsx2RecordingHeaders
+	Recording/KeyEditor.h
+	Recording/KeyMovie.h
+	Recording/KeyMovieFrame.h
+	Recording/KeyMovieOnFile.h
+	Recording/MovieControls.h
+	Recording/PadData.h
+	Recording/RecordingInputManager.h
+	Recording/VirtualPad.h)
 
 # Utilities sources
 set(pcsx2UtilitiesSources

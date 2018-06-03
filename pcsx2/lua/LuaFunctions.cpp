@@ -7,8 +7,8 @@
 
 #include "AppSaveStates.h"
 
-#include "TAS/MovieControls.h"
-#include "TAS/KeyMovie.h"
+#include "Recording/MovieControls.h"
+#include "Recording/KeyMovie.h"
 
 #include "LuaManager.h"
 #include "LuaEngine.h"

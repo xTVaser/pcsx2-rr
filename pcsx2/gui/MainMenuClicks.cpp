@@ -30,8 +30,8 @@
 #include "Utilities/IniInterface.h"
 
 #include "lua/LuaFrame.h"
-#include "TAS/KeyMovie.h"
-#include "TAS/VirtualPad.h"
+#include "Recording/KeyMovie.h"
+#include "Recording/VirtualPad.h"
 
 using namespace Dialogs;
 

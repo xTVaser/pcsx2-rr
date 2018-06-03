@@ -50,7 +50,7 @@ void MovieControls::StopCheck()
 			wxString title = g_Conf->Templates.TASTemplate;
 			wxString frameCount = wxString::Format("%d", g_FrameCount);
 
-			title.Replace(L"${frame}", frameCount);	//--TAS--//
+			title.Replace(L"${frame}", frameCount);
 			int frameIndex = title.find(wxString::Format(L"%d", g_FrameCount));
 			frameIndex += frameCount.length();
 

@@ -27,7 +27,7 @@
 #include "Debugger/DisassemblyDialog.h"
 
 #include "lua/LuaFrame.h"
-#include "TAS/VirtualPad.h"
+#include "Recording/VirtualPad.h"
 
 #include <wx/cmdline.h>
 #include <wx/intl.h>

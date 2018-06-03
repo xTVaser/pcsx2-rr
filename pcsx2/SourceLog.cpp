@@ -117,8 +117,8 @@ TLD_deci2 = {
 },
 
 TLD_tasConsole = {
-	L"TAS",			L"TAS Console",
-	pxDt("Shows TAS related logs and information")
+	L"Recording",			L"Recording Console",
+	pxDt("Shows recording related logs and information")
 },
 
 // TODO Lua Console log filter

@@ -81,7 +81,7 @@ GSwindow_OffsetXminus             = Alt-Ctrl-LEFT
 GSwindow_OffsetXplus              = Alt-Ctrl-RIGHT
 GSwindow_OffsetReset              = Alt-Ctrl-KP_DIVIDE
 
-# TAS / Recording Bindings
+# Recording Bindings
 # TODO: add to http://wiki.pcsx2.net/index.php/Hotkeys
 FrameAdvance                      =	SPACE
 TogglePause                       =	Shift-P

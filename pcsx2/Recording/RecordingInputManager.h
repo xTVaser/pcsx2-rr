@@ -1,10 +1,10 @@
 #pragma once
-#include "TAS/PadData.h"
+#include "PadData.h"
 
-class TASInputManager
+class RecordingInputManager
 {
 public:
-	TASInputManager();
+	RecordingInputManager();
 
 	void ControllerInterrupt(u8 &data, u8 &port, u16 & BufCount, u8 buf[]);
 
@@ -20,4 +20,4 @@ protected:
 	PadData pad;
 	bool virtualPad[2];
 };
-extern TASInputManager g_TASInput;
+extern RecordingInputManager g_RecordingInput;

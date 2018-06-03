@@ -55,7 +55,7 @@ bool KeyMovieOnFile::Open(const wxString fn, bool fNewOpen, VmStateBuffer *ss)
 	}
 	if ( fopen_s(&fp, fn.c_str(), mode.c_str()) != 0)
 	{
-		tasConLog(wxString::Format("[TAS]: Movie file opening failed. Error - %s\n", strerror(errno)));
+		tasConLog(wxString::Format("[REC]: Movie file opening failed. Error - %s\n", strerror(errno)));
 		return false;
 	}
 	filename = fn;
@@ -215,7 +215,7 @@ bool KeyMovieOnFile::readHeaderAndCheck()
 		// We read the size (and the savestate) only if we must
 		if (fread(&savestate.savestatesize, sizeof(savestate.savestatesize), 1, fp) != 1) return false;
 		if (savestate.savestatesize == 0) {
-			tasConLog(L"[TAS]: Invalid size of the savestate.\n");
+			tasConLog(L"[REC]: Invalid size of the savestate.\n");
 			return false;
 		}
 
@@ -233,9 +233,6 @@ bool KeyMovieOnFile::readHeaderAndCheck()
 		GetCoreThread().Resume();
 	}
 	else {
-		// We restart the game
-		// TODO TAS - this option no longer exists
-		// UI_DisableSysReset();
 		sApp.SysExecute();
 	}
 
@@ -331,19 +328,19 @@ void KeyMovieOnFile::ConvertV2ToV3(wxString filename)
 //===========================================================
 void KeyMovieOnFile::ConvertV1_XToV2(wxString filename)
 {
-	tasConLog(wxString::Format(L"[TAS]: Conversion started - [%s]\n", WX_STR(filename)));
+	tasConLog(wxString::Format(L"[REC]: Conversion started - [%s]\n", WX_STR(filename)));
 	FILE * fp;
 	FILE * fp2;
 	fopen_s(&fp, filename, "rb");
 	if (fp == NULL) {
-		tasConLog(wxString::Format(L"[TAS]: Conversion failed - Error - %s\n", WX_STR(wxString(strerror(errno)))));
+		tasConLog(wxString::Format(L"[REC]: Conversion failed - Error - %s\n", WX_STR(wxString(strerror(errno)))));
 		return;
 	}
 	wxString outfile = wxString::Format(L"%s_converted.p2m2", filename);
 	fopen_s(&fp2, outfile, "wb");
 	if (fp2 == NULL) {
-		// TODO: keybindings for TAS inputs - not related to this code, just made a note here lol
-		tasConLog(wxString::Format(L"[TAS]: Conversion failed - Error - %s\n", WX_STR(wxString(strerror(errno)))));
+		// TODO: keybindings for Recording inputs - not related to this code, just made a note here lol
+		tasConLog(wxString::Format(L"[REC]: Conversion failed - Error - %s\n", WX_STR(wxString(strerror(errno)))));
 		fclose(fp);
 		return;
 	}
@@ -387,8 +384,8 @@ void KeyMovieOnFile::ConvertV1_XToV2(wxString filename)
 	}
 	fclose(fp);
 	fclose(fp2);
-	tasConLog(wxString::Format(L"[TAS]: Conversion successful\n"));
-	tasConLog(wxString::Format(L"[TAS]: Converted File - [%s]\n", WX_STR(outfile))); 
+	tasConLog(wxString::Format(L"[REC]: Conversion successful\n"));
+	tasConLog(wxString::Format(L"[REC]: Converted File - [%s]\n", WX_STR(outfile))); 
 }
 
 void KeyMovieOnFile::ConvertV1ToV2(wxString filename)
@@ -405,18 +402,18 @@ void KeyMovieOnFile::ConvertV1ToV2(wxString filename)
 //===========================================================
 void KeyMovieOnFile::ConvertLegacy(wxString filename)
 {
-	tasConLog(wxString::Format(L"[TAS]: Conversion started - [%s]\n", WX_STR(filename)));
+	tasConLog(wxString::Format(L"[REC]: Conversion started - [%s]\n", WX_STR(filename)));
 	FILE * fp;
 	FILE * fp2;
 	fopen_s(&fp, filename, "rb");
 	if (fp == NULL) {
-		tasConLog(wxString::Format(L"[TAS]: Conversion failed - Error -  %s\n", WX_STR(wxString(strerror(errno)))));
+		tasConLog(wxString::Format(L"[REC]: Conversion failed - Error -  %s\n", WX_STR(wxString(strerror(errno)))));
 		return;
 	}
 	wxString outfile = wxString::Format(L"%s.p2m2", filename);
 	fopen_s(&fp2, outfile, "wb");
 	if (fp2 == NULL) {
-		tasConLog(wxString::Format(L"[TAS]: Conversion failed - Error - %s\n", WX_STR(wxString(strerror(errno)))));
+		tasConLog(wxString::Format(L"[REC]: Conversion failed - Error - %s\n", WX_STR(wxString(strerror(errno)))));
 		fclose(fp);
 		return;
 	}
@@ -461,8 +458,8 @@ void KeyMovieOnFile::ConvertLegacy(wxString filename)
 	}
 	fclose(fp);
 	fclose(fp2);
-	tasConLog(wxString::Format(L"[TAS]: Conversion successful\n"));
-	tasConLog(wxString::Format(L"[TAS]: Converted File - [%s]\n", WX_STR(outfile)));
+	tasConLog(wxString::Format(L"[REC]: Conversion successful\n"));
+	tasConLog(wxString::Format(L"[REC]: Converted File - [%s]\n", WX_STR(outfile)));
 }
 
 

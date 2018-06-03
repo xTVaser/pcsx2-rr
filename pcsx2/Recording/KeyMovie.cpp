@@ -6,7 +6,7 @@
 #include "SaveState.h"	// create "SaveStateBase::keymovieFreeze()"
 #include "AppSaveStates.h"	// use "States_GetCurrentSlot()"
 
-#include "TAS/MovieControls.h"
+#include "Recording/MovieControls.h"
 #include "KeyMovie.h"
 
 #include <vector>
@@ -113,7 +113,7 @@ void KeyMovie::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 buf[])
 void KeyMovie::Stop() {
 	state = NONE;
 	if (keyMovieData.Close()) {
-		tasConLog(L"[TAS]: KeyMovie Recording Stopped.\n");
+		tasConLog(L"[REC]: KeyMovie Recording Stopped.\n");
 	}
 }
 
@@ -131,7 +131,7 @@ void KeyMovie::Start(wxString FileName,bool fReadOnly, VmStateBuffer* ss)
 			return;
 		}
 		if (!keyMovieData.readHeaderAndCheck()) {
-			tasConLog(L"[TAS]: This file is not a correct KeyMovie file.\n");
+			tasConLog(L"[REC]: This file is not a correct KeyMovie file.\n");
 			keyMovieData.Close();
 			return;
 		}
@@ -139,11 +139,11 @@ void KeyMovie::Start(wxString FileName,bool fReadOnly, VmStateBuffer* ss)
 		if (!g_Conf->CurrentIso.IsEmpty())
 		{
 			if (Path::GetFilename(g_Conf->CurrentIso) != keyMovieData.getHeader().cdrom) {
-				tasConLog(L"[TAS]: Information on CD in Movie file is Different.\n");
+				tasConLog(L"[REC]: Information on CD in Movie file is Different.\n");
 			}
 		}
 		state = REPLAY;
-		tasConLog(wxString::Format(L"[TAS]: Replaying movie - [%s]\n",FileName));
+		tasConLog(wxString::Format(L"[REC]: Replaying movie - [%s]\n",FileName));
 		tasConLog(wxString::Format(L"MaxFrame: %d\n", keyMovieData.getMaxFrame()));
 		tasConLog(wxString::Format(L"UndoCount: %d\n", keyMovieData.getUndoCount()));
 	}
@@ -152,7 +152,7 @@ void KeyMovie::Start(wxString FileName,bool fReadOnly, VmStateBuffer* ss)
 		// backup
 		wxString bpfile = wxString::Format(L"%s_backup", FileName);
 		if (wxCopyFile( FileName , bpfile, false)) {
-			tasConLog(wxString::Format(L"[TAS]: Created backup movie file - [%s]\n", bpfile));
+			tasConLog(wxString::Format(L"[REC]: Created backup movie file - [%s]\n", bpfile));
 		}
 		// create
 		if (!keyMovieData.Open(FileName, true, ss)) {
@@ -167,7 +167,7 @@ void KeyMovie::Start(wxString FileName,bool fReadOnly, VmStateBuffer* ss)
 		keyMovieData.writeSavestate();
 
 		state = RECORD;
-		tasConLog(wxString::Format(L"[TAS]: Started new recording - [%s]\n", FileName));
+		tasConLog(wxString::Format(L"[REC]: Started new recording - [%s]\n", FileName));
 	}
 	// In every case, we reset the g_FrameCount
 	g_FrameCount = 0;
@@ -180,11 +180,11 @@ void KeyMovie::RecordModeToggle()
 {
 	if (state == REPLAY) {
 		state = RECORD;
-		tasConLog("[TAS]: Record mode ON.\n");
+		tasConLog("[REC]: Record mode ON.\n");
 	}
 	else if (state == RECORD) {
 		state = REPLAY;
-		tasConLog("[TAS]: Replay mode ON.\n");
+		tasConLog("[REC]: Replay mode ON.\n");
 	}
 }
 

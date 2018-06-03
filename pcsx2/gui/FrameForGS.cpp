@@ -25,7 +25,7 @@
 #include "ConsoleLogger.h"
 
 #include "Counters.h"
-#include "TAS/KeyMovie.h"
+#include "Recording/KeyMovie.h"
 
 #include <wx/utils.h>
 #include <wx/graphics.h>

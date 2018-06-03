@@ -21,9 +21,9 @@
 #include "Sio.h"
 #include "sio_internal.h"
 
-#include "TAS/KeyMovie.h"
-#include "TAS/PadData.h"
-#include "TAS/TASInputManager.h"
+#include "Recording/KeyMovie.h"
+#include "Recording/PadData.h"
+#include "Recording/RecordingInputManager.h"
 
 _sio sio;
 _mcd mcds[2][4];
@@ -217,7 +217,7 @@ SIO_WRITE sioWriteController(u8 data)
 			g_KeyMovie.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
 			if (g_KeyMovie.isInterruptFrame())
 			{
-				g_TASInput.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+				g_RecordingInput.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
 			}
 
 			PadData::logPadData(sio.port, sio.bufCount, sio.buf);

@@ -230,7 +230,7 @@ void MainEmuFrame::ConnectMenus()
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_MultitapToggle_Click, this, MenuId_Config_Multitap1Toggle);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_ResetAllSettings_Click, this, MenuId_Config_ResetAll);
 
-	// TAS
+	// Recording
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_KeyMovie_Record, this, MenuId_KeyMovie_Record);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_KeyMovie_Play, this, MenuId_KeyMovie_Play);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_KeyMovie_Stop, this, MenuId_KeyMovie_Stop);
@@ -570,7 +570,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	m_MovieSubmenu.AppendSeparator();
 	m_MovieSubmenu.Append(MenuId_KeyMovie_OpenKeyEditor, _("Open KeyEditor Window..."));
 	m_MovieSubmenu.AppendSeparator();
-	// TODO TAS - these should be moved to a non-disabled submenu because you dont need the game running
+	// TODO Recording - these should be moved to a non-disabled submenu because you dont need the game running
 	// to convert a movie file (or atleast you shouldnt)
 	// Would also be nice to have the older, non-latest conversion be in its own submenus
 	m_MovieSubmenu.Append(MenuId_KeyMovie_ConvertV2ToV3, _("Convert Movie (v2.0 -> v3.0)"))->Enable(false);
