@@ -498,10 +498,17 @@ void MainEmuFrame::Menu_EnableWideScreenPatches_Click( wxCommandEvent& )
 
 void MainEmuFrame::Menu_EnableRecordingTools_Click( wxCommandEvent& )
 {
-	// TODO Dialog Boxo
 	bool checked = GetMenuBar()->IsChecked(MenuId_EnableRecordingTools);
-	// TODO magic index again
-	m_menubar.EnableTop(6, checked);
+	if (checked) {
+		// If cancelled, uncheck the box
+		// TODO assuming these messages should probably go into the translation files
+		if (!Msgbox::OkCancel("Please be aware that PCSX2's input recording features are still very much a work-in-progress.\nAs a result, there may be unforeseen bugs, performance implications and instability with certain games.\n\nThese tools are provided as-is and should be enabled under your own discretion.", "Enabling Recording Tools")) {
+			checked = false;
+			m_menuSys.FindChildItem(MenuId_EnableRecordingTools)->Check(false);
+		}
+	}
+	// TODO magic index
+	GetMenuBar()->EnableTop(6, checked);
 	g_Conf->EmuOptions.EnableRecordingTools = checked;
 	AppApplySettings();
 	AppSaveSettings();
@@ -509,10 +516,17 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click( wxCommandEvent& )
 
 void MainEmuFrame::Menu_EnableLuaTools_Click( wxCommandEvent& )
 {
-	// TODO dialog box
 	bool checked = GetMenuBar()->IsChecked(MenuId_EnableLuaTools);
+	if (checked) {
+		// If cancelled, uncheck the box
+		// TODO assuming these messages should probably go into the translation files
+		if (!Msgbox::OkCancel("Please be aware that PCSX2's Lua scripting features are still very much a work-in-progress.\nAs a result, there may be unforeseen bugs, performance implications and instability with certain games.\n\nThese tools are provided as-is and should be enabled under your own discretion.", "Enabling Lua Tools")) {
+			checked = false;
+			m_menuSys.FindChildItem(MenuId_EnableLuaTools)->Check(false);
+		}
+	}
 	// TODO magic index
-	m_menubar.EnableTop(7, checked);
+	GetMenuBar()->EnableTop(7, checked);
 	g_Conf->EmuOptions.EnableLuaTools = checked;
 	AppApplySettings();
 	AppSaveSettings();
