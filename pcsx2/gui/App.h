@@ -109,9 +109,6 @@ enum MenuIdentifiers
 	MenuId_EnableRecordingTools,
 	MenuId_EnableLuaTools,
 	MenuId_EnableHostFs,
-	MenuId_Sys_Movie,
-	MenuId_Sys_AVIWAV,
-	MenuId_Sys_Screenshot,
 
 	MenuId_State_Load,
 	MenuId_State_LoadOther,
@@ -168,30 +165,29 @@ enum MenuIdentifiers
 	MenuId_Debug_CreateBlockdump,
 	MenuId_Config_ResetAll,
 
+	// Capture Subsection
+	MenuId_Capture_Video,
+	MenuId_Capture_Video_Record,
+	MenuId_Capture_Video_Stop,
+	MenuId_Capture_Screenshot,
+	MenuId_Capture_Screenshot_Screenshot,
+	MenuId_Capture_Screenshot_Screenshot_As,
+
 	// Recording Subsection
-	MenuId_KeyMovie_Record,
-	MenuId_KeyMovie_Play,
-	MenuId_KeyMovie_Stop,
-	MenuId_KeyMovie_ConvertV2ToV3,
-	MenuId_KeyMovie_ConvertV1_XToV2,
-	MenuId_KeyMovie_ConvertV1ToV2,
-	MenuId_KeyMovie_ConvertLegacy,
-	MenuId_KeyMovie_OpenKeyEditor,
+	MenuId_Recording_New,
+	MenuId_Recording_Play,
+	MenuId_Recording_Stop,
+	MenuId_Recording_Editor,
+	MenuId_Recording_VirtualPad_Port0,
+	MenuId_Recording_VirtualPad_Port1,
+	MenuId_Recording_Conversions,
+	MenuId_Recording_ConvertV2ToV3,
+	MenuId_Recording_ConvertV1_XToV2,
+	MenuId_Recording_ConvertV1ToV2,
+	MenuId_Recording_ConvertLegacy,
 
-	// Lua Engine
+	// Lua Subsection
 	MenuId_Lua_Open,
-
-	// VirtualPad
-	MenuId_VirtualPad_Port0,
-	MenuId_VirtualPad_Port1,
-
-	// AVI/WAV
-	MenuId_AVIWAV_Record,
-	MenuId_AVIWAV_Stop,
-
-	// Screenshot
-	MenuId_Screenshot_Shot,
-	MenuId_Screenshot_SaveAs
 };
 
 namespace Exception

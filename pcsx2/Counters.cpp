@@ -32,7 +32,7 @@
 
 #include "Sio.h"
 
-#include "lua/LuaManager.h"
+#include "Lua/LuaManager.h"
 #include "Recording/MovieControls.h"
 #include "Recording/KeyEditor.h"
 

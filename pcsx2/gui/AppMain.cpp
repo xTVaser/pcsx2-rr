@@ -31,7 +31,7 @@
 
 #include "Debugger/DisassemblyDialog.h"
 
-#include "lua/LuaManager.h"
+#include "Lua/LuaManager.h"
 #include "Recording/MovieControls.h"
 #include "Recording/KeyMovie.h"
 

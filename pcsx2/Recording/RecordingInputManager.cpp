@@ -1,7 +1,7 @@
 #include "PrecompiledHeader.h"
 
 #include "RecordingInputManager.h"
-#include "lua/LuaManager.h"
+#include "Lua/LuaManager.h"
 #include "KeyMovie.h"
 
 RecordingInputManager g_RecordingInput;
