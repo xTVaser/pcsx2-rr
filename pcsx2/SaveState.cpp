@@ -233,7 +233,7 @@ SaveStateBase& SaveStateBase::FreezeInternals()
 	// to merit an HLE Bios sub-section... yet.
 	deci2Freeze();
 
-	if (EmuConfig.EnableRecordingTools)
+	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
 		keymovieFreeze();
 	}

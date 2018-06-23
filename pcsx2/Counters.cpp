@@ -571,12 +571,12 @@ __fi void rcntUpdate_vSync()
 	}
 	else	// VSYNC end / VRENDER begin
 	{
-		if (EmuConfig.EnableLuaTools)
+		if (g_Conf->EmuOptions.EnableLuaTools)
 		{
 			g_Lua.FrameBoundary();
 		}
 
-		if (EmuConfig.EnableRecordingTools)
+		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
 			KeyEditor* dlg = wxGetApp().GetKeyEditorPtr();
 			if (dlg)dlg->FrameUpdate();

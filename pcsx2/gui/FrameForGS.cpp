@@ -364,7 +364,7 @@ void GSPanel::OnKeyDownOrUp( wxKeyEvent& evt )
 		evt.m_keyCode += (int)'a' - 'A';
 #endif
 
-	if (EmuConfig.EnableRecordingTools)
+	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
 		if ( (PADopen != NULL) && CoreThread.IsOpen() && evt.GetKeyCode() != m_frameAdvanceKey )
 		{
@@ -600,8 +600,8 @@ void GSGUIPanel::Create()
 //  GSFrame Implementation
 // --------------------------------------------------------------------------------------
 
-// TODO this may not work, might want an if/else
-static const uint TitleBarUpdateMs = (EmuConfig.EnableRecordingTools) ? 100 : 333;
+static const uint TitleBarUpdateMs = 333;
+static const uint TitleBarUpdateMsWhenRecording = 50;
 
 GSFrame::GSFrame( const wxString& title)
 	: wxFrame(NULL, wxID_ANY, title, g_Conf->GSWindow.WindowPos)
@@ -663,7 +663,14 @@ bool GSFrame::ShowFullScreen(bool show, bool updateConfig)
 
 void GSFrame::CoreThread_OnResumed()
 {
-	m_timer_UpdateTitle.Start( TitleBarUpdateMs );
+	if (g_Conf->EmuOptions.EnableRecordingTools)
+	{
+		m_timer_UpdateTitle.Start(TitleBarUpdateMsWhenRecording);
+	}
+	else
+	{
+		m_timer_UpdateTitle.Start(TitleBarUpdateMs);
+	}
 	if( !IsShown() ) Show();
 }
 
@@ -698,8 +705,18 @@ bool GSFrame::Show( bool shown )
 		gsPanel->DoResize();
 		gsPanel->SetFocus();
 
-		if( !m_timer_UpdateTitle.IsRunning() )
-			m_timer_UpdateTitle.Start( TitleBarUpdateMs );
+		if (!m_timer_UpdateTitle.IsRunning())
+		{
+			if (g_Conf->EmuOptions.EnableRecordingTools)
+			{
+				m_timer_UpdateTitle.Start(TitleBarUpdateMsWhenRecording);
+			}
+			else
+			{
+				m_timer_UpdateTitle.Start(TitleBarUpdateMs);
+			}
+		}
+			
 	}
 	else
 	{
@@ -807,11 +824,11 @@ void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 	switch (g_KeyMovie.getModeState()) {
 	case KeyMovie::KEY_MOVIE_MODE::RECORD:
 			movieMode = "Recording";
-			title = templates.TASTemplate;
+			title = templates.RecordingTemplate;
 			break;
 	case KeyMovie::KEY_MOVIE_MODE::REPLAY:
 			movieMode = "Replaying";
-			title = templates.TASTemplate;
+			title = templates.RecordingTemplate;
 			break;
 	case KeyMovie::KEY_MOVIE_MODE::NONE:
 			movieMode = "No movie";

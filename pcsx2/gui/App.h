@@ -67,6 +67,18 @@ static const bool CloseViewportWithPlugins = false;
 // All Menu Options for the Main Window! :D
 // ------------------------------------------------------------------------
 
+enum TopLevelMenuIndices
+{
+	TopLevelMenu_System = 0,
+	TopLevelMenu_Cdvd,
+	TopLevelMenu_Config,
+	TopLevelMenu_Misc,
+	TopLevelMenu_Debug,
+	TopLevelMenu_Capture,
+	TopLevelMenu_Recording,
+	TopLevelMenu_Lua,
+};
+
 enum MenuIdentifiers
 {
 	// Main Menu Section

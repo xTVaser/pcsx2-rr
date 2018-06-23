@@ -613,7 +613,7 @@ void Pcsx2App::HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent&
 {
 	try
 	{
-		if (EmuConfig.EnableRecordingTools)
+		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
 			if (g_MovieControls.isStop())
 			{
@@ -1053,11 +1053,11 @@ void Pcsx2App::OnProgramLogClosed( wxWindowID id )
 
 void Pcsx2App::OnMainFrameClosed( wxWindowID id )
 {
-	if (EmuConfig.EnableRecordingTools)
+	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
 		g_KeyMovie.Stop();
 	}
-	if (EmuConfig.EnableLuaTools)
+	if (g_Conf->EmuOptions.EnableLuaTools)
 	{
 		g_Lua.Stop();
 	}

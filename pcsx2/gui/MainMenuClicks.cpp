@@ -507,8 +507,7 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click( wxCommandEvent& )
 			m_menuSys.FindChildItem(MenuId_EnableRecordingTools)->Check(false);
 		}
 	}
-	// TODO magic index
-	GetMenuBar()->EnableTop(6, checked);
+	GetMenuBar()->EnableTop(TopLevelMenu_Recording, checked);
 	g_Conf->EmuOptions.EnableRecordingTools = checked;
 	AppApplySettings();
 	AppSaveSettings();
@@ -525,8 +524,7 @@ void MainEmuFrame::Menu_EnableLuaTools_Click( wxCommandEvent& )
 			m_menuSys.FindChildItem(MenuId_EnableLuaTools)->Check(false);
 		}
 	}
-	// TODO magic index
-	GetMenuBar()->EnableTop(7, checked);
+	GetMenuBar()->EnableTop(TopLevelMenu_Lua, checked);
 	g_Conf->EmuOptions.EnableLuaTools = checked;
 	AppApplySettings();
 	AppSaveSettings();

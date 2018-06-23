@@ -381,9 +381,8 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	SetMenuBar( &m_menubar );
 
 	// Disable or Enable the Recording and Lua Tools
-	// TODO - there is probably a nicer way to do this other than hardcoding indexes but not too familiar with wxWidgets
-	m_menubar.EnableTop(6, g_Conf->EmuOptions.EnableRecordingTools);
-	m_menubar.EnableTop(7, g_Conf->EmuOptions.EnableLuaTools);
+	m_menubar.EnableTop(TopLevelMenu_Recording, g_Conf->EmuOptions.EnableRecordingTools);
+	m_menubar.EnableTop(TopLevelMenu_Lua, g_Conf->EmuOptions.EnableLuaTools);
 
 	// ------------------------------------------------------------------------
 
@@ -476,8 +475,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	m_menuSys.Append(MenuId_EnableWideScreenPatches,	_("Enable &Widescreen Patches"),
 		wxEmptyString, wxITEM_CHECK);
 
-	// TODO put a confirmation dialog on enabling these with a warning, etc, we currently already enable menu options when a movie starts, so should be easy to follow that example
-	m_menuSys.Append(MenuId_EnableRecordingTools,	_("Enable &Recording Tools"), 
+	m_menuSys.Append(MenuId_EnableRecordingTools,	_("Enable &Recording Tools"),
 		wxEmptyString, wxITEM_CHECK);
 
 	m_menuSys.Append(MenuId_EnableLuaTools,	_("Enable &Lua Tools"),
@@ -568,7 +566,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	m_menuDebug.AppendCheckItem(MenuId_Debug_CreateBlockdump, _("Create &Blockdump"), _("Creates a block dump for debugging purposes."));
 
 	// ------------------------------------------------------------------------
-	
+
 	m_menuCapture.Append(MenuId_Capture_Video, _("Video"), &m_submenuVideoCapture);
 	m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Start Recording"));
 	m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Stop Recording"));

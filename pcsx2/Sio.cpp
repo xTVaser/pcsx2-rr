@@ -212,7 +212,7 @@ SIO_WRITE sioWriteController(u8 data)
 	default:
 		sio.buf[sio.bufCount] = PADpoll(data);
 
-		if (EmuConfig.EnableRecordingTools)
+		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
 			g_KeyMovie.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
 			if (g_KeyMovie.isInterruptFrame())

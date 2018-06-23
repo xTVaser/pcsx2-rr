@@ -62,7 +62,7 @@ void KeyMovie::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 buf[])
 	else if ( bufCount == 2 ){
 		// See - LilyPad.cpp:1255
 		// 0x5A is always the second byte in the buffer
-		// when the normal READ_DATA_AND_VIBRRATE (0x42) 
+		// when the normal READ_DATA_AND_VIBRRATE (0x42)
 		// query is executed, this looks like a sanity check
 		if (buf[bufCount] != 0x5A) {
 			fInterruptFrame = false;
@@ -73,7 +73,6 @@ void KeyMovie::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 buf[])
 	if (!fInterruptFrame)
 		return;
 
-	
 	if (state == NONE)
 		return;
 
