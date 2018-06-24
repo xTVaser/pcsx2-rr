@@ -502,8 +502,9 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click( wxCommandEvent& )
 	bool checked = GetMenuBar()->IsChecked(MenuId_EnableRecordingTools);
 	// Confirm with User
 	if (checked) {
-		// TODO assuming these messages should probably go into the translation files
-		if (!Msgbox::OkCancel("Please be aware that PCSX2's input recording features are still very much a work-in-progress.\nAs a result, there may be unforeseen bugs, performance implications and instability with certain games.\n\nThese tools are provided as-is and should be enabled under your own discretion.", "Enabling Recording Tools")) {
+		if (!Msgbox::OkCancel(_("Please be aware that PCSX2's input recording features are still very much a work-in-progress.\n"
+			"As a result, there may be unforeseen bugs, performance implications and instability with certain games.\n\n"
+			"These tools are provided as-is and should be enabled under your own discretion.", "Enabling Recording Tools"))) {
 			checked = false;
 			m_menuSys.FindChildItem(MenuId_EnableRecordingTools)->Check(false);
 		}
@@ -514,16 +515,9 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click( wxCommandEvent& )
 	{
 		GetMenuBar()->Insert(TopLevelMenu_Recording, &m_menuRecording, _("&Recording"));
 	}
-	else
+	else if (GetMenuBar()->GetMenuCount() > TopLevelMenu_Capture + 1)
 	{
-		if (g_Conf->EmuOptions.EnableLuaTools)
-		{
-			GetMenuBar()->Remove(TopLevelMenu_Recording);
-		}
-		else
-		{
-			GetMenuBar()->Remove(TopLevelMenu_Recording);
-		}
+		(g_Conf->EmuOptions.EnableLuaTools) ? GetMenuBar()->Remove(TopLevelMenu_Recording) : GetMenuBar()->Remove(TopLevelMenu_Recording);
 	}
 
 	g_Conf->EmuOptions.EnableRecordingTools = checked;
@@ -539,8 +533,9 @@ void MainEmuFrame::Menu_EnableLuaTools_Click( wxCommandEvent& )
 	bool checked = GetMenuBar()->IsChecked(MenuId_EnableLuaTools);
 	// Confirm with User
 	if (checked) {
-		// TODO assuming these messages should probably go into the translation files
-		if (!Msgbox::OkCancel("Please be aware that PCSX2's Lua scripting features are still very much a work-in-progress.\nAs a result, there may be unforeseen bugs, performance implications and instability with certain games.\n\nThese tools are provided as-is and should be enabled under your own discretion.", "Enabling Lua Tools")) {
+		if (!Msgbox::OkCancel(_("Please be aware that PCSX2's input recording features are still very much a work-in-progress.\n"
+			"As a result, there may be unforeseen bugs, performance implications and instability with certain games.\n\n"
+			"These tools are provided as-is and should be enabled under your own discretion.", "Enabling Recording Tools"))) {
 			checked = false;
 			m_menuSys.FindChildItem(MenuId_EnableLuaTools)->Check(false);
 		}
@@ -549,25 +544,11 @@ void MainEmuFrame::Menu_EnableLuaTools_Click( wxCommandEvent& )
 	// If still enabled, add the menu item, else, remove it
 	if (checked)
 	{
-		if (g_Conf->EmuOptions.EnableRecordingTools)
-		{
-			GetMenuBar()->Insert(TopLevelMenu_Lua, &m_menuLua, _("&Lua"));
-		}
-		else
-		{
-			GetMenuBar()->Insert(TopLevelMenu_Lua - 1, &m_menuLua, _("&Lua"));
-		}
+		(g_Conf->EmuOptions.EnableRecordingTools) ? GetMenuBar()->Insert(TopLevelMenu_Lua, &m_menuLua, _("&Lua")) : GetMenuBar()->Insert(TopLevelMenu_Lua - 1, &m_menuLua, _("&Lua"));
 	}
-	else
+	else if (GetMenuBar()->GetMenuCount() > TopLevelMenu_Capture + 1)
 	{
-		if (g_Conf->EmuOptions.EnableRecordingTools)
-		{
-			GetMenuBar()->Remove(TopLevelMenu_Lua);
-		}
-		else
-		{
-			GetMenuBar()->Remove(TopLevelMenu_Lua-1);
-		}
+		(g_Conf->EmuOptions.EnableRecordingTools) ? GetMenuBar()->Remove(TopLevelMenu_Lua) : GetMenuBar()->Remove(TopLevelMenu_Lua - 1);
 	}
 
 	g_Conf->EmuOptions.EnableLuaTools = checked;
@@ -820,7 +801,11 @@ void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_As_Click(wxCommandEvent &e
 
 	if (fileDialog.ShowModal() == wxID_OK)
 	{
-		GSmakeSnapshot(fileDialog.GetPath());
+		wxString path = fileDialog.GetPath();
+		// GS Code expects a .bmp path, despite PNG compression being hardcoded.  
+		// Swap extensions so UX isn't confusing and avoid changing too much GS code that I'm not familiar with
+		path = wxString::Format("%s.bmp", path.substr(0, path.size() - 4));
+		GSmakeSnapshot(path);
 	}
 }
 
@@ -855,6 +840,8 @@ void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 			g_InputRecording.Start(NewRecordingFrame->getFile(), false);
 		}
 	}
+	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
+	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
 }
 
 void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
@@ -866,11 +853,15 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 	if (openFileDialog.ShowModal() == wxID_CANCEL)return;	// cancel
 	wxString path = openFileDialog.GetPath();
 	g_InputRecording.Start(path, true);
+	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
+	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
 }
 
 void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
 {
 	g_InputRecording.Stop();
+	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(true);
+	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(false);
 }
 
 void MainEmuFrame::Menu_Recording_Editor_Click(wxCommandEvent &event)

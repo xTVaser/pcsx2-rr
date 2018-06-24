@@ -582,7 +582,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	// ------------------------------------------------------------------------
 
 	m_menuRecording.Append(MenuId_Recording_New, _("New"));
-	m_menuRecording.Append(MenuId_Recording_Stop, _("Stop"));
+	m_menuRecording.Append(MenuId_Recording_Stop, _("Stop"))->Enable(false);
 	m_menuRecording.Append(MenuId_Recording_Play, _("Play"));
 	m_menuRecording.AppendSeparator();
 	m_menuRecording.Append(MenuId_Recording_Editor, _("Open Movie Editor"));
