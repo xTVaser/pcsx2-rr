@@ -568,6 +568,11 @@ void ConsoleLogFrame::OnLoggingChanged()
 	}
 }
 
+void ConsoleLogFrame::UpdateLogList()
+{
+	OnLoggingChanged();
+}
+
 // Implementation note:  Calls SetColor and Write( text ).  Override those virtuals
 // and this one will magically follow suite. :)
 bool ConsoleLogFrame::Write( ConsoleColors color, const wxString& text )

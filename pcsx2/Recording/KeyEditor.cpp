@@ -40,6 +40,8 @@ wxEND_EVENT_TABLE()
 KeyEditor::KeyEditor(wxWindow * parent)
 	: wxFrame(parent, wxID_ANY, L"KeyEditor", wxPoint(437+680,52), wxSize(680,560))
 {
+	// TODO - needs proper wxFrame design, no hardcoding of coordinates
+
 	// menu bar
 	wxMenu *menuFile = new wxMenu;
 	menuFile->Append(ID_MenuAuthor, L"&set author");

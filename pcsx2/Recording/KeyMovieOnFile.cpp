@@ -29,8 +29,7 @@ long KeyMovieOnFile::_getBlockSeekPoint(const long & frame)
 	}
 }
 
-// Temporary Shim, probably a better cross-platform way to correct usages of
-// fopen_s
+// Temporary Shim, probably a better cross-platform way to correct usages of fopen_s
 int fopen_s(FILE **f, const char *name, const char *mode) {
 	int ret = 0;
 	assert(f);

@@ -85,31 +85,30 @@ void GSPanel::InitDefaultAccelerators()
 
 	m_Accels->Map( FULLSCREEN_TOGGLE_ACCELERATOR_GSPANEL,		"FullscreenToggle" );
 
-	// TODO if this runs when the GS window is opened, then we can probably wrap these in if statements as well
-	m_Accels->Map(AAC(WXK_SPACE), "FrameAdvance");
-	m_Accels->Map(AAC(wxKeyCode('p')).Shift(), "TogglePause");
-	m_Accels->Map(AAC(wxKeyCode('r')).Shift(), "KeyMovieModeToggle");
+	m_Accels->Map( AAC(WXK_SPACE), "FrameAdvance" );
+	m_Accels->Map( AAC(wxKeyCode('p')).Shift(), "TogglePause" );
+	m_Accels->Map( AAC(wxKeyCode('r')).Shift(), "KeyMovieModeToggle" );
 
-	m_Accels->Map(AAC( WXK_NUMPAD0 ).Shift(), "States_SaveSlot0");
-	m_Accels->Map(AAC( WXK_NUMPAD1 ).Shift(), "States_SaveSlot1");
-	m_Accels->Map(AAC( WXK_NUMPAD2 ).Shift(), "States_SaveSlot2");
-	m_Accels->Map(AAC( WXK_NUMPAD3 ).Shift(), "States_SaveSlot3");
-	m_Accels->Map(AAC( WXK_NUMPAD4 ).Shift(), "States_SaveSlot4");
-	m_Accels->Map(AAC( WXK_NUMPAD5 ).Shift(), "States_SaveSlot5");
-	m_Accels->Map(AAC( WXK_NUMPAD6 ).Shift(), "States_SaveSlot6");
-	m_Accels->Map(AAC( WXK_NUMPAD7 ).Shift(), "States_SaveSlot7");
-	m_Accels->Map(AAC( WXK_NUMPAD8 ).Shift(), "States_SaveSlot8");
-	m_Accels->Map(AAC( WXK_NUMPAD9 ).Shift(), "States_SaveSlot9");
-	m_Accels->Map(AAC( WXK_NUMPAD0 ), "States_LoadSlot0");
-	m_Accels->Map(AAC( WXK_NUMPAD1 ), "States_LoadSlot1");
-	m_Accels->Map(AAC( WXK_NUMPAD2 ), "States_LoadSlot2");
-	m_Accels->Map(AAC( WXK_NUMPAD3 ), "States_LoadSlot3");
-	m_Accels->Map(AAC( WXK_NUMPAD4 ), "States_LoadSlot4");
-	m_Accels->Map(AAC( WXK_NUMPAD5 ), "States_LoadSlot5");
-	m_Accels->Map(AAC( WXK_NUMPAD6 ), "States_LoadSlot6");
-	m_Accels->Map(AAC( WXK_NUMPAD7 ), "States_LoadSlot7");
-	m_Accels->Map(AAC( WXK_NUMPAD8 ), "States_LoadSlot8");
-	m_Accels->Map(AAC( WXK_NUMPAD9 ), "States_LoadSlot9");
+	m_Accels->Map( AAC( WXK_NUMPAD0 ).Shift(), "States_SaveSlot0" );
+	m_Accels->Map( AAC( WXK_NUMPAD1 ).Shift(), "States_SaveSlot1" );
+	m_Accels->Map( AAC( WXK_NUMPAD2 ).Shift(), "States_SaveSlot2" );
+	m_Accels->Map( AAC( WXK_NUMPAD3 ).Shift(), "States_SaveSlot3" );
+	m_Accels->Map( AAC( WXK_NUMPAD4 ).Shift(), "States_SaveSlot4" );
+	m_Accels->Map( AAC( WXK_NUMPAD5 ).Shift(), "States_SaveSlot5" );
+	m_Accels->Map( AAC( WXK_NUMPAD6 ).Shift(), "States_SaveSlot6" );
+	m_Accels->Map( AAC( WXK_NUMPAD7 ).Shift(), "States_SaveSlot7" );
+	m_Accels->Map( AAC( WXK_NUMPAD8 ).Shift(), "States_SaveSlot8" );
+	m_Accels->Map( AAC( WXK_NUMPAD9 ).Shift(), "States_SaveSlot9" );
+	m_Accels->Map( AAC( WXK_NUMPAD0 ), "States_LoadSlot0" );
+	m_Accels->Map( AAC( WXK_NUMPAD1 ), "States_LoadSlot1" );
+	m_Accels->Map( AAC( WXK_NUMPAD2 ), "States_LoadSlot2" );
+	m_Accels->Map( AAC( WXK_NUMPAD3 ), "States_LoadSlot3" );
+	m_Accels->Map( AAC( WXK_NUMPAD4 ), "States_LoadSlot4" );
+	m_Accels->Map( AAC( WXK_NUMPAD5 ), "States_LoadSlot5" );
+	m_Accels->Map( AAC( WXK_NUMPAD6 ), "States_LoadSlot6" );
+	m_Accels->Map( AAC( WXK_NUMPAD7 ), "States_LoadSlot7" );
+	m_Accels->Map( AAC( WXK_NUMPAD8 ), "States_LoadSlot8" );
+	m_Accels->Map( AAC( WXK_NUMPAD9 ), "States_LoadSlot9" );
 }
 
 GSPanel::GSPanel( wxWindow* parent )
@@ -128,7 +127,6 @@ GSPanel::GSPanel( wxWindow* parent )
 	InitDefaultAccelerators();
 
 	// Retrieving FrameAdvance Key
-	// TODO this can probably be improved
 	for (auto itr = m_Accels->begin(); itr != m_Accels->end(); ++itr) {
 		if (itr->second->Id == "FrameAdvance") {
 			m_frameAdvanceKey = itr->first;
@@ -364,13 +362,15 @@ void GSPanel::OnKeyDownOrUp( wxKeyEvent& evt )
 		evt.m_keyCode += (int)'a' - 'A';
 #endif
 
+	if ((PADopen != NULL) && CoreThread.IsOpen())
+		return;
+
 	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
-		if ( (PADopen != NULL) && CoreThread.IsOpen() && evt.GetKeyCode() != m_frameAdvanceKey )
-		{
-			return;
-		}
-		if (evt.GetKeyCode() == m_frameAdvanceKey && evt.GetEventType() == wxEVT_KEY_UP)
+		// TODO-Recording: This is to allow for repeated frame-advance while holding the key
+		// However as per the explaination above, this event no longer seems to fire under normal
+		// circumstances and I'm unsure if there is a place to put this logic
+		if (evt.GetKeyCode() == m_frameAdvanceKey)
 		{
 			return;
 		}

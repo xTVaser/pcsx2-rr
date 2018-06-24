@@ -375,14 +375,18 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	m_menubar.Append( &m_menuMisc,		_("&Misc") );
 	m_menubar.Append( &m_menuDebug,		_("&Debug") );
 	m_menubar.Append( &m_menuCapture,	_("&Capture") );
-	m_menubar.Append( &m_menuRecording,	_("&Recording") );
-	m_menubar.Append( &m_menuLua,		_("&Lua") );
 
 	SetMenuBar( &m_menubar );
 
-	// Disable or Enable the Recording and Lua Tools
-	m_menubar.EnableTop(TopLevelMenu_Recording, g_Conf->EmuOptions.EnableRecordingTools);
-	m_menubar.EnableTop(TopLevelMenu_Lua, g_Conf->EmuOptions.EnableLuaTools);
+	// Append the Recording / Lua options if previous enabled and picked up from ini
+	if (g_Conf->EmuOptions.EnableRecordingTools)
+	{
+		m_menubar.Append(&m_menuRecording, _("&Recording") );
+	}
+	if (g_Conf->EmuOptions.EnableLuaTools)
+	{
+		m_menubar.Append(&m_menuLua, _("&Lua"));
+	}
 
 	// ------------------------------------------------------------------------
 
@@ -569,11 +573,11 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 
 	m_menuCapture.Append(MenuId_Capture_Video, _("Video"), &m_submenuVideoCapture);
 	m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Start Recording"));
-	m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Stop Recording"));
+	m_submenuVideoCapture.Append(MenuId_Capture_Video_Stop, _("Stop Recording"))->Enable(false);
 
 	m_menuCapture.Append(MenuId_Capture_Screenshot, _("Screenshot"), &m_submenuScreenshot);
 	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot, _("Screenshot"));
-	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot, _("Screenshot As..."));
+	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot_As, _("Screenshot As..."));
 
 	// ------------------------------------------------------------------------
 
@@ -748,11 +752,6 @@ void MainEmuFrame::ApplyCoreStatus()
 			pxAssert(false);
 		}
 	}
-
-	// TODO this will change a bit once menu is fixed up
-	//menubar.Enable(MenuId_Sys_Movie, SysHasValidState() || CorePlugins.AreAnyInitialized());
-	//menubar.Enable(MenuId_Sys_AVIWAV, SysHasValidState() || CorePlugins.AreAnyInitialized());
-	//menubar.Enable(MenuId_Sys_Screenshot, SysHasValidState() || CorePlugins.AreAnyInitialized());
 }
 
 //Apply a config to the menu such that the menu reflects it properly

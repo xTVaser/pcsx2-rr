@@ -59,6 +59,8 @@ VirtualPad::VirtualPad(wxWindow * parent, int controllerPort)
 	: wxFrame(parent, wxID_ANY, wxString::Format("Virtual Pad %d", controllerPort), wxDefaultPosition, wxSize(600, 520), wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX)),
 	port(controllerPort)
 {
+	// TODO - needs proper wxFrame design, no hardcoding of coordinates
+
 	// Global
 	wxPanel *panel = new wxPanel(this, wxID_ANY);
 	int x = 10, y = 2;

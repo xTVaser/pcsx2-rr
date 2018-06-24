@@ -148,11 +148,6 @@ void KeyMovie::Start(wxString FileName,bool fReadOnly, VmStateBuffer* ss)
 	}
 	else
 	{
-		// backup
-		wxString bpfile = wxString::Format(L"%s_backup", FileName);
-		if (wxCopyFile( FileName , bpfile, false)) {
-			tasConLog(wxString::Format(L"[REC]: Created backup movie file - [%s]\n", bpfile));
-		}
 		// create
 		if (!keyMovieData.Open(FileName, true, ss)) {
 			return;

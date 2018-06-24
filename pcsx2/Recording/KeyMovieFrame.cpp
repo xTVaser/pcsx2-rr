@@ -29,8 +29,8 @@ KeyMovieFrame::KeyMovieFrame(wxWindow *parent)
 	m_fromChoice = new wxChoice(panel, From, wxDefaultPosition, wxDefaultSize, choices);
 	m_fromChoice->SetSelection(0);
 
-	m_startRecording = new wxButton(panel, wxID_ANY, _("Ok"), wxDefaultPosition, wxDefaultSize);
-	m_cancelRecording = new wxButton(panel, wxID_ANY, _("Cancel"), wxDefaultPosition, wxDefaultSize);
+	m_startRecording = new wxButton(panel, wxID_OK, _("Ok"), wxDefaultPosition, wxDefaultSize);
+	m_cancelRecording = new wxButton(panel, wxID_CANCEL, _("Cancel"), wxDefaultPosition, wxDefaultSize);
 
 	fgs->Add(m_fileLabel, 1);
 	fgs->Add(m_filePicker, 1);

@@ -182,7 +182,7 @@ protected:
 	void Menu_EnablePatches_Click(wxCommandEvent &event);
 	void Menu_EnableCheats_Click(wxCommandEvent &event);
 	void Menu_EnableWideScreenPatches_Click(wxCommandEvent &event);
-	void Menu_EnableRecordingTools_Click(wxCommandEvent &event); // TODO here is where i would hook in the event for prompting the dialog box i assume
+	void Menu_EnableRecordingTools_Click(wxCommandEvent &event);
 	void Menu_EnableLuaTools_Click(wxCommandEvent &event);
 	void Menu_EnableHostFs_Click(wxCommandEvent &event);
 

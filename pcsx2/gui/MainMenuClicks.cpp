@@ -19,6 +19,7 @@
 #include "CDVD/CDVD.h"
 #include "GS.h"
 
+#include "ConsoleLogger.h"
 #include "MainFrame.h"
 #include "IsoDropTarget.h"
 
@@ -499,16 +500,36 @@ void MainEmuFrame::Menu_EnableWideScreenPatches_Click( wxCommandEvent& )
 void MainEmuFrame::Menu_EnableRecordingTools_Click( wxCommandEvent& )
 {
 	bool checked = GetMenuBar()->IsChecked(MenuId_EnableRecordingTools);
+	// Confirm with User
 	if (checked) {
-		// If cancelled, uncheck the box
 		// TODO assuming these messages should probably go into the translation files
 		if (!Msgbox::OkCancel("Please be aware that PCSX2's input recording features are still very much a work-in-progress.\nAs a result, there may be unforeseen bugs, performance implications and instability with certain games.\n\nThese tools are provided as-is and should be enabled under your own discretion.", "Enabling Recording Tools")) {
 			checked = false;
 			m_menuSys.FindChildItem(MenuId_EnableRecordingTools)->Check(false);
 		}
 	}
-	GetMenuBar()->EnableTop(TopLevelMenu_Recording, checked);
+
+	// If still enabled, add the menu item, else, remove it
+	if (checked)
+	{
+		GetMenuBar()->Insert(TopLevelMenu_Recording, &m_menuRecording, _("&Recording"));
+	}
+	else
+	{
+		if (g_Conf->EmuOptions.EnableLuaTools)
+		{
+			GetMenuBar()->Remove(TopLevelMenu_Recording);
+		}
+		else
+		{
+			GetMenuBar()->Remove(TopLevelMenu_Recording);
+		}
+	}
+
 	g_Conf->EmuOptions.EnableRecordingTools = checked;
+	((ConsoleLogSource*)&SysConsole.tasConsole)->Enabled = checked;
+	ConsoleLogFrame* proglog = wxGetApp().GetProgramLog();
+	proglog->UpdateLogList();
 	AppApplySettings();
 	AppSaveSettings();
 }
@@ -516,16 +537,43 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click( wxCommandEvent& )
 void MainEmuFrame::Menu_EnableLuaTools_Click( wxCommandEvent& )
 {
 	bool checked = GetMenuBar()->IsChecked(MenuId_EnableLuaTools);
+	// Confirm with User
 	if (checked) {
-		// If cancelled, uncheck the box
 		// TODO assuming these messages should probably go into the translation files
 		if (!Msgbox::OkCancel("Please be aware that PCSX2's Lua scripting features are still very much a work-in-progress.\nAs a result, there may be unforeseen bugs, performance implications and instability with certain games.\n\nThese tools are provided as-is and should be enabled under your own discretion.", "Enabling Lua Tools")) {
 			checked = false;
 			m_menuSys.FindChildItem(MenuId_EnableLuaTools)->Check(false);
 		}
 	}
-	GetMenuBar()->EnableTop(TopLevelMenu_Lua, checked);
+
+	// If still enabled, add the menu item, else, remove it
+	if (checked)
+	{
+		if (g_Conf->EmuOptions.EnableRecordingTools)
+		{
+			GetMenuBar()->Insert(TopLevelMenu_Lua, &m_menuLua, _("&Lua"));
+		}
+		else
+		{
+			GetMenuBar()->Insert(TopLevelMenu_Lua - 1, &m_menuLua, _("&Lua"));
+		}
+	}
+	else
+	{
+		if (g_Conf->EmuOptions.EnableRecordingTools)
+		{
+			GetMenuBar()->Remove(TopLevelMenu_Lua);
+		}
+		else
+		{
+			GetMenuBar()->Remove(TopLevelMenu_Lua-1);
+		}
+	}
+
 	g_Conf->EmuOptions.EnableLuaTools = checked;
+	//((ConsoleLogSource*)&SysConsole.tasConsole)->Enabled = checked;
+	//ConsoleLogFrame* proglog = wxGetApp().GetProgramLog();
+	//proglog->UpdateLogList();
 	AppApplySettings();
 	AppSaveSettings();
 }
@@ -758,12 +806,17 @@ void MainEmuFrame::VideoCaptureUpdate()
 
 void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_Click(wxCommandEvent & event)
 {
+	if (!CoreThread.IsOpen())
+		return;
 	GSmakeSnapshot(g_Conf->Folders.Snapshots.ToAscii());
 }
 
 void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_As_Click(wxCommandEvent &event)
 {
-	wxFileDialog fileDialog(this, "Select a file", g_Conf->Folders.Snapshots.ToAscii(), wxEmptyString, "BMP files (*.bmp)|*.bmp", wxFD_SAVE);
+	if (!CoreThread.IsOpen())
+		return;
+
+	wxFileDialog fileDialog(this, "Select a file", g_Conf->Folders.Snapshots.ToAscii(), wxEmptyString, "PNG files (*.png)|*.png", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 
 	if (fileDialog.ShowModal() == wxID_OK)
 	{
@@ -782,20 +835,25 @@ void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 		{
 			return;
 		}
-		// From Power-On
+		g_KeyMovieHeader.setAuthor(keyMovieFrame->getAuthor());
+		// From Current Frame
 		if (keyMovieFrame->getFrom() == 0)
 		{
-			g_KeyMovie.Start(keyMovieFrame->getFile(), false);
-		}
-		// From Now
-		else if (keyMovieFrame->getFrom() == 1)
-		{
+			if (!CoreThread.IsOpen()) {
+				tasConLog(L"[REC]: Game is not open, aborting new input recording.\n");
+				return;
+			}
 			VmStateBuffer savestate;
 			memSavingState memSS(savestate);
 			memSS.FreezeAll();
 			g_KeyMovie.Start(keyMovieFrame->getFile(), false, &savestate);
 		}
-		g_KeyMovieHeader.setAuthor(keyMovieFrame->getAuthor());
+		// From Power-On
+		else if (keyMovieFrame->getFrom() == 1)
+		{
+			// TODO extensively test this
+			g_KeyMovie.Start(keyMovieFrame->getFile(), false);
+		}
 	}
 }
 
