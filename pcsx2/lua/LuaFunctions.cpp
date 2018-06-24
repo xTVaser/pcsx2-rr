@@ -7,8 +7,8 @@
 
 #include "AppSaveStates.h"
 
-#include "Recording/MovieControls.h"
-#include "Recording/KeyMovie.h"
+#include "Recording/RecordingControls.h"
+#include "Recording/InputRecording.h"
 
 #include "LuaManager.h"
 #include "LuaEngine.h"
@@ -32,7 +32,7 @@ static int emu_frameadvance(lua_State *L)
 	if (pLua == NULL)return 0;
 	if (pLua->getState() != LuaEngine::RUNNING)return 0;
 
-	g_MovieControls.FrameAdvance();
+	g_RecordingControls.FrameAdvance();
 	pLua->setState(LuaEngine::RESUME);
 	return lua_yield(L, 0);
 }
@@ -43,12 +43,12 @@ static int emu_frameadvance(lua_State *L)
 //=============================================
 static int emu_pause(lua_State *L)
 {
-	g_MovieControls.Pause();
+	g_RecordingControls.Pause();
 	return 0;
 }
 static int emu_unpause(lua_State *L)
 {
-	g_MovieControls.UnPause();
+	g_RecordingControls.UnPause();
 	return 0;
 }
 static int emu_getframecount(lua_State *L)
@@ -271,11 +271,11 @@ static int savestate_load(lua_State *L)
 //=============================================
 static int movie_getmode(lua_State *L)
 {
-	if (g_KeyMovie.getModeState() == KeyMovie::RECORD) {
+	if (g_InputRecording.getModeState() == InputRecording::RECORD) {
 		lua_pushstring(L, "record");
 		return 1;
 	}
-	else if (g_KeyMovie.getModeState() == KeyMovie::REPLAY) {
+	else if (g_InputRecording.getModeState() == InputRecording::REPLAY) {
 		lua_pushstring(L, "playback");
 		return 1;
 	}
@@ -284,53 +284,53 @@ static int movie_getmode(lua_State *L)
 }
 static int movie_getlength(lua_State *L)
 {
-	if (g_KeyMovie.getModeState() == KeyMovie::NONE) {
+	if (g_InputRecording.getModeState() == InputRecording::NONE) {
 		lua_pushinteger(L, 0);
 		return 1;
 	}
-	lua_pushinteger(L, g_KeyMovieData.getMaxFrame());
+	lua_pushinteger(L, g_InputRecordingData.getMaxFrame());
 	return 1;
 }
 
 static int movie_getauthor(lua_State *L)
 {
-	if (g_KeyMovie.getModeState() == KeyMovie::NONE) {
+	if (g_InputRecording.getModeState() == InputRecording::NONE) {
 		lua_pushnil(L);
 		return 1;
 	}
-	lua_pushstring(L, g_KeyMovieHeader.author);
+	lua_pushstring(L, g_InputRecordingHeader.author);
 	return 1;
 }
 static int movie_getcdrom(lua_State *L)
 {
-	if (g_KeyMovie.getModeState() == KeyMovie::NONE) {
+	if (g_InputRecording.getModeState() == InputRecording::NONE) {
 		lua_pushnil(L);
 		return 1;
 	}
-	lua_pushstring(L, g_KeyMovieHeader.cdrom);
+	lua_pushstring(L, g_InputRecordingHeader.cdrom);
 	return 1;
 }
 static int movie_getfilename(lua_State *L)
 {
-	if (g_KeyMovie.getModeState() == KeyMovie::NONE) {
+	if (g_InputRecording.getModeState() == InputRecording::NONE) {
 		lua_pushnil(L);
 		return 1;
 	}
-	lua_pushstring(L, g_KeyMovieData.getFilename());
+	lua_pushstring(L, g_InputRecordingData.getFilename());
 	return 1;
 }
 static int movie_rerecordcount(lua_State *L)
 {
-	if (g_KeyMovie.getModeState() == KeyMovie::NONE) {
+	if (g_InputRecording.getModeState() == InputRecording::NONE) {
 		lua_pushinteger(L, 0);
 		return 1;
 	}
-	lua_pushinteger(L, g_KeyMovieData.getUndoCount());
+	lua_pushinteger(L, g_InputRecordingData.getUndoCount());
 	return 1;
 }
 static int movie_stop(lua_State *L)
 {
-	g_KeyMovie.Stop();
+	g_InputRecording.Stop();
 	return 0;
 }
 

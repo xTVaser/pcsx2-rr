@@ -479,22 +479,22 @@ set(pcsx2SystemHeaders
 
 # Recording sources
 set(pcsx2RecordingSources
-	Recording/KeyEditor.cpp
-	Recording/KeyMovie.cpp
-	Recording/KeyMovieFrame.cpp
-	Recording/KeyMovieOnFile.cpp
-	Recording/MovieControls.cpp
+	Recording/InputRecordingEditor.cpp
+	Recording/InputRecording.cpp
+	Recording/NewRecordingFrame.cpp
+	Recording/InputRecordingFile.cpp
+	Recording/RecordingControls.cpp
 	Recording/PadData.cpp
 	Recording/RecordingInputManager.cpp
 	Recording/VirtualPad.cpp)
 
 # Recording headers
 set(pcsx2RecordingHeaders
-	Recording/KeyEditor.h
-	Recording/KeyMovie.h
-	Recording/KeyMovieFrame.h
-	Recording/KeyMovieOnFile.h
-	Recording/MovieControls.h
+	Recording/InputRecordingEditor.h
+	Recording/InputRecording.h
+	Recording/NewRecordingFrame.h
+	Recording/InputRecordingFile.h
+	Recording/RecordingControls.h
 	Recording/PadData.h
 	Recording/RecordingInputManager.h
 	Recording/VirtualPad.h)

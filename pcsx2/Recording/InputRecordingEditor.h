@@ -7,10 +7,10 @@
 
 #include "PadData.h"
 
-class KeyEditor : public wxFrame
+class InputRecordingEditor : public wxFrame
 {
 public:
-	KeyEditor(wxWindow * parent);
+	InputRecordingEditor(wxWindow * parent);
 
 public:
 	void FrameUpdate();
@@ -41,7 +41,7 @@ private:
 	void OnClose(wxCloseEvent& evt);
 
 	void OnMenuAuthor(wxCommandEvent& event);
-	void OnMenuKeyMovieInfo(wxCommandEvent& event);
+	void OnMenuInputRecordingInfo(wxCommandEvent& event);
 
 	void OnBtnUpdate(wxCommandEvent& event);
 	void OnBtnDelete(wxCommandEvent& event);

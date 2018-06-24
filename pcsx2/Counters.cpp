@@ -33,8 +33,8 @@
 #include "Sio.h"
 
 #include "Lua/LuaManager.h"
-#include "Recording/MovieControls.h"
-#include "Recording/KeyEditor.h"
+#include "Recording/RecordingControls.h"
+#include "Recording/InputRecordingEditor.h"
 
 using namespace Threading;
 
@@ -578,9 +578,9 @@ __fi void rcntUpdate_vSync()
 
 		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
-			KeyEditor* dlg = wxGetApp().GetKeyEditorPtr();
+			InputRecordingEditor* dlg = wxGetApp().GetInputRecordingEditorPtr();
 			if (dlg)dlg->FrameUpdate();
-			g_MovieControls.StopCheck();
+			g_RecordingControls.StopCheck();
 		}
 
 		VSyncStart(vsyncCounter.sCycle);

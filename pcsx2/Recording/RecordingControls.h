@@ -2,7 +2,7 @@
 #ifndef __MOVIE_CONTROLS_H__
 #define __MOVIE_CONTROLS_H__
 
-class MovieControls {
+class RecordingControls {
 public:
 
 	// Movie controls main functions
@@ -30,6 +30,6 @@ private:
 	bool fPauseState = false;
 
 };
-extern MovieControls g_MovieControls;
+extern RecordingControls g_RecordingControls;
 
 #endif

@@ -75,16 +75,16 @@ void Pcsx2App::OpenMainFrame()
 	DisassemblyDialog* disassembly = new DisassemblyDialog( mainFrame );
 	m_id_Disassembler = disassembly->GetId();
 
-	KeyEditor* keyEditor = new KeyEditor(mainFrame);
-	m_id_KeyEditor = keyEditor->GetId();
+	InputRecordingEditor* inputRecordingEditor = new InputRecordingEditor(mainFrame);
+	m_id_InputRecordingEditor = inputRecordingEditor->GetId();
 
 	VirtualPad* virtualPad0 = new VirtualPad(mainFrame, 0);
 	m_id_VirtualPad[0] = virtualPad0->GetId();
 	VirtualPad *virtualPad1 = new VirtualPad(mainFrame, 1);
 	m_id_VirtualPad[1] = virtualPad1->GetId();
 
-	KeyMovieFrame *keyMovieFrame = new KeyMovieFrame(mainFrame);
-	m_id_KeyMovieFrame = keyMovieFrame->GetId();
+	NewRecordingFrame* newRecordingFrame = new NewRecordingFrame(mainFrame);
+	m_id_NewRecordingFrame = newRecordingFrame->GetId();
 
 	LuaFrame *luaFrame = new LuaFrame(mainFrame);
 	m_id_LuaFrame = luaFrame->GetId();
@@ -759,12 +759,12 @@ Pcsx2App::Pcsx2App()
 	m_UseGUI				= true;
 	m_NoGuiExitPrompt		= true;
 
-	m_id_MainFrame		= wxID_ANY;
-	m_id_GsFrame		= wxID_ANY;
-	m_id_ProgramLogBox	= wxID_ANY;
-	m_id_Disassembler	= wxID_ANY;
-	m_id_KeyEditor		= wxID_ANY;
-	m_ptr_ProgramLog	= NULL;
+	m_id_MainFrame				= wxID_ANY;
+	m_id_GsFrame				= wxID_ANY;
+	m_id_ProgramLogBox			= wxID_ANY;
+	m_id_Disassembler			= wxID_ANY;
+	m_id_InputRecordingEditor	= wxID_ANY;
+	m_ptr_ProgramLog			= NULL;
 
 	SetAppName( L"PCSX2" );
 	BuildCommandHash();

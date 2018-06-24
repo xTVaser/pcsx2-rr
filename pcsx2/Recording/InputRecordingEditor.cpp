@@ -1,18 +1,18 @@
 #include "PrecompiledHeader.h"
 
 #include "MemoryTypes.h"
-#include "Counters.h"	// use"g_FrameCount"
+#include "Counters.h"
 
-#include "KeyEditor.h"
-#include "KeyMovie.h"
-#include "MovieControls.h"
+#include "InputRecordingEditor.h"
+#include "InputRecording.h"
+#include "RecordingControls.h"
 
 #include <string>
 #include <wx/joystick.h>
 
 enum {
 	ID_MenuAuthor = 1,
-	ID_MenuKeyMovieInfo,
+	ID_MenuInputRecordingInfo,
 
 	ID_List_KeyFrame,
 	ID_Text_Edit,
@@ -33,19 +33,19 @@ enum {
 
 };
 
-wxBEGIN_EVENT_TABLE(KeyEditor, wxFrame)
-	EVT_CLOSE(KeyEditor::OnClose)
+wxBEGIN_EVENT_TABLE(InputRecordingEditor, wxFrame)
+	EVT_CLOSE(InputRecordingEditor::OnClose)
 wxEND_EVENT_TABLE()
 
-KeyEditor::KeyEditor(wxWindow * parent)
-	: wxFrame(parent, wxID_ANY, L"KeyEditor", wxPoint(437+680,52), wxSize(680,560))
+InputRecordingEditor::InputRecordingEditor(wxWindow * parent)
+	: wxFrame(parent, wxID_ANY, L"InputRecordingEditor", wxPoint(437+680,52), wxSize(680,560))
 {
 	// TODO - needs proper wxFrame design, no hardcoding of coordinates
 
 	// menu bar
 	wxMenu *menuFile = new wxMenu;
 	menuFile->Append(ID_MenuAuthor, L"&set author");
-	menuFile->Append(ID_MenuKeyMovieInfo, L"&KeyMovieInfo");
+	menuFile->Append(ID_MenuInputRecordingInfo, L"&InputRecordingInfo");
 	wxMenuBar *menuBar = new wxMenuBar;
 	menuBar->Append(menuFile, L"&menu");
 	SetMenuBar(menuBar);
@@ -97,77 +97,77 @@ KeyEditor::KeyEditor(wxWindow * parent)
 	statusbar->SetStatusText(L"key editor open");
 
 	// event
-	Bind(wxEVT_COMMAND_MENU_SELECTED, &KeyEditor::OnMenuAuthor, this, ID_MenuAuthor);
-	Bind(wxEVT_COMMAND_MENU_SELECTED, &KeyEditor::OnMenuKeyMovieInfo, this, ID_MenuKeyMovieInfo);
+	Bind(wxEVT_COMMAND_MENU_SELECTED, &InputRecordingEditor::OnMenuAuthor, this, ID_MenuAuthor);
+	Bind(wxEVT_COMMAND_MENU_SELECTED, &InputRecordingEditor::OnMenuInputRecordingInfo, this, ID_MenuInputRecordingInfo);
 	// button
-	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &KeyEditor::OnBtnUpdate, this, ID_Btn_Update);
-	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &KeyEditor::OnBtnInsert, this, ID_Btn_Insert);
-	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &KeyEditor::OnBtnDelete, this, ID_Btn_Delete);
-	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &KeyEditor::OnBtnCopy, this, ID_Btn_Copy);
-	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &KeyEditor::OnBtnDrawFrame, this, ID_Btn_DrawFrame);
-	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &KeyEditor::OnBtnDrawNowFrame, this, ID_Btn_DrawNowFrame);
+	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &InputRecordingEditor::OnBtnUpdate, this, ID_Btn_Update);
+	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &InputRecordingEditor::OnBtnInsert, this, ID_Btn_Insert);
+	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &InputRecordingEditor::OnBtnDelete, this, ID_Btn_Delete);
+	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &InputRecordingEditor::OnBtnCopy, this, ID_Btn_Copy);
+	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &InputRecordingEditor::OnBtnDrawFrame, this, ID_Btn_DrawFrame);
+	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &InputRecordingEditor::OnBtnDrawNowFrame, this, ID_Btn_DrawNowFrame);
 
 	//list box
-	Bind(wxEVT_COMMAND_LISTBOX_SELECTED, &KeyEditor::OnListBox, this, ID_List_KeyFrame);
+	Bind(wxEVT_COMMAND_LISTBOX_SELECTED, &InputRecordingEditor::OnListBox, this, ID_List_KeyFrame);
 
 	//checklist
-	Bind(wxEVT_CHECKLISTBOX, &KeyEditor::OnCheckList_NormalKey1, this, ID_CheckList_NormalKey1);
+	Bind(wxEVT_CHECKLISTBOX, &InputRecordingEditor::OnCheckList_NormalKey1, this, ID_CheckList_NormalKey1);
 
 	//text
-	Bind(wxEVT_TEXT, &KeyEditor::OnText_Edit, this, ID_Text_Edit);
-	Bind(wxEVT_TEXT, &KeyEditor::OnText_Analog1, this, ID_Text_AnalogKey1);
-	Bind(wxEVT_TEXT, &KeyEditor::OnText_Analog2, this, ID_Text_AnalogKey2);
-	Bind(wxEVT_TEXT, &KeyEditor::OnText_Analog3, this, ID_Text_AnalogKey3);
-	Bind(wxEVT_TEXT, &KeyEditor::OnText_Analog4, this, ID_Text_AnalogKey4);
+	Bind(wxEVT_TEXT, &InputRecordingEditor::OnText_Edit, this, ID_Text_Edit);
+	Bind(wxEVT_TEXT, &InputRecordingEditor::OnText_Analog1, this, ID_Text_AnalogKey1);
+	Bind(wxEVT_TEXT, &InputRecordingEditor::OnText_Analog2, this, ID_Text_AnalogKey2);
+	Bind(wxEVT_TEXT, &InputRecordingEditor::OnText_Analog3, this, ID_Text_AnalogKey3);
+	Bind(wxEVT_TEXT, &InputRecordingEditor::OnText_Analog4, this, ID_Text_AnalogKey4);
 }
-void KeyEditor::OnClose(wxCloseEvent& evt)
+void InputRecordingEditor::OnClose(wxCloseEvent& evt)
 {
 	Hide();
 }
-void KeyEditor::OnMenuAuthor(wxCommandEvent& event)
+void InputRecordingEditor::OnMenuAuthor(wxCommandEvent& event)
 {
 	wxTextEntryDialog* dlg = new wxTextEntryDialog(NULL, L"input author.");
 	if (dlg->ShowModal() != wxID_OK) {
 		return;
 	}
-	g_KeyMovieHeader.setAuthor(dlg->GetValue());
-	g_KeyMovieData.writeHeader();
+	g_InputRecordingHeader.setAuthor(dlg->GetValue());
+	g_InputRecordingData.writeHeader();
 }
-void KeyEditor::OnMenuKeyMovieInfo(wxCommandEvent& event)
+void InputRecordingEditor::OnMenuInputRecordingInfo(wxCommandEvent& event)
 {
 	wxString s = L"";
-	s += wxString::Format(L"Ver:%d\n", g_KeyMovieHeader.version);
-	s += wxString::Format(L"Author:%s\n", g_KeyMovieHeader.author);
-	s += wxString::Format(L"Emu:%s\n", g_KeyMovieHeader.emu);
-	s += wxString::Format(L"CD:%s\n", g_KeyMovieHeader.cdrom);
-	s += wxString::Format(L"MaxFrame:%d\n", g_KeyMovieData.getMaxFrame());
-	s += wxString::Format(L"UndoCount:%d\n", g_KeyMovieData.getUndoCount());
+	s += wxString::Format(L"Ver:%d\n", g_InputRecordingHeader.version);
+	s += wxString::Format(L"Author:%s\n", g_InputRecordingHeader.author);
+	s += wxString::Format(L"Emu:%s\n", g_InputRecordingHeader.emu);
+	s += wxString::Format(L"CD:%s\n", g_InputRecordingHeader.cdrom);
+	s += wxString::Format(L"MaxFrame:%d\n", g_InputRecordingData.getMaxFrame());
+	s += wxString::Format(L"UndoCount:%d\n", g_InputRecordingData.getUndoCount());
 
-	wxMessageBox(s, L"KeyMovie file header info", wxOK | wxICON_INFORMATION);
+	wxMessageBox(s, L"InputRecording file header info", wxOK | wxICON_INFORMATION);
 }
 
 //-------------------------------
 // every frame
 //-------------------------------
-void KeyEditor::FrameUpdate()
+void InputRecordingEditor::FrameUpdate()
 {
 	if (g_FrameCount == 0)return;
 
-	wxString pauseMessage = g_MovieControls.getStopFlag() ? L"[pause]" : L"[run]";
+	wxString pauseMessage = g_RecordingControls.getStopFlag() ? L"[pause]" : L"[run]";
 	wxString recordMessage = "";
-	if (g_KeyMovie.getModeState() == KeyMovie::RECORD) {
+	if (g_InputRecording.getModeState() == InputRecording::RECORD) {
 		recordMessage = L"[record]";
 	}
-	else if (g_KeyMovie.getModeState() == KeyMovie::REPLAY) {
+	else if (g_InputRecording.getModeState() == InputRecording::REPLAY) {
 		recordMessage = L"[replay]";
 	}
-	SetTitle(wxString::Format(L"%d / %d ", g_FrameCount, g_KeyMovieData.getMaxFrame())+ pauseMessage+ recordMessage );
+	SetTitle(wxString::Format(L"%d / %d ", g_FrameCount, g_InputRecordingData.getMaxFrame())+ pauseMessage+ recordMessage );
 }
 
 //-------------------------------
 // draw
 //-------------------------------
-void KeyEditor::DrawKeyFrameList(long selectFrame)
+void InputRecordingEditor::DrawKeyFrameList(long selectFrame)
 {
 	// Decide the number of frames to display
 	// �\������t���[������߂�
@@ -182,7 +182,7 @@ void KeyEditor::DrawKeyFrameList(long selectFrame)
 	for (unsigned long i = start; i < end; i++)
 	{
 		PadData key;
-		g_KeyMovieData.getPadData(key, i);
+		g_InputRecordingData.getPadData(key, i);
 		frameList->Append(wxString::Format("%d [%s]", i, key.serialize()));
 		if (selectFrame == i) {
 			selectKeyStr = key.serialize();
@@ -196,7 +196,7 @@ void KeyEditor::DrawKeyFrameList(long selectFrame)
 		keyTextView->ChangeValue(selectKeyStr);
 	}
 }
-void KeyEditor::DrawKeyButtonCheck()
+void InputRecordingEditor::DrawKeyButtonCheck()
 {
 	PadData key;
 	key.deserialize(keyTextEdit->GetValue());
@@ -215,65 +215,65 @@ void KeyEditor::DrawKeyButtonCheck()
 // event
 // TODO: all of these need to be updated for the key editor window 
 //----------------------------------------------
-void KeyEditor::OnBtnUpdate(wxCommandEvent& event)
+void InputRecordingEditor::OnBtnUpdate(wxCommandEvent& event)
 {
 	int select = frameList->GetSelection();
 	if (select == wxNOT_FOUND)return;
 	long frame = select + frameListStartFrame;
 	PadData key;
 	key.deserialize(keyTextEdit->GetValue());
-	if (g_KeyMovieData.UpdatePadData(frame, key))
+	if (g_InputRecordingData.UpdatePadData(frame, key))
 	{
 		frameTextFoeMove->ChangeValue(wxString::Format(L"%d", frame));
 		DrawKeyFrameList(frame);
 	}
 }
-void KeyEditor::OnBtnInsert(wxCommandEvent& event)
+void InputRecordingEditor::OnBtnInsert(wxCommandEvent& event)
 {
 	int select = frameList->GetSelection();
 	if (select == wxNOT_FOUND)return;
 	long frame = select + frameListStartFrame;
 	PadData key;
 	key.deserialize(keyTextEdit->GetValue());
-	if (g_KeyMovieData.InsertPadData(frame,key))
+	if (g_InputRecordingData.InsertPadData(frame,key))
 	{
 		frameTextFoeMove->ChangeValue(wxString::Format(L"%d", frame));
 		DrawKeyFrameList(frame);
 	}
 
 }
-void KeyEditor::OnBtnDelete(wxCommandEvent& event)
+void InputRecordingEditor::OnBtnDelete(wxCommandEvent& event)
 {
 	int select = frameList->GetSelection();
 	if (select == wxNOT_FOUND)return;
 	long frame = select + frameListStartFrame;
-	if (g_KeyMovieData.DeletePadData(frame))
+	if (g_InputRecordingData.DeletePadData(frame))
 	{
 		frameTextFoeMove->ChangeValue(wxString::Format(L"%d",frame));
 		DrawKeyFrameList(frame);
 	}
 }
-void KeyEditor::OnBtnCopy(wxCommandEvent& event)
+void InputRecordingEditor::OnBtnCopy(wxCommandEvent& event)
 {
 	keyTextEdit->ChangeValue(keyTextView->GetValue());
 	DrawKeyButtonCheck();
 }
-void KeyEditor::OnText_Edit(wxCommandEvent& event)
+void InputRecordingEditor::OnText_Edit(wxCommandEvent& event)
 {
 	DrawKeyButtonCheck();
 }
-void KeyEditor::OnListBox(wxCommandEvent& event)
+void InputRecordingEditor::OnListBox(wxCommandEvent& event)
 {
 	int select = frameList->GetSelection();
 	if (select == wxNOT_FOUND)return;
 	long frame = select + frameListStartFrame;
 	PadData key;
-	g_KeyMovieData.getPadData(key,frame);
+	g_InputRecordingData.getPadData(key,frame);
 	keyTextView->ChangeValue(key.serialize());
 	frameTextFoeMove->ChangeValue(wxString::Format(L"%d", frame));
 }
 
-void KeyEditor::OnBtnDrawFrame(wxCommandEvent& event)
+void InputRecordingEditor::OnBtnDrawFrame(wxCommandEvent& event)
 {
 	long selectFrame;
 	if (frameTextFoeMove->GetValue().ToLong(&selectFrame))
@@ -281,12 +281,12 @@ void KeyEditor::OnBtnDrawFrame(wxCommandEvent& event)
 		DrawKeyFrameList(selectFrame);
 	}
 }
-void KeyEditor::OnBtnDrawNowFrame(wxCommandEvent& event)
+void InputRecordingEditor::OnBtnDrawNowFrame(wxCommandEvent& event)
 {
 	frameTextFoeMove->ChangeValue(wxString::Format(L"%d", g_FrameCount));
 	DrawKeyFrameList(g_FrameCount);
 }
-void KeyEditor::OnCheckList_NormalKey1(wxCommandEvent& event)
+void InputRecordingEditor::OnCheckList_NormalKey1(wxCommandEvent& event)
 {
 	PadData key;
 	key.deserialize(keyTextEdit->GetValue());
@@ -300,7 +300,7 @@ void KeyEditor::OnCheckList_NormalKey1(wxCommandEvent& event)
 	key.setNormalKeys(0,tmpkey);
 	keyTextEdit->ChangeValue(key.serialize());
 }
-void KeyEditor::_OnText_Analog(int num)
+void InputRecordingEditor::_OnText_Analog(int num)
 {
 	PadData key;
 	key.deserialize(keyTextEdit->GetValue());
@@ -319,19 +319,19 @@ void KeyEditor::_OnText_Analog(int num)
 	keyTextEdit->ChangeValue(s);
 
 }
-void KeyEditor::OnText_Analog1(wxCommandEvent& event)
+void InputRecordingEditor::OnText_Analog1(wxCommandEvent& event)
 {
 	_OnText_Analog(0);
 }
-void KeyEditor::OnText_Analog2(wxCommandEvent& event)
+void InputRecordingEditor::OnText_Analog2(wxCommandEvent& event)
 {
 	_OnText_Analog(1);
 }
-void KeyEditor::OnText_Analog3(wxCommandEvent& event)
+void InputRecordingEditor::OnText_Analog3(wxCommandEvent& event)
 {
 	_OnText_Analog(2);
 }
-void KeyEditor::OnText_Analog4(wxCommandEvent& event)
+void InputRecordingEditor::OnText_Analog4(wxCommandEvent& event)
 {
 	_OnText_Analog(3);
 }

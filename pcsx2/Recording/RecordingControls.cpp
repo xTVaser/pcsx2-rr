@@ -6,10 +6,10 @@
 #include "App.h"	// use "CoreThread"
 #include "Counters.h"	// use"g_FrameCount"
 
-#include "MovieControls.h"
+#include "RecordingControls.h"
 
 
-MovieControls g_MovieControls;
+RecordingControls g_RecordingControls;
 
 
 //-----------------------------------------------
@@ -21,14 +21,14 @@ MovieControls g_MovieControls;
 // CoreThread����~���Ă���Ԃ�wxFrame�̓��͂������d�g�݂��ۂ�
 //-----------------------------------------------
 
-bool MovieControls::isStop()
+bool RecordingControls::isStop()
 {
 	return (fPauseState && CoreThread.IsOpen() && CoreThread.IsPaused());
 }
 //-----------------------------------------------
 // Counters(CoreThread)��̒�~����p (For stop judgment in)
 //-----------------------------------------------
-void MovieControls::StartCheck()
+void RecordingControls::StartCheck()
 {
 	if (fStart && CoreThread.IsOpen() && CoreThread.IsPaused()) {
 		CoreThread.Resume();
@@ -37,7 +37,7 @@ void MovieControls::StartCheck()
 	}
 }
 
-void MovieControls::StopCheck()
+void RecordingControls::StopCheck()
 {
 	if (fFrameAdvance) {
 		if (stopFrameCount < g_FrameCount) {
@@ -72,26 +72,26 @@ void MovieControls::StopCheck()
 //----------------------------------
 // shortcut key
 //----------------------------------
-void MovieControls::FrameAdvance()
+void RecordingControls::FrameAdvance()
 {
 	stopFrameCount = g_FrameCount;
 	fFrameAdvance = true;
 	fStop = false;
 	fStart = true;
 }
-void MovieControls::TogglePause()
+void RecordingControls::TogglePause()
 {
 	fStop = !fStop;
 	if (fStop == false) {
 		fStart = true;
 	}
 }
-void MovieControls::Pause()
+void RecordingControls::Pause()
 {
 	fStop = true;
 	fFrameAdvance = true;
 }
-void MovieControls::UnPause()
+void RecordingControls::UnPause()
 {
 	fStop = false;
 	fStart = true;

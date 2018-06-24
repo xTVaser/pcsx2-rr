@@ -889,16 +889,16 @@
     <ClCompile Include="..\..\Lua\LuaManager.cpp">
       <Filter>Lua</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Recording\KeyEditor.cpp">
+    <ClCompile Include="..\..\Recording\InputRecordingEditor.cpp">
       <Filter>Recording</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Recording\KeyMovie.cpp">
+    <ClCompile Include="..\..\Recording\InputRecording.cpp">
       <Filter>Recording</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Recording\KeyMovieFrame.cpp">
+    <ClCompile Include="..\..\Recording\NewRecordingFrame.cpp">
       <Filter>Recording</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Recording\KeyMovieOnFile.cpp">
+    <ClCompile Include="..\..\Recording\InputRecordingFile.cpp">
       <Filter>Recording</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Recording\PadData.cpp">
@@ -907,7 +907,7 @@
     <ClCompile Include="..\..\Recording\VirtualPad.cpp">
       <Filter>Recording</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Recording\MovieControls.cpp">
+    <ClCompile Include="..\..\Recording\RecordingControls.cpp">
       <Filter>Recording</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Recording\RecordingInputManager.cpp">
@@ -1365,16 +1365,16 @@
     <ClInclude Include="..\..\Lua\LuaManager.h">
       <Filter>Lua</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Recording\KeyEditor.h">
+    <ClInclude Include="..\..\Recording\InputRecordingEditor.h">
       <Filter>Recording</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Recording\KeyMovie.h">
+    <ClInclude Include="..\..\Recording\InputRecording.h">
       <Filter>Recording</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Recording\KeyMovieFrame.h">
+    <ClInclude Include="..\..\Recording\NewRecordingFrame.h">
       <Filter>Recording</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Recording\KeyMovieOnFile.h">
+    <ClInclude Include="..\..\Recording\InputRecordingFile.h">
       <Filter>Recording</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Recording\PadData.h">
@@ -1383,7 +1383,7 @@
     <ClInclude Include="..\..\Recording\VirtualPad.h">
       <Filter>Recording</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Recording\MovieControls.h">
+    <ClInclude Include="..\..\Recording\RecordingControls.h">
       <Filter>Recording</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Recording\RecordingInputManager.h">

@@ -2,7 +2,7 @@
 
 #include "RecordingInputManager.h"
 #include "Lua/LuaManager.h"
-#include "KeyMovie.h"
+#include "InputRecording.h"
 
 RecordingInputManager g_RecordingInput;
 
@@ -23,7 +23,7 @@ void RecordingInputManager::ControllerInterrupt(u8 & data, u8 & port, u16 & BufC
 	{
 		int bufIndex = BufCount - 3;
 		// first two bytes have nothing of interest in the buffer
-		// already handled by KeyMovie.cpp
+		// already handled by InputRecording.cpp
 		if (BufCount < 3)
 			return;
 
@@ -39,7 +39,7 @@ void RecordingInputManager::ControllerInterrupt(u8 & data, u8 & port, u16 & BufC
 			buf[BufCount] = pad.buf[port][BufCount - 3];
 
 		// Updating movie file
-		g_KeyMovie.ControllerInterrupt(data, port, BufCount, buf);
+		g_InputRecording.ControllerInterrupt(data, port, BufCount, buf);
 	}
 }
 

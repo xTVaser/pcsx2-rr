@@ -31,7 +31,7 @@
 #include "Utilities/IniInterface.h"
 
 #include "Lua/LuaFrame.h"
-#include "Recording/KeyMovie.h"
+#include "Recording/InputRecording.h"
 #include "Recording/VirtualPad.h"
 
 using namespace Dialogs;
@@ -527,7 +527,7 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click( wxCommandEvent& )
 	}
 
 	g_Conf->EmuOptions.EnableRecordingTools = checked;
-	((ConsoleLogSource*)&SysConsole.tasConsole)->Enabled = checked;
+	((ConsoleLogSource*)&SysConsole.recordingConsole)->Enabled = checked;
 	ConsoleLogFrame* proglog = wxGetApp().GetProgramLog();
 	proglog->UpdateLogList();
 	AppApplySettings();
@@ -571,9 +571,9 @@ void MainEmuFrame::Menu_EnableLuaTools_Click( wxCommandEvent& )
 	}
 
 	g_Conf->EmuOptions.EnableLuaTools = checked;
-	//((ConsoleLogSource*)&SysConsole.tasConsole)->Enabled = checked;
-	//ConsoleLogFrame* proglog = wxGetApp().GetProgramLog();
-	//proglog->UpdateLogList();
+	((ConsoleLogSource*)&SysConsole.luaConsole)->Enabled = checked;
+	ConsoleLogFrame* proglog = wxGetApp().GetProgramLog();
+	proglog->UpdateLogList();
 	AppApplySettings();
 	AppSaveSettings();
 }
@@ -826,56 +826,56 @@ void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_As_Click(wxCommandEvent &e
 
 void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 {
-	g_KeyMovie.Stop();
+	g_InputRecording.Stop();
 
-	KeyMovieFrame* keyMovieFrame = wxGetApp().GetKeyMovieFramePtr();
-	if (keyMovieFrame)
+	NewRecordingFrame* NewRecordingFrame = wxGetApp().GetNewRecordingFramePtr();
+	if (NewRecordingFrame)
 	{
-		if (keyMovieFrame->ShowModal() == wxID_CANCEL)
+		if (NewRecordingFrame->ShowModal() == wxID_CANCEL)
 		{
 			return;
 		}
-		g_KeyMovieHeader.setAuthor(keyMovieFrame->getAuthor());
+		g_InputRecordingHeader.setAuthor(NewRecordingFrame->getAuthor());
 		// From Current Frame
-		if (keyMovieFrame->getFrom() == 0)
+		if (NewRecordingFrame->getFrom() == 0)
 		{
 			if (!CoreThread.IsOpen()) {
-				tasConLog(L"[REC]: Game is not open, aborting new input recording.\n");
+				recordingConLog(L"[REC]: Game is not open, aborting new input recording.\n");
 				return;
 			}
 			VmStateBuffer savestate;
 			memSavingState memSS(savestate);
 			memSS.FreezeAll();
-			g_KeyMovie.Start(keyMovieFrame->getFile(), false, &savestate);
+			g_InputRecording.Start(NewRecordingFrame->getFile(), false, &savestate);
 		}
 		// From Power-On
-		else if (keyMovieFrame->getFrom() == 1)
+		else if (NewRecordingFrame->getFrom() == 1)
 		{
 			// TODO extensively test this
-			g_KeyMovie.Start(keyMovieFrame->getFile(), false);
+			g_InputRecording.Start(NewRecordingFrame->getFile(), false);
 		}
 	}
 }
 
 void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 {
-	g_KeyMovie.Stop();
+	g_InputRecording.Stop();
 
 	wxFileDialog openFileDialog(this, _("Select P2M2 record file."), L"", L"",
 		L"p2m2 file(*.p2m2)|*.p2m2", wxFD_OPEN);
 	if (openFileDialog.ShowModal() == wxID_CANCEL)return;	// cancel
 	wxString path = openFileDialog.GetPath();
-	g_KeyMovie.Start(path, true);
+	g_InputRecording.Start(path, true);
 }
 
 void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
 {
-	g_KeyMovie.Stop();
+	g_InputRecording.Stop();
 }
 
 void MainEmuFrame::Menu_Recording_Editor_Click(wxCommandEvent &event)
 {
-	KeyEditor* dlg = wxGetApp().GetKeyEditorPtr();
+	InputRecordingEditor* dlg = wxGetApp().GetInputRecordingEditorPtr();
 	if (dlg)dlg->Show();
 }
 
@@ -896,7 +896,7 @@ void MainEmuFrame::Menu_Recording_ConvertV2ToV3_Click(wxCommandEvent &event)
 		L"p2m file(*.p2m2)|*.p2m2", wxFD_OPEN);
 	if (openFileDialog.ShowModal() == wxID_CANCEL)return;// cancel
 	wxString path = openFileDialog.GetPath();
-	g_KeyMovieData.ConvertV2ToV3(path);
+	g_InputRecordingData.ConvertV2ToV3(path);
 }
 
 void MainEmuFrame::Menu_Recording_ConvertV1_XToV2_Click(wxCommandEvent &event)
@@ -905,7 +905,7 @@ void MainEmuFrame::Menu_Recording_ConvertV1_XToV2_Click(wxCommandEvent &event)
 		L"p2m file(*.p2m2)|*.p2m2", wxFD_OPEN);
 	if (openFileDialog.ShowModal() == wxID_CANCEL)return;// cancel
 	wxString path = openFileDialog.GetPath();
-	g_KeyMovieData.ConvertV1_XToV2(path);
+	g_InputRecordingData.ConvertV1_XToV2(path);
 }
 
 void MainEmuFrame::Menu_Recording_ConvertV1ToV2_Click(wxCommandEvent &event)
@@ -914,7 +914,7 @@ void MainEmuFrame::Menu_Recording_ConvertV1ToV2_Click(wxCommandEvent &event)
 		L"p2m file(*.p2m2)|*.p2m2", wxFD_OPEN);
 	if (openFileDialog.ShowModal() == wxID_CANCEL)return;// cancel
 	wxString path = openFileDialog.GetPath();
-	g_KeyMovieData.ConvertV1ToV2(path);
+	g_InputRecordingData.ConvertV1ToV2(path);
 }
 
 void MainEmuFrame::Menu_Recording_ConvertLegacy_Click(wxCommandEvent &event)
@@ -923,7 +923,7 @@ void MainEmuFrame::Menu_Recording_ConvertLegacy_Click(wxCommandEvent &event)
 		L"p2m file(*.p2m)|*.p2m", wxFD_OPEN);
 	if (openFileDialog.ShowModal() == wxID_CANCEL)return;// cancel
 	wxString path = openFileDialog.GetPath();
-	g_KeyMovieData.ConvertLegacy(path);
+	g_InputRecordingData.ConvertLegacy(path);
 }
 
 void MainEmuFrame::Menu_Lua_Open_Click(wxCommandEvent &event)

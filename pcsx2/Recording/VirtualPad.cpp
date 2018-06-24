@@ -208,7 +208,7 @@ void VirtualPad::OnClick(wxCommandEvent & event)
 		g_RecordingInput.SetButtonState(port, PadDataNormalKeys[id], pressure);
 	}
 	else
-		tasConLog("[VirtualPad]: Unknown toggle button pressed.\n");
+		recordingConLog("[VirtualPad]: Unknown toggle button pressed.\n");
 }
 
 // TODO Recording - should probably implement an OnRelease (if wxwidgets has that?)
@@ -255,7 +255,7 @@ void VirtualPad::OnPressureCtrlChange(wxSpinEvent & event)
 		g_RecordingInput.SetButtonState(port, PadDataNormalKeys[id], pressure);
 	}
 	else
-		tasConLog("[VirtualPad]: Unknown pressure sensitivty change.\n");
+		recordingConLog("[VirtualPad]: Unknown pressure sensitivty change.\n");
 }
 
 void VirtualPad::OnTextCtrlChange(wxSpinEvent & event)
@@ -271,7 +271,7 @@ void VirtualPad::OnTextCtrlChange(wxSpinEvent & event)
 			g_RecordingInput.UpdateAnalog(port, PadDataAnalogKeys[id], event.GetInt());
 	}
 	else
-		tasConLog("[VirtualPad]: Unknown TextCtrl change.\n");
+		recordingConLog("[VirtualPad]: Unknown TextCtrl change.\n");
 }
 
 void VirtualPad::OnSliderMove(wxCommandEvent & event)
@@ -287,7 +287,7 @@ void VirtualPad::OnSliderMove(wxCommandEvent & event)
 			g_RecordingInput.UpdateAnalog(port, PadDataAnalogKeys[id], event.GetInt());
 	}
 	else
-		tasConLog("[VirtualPad]: Unknown TextCtrl change.\n");
+		recordingConLog("[VirtualPad]: Unknown TextCtrl change.\n");
 }
 
 int VirtualPad::getButtonIdFromPressure(int pressureCtrlId) {

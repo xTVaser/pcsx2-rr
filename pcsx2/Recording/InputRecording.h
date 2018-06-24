@@ -2,16 +2,16 @@
 #ifndef __KEY_MOVIE_H__
 #define __KEY_MOVIE_H__
 
-#include "KeyMovieOnFile.h"
+#include "InputRecordingFile.h"
 
 
 //----------------------------
-// KeyMovie
+// InputRecording
 //----------------------------
-class KeyMovie {
+class InputRecording {
 public:
-	KeyMovie() {}
-	~KeyMovie(){}
+	InputRecording() {}
+	~InputRecording(){}
 public:
 	// controller
 	void ControllerInterrupt(u8 &data, u8 &port, u16 & BufCount, u8 buf[]);
@@ -34,19 +34,19 @@ public:
 public:
 	// getter
 	KEY_MOVIE_MODE getModeState() { return state; }
-	KeyMovieOnFile & getKeyMovieData() {return keyMovieData;}
+	InputRecordingFile & getInputRecordingData() {return InputRecordingData;}
 	bool isInterruptFrame() { return fInterruptFrame; }
 
 private:
-	KeyMovieOnFile keyMovieData;
+	InputRecordingFile InputRecordingData;
 	KEY_MOVIE_MODE state = NONE;
 	bool fInterruptFrame = false;
 
 
 };
-extern KeyMovie g_KeyMovie;
-#define g_KeyMovieData (g_KeyMovie.getKeyMovieData())
-#define g_KeyMovieHeader (g_KeyMovie.getKeyMovieData().getHeader())
+extern InputRecording g_InputRecording;
+#define g_InputRecordingData (g_InputRecording.getInputRecordingData())
+#define g_InputRecordingHeader (g_InputRecording.getInputRecordingData().getHeader())
 
 
 #endif

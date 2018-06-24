@@ -3,29 +3,29 @@
 #include "MemoryTypes.h"
 #include "Common.h"
 #include "Counters.h"	// use"g_FrameCount"
-#include "SaveState.h"	// create "SaveStateBase::keymovieFreeze()"
+#include "SaveState.h"	// create "SaveStateBase::InputRecordingFreeze()"
 #include "AppSaveStates.h"	// use "States_GetCurrentSlot()"
 
-#include "Recording/MovieControls.h"
-#include "KeyMovie.h"
+#include "Recording/RecordingControls.h"
+#include "InputRecording.h"
 
 #include <vector>
 
 
-KeyMovie g_KeyMovie;
+InputRecording g_InputRecording;
 
 //-----------------------------------------------
 // Save or Load - Save frame number
 // Save or load - �Ńt���[�����̕ۑ�
 //-----------------------------------------------
-void SaveStateBase::keymovieFreeze()
+void SaveStateBase::InputRecordingFreeze()
 {
-	FreezeTag("keymovie");
+	FreezeTag("InputRecording");
 	Freeze(g_FrameCount);	// Somehow the function saved the frame successfully
 							// Freeze�֐��łȂ���frame�̕ۑ������܂�������
 
 	if (IsLoading()) {
-		g_KeyMovieData.addUndoCount();
+		g_InputRecordingData.addUndoCount();
 	}
 }
 
@@ -33,7 +33,7 @@ void SaveStateBase::keymovieFreeze()
 // Main func for handling recording and inputting controller data
 // Called by Sio.cpp::sioWriteController
 //----------------------------------
-void KeyMovie::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 buf[])
+void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 buf[])
 {
 	// Only examine controllers 1 / 2
 	if (port < 0 || 1 < port )
@@ -87,19 +87,19 @@ void KeyMovie::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 buf[])
 	const u8 &nowBuf = buf[bufCount];
 	if (state == RECORD)
 	{
-		keyMovieData.updateFrameMax(g_FrameCount);
-		keyMovieData.writeKeyBuf(g_FrameCount, port, bufCount - 3, nowBuf);
+		InputRecordingData.updateFrameMax(g_FrameCount);
+		InputRecordingData.writeKeyBuf(g_FrameCount, port, bufCount - 3, nowBuf);
 	}
 	else if (state == REPLAY)
 	{
-		if (keyMovieData.getMaxFrame() <= g_FrameCount)
+		if (InputRecordingData.getMaxFrame() <= g_FrameCount)
 		{
 			// Pause the emulation but the movie is not closed
-			g_MovieControls.Pause();
+			g_RecordingControls.Pause();
 			return;
 		}
 		u8 tmp = 0;
-		if (keyMovieData.readKeyBuf(tmp, g_FrameCount, port, bufCount - 3)) {
+		if (InputRecordingData.readKeyBuf(tmp, g_FrameCount, port, bufCount - 3)) {
 			buf[bufCount] = tmp;
 		}
 	}
@@ -109,59 +109,59 @@ void KeyMovie::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 buf[])
 //----------------------------------
 // stop
 //----------------------------------
-void KeyMovie::Stop() {
+void InputRecording::Stop() {
 	state = NONE;
-	if (keyMovieData.Close()) {
-		tasConLog(L"[REC]: KeyMovie Recording Stopped.\n");
+	if (InputRecordingData.Close()) {
+		recordingConLog(L"[REC]: InputRecording Recording Stopped.\n");
 	}
 }
 
 //----------------------------------
 // start
 //----------------------------------
-void KeyMovie::Start(wxString FileName,bool fReadOnly, VmStateBuffer* ss)
+void InputRecording::Start(wxString FileName,bool fReadOnly, VmStateBuffer* ss)
 {
-	g_MovieControls.Pause();
+	g_RecordingControls.Pause();
 	Stop();
 
 	if (fReadOnly)
 	{
-		if (!keyMovieData.Open(FileName, false)) {
+		if (!InputRecordingData.Open(FileName, false)) {
 			return;
 		}
-		if (!keyMovieData.readHeaderAndCheck()) {
-			tasConLog(L"[REC]: This file is not a correct KeyMovie file.\n");
-			keyMovieData.Close();
+		if (!InputRecordingData.readHeaderAndCheck()) {
+			recordingConLog(L"[REC]: This file is not a correct InputRecording file.\n");
+			InputRecordingData.Close();
 			return;
 		}
 		// cdrom
 		if (!g_Conf->CurrentIso.IsEmpty())
 		{
-			if (Path::GetFilename(g_Conf->CurrentIso) != keyMovieData.getHeader().cdrom) {
-				tasConLog(L"[REC]: Information on CD in Movie file is Different.\n");
+			if (Path::GetFilename(g_Conf->CurrentIso) != InputRecordingData.getHeader().cdrom) {
+				recordingConLog(L"[REC]: Information on CD in Movie file is Different.\n");
 			}
 		}
 		state = REPLAY;
-		tasConLog(wxString::Format(L"[REC]: Replaying movie - [%s]\n",FileName));
-		tasConLog(wxString::Format(L"MaxFrame: %d\n", keyMovieData.getMaxFrame()));
-		tasConLog(wxString::Format(L"UndoCount: %d\n", keyMovieData.getUndoCount()));
+		recordingConLog(wxString::Format(L"[REC]: Replaying movie - [%s]\n",FileName));
+		recordingConLog(wxString::Format(L"MaxFrame: %d\n", InputRecordingData.getMaxFrame()));
+		recordingConLog(wxString::Format(L"UndoCount: %d\n", InputRecordingData.getUndoCount()));
 	}
 	else
 	{
 		// create
-		if (!keyMovieData.Open(FileName, true, ss)) {
+		if (!InputRecordingData.Open(FileName, true, ss)) {
 			return;
 		}
 		// cdrom
 		if (!g_Conf->CurrentIso.IsEmpty())
 		{
-			keyMovieData.getHeader().setCdrom(Path::GetFilename(g_Conf->CurrentIso));
+			InputRecordingData.getHeader().setCdrom(Path::GetFilename(g_Conf->CurrentIso));
 		}
-		keyMovieData.writeHeader();
-		keyMovieData.writeSavestate();
+		InputRecordingData.writeHeader();
+		InputRecordingData.writeSavestate();
 
 		state = RECORD;
-		tasConLog(wxString::Format(L"[REC]: Started new recording - [%s]\n", FileName));
+		recordingConLog(wxString::Format(L"[REC]: Started new recording - [%s]\n", FileName));
 	}
 	// In every case, we reset the g_FrameCount
 	g_FrameCount = 0;
@@ -170,15 +170,15 @@ void KeyMovie::Start(wxString FileName,bool fReadOnly, VmStateBuffer* ss)
 //----------------------------------
 // shortcut key
 //----------------------------------
-void KeyMovie::RecordModeToggle()
+void InputRecording::RecordModeToggle()
 {
 	if (state == REPLAY) {
 		state = RECORD;
-		tasConLog("[REC]: Record mode ON.\n");
+		recordingConLog("[REC]: Record mode ON.\n");
 	}
 	else if (state == RECORD) {
 		state = REPLAY;
-		tasConLog("[REC]: Replay mode ON.\n");
+		recordingConLog("[REC]: Replay mode ON.\n");
 	}
 }
 

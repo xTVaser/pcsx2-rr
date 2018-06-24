@@ -12,7 +12,7 @@
 // fseek�Œ��ڏꏊ�w�肵�Ă���̂ŕϐ��̏��Ԃ͑厖
 // ��̓I�ɂ́uFrameMax�v��+2�uUndoCount�v��+6�o�C�g�̈ʒu�ɔz�u
 //----------------------------
-struct KeyMovieHeader
+struct InputRecordingHeader
 {
 	u8 version = 3;
 	u8 ID = 0xCC; // Especially, there is no meaning, a key file or ID for judgment
@@ -29,10 +29,10 @@ public:
 };
 
 //----------------------------
-// KeyMovieSavestate
+// InputRecordingSavestate
 // Contains info about the starting point of the movie
 //----------------------------
-struct KeyMovieSavestate
+struct InputRecordingSavestate
 {
 	bool fromSavestate = false; // Whether we start from the savestate or from power-on
 	unsigned int savestatesize; // The size of the savestate
@@ -40,12 +40,12 @@ struct KeyMovieSavestate
 };
 
 //----------------------------
-// KeyMovieOnFile
+// InputRecordingFile
 //----------------------------
-class KeyMovieOnFile {
+class InputRecordingFile {
 public:
-	KeyMovieOnFile() {}
-	~KeyMovieOnFile() { Close(); }
+	InputRecordingFile() {}
+	~InputRecordingFile() { Close(); }
 public:
 
 	// file
@@ -84,7 +84,7 @@ public:
 	//--------------------
 	// header
 	//--------------------
-	KeyMovieHeader& getHeader() { return header; }
+	InputRecordingHeader& getHeader() { return header; }
 	unsigned long& getMaxFrame() { return MaxFrame; }
 	unsigned long& getUndoCount() { return UndoCount; }
 	const wxString & getFilename() { return filename; }
@@ -98,8 +98,8 @@ public:
 	void addUndoCount();
 
 private:
-	KeyMovieHeader header;
-	KeyMovieSavestate savestate;
+	InputRecordingHeader header;
+	InputRecordingSavestate savestate;
 	unsigned long  MaxFrame = 0;
 	unsigned long  UndoCount = 0;
 

@@ -323,7 +323,8 @@ struct SysConsoleLogPack
 	ConsoleLogFromVM<Color_Yellow>			iopConsole;
 	ConsoleLogFromVM<Color_Cyan>			deci2;
 
-	ConsoleLogFromVM<Color_StrongMagenta>	tasConsole;
+	ConsoleLogFromVM<Color_StrongMagenta>	recordingConsole;
+	ConsoleLogFromVM<Color_StrongBlue>		luaConsole;
 	ConsoleLogFromVM<Color_Red>				controlInfo;
 
 	SysConsoleLogPack();
@@ -390,10 +391,11 @@ extern void __Log( const char* fmt, ... );
 #define MDEC_LOG		macTrace(IOP.MDEC)
 
 
-#define ELF_LOG			SysConsole.ELF.IsActive()			&& SysConsole.ELF.Write
-#define eeRecPerfLog	SysConsole.eeRecPerf.IsActive()		&& SysConsole.eeRecPerf
-#define eeConLog		SysConsole.eeConsole.IsActive()		&& SysConsole.eeConsole.Write
-#define eeDeci2Log		SysConsole.deci2.IsActive()			&& SysConsole.deci2.Write
-#define iopConLog		SysConsole.iopConsole.IsActive()	&& SysConsole.iopConsole.Write
-#define tasConLog		SysConsole.tasConsole.IsActive()	&& SysConsole.tasConsole.Write
-#define controlLog		SysConsole.controlInfo.IsActive()	&& SysConsole.controlInfo.Write
+#define ELF_LOG			SysConsole.ELF.IsActive()				&& SysConsole.ELF.Write
+#define eeRecPerfLog	SysConsole.eeRecPerf.IsActive()			&& SysConsole.eeRecPerf
+#define eeConLog		SysConsole.eeConsole.IsActive()			&& SysConsole.eeConsole.Write
+#define eeDeci2Log		SysConsole.deci2.IsActive()				&& SysConsole.deci2.Write
+#define iopConLog		SysConsole.iopConsole.IsActive()		&& SysConsole.iopConsole.Write
+#define recordingConLog	SysConsole.recordingConsole.IsActive()	&& SysConsole.recordingConsole.Write
+#define luaConLog		SysConsole.luaConsole.IsActive()		&& SysConsole.luaConsole.Write
+#define controlLog		SysConsole.controlInfo.IsActive()		&& SysConsole.controlInfo.Write

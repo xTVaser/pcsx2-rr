@@ -85,7 +85,7 @@ GSwindow_OffsetReset              = Alt-Ctrl-KP_DIVIDE
 # TODO: add to http://wiki.pcsx2.net/index.php/Hotkeys
 FrameAdvance                      =	SPACE
 TogglePause                       =	Shift-P
-KeyMovieModeToggle                =	Shift-R
+InputRecordingModeToggle          =	Shift-R
 
 # Save State Management
 States_SaveSlot0                  =	Shift-KP_1

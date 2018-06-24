@@ -235,7 +235,7 @@ SaveStateBase& SaveStateBase::FreezeInternals()
 
 	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
-		keymovieFreeze();
+		InputRecordingFreeze();
 	}
 
 	if( IsLoading() )

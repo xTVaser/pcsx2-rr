@@ -21,7 +21,7 @@
 #include "Sio.h"
 #include "sio_internal.h"
 
-#include "Recording/KeyMovie.h"
+#include "Recording/InputRecording.h"
 #include "Recording/PadData.h"
 #include "Recording/RecordingInputManager.h"
 
@@ -214,8 +214,8 @@ SIO_WRITE sioWriteController(u8 data)
 
 		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
-			g_KeyMovie.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
-			if (g_KeyMovie.isInterruptFrame())
+			g_InputRecording.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+			if (g_InputRecording.isInterruptFrame())
 			{
 				g_RecordingInput.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
 			}

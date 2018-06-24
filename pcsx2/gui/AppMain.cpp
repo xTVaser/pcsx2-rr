@@ -32,8 +32,8 @@
 #include "Debugger/DisassemblyDialog.h"
 
 #include "Lua/LuaManager.h"
-#include "Recording/MovieControls.h"
-#include "Recording/KeyMovie.h"
+#include "Recording/RecordingControls.h"
+#include "Recording/InputRecording.h"
 
 #include "Utilities/IniInterface.h"
 #include "Utilities/AppTrait.h"
@@ -615,7 +615,7 @@ void Pcsx2App::HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent&
 	{
 		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
-			if (g_MovieControls.isStop())
+			if (g_RecordingControls.isStop())
 			{
 				// While stopping, GSFrame key event also stops, so get key input from here
 				// Along with that, you can not use the shortcut keys set in GSFrame
@@ -629,7 +629,7 @@ void Pcsx2App::HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent&
 					}
 				}
 			}
-			g_MovieControls.StartCheck();
+			g_RecordingControls.StartCheck();
 		}
 		(handler->*func)(event);
 	}
@@ -1055,7 +1055,7 @@ void Pcsx2App::OnMainFrameClosed( wxWindowID id )
 {
 	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
-		g_KeyMovie.Stop();
+		g_InputRecording.Stop();
 	}
 	if (g_Conf->EmuOptions.EnableLuaTools)
 	{

@@ -25,7 +25,7 @@
 #include "ConsoleLogger.h"
 
 #include "Counters.h"
-#include "Recording/KeyMovie.h"
+#include "Recording/InputRecording.h"
 
 #include <wx/utils.h>
 #include <wx/graphics.h>
@@ -87,7 +87,7 @@ void GSPanel::InitDefaultAccelerators()
 
 	m_Accels->Map( AAC(WXK_SPACE), "FrameAdvance" );
 	m_Accels->Map( AAC(wxKeyCode('p')).Shift(), "TogglePause" );
-	m_Accels->Map( AAC(wxKeyCode('r')).Shift(), "KeyMovieModeToggle" );
+	m_Accels->Map( AAC(wxKeyCode('r')).Shift(), "InputRecordingModeToggle" );
 
 	m_Accels->Map( AAC( WXK_NUMPAD0 ).Shift(), "States_SaveSlot0" );
 	m_Accels->Map( AAC( WXK_NUMPAD1 ).Shift(), "States_SaveSlot1" );
@@ -821,23 +821,23 @@ void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 	wxString omodei = (smode2 & 1) ? templates.OutputInterlaced : templates.OutputProgressive;
 	wxString title;
 	wxString movieMode;
-	switch (g_KeyMovie.getModeState()) {
-	case KeyMovie::KEY_MOVIE_MODE::RECORD:
+	switch (g_InputRecording.getModeState()) {
+	case InputRecording::KEY_MOVIE_MODE::RECORD:
 			movieMode = "Recording";
 			title = templates.RecordingTemplate;
 			break;
-	case KeyMovie::KEY_MOVIE_MODE::REPLAY:
+	case InputRecording::KEY_MOVIE_MODE::REPLAY:
 			movieMode = "Replaying";
 			title = templates.RecordingTemplate;
 			break;
-	case KeyMovie::KEY_MOVIE_MODE::NONE:
+	case InputRecording::KEY_MOVIE_MODE::NONE:
 			movieMode = "No movie";
 			title = templates.TitleTemplate;
 			break;
 	}
 
 	title.Replace(L"${frame}", 		pxsFmt(L"%d", g_FrameCount));
-	title.Replace(L"${maxFrame}", 	pxsFmt(L"%d", g_KeyMovie.getKeyMovieData().getMaxFrame()));
+	title.Replace(L"${maxFrame}", 	pxsFmt(L"%d", g_InputRecording.getInputRecordingData().getMaxFrame()));
 	title.Replace(L"${mode}", 		movieMode);
 	title.Replace(L"${slot}",		pxsFmt(L"%d", States_GetCurrentSlot()));
 	title.Replace(L"${limiter}",	limiterStr);
