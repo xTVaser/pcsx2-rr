@@ -2,8 +2,8 @@
 
 #include "Common.h"
 
-#include "TAS/VirtualPad.h"
-#include "TAS/TASInputManager.h"
+#include "Recording/VirtualPad.h"
+#include "Recording/RecordingInputManager.h"
 
 enum
 {
@@ -59,6 +59,8 @@ VirtualPad::VirtualPad(wxWindow * parent, int controllerPort)
 	: wxFrame(parent, wxID_ANY, wxString::Format("Virtual Pad %d", controllerPort), wxDefaultPosition, wxSize(600, 520), wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX)),
 	port(controllerPort)
 {
+	// TODO - needs proper wxFrame design, no hardcoding of coordinates
+
 	// Global
 	wxPanel *panel = new wxPanel(this, wxID_ANY);
 	int x = 10, y = 2;
@@ -176,13 +178,13 @@ bool VirtualPad::Show(bool show)
 	if (!wxFrame::Show(show))
 		return false;
 	if (show)
-		g_TASInput.SetVirtualPadReading(port, true);
+		g_RecordingInput.SetVirtualPadReading(port, true);
 	return true;
 }
 
 void VirtualPad::OnClose(wxCloseEvent & event)
 {
-	g_TASInput.SetVirtualPadReading(port, false);
+	g_RecordingInput.SetVirtualPadReading(port, false);
 	Hide();
 }
 
@@ -203,13 +205,13 @@ void VirtualPad::OnClick(wxCommandEvent & event)
 					pressure = 0;
 			}
 		}
-		g_TASInput.SetButtonState(port, PadDataNormalKeys[id], pressure);
+		g_RecordingInput.SetButtonState(port, PadDataNormalKeys[id], pressure);
 	}
 	else
-		tasConLog("[VirtualPad]: Unknown toggle button pressed.\n");
+		recordingConLog("[VirtualPad]: Unknown toggle button pressed.\n");
 }
 
-// TODO TAS - should probably implement an OnRelease (if wxwidgets has that?)
+// TODO Recording - should probably implement an OnRelease (if wxwidgets has that?)
 
 void VirtualPad::OnResetButton(wxCommandEvent & event)
 {
@@ -217,7 +219,7 @@ void VirtualPad::OnResetButton(wxCommandEvent & event)
 	for (int i = 0; i < 16; i++)
 	{
 		buttons[i]->SetValue(false);
-		g_TASInput.SetButtonState(port, PadDataNormalKeys[i], 0);
+		g_RecordingInput.SetButtonState(port, PadDataNormalKeys[i], 0);
 	}
 	// Pressure sensitivity
 	for (int i = 0; i < 12; i++) {
@@ -229,7 +231,7 @@ void VirtualPad::OnResetButton(wxCommandEvent & event)
 	{
 		sticks[i]->SetValue(127);
 		sticksText[i]->SetValue(127);
-		g_TASInput.UpdateAnalog(port, PadDataAnalogKeys[i], 127);
+		g_RecordingInput.UpdateAnalog(port, PadDataAnalogKeys[i], 127);
 	}
 }
 
@@ -250,10 +252,10 @@ void VirtualPad::OnPressureCtrlChange(wxSpinEvent & event)
 			else if (pressure < 0)
 				pressure = 0;
 		}
-		g_TASInput.SetButtonState(port, PadDataNormalKeys[id], pressure);
+		g_RecordingInput.SetButtonState(port, PadDataNormalKeys[id], pressure);
 	}
 	else
-		tasConLog("[VirtualPad]: Unknown pressure sensitivty change.\n");
+		recordingConLog("[VirtualPad]: Unknown pressure sensitivty change.\n");
 }
 
 void VirtualPad::OnTextCtrlChange(wxSpinEvent & event)
@@ -264,12 +266,12 @@ void VirtualPad::OnTextCtrlChange(wxSpinEvent & event)
 		sticks[id]->SetValue(event.GetInt());
 		// We inverse up and down for more confort
 		if (id % 2 == 0)
-			g_TASInput.UpdateAnalog(port, PadDataAnalogKeys[id], 255 - event.GetInt());
+			g_RecordingInput.UpdateAnalog(port, PadDataAnalogKeys[id], 255 - event.GetInt());
 		else
-			g_TASInput.UpdateAnalog(port, PadDataAnalogKeys[id], event.GetInt());
+			g_RecordingInput.UpdateAnalog(port, PadDataAnalogKeys[id], event.GetInt());
 	}
 	else
-		tasConLog("[VirtualPad]: Unknown TextCtrl change.\n");
+		recordingConLog("[VirtualPad]: Unknown TextCtrl change.\n");
 }
 
 void VirtualPad::OnSliderMove(wxCommandEvent & event)
@@ -280,12 +282,12 @@ void VirtualPad::OnSliderMove(wxCommandEvent & event)
 		sticksText[id]->SetValue(event.GetInt());
 		// We inverse up and down for more confort
 		if (id % 2 == 0)
-			g_TASInput.UpdateAnalog(port, PadDataAnalogKeys[id], 255 - event.GetInt());
+			g_RecordingInput.UpdateAnalog(port, PadDataAnalogKeys[id], 255 - event.GetInt());
 		else
-			g_TASInput.UpdateAnalog(port, PadDataAnalogKeys[id], event.GetInt());
+			g_RecordingInput.UpdateAnalog(port, PadDataAnalogKeys[id], event.GetInt());
 	}
 	else
-		tasConLog("[VirtualPad]: Unknown TextCtrl change.\n");
+		recordingConLog("[VirtualPad]: Unknown TextCtrl change.\n");
 }
 
 int VirtualPad::getButtonIdFromPressure(int pressureCtrlId) {

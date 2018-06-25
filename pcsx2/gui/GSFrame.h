@@ -51,8 +51,7 @@ protected:
 	bool					m_HasFocus;
 	bool					m_coreRunning;
 
-	// TAS
-	int						m_frameAdvanceKey; // To allow event repeat of this key
+	int						m_frameAdvanceKey;
 
 public:
 	GSPanel( wxWindow* parent );

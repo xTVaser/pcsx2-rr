@@ -3,7 +3,7 @@
 #include <wx/tglbtn.h>
 #include <wx/spinctrl.h>
 
-#include "TAS/PadData.h"
+#include "Recording/PadData.h"
 
 class VirtualPad : public wxFrame
 {

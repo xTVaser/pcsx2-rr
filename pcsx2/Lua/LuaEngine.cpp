@@ -1,9 +1,10 @@
 #include "PrecompiledHeader.h"
 
+
 #include "LuaEngine.h"
 #include "LuaFunctions.h"
 #include "LuaManager.h"
-
+#include "Common.h"
 #include "LuaFrame.h"	// use "LuaFrame"
 #include "App.h"	// use "LuaFrame"
 
@@ -135,8 +136,7 @@ void LuaEngine::unRegistryExit()
 void LuaEngine::CallbackError(wxString cat,lua_State *L)
 {
 	wxString error = lua_tostring(L, -1);
-	// TODO - add a LUA console filter!
-	Console.WriteLn(Color_StrongBlue, L"[lua]Lua Error(%s):%s", WX_STR(cat), WX_STR(error));
+	luaConLog(wxString::Format(L"[Lua] Error(%s):%s", WX_STR(cat), WX_STR(error)));
 }
 
 //--------------------------------------------------

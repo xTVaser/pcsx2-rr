@@ -6,10 +6,10 @@
 #include "App.h"	// use "CoreThread"
 #include "Counters.h"	// use"g_FrameCount"
 
-#include "MovieControle.h"
+#include "RecordingControls.h"
 
 
-MovieControle g_MovieControle;
+RecordingControls g_RecordingControls;
 
 
 //-----------------------------------------------
@@ -21,14 +21,14 @@ MovieControle g_MovieControle;
 // CoreThread����~���Ă���Ԃ�wxFrame�̓��͂������d�g�݂��ۂ�
 //-----------------------------------------------
 
-bool MovieControle::isStop()
+bool RecordingControls::isStop()
 {
 	return (fPauseState && CoreThread.IsOpen() && CoreThread.IsPaused());
 }
 //-----------------------------------------------
 // Counters(CoreThread)��̒�~����p (For stop judgment in)
 //-----------------------------------------------
-void MovieControle::StartCheck()
+void RecordingControls::StartCheck()
 {
 	if (fStart && CoreThread.IsOpen() && CoreThread.IsPaused()) {
 		CoreThread.Resume();
@@ -37,7 +37,7 @@ void MovieControle::StartCheck()
 	}
 }
 
-void MovieControle::StopCheck()
+void RecordingControls::StopCheck()
 {
 	if (fFrameAdvance) {
 		if (stopFrameCount < g_FrameCount) {
@@ -47,10 +47,10 @@ void MovieControle::StopCheck()
 
 			// We force the frame counter in the title bar to change
 			wxString oldTitle = wxGetApp().GetGsFrame().GetTitle();
-			wxString title = g_Conf->Templates.TASTemplate;
+			wxString title = g_Conf->Templates.RecordingTemplate;
 			wxString frameCount = wxString::Format("%d", g_FrameCount);
 
-			title.Replace(L"${frame}", frameCount);	//--TAS--//
+			title.Replace(L"${frame}", frameCount);
 			int frameIndex = title.find(wxString::Format(L"%d", g_FrameCount));
 			frameIndex += frameCount.length();
 
@@ -72,26 +72,26 @@ void MovieControle::StopCheck()
 //----------------------------------
 // shortcut key
 //----------------------------------
-void MovieControle::FrameAdvance()
+void RecordingControls::FrameAdvance()
 {
 	stopFrameCount = g_FrameCount;
 	fFrameAdvance = true;
 	fStop = false;
 	fStart = true;
 }
-void MovieControle::TogglePause()
+void RecordingControls::TogglePause()
 {
 	fStop = !fStop;
 	if (fStop == false) {
 		fStart = true;
 	}
 }
-void MovieControle::Pause()
+void RecordingControls::Pause()
 {
 	fStop = true;
 	fFrameAdvance = true;
 }
-void MovieControle::UnPause()
+void RecordingControls::UnPause()
 {
 	fStop = false;
 	fStart = true;

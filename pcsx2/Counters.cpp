@@ -32,9 +32,9 @@
 
 #include "Sio.h"
 
-#include "lua/LuaManager.h"
-#include "TAS/MovieControle.h"
-#include "TAS/KeyEditor.h"
+#include "Lua/LuaManager.h"
+#include "Recording/RecordingControls.h"
+#include "Recording/InputRecordingEditor.h"
 
 using namespace Threading;
 
@@ -571,18 +571,17 @@ __fi void rcntUpdate_vSync()
 	}
 	else	// VSYNC end / VRENDER begin
 	{
-		//--LuaEngine--//
-		g_Lua.FrameBoundary();
-		//-------------//
+		if (g_Conf->EmuOptions.EnableLuaTools)
+		{
+			g_Lua.FrameBoundary();
+		}
 
-		//--TASKeyEditor--//
-		KeyEditor* dlg = wxGetApp().GetKeyEditorPtr();
-		if (dlg)dlg->FrameUpdate();
-		//-----------------//
-
-		//--TAS--//
-		g_MovieControle.StopCheck();
-
+		if (g_Conf->EmuOptions.EnableRecordingTools)
+		{
+			InputRecordingEditor* dlg = wxGetApp().GetInputRecordingEditorPtr();
+			if (dlg)dlg->FrameUpdate();
+			g_RecordingControls.StopCheck();
+		}
 
 		VSyncStart(vsyncCounter.sCycle);
 

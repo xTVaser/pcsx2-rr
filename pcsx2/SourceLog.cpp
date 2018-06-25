@@ -94,7 +94,7 @@ static const TraceLogDescriptor
 TLD_ELF = {
 	L"ELF",			L"E&LF",
 	pxDt("Dumps detailed information for PS2 executables (ELFs).")
-}, 
+},
 
 TLD_eeRecPerf = {
 	L"EErecPerf",	L"EErec &Performance",
@@ -116,14 +116,19 @@ TLD_deci2 = {
 	pxDt("Shows DECI2 debugging logs (EE processor)")
 },
 
-TLD_tasConsole = {
-	L"TAS",			L"TAS Console",
-	pxDt("Shows TAS related logs and information")
+TLD_recordingConsole = {
+	L"Recording",			L"Recording Console",
+	pxDt("Shows recording related logs and information")
+},
+
+TLD_luaConsole = {
+	L"Lua",			L"Lua Console",
+	pxDt("Shows lua script related logs and information")
 },
 
 TLD_controlInfo = {
 	L"Controller Info",			L"Controller Info",
-	pxDt("Shows detailed info on controller input values every frame on controller port 1")
+	pxDt("Shows detailed controller input values for port 1, every frame")
 };
 
 SysConsoleLogPack::SysConsoleLogPack()
@@ -132,7 +137,8 @@ SysConsoleLogPack::SysConsoleLogPack()
 	, eeConsole			(&TLD_eeConsole)
 	, iopConsole		(&TLD_iopConsole)
 	, deci2				(&TLD_deci2)
-	, tasConsole		(&TLD_tasConsole)
+	, recordingConsole	(&TLD_recordingConsole)
+	, luaConsole		(&TLD_luaConsole)
 	, controlInfo		(&TLD_controlInfo)
 {
 }

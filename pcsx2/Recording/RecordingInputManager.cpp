@@ -1,18 +1,18 @@
 #include "PrecompiledHeader.h"
 
-#include "TASInputManager.h"
-#include "lua/LuaManager.h"
-#include "KeyMovie.h"
+#include "RecordingInputManager.h"
+#include "Lua/LuaManager.h"
+#include "InputRecording.h"
 
-TASInputManager g_TASInput;
+RecordingInputManager g_RecordingInput;
 
-TASInputManager::TASInputManager()
+RecordingInputManager::RecordingInputManager()
 {
 	for (u8 i = 0; i < 2; i++)
 		virtualPad[i] = false;
 }
 
-void TASInputManager::ControllerInterrupt(u8 & data, u8 & port, u16 & BufCount, u8 buf[])
+void RecordingInputManager::ControllerInterrupt(u8 & data, u8 & port, u16 & BufCount, u8 buf[])
 {
 	if (port >= 2)
 		return;
@@ -23,7 +23,7 @@ void TASInputManager::ControllerInterrupt(u8 & data, u8 & port, u16 & BufCount, 
 	{
 		int bufIndex = BufCount - 3;
 		// first two bytes have nothing of interest in the buffer
-		// already handled by KeyMovie.cpp
+		// already handled by InputRecording.cpp
 		if (BufCount < 3)
 			return;
 
@@ -39,25 +39,25 @@ void TASInputManager::ControllerInterrupt(u8 & data, u8 & port, u16 & BufCount, 
 			buf[BufCount] = pad.buf[port][BufCount - 3];
 
 		// Updating movie file
-		g_KeyMovie.ControllerInterrupt(data, port, BufCount, buf);
+		g_InputRecording.ControllerInterrupt(data, port, BufCount, buf);
 	}
 }
 
-void TASInputManager::SetButtonState(int port, wxString button, int pressure)
+void RecordingInputManager::SetButtonState(int port, wxString button, int pressure)
 {
 	auto normalKeys = pad.getNormalKeys(port);
 	normalKeys.at(button) = pressure;
 	pad.setNormalKeys(port, normalKeys);
 }
 
-void TASInputManager::UpdateAnalog(int port, wxString key, int value)
+void RecordingInputManager::UpdateAnalog(int port, wxString key, int value)
 {
 	auto analogKeys = pad.getAnalogKeys(port);
 	analogKeys.at(key) = value;
 	pad.setAnalogKeys(port, analogKeys);
 }
 
-void TASInputManager::SetVirtualPadReading(int port, bool read)
+void RecordingInputManager::SetVirtualPadReading(int port, bool read)
 {
 	virtualPad[port] = read;
 }

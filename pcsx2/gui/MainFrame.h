@@ -111,13 +111,16 @@ protected:
 	wxMenu&			m_menuConfig;
 	wxMenu&			m_menuMisc;
 	wxMenu&			m_menuDebug;
-	wxMenu&			m_menuTools;
+
+	wxMenu&			m_menuCapture;
+	wxMenu&			m_submenuVideoCapture;
+	wxMenu&			m_submenuScreenshot;
+	wxMenu&			m_menuRecording;
+	wxMenu&			m_submenuMovieConvert;
+	wxMenu&			m_menuLua;
 
 	wxMenu&			m_LoadStatesSubmenu;
 	wxMenu&			m_SaveStatesSubmenu;
-	wxMenu&			m_MovieSubmenu;
-	wxMenu&			m_ScreenshotSubmenu;
-	wxMenu&			m_AVIWAVSubmenu;
 
 	wxMenuItem*		m_menuItem_RecentIsoMenu;
 	wxMenuItem&		m_MenuItem_Console;
@@ -127,7 +130,7 @@ protected:
 
 	PerPluginMenuInfo	m_PluginMenuPacks[PluginId_Count];
 
-	bool			m_recordAVIWAV;
+	bool			m_capturingVideo;
 
 	virtual void DispatchEvent( const PluginEventType& plugin_evt );
 	virtual void DispatchEvent( const CoreThreadStatus& status );
@@ -179,6 +182,8 @@ protected:
 	void Menu_EnablePatches_Click(wxCommandEvent &event);
 	void Menu_EnableCheats_Click(wxCommandEvent &event);
 	void Menu_EnableWideScreenPatches_Click(wxCommandEvent &event);
+	void Menu_EnableRecordingTools_Click(wxCommandEvent &event);
+	void Menu_EnableLuaTools_Click(wxCommandEvent &event);
 	void Menu_EnableHostFs_Click(wxCommandEvent &event);
 
 	void Menu_BootCdvd_Click(wxCommandEvent &event);
@@ -209,32 +214,23 @@ protected:
 	void Menu_ShowConsole_Stdio(wxCommandEvent &event);
 	void Menu_ShowAboutBox(wxCommandEvent &event);
 
-	//--TAS--//
-	void Menu_KeyMovie_Record(wxCommandEvent &event);
-	void Menu_KeyMovie_Stop(wxCommandEvent &event);
-	void Menu_KeyMovie_Play(wxCommandEvent &event);
-	void Menu_KeyMovie_ConvertV2ToV3(wxCommandEvent &event);
-	void Menu_KeyMovie_ConvertV1_XToV2(wxCommandEvent &event);
-	void Menu_KeyMovie_ConvertV1ToV2(wxCommandEvent &event);
-	void Menu_KeyMovie_ConvertLegacy(wxCommandEvent &event);
-	void Menu_KeyMovie_OpenKeyEditor(wxCommandEvent &event);
-	//-------//
+	void Menu_Capture_Video_Record_Click(wxCommandEvent &event);
+	void Menu_Capture_Video_Stop_Click(wxCommandEvent &event);
+	void VideoCaptureUpdate();
+	void Menu_Capture_Screenshot_Screenshot_Click(wxCommandEvent &event);
+	void Menu_Capture_Screenshot_Screenshot_As_Click(wxCommandEvent &event);
 
-	//--LuaEngine--//
+	void Menu_Recording_New_Click(wxCommandEvent &event);
+	void Menu_Recording_Play_Click(wxCommandEvent &event);
+	void Menu_Recording_Stop_Click(wxCommandEvent &event);
+	void Menu_Recording_Editor_Click(wxCommandEvent &event);
+	void Menu_Recording_VirtualPad_Open_Click(wxCommandEvent &event);
+	void Menu_Recording_ConvertV2ToV3_Click(wxCommandEvent &event);
+	void Menu_Recording_ConvertV1_XToV2_Click(wxCommandEvent &event);
+	void Menu_Recording_ConvertV1ToV2_Click(wxCommandEvent &event);
+	void Menu_Recording_ConvertLegacy_Click(wxCommandEvent &event);
+
 	void Menu_Lua_Open_Click(wxCommandEvent &event);
-	//------------//
-
-	// Virtual Pad
-	void Menu_VirtualPad_Open(wxCommandEvent &event);
-
-	// AVI/WAV
-	void Menu_AVIWAV_Record(wxCommandEvent &event);
-	void Menu_AVIWAV_Stop(wxCommandEvent &event);
-	void AVIWAVUpdate();
-
-	// Screenshot
-	void Menu_Screenshot_Shot(wxCommandEvent &event);
-	void Menu_Screenshot_SaveAs(wxCommandEvent &event);
 
 	void _DoBootCdvd();
 	bool _DoSelectIsoBrowser( wxString& dest );

@@ -5,19 +5,19 @@
 #include "Common.h"
 #include "Counters.h"
 
-#include "KeyMovieOnFile.h"
+#include "InputRecordingFile.h"
 
-#define HEADER_SIZE (sizeof(KeyMovieHeader)+4+4)
+#define HEADER_SIZE (sizeof(InputRecordingHeader)+4+4)
 #define SAVESTATE_HEADER_SIZE (sizeof(bool) + sizeof(savestate.savestatesize) + sizeof(savestate.savestate[0]) * savestate.savestatesize)
 #define BLOCK_HEADER_SIZE (0) 
 #define BLOCK_DATA_SIZE (18*2)
 #define BLOCK_SIZE (BLOCK_HEADER_SIZE+BLOCK_DATA_SIZE)
 
-#define SEEKPOINT_FRAMEMAX (sizeof(KeyMovieHeader))
-#define SEEKPOINT_UNDOCOUNT (sizeof(KeyMovieHeader)+4)
+#define SEEKPOINT_FRAMEMAX (sizeof(InputRecordingHeader))
+#define SEEKPOINT_UNDOCOUNT (sizeof(InputRecordingHeader)+4)
 #define SEEKPOINT_SAVESTATE (SEEKPOINT_UNDOCOUNT+4)
 
-long KeyMovieOnFile::_getBlockSeekPoint(const long & frame)
+long InputRecordingFile::_getBlockSeekPoint(const long & frame)
 {
 	if (savestate.fromSavestate) {
 		return HEADER_SIZE
@@ -29,8 +29,7 @@ long KeyMovieOnFile::_getBlockSeekPoint(const long & frame)
 	}
 }
 
-// Temporary Shim, probably a better cross-platform way to correct usages of
-// fopen_s
+// Temporary Shim, probably a better cross-platform way to correct usages of fopen_s
 int fopen_s(FILE **f, const char *name, const char *mode) {
 	int ret = 0;
 	assert(f);
@@ -43,7 +42,7 @@ int fopen_s(FILE **f, const char *name, const char *mode) {
 //----------------------------------
 // file
 //----------------------------------
-bool KeyMovieOnFile::Open(const wxString fn, bool fNewOpen, VmStateBuffer *ss)
+bool InputRecordingFile::Open(const wxString fn, bool fNewOpen, VmStateBuffer *ss)
 {
 	Close();
 	wxString mode = L"rb+";
@@ -55,7 +54,7 @@ bool KeyMovieOnFile::Open(const wxString fn, bool fNewOpen, VmStateBuffer *ss)
 	}
 	if ( fopen_s(&fp, fn.c_str(), mode.c_str()) != 0)
 	{
-		tasConLog(wxString::Format("[TAS]: Movie file opening failed. Error - %s\n", strerror(errno)));
+		recordingConLog(wxString::Format("[REC]: Movie file opening failed. Error - %s\n", strerror(errno)));
 		return false;
 	}
 	filename = fn;
@@ -75,7 +74,7 @@ bool KeyMovieOnFile::Open(const wxString fn, bool fNewOpen, VmStateBuffer *ss)
 	}
 	return true;
 }
-bool KeyMovieOnFile::Close()
+bool InputRecordingFile::Close()
 {
 	if (fp == NULL)return false;
 	writeHeader();
@@ -89,7 +88,7 @@ bool KeyMovieOnFile::Close()
 //----------------------------------
 // write frame
 //----------------------------------
-bool KeyMovieOnFile::writeKeyBuf(const uint & frame, const uint port, const uint bufIndex, const u8 & buf)
+bool InputRecordingFile::writeKeyBuf(const uint & frame, const uint port, const uint bufIndex, const u8 & buf)
 {
 	if (fp == NULL)return false;
 
@@ -107,7 +106,7 @@ bool KeyMovieOnFile::writeKeyBuf(const uint & frame, const uint port, const uint
 //----------------------------------
 // read frame
 //----------------------------------
-bool KeyMovieOnFile::readKeyBuf(u8 & result,const uint & frame, const uint port, const uint  bufIndex)
+bool InputRecordingFile::readKeyBuf(u8 & result,const uint & frame, const uint port, const uint  bufIndex)
 {
 	if (fp == NULL)return false;
 
@@ -127,7 +126,7 @@ bool KeyMovieOnFile::readKeyBuf(u8 & result,const uint & frame, const uint port,
 //===================================
 // pad
 //===================================
-void KeyMovieOnFile::getPadData(PadData & result, unsigned long frame)
+void InputRecordingFile::getPadData(PadData & result, unsigned long frame)
 {
 	result.fExistKey = false;
 	if (fp == NULL)return;
@@ -136,7 +135,7 @@ void KeyMovieOnFile::getPadData(PadData & result, unsigned long frame)
 	if (fread(result.buf, 1, BLOCK_DATA_SIZE, fp) == 0)return;
 	result.fExistKey = true;
 }
-bool KeyMovieOnFile::DeletePadData(unsigned long frame)
+bool InputRecordingFile::DeletePadData(unsigned long frame)
 {
 	if (fp == NULL)return false;
 
@@ -157,7 +156,7 @@ bool KeyMovieOnFile::DeletePadData(unsigned long frame)
 
 	return true;
 }
-bool KeyMovieOnFile::InsertPadData(unsigned long frame, const PadData& key)
+bool InputRecordingFile::InsertPadData(unsigned long frame, const PadData& key)
 {
 	if (fp == NULL)return false;
 	if (!key.fExistKey)return false;
@@ -184,7 +183,7 @@ bool KeyMovieOnFile::InsertPadData(unsigned long frame, const PadData& key)
 
 	return true;
 }
-bool KeyMovieOnFile::UpdatePadData(unsigned long frame, const PadData& key)
+bool InputRecordingFile::UpdatePadData(unsigned long frame, const PadData& key)
 {
 	if (fp == NULL)return false;
 	if (!key.fExistKey)return false;
@@ -203,11 +202,11 @@ bool KeyMovieOnFile::UpdatePadData(unsigned long frame, const PadData& key)
 //===================================
 // header
 //===================================
-bool KeyMovieOnFile::readHeaderAndCheck()
+bool InputRecordingFile::readHeaderAndCheck()
 {
 	if (fp == NULL)return false;
 	rewind(fp);
-	if (fread(&header, sizeof(KeyMovieHeader), 1, fp) != 1)return false;
+	if (fread(&header, sizeof(InputRecordingHeader), 1, fp) != 1)return false;
 	if (fread(&MaxFrame, 4, 1, fp) != 1)return false;
 	if (fread(&UndoCount, 4, 1, fp) != 1)return false;
 	if (fread(&savestate.fromSavestate, sizeof(bool), 1, fp) != 1) return false;
@@ -215,7 +214,7 @@ bool KeyMovieOnFile::readHeaderAndCheck()
 		// We read the size (and the savestate) only if we must
 		if (fread(&savestate.savestatesize, sizeof(savestate.savestatesize), 1, fp) != 1) return false;
 		if (savestate.savestatesize == 0) {
-			tasConLog(L"[TAS]: Invalid size of the savestate.\n");
+			recordingConLog(L"[REC]: Invalid size of the savestate.\n");
 			return false;
 		}
 
@@ -233,9 +232,6 @@ bool KeyMovieOnFile::readHeaderAndCheck()
 		GetCoreThread().Resume();
 	}
 	else {
-		// We restart the game
-		// TODO TAS - this option no longer exists
-		// UI_DisableSysReset();
 		sApp.SysExecute();
 	}
 
@@ -249,14 +245,14 @@ bool KeyMovieOnFile::readHeaderAndCheck()
 	}
 	return true;
 }
-bool KeyMovieOnFile::writeHeader()
+bool InputRecordingFile::writeHeader()
 {
 	if (fp == NULL)return false;
 	rewind(fp);
-	if (fwrite(&header, sizeof(KeyMovieHeader), 1, fp) != 1) return false;
+	if (fwrite(&header, sizeof(InputRecordingHeader), 1, fp) != 1) return false;
 	return true;
 }
-bool KeyMovieOnFile::writeSavestate()
+bool InputRecordingFile::writeSavestate()
 {
 	if (fp == NULL) return false;
 	fseek(fp, SEEKPOINT_SAVESTATE, SEEK_SET);
@@ -269,14 +265,14 @@ bool KeyMovieOnFile::writeSavestate()
 	}
 	return true;
 }
-bool KeyMovieOnFile::writeMaxFrame()
+bool InputRecordingFile::writeMaxFrame()
 {
 	if (fp == NULL)return false;
 	fseek(fp, SEEKPOINT_FRAMEMAX, SEEK_SET);
 	if (fwrite(&MaxFrame, 4, 1, fp) != 1) return false;
 	return true;
 }
-void KeyMovieOnFile::updateFrameMax(unsigned long frame)
+void InputRecordingFile::updateFrameMax(unsigned long frame)
 {
 	if (MaxFrame >= frame) {
 		return;
@@ -286,7 +282,7 @@ void KeyMovieOnFile::updateFrameMax(unsigned long frame)
 	fseek(fp, SEEKPOINT_FRAMEMAX, SEEK_SET);
 	fwrite(&MaxFrame, 4, 1, fp);
 }
-void KeyMovieOnFile::addUndoCount()
+void InputRecordingFile::addUndoCount()
 {
 	UndoCount++;
 	if (fp == NULL)return;
@@ -295,25 +291,25 @@ void KeyMovieOnFile::addUndoCount()
 
 }
 
-void KeyMovieHeader::setAuthor(wxString _author)
+void InputRecordingHeader::setAuthor(wxString _author)
 {
 	int max = ArraySize(author) - 1;
 	strncpy(author, _author.c_str(), max);
 	author[max] = 0;
 }
-void KeyMovieHeader::setCdrom(wxString _cdrom)
+void InputRecordingHeader::setCdrom(wxString _cdrom)
 {
 	int max = ArraySize(cdrom) - 1;
 	strncpy(cdrom, _cdrom.c_str(), max);
 	cdrom[max] = 0;
 }
-void KeyMovieHeader::init()
+void InputRecordingHeader::init()
 {
 	memset(author, 0, ArraySize(author));
 	memset(cdrom, 0, ArraySize(cdrom));
 }
 
-void KeyMovieOnFile::ConvertV2ToV3(wxString filename)
+void InputRecordingFile::ConvertV2ToV3(wxString filename)
 {
 	// TODO, with the latest version of save states requiring a savestate integrated into the file
 	// or it restarts as it assumes it is from power-on
@@ -329,28 +325,28 @@ void KeyMovieOnFile::ConvertV2ToV3(wxString filename)
 // 
 // Note - Save states are not even compatible from these two versions of PCSX2
 //===========================================================
-void KeyMovieOnFile::ConvertV1_XToV2(wxString filename)
+void InputRecordingFile::ConvertV1_XToV2(wxString filename)
 {
-	tasConLog(wxString::Format(L"[TAS]: Conversion started - [%s]\n", WX_STR(filename)));
+	recordingConLog(wxString::Format(L"[REC]: Conversion started - [%s]\n", WX_STR(filename)));
 	FILE * fp;
 	FILE * fp2;
 	fopen_s(&fp, filename, "rb");
 	if (fp == NULL) {
-		tasConLog(wxString::Format(L"[TAS]: Conversion failed - Error - %s\n", WX_STR(wxString(strerror(errno)))));
+		recordingConLog(wxString::Format(L"[REC]: Conversion failed - Error - %s\n", WX_STR(wxString(strerror(errno)))));
 		return;
 	}
 	wxString outfile = wxString::Format(L"%s_converted.p2m2", filename);
 	fopen_s(&fp2, outfile, "wb");
 	if (fp2 == NULL) {
-		// TODO: keybindings for TAS inputs - not related to this code, just made a note here lol
-		tasConLog(wxString::Format(L"[TAS]: Conversion failed - Error - %s\n", WX_STR(wxString(strerror(errno)))));
+		// TODO: keybindings for Recording inputs - not related to this code, just made a note here lol
+		recordingConLog(wxString::Format(L"[REC]: Conversion failed - Error - %s\n", WX_STR(wxString(strerror(errno)))));
 		fclose(fp);
 		return;
 	}
 	//---------
 	// head
 	//---------
-	KeyMovieHeader header;
+	InputRecordingHeader header;
 	header.version = 2;
 	u32 maxframe =0;
 	u32 undo = 0;
@@ -358,7 +354,7 @@ void KeyMovieOnFile::ConvertV1_XToV2(wxString filename)
 	fread(&undo, 4, 1, fp);
 	MaxFrame = maxframe;
 	UndoCount = undo;
-	fwrite(&header, sizeof(KeyMovieHeader), 1, fp2);
+	fwrite(&header, sizeof(InputRecordingHeader), 1, fp2);
 	fwrite(&MaxFrame, 4, 1, fp2);
 	fwrite(&UndoCount, 4, 1, fp2);
 
@@ -387,11 +383,11 @@ void KeyMovieOnFile::ConvertV1_XToV2(wxString filename)
 	}
 	fclose(fp);
 	fclose(fp2);
-	tasConLog(wxString::Format(L"[TAS]: Conversion successful\n"));
-	tasConLog(wxString::Format(L"[TAS]: Converted File - [%s]\n", WX_STR(outfile))); 
+	recordingConLog(wxString::Format(L"[REC]: Conversion successful\n"));
+	recordingConLog(wxString::Format(L"[REC]: Converted File - [%s]\n", WX_STR(outfile))); 
 }
 
-void KeyMovieOnFile::ConvertV1ToV2(wxString filename)
+void InputRecordingFile::ConvertV1ToV2(wxString filename)
 {
 	// TODO: Save states are not compatible across these releases
 	// so unable to test
@@ -403,20 +399,20 @@ void KeyMovieOnFile::ConvertV1ToV2(wxString filename)
 // https://code.google.com/archive/p/pcsx2-rr/
 // Legacy Conversion this will
 //===========================================================
-void KeyMovieOnFile::ConvertLegacy(wxString filename)
+void InputRecordingFile::ConvertLegacy(wxString filename)
 {
-	tasConLog(wxString::Format(L"[TAS]: Conversion started - [%s]\n", WX_STR(filename)));
+	recordingConLog(wxString::Format(L"[REC]: Conversion started - [%s]\n", WX_STR(filename)));
 	FILE * fp;
 	FILE * fp2;
 	fopen_s(&fp, filename, "rb");
 	if (fp == NULL) {
-		tasConLog(wxString::Format(L"[TAS]: Conversion failed - Error -  %s\n", WX_STR(wxString(strerror(errno)))));
+		recordingConLog(wxString::Format(L"[REC]: Conversion failed - Error -  %s\n", WX_STR(wxString(strerror(errno)))));
 		return;
 	}
 	wxString outfile = wxString::Format(L"%s.p2m2", filename);
 	fopen_s(&fp2, outfile, "wb");
 	if (fp2 == NULL) {
-		tasConLog(wxString::Format(L"[TAS]: Conversion failed - Error - %s\n", WX_STR(wxString(strerror(errno)))));
+		recordingConLog(wxString::Format(L"[REC]: Conversion failed - Error - %s\n", WX_STR(wxString(strerror(errno)))));
 		fclose(fp);
 		return;
 	}
@@ -430,7 +426,7 @@ void KeyMovieOnFile::ConvertLegacy(wxString filename)
 	//------
 	//head 
 	//------
-	KeyMovieHeader header;
+	InputRecordingHeader header;
 	header.version = 2;
 	u32 maxframe = 0;
 	u32 undo = 0;
@@ -438,7 +434,7 @@ void KeyMovieOnFile::ConvertLegacy(wxString filename)
 	fread(&undo, 4, 1, fp);
 	MaxFrame = maxframe;
 	UndoCount = undo;
-	fwrite(&header, sizeof(KeyMovieHeader), 1, fp2);
+	fwrite(&header, sizeof(InputRecordingHeader), 1, fp2);
 	fwrite(&MaxFrame, 4, 1, fp2);
 	fwrite(&UndoCount, 4, 1, fp2);
 
@@ -461,8 +457,8 @@ void KeyMovieOnFile::ConvertLegacy(wxString filename)
 	}
 	fclose(fp);
 	fclose(fp2);
-	tasConLog(wxString::Format(L"[TAS]: Conversion successful\n"));
-	tasConLog(wxString::Format(L"[TAS]: Converted File - [%s]\n", WX_STR(outfile)));
+	recordingConLog(wxString::Format(L"[REC]: Conversion successful\n"));
+	recordingConLog(wxString::Format(L"[REC]: Converted File - [%s]\n", WX_STR(outfile)));
 }
 
 

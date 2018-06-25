@@ -26,8 +26,8 @@
 
 #include "Debugger/DisassemblyDialog.h"
 
-#include "lua/LuaFrame.h"
-#include "TAS/VirtualPad.h"
+#include "Lua/LuaFrame.h"
+#include "Recording/VirtualPad.h"
 
 #include <wx/cmdline.h>
 #include <wx/intl.h>
@@ -75,23 +75,19 @@ void Pcsx2App::OpenMainFrame()
 	DisassemblyDialog* disassembly = new DisassemblyDialog( mainFrame );
 	m_id_Disassembler = disassembly->GetId();
 
-	// LuaEngine
-	LuaFrame *luaFrame = new LuaFrame(mainFrame);
-	m_id_LuaFrame = luaFrame->GetId();
+	InputRecordingEditor* inputRecordingEditor = new InputRecordingEditor(mainFrame);
+	m_id_InputRecordingEditor = inputRecordingEditor->GetId();
 
-	// TAS
-	KeyEditor* keyEditor = new KeyEditor(mainFrame);
-	m_id_KeyEditor = keyEditor->GetId();
-
-	// VirtualPad
 	VirtualPad* virtualPad0 = new VirtualPad(mainFrame, 0);
 	m_id_VirtualPad[0] = virtualPad0->GetId();
 	VirtualPad *virtualPad1 = new VirtualPad(mainFrame, 1);
 	m_id_VirtualPad[1] = virtualPad1->GetId();
 
-	// Movie Frame
-	KeyMovieFrame *keyMovieFrame = new KeyMovieFrame(mainFrame);
-	m_id_KeyMovieFrame = keyMovieFrame->GetId();
+	NewRecordingFrame* newRecordingFrame = new NewRecordingFrame(mainFrame);
+	m_id_NewRecordingFrame = newRecordingFrame->GetId();
+
+	LuaFrame *luaFrame = new LuaFrame(mainFrame);
+	m_id_LuaFrame = luaFrame->GetId();
 
 	if (g_Conf->EmuOptions.Debugger.ShowDebuggerOnStart)
 		disassembly->Show();
@@ -763,12 +759,12 @@ Pcsx2App::Pcsx2App()
 	m_UseGUI				= true;
 	m_NoGuiExitPrompt		= true;
 
-	m_id_MainFrame		= wxID_ANY;
-	m_id_GsFrame		= wxID_ANY;
-	m_id_ProgramLogBox	= wxID_ANY;
-	m_id_Disassembler	= wxID_ANY;
-	m_id_KeyEditor		= wxID_ANY;
-	m_ptr_ProgramLog	= NULL;
+	m_id_MainFrame				= wxID_ANY;
+	m_id_GsFrame				= wxID_ANY;
+	m_id_ProgramLogBox			= wxID_ANY;
+	m_id_Disassembler			= wxID_ANY;
+	m_id_InputRecordingEditor	= wxID_ANY;
+	m_ptr_ProgramLog			= NULL;
 
 	SetAppName( L"PCSX2" );
 	BuildCommandHash();

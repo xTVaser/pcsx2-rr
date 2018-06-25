@@ -757,6 +757,7 @@ EXPORT_C_(uint32) GSmakeSnapshot(char* path)
 
 		if (!s.empty())
 		{
+			// Facilitates Save As.. Feature
 			if (s.substr(s.size() - 4, 4) == ".bmp")
 			{
 				return s_gs->MakeSnapshot(s);

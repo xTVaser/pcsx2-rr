@@ -295,7 +295,8 @@ static ConsoleLogSource* const ConLogSources[] =
 	(ConsoleLogSource*)&pxConLog_Event,
 	(ConsoleLogSource*)&pxConLog_Thread,
 	NULL,
-	(ConsoleLogSource*)&SysConsole.tasConsole,
+	(ConsoleLogSource*)&SysConsole.recordingConsole,
+	(ConsoleLogSource*)&SysConsole.luaConsole,
 	(ConsoleLogSource*)&SysConsole.controlInfo,
 };
 
@@ -311,7 +312,8 @@ static const bool ConLogDefaults[] =
 	false,
 	false,
 	false,
-	true,
+	false,
+	false,
 	false
 };
 
@@ -341,15 +343,6 @@ void ConLog_LoadSaveSettings( IniInterface& ini )
 	}
 
 	ConLogInitialized = true;
-}
-
-bool isSourceEnabled(int index)
-{
-	if (ConsoleLogSource* log = ConLogSources[index])
-	{
-		return log->Enabled;
-	}
-	return false;
 }
 
 // --------------------------------------------------------------------------------------
@@ -575,6 +568,11 @@ void ConsoleLogFrame::OnLoggingChanged()
 			GetMenuBar()->Check( MenuId_LogSource_Start+i, log->IsActive() );
 		}
 	}
+}
+
+void ConsoleLogFrame::UpdateLogList()
+{
+	OnLoggingChanged();
 }
 
 // Implementation note:  Calls SetColor and Write( text ).  Override those virtuals

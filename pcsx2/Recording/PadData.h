@@ -4,7 +4,6 @@
 
 #include <map>
 
-
 #define PadDataNormalKeysSize 16
 const wxString PadDataNormalKeys[PadDataNormalKeysSize] =
 {
@@ -50,6 +49,8 @@ public:
 	u8 buf[2][18];
 
 public:
+	// Prints controlller data every frame to the Controller Log filter, disabled by default
+	static void logPadData(u8 port, u16 bufCount, u8 buf[512]);
 	wxString serialize()const;
 	void deserialize(wxString s);
 

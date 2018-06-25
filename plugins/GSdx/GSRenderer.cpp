@@ -512,9 +512,10 @@ bool GSRenderer::MakeSnapshot(const std::string& path)
 {
 	if(m_snapshot.empty())
 	{
+		// Facilitates Save As.. Feature
 		if (path.substr(path.size() - 4, 4) == ".bmp")
 		{
-			m_snapshot = path.substr(0, path.size() - 4); // We remove the .bmp
+			m_snapshot = path.substr(0, path.size() - 4);
 		}
 		else
 		{

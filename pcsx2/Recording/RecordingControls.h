@@ -1,24 +1,24 @@
 #pragma once
-#ifndef __MOVIE_CONTROLE_H__
-#define __MOVIE_CONTROLE_H__
+#ifndef __MOVIE_CONTROLS_H__
+#define __MOVIE_CONTROLS_H__
 
-class MovieControle {
+class RecordingControls {
 public:
 
-	// movie controle main function
+	// Movie controls main functions
 	bool isStop();
 	void StartCheck();
 	void StopCheck();
 
-	// shortcut key
+	// Shortcut Keys
 	void FrameAdvance();
 	void TogglePause();
 
-	// doit
+	// Setters
 	void Pause();
 	void UnPause();
 
-	// getter
+	// Getters
 	bool getStopFlag() { return (fStop || fFrameAdvance); }
 
 private:
@@ -30,6 +30,6 @@ private:
 	bool fPauseState = false;
 
 };
-extern MovieControle g_MovieControle;
+extern RecordingControls g_RecordingControls;
 
 #endif

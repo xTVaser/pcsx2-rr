@@ -27,9 +27,9 @@
 #include "AppCoreThread.h"
 #include "RecentIsoList.h"
 
-#include "TAS/KeyEditor.h"
-#include "TAS/VirtualPad.h"
-#include "TAS/KeyMovieFrame.h"
+#include "Recording/InputRecordingEditor.h"
+#include "Recording/VirtualPad.h"
+#include "Recording/NewRecordingFrame.h"
 
 class DisassemblyDialog;
 
@@ -66,6 +66,18 @@ static const bool CloseViewportWithPlugins = false;
 // ------------------------------------------------------------------------
 // All Menu Options for the Main Window! :D
 // ------------------------------------------------------------------------
+
+enum TopLevelMenuIndices
+{
+	TopLevelMenu_System = 0,
+	TopLevelMenu_Cdvd,
+	TopLevelMenu_Config,
+	TopLevelMenu_Misc,
+	TopLevelMenu_Debug,
+	TopLevelMenu_Capture,
+	TopLevelMenu_Recording,
+	TopLevelMenu_Lua,
+};
 
 enum MenuIdentifiers
 {
@@ -106,10 +118,9 @@ enum MenuIdentifiers
 	MenuId_EnablePatches,
 	MenuId_EnableCheats,
 	MenuId_EnableWideScreenPatches,
+	MenuId_EnableRecordingTools,
+	MenuId_EnableLuaTools,
 	MenuId_EnableHostFs,
-	MenuId_Sys_Movie,
-	MenuId_Sys_AVIWAV,
-	MenuId_Sys_Screenshot,
 
 	MenuId_State_Load,
 	MenuId_State_LoadOther,
@@ -166,30 +177,29 @@ enum MenuIdentifiers
 	MenuId_Debug_CreateBlockdump,
 	MenuId_Config_ResetAll,
 
-	// TAS Subsection
-	MenuId_KeyMovie_Record,
-	MenuId_KeyMovie_Play,
-	MenuId_KeyMovie_Stop,
-	MenuId_KeyMovie_ConvertV2ToV3,
-	MenuId_KeyMovie_ConvertV1_XToV2,
-	MenuId_KeyMovie_ConvertV1ToV2,
-	MenuId_KeyMovie_ConvertLegacy,
-	MenuId_KeyMovie_OpenKeyEditor,
+	// Capture Subsection
+	MenuId_Capture_Video,
+	MenuId_Capture_Video_Record,
+	MenuId_Capture_Video_Stop,
+	MenuId_Capture_Screenshot,
+	MenuId_Capture_Screenshot_Screenshot,
+	MenuId_Capture_Screenshot_Screenshot_As,
 
-	// Lua Engine
+	// Recording Subsection
+	MenuId_Recording_New,
+	MenuId_Recording_Play,
+	MenuId_Recording_Stop,
+	MenuId_Recording_Editor,
+	MenuId_Recording_VirtualPad_Port0,
+	MenuId_Recording_VirtualPad_Port1,
+	MenuId_Recording_Conversions,
+	MenuId_Recording_ConvertV2ToV3,
+	MenuId_Recording_ConvertV1_XToV2,
+	MenuId_Recording_ConvertV1ToV2,
+	MenuId_Recording_ConvertLegacy,
+
+	// Lua Subsection
 	MenuId_Lua_Open,
-
-	// VirtualPad
-	MenuId_VirtualPad_Port0,
-	MenuId_VirtualPad_Port1,
-
-	// AVI/WAV
-	MenuId_AVIWAV_Record,
-	MenuId_AVIWAV_Stop,
-
-	// Screenshot
-	MenuId_Screenshot_Shot,
-	MenuId_Screenshot_SaveAs
 };
 
 namespace Exception
@@ -527,9 +537,9 @@ protected:
 	wxWindowID			m_id_Disassembler;
 
 	wxWindowID			m_id_LuaFrame;
-	wxWindowID			m_id_KeyEditor;
+	wxWindowID			m_id_InputRecordingEditor;
 	wxWindowID			m_id_VirtualPad[2];
-	wxWindowID			m_id_KeyMovieFrame;
+	wxWindowID			m_id_NewRecordingFrame;
 
 	wxKeyEvent			m_kevt;
 
@@ -556,14 +566,12 @@ public:
 	DisassemblyDialog*	GetDisassemblyPtr() const	{ return (DisassemblyDialog*)wxWindow::FindWindowById(m_id_Disassembler); }
 
 	LuaFrame*			GetLuaFramePtr() const { return (LuaFrame*)wxWindow::FindWindowById(m_id_LuaFrame); }
-	KeyEditor *			GetKeyEditorPtr() const { return (KeyEditor*)wxWindow::FindWindowById(m_id_KeyEditor); }
+	InputRecordingEditor *			GetInputRecordingEditorPtr() const { return (InputRecordingEditor*)wxWindow::FindWindowById(m_id_InputRecordingEditor); }
 	VirtualPad *		GetVirtualPadPtr(int port) const {
-							if (port < 0 || port > 1) return NULL;
+							if (port < 0 || port > 1) return NULL; // TODO i believe this is always false, linter errors picked it up, double check
 							return (VirtualPad*)wxWindow::FindWindowById(m_id_VirtualPad[port]);
 						}
-	KeyMovieFrame *		GetKeyMovieFramePtr() const {
-								return (KeyMovieFrame*)wxWindow::FindWindowById(m_id_KeyMovieFrame);
-						}
+	NewRecordingFrame *		GetNewRecordingFramePtr() const { return (NewRecordingFrame*)wxWindow::FindWindowById(m_id_NewRecordingFrame); }
 
 	void enterDebugMode();
 	void leaveDebugMode();
@@ -662,7 +670,6 @@ protected:
 	void OpenWizardConsole();
 	void PadKeyDispatch( const keyEvent& ev );
 
-	// TAS
 public:
 	void TAS_PadKeyDispatch(const keyEvent& ev) { PadKeyDispatch(ev); }
 

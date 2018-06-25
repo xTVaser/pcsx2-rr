@@ -5,10 +5,10 @@
 /*
  * The Dialog to pop-up when recording a new movie
 */
-class KeyMovieFrame : public wxDialog
+class NewRecordingFrame : public wxDialog
 {
 public:
-	KeyMovieFrame(wxWindow *parent);
+	NewRecordingFrame(wxWindow *parent);
 
 	wxString getFile() const;
 	wxString getAuthor() const;
@@ -18,8 +18,10 @@ private:
 	wxStaticText *m_fileLabel;
 	wxFilePickerCtrl *m_filePicker;
 	wxStaticText *m_authorLabel;
-	wxTextCtrl *m_author;
+	wxTextCtrl *m_authorInput;
 	wxStaticText *m_fromLabel;
 	wxChoice *m_fromChoice;
+	wxButton *m_startRecording;
+	wxButton *m_cancelRecording;
 };
 

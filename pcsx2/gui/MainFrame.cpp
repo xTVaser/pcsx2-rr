@@ -200,6 +200,8 @@ void MainEmuFrame::ConnectMenus()
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnablePatches_Click, this, MenuId_EnablePatches);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableCheats_Click, this, MenuId_EnableCheats);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableWideScreenPatches_Click, this, MenuId_EnableWideScreenPatches);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableRecordingTools_Click, this, MenuId_EnableRecordingTools);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableLuaTools_Click, this, MenuId_EnableLuaTools);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableHostFs_Click, this, MenuId_EnableHostFs);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_SysShutdown_Click, this, MenuId_Sys_Shutdown);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Exit_Click, this, MenuId_Exit);
@@ -228,31 +230,6 @@ void MainEmuFrame::ConnectMenus()
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_MultitapToggle_Click, this, MenuId_Config_Multitap1Toggle);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_ResetAllSettings_Click, this, MenuId_Config_ResetAll);
 
-	// TAS
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_KeyMovie_Record, this, MenuId_KeyMovie_Record);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_KeyMovie_Play, this, MenuId_KeyMovie_Play);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_KeyMovie_Stop, this, MenuId_KeyMovie_Stop);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_KeyMovie_ConvertV2ToV3, this, MenuId_KeyMovie_ConvertV2ToV3);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_KeyMovie_ConvertV1_XToV2, this, MenuId_KeyMovie_ConvertV1_XToV2);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_KeyMovie_ConvertV1ToV2, this, MenuId_KeyMovie_ConvertV1ToV2);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_KeyMovie_ConvertLegacy, this, MenuId_KeyMovie_ConvertLegacy);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_KeyMovie_OpenKeyEditor, this, MenuId_KeyMovie_OpenKeyEditor);
-
-	// LuaEngine
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Lua_Open_Click, this, MenuId_Lua_Open);
-
-	// Virtual Pad
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_VirtualPad_Open, this, MenuId_VirtualPad_Port0);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_VirtualPad_Open, this, MenuId_VirtualPad_Port1);
-
-	// AVI/WAV
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_AVIWAV_Record, this, MenuId_AVIWAV_Record);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_AVIWAV_Stop, this, MenuId_AVIWAV_Stop);
-
-	// Screenshot
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Screenshot_Shot, this, MenuId_Screenshot_Shot);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Screenshot_SaveAs, this, MenuId_Screenshot_SaveAs);
-
 	// Misc
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_ShowConsole, this, MenuId_Console);
 #if defined(__unix__)
@@ -264,6 +241,29 @@ void MainEmuFrame::ConnectMenus()
 	// Debug
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Debug_Open_Click, this, MenuId_Debug_Open);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Debug_Logging_Click, this, MenuId_Debug_Logging);
+
+	// Capture
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Video_Record_Click, this, MenuId_Capture_Video_Record);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Video_Stop_Click, this, MenuId_Capture_Video_Stop);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Screenshot_Screenshot_Click, this, MenuId_Capture_Screenshot_Screenshot);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Capture_Screenshot_Screenshot_As_Click, this, MenuId_Capture_Screenshot_Screenshot_As);
+
+	// Recording
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_New_Click, this, MenuId_Recording_New);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_Play_Click, this, MenuId_Recording_Play);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_Stop_Click, this, MenuId_Recording_Stop);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_Editor_Click, this, MenuId_Recording_Editor);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_VirtualPad_Open_Click, this, MenuId_Recording_VirtualPad_Port0);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_VirtualPad_Open_Click, this, MenuId_Recording_VirtualPad_Port1);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_ConvertV2ToV3_Click, this, MenuId_Recording_ConvertV2ToV3);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_ConvertV1_XToV2_Click, this, MenuId_Recording_ConvertV1_XToV2);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_ConvertV1ToV2_Click, this, MenuId_Recording_ConvertV1ToV2);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_ConvertLegacy_Click, this, MenuId_Recording_ConvertLegacy);
+	
+	// Lua
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Lua_Open_Click, this, MenuId_Lua_Open);
+
+
 	//Bind(wxEVT_MENU, &MainEmuFrame::Menu_Debug_MemoryDump_Click, this, MenuId_Debug_MemoryDump);
 }
 
@@ -344,10 +344,12 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	, m_menuConfig			( *new wxMenu() )
 	, m_menuMisc			( *new wxMenu() )
 	, m_menuDebug			( *new wxMenu() )
-	, m_MovieSubmenu		( *new wxMenu() )
-	, m_AVIWAVSubmenu		( *new wxMenu() )
-	, m_ScreenshotSubmenu	( *new wxMenu() )
-	, m_menuTools			( *new wxMenu() )	//--Tools--//
+	, m_menuCapture			( *new wxMenu() )
+	, m_submenuVideoCapture	( *new wxMenu() )
+	, m_submenuScreenshot	( *new wxMenu() )
+	, m_menuRecording		( *new wxMenu() )
+	, m_submenuMovieConvert	( *new wxMenu() )
+	, m_menuLua				( *new wxMenu() )
 
 	, m_LoadStatesSubmenu( *MakeStatesSubMenu( MenuId_State_Load01, MenuId_State_LoadBackup ) )
 	, m_SaveStatesSubmenu( *MakeStatesSubMenu( MenuId_State_Save01 ) )
@@ -372,9 +374,19 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	m_menubar.Append( &m_menuConfig,	_("&Config") );
 	m_menubar.Append( &m_menuMisc,		_("&Misc") );
 	m_menubar.Append( &m_menuDebug,		_("&Debug") );
-	m_menubar.Append( &m_menuTools,		_("&Tools") );
+	m_menubar.Append( &m_menuCapture,	_("&Capture") );
 
 	SetMenuBar( &m_menubar );
+
+	// Append the Recording / Lua options if previous enabled and picked up from ini
+	if (g_Conf->EmuOptions.EnableRecordingTools)
+	{
+		m_menubar.Append(&m_menuRecording, _("&Recording") );
+	}
+	if (g_Conf->EmuOptions.EnableLuaTools)
+	{
+		m_menubar.Append(&m_menuLua, _("&Lua"));
+	}
 
 	// ------------------------------------------------------------------------
 
@@ -435,7 +447,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 
 	// ------------------------------------------------------------------------
 	// Some of the items in the System menu are configured by the UpdateCoreStatus() method.
-	
+
 	m_menuSys.Append(MenuId_Boot_CDVD,		_("Initializing..."));
 
 	m_menuSys.Append(MenuId_Boot_CDVD2,		_("Initializing..."));
@@ -467,11 +479,13 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	m_menuSys.Append(MenuId_EnableWideScreenPatches,	_("Enable &Widescreen Patches"),
 		wxEmptyString, wxITEM_CHECK);
 
-	m_menuSys.AppendSeparator();
+	m_menuSys.Append(MenuId_EnableRecordingTools,	_("Enable &Recording Tools"),
+		wxEmptyString, wxITEM_CHECK);
 
-	m_menuSys.Append(MenuId_Sys_Movie, _("Movie"), &m_MovieSubmenu)->Enable(false);
-	m_menuSys.Append(MenuId_Sys_AVIWAV, _("AVI/WAV"), &m_AVIWAVSubmenu)->Enable(false);
-	m_menuSys.Append(MenuId_Sys_Screenshot, _("Screenshot"), &m_ScreenshotSubmenu)->Enable(false);
+	m_menuSys.Append(MenuId_EnableLuaTools,	_("Enable &Lua Tools"),
+		wxEmptyString, wxITEM_CHECK);
+
+	m_menuSys.AppendSeparator();
 
 	if(IsDebugBuild || IsDevBuild)
 		m_menuSys.Append(MenuId_EnableHostFs,	_("Enable &Host Filesystem"),
@@ -555,38 +569,37 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 #endif
 	m_menuDebug.AppendCheckItem(MenuId_Debug_CreateBlockdump, _("Create &Blockdump"), _("Creates a block dump for debugging purposes."));
 
-	//--TAS--//
-	m_MovieSubmenu.Append(MenuId_KeyMovie_Record, _("New Record"));
-	m_MovieSubmenu.Append(MenuId_KeyMovie_Play, _("Play"));
-	m_MovieSubmenu.Append(MenuId_KeyMovie_Stop, _("Stop"));
-	m_MovieSubmenu.AppendSeparator();
-	m_MovieSubmenu.Append(MenuId_KeyMovie_OpenKeyEditor, _("Open KeyEditor Window..."));
-	m_MovieSubmenu.AppendSeparator();
-	// TODO TAS - these should be moved to a non-disabled submenu because you dont need the game running
-	// to convert a movie file (or atleast you shouldnt)
-	// Would also be nice to have the older, non-latest conversion be in its own submenus
-	m_MovieSubmenu.Append(MenuId_KeyMovie_ConvertV2ToV3, _("Convert Movie (v2.0 -> v3.0)"))->Enable(false);
-	m_MovieSubmenu.Append(MenuId_KeyMovie_ConvertV1_XToV2, _("Convert Movie (v1.X -> v2.0)"));
-	m_MovieSubmenu.Append(MenuId_KeyMovie_ConvertV1ToV2, _("Convert Movie (v1.0 -> v2.0)"))->Enable(false);
-	m_MovieSubmenu.Append(MenuId_KeyMovie_ConvertLegacy, _("Convert Legacy Movie (p2m -> p2m2)"));
-	//-------//
+	// ------------------------------------------------------------------------
 
-	//--LuaEngine--//
-	m_menuTools.Append(MenuId_Lua_Open, _("Lua Console"));
-	//------------//
+	m_menuCapture.Append(MenuId_Capture_Video, _("Video"), &m_submenuVideoCapture);
+	m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Start Recording"));
+	m_submenuVideoCapture.Append(MenuId_Capture_Video_Stop, _("Stop Recording"))->Enable(false);
 
-	m_menuTools.AppendSeparator();
-	// Virtual Pad
-	m_menuTools.Append(MenuId_VirtualPad_Port0, _("Virtual Pad Port 1"));
-	m_menuTools.Append(MenuId_VirtualPad_Port1, _("Virtual Pad Port 2"));
+	m_menuCapture.Append(MenuId_Capture_Screenshot, _("Screenshot"), &m_submenuScreenshot);
+	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot, _("Screenshot"));
+	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot_As, _("Screenshot As..."));
 
-	// AVI/WAV
-	m_AVIWAVSubmenu.Append(MenuId_AVIWAV_Record, _("Record AVI/WAV"));
-	m_AVIWAVSubmenu.Append(MenuId_AVIWAV_Stop, _("Stop AVI/WAV"))->Enable(false);
+	// ------------------------------------------------------------------------
 
-	// Screenshot
-	m_ScreenshotSubmenu.Append(MenuId_Screenshot_Shot, _("Screenshot"));
-	m_ScreenshotSubmenu.Append(MenuId_Screenshot_SaveAs, _("Screenshot as..."));
+	m_menuRecording.Append(MenuId_Recording_New, _("New"));
+	m_menuRecording.Append(MenuId_Recording_Stop, _("Stop"))->Enable(false);
+	m_menuRecording.Append(MenuId_Recording_Play, _("Play"));
+	m_menuRecording.AppendSeparator();
+	m_menuRecording.Append(MenuId_Recording_Editor, _("Open Movie Editor"));
+	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port0, _("Virtual Pad (Port 1)"));
+	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port1, _("Virtual Pad (Port 2)"));
+	m_menuRecording.AppendSeparator();
+	m_menuRecording.Append(MenuId_Recording_Conversions, _("Movie File Conversions"), &m_submenuMovieConvert);
+	m_submenuMovieConvert.Append(MenuId_Recording_ConvertV2ToV3, _("Convert (v2.0 -> v3.0)"))->Enable(false); // TODO
+	m_submenuMovieConvert.Append(MenuId_Recording_ConvertV1_XToV2, _("Convert (v1.X -> v2.0)"));
+	m_submenuMovieConvert.Append(MenuId_Recording_ConvertV1ToV2, _("Convert (v1.0 -> v2.0)"))->Enable(false); // TODO
+	m_submenuMovieConvert.Append(MenuId_Recording_ConvertLegacy, _("Convert Legacy Movie (p2m -> p2m2)"));
+
+	// ------------------------------------------------------------------------
+
+	m_menuLua.Append(MenuId_Lua_Open, _("Open Lua Console"));
+
+	// ------------------------------------------------------------------------
 
 	m_MenuItem_Console.Check( g_Conf->ProgLogBox.Visible );
 
@@ -739,10 +752,6 @@ void MainEmuFrame::ApplyCoreStatus()
 			pxAssert(false);
 		}
 	}
-
-	menubar.Enable(MenuId_Sys_Movie, SysHasValidState() || CorePlugins.AreAnyInitialized());
-	menubar.Enable(MenuId_Sys_AVIWAV, SysHasValidState() || CorePlugins.AreAnyInitialized());
-	menubar.Enable(MenuId_Sys_Screenshot, SysHasValidState() || CorePlugins.AreAnyInitialized());
 }
 
 //Apply a config to the menu such that the menu reflects it properly
@@ -765,6 +774,8 @@ void MainEmuFrame::ApplyConfigToGui(AppConfig& configToApply, int flags)
 		menubar.Check( MenuId_EnableBackupStates, configToApply.EmuOptions.BackupSavestate );
 		menubar.Check( MenuId_EnableCheats,  configToApply.EmuOptions.EnableCheats );
 		menubar.Check( MenuId_EnableWideScreenPatches,  configToApply.EmuOptions.EnableWideScreenPatches );
+		menubar.Check( MenuId_EnableRecordingTools,  configToApply.EmuOptions.EnableRecordingTools );
+		menubar.Check( MenuId_EnableLuaTools,  configToApply.EmuOptions.EnableLuaTools );
 		menubar.Check( MenuId_EnableHostFs,  configToApply.EmuOptions.HostFs );
 		menubar.Check( MenuId_Debug_CreateBlockdump, configToApply.EmuOptions.CdvdDumpBlocks );
 #if defined(__unix__)
