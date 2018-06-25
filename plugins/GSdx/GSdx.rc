@@ -53,7 +53,6 @@ BEGIN
     "#include ""res/interlace.fx""\r\n"
     "#include ""res/merge.fx""\r\n"
     "#include ""res/fxaa.fx""\r\n"
-    "#include ""res/cs.fx""\r\n"
     "#include ""res/shadeboost.fx""\r\n"
     "#include ""res/tfx.cl""\r\n"
     "\0"
@@ -77,26 +76,23 @@ IDR_MERGE_FX            RCDATA                  "res\\merge.fx"
 
 IDR_FXAA_FX             RCDATA                  "res\\fxaa.fx"
 
-IDR_CS_FX               RCDATA                  "res\\cs.fx"
-
 IDR_SHADEBOOST_FX       RCDATA                  "res\\shadeboost.fx"
 
 IDR_TFX_CL              RCDATA                  "res\\tfx.cl"
 
-IDR_CONVERT_GLSL        RCDATA                  "res\\glsl\\convert.glsl"
+IDR_CONVERT_GLSL        RCDATA                  "res\\glsl\\convert.glsl";
 
-IDR_INTERLACE_GLSL      RCDATA                  "res\\glsl\\interlace.glsl"
+IDR_INTERLACE_GLSL      RCDATA                  "res\\glsl\\interlace.glsl";
 
-IDR_MERGE_GLSL          RCDATA                  "res\\glsl\\merge.glsl"
+IDR_MERGE_GLSL          RCDATA                  "res\\glsl\\merge.glsl";
 
-IDR_SHADEBOOST_GLSL     RCDATA                  "res\\glsl\\shadeboost.glsl"
+IDR_SHADEBOOST_GLSL     RCDATA                  "res\\glsl\\shadeboost.glsl";
 
-IDR_COMMON_GLSL         RCDATA                  "res\\glsl\\common_header.glsl"
+IDR_COMMON_GLSL         RCDATA                  "res\\glsl\\common_header.glsl";
 
-IDR_TFX_VGS_GLSL        RCDATA                  "res\\glsl\\tfx_vgs.glsl"
+IDR_TFX_VGS_GLSL        RCDATA                  "res\\glsl\\tfx_vgs.glsl";
 
-IDR_TFX_FS_GLSL         RCDATA                  "res\\glsl\\tfx_fs.glsl"
-
+IDR_TFX_FS_GLSL         RCDATA                  "res\\glsl\\tfx_fs.glsl";
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -130,19 +126,24 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Advanced Settings & Hacks"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
+    // Hacks settings:
     GROUPBOX        "Hacks",IDC_STATIC,7,7,196,215,0,WS_EX_TRANSPARENT
+    // Column one - HW Hacks
     CONTROL         "Align Sprite",IDC_ALIGN_SPRITE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,19,58,8
     CONTROL         "Alpha",IDC_ALPHAHACK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,32,34,8
     CONTROL         "Alpha Stencil",IDC_ALPHASTENCIL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,45,57,8
     CONTROL         "Auto Flush",IDC_AUTO_FLUSH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,58,55,8
     CONTROL         "Disable Depth Emulation",IDC_TC_DEPTH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,71,92,8
     CONTROL         "Fast Texture Invalidation",IDC_FAST_TC_INV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,84,92,8
+    // Column two - HW hacks
     CONTROL         "Frame Buffer Conversion",IDC_CPU_FB_CONVERSION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,108,19,92,8
     CONTROL         "Memory Wrapping",IDC_MEMORY_WRAPPING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,108,32,75,8
     CONTROL         "Merge Sprite",IDC_MERGE_PP_SPRITE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,108,45,90,8
     CONTROL         "Preload Frame Data",IDC_PRELOAD_GS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,108,58,80,8
     CONTROL         "Unscale Point and Line",IDC_UNSCALE_POINT_LINE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,108,71,90,8
     CONTROL         "Wild Arms Offset",IDC_WILDHACK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,108,84,70,8
+    // Columns end
+    //
     RTEXT           "MSAA:",IDC_MSAA_TEXT,54,99,22,8
     COMBOBOX        IDC_MSAACB,80,96,116,63,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Trilinear Filtering:",IDC_TRI_FILTER_TEXT,16,114,60,8
@@ -162,11 +163,13 @@ BEGIN
     RTEXT           "TC Offset Y:",IDC_STATIC,32,204,44,8
     EDITTEXT        IDC_TCOFFSETY2,80,201,116,14,ES_RIGHT | ES_AUTOHSCROLL
     CONTROL         "",IDC_TCOFFSETY,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,127,199,11,14
+    // OpenGL Advanced Settings:
     GROUPBOX        "OpenGL Advanced Settings",IDC_STATIC,7,225,196,48,0,WS_EX_TRANSPARENT
     RTEXT           "Geometry Shader:",IDC_GEOMETRY_SHADER_TEXT,14,240,62,8
     COMBOBOX        IDC_GEOMETRY_SHADER_OVERRIDE,80,237,97,63,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Image Load Store:",IDC_IMAGE_LOAD_STORE_TEXT,14,255,62,8
     COMBOBOX        IDC_IMAGE_LOAD_STORE,80,252,97,63,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    // General Settings:
     DEFPUSHBUTTON   "OK",IDOK,52,278,50,14
     DEFPUSHBUTTON   "Cancel",IDCANCEL,108,278,50,14
 END
@@ -218,11 +221,12 @@ BEGIN
     CONTROL         "Enable Log",IDC_OSD_LOG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,56,54,10
     LTEXT           "Scrolling Speed:",IDC_STATIC,16,72,120,8
     EDITTEXT        IDC_OSD_SPEED_EDIT,116,70,84,14,ES_RIGHT | ES_AUTOHSCROLL
-    CONTROL         "",IDC_OSD_SPEED,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,116,70,11,14
+    CONTROL         "", IDC_OSD_SPEED,"msctls_updown32", UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,116,70,11,14
     LTEXT           "Maximum Onscreen Messages:",IDC_STATIC,16,88,150,8
     EDITTEXT        IDC_OSD_MAX_LOG_EDIT,116,86,84,14,ES_RIGHT | ES_AUTOHSCROLL
-    CONTROL         "",IDC_OSD_MAX_LOG,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,116,86,11,14
+    CONTROL         "", IDC_OSD_MAX_LOG,"msctls_updown32", UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS,116,86,11,14
     CONTROL         "Enable Monitor",IDC_OSD_MONITOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,103,65,10
+    //CONTROL         "Enable Indicator",IDC_OSD_INDICATOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,116,103,65,10 // Currently not implemented
     DEFPUSHBUTTON   "OK",IDOK,42,120,50,14
     DEFPUSHBUTTON   "Cancel",IDCANCEL,118,120,50,14
 END
@@ -277,6 +281,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "GSdx Settings"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
+    // General Settings:
     CONTROL         IDB_LOGO9,IDC_LOGO9,"Static",SS_BITMAP | SS_REALSIZECONTROL,6,6,230,44
     CONTROL         IDB_LOGO10,IDC_LOGO10,"Static",SS_BITMAP | SS_REALSIZECONTROL,6,6,230,44
     CONTROL         IDB_LOGO11,IDC_LOGO11,"Static",SS_BITMAP | SS_REALSIZECONTROL,6,6,230,44
@@ -296,6 +301,7 @@ BEGIN
     PUSHBUTTON      "OSD Configuration",IDC_OSDBUTTON,11,340,107,14
     DEFPUSHBUTTON   "OK",IDOK,69,366,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,125,366,50,14
+    // Hardware Renderer Settings:
     GROUPBOX        "Hardware Renderer Settings",IDC_STATIC,6,132,231,152,BS_CENTER
     CONTROL         "Allow 8-Bit Textures",IDC_PALTEX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,144,90,10
     CONTROL         "Large Framebuffer",IDC_LARGE_FB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,144,90,10
@@ -314,11 +320,14 @@ BEGIN
     COMBOBOX        IDC_CRC_LEVEL,105,220,127,63,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Enable HW Hacks",IDC_HACKS_ENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,239,71,10
     PUSHBUTTON      "Advanced Settings and Hacks",IDC_HACKSBUTTON,105,237,127,14
+    // OpenGL (Hardware) Settings:
     CONTROL         "Accurate Date",IDC_ACCURATE_DATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,253,72,8
     LTEXT           "Blending Unit Accuracy:",IDC_ACCURATE_BLEND_UNIT_TEXT,22,268,79,10
     COMBOBOX        IDC_ACCURATE_BLEND_UNIT,105,267,127,63,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    // Direct3D 9 (Hardware) Settings:
     CONTROL         "Logarithmic Z",IDC_LOGZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,255,90,8
     CONTROL         "Alpha Correction",IDC_FBA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,255,74,8
+    // Software Renderer Settings:
     GROUPBOX        "Software Renderer Settings",IDC_STATIC,6,291,231,42,BS_CENTER
     CONTROL         "Edge Anti-aliasing (AA1)",IDC_AA1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,303,91,10
     LTEXT           "Rendering threads:",IDC_SWTHREADS_TEXT,124,304,80,8
@@ -356,12 +365,15 @@ BEGIN
         LEFTMARGIN, 6
         RIGHTMARGIN, 242
         TOPMARGIN, 7
+        BOTTOMMARGIN, 244
     END
 
     IDD_OSD, DIALOG
     BEGIN
         LEFTMARGIN, 6
+        RIGHTMARGIN, 242
         TOPMARGIN, 7
+        BOTTOMMARGIN, 244
     END
 
     IDD_CAPTURE, DIALOG
@@ -437,17 +449,6 @@ BEGIN
     END
 END
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// AFX_DIALOG_LAYOUT
-//
-
-IDD_CAPTURE AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
-
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -463,10 +464,8 @@ END
 #include "res/interlace.fx"
 #include "res/merge.fx"
 #include "res/fxaa.fx"
-#include "res/cs.fx"
 #include "res/shadeboost.fx"
 #include "res/tfx.cl"
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
-

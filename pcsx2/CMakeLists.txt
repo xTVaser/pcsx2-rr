@@ -376,14 +376,16 @@ set(pcsx2LuaSources
 	Lua/LuaEngine.cpp
 	Lua/LuaFrame.cpp
 	Lua/LuaFunctions.cpp
-	Lua/LuaManager.cpp)
+	Lua/LuaManager.cpp
+	)
 
 # Lua headers
 set(pcsx2LuaHeaders
 	Lua/LuaEngine.h
 	Lua/LuaFrame.h
 	Lua/LuaFunctions.h
-	Lua/LuaManager.h)
+	Lua/LuaManager.h
+	)
 
 # IPU sources
 set(pcsx2IPUSources
@@ -467,6 +469,30 @@ set(pcsx2RDebugHeaders
 	RDebug/deci2_netmp.h
 	RDebug/deci2_ttyp.h)
 
+# Recording sources
+set(pcsx2RecordingSources
+	Recording/InputRecording.cpp
+	Recording/InputRecordingEditor.cpp
+	Recording/InputRecordingFile.cpp
+	Recording/NewRecordingFrame.cpp
+	Recording/PadData.cpp
+	Recording/RecordingControls.cpp
+	Recording/RecordingInputManager.cpp
+	Recording/VirtualPad.cpp
+)
+
+# Recording headers
+set(pcsx2RecordingHeaders
+	Recording/InputRecording.h
+	Recording/InputRecordingEditor.h
+	Recording/InputRecordingFile.h
+	Recording/NewRecordingFrame.h
+	Recording/PadData.h
+	Recording/RecordingControls.h
+	Recording/RecordingInputManager.h
+	Recording/VirtualPad.h
+)
+
 # System sources
 set(pcsx2SystemSources
 	System/SysCoreThread.cpp
@@ -476,28 +502,6 @@ set(pcsx2SystemSources
 set(pcsx2SystemHeaders
 	System/RecTypes.h
 	System/SysThreads.h)
-
-# Recording sources
-set(pcsx2RecordingSources
-	Recording/InputRecordingEditor.cpp
-	Recording/InputRecording.cpp
-	Recording/NewRecordingFrame.cpp
-	Recording/InputRecordingFile.cpp
-	Recording/RecordingControls.cpp
-	Recording/PadData.cpp
-	Recording/RecordingInputManager.cpp
-	Recording/VirtualPad.cpp)
-
-# Recording headers
-set(pcsx2RecordingHeaders
-	Recording/InputRecordingEditor.h
-	Recording/InputRecording.h
-	Recording/NewRecordingFrame.h
-	Recording/InputRecordingFile.h
-	Recording/RecordingControls.h
-	Recording/PadData.h
-	Recording/RecordingInputManager.h
-	Recording/VirtualPad.h)
 
 # Utilities sources
 set(pcsx2UtilitiesSources
@@ -631,7 +635,6 @@ else()
     set(pcsx2SSources "")
 endif()
 
-
 # common Sources
 set(Common
 	${pcsx2Sources}
@@ -642,16 +645,16 @@ set(Common
 	${pcsx2GuiSources}
 	${pcsx2GuiResources}
 	${pcsx2GuiHeaders}
-	${pcsx2LuaSources}
-	${pcsx2LuaHeaders}
 	${pcsx2IPUSources}
 	${pcsx2IPUHeaders}
+	${pcsx2LuaSources}
+	${pcsx2LuaHeaders}
 	${pcsx2ps2Sources}
 	${pcsx2ps2Headers}
+	${pcsx2RecordingSources}
+	${pcsx2RecordingSources}
 	${pcsx2SystemSources}
 	${pcsx2SystemHeaders}
-	${pcsx2TASSources}
-	${pcsx2TASHeaders}
 	${pcsx2UtilitiesSources}
 	${pcsx2UtilitiesHeaders}
 	${pcsx2x86Sources}
