@@ -294,6 +294,14 @@ static ConsoleLogSource* const ConLogSources[] =
 	NULL,
 	(ConsoleLogSource*)&pxConLog_Event,
 	(ConsoleLogSource*)&pxConLog_Thread,
+	NULL,
+#ifndef DISABLE_RECORDING
+	(ConsoleLogSource*)&SysConsole.recordingConsole,
+	(ConsoleLogSource*)&SysConsole.controlInfo,
+#endif
+#ifndef DISABLE_LUA
+	(ConsoleLogSource*)&SysConsole.luaConsole,
+#endif
 };
 
 // WARNING ConsoleLogSources & ConLogDefaults must have the same size
@@ -306,6 +314,14 @@ static const bool ConLogDefaults[] =
 	false,
 	false,
 	false,
+	false,
+#ifndef DISABLE_RECORDING
+	false,
+	false,
+#endif
+#ifndef DISABLE_LUA
+	false,
+#endif
 	false
 };
 
@@ -336,7 +352,6 @@ void ConLog_LoadSaveSettings( IniInterface& ini )
 
 	ConLogInitialized = true;
 }
-
 
 // --------------------------------------------------------------------------------------
 //  ConsoleLogFrame  (implementations)
@@ -561,6 +576,11 @@ void ConsoleLogFrame::OnLoggingChanged()
 			GetMenuBar()->Check( MenuId_LogSource_Start+i, log->IsActive() );
 		}
 	}
+}
+
+void ConsoleLogFrame::UpdateLogList()
+{
+	OnLoggingChanged();
 }
 
 // Implementation note:  Calls SetColor and Write( text ).  Override those virtuals

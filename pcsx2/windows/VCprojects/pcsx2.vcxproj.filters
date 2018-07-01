@@ -148,6 +148,12 @@
     <Filter Include="AppHost\Debugger">
       <UniqueIdentifier>{7a0a1104-f9ee-4cd1-aaba-f8267eba1658}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lua">
+      <UniqueIdentifier>{c47c56bc-b2a6-4f89-ba05-50aa607908d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Recording">
+      <UniqueIdentifier>{7b917318-5a5e-44c0-8463-1dfab67f3b67}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Utilities\folderdesc.txt">
@@ -871,6 +877,42 @@
     <ClCompile Include="..\..\ps2\Iop\PsxBios.cpp">
       <Filter>System\Ps2\Iop</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Lua\LuaEngine.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Lua\LuaFrame.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Lua\LuaFunctions.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Lua\LuaManager.cpp">
+      <Filter>Lua</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Recording\InputRecordingEditor.cpp">
+      <Filter>Recording</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Recording\InputRecording.cpp">
+      <Filter>Recording</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Recording\NewRecordingFrame.cpp">
+      <Filter>Recording</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Recording\InputRecordingFile.cpp">
+      <Filter>Recording</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Recording\PadData.cpp">
+      <Filter>Recording</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Recording\VirtualPad.cpp">
+      <Filter>Recording</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Recording\RecordingControls.cpp">
+      <Filter>Recording</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Recording\RecordingInputManager.cpp">
+      <Filter>Recording</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Patch.h">
@@ -1310,6 +1352,42 @@
     </ClInclude>
     <ClInclude Include="..\..\Mdec.h">
       <Filter>System\Ps2\Iop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Lua\LuaEngine.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Lua\LuaFrame.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Lua\LuaFunctions.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Lua\LuaManager.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Recording\InputRecordingEditor.h">
+      <Filter>Recording</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Recording\InputRecording.h">
+      <Filter>Recording</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Recording\NewRecordingFrame.h">
+      <Filter>Recording</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Recording\InputRecordingFile.h">
+      <Filter>Recording</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Recording\PadData.h">
+      <Filter>Recording</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Recording\VirtualPad.h">
+      <Filter>Recording</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Recording\RecordingControls.h">
+      <Filter>Recording</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Recording\RecordingInputManager.h">
+      <Filter>Recording</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

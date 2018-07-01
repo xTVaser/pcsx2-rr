@@ -18,6 +18,10 @@
 
 #include "AppCommon.h"
 #include "CpuUsageProvider.h"
+
+#include "wx/dcbuffer.h"
+#include "wx/dcgraph.h"
+
 #include <memory>
 
 
@@ -47,14 +51,18 @@ protected:
 	bool					m_HasFocus;
 	bool					m_coreRunning;
 
+#ifndef DISABLE_RECORDING
+	int						m_frameAdvanceKey;
+#endif
+
 public:
 	GSPanel( wxWindow* parent );
 	virtual ~GSPanel();
 
-	void DoResize();
+	virtual void DoResize();
 	void DoShowMouse();
 	void DirectKeyCommand( wxKeyEvent& evt );
-	void DirectKeyCommand( const KeyAcceleratorCode& kac );
+	virtual void DirectKeyCommand( const KeyAcceleratorCode& kac );
 
 protected:
 	void AppStatusEvent_OnSettingsApplied();
@@ -76,6 +84,48 @@ protected:
 };
 
 
+#ifndef DISABLE_LUA
+// --------------------------------------------------------------------------------------
+//  GSGUIPanel
+//  This panel is intented to be used by Lua scripts
+//  TODO: If anyone knows how to get wxBufferedDC to work without having a black screen...
+// --------------------------------------------------------------------------------------
+class GSGUIPanel : public GSPanel
+{
+	typedef GSPanel _parent;
+
+protected:
+	wxGraphicsContext * m_gc;
+	wxGCDC *m_dc;
+
+public:
+	GSGUIPanel(wxFrame* parent);
+	virtual ~GSGUIPanel() throw();
+
+	void DoResize() override;			// Overload to re-create dc
+	void DirectKeyCommand(const KeyAcceleratorCode& kac) override;
+
+	void BeginFrame();			// Must be called at the beginning of the Lua boundary frame (clears the screen from the previous drawings)
+	void EndFrame();			// Must be called at the end of the Lua boundary frame
+
+	void Clear();				// Erases everything from the screen
+	void DrawLine(int x1, int y1, int x2, int y2, wxColor color);
+	void DrawText(int x, int y, wxString text, wxColor foreground, wxColor background,
+		int fontSize, int family, int style, int weight);
+	void DrawBox(int x1, int y1, int x2, int y2, wxColor line, wxColor background);
+	void DrawRectangle(int x, int y, int width, int height, wxColor line, wxColor background);
+	void DrawPixel(int x, int y, wxColor color);
+	void DrawEllipse(int x, int y, int width, int height, wxColor line, wxColor background);
+	void DrawCircle(int x, int y, int radius, wxColor line, wxColor background);
+
+protected:
+	void OnEraseBackground(wxEraseEvent &event) {}
+	void OnPaint(wxPaintEvent &event);
+
+	void Create();				// Initialises pointers
+};
+#endif
+
 // --------------------------------------------------------------------------------------
 //  GSFrame
 // --------------------------------------------------------------------------------------
@@ -89,6 +139,9 @@ class GSFrame : public wxFrame
 protected:
 	wxTimer					m_timer_UpdateTitle;
 	wxWindowID				m_id_gspanel;
+#ifndef DISABLE_LUA
+	wxWindowID				m_id_gsguipanel;
+#endif
 	wxStatusBar*			m_statusbar;
 
 	CpuUsageProvider		m_CpuUsage;
@@ -98,6 +151,9 @@ public:
 	virtual ~GSFrame() = default;
 
 	GSPanel* GetViewport();
+#ifndef DISABLE_LUA
+	GSGUIPanel* GetGui();
+#endif
 	void SetFocus();
 	bool Show( bool shown=true );
 
