@@ -132,6 +132,7 @@ CRC::Game CRC::m_games[] =
 	{0xB049DD5E, OnePieceGrandBattle, US, 0},
 	{0x5D02CC5B, OnePieceGrandBattle, NoRegion, 0},
 	{0x6F8545DB, ICO, US, 0},
+	{0x48CDF317, ICO, US, 0}, // Demo
 	{0xB01A4C95, ICO, JP, 0},
 	{0x2DF2C1EA, ICO, KO, 0},
 	{0x5C991F4E, ICO, EU, 0},
@@ -163,7 +164,7 @@ CRC::Game CRC::m_games[] =
 	{0xC1640D2C, WildArms5, US, 0},
 	{0x0FCF8FE4, WildArms5, EU, 0},
 	{0x2294D322, WildArms5, JP, 0},
-	{0x565B6170, WildArms5, JP, 0},
+	{0x565B6170, WildArms4, JP, 0}, // Wild Arms: The 4th Detonator
 	{0xBBC3EFFA, WildArms4, US, 0},
 	{0xBBC396EC, WildArms4, US, 0}, // hmm such a small diff in the CRC..
 	{0x7B2DE9CC, WildArms4, EU, 0},
@@ -224,9 +225,6 @@ CRC::Game CRC::m_games[] =
 	{0x9FEE3466, GodOfWar2, CH, 0}, // cutie comment
 	{0x5D482F18, JackieChanAdv, EU, 0},
 	{0xAC4DFD5A, JackieChanAdv, EU, 0},
-	{0xF0A6D880, HarvestMoon, US, 0},
-	{0x9536E111, NamcoXCapcom, JP, 0},
-	{0x75C01A04, NamcoXCapcom, US, 0}, // same CRC as another JP disc
 	{0x95CC86EF, GiTS, US, 0}, // same CRC also reported as EU
 	{0xA5768F53, GiTS, JP, 0},
 	{0xA3643EB1, GiTS, KO, 0},
@@ -303,6 +301,7 @@ CRC::Game CRC::m_games[] =
 	{0x8BC95883, Sly3, US, 0},
 	{0x3130A4D3, Sly3, US, 0}, // E3 Demo
 	{0x35CCFA60, Sly3, US, 0}, // Regular Demo
+	{0x8C146034, Sly3, EU, 0}, // Demo
 	{0x8164C614, Sly3, EU, 0},
 	{0xA8CC1583, Sly3, KO, 0},
 	{0x518DD841, Sly2, KO, 0},
@@ -331,16 +330,6 @@ CRC::Game CRC::m_games[] =
 	{0xE169BAF8, RedDeadRevolver, US, 0},
 	{0xE2E67E23, RedDeadRevolver, EU, 0},
 	{0xF56C7948, HeavyMetalThunder, JP, 0},
-	{0x2498951B, SilentHill3, US, 0},
-	{0x5088CCDB, SilentHill3, EU, 0},
-	{0x8CFE667F, SilentHill3, JP, 0},
-	{0xC6CBDE91, SilentHill3, KO, 0},
-	{0x6B149273, SilentHill2, EU, 0},
-	{0x6BBD4932, SilentHill2, EU, 0}, // Director's Cut
-	{0x8E8E384B, SilentHill2, US, 0},
-	{0xFE06A030, SilentHill2, US, 0}, // greatest hits
-	{0xE36E16C9, SilentHill2, JP, 0},
-	{0x380D6782, SilentHill2, JP, 0}, // Saigo no uta
 	{0x6DF62AEA, BleachBladeBattlers, JP, 0},
 	{0x6EB71AB0, BleachBladeBattlers, JP, 0}, // 2nd
 	{0x3A446111, CastlevaniaCoD, US, 0},
@@ -355,7 +344,6 @@ CRC::Game CRC::m_games[] =
 	{0xED4BF0D3, FinalFightStreetwise, US, 0}, // cutie comment
 	{0x73C560BA, FinalFightStreetwise, EU, 0},
 	{0xCBB87BF9, EvangelionJo, JP, 0}, // cutie comment
-	{0x278A91FD, CaptainTsubasa, JP, 0}, // cutie comment
 	{0xC5B75C7C, Oneechanbara2Special, JP, 0}, // cutie comment
 	{0xC0659AD1, NarutimateAccel, JP, 0}, // cutie comment
 	{0xF3D9DFBE, NarutimateAccel, JP, 0},
@@ -373,7 +361,9 @@ CRC::Game CRC::m_games[] =
 	{0xB1995E29, ShadowofRome, EU, 0}, // cutie comment
 	{0x958DCA28, ShadowofRome, EU, 0},
 	{0x57818AF6, ShadowofRome, US, 0},
+	{0x1E210E60, ShadowofRome, US, 0}, // Demo
 	{0xF21EE6E0, CrashNburn, US, 0},
+	{0x54A548B4, CrashNburn, EU, 0},
 	{0x694A998E, TombRaiderUnderworld, JP, 0}, // cutie comment
 	{0x8E214549, TombRaiderUnderworld, EU, 0},
 	{0x618769D6, TombRaiderUnderworld, US, 0},
@@ -383,14 +373,10 @@ CRC::Game CRC::m_games[] =
 	{0xBC8B3F50, TombRaiderLegend, US, 0}, // cutie comment
 	{0x365172A0, TombRaiderLegend, JP, 0},
 	{0x05177ECE, TombRaiderLegend, EU, 0},
-	{0x08FFF00D, SSX3, JP, 0}, // cutie comment
-	{0xCE942B2A, SSX3, EU, 0},
 	{0x5C891FF1, Black, US, 0},
 	{0xCAA04879, Black, EU, 0},
 	{0xADDFF505, Black, EU, 0},
 	{0xB3A9F9ED, Black, JP, 0},
-	{0x7838882F, VF4, JP, 0},
-	{0xEA131B57, VF4, US, 0},
 	{0x879CDA5E, StarWarsForceUnleashed, US, 0},
 	{0x137C792E, StarWarsForceUnleashed, US, 0},
 	{0xDAF2145C, StarWarsForceUnleashed, EU, 0},
@@ -448,22 +434,12 @@ CRC::Game CRC::m_games[] =
 	{0x9000252A, SkyGunner, JP, 0},
 	{0x93092623, SkyGunner, JP, 0},
 	{0xA9461CB2, SkyGunner, US, 0},
+	{0xC71DE999, SkyGunner, US, 0}, // Regular Demo
+	{0xAADF3287, SkyGunner, US, 0}, // Trade Demo
 	{0xB799A60C, SkyGunner, NoRegion, 0},
-	{0x6848699B, JamesBondEverythingOrNothing, US, 0},
-	{0x5FFFDE40, JamesBondEverythingOrNothing, EU, 0},
-	{0xF7FB054C, Siren, CH, 0}, // cutie comment
-	{0x47C2C34A, Siren, KO, 0},
-	{0xB083CCC2, Siren, EU, 0}, // Spanish
 	{0x90F4B057, ZettaiZetsumeiToshi2, CH, 0},
 	{0xC988ECBB, ZettaiZetsumeiToshi2, JP, 0},
 	{0x2905C5C6, ZettaiZetsumeiToshi2, US, 0}, // Raw Danger!
-	{0x81CA29BE, VF4EVO, EU, 0},
-	{0xC9DEF513, VF4EVO, US, 0},
-	{0x7B402694, VF4EVO, KO, 0},
-	{0xAB01411F, VF4EVO, JP, 0},
-	{0xE11DFA28, Dororo, CH, 0},
-	{0x89954774, Dororo, US, 0},
-	{0xFDA2F2DF, Dororo, KO, 0},
 	{0xBD17248E, ShinOnimusha, JP, 0},
 	{0xBE17248E, ShinOnimusha, JP, 0},
 	{0xB817248E, ShinOnimusha, JP, 0},
@@ -473,6 +449,8 @@ CRC::Game CRC::m_games[] =
 	{0xE21404E2, GetaWay, US, 0},
 	{0x458485EF, GetaWay, EU, 0},
 	{0xE78971DF, GetaWayBlackMonday, US, 0},
+	{0x342D97FA, GetaWayBlackMonday, US, 0}, // Demo
+	{0xE8C0AD1A, GetaWayBlackMonday, JP, 0},
 	{0x09C3DF79, GetaWayBlackMonday, EU, 0},
 	{0x1130BF23, SakuraTaisen, CH, 0}, // cutie comment
 	{0x4FAE8B83, SakuraTaisen, KO, 0},
@@ -501,19 +479,13 @@ CRC::Game CRC::m_games[] =
 	{0xF7F181C3, DeathByDegreesTekkenNinaWilliams, CH, 0}, // cutie comment
 	{0xF088FA5B, DeathByDegreesTekkenNinaWilliams, KO, 0},
 	{0x59683BB0, DeathByDegreesTekkenNinaWilliams, EU, 0},
-	{0x449E1F6B, HummerBadlands, US, 0},
-	{0xAEA1B3AD, SengokuBasara, JP, 0},
 	{0x5B659BED, Grandia3, JP, 0},
 	{0x5B657DAD, Grandia3, US, 0},
 	{0x830B6FB1, TalesofSymphonia, JP, 0},
-	{0x8409FD51, TalesofDestiny, JP, 0}, // cutie comment
-	{0xA90CD846, TalesofDestiny, JP, 0},
-	{0xC4D0FACC, SDGundamGGeneration, JP, 0}, // cutie comment
-	{0xBBDE6926, SDGundamGGeneration, JP, 0}, // cutie comment
-	{0x49D60A00, SDGundamGGeneration, JP, 0}, // NEO
 	{0x86C57952, SoulCalibur2, JP, 0},
 	{0x83AFB38A, SoulCalibur2, KO, 0},
 	{0xE1B01308, SoulCalibur2, US, 0},
+	{0x4B66F38C, SoulCalibur2, US, 0}, // Demo
 	{0x632A5116, SoulCalibur2, EU, 0},
 	{0xFB8554A0, SoulCalibur3, JP, 0},
 	{0x7C7B9E71, SoulCalibur3, JP, 0},
@@ -523,7 +495,6 @@ CRC::Game CRC::m_games[] =
 	{0xBC5480A3, SoulCalibur3, EU, 0},
 	{0x37B99B14, SoulCalibur3, KO, 0},
 	{0xFC0F8A5B, Simple2000Vol114, JP, 0},
-	{0x0098F740, SeintoSeiya, NoRegion, 0}, // cutie comment
 	{0xBDD9BAAD, UrbanReign, US, 0}, // cutie comment
 	{0xAE4BEBD3, UrbanReign, EU, 0},
 	{0x48AC09BC, SteambotChronicles, EU, 0},
@@ -533,8 +504,6 @@ CRC::Game CRC::m_games[] =
 	{0XE8F7BAB6, SuperManReturns, EU, 0},
 	{0x06A7506A, SacredBlaze, JP, 0},
 	{0x4CE7FB04, ItadakiStreet, JP, 0},
-	{0x9C712FF0, Jak1, EU, 0},
-	{0x472E7699, Jak1, US, 0},
 	{0x2479F4A9, Jak2, EU, 0},
 	{0x9184AAF1, Jak2, US, 0},
 	{0x12804727, Jak3, EU, 0},
@@ -570,14 +539,20 @@ CRC::Game CRC::m_games[] =
 	{0x6D8B4CD1, SoulReaver2, EU, 0},
 	{0x728AB07C, LegacyOfKainDefiance, US, 0},
 	{0xBCAD1E8A, LegacyOfKainDefiance, EU, 0},
+	{0x28D09BF9, NicktoonsUnite, US, 0},
+	{0xF25266C4, NicktoonsUnite, EU, 0}, // Nickelodeon SpongeBob SquarePants And Friends Unite
 	{0xCE4933D0, RatchetAndClank, US, 0},
+	{0x6F191506, RatchetAndClank, US, 0}, // E3 Demo
+	{0x81CBFEA2, RatchetAndClank, US, 0}, // EB Games Demo
 	{0x56A35F77, RatchetAndClank, JP, 0},
 	{0x76F724A3, RatchetAndClank, EU, 0},
 	{0xB3A71D10, RatchetAndClank2, US, 0}, // Going Commando
 	{0x38996035, RatchetAndClank2, US, 0},
+	{0xDF6F94A1, RatchetAndClank2, US, 0}, // Demo - Going Commando & Jak II
 	{0x8CAA5F16, RatchetAndClank2, JP, 0}, // Gagaga! Ginga no Commando-ssu
 	{0x2F486E6F, RatchetAndClank2, EU, 0},
 	{0x45FE0CC4, RatchetAndClank3, US, 0}, // Up Your Arsenal
+	{0x2A12175A, RatchetAndClank3, US, 0}, // Regular Demo
 	{0x64DC6000, RatchetAndClank3, JP, 0}, // Totsugeki! Galactic Rangers
 	{0x17125698, RatchetAndClank3, EU, 0},
 	{0x9BFBCD42, RatchetAndClank4, US, 0}, // Deadlocked

@@ -37,14 +37,19 @@ CRC::Region g_crc_region = CRC::NoRegion;
 // (note: could potentially work with latest OpenGL)
 ////////////////////////////////////////////////////////////////////////////////
 
-// Channel effect not properly supported yet
-bool GSC_GiTS(const GSFrameInfo& fi, int& skip)
+bool GSC_BigMuthaTruckers(const GSFrameInfo& fi, int& skip)
 {
 	if(skip == 0)
 	{
-		if(fi.TME && fi.FBP == 0x01400 && fi.FPSM == PSM_PSMCT16 && fi.TBP0 == 0x02e40 && fi.TPSM == PSM_PSMCT16)
+		if(fi.TME && (fi.FBP == 0x00000 || fi.FBP == 0x00a00) && fi.FPSM == fi.TPSM && fi.TPSM == PSM_PSMCT16)
 		{
-			skip = 1315;
+			// A real mess.
+			// Half screen bottom and vertical stripes issues.
+			//
+			// HDR colclip/conclip not supported,
+			// Depth target lookup,
+			// Texture shuffle and SW emulated fbmask.
+			skip = 3;
 		}
 	}
 
@@ -123,6 +128,20 @@ bool GSC_DemonStone(const GSFrameInfo& fi, int& skip)
 		if(Dx_only && fi.TME && (fi.FBP == 0x00000 || fi.FBP == 0x01000) && fi.FPSM == PSM_PSMCT32)
 		{
 			skip = 2;
+		}
+	}
+
+	return true;
+}
+
+// Channel effect not properly supported yet
+bool GSC_GiTS(const GSFrameInfo& fi, int& skip)
+{
+	if(skip == 0)
+	{
+		if(fi.TME && fi.FBP == 0x01400 && fi.FPSM == PSM_PSMCT16 && fi.TBP0 == 0x02e40 && fi.TPSM == PSM_PSMCT16)
+		{
+			skip = 1315;
 		}
 	}
 
@@ -329,18 +348,6 @@ bool GSC_EvangelionJo(const GSFrameInfo& fi, int& skip)
 	return true;
 }
 
-bool GSC_CaptainTsubasa(const GSFrameInfo& fi, int& skip)
-{
-	if(skip == 0)
-	{
-		if(fi.TME && fi.FBP == 0x1C00 && !fi.FBMSK)
-		{
-			skip = 1;
-		}
-	}
-	return true;
-}
-
 bool GSC_Oneechanbara2Special(const GSFrameInfo& fi, int& skip)
 {
 	if(skip == 0)
@@ -528,38 +535,18 @@ bool GSC_RedDeadRevolver(const GSFrameInfo& fi, int& skip)
 	return true;
 }
 
-bool GSC_HeavyMetalThunder(const GSFrameInfo& fi, int& skip)
-{
-	if(skip == 0)
-	{
-		if(fi.TME && fi.FBP == 0x03100 && fi.FPSM == fi.TPSM && fi.TBP0 == 0x01c00 && fi.TPSM == PSM_PSMZ32)
-		{
-			skip = 100;
-		}
-	}
-	else
-	{
-		if(fi.TME && fi.FBP == 0x00e00 && fi.FPSM == fi.TPSM && fi.TBP0 == 0x02a00 && fi.TPSM == PSM_PSMCT32)
-		{
-			skip = 1;
-		}
-	}
-
-	return true;
-}
-
 bool GSC_Tekken5(const GSFrameInfo& fi, int& skip)
 {
 	if(skip == 0)
 	{
-		if(Aggressive && fi.TME && (fi.FBP == 0x02d60 || fi.FBP == 0x02d80 || fi.FBP == 0x02ea0 || fi.FBP == 0x03620) && fi.FPSM == fi.TPSM && fi.TBP0 == 0x00000 && fi.TPSM == PSM_PSMCT32)
+		if(Aggressive && fi.TME && (fi.FBP == 0x02d60 || fi.FBP == 0x02d80 || fi.FBP == 0x02ea0 || fi.FBP == 0x03620 || fi.FBP == 0x03640) && fi.FPSM == fi.TPSM && fi.TBP0 == 0x00000 && fi.TPSM == PSM_PSMCT32)
 		{
 			// Fixes/removes ghosting/blur effect and white lines appearing in stages: Moonfit Wilderness, Acid Rain - caused by upscaling.
 			// Downside is it also removes the channel effect which is fixed on OpenGL.
 			// Let's enable this hack for Aggressive only since it's an upscaling issue for both renders.
 			skip = 95;
 		}
-		else if(fi.TME && (fi.FBP == 0x02bc0 || fi.FBP == 0x02be0 || fi.FBP == 0x02d00) && fi.FPSM == fi.TPSM && fi.TBP0 == 0x00000 && fi.TPSM == PSM_PSMCT32)
+		else if(fi.TME && (fi.FBP == 0x02bc0 || fi.FBP == 0x02be0 || fi.FBP == 0x02d00 || fi.FBP == 0x03480 || fi.FBP == 0x034a0) && fi.FPSM == fi.TPSM && fi.TBP0 == 0x00000 && fi.TPSM == PSM_PSMCT32)
 		{
 			// The moving display effect(flames) is not emulated properly in the entire screen so let's remove the effect in the stage: Burning Temple. Related to half screen bottom issue.
 			// Fixes black lines in the stage: Burning Temple - caused by upscaling. Note the black lines can also be fixed with Merge Sprite hack.
@@ -949,6 +936,28 @@ bool GSC_SakuraWarsSoLongMyLove(const GSFrameInfo& fi, int& skip)
 	return true;
 }
 
+bool GSC_SonicUnleashed(const GSFrameInfo& fi, int& skip)
+{
+	if(skip == 0)
+	{
+		if(fi.TME && fi.FPSM == PSM_PSMCT16S && fi.TBP0 == 0x00000 && fi.TPSM == PSM_PSMCT16)
+		{
+			// Improper Texture shuffle emulation.
+			// Half Screen bottom issue.
+			skip = 1000; // shadow
+		}
+	}
+	else
+	{
+		if(fi.TME && fi.FBP == 0x00000 && fi.FPSM == PSM_PSMCT16 && fi.TPSM == PSM_PSMCT16S)
+		{
+			skip = 2;
+		}
+	}
+
+	return true;
+}
+
 bool GSC_FightingBeautyWulong(const GSFrameInfo& fi, int& skip)
 {
 	if(skip == 0)
@@ -1006,19 +1015,6 @@ bool GSC_UltramanFightingEvolution(const GSFrameInfo& fi, int& skip)
 	return true;
 }
 
-bool GSC_HummerBadlands(const GSFrameInfo& fi, int& skip)
-{
-	if(skip == 0)
-	{
-		if(fi.TME && (fi.FBP ==0x0a00) && (fi.TBP0 ==0x03200 || fi.TBP0==0x3700) && fi.FPSM == fi.TPSM && fi.TPSM == PSM_PSMCT32)
-		{
-			skip = 1;
-		}
-	}
-
-	return true;
-}
-
 bool GSC_TalesofSymphonia(const GSFrameInfo& fi, int& skip)
 {
 	if(skip == 0)
@@ -1063,6 +1059,19 @@ bool GSC_UrbanReign(const GSFrameInfo& fi, int& skip)
 			skip = 1;
 		}
 	}
+	return true;
+}
+
+bool GSC_SkyGunner(const GSFrameInfo& fi, int& skip)
+{
+	if(skip == 0)
+	{
+		if(!fi.TME && !(fi.FBP == 0x0 || fi.FBP == 0x00800 || fi.FBP == 0x008c0 || fi.FBP == 0x03e00) && fi.FPSM == PSM_PSMCT32 && (fi.TBP0 == 0x0 || fi.TBP0 == 0x01800) && fi.TPSM == PSM_PSMCT32)
+		{
+			skip = 1; // Huge Vram usage
+		}
+	}
+
 	return true;
 }
 
@@ -1184,6 +1193,26 @@ bool GSC_HauntingGround(const GSFrameInfo& fi, int& skip)
 	return true;
 }
 
+bool GSC_HeavyMetalThunder(const GSFrameInfo& fi, int& skip)
+{
+	if(skip == 0)
+	{
+		if(fi.TME && fi.FBP == 0x03100 && fi.FPSM == fi.TPSM && fi.TBP0 == 0x01c00 && fi.TPSM == PSM_PSMZ32)
+		{
+			skip = 100;
+		}
+	}
+	else
+	{
+		if(fi.TME && fi.FBP == 0x00e00 && fi.FPSM == fi.TPSM && fi.TBP0 == 0x02a00 && fi.TPSM == PSM_PSMCT32)
+		{
+			skip = 1;
+		}
+	}
+
+	return true;
+}
+
 bool GSC_GetaWay(const GSFrameInfo& fi, int& skip)
 {
 	if(skip == 0)
@@ -1282,20 +1311,6 @@ bool GSC_ICO(const GSFrameInfo& fi, int& skip)
 		if(fi.TME && fi.TBP0 == 0x00800 && fi.TPSM == PSM_PSMCT32)
 		{
 			skip = 0;
-		}
-	}
-
-	return true;
-}
-
-bool GSC_SkyGunner(const GSFrameInfo& fi, int& skip)
-{
-	if(skip == 0)
-	{
-
-		if(!fi.TME && !(fi.FBP == 0x0 || fi.FBP == 0x00800 || fi.FBP == 0x008c0 || fi.FBP == 0x03e00) && fi.FPSM == PSM_PSMCT32 && (fi.TBP0 == 0x0 || fi.TBP0 == 0x01800) && fi.TPSM == PSM_PSMCT32)
-		{
-			skip = 1; //Huge Vram usage
 		}
 	}
 
@@ -1525,26 +1540,6 @@ bool GSC_GodOfWar2(const GSFrameInfo& fi, int& skip)
 	return true;
 }
 
-bool GSC_SonicUnleashed(const GSFrameInfo& fi, int& skip)
-{
-	if(skip == 0)
-	{
-		if(fi.TME && fi.FPSM == PSM_PSMCT16S && fi.TBP0 == 0x00000 && fi.TPSM == PSM_PSMCT16)
-		{
-			skip = 1000; // shadow
-		}
-	}
-	else
-	{
-		if(fi.TME && fi.FBP == 0x00000 && fi.FPSM == PSM_PSMCT16 && fi.TPSM == PSM_PSMCT16S)
-		{
-			skip = 2;
-		}
-	}
-
-	return true;
-}
-
 bool GSC_StarOcean3(const GSFrameInfo& fi, int& skip)
 {
 	// The game emulate a stencil buffer with the alpha channel of the RT
@@ -1720,19 +1715,6 @@ bool GSC_Sly2(const GSFrameInfo& fi, int& skip)
 	return true;
 }
 
-bool GSC_BigMuthaTruckers(const GSFrameInfo& fi, int& skip)
-{
-	if(skip == 0)
-	{
-		if(fi.TME && (fi.FBP == 0x00000 || fi.FBP == 0x00a00) && fi.FPSM == fi.TPSM && fi.TPSM == PSM_PSMCT16)
-		{
-			skip = 3;
-		}
-	}
-
-	return true;
-}
-
 bool GSC_LordOfTheRingsTwoTowers(const GSFrameInfo& fi, int& skip)
 {
 	if(skip == 0)
@@ -1830,7 +1812,7 @@ bool GSC_SpyroNewBeginning(const GSFrameInfo& fi, int& skip)
 {
 	if(skip == 0)
 	{
-		if(fi.TME && fi.FBP == fi.TBP0 && fi.FPSM == fi.TPSM && fi.TBP0 == 0x034a0 && fi.TPSM == PSM_PSMCT16)
+		if(fi.TME && fi.FBP == fi.TBP0 && fi.FPSM == fi.TPSM && (fi.TBP0 == 0x034a0 || fi.TBP0 == 0x03020) && fi.TPSM == PSM_PSMCT16)
 		{
 			skip = 2;
 		}
@@ -1843,7 +1825,7 @@ bool GSC_SpyroEternalNight(const GSFrameInfo& fi, int& skip)
 {
 	if(skip == 0)
 	{
-		if(fi.TME && fi.FBP == fi.TBP0 && fi.FPSM == fi.TPSM && (fi.TBP0 == 0x034a0 ||fi.TBP0 == 0x035a0 || fi.TBP0 == 0x036e0) && fi.TPSM == PSM_PSMCT16)
+		if(fi.TME && fi.FBP == fi.TBP0 && fi.FPSM == fi.TPSM && (fi.TBP0 == 0x034a0 || fi.TBP0 == 0x035a0 || fi.TBP0 == 0x036e0) && fi.TPSM == PSM_PSMCT16)
 		{
 			skip = 2;
 		}
@@ -2217,23 +2199,20 @@ void GSState::SetupCrcHack()
 
 	if (Dx_and_OGL) {
 		lut[CRC::AceCombat4] = GSC_AceCombat4;
+		lut[CRC::BigMuthaTruckers] = GSC_BigMuthaTruckers;
 		lut[CRC::BlackHawkDown] = GSC_BlackHawkDown;
 		lut[CRC::BurnoutDominator] = GSC_Burnout;
 		lut[CRC::BurnoutRevenge] = GSC_Burnout;
 		lut[CRC::BurnoutTakedown] = GSC_Burnout;
-		lut[CRC::CaptainTsubasa] = GSC_CaptainTsubasa;
 		lut[CRC::CrashBandicootWoC] = GSC_CrashBandicootWoC;
 		lut[CRC::DevilMayCry3] = GSC_DevilMayCry3;
 		lut[CRC::EvangelionJo] = GSC_EvangelionJo;
 		lut[CRC::FightingBeautyWulong] = GSC_FightingBeautyWulong;
 		lut[CRC::Genji] = GSC_Genji;
 		lut[CRC::GodHand] = GSC_GodHand;
-		lut[CRC::HeavyMetalThunder] = GSC_HeavyMetalThunder;
-		lut[CRC::HummerBadlands] = GSC_HummerBadlands;
 		lut[CRC::IkkiTousen] = GSC_IkkiTousen;
 		lut[CRC::KnightsOfTheTemple2] = GSC_KnightsOfTheTemple2;
 		lut[CRC::Kunoichi] = GSC_Kunoichi;
-		lut[CRC::LordOfTheRingsThirdAge] = GSC_LordOfTheRingsThirdAge;
 		lut[CRC::Manhunt2] = GSC_Manhunt2;
 		lut[CRC::MidnightClub3] = GSC_MidnightClub3;
 		lut[CRC::NarutimateAccel] = GSC_NarutimateAccel;
@@ -2266,12 +2245,17 @@ void GSState::SetupCrcHack()
 
 		// Channel Effect
 		lut[CRC::GiTS] = GSC_GiTS;
+		lut[CRC::SkyGunner] = GSC_SkyGunner; // Maybe not a channel effect
 		lut[CRC::SteambotChronicles] = GSC_SteambotChronicles;
+
+		// Colclip not supported
+		lut[CRC::LordOfTheRingsThirdAge] = GSC_LordOfTheRingsThirdAge;
 
 		// Half Screen bottom issue
 		lut[CRC::DBZBT2] = GSC_DBZBT2;
 		lut[CRC::DBZBT3] = GSC_DBZBT3;
 		lut[CRC::DemonStone] = GSC_DemonStone;
+		lut[CRC::SonicUnleashed] = GSC_SonicUnleashed; // + Texture shuffle
 		lut[CRC::Tekken5] = GSC_Tekken5;
 
 		// These games emulate a stencil buffer with the alpha channel of the RT (too slow to move to DX only)
@@ -2292,14 +2276,15 @@ void GSState::SetupCrcHack()
 		lut[CRC::SoTC] = GSC_SoTC;
 	}
 
-	// Hack that were fixed on openGL
+	// Hacks that were fixed on OpenGL
 	if (Dx_only) {
 		// Depth
 		lut[CRC::Bully] = GSC_Bully;
 		lut[CRC::BullyCC] = GSC_BullyCC;
-		lut[CRC::FinalFightStreetwise] = GSC_FinalFightStreetwise; // + blending
+		lut[CRC::FinalFightStreetwise] = GSC_FinalFightStreetwise; // + Blending
 		lut[CRC::FrontMission5] = GSC_FrontMission5;
 		lut[CRC::GodOfWar2] = GSC_GodOfWar2;
+		lut[CRC::HeavyMetalThunder] = GSC_HeavyMetalThunder;
 		lut[CRC::ICO] = GSC_ICO;
 		lut[CRC::LordOfTheRingsTwoTowers] = GSC_LordOfTheRingsTwoTowers;
 		lut[CRC::Okami] = GSC_Okami;
@@ -2314,7 +2299,6 @@ void GSState::SetupCrcHack()
 		lut[CRC::HauntingGround] = GSC_HauntingGround;
 
 		// Not tested but must be fixed with texture shuffle
-		lut[CRC::BigMuthaTruckers] = GSC_BigMuthaTruckers;
 		lut[CRC::CrashNburn] = GSC_CrashNburn; // seem to be a basic depth effect
 		lut[CRC::EternalPoison] = GSC_EternalPoison;
 		lut[CRC::LegoBatman] = GSC_LegoBatman;
@@ -2322,7 +2306,6 @@ void GSState::SetupCrcHack()
 		lut[CRC::OnePieceGrandBattle] = GSC_OnePieceGrandBattle;
 		lut[CRC::SpyroEternalNight] = GSC_SpyroEternalNight;
 		lut[CRC::SpyroNewBeginning] = GSC_SpyroNewBeginning;
-		lut[CRC::SonicUnleashed] = GSC_SonicUnleashed;
 
 		// Those games might requires accurate fbmask
 		lut[CRC::Sly2] = GSC_Sly2;
@@ -2343,7 +2326,6 @@ void GSState::SetupCrcHack()
 		// Channel Effect
 		lut[CRC::DeathByDegreesTekkenNinaWilliams] = GSC_DeathByDegreesTekkenNinaWilliams;
 		lut[CRC::MetalGearSolid3] = GSC_MetalGearSolid3; // + accurate blending
-		lut[CRC::SkyGunner] = GSC_SkyGunner;
 		lut[CRC::StarWarsBattlefront2] = GSC_StarWarsBattlefront2;
 		lut[CRC::StarWarsBattlefront] = GSC_StarWarsBattlefront;
 
