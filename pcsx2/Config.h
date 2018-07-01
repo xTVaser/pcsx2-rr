@@ -454,8 +454,12 @@ struct Pcsx2Config
 			EnablePatches		:1,		// enables patch detection and application
 			EnableCheats		:1,		// enables cheat detection and application
 			EnableWideScreenPatches		:1,
-			EnableRecordingTools		:1,
-			EnableLuaTools				:1,
+#ifndef DISABLE_RECORDING
+			EnableRecordingTools : 1,
+#endif
+#ifndef DISABLE_LUA
+			EnableLuaTools : 1,
+#endif
 		// when enabled uses BOOT2 injection, skipping sony bios splashes
 			UseBOOT2Injection	:1,
 			BackupSavestate		:1,

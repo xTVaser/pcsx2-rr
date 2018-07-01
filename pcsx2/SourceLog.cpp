@@ -114,22 +114,26 @@ TLD_iopConsole = {
 TLD_deci2 = {
 	L"DECI2",		L"DECI&2 Console",
 	pxDt("Shows DECI2 debugging logs (EE processor)")
-},
+}
 
-TLD_recordingConsole = {
+#ifndef DISABLE_RECORDING
+,TLD_recordingConsole = {
 	L"Recording",			L"Recording Console",
 	pxDt("Shows recording related logs and information")
-},
-
-TLD_luaConsole = {
-	L"Lua",			L"Lua Console",
-	pxDt("Shows lua script related logs and information")
 },
 
 TLD_controlInfo = {
 	L"Controller Info",			L"Controller Info",
 	pxDt("Shows detailed controller input values for port 1, every frame")
-};
+}
+#endif
+#ifndef DISABLE_LUA
+,TLD_luaConsole = {
+	L"Lua",			L"Lua Console",
+	pxDt("Shows lua script related logs and information")
+}
+#endif
+; // End init of TraceLogDescriptors
 
 SysConsoleLogPack::SysConsoleLogPack()
 	: ELF				(&TLD_ELF, Color_Gray)
@@ -137,9 +141,13 @@ SysConsoleLogPack::SysConsoleLogPack()
 	, eeConsole			(&TLD_eeConsole)
 	, iopConsole		(&TLD_iopConsole)
 	, deci2				(&TLD_deci2)
-	, recordingConsole	(&TLD_recordingConsole)
-	, luaConsole		(&TLD_luaConsole)
-	, controlInfo		(&TLD_controlInfo)
+#ifndef DISABLE_RECORDING
+	, recordingConsole(&TLD_recordingConsole)
+	, controlInfo(&TLD_controlInfo)
+#endif
+#ifndef DISABLE_LUA
+	, luaConsole(&TLD_luaConsole)
+#endif
 {
 }
 

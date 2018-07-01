@@ -30,9 +30,13 @@
 
 #include "Utilities/IniInterface.h"
 
-#include "Lua/LuaFrame.h"
-#include "Recording/InputRecording.h"
-#include "Recording/VirtualPad.h"
+#ifndef DISABLE_RECORDING
+#	include "Recording/InputRecording.h"
+#	include "Recording/VirtualPad.h"
+#endif
+#ifndef DISABLE_LUA
+#	include "Lua/LuaFrame.h"
+#endif
 
 using namespace Dialogs;
 
@@ -497,7 +501,8 @@ void MainEmuFrame::Menu_EnableWideScreenPatches_Click( wxCommandEvent& )
 	AppSaveSettings();
 }
 
-void MainEmuFrame::Menu_EnableRecordingTools_Click( wxCommandEvent& )
+#ifndef DISABLE_RECORDING
+void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent&)
 {
 	bool checked = GetMenuBar()->IsChecked(MenuId_EnableRecordingTools);
 	// Confirm with User
@@ -527,8 +532,10 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click( wxCommandEvent& )
 	AppApplySettings();
 	AppSaveSettings();
 }
+#endif
 
-void MainEmuFrame::Menu_EnableLuaTools_Click( wxCommandEvent& )
+#ifndef DISABLE_LUA
+void MainEmuFrame::Menu_EnableLuaTools_Click(wxCommandEvent&)
 {
 	bool checked = GetMenuBar()->IsChecked(MenuId_EnableLuaTools);
 	// Confirm with User
@@ -558,6 +565,7 @@ void MainEmuFrame::Menu_EnableLuaTools_Click( wxCommandEvent& )
 	AppApplySettings();
 	AppSaveSettings();
 }
+#endif
 
 void MainEmuFrame::Menu_EnableHostFs_Click( wxCommandEvent& )
 {
@@ -595,7 +603,7 @@ void MainEmuFrame::Menu_SaveStates_Click(wxCommandEvent &event)
 	States_FreezeCurrentSlot();
 }
 
-void MainEmuFrame::Menu_LoadStateOther_Click(wxCommandEvent &event)
+void MainEmuFrame::Menu_LoadStateFromFile_Click(wxCommandEvent &event)
 {
 	wxFileDialog loadStateDialog(this, _("Load State"), L"", L"",
 		L"Savestate files (*.p2s)|*.p2s", wxFD_OPEN);
@@ -609,7 +617,7 @@ void MainEmuFrame::Menu_LoadStateOther_Click(wxCommandEvent &event)
 	StateCopy_LoadFromFile(path);
 }
 
-void MainEmuFrame::Menu_SaveStateOther_Click(wxCommandEvent &event)
+void MainEmuFrame::Menu_SaveStateToFile_Click(wxCommandEvent &event)
 {
 	wxFileDialog saveStateDialog(this, _("Save State"), L"", L"",
 		L"Savestate files (*.p2s)|*.p2s", wxFD_OPEN);
@@ -809,6 +817,7 @@ void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_As_Click(wxCommandEvent &e
 	}
 }
 
+#ifndef DISABLE_RECORDING
 void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 {
 	g_InputRecording.Stop();
@@ -916,10 +925,13 @@ void MainEmuFrame::Menu_Recording_ConvertLegacy_Click(wxCommandEvent &event)
 	wxString path = openFileDialog.GetPath();
 	g_InputRecordingData.ConvertLegacy(path);
 }
+#endif
 
+#ifndef DISABLE_LUA
 void MainEmuFrame::Menu_Lua_Open_Click(wxCommandEvent &event)
 {
 	LuaFrame* dlg = wxGetApp().GetLuaFramePtr();
 	if (dlg)
 		dlg->Show();
 }
+#endif

@@ -51,7 +51,9 @@ protected:
 	bool					m_HasFocus;
 	bool					m_coreRunning;
 
+#ifndef DISABLE_RECORDING
 	int						m_frameAdvanceKey;
+#endif
 
 public:
 	GSPanel( wxWindow* parent );
@@ -82,6 +84,7 @@ protected:
 };
 
 
+#ifndef DISABLE_LUA
 // --------------------------------------------------------------------------------------
 //  GSGUIPanel
 //  This panel is intented to be used by Lua scripts
@@ -92,7 +95,7 @@ class GSGUIPanel : public GSPanel
 	typedef GSPanel _parent;
 
 protected:
-	wxGraphicsContext *m_gc;
+	wxGraphicsContext * m_gc;
 	wxGCDC *m_dc;
 
 public:
@@ -121,7 +124,7 @@ protected:
 
 	void Create();				// Initialises pointers
 };
-
+#endif
 
 // --------------------------------------------------------------------------------------
 //  GSFrame
@@ -136,7 +139,9 @@ class GSFrame : public wxFrame
 protected:
 	wxTimer					m_timer_UpdateTitle;
 	wxWindowID				m_id_gspanel;
+#ifndef DISABLE_LUA
 	wxWindowID				m_id_gsguipanel;
+#endif
 	wxStatusBar*			m_statusbar;
 
 	CpuUsageProvider		m_CpuUsage;
@@ -146,7 +151,9 @@ public:
 	virtual ~GSFrame() = default;
 
 	GSPanel* GetViewport();
+#ifndef DISABLE_LUA
 	GSGUIPanel* GetGui();
+#endif
 	void SetFocus();
 	bool Show( bool shown=true );
 

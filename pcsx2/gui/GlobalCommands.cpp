@@ -24,14 +24,16 @@
 
 #include "Utilities/HashMap.h"
 
+#ifndef DISABLE_RECORDING
+#	include "Recording/RecordingControls.h"
+#	include "Recording/InputRecording.h"
+#endif
+
 // Various includes needed for dumping...
 #include "GS.h"
 #include "Dump.h"
 #include "DebugTools/Debug.h"
 #include "R3000A.h"
-
-#include "Recording/RecordingControls.h"
-#include "Recording/InputRecording.h"
 
 // renderswitch - tells GSdx to go into dx9 sw if "renderswitch" is set.
 bool renderswitch = false;
@@ -463,7 +465,7 @@ namespace Implementations
 		if( GSFrame* gsframe = wxGetApp().GetGsFramePtr() )
 			gsframe->ShowFullScreen( !gsframe->IsFullScreen() );
 	}
-
+#ifndef DISABLE_RECORDING
 	void FrameAdvance()
 	{
 		if (g_Conf->EmuOptions.EnableRecordingTools)
@@ -509,6 +511,7 @@ namespace Implementations
 	void States_LoadSlot7() { States_LoadSlot(7); }
 	void States_LoadSlot8() { States_LoadSlot(8); }
 	void States_LoadSlot9() { States_LoadSlot(9); }
+#endif
 }
 
 // --------------------------------------------------------------------------------------
@@ -670,6 +673,7 @@ static const GlobalCommandDescriptor CommandDeclarations[] =
 		false,
 	},
 
+#ifndef DISABLE_RECORDING
 	{ "FrameAdvance"				, Implementations::FrameAdvance,				NULL, NULL, false },
 	{ "TogglePause"					, Implementations::TogglePause,					NULL, NULL, false },
 	{ "InputRecordingModeToggle"	, Implementations::InputRecordingModeToggle,	NULL, NULL, false },
@@ -693,7 +697,7 @@ static const GlobalCommandDescriptor CommandDeclarations[] =
 	{ "States_LoadSlot7"			, Implementations::States_LoadSlot7,			NULL, NULL, false },
 	{ "States_LoadSlot8"			, Implementations::States_LoadSlot8,			NULL, NULL, false },
 	{ "States_LoadSlot9"			, Implementations::States_LoadSlot9,			NULL, NULL, false },
-
+#endif
 	// Command Declarations terminator:
 	// (must always be last in list!!)
 	{ NULL }

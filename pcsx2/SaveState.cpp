@@ -233,10 +233,13 @@ SaveStateBase& SaveStateBase::FreezeInternals()
 	// to merit an HLE Bios sub-section... yet.
 	deci2Freeze();
 
+#ifndef DISABLE_RECORDING
 	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
 		InputRecordingFreeze();
 	}
+#endif
+	
 
 	if( IsLoading() )
 		PostLoadPrep();

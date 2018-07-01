@@ -433,8 +433,12 @@ void Pcsx2Config::LoadSave( IniInterface& ini )
 	IniBitBool( EnablePatches );
 	IniBitBool( EnableCheats );
 	IniBitBool( EnableWideScreenPatches );
-	IniBitBool( EnableRecordingTools );
-	IniBitBool( EnableLuaTools );
+#ifndef DISABLE_RECORDING
+	IniBitBool(EnableRecordingTools);
+#endif
+#ifndef DISABLE_LUA
+	IniBitBool(EnableLuaTools);
+#endif
 	IniBitBool( ConsoleToStdio );
 	IniBitBool( HostFs );
 

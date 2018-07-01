@@ -29,7 +29,9 @@ class Pcsx2App;
 class MainEmuFrame;
 class GSFrame;
 class ConsoleLogFrame;
+#ifndef DISABLE_LUA
 class LuaFrame;
+#endif
 class PipeRedirectionBase;
 class AppCoreThread;
 class Pcsx2AppMethodEvent;

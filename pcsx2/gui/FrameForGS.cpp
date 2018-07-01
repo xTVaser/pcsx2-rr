@@ -24,8 +24,9 @@
 
 #include "ConsoleLogger.h"
 
-#include "Counters.h"
-#include "Recording/InputRecording.h"
+#ifndef DISABLE_RECORDING
+#	include "Recording/InputRecording.h"
+#endif
 
 #include <wx/utils.h>
 #include <wx/graphics.h>
@@ -85,30 +86,33 @@ void GSPanel::InitDefaultAccelerators()
 
 	m_Accels->Map( FULLSCREEN_TOGGLE_ACCELERATOR_GSPANEL,		"FullscreenToggle" );
 
-	m_Accels->Map( AAC(WXK_SPACE), "FrameAdvance" );
-	m_Accels->Map( AAC(wxKeyCode('p')).Shift(), "TogglePause" );
-	m_Accels->Map( AAC(wxKeyCode('r')).Shift(), "InputRecordingModeToggle" );
+#ifndef DISABLE_RECORDING
+	m_Accels->Map(AAC(WXK_SPACE), "FrameAdvance");
+	m_Accels->Map(AAC(wxKeyCode('p')).Shift(), "TogglePause");
+	m_Accels->Map(AAC(wxKeyCode('r')).Shift(), "InputRecordingModeToggle");
 
-	m_Accels->Map( AAC( WXK_NUMPAD0 ).Shift(), "States_SaveSlot0" );
-	m_Accels->Map( AAC( WXK_NUMPAD1 ).Shift(), "States_SaveSlot1" );
-	m_Accels->Map( AAC( WXK_NUMPAD2 ).Shift(), "States_SaveSlot2" );
-	m_Accels->Map( AAC( WXK_NUMPAD3 ).Shift(), "States_SaveSlot3" );
-	m_Accels->Map( AAC( WXK_NUMPAD4 ).Shift(), "States_SaveSlot4" );
-	m_Accels->Map( AAC( WXK_NUMPAD5 ).Shift(), "States_SaveSlot5" );
-	m_Accels->Map( AAC( WXK_NUMPAD6 ).Shift(), "States_SaveSlot6" );
-	m_Accels->Map( AAC( WXK_NUMPAD7 ).Shift(), "States_SaveSlot7" );
-	m_Accels->Map( AAC( WXK_NUMPAD8 ).Shift(), "States_SaveSlot8" );
-	m_Accels->Map( AAC( WXK_NUMPAD9 ).Shift(), "States_SaveSlot9" );
-	m_Accels->Map( AAC( WXK_NUMPAD0 ), "States_LoadSlot0" );
-	m_Accels->Map( AAC( WXK_NUMPAD1 ), "States_LoadSlot1" );
-	m_Accels->Map( AAC( WXK_NUMPAD2 ), "States_LoadSlot2" );
-	m_Accels->Map( AAC( WXK_NUMPAD3 ), "States_LoadSlot3" );
-	m_Accels->Map( AAC( WXK_NUMPAD4 ), "States_LoadSlot4" );
-	m_Accels->Map( AAC( WXK_NUMPAD5 ), "States_LoadSlot5" );
-	m_Accels->Map( AAC( WXK_NUMPAD6 ), "States_LoadSlot6" );
-	m_Accels->Map( AAC( WXK_NUMPAD7 ), "States_LoadSlot7" );
-	m_Accels->Map( AAC( WXK_NUMPAD8 ), "States_LoadSlot8" );
-	m_Accels->Map( AAC( WXK_NUMPAD9 ), "States_LoadSlot9" );
+	m_Accels->Map(AAC(WXK_NUMPAD0).Shift(), "States_SaveSlot0");
+	m_Accels->Map(AAC(WXK_NUMPAD1).Shift(), "States_SaveSlot1");
+	m_Accels->Map(AAC(WXK_NUMPAD2).Shift(), "States_SaveSlot2");
+	m_Accels->Map(AAC(WXK_NUMPAD3).Shift(), "States_SaveSlot3");
+	m_Accels->Map(AAC(WXK_NUMPAD4).Shift(), "States_SaveSlot4");
+	m_Accels->Map(AAC(WXK_NUMPAD5).Shift(), "States_SaveSlot5");
+	m_Accels->Map(AAC(WXK_NUMPAD6).Shift(), "States_SaveSlot6");
+	m_Accels->Map(AAC(WXK_NUMPAD7).Shift(), "States_SaveSlot7");
+	m_Accels->Map(AAC(WXK_NUMPAD8).Shift(), "States_SaveSlot8");
+	m_Accels->Map(AAC(WXK_NUMPAD9).Shift(), "States_SaveSlot9");
+	m_Accels->Map(AAC(WXK_NUMPAD0), "States_LoadSlot0");
+	m_Accels->Map(AAC(WXK_NUMPAD1), "States_LoadSlot1");
+	m_Accels->Map(AAC(WXK_NUMPAD2), "States_LoadSlot2");
+	m_Accels->Map(AAC(WXK_NUMPAD3), "States_LoadSlot3");
+	m_Accels->Map(AAC(WXK_NUMPAD4), "States_LoadSlot4");
+	m_Accels->Map(AAC(WXK_NUMPAD5), "States_LoadSlot5");
+	m_Accels->Map(AAC(WXK_NUMPAD6), "States_LoadSlot6");
+	m_Accels->Map(AAC(WXK_NUMPAD7), "States_LoadSlot7");
+	m_Accels->Map(AAC(WXK_NUMPAD8), "States_LoadSlot8");
+	m_Accels->Map(AAC(WXK_NUMPAD9), "States_LoadSlot9");
+#endif
+	
 }
 
 GSPanel::GSPanel( wxWindow* parent )
@@ -126,6 +130,7 @@ GSPanel::GSPanel( wxWindow* parent )
 
 	InitDefaultAccelerators();
 
+#ifndef DISABLE_RECORDING
 	// Retrieving FrameAdvance Key
 	for (auto itr = m_Accels->begin(); itr != m_Accels->end(); ++itr) {
 		if (itr->second->Id == "FrameAdvance") {
@@ -133,6 +138,7 @@ GSPanel::GSPanel( wxWindow* parent )
 			break;
 		}
 	}
+#endif
 
 	SetBackgroundColour(wxColour((unsigned long)0));
 	if( g_Conf->GSWindow.AlwaysHideMouse )
@@ -365,6 +371,7 @@ void GSPanel::OnKeyDownOrUp( wxKeyEvent& evt )
 	if ((PADopen != NULL) && CoreThread.IsOpen())
 		return;
 
+#ifndef DISABLE_RECORDING
 	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
 		// TODO-Recording: This is to allow for repeated frame-advance while holding the key
@@ -375,6 +382,8 @@ void GSPanel::OnKeyDownOrUp( wxKeyEvent& evt )
 			return;
 		}
 	}
+#endif
+	
 	DirectKeyCommand( evt );
 }
 
@@ -479,6 +488,7 @@ void GSPanel::OnLeftDclick(wxMouseEvent& evt)
 	DirectKeyCommand(FULLSCREEN_TOGGLE_ACCELERATOR_GSPANEL);
 }
 
+#ifndef DISABLE_LUA
 // --------------------------------------------------------------------------------------
 //  GSGUIPanel Implementation
 // --------------------------------------------------------------------------------------
@@ -595,13 +605,16 @@ void GSGUIPanel::Create()
 	m_dc = new wxGCDC(m_gc);
 	m_dc->SetBackgroundMode(wxSOLID);
 }
+#endif
 
 // --------------------------------------------------------------------------------------
 //  GSFrame Implementation
 // --------------------------------------------------------------------------------------
 
 static const uint TitleBarUpdateMs = 333;
+#ifndef DISABLE_RECORDING
 static const uint TitleBarUpdateMsWhenRecording = 50;
+#endif
 
 GSFrame::GSFrame( const wxString& title)
 	: wxFrame(NULL, wxID_ANY, title, g_Conf->GSWindow.WindowPos)
@@ -663,6 +676,7 @@ bool GSFrame::ShowFullScreen(bool show, bool updateConfig)
 
 void GSFrame::CoreThread_OnResumed()
 {
+#ifndef DISABLE_RECORDING
 	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
 		m_timer_UpdateTitle.Start(TitleBarUpdateMsWhenRecording);
@@ -671,6 +685,10 @@ void GSFrame::CoreThread_OnResumed()
 	{
 		m_timer_UpdateTitle.Start(TitleBarUpdateMs);
 	}
+#else
+	m_timer_UpdateTitle.Start(TitleBarUpdateMs);
+#endif
+	
 	if( !IsShown() ) Show();
 }
 
@@ -707,6 +725,7 @@ bool GSFrame::Show( bool shown )
 
 		if (!m_timer_UpdateTitle.IsRunning())
 		{
+#ifndef DISABLE_RECORDING
 			if (g_Conf->EmuOptions.EnableRecordingTools)
 			{
 				m_timer_UpdateTitle.Start(TitleBarUpdateMsWhenRecording);
@@ -715,8 +734,10 @@ bool GSFrame::Show( bool shown )
 			{
 				m_timer_UpdateTitle.Start(TitleBarUpdateMs);
 			}
+#else
+			m_timer_UpdateTitle.Start(TitleBarUpdateMs);
+#endif
 		}
-			
 	}
 	else
 	{
@@ -748,10 +769,12 @@ GSPanel* GSFrame::GetViewport()
 	return (GSPanel*)FindWindowById( m_id_gspanel );
 }
 
+#ifndef DISABLE_LUA
 GSGUIPanel* GSFrame::GetGui()
 {
-	return (GSGUIPanel*)FindWindowById( m_id_gsguipanel );
+	return (GSGUIPanel*)FindWindowById(m_id_gsguipanel);
 }
+#endif
 
 void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 {
@@ -819,26 +842,31 @@ void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 	const u64& smode2 = *(u64*)PS2GS_BASE(GS_SMODE2);
 	wxString omodef = (smode2 & 2) ? templates.OutputFrame : templates.OutputField;
 	wxString omodei = (smode2 & 1) ? templates.OutputInterlaced : templates.OutputProgressive;
+#ifndef DISABLE_RECORDING
 	wxString title;
 	wxString movieMode;
 	switch (g_InputRecording.getModeState()) {
 	case InputRecording::KEY_MOVIE_MODE::RECORD:
-			movieMode = "Recording";
-			title = templates.RecordingTemplate;
-			break;
+		movieMode = "Recording";
+		title = templates.RecordingTemplate;
+		break;
 	case InputRecording::KEY_MOVIE_MODE::REPLAY:
-			movieMode = "Replaying";
-			title = templates.RecordingTemplate;
-			break;
+		movieMode = "Replaying";
+		title = templates.RecordingTemplate;
+		break;
 	case InputRecording::KEY_MOVIE_MODE::NONE:
-			movieMode = "No movie";
-			title = templates.TitleTemplate;
-			break;
+		movieMode = "No movie";
+		title = templates.TitleTemplate;
+		break;
 	}
 
-	title.Replace(L"${frame}", 		pxsFmt(L"%d", g_FrameCount));
-	title.Replace(L"${maxFrame}", 	pxsFmt(L"%d", g_InputRecording.getInputRecordingData().getMaxFrame()));
-	title.Replace(L"${mode}", 		movieMode);
+	title.Replace(L"${frame}", pxsFmt(L"%d", g_FrameCount));
+	title.Replace(L"${maxFrame}", pxsFmt(L"%d", g_InputRecording.getInputRecordingData().getMaxFrame()));
+	title.Replace(L"${mode}", movieMode);
+#else
+	wxString title = templates.TitleTemplate;
+#endif
+	
 	title.Replace(L"${slot}",		pxsFmt(L"%d", States_GetCurrentSlot()));
 	title.Replace(L"${limiter}",	limiterStr);
 	title.Replace(L"${speed}",		pxsFmt(L"%3d%%", lround(percentage)));
@@ -904,11 +932,12 @@ void GSFrame::OnResize( wxSizeEvent& evt )
 		gsPanel->DoResize();
 		gsPanel->SetFocus();
 	}
-
+#ifndef DISABLE_RECORDING
 	if (GSGUIPanel *gui = GetGui())
 	{
 		gui->DoResize();
 	}
+#endif
 
 	//wxPoint hudpos = wxPoint(-10,-10) + (GetClientSize() - m_hud->GetSize());
 	//m_hud->SetPosition( hudpos ); //+ GetScreenPosition() + GetClientAreaOrigin() );

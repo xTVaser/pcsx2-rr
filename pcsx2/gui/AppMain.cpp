@@ -31,9 +31,13 @@
 
 #include "Debugger/DisassemblyDialog.h"
 
-#include "Lua/LuaManager.h"
-#include "Recording/RecordingControls.h"
-#include "Recording/InputRecording.h"
+#ifndef DISABLE_RECORDING
+#	include "Recording/RecordingControls.h"
+#	include "Recording/InputRecording.h"
+#endif
+#ifndef DISABLE_LUA
+#	include "Lua/LuaManager.h"
+#endif
 
 #include "Utilities/IniInterface.h"
 #include "Utilities/AppTrait.h"
@@ -613,6 +617,7 @@ void Pcsx2App::HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent&
 {
 	try
 	{
+#ifndef DISABLE_RECORDING
 		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
 			if (g_RecordingControls.isStop())
@@ -625,12 +630,13 @@ void Pcsx2App::HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent&
 					const keyEvent* ev = PADkeyEvent();
 					if (ev != NULL)
 					{
-						sApp.TAS_PadKeyDispatch(*ev);
+						sApp.Recording_PadKeyDispatch(*ev);
 					}
 				}
 			}
 			g_RecordingControls.StartCheck();
 		}
+#endif
 		(handler->*func)(event);
 	}
 	// ----------------------------------------------------------------------------
@@ -1053,14 +1059,18 @@ void Pcsx2App::OnProgramLogClosed( wxWindowID id )
 
 void Pcsx2App::OnMainFrameClosed( wxWindowID id )
 {
+#ifndef DISABLE_RECORDING
 	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
 		g_InputRecording.Stop();
 	}
+#endif
+#ifndef DISABLE_LUA
 	if (g_Conf->EmuOptions.EnableLuaTools)
 	{
 		g_Lua.Stop();
 	}
+#endif
 
 	// Nothing threaded depends on the mainframe (yet) -- it all passes through the main wxApp
 	// message handler.  But that might change in the future.
