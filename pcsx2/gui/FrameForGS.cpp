@@ -932,7 +932,7 @@ void GSFrame::OnResize( wxSizeEvent& evt )
 		gsPanel->DoResize();
 		gsPanel->SetFocus();
 	}
-#ifndef DISABLE_RECORDING
+#ifndef DISABLE_LUA
 	if (GSGUIPanel *gui = GetGui())
 	{
 		gui->DoResize();

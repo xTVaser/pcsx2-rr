@@ -522,7 +522,9 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent&)
 	}
 	else if (GetMenuBar()->GetMenuCount() > TopLevelMenu_Capture + 1)
 	{
+#ifndef DISABLE_LUA
 		(g_Conf->EmuOptions.EnableLuaTools) ? GetMenuBar()->Remove(TopLevelMenu_Recording) : GetMenuBar()->Remove(TopLevelMenu_Recording);
+#endif
 	}
 
 	g_Conf->EmuOptions.EnableRecordingTools = checked;
