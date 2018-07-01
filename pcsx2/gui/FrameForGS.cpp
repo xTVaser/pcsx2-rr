@@ -488,125 +488,6 @@ void GSPanel::OnLeftDclick(wxMouseEvent& evt)
 	DirectKeyCommand(FULLSCREEN_TOGGLE_ACCELERATOR_GSPANEL);
 }
 
-#ifndef DISABLE_LUA
-// --------------------------------------------------------------------------------------
-//  GSGUIPanel Implementation
-// --------------------------------------------------------------------------------------
-static wxMutex s_guiMutex;
-GSGUIPanel::GSGUIPanel(wxFrame *parent)
-	: GSPanel(parent)
-{
-	s_guiMutex.Lock();
-	Create();
-
-	Connect(wxEVT_ERASE_BACKGROUND, wxEraseEventHandler(GSGUIPanel::OnEraseBackground));
-	Connect(wxEVT_PAINT, wxPaintEventHandler(GSGUIPanel::OnPaint));
-
-	s_guiMutex.Unlock();
-}
-
-GSGUIPanel::~GSGUIPanel()
-{
-}
-
-void GSGUIPanel::DoResize()
-{
-	s_guiMutex.Lock();
-	GSPanel::DoResize();
-	Create();
-	s_guiMutex.Unlock();
-}
-
-void GSGUIPanel::DirectKeyCommand(const KeyAcceleratorCode & kac)
-{
-	_parent::DirectKeyCommand(kac);
-
-	int pad = PADquery(0);
-	Console.WriteLn(wxString::Format("%d", pad));
-}
-
-void GSGUIPanel::BeginFrame()
-{
-	s_guiMutex.Lock();
-	Clear();
-}
-
-void GSGUIPanel::EndFrame()
-{
-	s_guiMutex.Unlock();
-}
-
-void GSGUIPanel::Clear()
-{
-	m_dc->SetBackground(*wxTRANSPARENT_BRUSH);
-	m_dc->Clear();
-}
-
-void GSGUIPanel::DrawLine(int x1, int y1, int x2, int y2, wxColor color)
-{
-	m_dc->SetPen(wxPen(color));
-	m_dc->DrawLine(x1, y1, x2, y2);
-	m_dc->SetPen(wxNullPen);
-}
-
-void GSGUIPanel::DrawText(int x, int y, wxString text, wxColor foreground, wxColor background,
-	int fontSize, int family, int style, int weight)
-{
-	m_dc->SetTextForeground(foreground);
-	m_dc->SetTextBackground(background);
-	wxFont font(fontSize, family, style, weight);
-	m_dc->SetFont(font);
-	m_dc->DrawText(text, x, y);
-}
-
-void GSGUIPanel::DrawBox(int x1, int y1, int x2, int y2, wxColor line, wxColor background)
-{
-	DrawRectangle(x1, y1, x2 - x1, y2 - y1, line, background);
-}
-
-void GSGUIPanel::DrawRectangle(int x, int y, int width, int height, wxColor line, wxColor background)
-{
-	m_dc->SetPen(wxPen(line));
-	m_dc->SetBrush(wxBrush(background));
-	m_dc->DrawRectangle(x, y, width, height);
-}
-
-void GSGUIPanel::DrawPixel(int x, int y, wxColor color)
-{
-	m_dc->SetPen(wxPen(color));
-	m_dc->DrawPoint(x, y);
-}
-
-void GSGUIPanel::DrawEllipse(int x, int y, int width, int height, wxColor line, wxColor background)
-{
-	m_dc->SetPen(wxPen(line));
-	m_dc->SetBrush(wxBrush(background));
-	m_dc->DrawEllipse(x, y, width, height);
-}
-
-void GSGUIPanel::DrawCircle(int x, int y, int radius, wxColor line, wxColor background)
-{
-	m_dc->SetPen(wxPen(line));
-	m_dc->SetBrush(wxBrush(background));
-	m_dc->DrawCircle(x, y, radius);
-}
-
-void GSGUIPanel::OnPaint(wxPaintEvent &event)
-{
-	s_guiMutex.Lock();
-	wxPaintDC dc(this);
-	dc.Blit(0, 0, GetSize().GetWidth(), GetSize().GetHeight(), m_dc, 0, 0);
-	s_guiMutex.Unlock();
-}
-
-void GSGUIPanel::Create()
-{
-	m_gc = wxGraphicsContext::Create(this);
-	m_dc = new wxGCDC(m_gc);
-	m_dc->SetBackgroundMode(wxSOLID);
-}
-#endif
-
 // --------------------------------------------------------------------------------------
 //  GSFrame Implementation
 // --------------------------------------------------------------------------------------
@@ -769,13 +650,6 @@ GSPanel* GSFrame::GetViewport()
 	return (GSPanel*)FindWindowById( m_id_gspanel );
 }
 
-#ifndef DISABLE_LUA
-GSGUIPanel* GSFrame::GetGui()
-{
-	return (GSGUIPanel*)FindWindowById(m_id_gsguipanel);
-}
-#endif
-
 void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 {
 	// Update the title only after the completion of at least a single Vsync, it's pointless to display the fps
@@ -932,12 +806,6 @@ void GSFrame::OnResize( wxSizeEvent& evt )
 		gsPanel->DoResize();
 		gsPanel->SetFocus();
 	}
-#ifndef DISABLE_RECORDING
-	if (GSGUIPanel *gui = GetGui())
-	{
-		gui->DoResize();
-	}
-#endif
 
 	//wxPoint hudpos = wxPoint(-10,-10) + (GetClientSize() - m_hud->GetSize());
 	//m_hud->SetPosition( hudpos ); //+ GetScreenPosition() + GetClientAreaOrigin() );

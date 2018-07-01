@@ -299,9 +299,6 @@ static ConsoleLogSource* const ConLogSources[] =
 	(ConsoleLogSource*)&SysConsole.recordingConsole,
 	(ConsoleLogSource*)&SysConsole.controlInfo,
 #endif
-#ifndef DISABLE_LUA
-	(ConsoleLogSource*)&SysConsole.luaConsole,
-#endif
 };
 
 // WARNING ConsoleLogSources & ConLogDefaults must have the same size
@@ -317,9 +314,6 @@ static const bool ConLogDefaults[] =
 	false,
 #ifndef DISABLE_RECORDING
 	false,
-	false,
-#endif
-#ifndef DISABLE_LUA
 	false,
 #endif
 	false

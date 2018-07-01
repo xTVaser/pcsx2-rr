@@ -80,9 +80,6 @@ enum TopLevelMenuIndices
 #ifndef DISABLE_RECORDING
 	TopLevelMenu_Recording,
 #endif
-#ifndef DISABLE_LUA
-	TopLevelMenu_Lua,
-#endif
 };
 
 enum MenuIdentifiers
@@ -204,10 +201,6 @@ enum MenuIdentifiers
 	MenuId_Recording_ConvertV1_XToV2,
 	MenuId_Recording_ConvertV1ToV2,
 	MenuId_Recording_ConvertLegacy,
-#endif
-#ifndef DISABLE_LUA
-	// Lua Subsection
-	MenuId_Lua_Open,
 #endif
 
 };
@@ -551,9 +544,6 @@ protected:
 	wxWindowID			m_id_VirtualPad[2];
 	wxWindowID			m_id_NewRecordingFrame;
 #endif
-#ifndef DISABLE_LUA
-	wxWindowID			m_id_LuaFrame;
-#endif
 
 	wxKeyEvent			m_kevt;
 
@@ -586,9 +576,6 @@ public:
 		return (VirtualPad*)wxWindow::FindWindowById(m_id_VirtualPad[port]);
 	}
 	NewRecordingFrame *		GetNewRecordingFramePtr() const { return (NewRecordingFrame*)wxWindow::FindWindowById(m_id_NewRecordingFrame); }
-#endif
-#ifndef DISABLE_LUA
-	LuaFrame*			GetLuaFramePtr() const { return (LuaFrame*)wxWindow::FindWindowById(m_id_LuaFrame); }
 #endif
 
 	void enterDebugMode();

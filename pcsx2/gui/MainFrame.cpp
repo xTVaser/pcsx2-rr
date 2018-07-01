@@ -203,9 +203,6 @@ void MainEmuFrame::ConnectMenus()
 #ifndef DISABLE_RECORDING
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableRecordingTools_Click, this, MenuId_EnableRecordingTools);
 #endif
-#ifndef DISABLE_LUA
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableLuaTools_Click, this, MenuId_EnableLuaTools);
-#endif
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableHostFs_Click, this, MenuId_EnableHostFs);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_SysShutdown_Click, this, MenuId_Sys_Shutdown);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Exit_Click, this, MenuId_Exit);
@@ -264,10 +261,6 @@ void MainEmuFrame::ConnectMenus()
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_ConvertV1_XToV2_Click, this, MenuId_Recording_ConvertV1_XToV2);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_ConvertV1ToV2_Click, this, MenuId_Recording_ConvertV1ToV2);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_ConvertLegacy_Click, this, MenuId_Recording_ConvertLegacy);
-#endif
-#ifndef DISABLE_LUA
-	// Lua
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Lua_Open_Click, this, MenuId_Lua_Open);
 #endif
 
 	//Bind(wxEVT_MENU, &MainEmuFrame::Menu_Debug_MemoryDump_Click, this, MenuId_Debug_MemoryDump);
@@ -357,9 +350,6 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	, m_menuRecording(*new wxMenu())
 	, m_submenuMovieConvert(*new wxMenu())
 #endif
-#ifndef DISABLE_LUA
-	, m_menuLua(*new wxMenu())
-#endif
 	, m_LoadStatesSubmenu( *MakeStatesSubMenu( MenuId_State_Load01, MenuId_State_LoadBackup ) )
 	, m_SaveStatesSubmenu( *MakeStatesSubMenu( MenuId_State_Save01 ) )
 
@@ -392,12 +382,6 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
 		m_menubar.Append(&m_menuRecording, _("&Recording"));
-	}
-#endif
-#ifndef DISABLE_LUA
-	if (g_Conf->EmuOptions.EnableLuaTools)
-	{
-		m_menubar.Append(&m_menuLua, _("&Lua"));
 	}
 #endif
 
@@ -494,10 +478,6 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 
 #ifndef DISABLE_RECORDING
 	m_menuSys.Append(MenuId_EnableRecordingTools, _("Enable &Recording Tools"),
-		wxEmptyString, wxITEM_CHECK);
-#endif
-#ifndef DISABLE_LUA
-	m_menuSys.Append(MenuId_EnableLuaTools, _("Enable &Lua Tools"),
 		wxEmptyString, wxITEM_CHECK);
 #endif
 	m_menuSys.AppendSeparator();
@@ -611,14 +591,6 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	m_submenuMovieConvert.Append(MenuId_Recording_ConvertV1ToV2, _("Convert (v1.0 -> v2.0)"))->Enable(false); // TODO
 	m_submenuMovieConvert.Append(MenuId_Recording_ConvertLegacy, _("Convert Legacy Movie (p2m -> p2m2)"));
 #endif
-
-	// ------------------------------------------------------------------------
-
-#ifndef DISABLE_LUA
-	m_menuLua.Append(MenuId_Lua_Open, _("Open Lua Console"));
-#endif
-	
-	// ------------------------------------------------------------------------
 
 	m_MenuItem_Console.Check( g_Conf->ProgLogBox.Visible );
 
@@ -795,9 +767,6 @@ void MainEmuFrame::ApplyConfigToGui(AppConfig& configToApply, int flags)
 		menubar.Check( MenuId_EnableWideScreenPatches,  configToApply.EmuOptions.EnableWideScreenPatches );
 #ifndef DISABLE_RECORDING
 		menubar.Check(MenuId_EnableRecordingTools, configToApply.EmuOptions.EnableRecordingTools);
-#endif
-#ifndef DISABLE_LUA
-		menubar.Check(MenuId_EnableLuaTools, configToApply.EmuOptions.EnableLuaTools);
 #endif
 		menubar.Check( MenuId_EnableHostFs,  configToApply.EmuOptions.HostFs );
 		menubar.Check( MenuId_Debug_CreateBlockdump, configToApply.EmuOptions.CdvdDumpBlocks );

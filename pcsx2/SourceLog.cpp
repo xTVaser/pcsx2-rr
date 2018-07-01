@@ -127,12 +127,6 @@ TLD_controlInfo = {
 	pxDt("Shows detailed controller input values for port 1, every frame")
 }
 #endif
-#ifndef DISABLE_LUA
-,TLD_luaConsole = {
-	L"Lua",			L"Lua Console",
-	pxDt("Shows lua script related logs and information")
-}
-#endif
 ; // End init of TraceLogDescriptors
 
 SysConsoleLogPack::SysConsoleLogPack()
@@ -144,9 +138,6 @@ SysConsoleLogPack::SysConsoleLogPack()
 #ifndef DISABLE_RECORDING
 	, recordingConsole(&TLD_recordingConsole)
 	, controlInfo(&TLD_controlInfo)
-#endif
-#ifndef DISABLE_LUA
-	, luaConsole(&TLD_luaConsole)
 #endif
 {
 }

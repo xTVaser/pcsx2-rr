@@ -53,13 +53,6 @@ check_no_parenthesis_in_path()
 detectOperatingSystem()
 check_compiler_version("4.8" "4.8")
 
-## Locate Lua libraries
-include(FindLua)
-if(LUA_FOUND)
-    find_package(Lua REQUIRED)
-    include_directories(${LUA_INCLUDE_DIR})
-endif()
-
 #-------------------------------------------------------------------------------
 # Include specific module
 # BuildParameters Must be done before SearchForStuff

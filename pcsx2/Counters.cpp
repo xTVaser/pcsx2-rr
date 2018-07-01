@@ -36,9 +36,6 @@
 #	include "Recording/RecordingControls.h"
 #	include "Recording/InputRecordingEditor.h"
 #endif
-#ifndef DISABLE_LUA
-#	include "Lua/LuaManager.h"
-#endif
 
 using namespace Threading;
 
@@ -576,12 +573,6 @@ __fi void rcntUpdate_vSync()
 	else	// VSYNC end / VRENDER begin
 	{
 
-#ifndef DISABLE_LUA
-		if (g_Conf->EmuOptions.EnableLuaTools)
-		{
-			g_Lua.FrameBoundary();
-		}
-#endif
 #ifndef DISABLE_RECORDING
 		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{

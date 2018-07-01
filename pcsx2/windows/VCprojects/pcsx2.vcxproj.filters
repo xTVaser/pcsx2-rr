@@ -877,18 +877,6 @@
     <ClCompile Include="..\..\ps2\Iop\PsxBios.cpp">
       <Filter>System\Ps2\Iop</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Lua\LuaEngine.cpp">
-      <Filter>Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Lua\LuaFrame.cpp">
-      <Filter>Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Lua\LuaFunctions.cpp">
-      <Filter>Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Lua\LuaManager.cpp">
-      <Filter>Lua</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Recording\InputRecordingEditor.cpp">
       <Filter>Recording</Filter>
     </ClCompile>
@@ -1352,18 +1340,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Mdec.h">
       <Filter>System\Ps2\Iop</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Lua\LuaEngine.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Lua\LuaFrame.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Lua\LuaFunctions.h">
-      <Filter>Lua</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Lua\LuaManager.h">
-      <Filter>Lua</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Recording\InputRecordingEditor.h">
       <Filter>Recording</Filter>

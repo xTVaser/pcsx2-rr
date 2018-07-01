@@ -436,9 +436,6 @@ void Pcsx2Config::LoadSave( IniInterface& ini )
 #ifndef DISABLE_RECORDING
 	IniBitBool(EnableRecordingTools);
 #endif
-#ifndef DISABLE_LUA
-	IniBitBool(EnableLuaTools);
-#endif
 	IniBitBool( ConsoleToStdio );
 	IniBitBool( HostFs );
 

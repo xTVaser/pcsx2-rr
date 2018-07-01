@@ -327,9 +327,6 @@ struct SysConsoleLogPack
 	ConsoleLogFromVM<Color_StrongMagenta>	recordingConsole;
 	ConsoleLogFromVM<Color_Red>				controlInfo;
 #endif
-#ifndef DISABLE_LUA
-	ConsoleLogFromVM<Color_StrongBlue>		luaConsole;
-#endif
 
 	SysConsoleLogPack();
 };
@@ -404,7 +401,4 @@ extern void __Log( const char* fmt, ... );
 #ifndef DISABLE_RECORDING
 #	define recordingConLog	SysConsole.recordingConsole.IsActive()	&& SysConsole.recordingConsole.Write
 #	define controlLog		SysConsole.controlInfo.IsActive()		&& SysConsole.controlInfo.Write
-#endif
-#ifndef DISABLE_LUA
-#	define luaConLog		SysConsole.luaConsole.IsActive()		&& SysConsole.luaConsole.Write
 #endif

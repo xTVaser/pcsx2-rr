@@ -457,9 +457,6 @@ struct Pcsx2Config
 #ifndef DISABLE_RECORDING
 			EnableRecordingTools : 1,
 #endif
-#ifndef DISABLE_LUA
-			EnableLuaTools : 1,
-#endif
 		// when enabled uses BOOT2 injection, skipping sony bios splashes
 			UseBOOT2Injection	:1,
 			BackupSavestate		:1,

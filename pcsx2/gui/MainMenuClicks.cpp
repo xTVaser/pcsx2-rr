@@ -34,9 +34,6 @@
 #	include "Recording/InputRecording.h"
 #	include "Recording/VirtualPad.h"
 #endif
-#ifndef DISABLE_LUA
-#	include "Lua/LuaFrame.h"
-#endif
 
 using namespace Dialogs;
 
@@ -520,46 +517,9 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent&)
 	{
 		GetMenuBar()->Insert(TopLevelMenu_Recording, &m_menuRecording, _("&Recording"));
 	}
-	else if (GetMenuBar()->GetMenuCount() > TopLevelMenu_Capture + 1)
-	{
-		(g_Conf->EmuOptions.EnableLuaTools) ? GetMenuBar()->Remove(TopLevelMenu_Recording) : GetMenuBar()->Remove(TopLevelMenu_Recording);
-	}
 
 	g_Conf->EmuOptions.EnableRecordingTools = checked;
 	((ConsoleLogSource*)&SysConsole.recordingConsole)->Enabled = checked;
-	ConsoleLogFrame* proglog = wxGetApp().GetProgramLog();
-	proglog->UpdateLogList();
-	AppApplySettings();
-	AppSaveSettings();
-}
-#endif
-
-#ifndef DISABLE_LUA
-void MainEmuFrame::Menu_EnableLuaTools_Click(wxCommandEvent&)
-{
-	bool checked = GetMenuBar()->IsChecked(MenuId_EnableLuaTools);
-	// Confirm with User
-	if (checked) {
-		if (!Msgbox::OkCancel(_("Please be aware that PCSX2's Lua scripting features are still very much a work-in-progress.\n"
-			"As a result, there may be unforeseen bugs, performance implications and instability with certain games.\n\n"
-			"These tools are provided as-is and should be enabled under your own discretion."), "Enabling Lua Tools")) {
-			checked = false;
-			m_menuSys.FindChildItem(MenuId_EnableLuaTools)->Check(false);
-		}
-	}
-
-	// If still enabled, add the menu item, else, remove it
-	if (checked)
-	{
-		(g_Conf->EmuOptions.EnableRecordingTools) ? GetMenuBar()->Insert(TopLevelMenu_Lua, &m_menuLua, _("&Lua")) : GetMenuBar()->Insert(TopLevelMenu_Lua - 1, &m_menuLua, _("&Lua"));
-	}
-	else if (GetMenuBar()->GetMenuCount() > TopLevelMenu_Capture + 1)
-	{
-		(g_Conf->EmuOptions.EnableRecordingTools) ? GetMenuBar()->Remove(TopLevelMenu_Lua) : GetMenuBar()->Remove(TopLevelMenu_Lua - 1);
-	}
-
-	g_Conf->EmuOptions.EnableLuaTools = checked;
-	((ConsoleLogSource*)&SysConsole.luaConsole)->Enabled = checked;
 	ConsoleLogFrame* proglog = wxGetApp().GetProgramLog();
 	proglog->UpdateLogList();
 	AppApplySettings();
@@ -924,14 +884,5 @@ void MainEmuFrame::Menu_Recording_ConvertLegacy_Click(wxCommandEvent &event)
 	if (openFileDialog.ShowModal() == wxID_CANCEL)return;// cancel
 	wxString path = openFileDialog.GetPath();
 	g_InputRecordingData.ConvertLegacy(path);
-}
-#endif
-
-#ifndef DISABLE_LUA
-void MainEmuFrame::Menu_Lua_Open_Click(wxCommandEvent &event)
-{
-	LuaFrame* dlg = wxGetApp().GetLuaFramePtr();
-	if (dlg)
-		dlg->Show();
 }
 #endif

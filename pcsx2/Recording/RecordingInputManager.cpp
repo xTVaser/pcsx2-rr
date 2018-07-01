@@ -1,7 +1,6 @@
 #include "PrecompiledHeader.h"
 
 #include "RecordingInputManager.h"
-#include "Lua/LuaManager.h"
 #include "InputRecording.h"
 
 RecordingInputManager g_RecordingInput;
@@ -16,8 +15,6 @@ void RecordingInputManager::ControllerInterrupt(u8 & data, u8 & port, u16 & BufC
 {
 	if (port >= 2)
 		return;
-
-	g_Lua.ControllerInterrupt(data, port, BufCount, buf);
 
 	if (virtualPad[port])
 	{

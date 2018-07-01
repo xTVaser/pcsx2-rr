@@ -35,9 +35,6 @@
 #	include "Recording/RecordingControls.h"
 #	include "Recording/InputRecording.h"
 #endif
-#ifndef DISABLE_LUA
-#	include "Lua/LuaManager.h"
-#endif
 
 #include "Utilities/IniInterface.h"
 #include "Utilities/AppTrait.h"
@@ -1063,12 +1060,6 @@ void Pcsx2App::OnMainFrameClosed( wxWindowID id )
 	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
 		g_InputRecording.Stop();
-	}
-#endif
-#ifndef DISABLE_LUA
-	if (g_Conf->EmuOptions.EnableLuaTools)
-	{
-		g_Lua.Stop();
 	}
 #endif
 

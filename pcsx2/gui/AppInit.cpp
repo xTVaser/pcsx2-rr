@@ -29,9 +29,6 @@
 #ifndef DISABLE_RECORDING
 #	include "Recording/VirtualPad.h"
 #endif
-#ifndef DISABLE_LUA
-#	include "Lua/LuaFrame.h"
-#endif
 
 #include <wx/cmdline.h>
 #include <wx/intl.h>
@@ -90,10 +87,6 @@ void Pcsx2App::OpenMainFrame()
 
 	NewRecordingFrame* newRecordingFrame = new NewRecordingFrame(mainFrame);
 	m_id_NewRecordingFrame = newRecordingFrame->GetId();
-#endif
-#ifndef DISABLE_LUA
-	LuaFrame *luaFrame = new LuaFrame(mainFrame);
-	m_id_LuaFrame = luaFrame->GetId();
 #endif
 	
 	if (g_Conf->EmuOptions.Debugger.ShowDebuggerOnStart)

@@ -120,9 +120,6 @@ protected:
 	wxMenu&			m_menuRecording;
 	wxMenu&			m_submenuMovieConvert;
 #endif
-#ifndef DISABLE_LUA
-	wxMenu&			m_menuLua;
-#endif
 
 	wxMenu&			m_LoadStatesSubmenu;
 	wxMenu&			m_SaveStatesSubmenu;
@@ -192,9 +189,6 @@ protected:
 #ifndef DISABLE_RECORDING
 	void Menu_EnableRecordingTools_Click(wxCommandEvent &event);
 #endif
-#ifndef DISABLE_LUA
-	void Menu_EnableLuaTools_Click(wxCommandEvent &event);
-#endif
 	void Menu_EnableHostFs_Click(wxCommandEvent &event);
 
 	void Menu_BootCdvd_Click(wxCommandEvent &event);
@@ -241,9 +235,6 @@ protected:
 	void Menu_Recording_ConvertV1_XToV2_Click(wxCommandEvent &event);
 	void Menu_Recording_ConvertV1ToV2_Click(wxCommandEvent &event);
 	void Menu_Recording_ConvertLegacy_Click(wxCommandEvent &event);
-#endif
-#ifndef DISABLE_LUA
-	void Menu_Lua_Open_Click(wxCommandEvent &event);
 #endif
 
 	void _DoBootCdvd();

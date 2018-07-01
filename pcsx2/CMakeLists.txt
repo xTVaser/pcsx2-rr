@@ -371,22 +371,6 @@ set(pcsx2GuiResources
     ${res_bin}/Breakpoint_Inactive.h
     )
 
-# Lua sources
-set(pcsx2LuaSources
-	Lua/LuaEngine.cpp
-	Lua/LuaFrame.cpp
-	Lua/LuaFunctions.cpp
-	Lua/LuaManager.cpp
-	)
-
-# Lua headers
-set(pcsx2LuaHeaders
-	Lua/LuaEngine.h
-	Lua/LuaFrame.h
-	Lua/LuaFunctions.h
-	Lua/LuaManager.h
-	)
-
 # IPU sources
 set(pcsx2IPUSources
 	IPU/IPU.cpp
@@ -647,8 +631,6 @@ set(Common
 	${pcsx2GuiHeaders}
 	${pcsx2IPUSources}
 	${pcsx2IPUHeaders}
-	${pcsx2LuaSources}
-	${pcsx2LuaHeaders}
 	${pcsx2ps2Sources}
 	${pcsx2ps2Headers}
 	${pcsx2RecordingSources}
@@ -704,7 +686,6 @@ set(pcsx2FinalLibs
     ${ZLIB_LIBRARIES}
     ${AIO_LIBRARIES}
     ${GCOV_LIBRARIES}
-	${LUA_LIBRARIES}
 )
 
 if(BUILTIN_GS)
