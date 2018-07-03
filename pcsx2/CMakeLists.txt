@@ -453,6 +453,30 @@ set(pcsx2RDebugHeaders
 	RDebug/deci2_netmp.h
 	RDebug/deci2_ttyp.h)
 
+# Recording sources
+set(pcsx2RecordingSources
+	Recording/InputRecording.cpp
+	Recording/InputRecordingEditor.cpp
+	Recording/InputRecordingFile.cpp
+	Recording/NewRecordingFrame.cpp
+	Recording/PadData.cpp
+	Recording/RecordingControls.cpp
+	Recording/RecordingInputManager.cpp
+	Recording/VirtualPad.cpp
+)
+
+# Recording headers
+set(pcsx2RecordingHeaders
+	Recording/InputRecording.h
+	Recording/InputRecordingEditor.h
+	Recording/InputRecordingFile.h
+	Recording/NewRecordingFrame.h
+	Recording/PadData.h
+	Recording/RecordingControls.h
+	Recording/RecordingInputManager.h
+	Recording/VirtualPad.h
+)
+
 # System sources
 set(pcsx2SystemSources
 	System/SysCoreThread.cpp
@@ -595,7 +619,6 @@ else()
     set(pcsx2SSources "")
 endif()
 
-
 # common Sources
 set(Common
 	${pcsx2Sources}
@@ -610,6 +633,8 @@ set(Common
 	${pcsx2IPUHeaders}
 	${pcsx2ps2Sources}
 	${pcsx2ps2Headers}
+	${pcsx2RecordingSources}
+	${pcsx2RecordingSources}
 	${pcsx2SystemSources}
 	${pcsx2SystemHeaders}
 	${pcsx2UtilitiesSources}
