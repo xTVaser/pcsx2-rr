@@ -27,6 +27,9 @@
 #include "AppCoreThread.h"
 #include "RecentIsoList.h"
 
+//Purely to make sure the saveslot define comes through. Remove if it gets removed.
+#include "Saveslots.h"
+
 #ifndef DISABLE_RECORDING
 #	include "Recording/VirtualPad.h"
 #	include "Recording/NewRecordingFrame.h"
@@ -138,7 +141,6 @@ enum MenuIdentifiers
 	MenuId_Config_SysSettings,
 	MenuId_Config_McdSettings,
 	MenuId_Config_AppSettings,
-	MenuId_Config_GameDatabase,
 	MenuId_Config_BIOS,
 	MenuId_Config_Language,
 
@@ -329,6 +331,8 @@ public:
 	wxString		IsoFile;
 
 	wxString		ElfFile;
+
+	wxString		GameLaunchArgs;
 
 	// Specifies the CDVD source type to use when AutoRunning
 	CDVD_SourceType CdvdSource;

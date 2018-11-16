@@ -27,6 +27,9 @@
 
 class GSDeviceDX : public GSDevice
 {
+protected:
+	int m_upscale_multiplier;
+
 public:
 	#pragma pack(push, 1)
 
@@ -172,6 +175,7 @@ public:
 				// *** Word 1
 				// Format
 				uint32 fmt:4;
+				uint32 dfmt:2;
 				// Alpha extension/Correction
 				uint32 aem:1;
 				uint32 fba:1;
@@ -203,7 +207,7 @@ public:
 				uint32 tcoffsethack:1;
 				uint32 point_sampler:1;
 
-				uint32 _free:32;
+				uint32 _free:30;
 			};
 
 			uint64 key;

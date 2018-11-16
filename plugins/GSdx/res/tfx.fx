@@ -3,9 +3,6 @@
 #define FMT_24 1
 #define FMT_16 2
 
-// And I say this as an ATI user.
-#define ATI_SUCKS 1
-
 #if SHADER_MODEL >= 0x400
 
 #ifndef VS_BPPZ
@@ -116,13 +113,14 @@ cbuffer cb2
 
 float4 sample_c(float2 uv)
 {
-	if (ATI_SUCKS && PS_POINT_SAMPLER)
+	if (PS_POINT_SAMPLER)
 	{
-		// Weird issue with ATI cards (happens on at least HD 4xxx and 5xxx),
+		// Weird issue with ATI/AMD cards,
 		// it looks like they add 127/128 of a texel to sampling coordinates
 		// occasionally causing point sampling to erroneously round up.
 		// I'm manually adjusting coordinates to the centre of texels here,
 		// though the centre is just paranoia, the top left corner works fine.
+		// As of 2018 this issue is still present.
 		uv = (trunc(uv * WH.zw) + float2(0.5, 0.5)) / WH.zw;
 	}
 	return Texture.Sample(TextureSampler, uv);
@@ -167,7 +165,7 @@ float4 sample_rt(float2 uv)
 
 struct VS_INPUT
 {
-	float4 p : POSITION0; 
+	float4 p : POSITION0;
 	float2 t : TEXCOORD0;
 	float4 c : COLOR0;
 	float4 f : COLOR1;
@@ -249,7 +247,7 @@ float4 clamp_wrap_uv(float4 uv)
 			uv = saturate(uv);
 		}
 		else
-*/ 
+*/
 		if(PS_WMS == 2)
 		{
 			uv = clamp(uv, MinMax.xyxy, MinMax.zwzw);
@@ -257,7 +255,12 @@ float4 clamp_wrap_uv(float4 uv)
 		else if(PS_WMS == 3)
 		{
 			#if SHADER_MODEL >= 0x400
-			uv = (float4)(((int4)(uv * WH.xyxy) & MskFix.xyxy) | MskFix.zwzw) / WH.xyxy;
+			#if PS_FST == 0
+			// wrap negative uv coords to avoid an off by one error that shifted
+			// textures. Fixes Xenosaga's hair issue.
+			uv = frac(uv);
+			#endif
+			uv = (float4)(((uint4)(uv * WH.xyxy) & MskFix.xyxy) | MskFix.zwzw) / WH.xyxy;
 			#elif SHADER_MODEL <= 0x300
 			uv.x = tex1D(UMSKFIX, uv.x);
 			uv.y = tex1D(VMSKFIX, uv.y);
@@ -268,7 +271,7 @@ float4 clamp_wrap_uv(float4 uv)
 	}
 	else
 	{
-/*	
+/*
 		if(PS_WMS == 0)
 		{
 			uv.xz = frac(uv.xz);
@@ -277,8 +280,8 @@ float4 clamp_wrap_uv(float4 uv)
 		{
 			uv.xz = saturate(uv.xz);
 		}
-		else 
-*/		
+		else
+*/
 		if(PS_WMS == 2)
 		{
 			uv.xz = clamp(uv.xz, MinMax.xx, MinMax.zz);
@@ -286,7 +289,10 @@ float4 clamp_wrap_uv(float4 uv)
 		else if(PS_WMS == 3)
 		{
 			#if SHADER_MODEL >= 0x400
-			uv.xz = (float2)(((int2)(uv.xz * WH.xx) & MskFix.xx) | MskFix.zz) / WH.xx;
+			#if PS_FST == 0
+			uv.xz = frac(uv.xz);
+			#endif
+			uv.xz = (float2)(((uint2)(uv.xz * WH.xx) & MskFix.xx) | MskFix.zz) / WH.xx;
 			#elif SHADER_MODEL <= 0x300
 			uv.x = tex1D(UMSKFIX, uv.x);
 			uv.z = tex1D(UMSKFIX, uv.z);
@@ -301,7 +307,7 @@ float4 clamp_wrap_uv(float4 uv)
 		{
 			uv.yw = saturate(uv.yw);
 		}
-		else 
+		else
 */
 		if(PS_WMT == 2)
 		{
@@ -310,21 +316,24 @@ float4 clamp_wrap_uv(float4 uv)
 		else if(PS_WMT == 3)
 		{
 			#if SHADER_MODEL >= 0x400
-			uv.yw = (float2)(((int2)(uv.yw * WH.yy) & MskFix.yy) | MskFix.ww) / WH.yy;
+			#if PS_FST == 0
+			uv.yw = frac(uv.yw);
+			#endif
+			uv.yw = (float2)(((uint2)(uv.yw * WH.yy) & MskFix.yy) | MskFix.ww) / WH.yy;
 			#elif SHADER_MODEL <= 0x300
 			uv.y = tex1D(VMSKFIX, uv.y);
 			uv.w = tex1D(VMSKFIX, uv.w);
 			#endif
 		}
 	}
-	
+
 	return uv;
 }
 
 float4x4 sample_4c(float4 uv)
 {
 	float4x4 c;
-	
+
 	c[0] = sample_c(uv.xy);
 	c[1] = sample_c(uv.zy);
 	c[2] = sample_c(uv.xw);
@@ -333,7 +342,7 @@ float4x4 sample_4c(float4 uv)
 	return c;
 }
 
-float4 sample_4a(float4 uv)
+float4 sample_4_index(float4 uv)
 {
 	float4 c;
 
@@ -373,7 +382,7 @@ float4 sample_4a(float4 uv)
 float4x4 sample_4p(float4 u)
 {
 	float4x4 c;
-	
+
 	c[0] = sample_p(u.x);
 	c[1] = sample_p(u.y);
 	c[2] = sample_p(u.z);
@@ -388,7 +397,7 @@ float4 sample(float2 st, float q)
 
 	#if PS_TCOFFSETHACK
 	st += TC_OffsetHack.xy;
-	#endif 
+	#endif
 
 	float4 t;
 	float4x4 c;
@@ -406,6 +415,12 @@ float4 sample(float2 st, float q)
 		{
 			uv = st.xyxy + HalfTexel;
 			dd = frac(uv.xy * WH.zw);
+			#if SHADER_MODEL >= 0x400
+			if(PS_FST == 0)
+			{
+				dd = clamp(dd, (float2)0.0, (float2)0.9999999);
+			}
+			#endif
 		}
 		else
 		{
@@ -415,7 +430,7 @@ float4 sample(float2 st, float q)
 		uv = clamp_wrap_uv(uv);
 
 #if PS_PAL_FMT != 0
-			c = sample_4p(sample_4a(uv));
+			c = sample_4p(sample_4_index(uv));
 #else
 			c = sample_4c(uv);
 #endif
@@ -436,12 +451,12 @@ float4 sample(float2 st, float q)
 		}
 		else if(PS_AEM_FMT == FMT_16)
 		{
-			c[i].a = c[i].a >= 0.5 ? TA.y : !PS_AEM || any(c[i].rgb) ? TA.x : 0; 
+			c[i].a = c[i].a >= 0.5 ? TA.y : !PS_AEM || any(c[i].rgb) ? TA.x : 0;
 		}
 	}
 
 	if(PS_LTF)
-	{	
+	{
 		t = lerp(lerp(c[0], c[1], dd.x), lerp(c[2], c[3], dd.x), dd.y);
 	}
 	else
@@ -456,7 +471,7 @@ float4 tfx(float4 t, float4 c)
 {
 	if(PS_TFX == 0)
 	{
-		if(PS_TCC) 
+		if(PS_TCC)
 		{
 			c = c * t * 255.0f / 128;
 		}
@@ -467,7 +482,7 @@ float4 tfx(float4 t, float4 c)
 	}
 	else if(PS_TFX == 1)
 	{
-		if(PS_TCC) 
+		if(PS_TCC)
 		{
 			c = t;
 		}
@@ -480,7 +495,7 @@ float4 tfx(float4 t, float4 c)
 	{
 		c.rgb = c.rgb * t.rgb * 255.0f / 128 + c.a;
 
-		if(PS_TCC) 
+		if(PS_TCC)
 		{
 			c.a += t.a;
 		}
@@ -489,12 +504,12 @@ float4 tfx(float4 t, float4 c)
 	{
 		c.rgb = c.rgb * t.rgb * 255.0f / 128 + c.a;
 
-		if(PS_TCC) 
+		if(PS_TCC)
 		{
 			c.a = t.a;
 		}
 	}
-	
+
 	return saturate(c);
 }
 
@@ -518,7 +533,7 @@ void datst(PS_INPUT input)
 void atst(float4 c)
 {
 	float a = trunc(c.a * 255 + 0.01);
-	
+
 #if 0
     switch(Uber_ATST) {
         case 0:
@@ -548,11 +563,11 @@ void atst(float4 c)
 	{
 		#if PS_SPRITEHACK == 0
 		if (a > AREF) discard;
-		#endif		
+		#endif
 	}
 	else if(PS_ATST == 2)
 	{
-		if (a < AREF) discard;	
+		if (a < AREF) discard;
 	}
 	else if(PS_ATST == 3)
 	{
@@ -598,7 +613,7 @@ float4 ps_color(PS_INPUT input)
 
 	if(PS_CLR1) // needed for Cd * (As/Ad/F + 1) blending modes
 	{
-		c.rgb = 1; 
+		c.rgb = 1;
 	}
 
 	return c;
@@ -610,7 +625,7 @@ VS_OUTPUT vs_main(VS_INPUT input)
 {
 	if(VS_BPPZ == 1) // 24
 	{
-		input.z = input.z & 0xffffff; 
+		input.z = input.z & 0xffffff;
 	}
 	else if(VS_BPPZ == 2) // 16
 	{
@@ -618,13 +633,13 @@ VS_OUTPUT vs_main(VS_INPUT input)
 	}
 
 	VS_OUTPUT output;
-	
+
 	// pos -= 0.05 (1/320 pixel) helps avoiding rounding problems (integral part of pos is usually 5 digits, 0.05 is about as low as we can go)
 	// example: ceil(afterseveralvertextransformations(y = 133)) => 134 => line 133 stays empty
 	// input granularity is 1/16 pixel, anything smaller than that won't step drawing up/left by one pixel
 	// example: 133.0625 (133 + 1/16) should start from line 134, ceil(133.0625 - 0.05) still above 133
-	
-	float4 p = float4(input.p, input.z, 0) - float4(0.05f, 0.05f, 0, 0); 
+
+	float4 p = float4(input.p, input.z, 0) - float4(0.05f, 0.05f, 0, 0);
 
 	output.p = p * VertexScale - VertexOffset;
 #if VS_RTCOPY
@@ -818,36 +833,31 @@ PS_OUTPUT ps_main(PS_INPUT input)
 
 	PS_OUTPUT output;
 
-	if (PS_SHUFFLE){
+	if (PS_SHUFFLE)
+	{
 		uint4 denorm_c = uint4(c * 255.0f + 0.5f);
 		uint2 denorm_TA = uint2(float2(TA.xy) * 255.0f + 0.5f);
 
 		// Mask will take care of the correct destination
-		if (PS_READ_BA){
+		if (PS_READ_BA)
 			c.rb = c.bb;
-		}
-		else {
+		else
 			c.rb = c.rr;
-		}
-		c.g = c.a;
-		if (PS_READ_BA){
-			if (denorm_c.a & 0x80)
-				c.a = float((denorm_c.a & 0x7Fu) | (denorm_TA.y & 0x80u)) / 255.0f;
-			else
-				c.a = float((denorm_c.a & 0x7Fu) | (denorm_TA.x & 0x80u)) / 255.0f;
 
-			//c.g = c.a;
-		}
-		else {
-			if (denorm_c.g & 0x80)
-				c.a = float((denorm_c.g & 0x7Fu) | (denorm_TA.y & 0x80u)) / 255.0f;
+		if (PS_READ_BA)
+		{
+			if (denorm_c.a & 0x80u)
+				c.ga = (float2)(float((denorm_c.a & 0x7Fu) | (denorm_TA.y & 0x80u)) / 255.0f);
 			else
-				c.a = float((denorm_c.g & 0x7Fu) | (denorm_TA.x & 0x80u)) / 255.0f;
-
-			//c.g = c.a;
+				c.ga = (float2)(float((denorm_c.a & 0x7Fu) | (denorm_TA.x & 0x80u)) / 255.0f);
 		}
-		//Probably not right :/
-		//c.g = c.b;
+		else
+		{
+			if (denorm_c.g & 0x80u)
+				c.ga = (float2)(float((denorm_c.g & 0x7Fu) | (denorm_TA.y & 0x80u)) / 255.0f);
+			else
+				c.ga = (float2)(float((denorm_c.g & 0x7Fu) | (denorm_TA.x & 0x80u)) / 255.0f);
+		}
 	}
 
 	output.c1 = c.a * 2; // used for alpha blending
@@ -855,7 +865,7 @@ PS_OUTPUT ps_main(PS_INPUT input)
 	if(PS_AOUT) // 16 bit output
 	{
 		float a = 128.0f / 255; // alpha output will be 0x80
-		
+
 		c.a = PS_FBA ? a : step(0.5, c.a) * a;
 	}
 	else if(PS_FBA)
@@ -874,7 +884,7 @@ VS_OUTPUT vs_main(VS_INPUT input)
 {
 	if(VS_BPPZ == 1) // 24
 	{
-		input.p.z = fmod(input.p.z, 0x1000000); 
+		input.p.z = fmod(input.p.z, 0x1000000);
 	}
 	else if(VS_BPPZ == 2) // 16
 	{
@@ -882,7 +892,7 @@ VS_OUTPUT vs_main(VS_INPUT input)
 	}
 
 	VS_OUTPUT output;
-	
+
 	// pos -= 0.05 (1/320 pixel) helps avoiding rounding problems (integral part of pos is usually 5 digits, 0.05 is about as low as we can go)
 	// example: ceil(afterseveralvertextransformations(y = 133)) => 134 => line 133 stays empty
 	// input granularity is 1/16 pixel, anything smaller than that won't step drawing up/left by one pixel
@@ -899,7 +909,7 @@ VS_OUTPUT vs_main(VS_INPUT input)
 	{
 		output.p.z = log2(1.0f + input.p.z) / 32;
 	}
-	
+
 	if(VS_TME)
 	{
 		float2 t = input.t - Texture_Scale_Offset.zw;
@@ -923,7 +933,7 @@ VS_OUTPUT vs_main(VS_INPUT input)
 
 	output.c = input.c;
 	output.t.z = input.f.b;
-	
+
 	return output;
 }
 

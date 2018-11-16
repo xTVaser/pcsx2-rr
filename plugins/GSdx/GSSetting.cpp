@@ -53,13 +53,17 @@ const char* dialog_message(int ID, bool* updateText) {
 				"For an optimal experience with OpenGL, Blending Unit Accuracy/Depth Emulation may need to be enabled.\n\n"
 				"Full:\nEnable all CRC hacks.\n\n"
 				"Aggressive:\nUse more aggressive CRC hacks. Only affects a few games, removing some effects which might make the image sharper/clearer.\n"
-				"Affected games: FFX, FFX2, FFXII, GOW2, ICO, SoTC, SSX3, SMT3, SMTDDS1, SMTDDS2.\n"
-				"Works as a speedhack for: Steambot Chronicles.";
+				"Affected games: AC4, DBZBT3, FFX, FFX2, FFXII, GOW2, LegoBatman, OnimushaDoD, RE4, SoTC, SMT3, SMTDDS1, SMTDDS2, Tekken5.\n"
+				"Works as a speedhack for: BleachBB, Kunoichi, Steambot Chronicles, The Simpsons Game.";
 		case IDC_SKIPDRAWHACK:
 		case IDC_SKIPDRAWHACKEDIT:
-			return "Skips drawing n surfaces completely. "
-				"Use it, for example, to try and get rid of bad post processing effects."
-				" Try values between 1 and 100.";
+		case IDC_SKIPDRAWOFFSET:
+		case IDC_SKIPDRAWOFFSETEDIT:
+			return "Completely skips drawing surfaces from the surface in the left box up to the surface specified in the box on the right.\n\n"
+				"Use it, for example, to try and get rid of bad post processing effects.\n"
+				"Step 1: Increase the value in the left box and keep the value in the right box set to the same value as the left box to find and remove a bad effect.\n"
+				"Step 2: If a bad effect found with Step 1 is not completely removed yet, then without changing the value in the left box, try increasing the value in the box to right until the effect is completely gone.\n\n"
+				"Note: Increase the value in the right box and keep the value in the left box set to \"1\" to reproduce the old skipdraw behaviour.";
 		case IDC_ALPHAHACK:
 			return "Different alpha handling. Can work around some shadow problems.";
 		case IDC_OFFSETHACK:
@@ -71,22 +75,16 @@ const char* dialog_message(int ID, bool* updateText) {
 				" Half option is the preferred one. Use it for Mana Khemia or Ar tonelico for example."
 				" Full can be used for Tales of Destiny.";
 		case IDC_WILDHACK:
-			return "Lowers the GS precision to avoid gaps between pixels when upscaling. Fixes the text on Wild Arms games.";
+			return "Lowers the GS precision to avoid gaps between pixels when upscaling.\n"
+				"Fixes the text on Wild Arms games.";
 		case IDC_MSAACB:
-			return "Enables hardware Anti-Aliasing. Needs lots of memory."
+			return "Enables hardware Anti-Aliasing. Needs lots of memory.\n"
 				" The Z-24 modes might need to have LogarithmicZ to compensate for the bits lost (only in DX9 mode).\n\n"
 				" MSAA is not implemented on the OpenGL renderer.";
 		case IDC_ALPHASTENCIL:
 			return "Extend stencil based emulation of destination alpha to perform stencil operations while drawing.\n\n"
 				"Improves many shadows which are normally overdrawn in parts, may affect other effects.\n"
 				"Will disable partial transparency in some games or even prevent drawing some elements altogether.";
-		case IDC_CHECK_DISABLE_ALL_HACKS:
-			return "FOR TESTING ONLY!!\n\n"
-				"Disable all CRC hacks - will break many games. Overrides CrcHacksExclusion at gsdx.ini\n"
-				"\n"
-				"It's possible to exclude CRC hacks also via the gsdx.ini. E.g.:\n"
-				"CrcHacksExclusions=all\n"
-				"CrcHacksExclusions=0x0F0C4A9C, 0x0EE5646B, 0x7ACF7E03";
 		case IDC_ALIGN_SPRITE:
 			return "Fixes issues with upscaling(vertical lines) in Namco games like Ace Combat, Tekken, Soul Calibur, etc.";
 		case IDC_ROUND_SPRITE:
@@ -98,8 +96,7 @@ const char* dialog_message(int ID, bool* updateText) {
 		case IDC_TCOFFSETY:
 		case IDC_TCOFFSETY2:
 			return "Offset for the ST/UV texture coordinates. Fixes some odd texture issues and might fix some post processing alignment too.\n\n"
-				"  0500 0500, fixes Persona 3 minimap, helps Haunting Ground.\n"
-				"  0000 1000, fixes Xenosaga hair edges (DX10+ Issue)";
+				"  0500 0500, fixes Persona 3 minimap, helps Haunting Ground.";
 		case IDC_OSD_LOG:
 			return "Prints log messages from the Function keys onscreen.";
 		case IDC_OSD_MONITOR:
@@ -145,30 +142,36 @@ const char* dialog_message(int ID, bool* updateText) {
 		case IDC_FXAA:
 			return "Enables fast approximate anti-aliasing. Small performance impact.";
 		case IDC_AUTO_FLUSH:
-			return "Force a primitive flush when a framebuffer is also an input texture. Fixes some processing effects such as the shadows in the Jak series and radiosity in GTA:SA.\n"
+			return "Force a primitive flush when a framebuffer is also an input texture.\n"
+				"Fixes some processing effects such as the shadows in the Jak series and radiosity in GTA:SA.\n"
 				"Warning: it's very costly on the performance.\n\n"
 				"Note: OpenGL HW renderer is able to handle Jak shadows at full speed without this option.";
 		case IDC_UNSCALE_POINT_LINE:
 			return "Increases the width of lines at higher than native resolutions. This ensures that the lines will keep the correct proportions and prevents aliasing. "
 				"Avoids empty lines on the screen in games such as Ridge Racer V, and clears FMVs obscured by a grid in games like the Silent Hill series and Dirge of Cerberus.";
 		case IDC_MEMORY_WRAPPING:
-			return "Emulates GS memory wrapping accurately. This fixes issues where part of the image is cut-off by block shaped sections such as the FMVs in Wallace & Gromit: The Curse of the Were-Rabbit and Thrillville.\n"
+			return "Emulates GS memory wrapping accurately. This fixes issues where part of the image is cut-off by block shaped sections such as the FMVs in Wallace & Gromit: The Curse of the Were-Rabbit and Thrillville.\n\n"
 				"Note: This hack can have a small impact on performance.";
 		case IDC_MERGE_PP_SPRITE:
-			return "Replaces post-processing multiple paving sprites by a single fat sprite. It reduces various upscaling lines.\n"
+			return "Replaces post-processing multiple paving sprites by a single fat sprite.\n"
+				" It reduces various upscaling lines.\n\n"
 				"Note: This hack is a work in progress.";
 		case IDC_GEOMETRY_SHADER_OVERRIDE:
 			return "Allows the GPU instead of just the CPU to transform lines into sprites. This reduces CPU load and bandwidth requirement, but it is heavier on the GPU.\n"
-				"Automatic detection is recommended.\nNote: This option is only supported by GPUs which support at least Direct3D 10.";
+				"Automatic detection is recommended.\n\n"
+				"Note: This option is only supported by GPUs which support at least Direct3D 10.";
 		case IDC_IMAGE_LOAD_STORE:
-			return "Allows advanced atomic operations to speed up Accurate Date. Only disable this if using Accurate Date causes (GPU driver) issues.\n"
+			return "Allows advanced atomic operations to speed up Accurate Date.\n"
+				"Only disable this if using Accurate Date causes (GPU driver) issues.\n\n"
 				"Note: This option is only supported by GPUs which support at least Direct3D 11.";
 #ifdef _WIN32
 		// DX9 only
 		case IDC_FBA:
-			return "Makes textures partially or fully transparent as required by emulation. May cause unusual slowdowns or graphical glitches for some games.";
+			return "Makes textures partially or fully transparent as required by emulation.\n"
+				"May cause unusual slowdowns or graphical glitches for some games.";
 		case IDC_LOGZ:
-			return "Treat depth as logarithmic instead of linear. Recommended setting is on unless it causes graphical glitches.";
+			return "Treat depth as logarithmic instead of linear.\n"
+				"Recommended setting is on unless it causes graphical glitches.";
 #endif
 		case IDC_OSD_MAX_LOG_EDIT:
 		case IDC_OSD_MAX_LOG:
@@ -178,7 +181,8 @@ const char* dialog_message(int ID, bool* updateText) {
 			return "Use bilinear filtering when Upscaling/Downscaling the image to the screen. Disable it if you want a sharper/pixelated output.";
 		// Exclusive for Hardware Renderer
 		case IDC_PRELOAD_GS:
-			return "Uploads GS data when rendering a new frame to reproduce some effects accurately. Fixes black screen issues in games like Armored Core: Last Raven.";
+			return "Uploads GS data when rendering a new frame to reproduce some effects accurately.\n"
+				"Fixes black screen issues in games like Armored Core: Last Raven.";
 		case IDC_MIPMAP_HW:
 			return	"Control the accuracy level of the mipmapping emulation\n\n"
 				"Automatic:\nAutomatically sets the mipmapping level based on the game.\n"

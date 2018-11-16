@@ -179,7 +179,7 @@ SIO_WRITE sioWriteStart(u8 data)
 	case 0x81: siomode = SIO_MEMCARD; break;
 
 	default:
-		DevCon.Warning("%s cmd: %02X??\n", __FUNCTION__, data);
+		DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
 		DEVICE_UNPLUGGED();
 		siomode = SIO_DUMMY;
 		break;
@@ -279,7 +279,7 @@ SIO_WRITE sioWriteMultitap(u8 data)
 			break;
 
 		default:
-			DevCon.Warning("%s cmd: %02X??\n", __FUNCTION__, data);
+			DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
 			sio.buf[3] = 0x00;
 			sio.buf[4] = 0x00;
 			sio.buf[5] = 0x00;
@@ -386,7 +386,7 @@ SIO_WRITE memcardErase(u8 data)
 				break;
 
 			default:
-				DevCon.Warning("%s cmd: %02X??\n", __FUNCTION__, data);
+				DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
 				sio.bufCount = -1;
 				//sio.bufSize = 3;
 				//sio.bufCount = 4;
@@ -447,7 +447,7 @@ SIO_WRITE memcardWrite(u8 data)
 				}
 
 			default:
-				DevCon.Warning("%s cmd: %02X??\n", __FUNCTION__, data);
+				DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
 				sio.bufCount = -1;
 				//sio.bufSize = 3;
 				//sio.bufCount = 4;
@@ -537,7 +537,7 @@ SIO_WRITE memcardRead(u8 data)
 				}
 
 			default:
-				DevCon.Warning("%s cmd: %02X??\n", __FUNCTION__, data);
+				DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
 				sio.bufCount = -1;
 				//sio.bufSize = 3;
 				//sio.bufCount = 4;
@@ -728,7 +728,7 @@ SIO_WRITE sioWriteMemcard(u8 data)
 			break;
 
 		default:
-			DevCon.Warning("%s cmd: %02X??\n", __FUNCTION__, data);
+			DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
 			siomode = SIO_DUMMY;
 			break;
 		}
@@ -920,8 +920,8 @@ static void sioWrite8inl(u8 data)
 	if (IS_LAST_BYTE_IN_PACKET != 1) //The following should be set after each byte transfer but the last one.
 		sio.StatReg |= ACK_INP; //Signal that Controller (or MC) has brought the /ACK (Acknowledge) line active low.
 
-		sioInterrupt();
-		//chkTriggerInt();
+	sioInterrupt();
+	//chkTriggerInt();
 	//Console.WriteLn( "SIO0 WR DATA COMMON %02X  INT_STAT= %08X  IOPpc= %08X " , data, psxHu32(0x1070), psxRegs.pc);
 	byteCnt++;
 }
@@ -932,11 +932,11 @@ void sioStatRead() {
 
 if (clrAckCnt > 1) {  //This check can probably be removed...
 	sio.StatReg &= ~ACK_INP; //clear (goes inactive) /ACK line.
-//sio.StatReg &= ~TX_RDY;
-//	sio.StatReg &= ~0x200; //irq
-	//if (byteCnt == 1)
-	//	sio.StatReg &= ~RX_RDY;
-clrAckCnt = 0;
+	// sio.StatReg &= ~TX_RDY;
+	// sio.StatReg &= ~0x200; //irq
+	// if (byteCnt == 1)
+	// 	sio.StatReg &= ~RX_RDY;
+	clrAckCnt = 0;
 }
 	//The /ACK line should go active for >2us, in a time window between 12us and 100us after each byte is sent (received by the controller).
 	//If that doesn't happen, the controller is considered missing.

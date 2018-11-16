@@ -495,7 +495,7 @@ static __fi bool mfifoGIFrbTransfer()
 {
 	u16 qwc = std::min(QWCinGIFMFIFO(gifch.madr), gifch.qwc);
 	if (qwc == 0) {
-		DevCon.Warning("GIF FIFO EMPTY before transfer (how??)");
+		DevCon.Warning("GIF FIFO EMPTY before transfer (how?)");
 	}
 
 	u8* src = (u8*)PSM(gifch.madr);
@@ -569,7 +569,7 @@ static __fi bool mfifoGIFchain()
 		//This ends up being done more often but it's safer :P
 		//Make sure we wrap the addresses, dont want it being stuck outside the ring when reading from the ring!
 		gifch.madr = dmacRegs.rbor.ADDR + (gifch.madr & dmacRegs.rbsr.RMSK);
-		gifch.tadr = dmacRegs.rbor.ADDR + (gifch.tadr & dmacRegs.rbsr.RMSK); //Front Mission 4 tag increments to end of ring
+		gifch.tadr = gifch.madr;
 
 		return ret;
 	}
@@ -780,8 +780,12 @@ void gifMFIFOInterrupt()
 		clearFIFOstuff(false);
 	}
 	
-	gif.gscycles = 0;
+	if (spr0ch.madr == gifch.tadr) {
+		FireMFIFOEmpty();
+	}
 
+	gif.gscycles = 0;
+	
 	gifch.chcr.STR = false;
 	gif.gifstate = GIF_STATE_READY;
 	hwDmacIrq(DMAC_GIF);

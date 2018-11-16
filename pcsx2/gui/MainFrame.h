@@ -149,6 +149,7 @@ public:
 	void UpdateIsoSrcSelection();
 	void RemoveCdvdMenu();
 	void EnableMenuItem( int id, bool enable );
+	void SetMenuItemLabel(int id, wxString str);
 	void EnableCdvdPluginSubmenu(bool isEnable = true);
 	
 	bool Destroy();
@@ -173,7 +174,6 @@ protected:
 
 	void Menu_SysSettings_Click(wxCommandEvent &event);
 	void Menu_McdSettings_Click(wxCommandEvent &event);
-	void Menu_GameDatabase_Click(wxCommandEvent &event);
 	void Menu_WindowSettings_Click(wxCommandEvent &event);
 	void Menu_GSSettings_Click(wxCommandEvent &event);
 	void Menu_SelectPluginsBios_Click(wxCommandEvent &event);

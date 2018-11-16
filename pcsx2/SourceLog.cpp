@@ -114,6 +114,11 @@ TLD_iopConsole = {
 TLD_deci2 = {
 	L"DECI2",		L"DECI&2 Console",
 	pxDt("Shows DECI2 debugging logs (EE processor)")
+},
+
+TLD_sysoutConsole = {
+	L"SYSout",		L"System Out",
+	pxDt("Shows strings printed to the system output stream.")
 }
 
 #ifndef DISABLE_RECORDING
@@ -132,12 +137,13 @@ TLD_controlInfo = {
 SysConsoleLogPack::SysConsoleLogPack()
 	: ELF				(&TLD_ELF, Color_Gray)
 	, eeRecPerf			(&TLD_eeRecPerf, Color_Gray)
+	, sysoutConsole		(&TLD_sysoutConsole, Color_Gray)
 	, eeConsole			(&TLD_eeConsole)
 	, iopConsole		(&TLD_iopConsole)
 	, deci2				(&TLD_deci2)
 #ifndef DISABLE_RECORDING
-	, recordingConsole(&TLD_recordingConsole)
-	, controlInfo(&TLD_controlInfo)
+	, recordingConsole	(&TLD_recordingConsole)
+	, controlInfo		(&TLD_controlInfo)
 #endif
 {
 }

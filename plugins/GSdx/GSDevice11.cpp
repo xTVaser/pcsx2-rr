@@ -39,12 +39,15 @@ GSDevice11::GSDevice11()
 	m_state.topology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
 	m_state.bf = -1;
 
-	if (theApp.GetConfigB("UserHacks")) {
+	m_mipmap = theApp.GetConfigI("mipmap");
+
+	if (theApp.GetConfigB("UserHacks"))
+	{
 		UserHacks_unscale_pt_ln = theApp.GetConfigB("UserHacks_unscale_point_line");
-		UserHacks_disable_NV_hack = theApp.GetConfigB("UserHacks_DisableNVhack");
-	} else {
+	}
+	else
+	{
 		UserHacks_unscale_pt_ln = false;
-		UserHacks_disable_NV_hack = false;
 	}
 }
 
@@ -119,10 +122,6 @@ bool GSDevice11::Create(const std::shared_ptr<GSWnd> &wnd)
 
 	scd.Windowed = TRUE;
 
-	spritehack = theApp.GetConfigB("UserHacks") ? theApp.GetConfigI("UserHacks_SpriteHack") : 0;
-
-	isNative = theApp.GetConfigI("upscale_multiplier") == 1;
-
 	// NOTE : D3D11_CREATE_DEVICE_SINGLETHREADED
 	//   This flag is safe as long as the DXGI's internal message pump is disabled or is on the
 	//   same thread as the GS window (which the emulator makes sure of, if it utilizes a
@@ -150,6 +149,31 @@ bool GSDevice11::Create(const std::shared_ptr<GSWnd> &wnd)
 	if(!SetFeatureLevel(level, true))
 	{
 		return false;
+	}
+
+	{	// HACK: check nVIDIA
+		bool nvidia_gpu = false;
+		IDXGIDevice *dxd;
+
+		if(SUCCEEDED(m_dev->QueryInterface(IID_PPV_ARGS(&dxd))))
+		{
+			IDXGIAdapter *dxa;
+
+			if(SUCCEEDED(dxd->GetAdapter(&dxa)))
+			{
+				DXGI_ADAPTER_DESC dxad;
+
+				if(SUCCEEDED(dxa->GetDesc(&dxad)))
+					nvidia_gpu = dxad.VendorId == 0x10DE;
+
+				dxa->Release();
+			}
+			dxd->Release();
+		}
+
+		bool spritehack_enabled = theApp.GetConfigB("UserHacks") && theApp.GetConfigI("UserHacks_SpriteHack");
+
+		m_hack_topleft_offset = (!nvidia_gpu || m_upscale_multiplier == 1 || spritehack_enabled) ? 0.0f : -0.01f;
 	}
 
 	D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS options;
@@ -189,9 +213,19 @@ bool GSDevice11::Create(const std::shared_ptr<GSWnd> &wnd)
 	theApp.LoadResource(IDR_CONVERT_FX, shader);
 	CompileShader(shader.data(), shader.size(), "convert.fx", nullptr, "vs_main", nullptr, &m_convert.vs, il_convert, countof(il_convert), &m_convert.il);
 
+	std::string convert_mstr[1];
+
+	convert_mstr[0] = format("%d", m_upscale_multiplier);
+
+	D3D_SHADER_MACRO convert_macro[] =
+	{
+		{"PS_SCALE_FACTOR", convert_mstr[0].c_str()},
+		{NULL, NULL},
+	};
+
 	for(size_t i = 0; i < countof(m_convert.ps); i++)
 	{
-		CompileShader(shader.data(), shader.size(), "convert.fx", nullptr, format("ps_main%d", i).c_str(), nullptr, &m_convert.ps[i]);
+		CompileShader(shader.data(), shader.size(), "convert.fx", nullptr, format("ps_main%d", i).c_str(), convert_macro, &m_convert.ps[i]);
 	}
 
 	memset(&dsd, 0, sizeof(dsd));
@@ -514,6 +548,10 @@ GSTexture* GSDevice11::CreateSurface(int type, int w, int h, bool msaa, int form
 		desc.SampleDesc = m_msaa_desc;
 	}
 
+	// mipmap = m_mipmap > 1 || m_filter != TriFiltering::None;
+	bool mipmap = m_mipmap > 1;
+	int layers = mipmap && format == DXGI_FORMAT_R8G8B8A8_UNORM ? (int)log2(std::max(w,h)) : 1;
+
 	switch(type)
 	{
 	case GSTexture::RenderTarget:
@@ -524,6 +562,7 @@ GSTexture* GSDevice11::CreateSurface(int type, int w, int h, bool msaa, int form
 		break;
 	case GSTexture::Texture:
 		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		desc.MipLevels = layers;
 		break;
 	case GSTexture::Offscreen:
 		desc.Usage = D3D11_USAGE_STAGING;
@@ -709,14 +748,14 @@ void GSDevice11::StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture*
 	GSSelector sel;
 	//Don't use shading for stretching, we're just passing through - Note: With Win10 it seems to cause other bugs when shading is off if any of the coords is greater than 0
 	//I really don't know whats going on there, but this seems to resolve it mostly (if not all, not tester a lot of games, only BIOS, FFXII and VP2)
-	//sel.iip = (sRect.y > 0.0f || sRect.w > 0.0f) ? 1 : 0; 
+	//sel.iip = (sRect.y > 0.0f || sRect.w > 0.0f) ? 1 : 0;
 	//sel.prim = 2; //Triangle Strip
 	//SetupGS(sel);
 
 	GSSetShader(NULL, NULL);
 
 	/*END OF HACK*/
-	
+
 	//
 
 	// ps
@@ -917,7 +956,7 @@ void GSDevice11::SetupDATE(GSTexture* rt, GSTexture* ds, const GSVertexPT1* vert
 
 	PSSetShaderResources(rt2, NULL);
 	PSSetSamplerState(m_convert.pt, NULL);
-	PSSetShader(m_convert.ps[datm ? 2 : 3], NULL);
+	PSSetShader(m_convert.ps[datm ? ShaderConvert_DATM_1 : ShaderConvert_DATM_0], NULL);
 
 	//
 
@@ -1262,8 +1301,8 @@ void GSDevice11::OMSetRenderTargets(GSTexture* rt, GSTexture* ds, const GSVector
 		D3D11_VIEWPORT vp;
 		memset(&vp, 0, sizeof(vp));
 
-		vp.TopLeftX = (UserHacks_disable_NV_hack || spritehack > 0 || isNative) ? 0.0f : -0.01f;
-		vp.TopLeftY = (UserHacks_disable_NV_hack || spritehack > 0 || isNative) ? 0.0f : -0.01f;
+		vp.TopLeftX = m_hack_topleft_offset;
+		vp.TopLeftY = m_hack_topleft_offset;
 		vp.Width = (float)size.x;
 		vp.Height = (float)size.y;
 		vp.MinDepth = 0.0f;

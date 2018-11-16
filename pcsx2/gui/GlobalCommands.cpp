@@ -22,8 +22,6 @@
 #include "AppAccelerators.h"
 #include "AppSaveStates.h"
 
-#include "Utilities/HashMap.h"
-
 #ifndef DISABLE_RECORDING
 #	include "Recording/RecordingControls.h"
 #	include "Recording/InputRecording.h"
@@ -358,7 +356,7 @@ namespace Implementations
 
 	void Sys_TakeSnapshot()
 	{
-		GSmakeSnapshot( g_Conf->Folders.Snapshots.ToAscii() );
+		GSmakeSnapshot( g_Conf->Folders.Snapshots.ToUTF8() );
 	}
 
 	void Sys_RenderToggle()

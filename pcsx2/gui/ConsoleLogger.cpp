@@ -294,6 +294,7 @@ static ConsoleLogSource* const ConLogSources[] =
 	NULL,
 	(ConsoleLogSource*)&pxConLog_Event,
 	(ConsoleLogSource*)&pxConLog_Thread,
+	(ConsoleLogSource*)&SysConsole.sysoutConsole,
 	NULL,
 #ifndef DISABLE_RECORDING
 	(ConsoleLogSource*)&SysConsole.recordingConsole,
@@ -308,6 +309,7 @@ static const bool ConLogDefaults[] =
 	true,
 	false,
 	true,
+	false,
 	false,
 	false,
 	false,

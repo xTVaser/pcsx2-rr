@@ -201,10 +201,10 @@ void GSdxApp::Init()
 
 #ifdef _WIN32
 	m_gs_renderers.push_back(GSSetting(static_cast<uint32>(GSRendererType::DX9_HW), "Direct3D 9", "Hardware"));
-	m_gs_renderers.push_back(GSSetting(static_cast<uint32>(GSRendererType::DX1011_HW), "Direct3D ", "Hardware"));
+	m_gs_renderers.push_back(GSSetting(static_cast<uint32>(GSRendererType::DX1011_HW), "Direct3D 11", "Hardware"));
 	m_gs_renderers.push_back(GSSetting(static_cast<uint32>(GSRendererType::OGL_HW), "OpenGL", "Hardware"));
 	m_gs_renderers.push_back(GSSetting(static_cast<uint32>(GSRendererType::DX9_SW), "Direct3D 9", "Software"));
-	m_gs_renderers.push_back(GSSetting(static_cast<uint32>(GSRendererType::DX1011_SW), "Direct3D ", "Software"));
+	m_gs_renderers.push_back(GSSetting(static_cast<uint32>(GSRendererType::DX1011_SW), "Direct3D 11", "Software"));
 	m_gs_renderers.push_back(GSSetting(static_cast<uint32>(GSRendererType::OGL_SW), "OpenGL", "Software"));
 #else // Linux
 	m_gs_renderers.push_back(GSSetting(static_cast<uint32>(GSRendererType::OGL_HW), "OpenGL", "Hardware"));
@@ -237,15 +237,15 @@ void GSdxApp::Init()
 	m_gs_aspectratio.push_back(GSSetting(1, "4:3", ""));
 	m_gs_aspectratio.push_back(GSSetting(2, "16:9", ""));
 
-	m_gs_upscale_multiplier.push_back(GSSetting(1, "Native", ""));
-	m_gs_upscale_multiplier.push_back(GSSetting(2, "2x Native", ""));
-	m_gs_upscale_multiplier.push_back(GSSetting(3, "3x Native", ""));
-	m_gs_upscale_multiplier.push_back(GSSetting(4, "4x Native", ""));
-	m_gs_upscale_multiplier.push_back(GSSetting(5, "5x Native", ""));
-	m_gs_upscale_multiplier.push_back(GSSetting(6, "6x Native", ""));
-	m_gs_upscale_multiplier.push_back(GSSetting(8, "8x Native", ""));
+	m_gs_upscale_multiplier.push_back(GSSetting(1, "Native", "PS2"));
+	m_gs_upscale_multiplier.push_back(GSSetting(2, "2x Native", "~720p"));
+	m_gs_upscale_multiplier.push_back(GSSetting(3, "3x Native", "~1080p"));
+	m_gs_upscale_multiplier.push_back(GSSetting(4, "4x Native", "~1440p 2K"));
+	m_gs_upscale_multiplier.push_back(GSSetting(5, "5x Native", "~1620p 3K"));
+	m_gs_upscale_multiplier.push_back(GSSetting(6, "6x Native", "~2160p 4K"));
+	m_gs_upscale_multiplier.push_back(GSSetting(8, "8x Native", "~2880p 5K"));
 #ifndef __unix__
-	m_gs_upscale_multiplier.push_back(GSSetting(0, "Custom", ""));
+	m_gs_upscale_multiplier.push_back(GSSetting(0, "Custom", "Not Recommended"));
 #endif
 
 	m_gs_max_anisotropy.push_back(GSSetting(0, "Off", ""));
@@ -263,7 +263,7 @@ void GSdxApp::Init()
 	m_gs_trifilter.push_back(GSSetting(static_cast<uint32>(TriFiltering::PS2), "Trilinear", ""));
 	m_gs_trifilter.push_back(GSSetting(static_cast<uint32>(TriFiltering::Forced), "Trilinear", "Ultra/Slow"));
 
-	m_gs_gl_ext.push_back(GSSetting(-1, "Auto", "Default"));
+	m_gs_gl_ext.push_back(GSSetting(-1, "Automatic", "Default"));
 	m_gs_gl_ext.push_back(GSSetting(0,  "Force-Disabled", ""));
 	m_gs_gl_ext.push_back(GSSetting(1,  "Force-Enabled", ""));
 
@@ -287,8 +287,8 @@ void GSdxApp::Init()
 		GSSetting(CRCHackLevel::Automatic, "Automatic", "Default"),
 		GSSetting(CRCHackLevel::None , "None", "Debug"),
 		GSSetting(CRCHackLevel::Minimum, "Minimum", "Debug"),
-		GSSetting(CRCHackLevel::Partial, "Partial", "OpenGL Recommended"),
-		GSSetting(CRCHackLevel::Full, "Full", "Direct3D Recommended"),
+		GSSetting(CRCHackLevel::Partial, "Partial", "OpenGL"),
+		GSSetting(CRCHackLevel::Full, "Full", "Direct3D"),
 		GSSetting(CRCHackLevel::Aggressive, "Aggressive", ""),
 	};
 
@@ -434,7 +434,6 @@ void GSdxApp::Init()
 	m_default_configuration["UserHacks_DisableDepthSupport"]              = "0";
 	m_default_configuration["UserHacks_CPU_FB_Conversion"]                = "0";
 	m_default_configuration["UserHacks_DisableGsMemClear"]                = "0";
-	m_default_configuration["UserHacks_DisableNVhack"]                    = "0";
 	m_default_configuration["UserHacks_DisablePartialInvalidation"]       = "0";
 	m_default_configuration["UserHacks_HalfPixelOffset"]                  = "0";
 	m_default_configuration["UserHacks_merge_pp_sprite"]                  = "0";
@@ -442,8 +441,10 @@ void GSdxApp::Init()
 	m_default_configuration["UserHacks_unscale_point_line"]               = "0";
 	m_default_configuration["UserHacks_round_sprite_offset"]              = "0";
 	m_default_configuration["UserHacks_SkipDraw"]                         = "0";
+	m_default_configuration["UserHacks_SkipDraw_Offset"]                  = "0";
 	m_default_configuration["UserHacks_SpriteHack"]                       = "0";
-	m_default_configuration["UserHacks_TCOffset"]                         = "0";
+	m_default_configuration["UserHacks_TCOffsetX"]                        = "0";
+	m_default_configuration["UserHacks_TCOffsetY"]                        = "0";
 	m_default_configuration["UserHacks_TextureInsideRt"]                  = "0";
 	m_default_configuration["UserHacks_TriFilter"]                        = std::to_string(static_cast<int8>(TriFiltering::None));
 	m_default_configuration["UserHacks_WildHack"]                         = "0";

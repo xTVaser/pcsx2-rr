@@ -25,6 +25,7 @@
 
 CRC::Game CRC::m_games[] =
 {
+	// Note: IDs 0x7ACF7E03, 0x7D4EA48F, 0x37C53760 - shouldn't be added as it's from the multiloaders when packing games.
 	{0x00000000, NoTitle, NoRegion, 0},
 	{0xF46142D3, ArTonelico2, NoRegion, 0},
 	{0xC38067F4, ArTonelico2, NoRegion, 0}, // project metafalica 1.0
@@ -70,7 +71,6 @@ CRC::Game CRC::m_games[] =
 	{0x280AD120, FFXII, JP, 0},
 	{0x08C1ED4D, HauntingGround, EU, 0},
 	{0x2CD5794C, HauntingGround, EU, 0},
-	// {0x7D4EA48F, HauntingGround, EU, 0}, // same CRC as {Genji, EU}
 	{0x867BB945, HauntingGround, JP, 0},
 	{0xE263BC4B, HauntingGround, JP, 0},
 	{0x901AAC09, HauntingGround, US, 0},
@@ -136,30 +136,39 @@ CRC::Game CRC::m_games[] =
 	{0xB01A4C95, ICO, JP, 0},
 	{0x2DF2C1EA, ICO, KO, 0},
 	{0x5C991F4E, ICO, EU, 0},
-	{0x7ACF7E03, ICO, NoRegion, 0}, // same CRC as {SpyroNewBeginning, NoRegion}
-	// and as "Twisted Metal - Black" (PAL).
+	{0x3DCE2229, ICO, RU, 0}, // Unofficial RU-version
 	{0x788D8B4F, ICO, EU, 0},
 	{0x29C28734, ICO, CH, 0},
-	{0xC02C653E, GT4, CH, 0},
-	{0xAEAD1CA3, GT4, JP, 0},
-	{0x30E41D93, GT4, KO, 0},
-	{0x715CF2EC, GT4, EU, 0},
-	{0x44A61C8F, GT4, EU, 0},
-	{0x0086E35B, GT4, EU, 0},
-	{0x77E61C8A, GT4, US, 0},
-	{0x33C6E35E, GT4, US, 0},
-	{0x32A1C752, GT4, US, 0}, // GT4 Online Beta
-	{0x7ABDBB5E, GT3, CH, 0}, // cutie comment
+	{0x60013EBD, GTConcept, EU, 0},
+	{0x6810C3BC, GTConcept, CH, 0}, // Gran Turismo Concept 2002 Tokyo-Geneva
+	{0x0EEF32A3, GTConcept, KO, 0}, // Gran Turismo Concept 2002 Tokyo-Seoul
 	{0x3E9D448A, GT3, CH, 0}, // cutie comment
 	{0xAD66643C, GT3, CH, 0}, // cutie comment
 	{0x85AE91B3, GT3, US, 0},
 	{0x8AA991B0, GT3, US, 0},
 	{0xC220951A, GT3, JP, 0},
 	{0x9DE5CF65, GT3, JP, 0},
+	{0x706DFF80, GT3, JP, 0}, // GT3 Store Disc Vol. 2
+	{0x55CE5111, GT3, JP, 0}, // Gran Turismo 2000 Body Omen
 	{0xB590CE04, GT3, EU, 0},
-	{0x60013EBD, GTConcept, EU, 0},
-	{0x6810C3BC, GTConcept, CH, 0}, // Gran Turismo Concept 2002 Tokyo-Geneva
-	{0x0EEF32A3, GTConcept, KO, 0}, // Gran Turismo Concept 2002 Tokyo-Seoul
+	{0xC02C653E, GT4, CH, 0},
+	{0x7ABDBB5E, GT4, CH, 0}, // cutie comment
+	{0xAEAD1CA3, GT4, JP, 0},
+	{0xE906EA37, GT4, JP, 0}, // GT4 First Preview 
+	{0xCA6243B9, GT4, JP, 0}, // GT4 Prologue
+	{0xDD764BBE, GT4, JP, 0}, // GT4 Prologue
+	{0xE1258846, GT4, JP, 0}, // GT4 Prologue
+	{0x27B8F05F, GT4, JP, 0}, // GT4 Prius Trial Version
+	{0x30E41D93, GT4, KO, 0},
+	{0x715CF2EC, GT4, EU, 0},
+	{0x44A61C8F, GT4, EU, 0},
+	{0x0086E35B, GT4, EU, 0},
+	{0x3FB69323, GT4, EU, 0}, // GT4 Prologue
+	{0x77E61C8A, GT4, US, 0},
+	{0x33C6E35E, GT4, US, 0},
+	{0x70538747, GT4, US, 0}, // Toyota Prius Trial
+	{0x32A1C752, GT4, US, 0}, // GT4 Online Beta
+	{0x0087EEC4, GT4, NoRegion, 0}, // JP and US versions have the same CRC - GT4 Online Beta
 	{0xC164550A, WildArms5, JPUNDUB, 0},
 	{0xC1640D2C, WildArms5, US, 0},
 	{0x0FCF8FE4, WildArms5, EU, 0},
@@ -174,6 +183,7 @@ CRC::Game CRC::m_games[] =
 	{0x103B5706, CrashBandicootWoC, US, 0}, // American Greatest Hits release
 	{0x75182BE5, CrashBandicootWoC, US, 0},
 	{0x5188ABCA, CrashBandicootWoC, US, 0},
+	{0x34E2EEC7, CrashBandicootWoC, RU, 0},
 	{0x3A03D62F, CrashBandicootWoC, EU, 0},
 	{0x013E349D, ResidentEvil4, US, 0},
 	{0xDBB7A559, ResidentEvil4, US, 0},
@@ -199,16 +209,17 @@ CRC::Game CRC::m_games[] =
 	{0x9E98B8AE, IkkiTousen, JP, 0},
 	{0xD6385328, GodOfWar, US, 0},
 	{0xF2A8D307, GodOfWar, US, 0},
+	{0xA61A4C6D, GodOfWar, US, 0},
+	{0xDF3A5A5C, GodOfWar, US, 0}, // Demo
 	{0xFB0E6D72, GodOfWar, EU, 0},
 	{0xEB001875, GodOfWar, EU, 0},
 	{0xCF148C74, GodOfWar, EU, 0},
+	{0xDF1AF973, GodOfWar, EU, 0},
 	{0xCA052D22, GodOfWar, JP, 0},
 	{0xBFCC1795, GodOfWar, KO, 0},
 	{0x9567B7D6, GodOfWar, KO, 0},
 	{0x9B5C97BA, GodOfWar, KO, 0},
-	{0xA61A4C6D, GodOfWar, US, 0},
 	{0xE23D532B, GodOfWar, NoRegion, 0},
-	{0xDF1AF973, GodOfWar, EU, 0},
 	{0x1A85E924, GodOfWar, NoRegion, 0}, // cutie comment
 	{0x608ACBD3, GodOfWar, CH, 0}, // cutie comment
 	{0x2F123FD8, GodOfWar2, US, 0}, // same CRC as RU
@@ -229,8 +240,10 @@ CRC::Game CRC::m_games[] =
 	{0x2C5BF134, GiTS, US, 0}, // Demo
 	{0xA5768F53, GiTS, JP, 0},
 	{0xA3643EB1, GiTS, KO, 0},
+	{0x28557423, GiTS, RU, 0},
 	{0xBF6F101F, GiTS, EU, 0}, // same CRC as another US disc
 	{0x6BF11378, Onimusha3, US, 0},
+	{0x78F1136A, Onimusha3, RU, 0}, // Unofficial RU-version
 	{0x71320CA8, Onimusha3, JP, 0},
 	{0xDAFFFB0D, Onimusha3, KO, 0},
 	{0xF442260C, MajokkoALaMode2, JP, 0},
@@ -252,7 +265,6 @@ CRC::Game CRC::m_games[] =
 	{0x56242EC9, Genji, KO, 0},
 	{0xCDAF243D, Genji, CH, 0},
 	{0x2A5E0B61, Genji, CH, 0},
-	{0x7D4EA48F, Genji, EU, 0}, // same CRC as {HauntingGround, EU}
 	{0xE04EA200, StarOcean3, EU, 0},
 	{0x23A97857, StarOcean3, US, 0},
 	{0xBEC32D49, StarOcean3, JP, 0},
@@ -288,6 +300,7 @@ CRC::Game CRC::m_games[] =
 	{0xA33AF77A, TenchuFS, US, 0},
 	{0x64C58FB4, TenchuFS, US, 0},
 	{0xE7CCCB1E, TenchuFS, EU, 0},
+	{0x89E63B40, TenchuFS, RU, 0}, // Beta
 	{0x1969B19A, TenchuFS, ES, 0}, // PAL Spanish
 	{0xBF0DC4CE, TenchuFS, DE, 0},
 	{0x696BBEC3, TenchuFS, KO, 0},
@@ -308,6 +321,7 @@ CRC::Game CRC::m_games[] =
 	{0x518DD841, Sly2, KO, 0},
 	{0x07652DD9, Sly2, US, 0},
 	{0x5B93397F, Sly2, US, 0}, // E3 Demo
+	{0xDD0B5E6C, Sly2, US, 0}, // Internal prototype disc
 	{0x615EA2DB, Sly2, JP, 0}, // Kaitou Sly Cooper 2
 	{0xFDA1CBF6, Sly2, EU, 0},
 	{0x15DD1F6F, Sly2, NoRegion, 0},
@@ -330,6 +344,7 @@ CRC::Game CRC::m_games[] =
 	{0x37CD4279, LordOfTheRingsThirdAge, KO, 0},
 	{0xE169BAF8, RedDeadRevolver, US, 0},
 	{0xE2E67E23, RedDeadRevolver, EU, 0},
+	{0x87844524, RedDeadRevolver, RU, 0}, // Unofficial RU-version
 	{0xF56C7948, HeavyMetalThunder, JP, 0},
 	{0x6DF62AEA, BleachBladeBattlers, JP, 0},
 	{0x6EB71AB0, BleachBladeBattlers, JP, 0}, // 2nd
@@ -343,6 +358,7 @@ CRC::Game CRC::m_games[] =
 	{0x9A93FE5D, CastlevaniaLoI, KO, 0},
 	{0x7985D894, FinalFightStreetwise, US, 0},
 	{0xED4BF0D3, FinalFightStreetwise, US, 0}, // cutie comment
+	{0x0BA2B682, FinalFightStreetwise, RU, 0},
 	{0x73C560BA, FinalFightStreetwise, EU, 0},
 	{0xCBB87BF9, EvangelionJo, JP, 0}, // cutie comment
 	{0xC5B75C7C, Oneechanbara2Special, JP, 0}, // cutie comment
@@ -367,6 +383,7 @@ CRC::Game CRC::m_games[] =
 	{0x54A548B4, CrashNburn, EU, 0},
 	{0x694A998E, TombRaiderUnderworld, JP, 0}, // cutie comment
 	{0x8E214549, TombRaiderUnderworld, EU, 0},
+	{0x8E265148, TombRaiderUnderworld, RU, 0}, // Unofficial RU-version
 	{0x618769D6, TombRaiderUnderworld, US, 0},
 	{0xB639EB17, TombRaiderAnniversary, US, 0}, // Also needed for automatic mipmapping
 	{0xB05805B6, TombRaiderAnniversary, JP, 0}, // cutie comment
@@ -396,8 +413,10 @@ CRC::Game CRC::m_games[] =
 	{0xBEBF8793, BurnoutTakedown, US, 0},
 	{0x75BECC18, BurnoutTakedown, EU, 0},
 	{0xCE49B0DE, BurnoutTakedown, EU, 0},
+	{0x381EE9EF, BurnoutTakedown, EU, 0}, // E3 Demo
 	{0xD224D348, BurnoutRevenge, US, 0},
 	{0x7E83CC5B, BurnoutRevenge, EU, 0},
+	{0x2CAC3DBC, BurnoutRevenge, EU, 0},
 	{0xEEA60511, BurnoutRevenge, KO, 0},
 	{0x8C9576A1, BurnoutDominator, US, 0},
 	{0x8C9576B4, BurnoutDominator, EU, 0},
@@ -407,8 +426,6 @@ CRC::Game CRC::m_games[] =
 	{0x60A42FF5, MidnightClub3, US, 0}, // remix
 	{0xD03D4C77, SpyroNewBeginning, US, 0},
 	{0x0EE5646B, SpyroNewBeginning, EU, 0},
-	// {0x7ACF7E03, SpyroNewBeginning, NoRegion, 0}, // same CRC as {ICO, NoRegion}
-	// and as "Twisted Metal - Black" (PAL).
 	{0xB80CE8EC, SpyroEternalNight, US, 0},
 	{0x8AE9536D, SpyroEternalNight, EU, 0},
 	{0xC95F0198, SpyroEternalNight, NoRegion, 0},
@@ -427,10 +444,12 @@ CRC::Game CRC::m_games[] =
 	{0XD3F182A3, Yakuza, EU, 0},
 	{0x6F9F99F8, Yakuza, EU, 0},
 	{0x388F687B, Yakuza, US, 0},
+	{0xC1B91FC5, Yakuza, US, 0}, // Demo
 	{0xB7B3800A, Yakuza, JP, 0},
 	{0xA60C2E65, Yakuza2, EU, 0},
 	{0x800E3E5A, Yakuza2, EU, 0},
 	{0x97E9C87E, Yakuza2, US, 0},
+	{0xB1EBD841, Yakuza2, US, 0},
 	{0xC6B95C48, Yakuza2, JP, 0},
 	{0x9000252A, SkyGunner, JP, 0},
 	{0x93092623, SkyGunner, JP, 0},
@@ -494,9 +513,11 @@ CRC::Game CRC::m_games[] =
 	{0x24090A12, SoulCalibur3, EU, 0},
 	{0x3BA95B70, SoulCalibur3, EU, 0},
 	{0xBC5480A3, SoulCalibur3, EU, 0},
+	{0xBE40779A, SoulCalibur3, RU, 0},
 	{0x37B99B14, SoulCalibur3, KO, 0},
 	{0xFC0F8A5B, Simple2000Vol114, JP, 0},
 	{0xBDD9BAAD, UrbanReign, US, 0}, // cutie comment
+	{0x0418486E, UrbanReign, RU, 0},
 	{0xAE4BEBD3, UrbanReign, EU, 0},
 	{0x48AC09BC, SteambotChronicles, EU, 0},
 	{0x9F391882, SteambotChronicles, US, 0},
@@ -517,6 +538,9 @@ CRC::Game CRC::m_games[] =
 	{0x194C9F38, AceCombatZero, EU, 0},
 	{0x65729657, AceCombatZero, US, 0},
 	{0xA04B52DB, AceCombatZero, JP, 0},
+	{0x09B3AD4D, ApeEscape2, EU, 0},
+	{0xBDD9F5E1, ApeEscape2, US, 0},
+	{0xFE0A6AB6, ApeEscape2, JP, 0}, // Saru! Get You! 2
 	{0x0940508D, BrianLaraInternationalCricket, EU, 0},
 	{0x0BAA8DD8, DarkCloud, EU, 0},
 	{0x1DF41F33, DarkCloud, US, 0},
@@ -535,11 +559,22 @@ CRC::Game CRC::m_games[] =
 	{0x684ADFC6, FIFA04, EU, 0},
 	{0x972611BB, FIFA05, US, 0},
 	{0x972719A3, FIFA05, EU, 0},
+	{0xC5473413, HarryPotterATCOS, NoRegion, 0}, // EU and US versions have the same CRC - Chamber Of Secrets
+	{0xE90BE9F8, HarryPotterATCOS, JP, 0 }, // Coca Cola original Version
+	{0x9C3A84F4, HarryPotterATHBP, US, 0 }, // Half-Blood Prince
+	{0xCB598BC2, HarryPotterATHBP, EU, 0 },
+	{0x51E019BC, HarryPotterATPOA, NoRegion, 0 }, // EU and US versions have the same CRC - Prisoner of Azkaban
+	{0x99A8B4FF, HarryPotterATPOA, KO, 0 },
+	{0xA8901AD6, HarryPotterATPOA, JP, 0 }, // Harry Potter to Azkaban no Shuujin
+	{0x4C01B1B0, HarryPotterOOTP, US, 0}, // Order Of The Phoenix
+	{0x01A9BF0E, HarryPotterOOTP, EU, 0},
 	{0x230CB71D, SoulReaver2, US, 0},
 	{0x6F991F52, SoulReaver2, JP, 0},
 	{0x6D8B4CD1, SoulReaver2, EU, 0},
+	{0x60F56E8F, SoulReaver2, RU, 0}, // Unofficial RU-version
 	{0x728AB07C, LegacyOfKainDefiance, US, 0},
 	{0xBCAD1E8A, LegacyOfKainDefiance, EU, 0},
+	{0x018AC37C, LegacyOfKainDefiance, RU, 0}, // Unofficial RU-version
 	{0x28D09BF9, NicktoonsUnite, US, 0},
 	{0xF25266C4, NicktoonsUnite, EU, 0}, // Nickelodeon SpongeBob SquarePants And Friends Unite
 	{0xCE4933D0, RatchetAndClank, US, 0},
@@ -567,6 +602,8 @@ CRC::Game CRC::m_games[] =
 	{0xDDAC3815, Shox, US, 0},
 	{0x78FFA39F, Shox, EU, 0},
 	{0x3DF10389, Shox, EU, 0},
+	{0xF17AF8BD, TheIncredibleHulkUD, US, 0},
+	{0x6B3D50A5, TheIncredibleHulkUD, EU, 0},
 	{0x2B58234D, TribesAerialAssault, US, 0},
 	{0x4D22DB95, Whiplash, US, 0},
 	{0xB1BE3E51, Whiplash, EU, 0},
