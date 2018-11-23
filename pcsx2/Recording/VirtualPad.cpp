@@ -85,19 +85,19 @@ VirtualPad::VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, i
 	std::copy(std::begin(tempAnalogVals), std::end(tempAnalogVals), std::begin(analogVals));
 
 	// Setup event bindings
-	for (int i = 0; i < std::size(buttons); i++) 
+	for (int i = 0; i < buttonsLength; i++) 
 	{
 		(*buttons[i]).Bind(wxEVT_TOGGLEBUTTON, &VirtualPad::OnButtonPress, this);
 	}
-	for (int i = 0; i < std::size(buttonsPressure); i++)
+	for (int i = 0; i < buttonsPressureLength; i++)
 	{
 		(*buttonsPressure[i]).Bind(wxEVT_SPINCTRL, &VirtualPad::OnPressureChange, this);
 	}
-	for (int i = 0; i < std::size(analogSliders); i++)
+	for (int i = 0; i < analogSlidersLength; i++)
 	{
 		(*analogSliders[i]).Bind(wxEVT_SLIDER, &VirtualPad::OnAnalogSliderChange, this);
 	}
-	for (int i = 0; i < std::size(analogVals); i++)
+	for (int i = 0; i < analogValsLength; i++)
 	{
 		(*analogVals[i]).Bind(wxEVT_SPINCTRL, &VirtualPad::OnAnalogValChange, this);
 	}
@@ -138,7 +138,7 @@ void VirtualPad::OnButtonPress(wxCommandEvent & event)
 {
 	wxToggleButton* pressedButton = (wxToggleButton*) event.GetEventObject();
 	int buttonId = -1;
-	for (int i = 0; i < std::size(buttons); i++) 
+	for (int i = 0; i < buttonsLength; i++) 
 	{
 		if (pressedButton == buttons[i]) 
 		{
@@ -167,7 +167,7 @@ void VirtualPad::OnPressureChange(wxSpinEvent & event)
 {
 	wxSpinCtrl* updatedSpinner = (wxSpinCtrl*) event.GetEventObject();
 	int spinnerId = -1;
-	for (int i = 0; i < std::size(buttonsPressure); i++)
+	for (int i = 0; i < buttonsPressureLength; i++)
 	{
 		if (updatedSpinner == buttonsPressure[i])
 		{
@@ -189,7 +189,7 @@ void VirtualPad::OnAnalogSliderChange(wxCommandEvent & event)
 {
 	wxSlider* movedSlider = (wxSlider*) event.GetEventObject();
 	int sliderId = -1;
-	for (int i = 0; i < std::size(analogSliders); i++)
+	for (int i = 0; i < analogSlidersLength; i++)
 	{
 		if (movedSlider == analogSliders[i])
 		{
@@ -214,7 +214,7 @@ void VirtualPad::OnAnalogValChange(wxSpinEvent & event)
 {
 	wxSpinCtrl* updatedSpinner = (wxSpinCtrl*)event.GetEventObject();
 	int spinnerId = -1;
-	for (int i = 0; i < std::size(analogVals); i++)
+	for (int i = 0; i < analogValsLength; i++)
 	{
 		if (updatedSpinner == analogVals[i])
 		{
