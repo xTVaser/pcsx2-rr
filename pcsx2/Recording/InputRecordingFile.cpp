@@ -64,7 +64,6 @@ bool InputRecordingFile::Open(const wxString path, bool fNewOpen, bool fromSaveS
 	}
 	filename = path;
 
-	// problems seem to be be based in how we are saving the savestate
 	if (fNewOpen) {
 		if (fromSaveState) {
 			savestate.fromSavestate = true;
@@ -72,8 +71,8 @@ bool InputRecordingFile::Open(const wxString path, bool fNewOpen, bool fromSaveS
 			FILE* ssFileCheck = wxFopen(path + "_SaveState.p2s", "r");
 			if (ssFileCheck != NULL) {
 				wxCopyFile(path + "_SaveState.p2s", path + "_SaveState.p2s.bak", false);
+				fclose(ssFileCheck);
 			}
-			fclose(ssFileCheck);
 			StateCopy_SaveToFile(path + "_SaveState.p2s");
 		}
 		else {
@@ -242,9 +241,9 @@ bool InputRecordingFile::readHeaderAndCheck()
 		FILE* ssFileCheck = wxFopen(filename + "_SaveState.p2s", "r");
 		if (ssFileCheck = NULL) {
 			recordingConLog(wxString::Format("[REC]: Could not locate savestate file at location - %s\n", filename + "_SaveState.p2s"));
+			fclose(ssFileCheck);
 			return false;
 		}
-		fclose(ssFileCheck);
 		StateCopy_LoadFromFile(filename + "_SaveState.p2s");
 	}
 	else {

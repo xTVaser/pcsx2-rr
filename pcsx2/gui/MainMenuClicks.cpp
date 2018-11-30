@@ -515,12 +515,14 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent&)
 	else
 	{
 		GetMenuBar()->Remove(TopLevelMenu_Recording);
+		// Always turn controller logs off, but never turn it on by default
+		SysConsole.controlInfo.Enabled = checked;
 	}
 
 	g_Conf->EmuOptions.EnableRecordingTools = checked;
 	SysConsole.recordingConsole.Enabled = checked;
-	ConsoleLogFrame* proglog = wxGetApp().GetProgramLog();
-	proglog->UpdateLogList();
+	ConsoleLogFrame* progLog = wxGetApp().GetProgramLog();
+	progLog->UpdateLogList();
 	AppApplySettings();
 	AppSaveSettings();
 }

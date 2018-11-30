@@ -60,8 +60,6 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 
 	//
 	// See - Lilypad.cpp:1254
 	// 0x42 is the magic number for the default read query
-	//
-	// NOTE: this appears to break if you have logging enabled in LilyPad's config!
 	//==========================
 	if (bufCount == 1) {
 		if (data == 0x42)
