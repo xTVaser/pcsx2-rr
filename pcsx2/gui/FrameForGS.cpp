@@ -727,19 +727,20 @@ void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 #ifndef DISABLE_RECORDING
 	wxString title;
 	wxString movieMode;
-	switch (g_InputRecording.getModeState()) {
-	case InputRecording::KEY_MOVIE_MODE::RECORD:
-		movieMode = "Recording";
-		title = templates.RecordingTemplate;
-		break;
-	case InputRecording::KEY_MOVIE_MODE::REPLAY:
-		movieMode = "Replaying";
-		title = templates.RecordingTemplate;
-		break;
-	case InputRecording::KEY_MOVIE_MODE::NONE:
-		movieMode = "No movie";
-		title = templates.TitleTemplate;
-		break;
+	switch (g_InputRecording.getModeState())
+	{
+		case INPUT_RECORDING_MODE_RECORD:
+			movieMode = "Recording";
+			title = templates.RecordingTemplate;
+			break;
+		case INPUT_RECORDING_MODE_REPLAY:
+			movieMode = "Replaying";
+			title = templates.RecordingTemplate;
+			break;
+		case INPUT_RECORDING_MODE_NONE:
+			movieMode = "No movie";
+			title = templates.TitleTemplate;
+			break;
 	}
 
 	title.Replace(L"${frame}", pxsFmt(L"%d", g_FrameCount));

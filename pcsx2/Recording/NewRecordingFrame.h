@@ -18,6 +18,14 @@
 #include <wx/wx.h>
 #include <wx/filepicker.h>
 
+
+enum MenuIds_New_Recording_Frame
+{
+	MenuIds_New_Recording_Frame_File = 0,
+	MenuIds_New_Recording_Frame_Author,
+	MenuIds_New_Recording_Frame_From
+};
+
 /*
  * The Dialog to pop-up when recording a new movie
 */

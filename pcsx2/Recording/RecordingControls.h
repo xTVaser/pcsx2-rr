@@ -15,13 +15,14 @@
 
 #pragma once
 
-class RecordingControls {
+class RecordingControls
+{
 public:
 
 	// Movie controls main functions
-	bool isStop();
-	void StartCheck();
-	void StopCheck();
+	bool hasRecordingStopped();
+	void resumeCoreThreadIfStarted();
+	void handleFrameAdvanceAndStop();
 
 	// Shortcut Keys
 	void FrameAdvance();
@@ -43,4 +44,5 @@ private:
 	bool fPauseState = false;
 
 };
+
 extern RecordingControls g_RecordingControls;

@@ -18,6 +18,7 @@
 #include "PadData.h"
 #include "System.h"
 
+
 struct InputRecordingHeader
 {
 	u8 version = 1;
@@ -39,7 +40,8 @@ struct InputRecordingSavestate
 };
 
 
-class InputRecordingFile {
+class InputRecordingFile
+{
 public:
 	InputRecordingFile() {}
 	~InputRecordingFile() { Close(); }

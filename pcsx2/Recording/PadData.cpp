@@ -19,6 +19,7 @@
 #include "ConsoleLogger.h"
 #include "PadData.h"
 
+
 PadData::PadData()
 {
 	// TODO - multi-tap support eventually?
@@ -59,7 +60,7 @@ int* PadData::getNormalButtons(int port) const
 	int buttons[PadDataNormalButtonCount];
 	for (int i = 0; i < PadDataNormalButtonCount; i++)
 	{
-		buttons[i] = getNormalButton(port, PadDataNormalButton(i));
+		buttons[i] = getNormalButton(port, PadData_NormalButton(i));
 	}
 	return buttons;
 }
@@ -67,11 +68,11 @@ void PadData::setNormalButtons(int port, int* buttons)
 {
 	for (int i = 0; i < PadDataNormalButtonCount; i++)
 	{
-		setNormalButton(port, PadDataNormalButton(i), buttons[i]);
+		setNormalButton(port, PadData_NormalButton(i), buttons[i]);
 	}
 }
 
-void PadData::setNormalButton(int port, PadDataNormalButton button, int fpushed)
+void PadData::setNormalButton(int port, PadData_NormalButton button, int fpushed)
 {
 	if (port < 0 || 1 < port)
 		return;
@@ -104,7 +105,7 @@ void PadData::setNormalButton(int port, PadDataNormalButton button, int fpushed)
 	}
 }
 
-int PadData::getNormalButton(int port, PadDataNormalButton button) const
+int PadData::getNormalButton(int port, PadData_NormalButton button) const
 {
 	if (port < 0 || 1 < port)
 		return false;
@@ -132,56 +133,56 @@ int PadData::getNormalButton(int port, PadDataNormalButton button) const
 	return 0;
 }
 
-void PadData::getKeyBit(wxByte keybit[2], PadDataNormalButton button) const
+void PadData::getKeyBit(wxByte keybit[2], PadData_NormalButton button) const
 {
-	if (button == UP) { keybit[0] = 0b00010000; keybit[1] = 0b00000000; }
-	else if (button == LEFT) { keybit[0] = 0b10000000; keybit[1] = 0b00000000; }
-	else if (button == RIGHT) { keybit[0] = 0b00100000; keybit[1] = 0b00000000; }
-	else if (button == DOWN) { keybit[0] = 0b01000000; keybit[1] = 0b00000000; }
-	else if (button == START) { keybit[0] = 0b00001000; keybit[1] = 0b00000000; }
-	else if (button == SELECT) { keybit[0] = 0b00000001; keybit[1] = 0b00000000; }
-	else if (button == CROSS) { keybit[0] = 0b00000000; keybit[1] = 0b01000000; }
-	else if (button == CIRCLE) { keybit[0] = 0b00000000; keybit[1] = 0b00100000; }
-	else if (button == SQUARE) { keybit[0] = 0b00000000; keybit[1] = 0b10000000; }
-	else if (button == TRIANGLE) { keybit[0] = 0b00000000; keybit[1] = 0b00010000; }
-	else if (button == L1) { keybit[0] = 0b00000000; keybit[1] = 0b00000100; }
-	else if (button == L2) { keybit[0] = 0b00000000; keybit[1] = 0b00000001; }
-	else if (button == L3) { keybit[0] = 0b00000010; keybit[1] = 0b00000000; }
-	else if (button == R1) { keybit[0] = 0b00000000; keybit[1] = 0b00001000; }
-	else if (button == R2) { keybit[0] = 0b00000000; keybit[1] = 0b00000010; }
-	else if (button == R3) { keybit[0] = 0b00000100; keybit[1] = 0b00000000; }
+	if (button == PadData_NormalButton_UP) { keybit[0] = 0b00010000; keybit[1] = 0b00000000; }
+	else if (button == PadData_NormalButton_LEFT) { keybit[0] = 0b10000000; keybit[1] = 0b00000000; }
+	else if (button == PadData_NormalButton_RIGHT) { keybit[0] = 0b00100000; keybit[1] = 0b00000000; }
+	else if (button == PadData_NormalButton_DOWN) { keybit[0] = 0b01000000; keybit[1] = 0b00000000; }
+	else if (button == PadData_NormalButton_START) { keybit[0] = 0b00001000; keybit[1] = 0b00000000; }
+	else if (button == PadData_NormalButton_SELECT) { keybit[0] = 0b00000001; keybit[1] = 0b00000000; }
+	else if (button == PadData_NormalButton_CROSS) { keybit[0] = 0b00000000; keybit[1] = 0b01000000; }
+	else if (button == PadData_NormalButton_CIRCLE) { keybit[0] = 0b00000000; keybit[1] = 0b00100000; }
+	else if (button == PadData_NormalButton_SQUARE) { keybit[0] = 0b00000000; keybit[1] = 0b10000000; }
+	else if (button == PadData_NormalButton_TRIANGLE) { keybit[0] = 0b00000000; keybit[1] = 0b00010000; }
+	else if (button == PadData_NormalButton_L1) { keybit[0] = 0b00000000; keybit[1] = 0b00000100; }
+	else if (button == PadData_NormalButton_L2) { keybit[0] = 0b00000000; keybit[1] = 0b00000001; }
+	else if (button == PadData_NormalButton_L3) { keybit[0] = 0b00000010; keybit[1] = 0b00000000; }
+	else if (button == PadData_NormalButton_R1) { keybit[0] = 0b00000000; keybit[1] = 0b00001000; }
+	else if (button == PadData_NormalButton_R2) { keybit[0] = 0b00000000; keybit[1] = 0b00000010; }
+	else if (button == PadData_NormalButton_R3) { keybit[0] = 0b00000100; keybit[1] = 0b00000000; }
 	else { keybit[0] = 0; keybit[1] = 0; }
 }
 
 // Returns an index for the buffer to set the pressure byte
 // Returns -1 if it is a button that does not support pressure sensitivty
-int PadData::getPressureByte(PadDataNormalButton button) const
+int PadData::getPressureByte(PadData_NormalButton button) const
 {
 	// Pressure Byte Order
 	// R - L - U - D - Tri - Sqr - Circle - Cross - L1 - R1 - L2 - R2
-	if (button == UP)
+	if (button == PadData_NormalButton_UP)
 		return 2;
-	else if (button == LEFT)
+	else if (button == PadData_NormalButton_LEFT)
 		return 1;
-	else if (button == RIGHT)
+	else if (button == PadData_NormalButton_RIGHT)
 		return 0;
-	else if (button == DOWN)
+	else if (button == PadData_NormalButton_DOWN)
 		return 3;
-	else if (button == CROSS)
+	else if (button == PadData_NormalButton_CROSS)
 		return 6;
-	else if (button == CIRCLE)
+	else if (button == PadData_NormalButton_CIRCLE)
 		return 5;
-	else if (button == SQUARE)
+	else if (button == PadData_NormalButton_SQUARE)
 		return 7;
-	else if (button == TRIANGLE)
+	else if (button == PadData_NormalButton_TRIANGLE)
 		return 4;
-	else if (button == L1)
+	else if (button == PadData_NormalButton_L1)
 		return 8;
-	else if (button == L2)
+	else if (button == PadData_NormalButton_L2)
 		return 10;
-	else if (button == R1)
+	else if (button == PadData_NormalButton_R1)
 		return 9;
-	else if (button == R2)
+	else if (button == PadData_NormalButton_R2)
 		return 11;
 	else
 		return -1;
@@ -192,8 +193,9 @@ int* PadData::getAnalogVectors(int port) const
 	int vectors[PadDataAnalogVectorCount];
 	for (int i = 0; i < PadDataAnalogVectorCount; i++)
 	{
-		vectors[i] = getAnalogVector(port, PadDataAnalogVector(i));
+		vectors[i] = getAnalogVector(port, PadData_AnalogVector(i));
 	}
+	// returning address of local variable or temporary: vectors
 	return vectors;
 }
 
@@ -201,11 +203,11 @@ void PadData::setAnalogVectors(int port, int* vectors)
 {
 	for (int i = 0; i < PadDataAnalogVectorCount; i++)
 	{
-		setAnalogVector(port, PadDataAnalogVector(i), vectors[i]);
+		setAnalogVector(port, PadData_AnalogVector(i), vectors[i]);
 	}
 }
 
-void PadData::setAnalogVector(int port, PadDataAnalogVector vector, int val)
+void PadData::setAnalogVector(int port, PadData_AnalogVector vector, int val)
 {
 	if (port < 0 || 1 < port)
 		return;
@@ -217,7 +219,7 @@ void PadData::setAnalogVector(int port, PadDataAnalogVector vector, int val)
 	buf[port][getAnalogVectorByte(vector)] = val;
 }
 
-int PadData::getAnalogVector(int port, PadDataAnalogVector vector) const
+int PadData::getAnalogVector(int port, PadData_AnalogVector vector) const
 {
 	if (port < 0 || 1 < port)
 		return 0;
@@ -226,15 +228,15 @@ int PadData::getAnalogVector(int port, PadDataAnalogVector vector) const
 }
 
 // Returns an index for the buffer to set the analog's vector
-int PadData::getAnalogVectorByte(PadDataAnalogVector vector) const
+int PadData::getAnalogVectorByte(PadData_AnalogVector vector) const
 {
 	// Vector Byte Ordering
 	// RX - RY - LX - LY
-	if (vector == LEFT_ANALOG_X)
+	if (vector == PadData_AnalogVector_LEFT_ANALOG_X)
 		return 4;
-	else if (vector == LEFT_ANALOG_Y)
+	else if (vector == PadData_AnalogVector_LEFT_ANALOG_Y)
 		return 5;
-	else if (vector == RIGHT_ANALOG_X)
+	else if (vector == PadData_AnalogVector_RIGHT_ANALOG_X)
 		return 2;
 	else
 		return 3;

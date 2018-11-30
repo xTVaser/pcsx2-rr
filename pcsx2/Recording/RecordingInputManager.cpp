@@ -18,6 +18,7 @@
 #include "RecordingInputManager.h"
 #include "InputRecording.h"
 
+
 RecordingInputManager g_RecordingInput;
 
 RecordingInputManager::RecordingInputManager()
@@ -55,14 +56,14 @@ void RecordingInputManager::ControllerInterrupt(u8 & data, u8 & port, u16 & BufC
 	}
 }
 
-void RecordingInputManager::SetButtonState(int port, PadDataNormalButton button, int pressure)
+void RecordingInputManager::SetButtonState(int port, PadData_NormalButton button, int pressure)
 {
 	int* buttons = pad.getNormalButtons(port);
 	buttons[button] = pressure;
 	pad.setNormalButtons(port, buttons);
 }
 
-void RecordingInputManager::UpdateAnalog(int port, PadDataAnalogVector vector, int value)
+void RecordingInputManager::UpdateAnalog(int port, PadData_AnalogVector vector, int value)
 {
 	int* vectors = pad.getAnalogVectors(port);
 	vectors[vector] = value;

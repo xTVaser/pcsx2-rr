@@ -30,9 +30,7 @@
 
 InputRecording g_InputRecording;
 
-// --------------------------------
 // Tag and save framecount along with savestate
-// --------------------------------
 void SaveStateBase::InputRecordingFreeze()
 {
 	FreezeTag("InputRecording");
@@ -42,10 +40,8 @@ void SaveStateBase::InputRecordingFreeze()
 	}
 }
 
-//----------------------------------
 // Main func for handling controller input data
-// Called by Sio.cpp::sioWriteController
-//----------------------------------
+// - Called by Sio.cpp::sioWriteController
 void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 buf[])
 {
 	// TODO - Multi-Tap Support
@@ -85,7 +81,7 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 
 	if (!fInterruptFrame)
 		return;
 
-	if (state == NONE)
+	if (state == INPUT_RECORDING_MODE_NONE)
 		return;
 
 	// We do not want to record or save the first two
@@ -93,16 +89,14 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 
 	if (bufCount < 3)
 		return;
 
-	//---------------
 	// Read or Write
-	//---------------
 	const u8 &nowBuf = buf[bufCount];
-	if (state == RECORD)
+	if (state == INPUT_RECORDING_MODE_RECORD)
 	{
 		InputRecordingData.updateFrameMax(g_FrameCount);
 		InputRecordingData.writeKeyBuf(g_FrameCount, port, bufCount - 3, nowBuf);
 	}
-	else if (state == REPLAY)
+	else if (state == INPUT_RECORDING_MODE_REPLAY)
 	{
 		if (InputRecordingData.getMaxFrame() <= g_FrameCount)
 		{
@@ -118,19 +112,15 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 
 }
 
 
-//----------------------------------
-// stop
-//----------------------------------
+// GUI Handler - Stop recording
 void InputRecording::Stop() {
-	state = NONE;
+	state = INPUT_RECORDING_MODE_NONE;
 	if (InputRecordingData.Close()) {
 		recordingConLog(L"[REC]: InputRecording Recording Stopped.\n");
 	}
 }
 
-//----------------------------------
-// start
-//----------------------------------
+// GUI Handler - Start recording
 void InputRecording::Create(wxString FileName, bool fromSaveState, wxString authorName)
 {
 	g_RecordingControls.Pause();
@@ -164,13 +154,14 @@ void InputRecording::Create(wxString FileName, bool fromSaveState, wxString auth
 	}
 	InputRecordingData.getHeader().setGameName(!gameName.IsEmpty() ? gameName : Path::GetFilename(g_Conf->CurrentIso));
 	InputRecordingData.writeHeader();
-	state = RECORD;
+	state = INPUT_RECORDING_MODE_RECORD;
 	recordingConLog(wxString::Format(L"[REC]: Started new recording - [%s]\n", FileName));
 
 	// In every case, we reset the g_FrameCount
 	g_FrameCount = 0;
 }
 
+// GUI Handler - Play a recording
 void InputRecording::Play(wxString FileName, bool fromSaveState)
 {
 	g_RecordingControls.Pause();
@@ -191,7 +182,7 @@ void InputRecording::Play(wxString FileName, bool fromSaveState)
 			recordingConLog(L"[REC]: Information on CD in Movie file is Different.\n");
 		}
 	}
-	state = REPLAY;
+	state = INPUT_RECORDING_MODE_REPLAY;
 	recordingConLog(wxString::Format(L"[REC]: Replaying movie - [%s]\n", FileName));
 	recordingConLog(wxString::Format(L"Recording File Version: %d\n", InputRecordingData.getHeader().version));
 	recordingConLog(wxString::Format(L"Associated Game Name / ISO Filename: %s\n", InputRecordingData.getHeader().gameName));
@@ -200,19 +191,15 @@ void InputRecording::Play(wxString FileName, bool fromSaveState)
 	recordingConLog(wxString::Format(L"UndoCount: %d\n", InputRecordingData.getUndoCount()));
 }
 
-//----------------------------------
-// shortcut key
-//----------------------------------
+// Keybind Handler - Toggle between recording input and not
 void InputRecording::RecordModeToggle()
 {
-	if (state == REPLAY) {
-		state = RECORD;
+	if (state == INPUT_RECORDING_MODE_REPLAY) {
+		state = INPUT_RECORDING_MODE_RECORD;
 		recordingConLog("[REC]: Record mode ON.\n");
 	}
-	else if (state == RECORD) {
-		state = REPLAY;
+	else if (state == INPUT_RECORDING_MODE_RECORD) {
+		state = INPUT_RECORDING_MODE_REPLAY;
 		recordingConLog("[REC]: Replay mode ON.\n");
 	}
 }
-
-

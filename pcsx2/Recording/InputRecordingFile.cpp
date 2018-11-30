@@ -23,6 +23,7 @@
 
 #include "InputRecordingFile.h"
 
+
 #define HEADER_SIZE (sizeof(InputRecordingHeader)+4+4)
 #define SAVESTATE_HEADER_SIZE (sizeof(bool))
 #define BLOCK_HEADER_SIZE (0)
@@ -82,6 +83,7 @@ bool InputRecordingFile::Open(const wxString path, bool fNewOpen, bool fromSaveS
 	return true;
 }
 
+// Gracefully close the current recording file
 bool InputRecordingFile::Close()
 {
 	if (recordingFile == NULL)
@@ -94,6 +96,7 @@ bool InputRecordingFile::Close()
 	return true;
 }
 
+// Write savestate flag to file 
 bool InputRecordingFile::writeSaveState() {
 	if (recordingFile == NULL)
 		return false;
@@ -105,9 +108,7 @@ bool InputRecordingFile::writeSaveState() {
 	return true;
 }
 
-//----------------------------------
-// write frame
-//----------------------------------
+// Write controller input buffer to file (per frame)
 bool InputRecordingFile::writeKeyBuf(const uint & frame, const uint port, const uint bufIndex, const u8 & buf)
 {
 	if (recordingFile == NULL)
@@ -124,9 +125,7 @@ bool InputRecordingFile::writeKeyBuf(const uint & frame, const uint port, const 
 	return true;
 }
 
-//----------------------------------
-// read frame
-//----------------------------------
+// Read controller input buffer from file (per frame)
 bool InputRecordingFile::readKeyBuf(u8 & result,const uint & frame, const uint port, const uint  bufIndex)
 {
 	if (recordingFile == NULL)
@@ -141,9 +140,7 @@ bool InputRecordingFile::readKeyBuf(u8 & result,const uint & frame, const uint p
 	return true;
 }
 
-//===================================
-// pad
-//===================================
+
 void InputRecordingFile::getPadData(PadData & result, unsigned long frame)
 {
 	result.fExistKey = false;

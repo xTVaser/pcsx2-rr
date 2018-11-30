@@ -15,30 +15,27 @@
 
 #include "PrecompiledHeader.h"
 
-#include "GSFrame.h"
-
-#include "MemoryTypes.h"
 #include "App.h"
 #include "Counters.h"
+#include "GSFrame.h"
+#include "MemoryTypes.h"
 
 #include "RecordingControls.h"
 
 
 RecordingControls g_RecordingControls;
 
-// TODO - I think these functions could be named a lot better...
-
 //-----------------------------------------------
 // Status on whether or not the current recording is stopped
 //-----------------------------------------------
-bool RecordingControls::isStop()
+bool RecordingControls::hasRecordingStopped()
 {
 	return (fPauseState && CoreThread.IsOpen() && CoreThread.IsPaused());
 }
 //-----------------------------------------------
 // Called after inputs are recorded for that frame, places lock on input recording, effectively releasing resources and resuming CoreThread.
 //-----------------------------------------------
-void RecordingControls::StartCheck()
+void RecordingControls::resumeCoreThreadIfStarted()
 {
 	if (fStart && CoreThread.IsOpen() && CoreThread.IsPaused()) {
 		CoreThread.Resume();
@@ -48,10 +45,10 @@ void RecordingControls::StartCheck()
 }
 
 //-----------------------------------------------
-// Called at VSYNC End / VRender Begin, updates everything recording related for the next frame, 
+// Called at VSYNC End / VRender Begin, updates everything recording related for the next frame,
 // toggles RecordingControl flags back to enable input recording for the next frame.
 //-----------------------------------------------
-void RecordingControls::StopCheck()
+void RecordingControls::handleFrameAdvanceAndStop()
 {
 	if (fFrameAdvance) {
 		if (stopFrameCount < g_FrameCount) {
@@ -81,10 +78,6 @@ void RecordingControls::StopCheck()
 }
 
 
-
-//----------------------------------
-// shortcut key
-//----------------------------------
 void RecordingControls::FrameAdvance()
 {
 	stopFrameCount = g_FrameCount;
@@ -110,4 +103,3 @@ void RecordingControls::UnPause()
 	fStart = true;
 	fFrameAdvance = true;
 }
-
