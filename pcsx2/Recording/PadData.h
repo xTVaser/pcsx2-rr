@@ -16,9 +16,10 @@
 #pragma once
 
 #include <map>
+#include <vector>
 
 
-#define PadDataNormalButtonCount 16
+static const int PadDataNormalButtonCount = 16;
 enum PadData_NormalButton
 {
 	PadData_NormalButton_UP,
@@ -39,7 +40,7 @@ enum PadData_NormalButton
 	PadData_NormalButton_START
 };
 
-#define PadDataAnalogVectorCount 4
+static const int PadDataAnalogVectorCount = 4;
 enum PadData_AnalogVector
 {
 	PadData_AnalogVector_LEFT_ANALOG_X,
@@ -61,18 +62,18 @@ public:
 	static void logPadData(u8 port, u16 bufCount, u8 buf[512]);
 
 	// Normal Buttons
-	int* getNormalButtons(int port) const;
-	void setNormalButtons(int port, int* buttons);
+	std::vector<int> getNormalButtons(int port) const;
+	void setNormalButtons(int port, std::vector<int> buttons);
 
 	// Analog Vectors
 	// max left/up    : 0
 	// neutral        : 127
 	// max right/down : 255
-	int* getAnalogVectors(int port) const;
+	std::vector<int> getAnalogVectors(int port) const;
 	// max left/up    : 0
 	// neutral        : 127
 	// max right/down : 255
-	void setAnalogVectors(int port, int* vector);
+	void setAnalogVectors(int port, std::vector<int> vector);
 
 private:
 	void setNormalButton(int port, PadData_NormalButton button, int pressure);

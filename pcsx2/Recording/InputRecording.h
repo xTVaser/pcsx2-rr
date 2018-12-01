@@ -50,5 +50,5 @@ private:
 };
 
 extern InputRecording g_InputRecording;
-#define g_InputRecordingData (g_InputRecording.getInputRecordingData())
-#define g_InputRecordingHeader (g_InputRecording.getInputRecordingData().getHeader())
+static InputRecordingFile& g_InputRecordingData = g_InputRecording.getInputRecordingData();
+static InputRecordingHeader& g_InputRecordingHeader = g_InputRecording.getInputRecordingData().getHeader();

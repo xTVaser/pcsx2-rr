@@ -32,13 +32,14 @@ public:
 	void init();
 };
 
+static const int RecordingHeaderSize = sizeof(InputRecordingHeader) + 4 + 4;
+
 // Contains info about the starting point of the movie
 struct InputRecordingSavestate
 {
 	// Whether we start from the savestate or from power-on
 	bool fromSavestate = false;
 };
-
 
 class InputRecordingFile
 {
@@ -73,6 +74,14 @@ public:
 	void addUndoCount();
 
 private:
+	static const int RecordingSavestateHeaderSize = sizeof(bool);
+	static const int RecordingBlockHeaderSize = 0;
+	static const int RecordingBlockDataSize = 18 * 2;
+	static const int RecordingBlockSize = RecordingBlockHeaderSize + RecordingBlockDataSize;
+	static const int RecordingSeekpointFrameMax = sizeof(InputRecordingHeader);
+	static const int RecordingSeekpointUndoCount = sizeof(InputRecordingHeader) + 4;
+	static const int RecordingSeekpointSaveState = RecordingSeekpointUndoCount + 4;
+
 	// Movie File
 	FILE * recordingFile = NULL;
 	wxString filename = "";

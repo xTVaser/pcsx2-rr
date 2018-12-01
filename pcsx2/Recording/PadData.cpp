@@ -55,16 +55,16 @@ void PadData::logPadData(u8 port, u16 bufCount, u8 buf[512]) {
 	}
 }
 
-int* PadData::getNormalButtons(int port) const
+std::vector<int> PadData::getNormalButtons(int port) const
 {
-	int buttons[PadDataNormalButtonCount];
+	std::vector<int> buttons(PadDataNormalButtonCount);
 	for (int i = 0; i < PadDataNormalButtonCount; i++)
 	{
 		buttons[i] = getNormalButton(port, PadData_NormalButton(i));
 	}
 	return buttons;
 }
-void PadData::setNormalButtons(int port, int* buttons)
+void PadData::setNormalButtons(int port, std::vector<int> buttons)
 {
 	for (int i = 0; i < PadDataNormalButtonCount; i++)
 	{
@@ -188,18 +188,17 @@ int PadData::getPressureByte(PadData_NormalButton button) const
 		return -1;
 }
 
-int* PadData::getAnalogVectors(int port) const
+std::vector<int> PadData::getAnalogVectors(int port) const
 {
-	int vectors[PadDataAnalogVectorCount];
+	std::vector<int> vectors(PadDataAnalogVectorCount);
 	for (int i = 0; i < PadDataAnalogVectorCount; i++)
 	{
 		vectors[i] = getAnalogVector(port, PadData_AnalogVector(i));
 	}
-	// returning address of local variable or temporary: vectors
 	return vectors;
 }
 
-void PadData::setAnalogVectors(int port, int* vectors)
+void PadData::setAnalogVectors(int port, std::vector<int> vectors)
 {
 	for (int i = 0; i < PadDataAnalogVectorCount; i++)
 	{

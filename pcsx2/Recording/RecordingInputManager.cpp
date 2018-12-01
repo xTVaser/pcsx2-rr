@@ -58,14 +58,14 @@ void RecordingInputManager::ControllerInterrupt(u8 & data, u8 & port, u16 & BufC
 
 void RecordingInputManager::SetButtonState(int port, PadData_NormalButton button, int pressure)
 {
-	int* buttons = pad.getNormalButtons(port);
+	std::vector<int> buttons = pad.getNormalButtons(port);
 	buttons[button] = pressure;
 	pad.setNormalButtons(port, buttons);
 }
 
 void RecordingInputManager::UpdateAnalog(int port, PadData_AnalogVector vector, int value)
 {
-	int* vectors = pad.getAnalogVectors(port);
+	std::vector<int> vectors = pad.getAnalogVectors(port);
 	vectors[vector] = value;
 	pad.setAnalogVectors(port, vectors);
 }
