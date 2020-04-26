@@ -53,12 +53,6 @@ public:
 	bool WriteKeyBuf(const uint & frame, const uint port, const uint bufIndex, const u8 & buf);
 	bool ReadKeyBuf(u8 & result, const uint & frame, const uint port, const uint bufIndex);
 
-	// Controller Data
-	void GetPadData(PadData & result_pad, unsigned long frame);
-	bool DeletePadData(unsigned long frame);
-	bool InsertPadData(unsigned long frame, const PadData& key);
-	bool UpdatePadData(unsigned long frame, const PadData& key);
-
 	// Header
 	InputRecordingHeader& GetHeader();
 	unsigned long& GetMaxFrame();

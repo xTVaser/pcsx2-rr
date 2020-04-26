@@ -130,7 +130,7 @@ bool InputRecordingFile::WriteKeyBuf(const uint & frame, const uint port, const 
 }
 
 // Read controller input buffer from file (per frame)
-bool InputRecordingFile::ReadKeyBuf(u8 & result,const uint & frame, const uint port, const uint  bufIndex)
+bool InputRecordingFile::ReadKeyBuf(u8 & result,const uint & frame, const uint port, const uint bufIndex)
 {
 	if (recordingFile == NULL)
 	{
@@ -147,125 +147,6 @@ bool InputRecordingFile::ReadKeyBuf(u8 & result,const uint & frame, const uint p
 		return false;
 	}
 
-	return true;
-}
-
-
-void InputRecordingFile::GetPadData(PadData & result, unsigned long frame)
-{
-	result.fExistKey = false;
-	if (recordingFile == NULL)
-	{
-		return;
-	}
-
-	long seek = GetBlockSeekPoint(frame) + RecordingBlockHeaderSize;
-	if (fseek(recordingFile, seek, SEEK_SET) != 0
-		|| fread(result.buf, 1, RecordingBlockDataSize, recordingFile) == 0)
-	{
-		return;
-	}
-
-	result.fExistKey = true;
-}
-
-bool InputRecordingFile::DeletePadData(unsigned long frame)
-{
-	if (recordingFile == NULL)
-	{
-		return false;
-	}
-
-	for (unsigned long i = frame; i < MaxFrame - 1; i++)
-	{
-		long seek1 = GetBlockSeekPoint(i+1) + RecordingBlockHeaderSize;
-		long seek2 = GetBlockSeekPoint(i) + RecordingBlockHeaderSize;
-
-		u8 buf[2][18];
-		fseek(recordingFile, seek1, SEEK_SET);
-		int rSize = fread(buf, 1, RecordingBlockDataSize, recordingFile);
-		if (rSize != RecordingBlockDataSize)
-		{
-			recordingConLog(wxString::Format("[REC]: Error encountered when reading from file: Expected %d bytes, read %d instead.\n", RecordingBlockDataSize, rSize));
-			return false;
-		}
-		fseek(recordingFile, seek2, SEEK_SET);
-		rSize = fwrite(buf, 1, RecordingBlockDataSize, recordingFile);
-		if (rSize != RecordingBlockDataSize)
-		{
-			recordingConLog(wxString::Format("[REC]: Error encountered when writing to file: Expected %d bytes, read %d instead.\n", RecordingBlockDataSize, rSize));
-			return false;
-		}
-	}
-	MaxFrame--;
-	WriteMaxFrame();
-	fflush(recordingFile);
-
-	return true;
-}
-
-bool InputRecordingFile::InsertPadData(unsigned long frame, const PadData& key)
-{
-	if (recordingFile == NULL || !key.fExistKey)
-	{
-		return false;
-	}
-
-	for (unsigned long i = MaxFrame - 1; i >= frame; i--)
-	{
-		long seek1 = GetBlockSeekPoint(i) + RecordingBlockHeaderSize;
-		long seek2 = GetBlockSeekPoint(i+1) + RecordingBlockHeaderSize;
-
-		u8 buf[2][18];
-		fseek(recordingFile, seek1, SEEK_SET);
-		int rSize = fread(buf, 1, RecordingBlockDataSize, recordingFile);
-		if (rSize != RecordingBlockDataSize)
-		{
-			recordingConLog(wxString::Format("[REC]: Error encountered when reading from file: Expected %d bytes, read %d instead.\n", RecordingBlockDataSize, rSize));
-			return false;
-		}
-		fseek(recordingFile, seek2, SEEK_SET);
-		rSize = fwrite(buf, 1, RecordingBlockDataSize, recordingFile);
-		if (rSize != RecordingBlockDataSize)
-		{
-			recordingConLog(wxString::Format("[REC]: Error encountered when writing to file: Expected %d bytes, wrote %d instead.\n", RecordingBlockDataSize, rSize));
-			return false;
-		}
-	}
-	long seek = GetBlockSeekPoint(frame) + RecordingBlockHeaderSize;
-	fseek(recordingFile, seek, SEEK_SET);
-	int rSize = fwrite(key.buf, 1, RecordingBlockDataSize, recordingFile);
-	if (rSize != RecordingBlockDataSize)
-	{
-		recordingConLog(wxString::Format("[REC]: Error encountered when writing to file: Expected %d bytes, wrote %d instead.\n", RecordingBlockDataSize, rSize));
-		return false;
-	}
-	MaxFrame++;
-	WriteMaxFrame();
-	fflush(recordingFile);
-
-	return true;
-}
-
-bool InputRecordingFile::UpdatePadData(unsigned long frame, const PadData& key)
-{
-	if (recordingFile == NULL)
-	{
-		return false;
-	}
-	if (!key.fExistKey)
-	{
-		return false;
-	}
-
-	long seek = GetBlockSeekPoint(frame) + RecordingBlockHeaderSize;
-	fseek(recordingFile, seek, SEEK_SET);
-	if (fwrite(key.buf, 1, RecordingBlockDataSize, recordingFile) == 0)
-	{
-		return false;
-	}
-
-	fflush(recordingFile);
 	return true;
 }
 
