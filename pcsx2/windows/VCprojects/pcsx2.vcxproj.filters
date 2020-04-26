@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Misc">
@@ -153,6 +153,9 @@
     </Filter>
     <Filter Include="Recording\gui">
       <UniqueIdentifier>{93e36831-627f-4529-b709-1f4bad398512}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Recording\VirtualPad">
+      <UniqueIdentifier>{ae88cd9a-f9f2-4196-979c-7a16ed5e455e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -880,14 +883,17 @@
     <ClCompile Include="..\..\Recording\RecordingControls.cpp">
       <Filter>Recording</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Recording\RecordingInputManager.cpp">
-      <Filter>Recording</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Recording\NewRecordingFrame.cpp">
       <Filter>Recording\gui</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Recording\VirtualPad.cpp">
-      <Filter>Recording\gui</Filter>
+    <ClCompile Include="..\..\Recording\VirtualPad\VirtualPad.cpp">
+      <Filter>Recording\VirtualPad</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Recording\VirtualPad\VirtualPadData.cpp">
+      <Filter>Recording\VirtualPad</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Recording\VirtualPad\VirtualPadResources.cpp">
+      <Filter>Recording\VirtualPad</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1341,14 +1347,17 @@
     <ClInclude Include="..\..\Recording\RecordingControls.h">
       <Filter>Recording</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Recording\RecordingInputManager.h">
-      <Filter>Recording</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Recording\NewRecordingFrame.h">
       <Filter>Recording\gui</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Recording\VirtualPad.h">
-      <Filter>Recording\gui</Filter>
+    <ClInclude Include="..\..\Recording\VirtualPad\VirtualPad.h">
+      <Filter>Recording\VirtualPad</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Recording\VirtualPad\VirtualPadData.h">
+      <Filter>Recording\VirtualPad</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Recording\VirtualPad\VirtualPadResources.h">
+      <Filter>Recording\VirtualPad</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
