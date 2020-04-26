@@ -42,9 +42,23 @@ void SaveStateBase::InputRecordingFreeze()
 	}
 }
 
+InputRecording::InputRecording()
+{
+	// NOTE - No multi-tap support, only two controllers
+	for (int i = 0; i < 2; i++)
+	{
+		padData[i] = new PadData();
+	}
+}
+
+void InputRecording::setVirtualPadPtr(VirtualPad *ptr, int port)
+{
+	virtualPads[port] = ptr;
+}
+
 // Main func for handling controller input data
 // - Called by Sio.cpp::sioWriteController
-void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 buf[])
+void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 &bufCount, u8 buf[])
 {
 	// TODO - Multi-Tap Support
 	// Only examine controllers 1 / 2
@@ -85,7 +99,6 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 
 	}
 
 	if (!fInterruptFrame
-		|| state == INPUT_RECORDING_MODE_NONE
 		// We do not want to record or save the first two
 		// bytes in the data returned from LilyPad
 		|| bufCount < 3)
@@ -93,14 +106,12 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 
 		return;
 	}
 
-	// Read or Write
-	const u8 &nowBuf = buf[bufCount];
-	if (state == INPUT_RECORDING_MODE_RECORD)
-	{
-		InputRecordingData.UpdateFrameMax(g_FrameCount);
-		InputRecordingData.WriteKeyBuf(g_FrameCount, port, bufCount - 3, nowBuf);
-	}
-	else if (state == INPUT_RECORDING_MODE_REPLAY)
+	u8 &bufVal = buf[bufCount];
+	const u16 bufIndex = bufCount - 3;
+
+	// If we are replaying a movie, there should be NO modifications to the inputs
+	// Grab the byte from the movie file and overwrite whatever the PAD is inputting
+	if (state == INPUT_RECORDING_MODE_REPLAY)
 	{
 		if (InputRecordingData.GetMaxFrame() <= g_FrameCount)
 		{
@@ -109,10 +120,47 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 & bufCount, u8 
 			return;
 		}
 		u8 tmp = 0;
-		if (InputRecordingData.ReadKeyBuf(tmp, g_FrameCount, port, bufCount - 3))
+		if (InputRecordingData.ReadKeyBuf(tmp, g_FrameCount, port, bufIndex))
 		{
-			buf[bufCount] = tmp;
+			// Overwrite value originally provided by the PAD plugin
+			bufVal = tmp;
+			// Update controller data state for future VirtualPad / logging usage.
+			padData[port]->UpdateControllerData(bufIndex, bufVal);
+			if (virtualPads[port] != NULL && virtualPads[port]->IsShown())
+			{
+				virtualPads[port]->UpdateControllerData(bufIndex, padData[port]);
+			}
 		}
+		return;
+	}
+
+	// Update controller data state for future VirtualPad / logging usage.
+	padData[port]->UpdateControllerData(bufIndex, bufVal);
+
+	if (virtualPads[port] != NULL && virtualPads[port]->IsShown())
+	{
+		// If the VirtualPad updated the PadData, we have to update the buffer
+		// before committing it to the recording / sending it to the game
+		if (virtualPads[port]->UpdateControllerData(bufIndex, padData[port]))
+		{
+			bufVal = padData[port]->PollControllerData(bufIndex);
+		}
+	}
+
+	// If we have reached the end of the pad data, log it out
+	if (bufIndex == 17) { // TODO constant for end
+		padData[port]->LogPadData();
+		if (virtualPads[port] != NULL && virtualPads[port]->IsShown())
+		{
+			virtualPads[port]->Redraw();
+		}
+	}
+
+	// Finally, commit the byte to the movie file if we are recording
+	if (state == INPUT_RECORDING_MODE_RECORD)
+	{
+		InputRecordingData.UpdateFrameMax(g_FrameCount);
+		InputRecordingData.WriteKeyBuf(g_FrameCount, port, bufIndex, bufVal);
 	}
 }
 

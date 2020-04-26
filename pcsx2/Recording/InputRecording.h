@@ -28,8 +28,7 @@ enum INPUT_RECORDING_MODE
 class InputRecording
 {
 public:
-	InputRecording() {}
-	~InputRecording(){}
+	InputRecording();
 
 	void ControllerInterrupt(u8 &data, u8 &port, u16 & BufCount, u8 buf[]);
 
@@ -43,10 +42,24 @@ public:
 	void Create(wxString filename, bool fromSaveState, wxString authorName);
 	void Play(wxString filename, bool fromSaveState);
 
+	void setVirtualPadPtr(VirtualPad *ptr, int port);
+
 private:
 	InputRecordingFile InputRecordingData;
 	INPUT_RECORDING_MODE state = INPUT_RECORDING_MODE_NONE;
 	bool fInterruptFrame = false;
+
+	// Controller Data
+	PadData *padData[2];
+
+	// VirtualPad
+	VirtualPad *virtualPads[2];
+
+
+
+
+
+
 };
 
 extern InputRecording g_InputRecording;
