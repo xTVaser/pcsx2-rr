@@ -31,7 +31,7 @@
 #include "Saveslots.h"
 
 #ifndef DISABLE_RECORDING
-#	include "Recording/VirtualPad.h"
+#	include "Recording/VirtualPad/VirtualPad.h"
 #	include "Recording/NewRecordingFrame.h"
 #endif
 
