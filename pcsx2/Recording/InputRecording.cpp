@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2019  PCSX2 Dev Team
+ *  Copyright (C) 2002-2020  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -15,18 +15,15 @@
 
 #include "PrecompiledHeader.h"
 
-#include "AppSaveStates.h"
-#include "AppGameDatabase.h"
-#include "Common.h"
-#include "Counters.h"
-#include "MemoryTypes.h"
-#include "SaveState.h"
-
-#include "InputRecording.h"
-#include "Recording/RecordingControls.h"
-
 #include <vector>
 
+#include "AppSaveStates.h"
+#include "AppGameDatabase.h"
+#include "DebugTools/Debug.h"
+#include "Counters.h"
+
+#include "Recording/InputRecording.h"
+#include "Recording/RecordingControls.h"
 
 InputRecording g_InputRecording;
 

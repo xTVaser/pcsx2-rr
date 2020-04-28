@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2019  PCSX2 Dev Team
+ *  Copyright (C) 2002-2020  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -15,8 +15,7 @@
 
 #pragma once
 
-#include "InputRecordingFile.h"
-
+#include "Recording/InputRecordingFile.h"
 
 enum INPUT_RECORDING_MODE
 {
@@ -54,12 +53,6 @@ private:
 
 	// VirtualPad
 	VirtualPad *virtualPads[2];
-
-
-
-
-
-
 };
 
 extern InputRecording g_InputRecording;
