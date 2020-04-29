@@ -57,7 +57,7 @@ void InputRecording::setVirtualPadPtr(VirtualPad *ptr, int port)
 // - Called by Sio.cpp::sioWriteController
 void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 &bufCount, u8 buf[])
 {
-	// TODO - Multi-Tap Support
+	// NOTE - No Multi-Tap Support
 	// Only examine controllers 1 / 2
 	if (port != 0 && port != 1)
 	{
@@ -145,7 +145,7 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 &bufCount, u8 b
 	}
 
 	// If we have reached the end of the pad data, log it out
-	if (bufIndex == 17) { // TODO constant for end
+    if (bufIndex == PadData::END_INDEX_CONTROLLER_BUFFER) {
 		padData[port]->LogPadData();
 		if (virtualPads[port] != NULL && virtualPads[port]->IsShown())
 		{

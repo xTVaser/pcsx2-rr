@@ -59,41 +59,43 @@ public:
     virtual void Render(wxDC &dc) = 0;
 };
 
-class ControllerNormalButton : VirtualPadElement
+class ControllerButton
+{
+public:
+    bool pressed = false;
+    bool widgetUpdateRequired = false;
+    bool isControllerPressBypassed = false;
+    bool prevPressedVal = false;
+
+	bool UpdateButtonData(bool &padDataVal, bool ignoreRealController, bool readOnly);
+};
+
+class ControllerNormalButton : public ControllerButton, VirtualPadElement
 {
 public:
 	/// GUI
 	ImageFile icon;
 	wxCheckBox *pressedBox;
 
-	bool pressed = false;
-
-	/// State 
-	bool renderRequired = false;
-	bool isControllerBypassed;
-	bool prevPressedVal;
+	/// State
 
 	void UpdateGuiElement(std::queue<VirtualPadElement *> *renderQueue, bool &clearScreenRequired) override;
     void Render(wxDC &dc) override;
     bool UpdateData(bool &padDataVal, bool ignoreRealController, bool readOnly);
 };
 
-class ControllerPressureButton : VirtualPadElement
+class ControllerPressureButton : public ControllerButton, VirtualPadElement
 {
 public:
 	/// GUI
 	ImageFile icon;
 	wxSpinCtrl *pressureSpinner;
 
-	bool pressed = false;
 	u8 pressure;
 
 	/// State Management
-	bool renderRequired = false;
-	bool isControllerPressBypassed;
-	bool isControllerPressureBypassed;
-	bool prevPressedVal;
-	u8 prevPressureVal;
+	bool isControllerPressureBypassed = false;
+	u8 prevPressureVal = 0;
 
 	void UpdateGuiElement(std::queue<VirtualPadElement *> *renderQueue, bool &clearScreenRequired) override;
     void Render(wxDC &dc) override;
