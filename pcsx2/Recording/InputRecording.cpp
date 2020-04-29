@@ -123,7 +123,7 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 &bufCount, u8 b
 			bufVal = tmp;
 			// Update controller data state for future VirtualPad / logging usage.
 			padData[port]->UpdateControllerData(bufIndex, bufVal);
-			if (virtualPads[port] != NULL && virtualPads[port]->IsShown())
+			if (virtualPads[port] && virtualPads[port]->IsShown())
 			{
 				virtualPads[port]->UpdateControllerData(bufIndex, padData[port]);
 			}
@@ -134,7 +134,7 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 &bufCount, u8 b
 	// Update controller data state for future VirtualPad / logging usage.
 	padData[port]->UpdateControllerData(bufIndex, bufVal);
 
-	if (virtualPads[port] != NULL && virtualPads[port]->IsShown())
+	if (virtualPads[port] && virtualPads[port]->IsShown())
 	{
 		// If the VirtualPad updated the PadData, we have to update the buffer
 		// before committing it to the recording / sending it to the game
@@ -146,8 +146,8 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 &bufCount, u8 b
 
 	// If we have reached the end of the pad data, log it out
     if (bufIndex == PadData::END_INDEX_CONTROLLER_BUFFER) {
-		padData[port]->LogPadData();
-		if (virtualPads[port] != NULL && virtualPads[port]->IsShown())
+		padData[port]->LogPadData(port);
+		if (virtualPads[port] && virtualPads[port]->IsShown())
 		{
 			virtualPads[port]->Redraw();
 		}

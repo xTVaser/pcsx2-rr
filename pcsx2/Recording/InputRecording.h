@@ -51,7 +51,7 @@ private:
 	// Controller Data
 	PadData *padData[2];
 
-	// VirtualPad
+	// VirtualPads
 	VirtualPad *virtualPads[2];
 };
 

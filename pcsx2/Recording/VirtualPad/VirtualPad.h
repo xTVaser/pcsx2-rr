@@ -18,10 +18,10 @@
 #include <map>
 #include <queue>
 
-#include "wx/window.h"
-#include "wx/frame.h"
-#include "wx/checkbox.h"
 #include "Pcsx2Types.h"
+#include "wx/checkbox.h"
+#include "wx/frame.h"
+#include "wx/window.h"
 
 #include "Recording/PadData.h"
 #include "Recording/VirtualPad/VirtualPadData.h"
@@ -81,5 +81,5 @@ private:
 	void OnPressureButtonPressureChange(wxCommandEvent &event);
 	void OnAnalogSliderChange(wxCommandEvent &event);
 	void OnAnalogSpinnerChange(wxCommandEvent &event);
-	void OnIgnoreRealController(wxCommandEvent &event);
+	void OnIgnoreRealController(wxCommandEvent const &event);
 };

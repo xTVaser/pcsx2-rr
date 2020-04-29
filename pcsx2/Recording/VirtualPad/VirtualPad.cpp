@@ -19,8 +19,8 @@
 
 #include "App.h"
 #include "Utilities/EmbeddedImage.h"
-#include "wx/display.h"
 #include "wx/dcbuffer.h"
+#include "wx/display.h"
 #include "wx/spinctrl.h"
 
 #include "Recording/VirtualPad/VirtualPad.h"
@@ -206,7 +206,10 @@ void VirtualPad::Render(wxDC &dc)
 		// After some tests, the performance impact is well within reason, and on the hardware renderer modes, is almost non-existant.
 		while (!renderQueue.empty()) {
             VirtualPadElement *element = renderQueue.front();
-            element->Render(bdc);
+            if (element) 
+			{
+                element->Render(bdc);
+            }
             renderQueue.pop();
         }
 	}
@@ -217,18 +220,24 @@ bool VirtualPad::UpdateControllerData(u16 const bufIndex, PadData *padData, bool
 	return virtualPadData.UpdateVirtualPadData(bufIndex, padData, ignoreRealController && !readOnly, readOnly);
 }
 
-void VirtualPad::OnIgnoreRealController(wxCommandEvent &event)
+void VirtualPad::OnIgnoreRealController(wxCommandEvent const &event)
 {
-	wxCheckBox* ignoreButton = (wxCheckBox*) event.GetEventObject();
-	ignoreRealController = ignoreButton->GetValue();
+	const wxCheckBox* ignoreButton = (wxCheckBox*) event.GetEventObject();
+    if (ignoreButton) 
+	{
+        ignoreRealController = ignoreButton->GetValue();
+    }
 }
 
 void VirtualPad::OnNormalButtonPress(wxCommandEvent &event)
 {
-	wxCheckBox* pressedButton = (wxCheckBox*) event.GetEventObject();
+	const wxCheckBox* pressedButton = (wxCheckBox*) event.GetEventObject();
 	ControllerNormalButton *eventBtn = buttonElements[pressedButton->GetId()];
 
-	eventBtn->pressed = pressedButton->GetValue();
+	if (pressedButton) 
+	{
+        eventBtn->pressed = pressedButton->GetValue();
+    }
 
 	// If the real controller is being bypassed, we move on, otherwise we begin bypassing the controller
 	if (!eventBtn->isControllerPressBypassed) {
@@ -238,13 +247,15 @@ void VirtualPad::OnNormalButtonPress(wxCommandEvent &event)
 
 void VirtualPad::OnPressureButtonPressureChange(wxCommandEvent &event)
 {
-	wxSpinCtrl* pressureSpinner = (wxSpinCtrl*) event.GetEventObject();
+	const wxSpinCtrl* pressureSpinner = (wxSpinCtrl*) event.GetEventObject();
 	ControllerPressureButton *eventBtn = pressureElements[pressureSpinner->GetId()];
 
-	eventBtn->pressure = pressureSpinner->GetValue();
+	if (pressureSpinner)
+	{
+        eventBtn->pressure = pressureSpinner->GetValue();
+    }
 	eventBtn->pressed = eventBtn->pressure > 0;
 
-	// If the real controller is being bypassed, we move on, otherwise we begin bypassing the controller
 	if (!eventBtn->isControllerPressureBypassed || !eventBtn->isControllerPressBypassed) {
 		eventBtn->isControllerPressureBypassed = true;
 		eventBtn->isControllerPressBypassed = true;
@@ -253,13 +264,15 @@ void VirtualPad::OnPressureButtonPressureChange(wxCommandEvent &event)
 
 void VirtualPad::OnAnalogSpinnerChange(wxCommandEvent &event)
 {
-	wxSpinCtrl* analogSpinner = (wxSpinCtrl*) event.GetEventObject();
+	const wxSpinCtrl* analogSpinner = (wxSpinCtrl*) event.GetEventObject();
 	AnalogVector *eventVector = analogElements[analogSpinner->GetId()];
 
-	eventVector->val = analogSpinner->GetValue();
+	if (analogSpinner) 
+	{
+        eventVector->val = analogSpinner->GetValue();
+    }
 	eventVector->slider->SetValue(eventVector->val);
 
-	// If the real controller is being bypassed, we move on, otherwise we begin bypassing the controller
 	if (!eventVector->isControllerBypassed) {
 		eventVector->isControllerBypassed = true;
 	}
@@ -267,13 +280,15 @@ void VirtualPad::OnAnalogSpinnerChange(wxCommandEvent &event)
 
 void VirtualPad::OnAnalogSliderChange(wxCommandEvent &event)
 {
-	wxSlider* analogSlider = (wxSlider*) event.GetEventObject();
+	const wxSlider* analogSlider = (wxSlider*) event.GetEventObject();
 	AnalogVector *eventVector = analogElements[analogSlider->GetId()];
 
-	eventVector->val = analogSlider->GetValue();
+	if (analogSlider)
+	{
+        eventVector->val = analogSlider->GetValue();
+    }
 	eventVector->spinner->SetValue(eventVector->val);
 
-	// If the real controller is being bypassed, we move on, otherwise we begin bypassing the controller
 	if (!eventVector->isControllerBypassed) {
 		eventVector->isControllerBypassed = true;
 	}
@@ -331,8 +346,8 @@ void VirtualPad::InitNormalButtonGuiElements(ControllerNormalButton &button, Ima
 
 void VirtualPad::InitPressureButtonGuiElements(ControllerPressureButton &button, ImageFile image, wxWindow *parentWindow, wxPoint point, bool rightAlignedPoint)
 {
-    int spinnerWidth = 100;
-	wxPoint scaledPoint = ScaledPoint(point.x, point.y, spinnerWidth, rightAlignedPoint);
+    const int spinnerWidth = 100;
+	const wxPoint scaledPoint = ScaledPoint(point.x, point.y, spinnerWidth, rightAlignedPoint);
     wxSpinCtrl *spinner = new wxSpinCtrl(parentWindow, wxID_ANY, wxEmptyString, scaledPoint, ScaledSize(spinnerWidth, wxDefaultSize.GetHeight()), wxSP_ARROW_KEYS, 0, 255, 0);
 
 	button.icon = image;
@@ -349,9 +364,9 @@ void VirtualPad::InitAnalogStickGuiElements(AnalogStick &analog, wxWindow *paren
 	analogPos.radius = radius * scalingFactor;
 	analogPos.lineThickness = 6 * scalingFactor;
 
-	int spinnerWidth = 90;
-	wxPoint xSpinnerScaledPoint = ScaledPoint(xSpinnerPoint, spinnerWidth, rightAlignedSpinners);
-    wxPoint ySpinnerScaledPoint = ScaledPoint(ySpinnerPoint, spinnerWidth, rightAlignedSpinners);
+	const int spinnerWidth = 90;
+	const wxPoint xSpinnerScaledPoint = ScaledPoint(xSpinnerPoint, spinnerWidth, rightAlignedSpinners);
+    const wxPoint ySpinnerScaledPoint = ScaledPoint(ySpinnerPoint, spinnerWidth, rightAlignedSpinners);
 
 	wxSlider *xSlider = new wxSlider(parentWindow, wxID_ANY, 127, 0, 255, ScaledPoint(xSliderPoint), ScaledSize(185, 30));
     wxSlider *ySlider = new wxSlider(parentWindow, wxID_ANY, 127, 0, 255, ScaledPoint(ySliderPoint), ScaledSize(30, 185), flipYSlider ? wxSL_LEFT : wxSL_RIGHT);

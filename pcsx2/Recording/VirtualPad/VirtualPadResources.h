@@ -21,15 +21,15 @@ struct ImageFile
 {
 	wxBitmap image;
 	wxPoint coords;
-	u32 width;
-	u32 height;
+	u32 width = 0;
+	u32 height = 0;
 };
 
 struct AnalogVector
 {
     // GUI
-    wxSlider *slider;
-    wxSpinCtrl *spinner;
+    wxSlider *slider = 0;
+    wxSpinCtrl *spinner = 0;
 
     u8 val = 127;
 
@@ -46,8 +46,8 @@ struct AnalogPosition
 	wxPoint centerCoords;
 	wxPoint endCoords;
 
-	int lineThickness;
-	int radius;
+	int lineThickness = 0;
+	int radius = 0;
 };
 
 class VirtualPadElement
@@ -75,7 +75,7 @@ class ControllerNormalButton : public ControllerButton, VirtualPadElement
 public:
 	/// GUI
 	ImageFile icon;
-	wxCheckBox *pressedBox;
+	wxCheckBox *pressedBox = 0;
 
 	/// State
 
@@ -89,9 +89,9 @@ class ControllerPressureButton : public ControllerButton, VirtualPadElement
 public:
 	/// GUI
 	ImageFile icon;
-	wxSpinCtrl *pressureSpinner;
+	wxSpinCtrl *pressureSpinner = 0;
 
-	u8 pressure;
+	u8 pressure = 0;
 
 	/// State Management
 	bool isControllerPressureBypassed = false;
