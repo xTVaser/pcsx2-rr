@@ -165,26 +165,26 @@ void VirtualPad::Redraw()
 void VirtualPad::Render(wxDC &dc)
 {
 	// Update GUI Elements and figure out what needs to be rendered
-	virtualPadData.circle.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.cross.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.square.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.triangle.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.down.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.left.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.right.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.up.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.l1.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.l2.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.r1.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.r2.UpdateGuiElement(&renderQueue, clearScreenRequired);
+	virtualPadData.circle.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.cross.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.square.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.triangle.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.down.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.left.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.right.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.up.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.l1.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.l2.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.r1.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.r2.UpdateGuiElement(renderQueue, clearScreenRequired);
 
-	virtualPadData.select.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.start.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.l3.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.r3.UpdateGuiElement(&renderQueue, clearScreenRequired);
+	virtualPadData.select.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.start.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.l3.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.r3.UpdateGuiElement(renderQueue, clearScreenRequired);
 
-	virtualPadData.leftAnalog.UpdateGuiElement(&renderQueue, clearScreenRequired);
-    virtualPadData.rightAnalog.UpdateGuiElement(&renderQueue, clearScreenRequired);
+	virtualPadData.leftAnalog.UpdateGuiElement(renderQueue, clearScreenRequired);
+    virtualPadData.rightAnalog.UpdateGuiElement(renderQueue, clearScreenRequired);
 
 	// Update Graphic Elements off render stack
 	// Before we start rendering (if we have to) clear and re-draw the background
@@ -215,9 +215,45 @@ void VirtualPad::Render(wxDC &dc)
 	}
 }
 
-bool VirtualPad::UpdateControllerData(u16 const bufIndex, PadData *padData, bool readOnly)
+bool VirtualPad::UpdateControllerData(u16 const bufIndex, PadData *padData)
 {
-	return virtualPadData.UpdateVirtualPadData(bufIndex, padData, ignoreRealController && !readOnly, readOnly);
+    return virtualPadData.UpdateVirtualPadData(bufIndex, padData, ignoreRealController && !readOnlyMode, readOnlyMode);
+}
+
+void VirtualPad::enablePadElements(bool enable)
+{
+    virtualPadData.circle.EnableWidgets(enable);
+    virtualPadData.cross.EnableWidgets(enable);
+    virtualPadData.square.EnableWidgets(enable);
+    virtualPadData.triangle.EnableWidgets(enable);
+    virtualPadData.down.EnableWidgets(enable);
+    virtualPadData.left.EnableWidgets(enable);
+    virtualPadData.right.EnableWidgets(enable);
+    virtualPadData.up.EnableWidgets(enable);
+    virtualPadData.l1.EnableWidgets(enable);
+    virtualPadData.l2.EnableWidgets(enable);
+    virtualPadData.r1.EnableWidgets(enable);
+    virtualPadData.r2.EnableWidgets(enable);
+
+    virtualPadData.select.EnableWidgets(enable);
+    virtualPadData.start.EnableWidgets(enable);
+    virtualPadData.l3.EnableWidgets(enable);
+    virtualPadData.r3.EnableWidgets(enable);
+
+    virtualPadData.leftAnalog.EnableWidgets(enable);
+    virtualPadData.rightAnalog.EnableWidgets(enable);
+}
+
+void VirtualPad::SetReadOnlyMode()
+{
+    enablePadElements(true);
+    readOnlyMode = true;
+}
+
+void VirtualPad::ClearReadOnlyMode()
+{
+    enablePadElements(false);
+    readOnlyMode = false;
 }
 
 void VirtualPad::OnIgnoreRealController(wxCommandEvent const &event)

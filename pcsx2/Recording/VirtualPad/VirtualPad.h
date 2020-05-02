@@ -17,6 +17,7 @@
 
 #include <map>
 #include <queue>
+#include <vector>
 
 #include "Pcsx2Types.h"
 #include "wx/checkbox.h"
@@ -31,12 +32,16 @@ class VirtualPad : public wxFrame
 public:
 	VirtualPad(wxWindow *parent, wxWindowID id, const wxString& title, int controllerPort, const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize, long style = wxDEFAULT_FRAME_STYLE);
 	// Updates the VirtualPad if necessary, as well as updates the PadData fields if the VirtualPad is actively overriding them
-	bool UpdateControllerData(u16 const bufIndex, PadData *padData, bool readOnly = false);
+	bool UpdateControllerData(u16 const bufIndex, PadData *padData);
+    void SetReadOnlyMode();
+    void ClearReadOnlyMode();
 	void Redraw();
 
 private:
+    void enablePadElements(bool enable);
     bool manualRedrawMode = false;
     bool clearScreenRequired = false;
+    bool readOnlyMode = false;
 
     std::queue<VirtualPadElement*> renderQueue;
 

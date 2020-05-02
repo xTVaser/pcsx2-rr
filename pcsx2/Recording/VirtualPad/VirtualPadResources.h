@@ -55,7 +55,8 @@ class VirtualPadElement
 public:
     bool currentlyRendered = false;
 
-    virtual void UpdateGuiElement(std::queue<VirtualPadElement *> *renderQueue, bool &clearScreenRequired) = 0;
+    virtual void UpdateGuiElement(std::queue<VirtualPadElement *> &renderQueue, bool &clearScreenRequired) = 0;
+    virtual void EnableWidgets(bool enable) = 0;
     virtual void Render(wxDC &dc) = 0;
 };
 
@@ -70,7 +71,7 @@ public:
 	bool UpdateButtonData(bool &padDataVal, bool ignoreRealController, bool readOnly);
 };
 
-class ControllerNormalButton : public ControllerButton, VirtualPadElement
+class ControllerNormalButton : public ControllerButton, public VirtualPadElement
 {
 public:
 	/// GUI
@@ -79,12 +80,13 @@ public:
 
 	/// State
 
-	void UpdateGuiElement(std::queue<VirtualPadElement *> *renderQueue, bool &clearScreenRequired) override;
+	void UpdateGuiElement(std::queue<VirtualPadElement *> &renderQueue, bool &clearScreenRequired) override;
+    void EnableWidgets(bool enable) override;
     void Render(wxDC &dc) override;
     bool UpdateData(bool &padDataVal, bool ignoreRealController, bool readOnly);
 };
 
-class ControllerPressureButton : public ControllerButton, VirtualPadElement
+class ControllerPressureButton : public ControllerButton, public VirtualPadElement
 {
 public:
 	/// GUI
@@ -97,13 +99,14 @@ public:
 	bool isControllerPressureBypassed = false;
 	u8 prevPressureVal = 0;
 
-	void UpdateGuiElement(std::queue<VirtualPadElement *> *renderQueue, bool &clearScreenRequired) override;
+	void UpdateGuiElement(std::queue<VirtualPadElement *> &renderQueue, bool &clearScreenRequired) override;
+    void EnableWidgets(bool enable) override;
     void Render(wxDC &dc) override;
     bool UpdateData(bool &padDataVal, bool ignoreRealController, bool readOnly);
     bool UpdateData(u8 &padDataVal, bool ignoreRealController, bool readOnly);
 };
 
-class AnalogStick : VirtualPadElement
+class AnalogStick : public VirtualPadElement
 {
 public:
 	AnalogVector xVector;
@@ -111,6 +114,7 @@ public:
 
 	AnalogPosition positionGraphic;
 
-	void UpdateGuiElement(std::queue<VirtualPadElement *> *renderQueue, bool &clearScreenRequired) override;
+	void UpdateGuiElement(std::queue<VirtualPadElement *> &renderQueue, bool &clearScreenRequired) override;
+    void EnableWidgets(bool enable) override;
     void Render(wxDC &dc) override;
 };
