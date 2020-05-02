@@ -20,7 +20,7 @@
 #include "Recording/VirtualPad/VirtualPadResources.h"
 #include "Recording/PadData.h"
 
-void ControllerNormalButton::UpdateGuiElement(std::queue<VirtualPadElement*> *renderQueue, bool &clearScreenRequired)
+void ControllerNormalButton::UpdateGuiElement(std::queue<VirtualPadElement*> &renderQueue, bool &clearScreenRequired)
 {
     ControllerNormalButton &button = *this;
     if (button.widgetUpdateRequired)
@@ -30,7 +30,7 @@ void ControllerNormalButton::UpdateGuiElement(std::queue<VirtualPadElement*> *re
 
     if (button.pressed)
 	{
-        renderQueue->push(this);
+        renderQueue.push(this);
     } 
 	else if (button.currentlyRendered) 
 	{
@@ -39,7 +39,7 @@ void ControllerNormalButton::UpdateGuiElement(std::queue<VirtualPadElement*> *re
 	}
 }
 
-void ControllerPressureButton::UpdateGuiElement(std::queue<VirtualPadElement *> *renderQueue, bool &clearScreenRequired)
+void ControllerPressureButton::UpdateGuiElement(std::queue<VirtualPadElement *> &renderQueue, bool &clearScreenRequired)
 {
     ControllerPressureButton &button = *this;
     if (button.widgetUpdateRequired) 
@@ -50,7 +50,7 @@ void ControllerPressureButton::UpdateGuiElement(std::queue<VirtualPadElement *> 
 
     if (button.pressed) 
 	{
-        renderQueue->push(this);
+        renderQueue.push(this);
     } 
 	else if (button.currentlyRendered) 
 	{
@@ -59,7 +59,7 @@ void ControllerPressureButton::UpdateGuiElement(std::queue<VirtualPadElement *> 
     }
 }
 
-void AnalogStick::UpdateGuiElement(std::queue<VirtualPadElement *> *renderQueue, bool &clearScreenRequired)
+void AnalogStick::UpdateGuiElement(std::queue<VirtualPadElement *> &renderQueue, bool &clearScreenRequired)
 {
     AnalogStick &analogStick = *this;
     // Update the GUI elements that need updating
@@ -76,11 +76,50 @@ void AnalogStick::UpdateGuiElement(std::queue<VirtualPadElement *> *renderQueue,
     }
     if (!(analogStick.xVector.val == PadData::ANALOG_VECTOR_NEUTRAL && analogStick.yVector.val == PadData::ANALOG_VECTOR_NEUTRAL))
 	{
-        renderQueue->push(this);
+        renderQueue.push(this);
 	} 
 	else if (analogStick.currentlyRendered) {
         analogStick.currentlyRendered = false;
         clearScreenRequired = true;
+    }
+}
+
+void ControllerNormalButton::EnableWidgets(bool enable)
+{
+    ControllerNormalButton &button = *this;
+    if (enable) 
+	{
+        button.pressedBox->Enable();
+    } 
+	else 
+	{
+        button.pressedBox->Disable();
+    }
+}
+
+void ControllerPressureButton::EnableWidgets(bool enable)
+{
+    ControllerPressureButton &button = *this;
+    if (enable) {
+        button.pressureSpinner->Enable();
+    } else {
+        button.pressureSpinner->Disable();
+    }
+}
+
+void AnalogStick::EnableWidgets(bool enable)
+{
+    AnalogStick &analog = *this;
+    if (enable) {
+        analog.xVector.slider->Enable();
+        analog.yVector.slider->Enable();
+        analog.xVector.spinner->Enable();
+        analog.yVector.spinner->Enable();
+    } else {
+        analog.xVector.slider->Disable();
+        analog.yVector.slider->Disable();
+        analog.xVector.spinner->Disable();
+        analog.yVector.spinner->Disable();
     }
 }
 
@@ -109,7 +148,7 @@ void AnalogStick::Render(wxDC &dc)
     int newXCoord = analogPos.centerCoords.x + ((analogStick.xVector.val - 127) / 127.0) * analogPos.radius;
     int newYCoord = analogPos.centerCoords.y + ((analogStick.yVector.val - 127) / 127.0) * analogPos.radius;
     // We want to ensure the line segment length is capped at the defined radius
-    float lengthOfLine = sqrt(pow(newXCoord - analogPos.centerCoords.x, 2) + pow(newYCoord - analogPos.centerCoords.y, 2));
+    const float lengthOfLine = sqrt(pow(newXCoord - analogPos.centerCoords.x, 2) + pow(newYCoord - analogPos.centerCoords.y, 2));
     if (lengthOfLine > analogPos.radius) {
         newXCoord = ((1 - analogPos.radius / lengthOfLine) * analogPos.centerCoords.x) + analogPos.radius / lengthOfLine * newXCoord;
         newYCoord = ((1 - analogPos.radius / lengthOfLine) * analogPos.centerCoords.y) + analogPos.radius / lengthOfLine * newYCoord;
@@ -127,15 +166,15 @@ void AnalogStick::Render(wxDC &dc)
 bool ControllerButton::UpdateButtonData(bool &padDataVal, bool ignoreRealController, bool readOnly)
 {
     ControllerButton &button = *this;
-    if (!ignoreRealController) {
+    if (!ignoreRealController || readOnly) {
         // If controller is being bypassed and controller's state has changed
-        bool bypassedWithChangedState = button.isControllerPressBypassed && padDataVal != button.prevPressedVal;
+        const bool bypassedWithChangedState = button.isControllerPressBypassed && padDataVal != button.prevPressedVal;
         if (bypassedWithChangedState) {
             button.prevPressedVal = padDataVal;
             button.isControllerPressBypassed = false;
         }
         // If we aren't bypassing the controller OR the previous condition was met
-        if (bypassedWithChangedState || !button.isControllerPressBypassed) {
+        if (bypassedWithChangedState || !button.isControllerPressBypassed || readOnly) {
             button.widgetUpdateRequired = button.pressed != padDataVal;
             button.pressed = padDataVal;
             return false;
@@ -159,13 +198,13 @@ bool ControllerPressureButton::UpdateData(bool &padDataVal, bool ignoreRealContr
 bool ControllerPressureButton::UpdateData(u8 &padDataVal, bool ignoreRealController, bool readOnly)
 {
     ControllerPressureButton &button = *this;
-    if (!ignoreRealController) {
-        bool bypassedWithChangedState = button.isControllerPressureBypassed && padDataVal != button.prevPressureVal;
+    if (!ignoreRealController || readOnly) {
+        const bool bypassedWithChangedState = button.isControllerPressureBypassed && padDataVal != button.prevPressureVal;
         if (bypassedWithChangedState) {
             button.prevPressureVal = padDataVal;
             button.isControllerPressureBypassed = false;
         }
-        if (bypassedWithChangedState || !button.isControllerPressureBypassed) {
+        if (bypassedWithChangedState || !button.isControllerPressureBypassed || readOnly) {
             button.widgetUpdateRequired = button.pressure != padDataVal;
             button.pressure = padDataVal;
             return false;
@@ -179,13 +218,13 @@ bool ControllerPressureButton::UpdateData(u8 &padDataVal, bool ignoreRealControl
 bool AnalogVector::UpdateData(u8 &padDataVal, bool ignoreRealController, bool readOnly)
 {
     AnalogVector &vector = *this;
-    if (!ignoreRealController) {
-        bool bypassedWithChangedState = vector.isControllerBypassed && padDataVal != vector.prevVal;
+    if (!ignoreRealController || readOnly) {
+        const bool bypassedWithChangedState = vector.isControllerBypassed && padDataVal != vector.prevVal;
         if (bypassedWithChangedState) {
             vector.prevVal = padDataVal;
             vector.isControllerBypassed = false;
         }
-        if (bypassedWithChangedState || !vector.isControllerBypassed) {
+        if (bypassedWithChangedState || !vector.isControllerBypassed || readOnly) {
             vector.widgetUpdateRequired = vector.val != padDataVal;
             vector.val = padDataVal;
             return false;

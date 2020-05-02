@@ -42,72 +42,56 @@ void SaveStateBase::InputRecordingFreeze()
 InputRecording::InputRecording()
 {
 	// NOTE - No multi-tap support, only two controllers
-	for (int i = 0; i < 2; i++)
-	{
-		padData[i] = new PadData();
-	}
+    padData[CONTROLLER_PORT_ONE] = new PadData();
+    padData[CONTROLLER_PORT_TWO] = new PadData();
 }
 
-void InputRecording::setVirtualPadPtr(VirtualPad *ptr, int port)
+void InputRecording::SetVirtualPadPtr(VirtualPad *ptr, int const port)
 {
 	virtualPads[port] = ptr;
 }
 
 // Main func for handling controller input data
 // - Called by Sio.cpp::sioWriteController
-void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 &bufCount, u8 buf[])
+void InputRecording::ControllerInterrupt(u8 const &data, u8 const &port, u16 const &bufCount, u8 buf[])
 {
-	// NOTE - No Multi-Tap Support
-	// Only examine controllers 1 / 2
-	if (port != 0 && port != 1)
+	// NOTE - No Multi-Tap Support - Only examine controllers 1 / 2
+    if (port != CONTROLLER_PORT_ONE && port != CONTROLLER_PORT_TWO)
 	{
 		return;
 	}
 
-	/*
-		This appears to try to ensure that we are only paying attention
-		to the frames that matter, the ones that are reading from
-		the controller.
-
-		See - Lilypad.cpp::PADpoll - https://github.com/PCSX2/pcsx2/blob/v1.5.0-dev/plugins/LilyPad/LilyPad.cpp#L1193
-		0x42 is the magic number for the default read query
-	*/
+	// We are only interested in reading from the buffer when it contains the controller data.
+    // The first byte in the buffer is used to indicate this.
+    // A flag is set(fInterruptFrame) so that future interrupts will either be processed or skipped.
 	if (bufCount == 1)
 	{
-		fInterruptFrame = data == 0x42;
-		if (!fInterruptFrame)
-		{
-			return;
-		}
+        fInterruptFrame = data == READ_DATA_AND_VIBRATE_FIRST_BYTE;
 	}
 	else if ( bufCount == 2 )
 	{
-		/*
-			See - LilyPad.cpp::PADpoll - https://github.com/PCSX2/pcsx2/blob/v1.5.0-dev/plugins/LilyPad/LilyPad.cpp#L1194
-			0x5A is always the second byte in the buffer
-			when the normal READ_DATA_AND_VIBRRATE (0x42)
-			query is executed, this looks like a sanity check
-		*/
-		if (buf[bufCount] != 0x5A)
+        // This is an extra sanity check, if this byte is different, then we unset the flag
+		// and skip processing the buffer for this particular interrupt routine.
+        if (buf[bufCount] != READ_DATA_AND_VIBRATE_SECOND_BYTE)
 		{
 			fInterruptFrame = false;
-			return;
 		}
 	}
 
-	if (!fInterruptFrame
-		// We do not want to record or save the first two
-		// bytes in the data returned from LilyPad
-		|| bufCount < 3)
+	// Skip processing this buffer if:
+	// - Due to the prior checks, this interrupt is not something we are interested in
+	// - We have got hit the actual data, which starts at the 3rd byte in the buffer
+	if (!fInterruptFrame || bufCount < 3)
 	{
 		return;
 	}
 
 	u8 &bufVal = buf[bufCount];
+	// For convenience sake, since the controller data starts at bufCount=3, we treat that as the first index. 
 	const u16 bufIndex = bufCount - 3;
 
 	// If we are replaying a movie, there should be NO modifications to the inputs
-	// Grab the byte from the movie file and overwrite whatever the PAD is inputting
+	// Grab the byte from the movie file and overwrite whatever the [Virtual]Pad is inputting
 	if (state == INPUT_RECORDING_MODE_REPLAY)
 	{
 		if (InputRecordingData.GetMaxFrame() <= g_FrameCount)
@@ -121,14 +105,7 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 &bufCount, u8 b
 		{
 			// Overwrite value originally provided by the PAD plugin
 			bufVal = tmp;
-			// Update controller data state for future VirtualPad / logging usage.
-			padData[port]->UpdateControllerData(bufIndex, bufVal);
-			if (virtualPads[port] && virtualPads[port]->IsShown())
-			{
-				virtualPads[port]->UpdateControllerData(bufIndex, padData[port]);
-			}
 		}
-		return;
 	}
 
 	// Update controller data state for future VirtualPad / logging usage.
@@ -138,7 +115,8 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 &bufCount, u8 b
 	{
 		// If the VirtualPad updated the PadData, we have to update the buffer
 		// before committing it to the recording / sending it to the game
-		if (virtualPads[port]->UpdateControllerData(bufIndex, padData[port]))
+		// - Do not do this if we are in replay mode!
+        if (virtualPads[port]->UpdateControllerData(bufIndex, padData[port]) && state != INPUT_RECORDING_MODE_REPLAY)
 		{
 			bufVal = padData[port]->PollControllerData(bufIndex);
 		}
@@ -147,6 +125,7 @@ void InputRecording::ControllerInterrupt(u8 &data, u8 &port, u16 &bufCount, u8 b
 	// If we have reached the end of the pad data, log it out
     if (bufIndex == PadData::END_INDEX_CONTROLLER_BUFFER) {
 		padData[port]->LogPadData(port);
+		// As well as re-render the virtual pad UI, if applicable
 		if (virtualPads[port] && virtualPads[port]->IsShown())
 		{
 			virtualPads[port]->Redraw();
@@ -208,6 +187,9 @@ void InputRecording::Create(wxString FileName, bool fromSaveState, wxString auth
 	InputRecordingData.GetHeader().SetGameName(!gameName.IsEmpty() ? gameName : Path::GetFilename(g_Conf->CurrentIso));
 	InputRecordingData.WriteHeader();
 	state = INPUT_RECORDING_MODE_RECORD;
+    // Ensure VirtualPads aren't set to readOnly mode
+    virtualPads[CONTROLLER_PORT_ONE]->ClearReadOnlyMode();
+    virtualPads[CONTROLLER_PORT_TWO]->ClearReadOnlyMode();
 	recordingConLog(wxString::Format(L"[REC]: Started new recording - [%s]\n", FileName));
 
 	// In every case, we reset the g_FrameCount
@@ -239,6 +221,10 @@ void InputRecording::Play(wxString FileName, bool fromSaveState)
 		}
 	}
 	state = INPUT_RECORDING_MODE_REPLAY;
+	// Set VirtualPads to readOnly mode
+    virtualPads[CONTROLLER_PORT_ONE]->SetReadOnlyMode();
+    virtualPads[CONTROLLER_PORT_TWO]->SetReadOnlyMode();
+	// TODO - This should be converted to a single log statement (since we want to guarantee its grouped)
 	recordingConLog(wxString::Format(L"[REC]: Replaying movie - [%s]\n", FileName));
 	recordingConLog(wxString::Format(L"[REC]: Recording File Version: %d\n", InputRecordingData.GetHeader().version));
 	recordingConLog(wxString::Format(L"[REC]: Associated Game Name / ISO Filename: %s\n", InputRecordingData.GetHeader().gameName));
@@ -253,11 +239,17 @@ void InputRecording::RecordModeToggle()
 	if (state == INPUT_RECORDING_MODE_REPLAY)
 	{
 		state = INPUT_RECORDING_MODE_RECORD;
+        // Set VirtualPads to readOnly mode
+        virtualPads[CONTROLLER_PORT_ONE]->ClearReadOnlyMode();
+        virtualPads[CONTROLLER_PORT_TWO]->ClearReadOnlyMode();
 		recordingConLog("[REC]: Record mode ON.\n");
 	}
 	else if (state == INPUT_RECORDING_MODE_RECORD)
 	{
 		state = INPUT_RECORDING_MODE_REPLAY;
+        // Set VirtualPads to readOnly mode
+        virtualPads[CONTROLLER_PORT_ONE]->SetReadOnlyMode();
+        virtualPads[CONTROLLER_PORT_TWO]->SetReadOnlyMode();
 		recordingConLog("[REC]: Replay mode ON.\n");
 	}
 }
@@ -270,9 +262,4 @@ INPUT_RECORDING_MODE InputRecording::GetModeState()
 InputRecordingFile & InputRecording::GetInputRecordingData()
 {
 	return InputRecordingData;
-}
-
-bool InputRecording::IsInterruptFrame()
-{
-	return fInterruptFrame;
 }

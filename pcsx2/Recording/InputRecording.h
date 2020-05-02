@@ -29,7 +29,7 @@ class InputRecording
 public:
 	InputRecording();
 
-	void ControllerInterrupt(u8 &data, u8 &port, u16 & BufCount, u8 buf[]);
+	void ControllerInterrupt(u8 const &data, u8 const &port, u16 const &bufCount, u8 buf[]);
 
 	void RecordModeToggle();
 
@@ -41,9 +41,20 @@ public:
 	void Create(wxString filename, bool fromSaveState, wxString authorName);
 	void Play(wxString filename, bool fromSaveState);
 
-	void setVirtualPadPtr(VirtualPad *ptr, int port);
+	void SetVirtualPadPtr(VirtualPad *ptr, int const port);
 
 private:
+    static const int CONTROLLER_PORT_ONE = 0;
+    static const int CONTROLLER_PORT_TWO = 1;
+
+	// 0x42 is the magic number to indicate the default controller read query
+	// See - Lilypad.cpp::PADpoll - https://github.com/PCSX2/pcsx2/blob/v1.5.0-dev/plugins/LilyPad/LilyPad.cpp#L1193
+	static const u8 READ_DATA_AND_VIBRATE_FIRST_BYTE = 0x42;
+	// 0x5A is always the second byte in the buffer when the normal READ_DATA_AND_VIBRATE (0x42) query is executed.
+	// See - LilyPad.cpp::PADpoll - https://github.com/PCSX2/pcsx2/blob/v1.5.0-dev/plugins/LilyPad/LilyPad.cpp#L1194
+    static const u8 READ_DATA_AND_VIBRATE_SECOND_BYTE = 0x5A;
+
+
 	InputRecordingFile InputRecordingData;
 	INPUT_RECORDING_MODE state = INPUT_RECORDING_MODE_NONE;
 	bool fInterruptFrame = false;
