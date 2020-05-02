@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2019  PCSX2 Dev Team
+ *  Copyright (C) 2002-2020  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -97,13 +97,10 @@ VirtualPad::VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, i
 
 	// Bind Window Events
     Bind(wxEVT_ERASE_BACKGROUND, &VirtualPad::OnEraseBackground, this);
-    Bind(wxEVT_MOTION, &VirtualPad::OnMouseEvent, this);
     Bind(wxEVT_CLOSE_WINDOW, &VirtualPad::OnClose, this);
-    Bind(wxEVT_SET_FOCUS, &VirtualPad::OnFocusEvent, this);
-    Bind(wxEVT_KILL_FOCUS, &VirtualPad::OnFocusEvent, this);
 	// Temporary Paint event handler so the window displays properly before the controller-interrupt routine takes over with manual drawing.
 	// The reason for this is in order to minimize the performance impact, we need total control over when render is called
-	// Windows redraws the window _alot_ otherwise which leads to major performance problems
+	// Windows redraws the window _alot_ otherwise which leads to major performance problems (when GS is using the software renderer)
     Bind(wxEVT_PAINT, &VirtualPad::OnPaint, this);
 
 	// Finalize layout
@@ -124,18 +121,6 @@ void VirtualPad::OnClose(wxCloseEvent & event)
 	Hide();
 }
 
-void VirtualPad::OnMouseEvent(wxMouseEvent &evt)
-{
-	evt.Skip();
-	return;
-}
-
-void VirtualPad::OnFocusEvent(wxFocusEvent &evt)
-{
-	evt.Skip();
-	return;
-}
-
 void VirtualPad::OnEraseBackground(wxEraseEvent& event)
 {
 	// Intentionally Empty
@@ -150,10 +135,6 @@ void VirtualPad::OnPaint(wxPaintEvent &evt)
 
 void VirtualPad::Redraw()
 {
-	// This function is called once per frame once we start receiving data from the controller
-	// and there is actually an update that needs to be made.
-	// Once that occurs, we want total control over how often we re-render to minimize flickering
-	// and minimize the performance impact
     if (!manualRedrawMode) {
         Unbind(wxEVT_PAINT, &VirtualPad::OnPaint, this);
         manualRedrawMode = true;
@@ -275,7 +256,6 @@ void VirtualPad::OnNormalButtonPress(wxCommandEvent &event)
         eventBtn->pressed = pressedButton->GetValue();
     }
 
-	// If the real controller is being bypassed, we move on, otherwise we begin bypassing the controller
 	if (!eventBtn->isControllerPressBypassed) {
         eventBtn->isControllerPressBypassed = true;
 	}

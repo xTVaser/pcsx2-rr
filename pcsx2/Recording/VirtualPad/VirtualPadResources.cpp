@@ -23,15 +23,22 @@
 void ControllerNormalButton::UpdateGuiElement(std::queue<VirtualPadElement*> &renderQueue, bool &clearScreenRequired)
 {
     ControllerNormalButton &button = *this;
+	// This boolean is set when we parse the PadData in VirtualPadData::UpdateVirtualPadData
+	// Updating wxWidget elements can be expensive, we only want to do this if required
     if (button.widgetUpdateRequired)
 	{
         button.pressedBox->SetValue(button.pressed);
 	}
 
+	// We only render the button if it is pressed
     if (button.pressed)
 	{
         renderQueue.push(this);
-    } 
+    }
+	// However, if the button has been drawn to the screen in the past
+	// we need to ensure the screen is cleared.
+	// This is needed in the scenario where only a single button is being pressed/released
+	// As no other elements will trigger a clear
 	else if (button.currentlyRendered) 
 	{
         button.currentlyRendered = false;
@@ -45,7 +52,6 @@ void ControllerPressureButton::UpdateGuiElement(std::queue<VirtualPadElement *> 
     if (button.widgetUpdateRequired) 
 	{
         button.pressureSpinner->SetValue(button.pressure);
-        clearScreenRequired = true;
     }
 
     if (button.pressed) 
@@ -62,8 +68,6 @@ void ControllerPressureButton::UpdateGuiElement(std::queue<VirtualPadElement *> 
 void AnalogStick::UpdateGuiElement(std::queue<VirtualPadElement *> &renderQueue, bool &clearScreenRequired)
 {
     AnalogStick &analogStick = *this;
-    // Update the GUI elements that need updating
-    // If either vector has changed, we need to redraw the graphics
     if (analogStick.xVector.widgetUpdateRequired) 
 	{
         analogStick.xVector.slider->SetValue(analogStick.xVector.val);
@@ -74,6 +78,8 @@ void AnalogStick::UpdateGuiElement(std::queue<VirtualPadElement *> &renderQueue,
         analogStick.yVector.slider->SetValue(analogStick.yVector.val);
 		analogStick.yVector.spinner->SetValue(analogStick.yVector.val);
     }
+
+	// We render the analog sticks as long as they are not in the neutral position
     if (!(analogStick.xVector.val == PadData::ANALOG_VECTOR_NEUTRAL && analogStick.yVector.val == PadData::ANALOG_VECTOR_NEUTRAL))
 	{
         renderQueue.push(this);
@@ -148,6 +154,8 @@ void AnalogStick::Render(wxDC &dc)
     int newXCoord = analogPos.centerCoords.x + ((analogStick.xVector.val - 127) / 127.0) * analogPos.radius;
     int newYCoord = analogPos.centerCoords.y + ((analogStick.yVector.val - 127) / 127.0) * analogPos.radius;
     // We want to ensure the line segment length is capped at the defined radius
+	// NOTE - The conventional way to do this is using arctan2, but the analog values that come out
+	// of the Pad plugins in pcsx2 do not permit this, the coordinates returned do not define a circle.
     const float lengthOfLine = sqrt(pow(newXCoord - analogPos.centerCoords.x, 2) + pow(newYCoord - analogPos.centerCoords.y, 2));
     if (lengthOfLine > analogPos.radius) {
         newXCoord = ((1 - analogPos.radius / lengthOfLine) * analogPos.centerCoords.x) + analogPos.radius / lengthOfLine * newXCoord;
@@ -161,6 +169,16 @@ void AnalogStick::Render(wxDC &dc)
     dc.DrawCircle(analogPos.endCoords, wxCoord(analogPos.lineThickness));
     dc.SetPen(wxNullPen);
     analogStick.currentlyRendered = true;
+}
+
+bool ControllerNormalButton::UpdateData(bool &padDataVal, bool ignoreRealController, bool readOnly)
+{
+    return this->UpdateButtonData(padDataVal, ignoreRealController, readOnly);
+}
+
+bool ControllerPressureButton::UpdateData(bool &padDataVal, bool ignoreRealController, bool readOnly)
+{
+    return this->UpdateButtonData(padDataVal, ignoreRealController, readOnly);
 }
 
 bool ControllerButton::UpdateButtonData(bool &padDataVal, bool ignoreRealController, bool readOnly)
@@ -180,19 +198,10 @@ bool ControllerButton::UpdateButtonData(bool &padDataVal, bool ignoreRealControl
             return false;
         }
     }
+    // Otherwise, we update the real PadData value, which will in turn be used to update the interrupt's buffer
     button.prevPressedVal = padDataVal;
     padDataVal = button.pressed;
     return button.prevPressedVal != button.pressed;
-}
-
-bool ControllerNormalButton::UpdateData(bool &padDataVal, bool ignoreRealController, bool readOnly)
-{
-    return this->UpdateButtonData(padDataVal, ignoreRealController, readOnly);
-}
-
-bool ControllerPressureButton::UpdateData(bool &padDataVal, bool ignoreRealController, bool readOnly)
-{
-    return this->UpdateButtonData(padDataVal, ignoreRealController, readOnly);
 }
 
 bool ControllerPressureButton::UpdateData(u8 &padDataVal, bool ignoreRealController, bool readOnly)
