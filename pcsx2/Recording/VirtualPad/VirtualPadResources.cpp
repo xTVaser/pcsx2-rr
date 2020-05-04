@@ -13,6 +13,8 @@
 *  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef DISABLE_RECORDING
+
 #include "PrecompiledHeader.h"
 
 #include <wx/spinctrl.h>
@@ -243,3 +245,5 @@ bool AnalogVector::UpdateData(u8 &padDataVal, bool ignoreRealController, bool re
     padDataVal = vector.val;
     return vector.prevVal != vector.val;
 }
+
+#endif

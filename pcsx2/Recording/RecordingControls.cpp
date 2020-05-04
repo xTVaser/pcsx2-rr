@@ -21,6 +21,7 @@
 
 #include "Recording/RecordingControls.h"
 
+#ifndef DISABLE_RECORDING
 RecordingControls g_RecordingControls;
 
 //-----------------------------------------------
@@ -115,3 +116,4 @@ void RecordingControls::Unpause()
 	fStart = true;
 	fFrameAdvance = true;
 }
+#endif

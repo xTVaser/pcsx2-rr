@@ -13,6 +13,8 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef DISABLE_RECORDING
+
 #include "PrecompiledHeader.h"
 
 #include <vector>
@@ -33,10 +35,12 @@ void SaveStateBase::InputRecordingFreeze()
 	FreezeTag("InputRecording");
 	Freeze(g_FrameCount);
 
+#ifndef DISABLE_RECORDING
 	if (g_FrameCount > 0 && IsLoading())
 	{
 		g_InputRecordingData.AddUndoCount();
 	}
+#endif
 }
 
 InputRecording::InputRecording()
@@ -264,3 +268,5 @@ InputRecordingFile & InputRecording::GetInputRecordingData()
 {
 	return InputRecordingData;
 }
+
+#endif

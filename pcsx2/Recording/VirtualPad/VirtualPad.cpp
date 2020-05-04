@@ -13,6 +13,8 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef DISABLE_RECORDING
+
 #include "PrecompiledHeader.h"
 
 #include <math.h>
@@ -420,3 +422,5 @@ void VirtualPad::InitAnalogStickGuiElements(AnalogStick &analog, wxWindow *paren
     analogElements[xSpinner->GetId()] = &analog.xVector;
     analogElements[ySpinner->GetId()] = &analog.yVector;
 }
+
+#endif

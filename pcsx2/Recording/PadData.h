@@ -14,6 +14,7 @@
  */
 
 #pragma once
+#ifndef DISABLE_RECORDING
 
 class PadData
 {
@@ -123,3 +124,5 @@ private:
 
 	wxString RawPadBytesToString(int start, int end);
 };
+
+#endif

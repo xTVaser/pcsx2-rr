@@ -14,6 +14,7 @@
 */
 
 #pragma once
+#ifndef DISABLE_RECORDING
 
 #include <queue>
 
@@ -119,3 +120,5 @@ public:
     void Render(wxDC &dc) override;
 	void UpdateGuiElement(std::queue<VirtualPadElement *> &renderQueue, bool &clearScreenRequired) override;
 };
+
+#endif

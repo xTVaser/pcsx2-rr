@@ -14,6 +14,7 @@
  */
 
 #pragma once
+#ifndef DISABLE_RECORDING
 
 #include <map>
 #include <queue>
@@ -96,3 +97,5 @@ private:
     void InitAnalogStickGuiElements(AnalogStick &analog, wxWindow *parentWindow, wxPoint centerPoint, int radius, wxPoint xSliderPoint, 
 		wxPoint ySliderPoint, bool flipYSlider, wxPoint xSpinnerPoint, wxPoint ySpinnerPoint, bool rightAlignedSpinners = false);
 };
+
+#endif

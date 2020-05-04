@@ -13,6 +13,8 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef DISABLE_RECORDING
+
 #include "PrecompiledHeader.h"
 
 #include "Recording/VirtualPad/VirtualPadData.h"
@@ -78,3 +80,5 @@ bool VirtualPadData::UpdateVirtualPadData(u16 bufIndex, PadData *padData, bool i
 	}
 	return changeDetected;
 }
+
+#endif

@@ -13,6 +13,8 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef DISABLE_RECORDING
+
 #include "PrecompiledHeader.h"
 
 #include "DebugTools/Debug.h"
@@ -199,3 +201,5 @@ void PadData::LogPadData(u8 const &port) {
         wxString::Format("[PAD %d] Raw Bytes: Pressure = [%s]\n", port + 1, pressureBytes);
 	controlLog(fullLog);
 }
+
+#endif

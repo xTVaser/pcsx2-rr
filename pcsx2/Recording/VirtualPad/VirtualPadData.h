@@ -14,6 +14,7 @@
 */
 
 #pragma once
+#ifndef DISABLE_RECORDING
 
 #include "Pcsx2Types.h"
 
@@ -57,3 +58,5 @@ public:
 	// returns a boolean to indicate if it has updated the PadData
 	bool UpdateVirtualPadData(u16 bufIndex, PadData *padData, bool ignoreRealController = false, bool readOnly = false);
 };
+
+#endif
