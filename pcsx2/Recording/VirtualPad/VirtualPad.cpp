@@ -244,13 +244,13 @@ void VirtualPad::enablePadElements(bool enable)
 
 void VirtualPad::SetReadOnlyMode()
 {
-    enablePadElements(true);
+    enablePadElements(false);
     readOnlyMode = true;
 }
 
 void VirtualPad::ClearReadOnlyMode()
 {
-    enablePadElements(false);
+    enablePadElements(true);
     readOnlyMode = false;
 }
 
