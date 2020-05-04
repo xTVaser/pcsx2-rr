@@ -13,9 +13,9 @@
 *  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef DISABLE_RECORDING
-
 #include "PrecompiledHeader.h"
+
+#ifndef DISABLE_RECORDING
 
 #include <wx/spinctrl.h>
 

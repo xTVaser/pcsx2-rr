@@ -463,8 +463,8 @@ set(pcsx2RDebugHeaders
 	RDebug/deci2_ttyp.h)
 
 # Recording sources
-set(rec_src "${CMAKE_BINARY_DIR}/pcsx2/Recording")
-set(rec_vp_src "${CMAKE_BINARY_DIR}/pcsx2/Recording")
+set(rec_src "Recording")
+set(rec_vp_src "${rec_src}/VirtualPad")
 set(pcsx2RecordingSources
 	${rec_src}/InputRecording.cpp
 	${rec_src}/InputRecordingFile.cpp

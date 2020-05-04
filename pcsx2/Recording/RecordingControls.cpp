@@ -15,13 +15,14 @@
 
 #include "PrecompiledHeader.h"
 
+#ifndef DISABLE_RECORDING
+
 #include "App.h"
 #include "Counters.h"
 #include "GSFrame.h"
 
 #include "Recording/RecordingControls.h"
 
-#ifndef DISABLE_RECORDING
 RecordingControls g_RecordingControls;
 
 //-----------------------------------------------

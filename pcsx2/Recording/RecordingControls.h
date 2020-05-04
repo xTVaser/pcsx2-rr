@@ -14,8 +14,8 @@
  */
 
 #pragma once
-
 #ifndef DISABLE_RECORDING
+
 class RecordingControls
 {
 public:

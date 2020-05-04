@@ -14,8 +14,8 @@
  */
 
 #pragma once
-
 #ifndef DISABLE_RECORDING
+
 struct InputRecordingHeader
 {
 	u8 version = 1;
