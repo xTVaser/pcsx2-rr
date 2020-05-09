@@ -767,7 +767,7 @@ file(MAKE_DIRECTORY ${res_rec_vp_bin})
 
 foreach(res_file IN ITEMS
 				circlePressed controller crossPressed downPressed l1Pressed l2Pressed l3Pressed leftPressed
-				r1Pressed r2Pressed r3Pressed rightPressed selectPressed startPressed trianglePressed upPressed)
+				r1Pressed r2Pressed r3Pressed rightPressed selectPressed squarePressed startPressed trianglePressed upPressed)
     add_custom_command(OUTPUT  "${res_rec_vp_bin}/${res_file}.h" COMMAND perl ${CMAKE_SOURCE_DIR}/linux_various/hex2h.pl "${res_rec_vp_src}/${res_file}.png" "${res_rec_vp_bin}/${res_file}" )
 endforeach()
 
