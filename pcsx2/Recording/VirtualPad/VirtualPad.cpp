@@ -15,6 +15,8 @@
 
 #include "PrecompiledHeader.h"
 
+#ifndef DISABLE_RECORDING
+
 #include <math.h>
 
 #include "App.h"
