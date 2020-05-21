@@ -35,7 +35,7 @@
 class VirtualPad : public wxFrame
 {
 public:
-	VirtualPad(wxWindow *parent, wxWindowID id, const wxString& title, int controllerPort, 
+	VirtualPad(wxWindow *parent, wxWindowID id, const wxString& title, u8 controllerPort, u8 controllerSlot, 
 		const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize, long style = wxDEFAULT_FRAME_STYLE);
 	// Updates the VirtualPad's data if necessary, as well as updates the provided PadData if the VirtualPad overrides it
 	// - PadData will not be updated if ReadOnly mode is set

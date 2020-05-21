@@ -92,7 +92,7 @@ public:
 	u8 PollControllerData(u16 bufIndex);
 
 	// Prints current PadData to the Controller Log filter which disabled by default
-    void LogPadData(u8 const &port);
+    void LogPadData(u8 const &port, u8 const &slot);
 
 private:
 	struct ButtonResolver

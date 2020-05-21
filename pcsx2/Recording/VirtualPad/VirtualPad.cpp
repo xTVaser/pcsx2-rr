@@ -48,7 +48,7 @@
 
 // TODO - Store position of frame in an (possibly the main) .ini file
 
-VirtualPad::VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, int controllerPort, const wxPoint& pos, const wxSize& size, long style) :
+VirtualPad::VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, u8 controllerPort, u8 controllerSlot, const wxPoint& pos, const wxSize& size, long style) :
 	wxFrame(parent, id, title, pos, size, wxDEFAULT_FRAME_STYLE)
 {
 	// Images at 1.00 scale are designed to work well on HiDPI (4k) at 150% scaling (default recommended setting on windows)
@@ -109,7 +109,7 @@ VirtualPad::VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, i
 
 	// Finalize layout
 	SetIcons(wxGetApp().GetIconBundle());
-	SetTitle(wxString::Format("Virtual Pad - Port %d", controllerPort + 1));
+	SetTitle(wxString::Format("Virtual Pad - Port %d : Slot %d", controllerPort + 1, controllerSlot + 1));
 	SetBackgroundColour(*wxWHITE);
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
     // This window does not allow for resizing for sake of simplicity: all images are scaled initially and stored, ready to be rendered

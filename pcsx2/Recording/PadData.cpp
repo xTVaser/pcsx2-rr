@@ -189,16 +189,16 @@ wxString PadData::RawPadBytesToString(int start, int end)
 	return str;
 }
 
-void PadData::LogPadData(u8 const &port) {
+void PadData::LogPadData(u8 const &port, u8 const &slot) {
 	wxString pressedBytes = RawPadBytesToString(0, 2);
 	wxString rightAnalogBytes = RawPadBytesToString(2, 4);
 	wxString leftAnalogBytes = RawPadBytesToString(4, 6);
 	wxString pressureBytes = RawPadBytesToString(6, 17);
     wxString fullLog =
-        wxString::Format("[PAD %d] Raw Bytes: Pressed = [%s]\n", port + 1, pressedBytes) +
-        wxString::Format("[PAD %d] Raw Bytes: Right Analog = [%s]\n", port + 1, rightAnalogBytes) +
-        wxString::Format("[PAD %d] Raw Bytes: Left Analog = [%s]\n", port + 1, leftAnalogBytes) +
-        wxString::Format("[PAD %d] Raw Bytes: Pressure = [%s]\n", port + 1, pressureBytes);
+        wxString::Format("[PAD %d%c] Raw Bytes: Pressed = [%s]\n", port + 1, 'A' + slot, pressedBytes) +
+        wxString::Format("[PAD %d%c] Raw Bytes: Right Analog = [%s]\n", port + 1, 'A' + slot, rightAnalogBytes) +
+        wxString::Format("[PAD %d%c] Raw Bytes: Left Analog = [%s]\n", port + 1, 'A' + slot, leftAnalogBytes) +
+        wxString::Format("[PAD %d%c] Raw Bytes: Pressure = [%s]\n", port + 1, 'A' + slot, pressureBytes);
 	controlLog(fullLog);
 }
 
