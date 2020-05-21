@@ -24,7 +24,15 @@ enum MenuIds_New_Recording_Frame
 {
 	MenuIds_New_Recording_Frame_File = 0,
 	MenuIds_New_Recording_Frame_Author,
-	MenuIds_New_Recording_Frame_From
+	MenuIds_New_Recording_Frame_From,
+	MenuIds_New_Recording_Frame_Slot_1A,
+	MenuIds_New_Recording_Frame_Slot_1B,
+	MenuIds_New_Recording_Frame_Slot_1C,
+	MenuIds_New_Recording_Frame_Slot_1D,
+	MenuIds_New_Recording_Frame_Slot_2A,
+	MenuIds_New_Recording_Frame_Slot_2B,
+	MenuIds_New_Recording_Frame_Slot_2C,
+	MenuIds_New_Recording_Frame_Slot_2D
 };
 
 // The Dialog to pop-up when recording a new movie
@@ -36,14 +44,20 @@ public:
 	wxString GetFile() const;
 	wxString GetAuthor() const;
 	int GetFrom() const;
+	void RetrieveSlots(bool (&slotBuf)[2][4]) const;
 
 private:
+	wxStaticText* m_empty;
 	wxStaticText *m_fileLabel;
 	wxFilePickerCtrl *m_filePicker;
 	wxStaticText *m_authorLabel;
 	wxTextCtrl *m_authorInput;
-	wxStaticText *m_fromLabel;
 	wxChoice *m_fromChoice;
+	wxStaticText* m_ControllerLabel;
+	wxStaticText* m_SlotLabel_1;
+	wxStaticText* m_SlotLabel_2;
+	wxCheckBox* m_SlotCheck[2][4];
+	wxStaticText* m_fromLabel;
 	wxButton *m_startRecording;
 	wxButton *m_cancelRecording;
 };

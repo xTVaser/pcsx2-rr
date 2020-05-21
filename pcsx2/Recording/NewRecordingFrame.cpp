@@ -23,16 +23,28 @@ NewRecordingFrame::NewRecordingFrame(wxWindow *parent)
 	: wxDialog(parent, wxID_ANY, "New Input Recording", wxDefaultPosition, wxDefaultSize, wxSTAY_ON_TOP | wxCAPTION)
 {
 	wxPanel *panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL, _("panel"));
+	m_empty = new wxStaticText(panel, wxID_ANY, _(""), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
 
-	wxFlexGridSizer *fgs = new wxFlexGridSizer(4, 2, 20, 20);
+	wxFlexGridSizer *fgs = new wxFlexGridSizer(10, 2, 20, 20);
 	wxBoxSizer *container = new wxBoxSizer(wxVERTICAL);
 
 	m_fileLabel = new wxStaticText(panel, wxID_ANY, _("File Path"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
 	m_authorLabel = new wxStaticText(panel, wxID_ANY, _("Author"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
-	m_fromLabel = new wxStaticText(panel, wxID_ANY, _("Record From"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+	m_ControllerLabel = new wxStaticText(panel, wxID_ANY, _("Controllers"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+	m_SlotLabel_1 = new wxStaticText(panel, wxID_ANY, _("Port 1"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
+	m_SlotLabel_2 = new wxStaticText(panel, wxID_ANY, _("Port 2"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
 
 	m_filePicker = new wxFilePickerCtrl(panel, MenuIds_New_Recording_Frame_File, wxEmptyString, "File", L"p2m2 file(*.p2m2)|*.p2m2", wxDefaultPosition, wxDefaultSize, wxFLP_SAVE | wxFLP_OVERWRITE_PROMPT | wxFLP_USE_TEXTCTRL);
 	m_authorInput = new wxTextCtrl(panel, MenuIds_New_Recording_Frame_Author, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+	m_SlotCheck[0][0] = new wxCheckBox(panel, MenuIds_New_Recording_Frame_Slot_1A, _("1A"), wxDefaultPosition, wxDefaultSize);
+	m_SlotCheck[1][0] = new wxCheckBox(panel, MenuIds_New_Recording_Frame_Slot_2A, _("2A"), wxDefaultPosition, wxDefaultSize);
+	m_SlotCheck[0][1] = new wxCheckBox(panel, MenuIds_New_Recording_Frame_Slot_1B, _("1B"), wxDefaultPosition, wxDefaultSize);
+	m_SlotCheck[1][1] = new wxCheckBox(panel, MenuIds_New_Recording_Frame_Slot_2B, _("2B"), wxDefaultPosition, wxDefaultSize);
+	m_SlotCheck[0][2] = new wxCheckBox(panel, MenuIds_New_Recording_Frame_Slot_1C, _("1C"), wxDefaultPosition, wxDefaultSize);
+	m_SlotCheck[1][2] = new wxCheckBox(panel, MenuIds_New_Recording_Frame_Slot_2C, _("2C"), wxDefaultPosition, wxDefaultSize);
+	m_SlotCheck[0][3] = new wxCheckBox(panel, MenuIds_New_Recording_Frame_Slot_1D, _("1D"), wxDefaultPosition, wxDefaultSize);
+	m_SlotCheck[1][3] = new wxCheckBox(panel, MenuIds_New_Recording_Frame_Slot_2D, _("2D"), wxDefaultPosition, wxDefaultSize);
+	m_fromLabel = new wxStaticText(panel, wxID_ANY, _("Record From"), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
 	wxArrayString choices;
 	choices.Add("Current Frame");
 	choices.Add("Power-On");
@@ -47,6 +59,21 @@ NewRecordingFrame::NewRecordingFrame(wxWindow *parent)
 
 	fgs->Add(m_authorLabel, 1);
 	fgs->Add(m_authorInput, 1, wxEXPAND);
+
+	fgs->Add(m_ControllerLabel, 2);
+	fgs->Add(m_empty, 1); //Empty spot
+
+	fgs->Add(m_SlotLabel_1, 1);
+	fgs->Add(m_SlotLabel_2, 1);
+
+	fgs->Add(m_SlotCheck[0][0], 1);
+	fgs->Add(m_SlotCheck[1][0], 1);
+	fgs->Add(m_SlotCheck[0][1], 1);
+	fgs->Add(m_SlotCheck[1][1], 1);
+	fgs->Add(m_SlotCheck[0][2], 1);
+	fgs->Add(m_SlotCheck[1][2], 1);
+	fgs->Add(m_SlotCheck[0][3], 1);
+	fgs->Add(m_SlotCheck[1][3], 1);
 
 	fgs->Add(m_fromLabel, 1);
 	fgs->Add(m_fromChoice, 1, wxEXPAND);
@@ -80,4 +107,20 @@ int NewRecordingFrame::GetFrom() const
 {
 	return m_fromChoice->GetSelection();
 }
+
+//Grabs slot values from the window and inserts into the array provided
+void NewRecordingFrame::RetrieveSlots(bool (&slotBuf)[2][4]) const
+{
+	//Port 1
+	slotBuf[0][0] = m_SlotCheck[0][0]->GetValue();
+	slotBuf[0][1] = m_SlotCheck[0][1]->GetValue();
+	slotBuf[0][2] = m_SlotCheck[0][2]->GetValue();
+	slotBuf[0][3] = m_SlotCheck[0][3]->GetValue();
+	//Port 2
+	slotBuf[1][0] = m_SlotCheck[1][0]->GetValue();
+	slotBuf[1][1] = m_SlotCheck[1][1]->GetValue();
+	slotBuf[1][2] = m_SlotCheck[1][2]->GetValue();
+	slotBuf[1][3] = m_SlotCheck[1][3]->GetValue();
+}
+
 #endif
