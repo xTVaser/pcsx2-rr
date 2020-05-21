@@ -215,7 +215,19 @@ SIO_WRITE sioWriteController(u8 data)
 #ifndef DISABLE_RECORDING
 		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
-			g_InputRecording.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+			//If a recoding file isn't currently loaded or if the current port & slot is active, pull the data
+			if (g_InputRecording.GetModeState() == INPUT_RECORDING_MODE_NONE || g_InputRecordingData.ActiveSlot(sio.port, sio.slot[sio.port]))
+			{
+				g_InputRecording.ControllerInterrupt(data, sio.port, sio.slot[sio.port], sio.bufCount, sio.buf);
+			}
+			//If the port isn't in use at all or if the slot for said port is not the first slot, act as if the slot is unplugged
+			//Note: this is a file is currently loaded
+			else if (!g_InputRecordingData.ActivePort(sio.port) || sio.slot[sio.port] > 0)
+			{
+				DEVICE_UNPLUGGED();
+				sio.buf[0] = 0x00;
+				siomode = SIO_DUMMY;
+			}
 		}
 #endif
 		break;
