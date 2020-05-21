@@ -254,8 +254,7 @@ void MainEmuFrame::ConnectMenus()
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_New_Click, this, MenuId_Recording_New);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_Play_Click, this, MenuId_Recording_Play);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_Stop_Click, this, MenuId_Recording_Stop);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_VirtualPad_Open_Click, this, MenuId_Recording_VirtualPad_Port0);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_VirtualPad_Open_Click, this, MenuId_Recording_VirtualPad_Port1);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_VirtualPad_Open_Click, this, MenuId_Recording_VirtualPad_Port0_1, MenuId_Recording_VirtualPad_Port0_1 + 8);
 #endif
 
 	//Bind(wxEVT_MENU, &MainEmuFrame::Menu_Debug_MemoryDump_Click, this, MenuId_Debug_MemoryDump);
@@ -341,7 +340,9 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	, m_menuCapture			( *new wxMenu() )
 	, m_submenuVideoCapture	( *new wxMenu() )
 #ifndef DISABLE_RECORDING
-	, m_menuRecording(*new wxMenu())
+	, m_menuRecording		( *new wxMenu() )
+	, m_submenuvirtualPort0 ( *new wxMenu() )
+	, m_submenuvirtualPort1 ( *new wxMenu() )
 #endif
 	, m_LoadStatesSubmenu( *MakeStatesSubMenu( MenuId_State_Load01, MenuId_State_LoadBackup ) )
 	, m_SaveStatesSubmenu( *MakeStatesSubMenu( MenuId_State_Save01 ) )
@@ -570,8 +571,16 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	m_menuRecording.Append(MenuId_Recording_Stop, _("Stop"))->Enable(false);
 	m_menuRecording.Append(MenuId_Recording_Play, _("Play"));
 	m_menuRecording.AppendSeparator();
-	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port0, _("Virtual Pad (Port 1)"));
-	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port1, _("Virtual Pad (Port 2)"));
+	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port0, _("Virtual Pad (Port 1)"), &m_submenuvirtualPort0);
+	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port1, _("Virtual Pad (Port 2)"), &m_submenuvirtualPort1);
+	m_submenuvirtualPort0.Append(MenuId_Recording_VirtualPad_Port0_1, _("Virtual Pad (Port 1 - Slot 1)"));
+	m_submenuvirtualPort0.Append(MenuId_Recording_VirtualPad_Port0_2, _("Virtual Pad (Port 1 - Slot 2)"))->Enable(g_Conf->EmuOptions.MultitapPort0_Enabled);
+	m_submenuvirtualPort0.Append(MenuId_Recording_VirtualPad_Port0_3, _("Virtual Pad (Port 1 - Slot 3)"))->Enable(g_Conf->EmuOptions.MultitapPort0_Enabled);
+	m_submenuvirtualPort0.Append(MenuId_Recording_VirtualPad_Port0_4, _("Virtual Pad (Port 1 - Slot 4)"))->Enable(g_Conf->EmuOptions.MultitapPort0_Enabled);
+	m_submenuvirtualPort1.Append(MenuId_Recording_VirtualPad_Port1_1, _("Virtual Pad (Port 2 - Slot 1)"));
+	m_submenuvirtualPort1.Append(MenuId_Recording_VirtualPad_Port1_2, _("Virtual Pad (Port 2 - Slot 2)"))->Enable(g_Conf->EmuOptions.MultitapPort1_Enabled);
+	m_submenuvirtualPort1.Append(MenuId_Recording_VirtualPad_Port1_3, _("Virtual Pad (Port 2 - Slot 3)"))->Enable(g_Conf->EmuOptions.MultitapPort1_Enabled);
+	m_submenuvirtualPort1.Append(MenuId_Recording_VirtualPad_Port1_4, _("Virtual Pad (Port 2 - Slot 4)"))->Enable(g_Conf->EmuOptions.MultitapPort1_Enabled);
 #endif
 
 	m_MenuItem_Console.Check( g_Conf->ProgLogBox.Visible );

@@ -195,6 +195,14 @@ enum MenuIdentifiers
 	MenuId_Recording_Editor,
 	MenuId_Recording_VirtualPad_Port0,
 	MenuId_Recording_VirtualPad_Port1,
+	MenuId_Recording_VirtualPad_Port0_1,
+	MenuId_Recording_VirtualPad_Port0_2,
+	MenuId_Recording_VirtualPad_Port0_3,
+	MenuId_Recording_VirtualPad_Port0_4,
+	MenuId_Recording_VirtualPad_Port1_1,
+	MenuId_Recording_VirtualPad_Port1_2,
+	MenuId_Recording_VirtualPad_Port1_3,
+	MenuId_Recording_VirtualPad_Port1_4,
 	MenuId_Recording_Conversions,
 #endif
 
@@ -537,7 +545,7 @@ protected:
 	wxWindowID			m_id_Disassembler;
 
 #ifndef DISABLE_RECORDING
-	wxWindowID			m_id_VirtualPad[2];
+	wxWindowID			m_id_VirtualPad[2][4];
 	wxWindowID			m_id_NewRecordingFrame;
 #endif
 
@@ -566,7 +574,7 @@ public:
 	DisassemblyDialog*	GetDisassemblyPtr() const	{ return (DisassemblyDialog*)wxWindow::FindWindowById(m_id_Disassembler); }
 
 #ifndef DISABLE_RECORDING
-	VirtualPad*			GetVirtualPadPtr(int port) const	{ return (VirtualPad*)wxWindow::FindWindowById(m_id_VirtualPad[port]); }
+	VirtualPad*			GetVirtualPadPtr(u8 port, u8 slot) const	{ return (VirtualPad*)wxWindow::FindWindowById(m_id_VirtualPad[port][slot]); }
 	NewRecordingFrame*	GetNewRecordingFramePtr() const		{ return (NewRecordingFrame*)wxWindow::FindWindowById(m_id_NewRecordingFrame); }
 #endif
 

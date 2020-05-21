@@ -117,6 +117,8 @@ protected:
 
 #ifndef DISABLE_RECORDING
 	wxMenu&			m_menuRecording;
+	wxMenu&			m_submenuvirtualPort0;
+	wxMenu&			m_submenuvirtualPort1;
 #endif
 
 	wxMenu&			m_LoadStatesSubmenu;

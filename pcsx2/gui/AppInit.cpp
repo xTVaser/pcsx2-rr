@@ -78,13 +78,37 @@ void Pcsx2App::OpenMainFrame()
 	m_id_Disassembler = disassembly->GetId();
 
 #ifndef DISABLE_RECORDING
-	VirtualPad* virtualPad0 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 0);
-	g_InputRecording.SetVirtualPadPtr(virtualPad0, 0);
-	m_id_VirtualPad[0] = virtualPad0->GetId();
-	
-	VirtualPad *virtualPad1 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 1);
-    g_InputRecording.SetVirtualPadPtr(virtualPad1, 1);
-	m_id_VirtualPad[1] = virtualPad1->GetId();
+	VirtualPad* virtualPad0_1 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 0, 0);
+    g_InputRecording.SetVirtualPadPtr(virtualPad0_1, 0, 0);
+    m_id_VirtualPad[0][0] = virtualPad0_1->GetId();
+
+	VirtualPad *virtualPad0_2 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 0, 1);
+    g_InputRecording.SetVirtualPadPtr(virtualPad0_2, 0, 1);
+	m_id_VirtualPad[0][1] = virtualPad0_2->GetId();
+
+    VirtualPad *virtualPad0_3 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 0, 2);
+    g_InputRecording.SetVirtualPadPtr(virtualPad0_3, 0, 2);
+	m_id_VirtualPad[0][2] = virtualPad0_3->GetId();
+
+	VirtualPad *virtualPad0_4 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 0, 3);
+    g_InputRecording.SetVirtualPadPtr(virtualPad0_4, 0, 3);
+	m_id_VirtualPad[0][3] = virtualPad0_4->GetId();
+
+	VirtualPad* virtualPad1_1 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 1, 0);
+	g_InputRecording.SetVirtualPadPtr(virtualPad1_1, 1, 0);
+	m_id_VirtualPad[1][0] = virtualPad1_1->GetId();
+
+    VirtualPad *virtualPad1_2 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 1, 1);
+    g_InputRecording.SetVirtualPadPtr(virtualPad1_2, 1, 1);
+	m_id_VirtualPad[1][1] = virtualPad1_2->GetId();
+
+	VirtualPad *virtualPad1_3 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 1, 2);
+    g_InputRecording.SetVirtualPadPtr(virtualPad1_3, 1, 2);
+	m_id_VirtualPad[1][2] = virtualPad1_3->GetId();
+
+    VirtualPad *virtualPad1_4 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 1, 3);
+    g_InputRecording.SetVirtualPadPtr(virtualPad1_4, 1, 3);
+	m_id_VirtualPad[1][3] = virtualPad1_4->GetId();
 
 	NewRecordingFrame* newRecordingFrame = new NewRecordingFrame(mainFrame);
 	m_id_NewRecordingFrame = newRecordingFrame->GetId();
