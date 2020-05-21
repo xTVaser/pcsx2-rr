@@ -34,6 +34,7 @@
 #ifndef DISABLE_RECORDING
 #	include "Recording/InputRecording.h"
 #	include "Recording/VirtualPad/VirtualPad.h"
+#	include "Recording/RecordingControls.h"
 #endif
 
 using namespace Dialogs;
@@ -455,6 +456,12 @@ void MainEmuFrame::Menu_MultitapToggle_Click( wxCommandEvent& )
 {
 	g_Conf->EmuOptions.MultitapPort0_Enabled = GetMenuBar()->IsChecked( MenuId_Config_Multitap0Toggle );
 	g_Conf->EmuOptions.MultitapPort1_Enabled = GetMenuBar()->IsChecked( MenuId_Config_Multitap1Toggle );
+#ifndef DISABLE_RECORDING
+	for (int i = 0; i < 3; i++) {
+		m_submenuvirtualPort0.FindChildItem(MenuId_Recording_VirtualPad_Port0_2 + i)->Enable(g_Conf->EmuOptions.MultitapPort0_Enabled);
+		m_submenuvirtualPort1.FindChildItem(MenuId_Recording_VirtualPad_Port1_2 + i)->Enable(g_Conf->EmuOptions.MultitapPort1_Enabled);
+	}
+#endif
 	AppApplySettings();
 	AppSaveSettings();
 
@@ -495,7 +502,7 @@ void MainEmuFrame::Menu_EnableWideScreenPatches_Click( wxCommandEvent& )
 }
 
 #ifndef DISABLE_RECORDING
-void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent&)
+void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent& event)
 {
 	bool checked = GetMenuBar()->IsChecked(MenuId_EnableRecordingTools);
 	// Confirm with User
@@ -525,6 +532,9 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent&)
 	}
 	else
 	{
+		//Closes the TAS file if one is loaded
+		if (g_InputRecording.GetModeState() != INPUT_RECORDING_MODE_NONE)
+			Menu_Recording_Stop_Click(event);
 		GetMenuBar()->Remove(TopLevelMenu_Recording);
 		// Always turn controller logs off, but never turn it on by default
 		SysConsole.controlInfo.Enabled = checked;
@@ -614,6 +624,16 @@ void MainEmuFrame::Menu_SaveStateToFile_Click(wxCommandEvent &event)
 
 void MainEmuFrame::Menu_Exit_Click(wxCommandEvent &event)
 {
+#ifndef DISABLE_RECORDING
+	//Properly close the TAS and set original mulititap values
+	if (g_InputRecording.GetModeState() != INPUT_RECORDING_MODE_NONE)
+	{
+		g_InputRecording.Stop();
+		g_Conf->EmuOptions.MultitapPort0_Enabled = g_InputRecording.GetMultitapBuffer(0);
+		g_Conf->EmuOptions.MultitapPort1_Enabled = g_InputRecording.GetMultitapBuffer(1);
+		AppApplySettings();
+	}
+#endif
 	Close();
 }
 
@@ -807,72 +827,224 @@ void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_Click(wxCommandEvent & eve
 }
 
 #ifndef DISABLE_RECORDING
-void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
+void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent&)
 {
-	g_InputRecording.Stop();
-
+	if (!CoreThread.IsOpen())
+	{
+		recordingConLog(L"[REC]: A game must be open to record a new input recording file.\n");
+		return;
+	}
+	const bool resume = !g_RecordingControls.GetStopFlag();
+	if (resume)
+		g_RecordingControls.Pause();
 	NewRecordingFrame* NewRecordingFrame = wxGetApp().GetNewRecordingFramePtr();
 	if (NewRecordingFrame)
 	{
 		if (NewRecordingFrame->ShowModal() == wxID_CANCEL)
 		{
+			if(resume)
+				g_RecordingControls.Unpause();
 			return;
 		}
-		// From Current Frame
-		if (NewRecordingFrame->GetFrom() == 0)
+		bool slots[2][4];
+		NewRecordingFrame->RetrieveSlots(slots);
+		//Reads the pad list as an u8, where a result of 0 means no pads were selected
+		if (*((u8*)slots) == 0)
 		{
-			if (!CoreThread.IsOpen())
+			recordingConLog(L"[REC]: No controllers were selected, aborting new input recording.\n");
+			return;
+		}
+		g_InputRecording.Create(NewRecordingFrame->GetFile(), !NewRecordingFrame->GetFrom(), NewRecordingFrame->GetAuthor(), slots);
+		//Disbales Config's Multitap options & saves Multitap settings to buffers
+		m_menuConfig.FindChildItem(MenuId_Config_Multitap0Toggle)->Enable(false);
+		m_menuConfig.FindChildItem(MenuId_Config_Multitap1Toggle)->Enable(false);
+		m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
+		m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
+		g_InputRecording.SetMultitapBuffer(g_Conf->EmuOptions.MultitapPort0_Enabled, g_Conf->EmuOptions.MultitapPort1_Enabled);
+		/*
+		If some slots for the TAS are multitap-required, it enables their corresponding multitaps.
+		If a certain multitap is not required, then only preset multitaps stay on. If either port 0 or 1 in their entirety are not required,
+		it disables that port's Virtual Pad submenu. Otherwise, it disables each separate virutal pad of any unused controller.
+
+		Note: This does not overwrite a controller plugin's multitap settings, so a port's multitap must be active in plugin settings
+		for inputs in multitap slots to be recognized.
+		*/
+		if (g_InputRecordingData.ActivePort(0))
+		{
+			g_Conf->EmuOptions.MultitapPort0_Enabled = g_InputRecordingData.ActiveMultitap(0) ? true : g_InputRecording.GetMultitapBuffer(0);
+			for (u8 slot = 0; slot < 4; slot++)
 			{
-				recordingConLog(L"[REC]: Game is not open, aborting new input recording.\n");
-				return;
+				m_submenuvirtualPort0.FindChildItem(MenuId_Recording_VirtualPad_Port0_1 + slot)->Enable(g_InputRecordingData.ActiveSlot(0, slot));
 			}
-			g_InputRecording.Create(NewRecordingFrame->GetFile(), true, NewRecordingFrame->GetAuthor());
 		}
-		// From Power-On
-		else if (NewRecordingFrame->GetFrom() == 1)
+		else
 		{
-			g_InputRecording.Create(NewRecordingFrame->GetFile(), false, NewRecordingFrame->GetAuthor());
+			m_menuRecording.FindChildItem(MenuId_Recording_VirtualPad_Port0)->Enable(false);
 		}
+		if (g_InputRecordingData.ActivePort(1))
+		{
+			g_Conf->EmuOptions.MultitapPort1_Enabled = g_InputRecordingData.ActiveMultitap(1) ? true : g_InputRecording.GetMultitapBuffer(1);
+			for (u8 slot = 0; slot < 4; slot++)
+			{
+				m_submenuvirtualPort1.FindChildItem(MenuId_Recording_VirtualPad_Port1_1 + slot)->Enable(g_InputRecordingData.ActiveSlot(1, slot));
+			}
+		}
+		else
+		{
+			m_menuRecording.FindChildItem(MenuId_Recording_VirtualPad_Port1)->Enable(false);
+		}
+		AppApplySettings();
 	}
-	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
-	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
 }
 
 void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 {
-	g_InputRecording.Stop();
+	const bool previousMode = g_InputRecording.GetModeState() == INPUT_RECORDING_MODE_NONE;
+	if (!CoreThread.IsOpen())
+	{
+		if (previousMode)
+			recordingConLog(L"[REC]: A game must be open to play an existing input recording file.\n");
+		else
+			recordingConLog(L"[REC]: A game must be open before switching the current input recording file.\n");
+		return;
+	}
+	const bool resume = !g_RecordingControls.GetStopFlag();
+	if (resume)
+		g_RecordingControls.Pause();
 	wxFileDialog openFileDialog(this, _("Select P2M2 record file."), L"", L"",
 		L"p2m2 file(*.p2m2)|*.p2m2", wxFD_OPEN);
 	if (openFileDialog.ShowModal() == wxID_CANCEL)
 	{
+		if (resume)
+			g_RecordingControls.Unpause();
 		return;
 	}
-
 	wxString path = openFileDialog.GetPath();
-	g_InputRecording.Play(path, true);
-	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
-	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
+	if (!g_InputRecording.Play(path))
+	{
+		if (!previousMode)
+			Menu_Recording_Stop_Click(event);
+		if (resume)
+			g_RecordingControls.Unpause();
+		return;
+	}
+	//Only does the below if these settings weren't already saved
+	if (previousMode) {
+		//Disbales Config's Multitap options & saves Multitap settings to buffers
+		m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
+		m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
+		m_menuConfig.FindChildItem(MenuId_Config_Multitap0Toggle)->Enable(false);
+		m_menuConfig.FindChildItem(MenuId_Config_Multitap1Toggle)->Enable(false);
+		g_InputRecording.SetMultitapBuffer(g_Conf->EmuOptions.MultitapPort0_Enabled, g_Conf->EmuOptions.MultitapPort1_Enabled);
+	}
+	/*
+		If some slots for the TAS are multitap-required, it enables their corresponding multitaps.
+		If a certain multitap is not required, it keeps it's original value. If either port 0 or 1 in its entirety is not required,
+		it disables that port's Virtual Pad submenu. Otherwise, it disables each sepearate slot's virtual pad if it won't be used.
+		As added safety, it will always forcibly activate or deactivate the Virtual Pad submenu of both ports depending on necessity
+		- for when the user goes from one TAS directly to another with different controller needs.
+
+		Note: This does not overwrite a controller plugin's multitap settings, so a port's multitap must be active in plugin settings
+		for inputs in multitap slots to be recognized.
+		*/
+	if (g_InputRecordingData.ActivePort(0))
+	{
+		m_menuRecording.FindChildItem(MenuId_Recording_VirtualPad_Port0)->Enable(true);
+		g_Conf->EmuOptions.MultitapPort0_Enabled = g_InputRecordingData.ActiveMultitap(0) ? true : g_InputRecording.GetMultitapBuffer(0);
+		for (u8 slot = 0; slot < 4; slot++)
+		{
+			m_submenuvirtualPort0.FindChildItem(MenuId_Recording_VirtualPad_Port0_1 + slot)->Enable(g_InputRecordingData.ActiveSlot(0, slot));
+		}
+	}
+	else
+	{
+		m_menuRecording.FindChildItem(MenuId_Recording_VirtualPad_Port0)->Enable(false);
+		g_Conf->EmuOptions.MultitapPort0_Enabled = g_InputRecording.GetMultitapBuffer(0);
+	}
+	if (g_InputRecordingData.ActivePort(1))
+	{
+		m_menuRecording.FindChildItem(MenuId_Recording_VirtualPad_Port1)->Enable(true);
+		g_Conf->EmuOptions.MultitapPort1_Enabled = g_InputRecordingData.ActiveMultitap(1) ? true : g_InputRecording.GetMultitapBuffer(1);
+		for (u8 slot = 0; slot < 4; slot++)
+		{
+			m_submenuvirtualPort1.FindChildItem(MenuId_Recording_VirtualPad_Port1_1 + slot)->Enable(g_InputRecordingData.ActiveSlot(1, slot));
+		}
+	}
+	else
+	{
+		m_menuRecording.FindChildItem(MenuId_Recording_VirtualPad_Port1)->Enable(false);
+		g_Conf->EmuOptions.MultitapPort1_Enabled = g_InputRecording.GetMultitapBuffer(1);
+	}
+	AppApplySettings();
 }
 
-void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
+void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &)
 {
 	g_InputRecording.Stop();
+	//Reenables all disabled menu options, setting multitaps to the buffer values
 	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(true);
 	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(false);
+	m_menuConfig.FindChildItem(MenuId_Config_Multitap0Toggle)->Enable(true);
+	m_menuConfig.FindChildItem(MenuId_Config_Multitap1Toggle)->Enable(true);
+	m_menuRecording.FindChildItem(MenuId_Recording_VirtualPad_Port0)->Enable(true);
+	//When no file is loaded, controller 1 of both ports will always be active
+	m_submenuvirtualPort0.FindChildItem(MenuId_Recording_VirtualPad_Port0_1)->Enable(true);
+	if (g_InputRecording.GetMultitapBuffer(0))
+	{
+		g_Conf->EmuOptions.MultitapPort0_Enabled = true;
+		m_submenuvirtualPort0.FindChildItem(MenuId_Recording_VirtualPad_Port0_2)->Enable(true);
+		m_submenuvirtualPort0.FindChildItem(MenuId_Recording_VirtualPad_Port0_3)->Enable(true);
+		m_submenuvirtualPort0.FindChildItem(MenuId_Recording_VirtualPad_Port0_4)->Enable(true);
+	}
+	m_menuRecording.FindChildItem(MenuId_Recording_VirtualPad_Port1)->Enable(true);
+	m_submenuvirtualPort1.FindChildItem(MenuId_Recording_VirtualPad_Port1_1)->Enable(true);
+	if (g_InputRecording.GetMultitapBuffer(1))
+	{
+		g_Conf->EmuOptions.MultitapPort1_Enabled = true;
+		m_submenuvirtualPort1.FindChildItem(MenuId_Recording_VirtualPad_Port1_2)->Enable(true);
+		m_submenuvirtualPort1.FindChildItem(MenuId_Recording_VirtualPad_Port1_3)->Enable(true);
+		m_submenuvirtualPort1.FindChildItem(MenuId_Recording_VirtualPad_Port1_4)->Enable(true);
+	}
+	AppApplySettings();
+
 }
 
 void MainEmuFrame::Menu_Recording_VirtualPad_Open_Click(wxCommandEvent &event)
 {
-	VirtualPad *vp = NULL;
-	if (event.GetId() == MenuId_Recording_VirtualPad_Port0)
+	VirtualPad *vp = nullptr;
+	if (event.GetId() == MenuId_Recording_VirtualPad_Port0_1)
 	{
-		vp = wxGetApp().GetVirtualPadPtr(0);
+		vp = wxGetApp().GetVirtualPadPtr(0, 0);
 	}
-	else if (event.GetId() == MenuId_Recording_VirtualPad_Port1)
+	else if (event.GetId() == MenuId_Recording_VirtualPad_Port0_2)
 	{
-		vp = wxGetApp().GetVirtualPadPtr(1);
+		vp = wxGetApp().GetVirtualPadPtr(0, 1);
 	}
-	if (vp != NULL)
+	else if (event.GetId() == MenuId_Recording_VirtualPad_Port0_3)
+	{
+		vp = wxGetApp().GetVirtualPadPtr(0, 2);
+	}
+	else if (event.GetId() == MenuId_Recording_VirtualPad_Port0_4)
+	{
+		vp = wxGetApp().GetVirtualPadPtr(0, 3);
+	}
+	else if (event.GetId() == MenuId_Recording_VirtualPad_Port1_1)
+	{
+		vp = wxGetApp().GetVirtualPadPtr(1, 0);
+	}
+	else if (event.GetId() == MenuId_Recording_VirtualPad_Port1_2)
+	{
+		vp = wxGetApp().GetVirtualPadPtr(1, 1);
+	}
+	else if (event.GetId() == MenuId_Recording_VirtualPad_Port1_3)
+	{
+		vp = wxGetApp().GetVirtualPadPtr(1, 2);
+	}
+	else if (event.GetId() == MenuId_Recording_VirtualPad_Port1_4)
+	{
+		vp = wxGetApp().GetVirtualPadPtr(1, 3);
+	}
+	if (vp != nullptr)
 	{
 		vp->Show();
 	}
