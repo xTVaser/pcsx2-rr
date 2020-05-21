@@ -30,23 +30,30 @@ class InputRecording
 public:
 	InputRecording();
 
-	void ControllerInterrupt(u8 const &data, u8 const &port, u16 const &bufCount, u8 buf[]);
+	void ControllerInterrupt(u8 const &data, u8 const &port, u8 const &slot, u16 const &bufCount, u8 buf[]);
 
 	void RecordModeToggle();
 
 	INPUT_RECORDING_MODE GetModeState();
 	InputRecordingFile & GetInputRecordingData();
-	bool IsInterruptFrame();
 
 	void Stop();
-	void Create(wxString filename, bool fromSaveState, wxString authorName);
-	void Play(wxString filename, bool fromSaveState);
+	bool Create(wxString filename, bool fromSaveState, wxString authorName, bool (&slots)[2][4]);
+	bool Play(wxString filename);
 
-	void SetVirtualPadPtr(VirtualPad *ptr, int const port);
+	void SetVirtualPadPtr(VirtualPad *ptr, const u8 port, const u8 slot);
+	void SetMultitapBuffer(const bool port1, const bool port2);
+	bool GetMultitapBuffer(const u8 port);
 
 private:
-    static const int CONTROLLER_PORT_ONE = 0;
-    static const int CONTROLLER_PORT_TWO = 1;
+	static const int CONTROLLER_PORT_ONE = 0;
+	static const int CONTROLLER_PORT_TWO = 1;
+	static const int CONTROLLER_SLOT_A = 0;
+	static const int CONTROLLER_SLOT_B = 1;
+	static const int CONTROLLER_SLOT_C = 2;
+	static const int CONTROLLER_SLOT_D = 3;
+	//Holds pre-recording multitap settings 
+	bool multitap_Buffer[2];
 
 	// 0x42 is the magic number to indicate the default controller read query
 	// See - Lilypad.cpp::PADpoll - https://github.com/PCSX2/pcsx2/blob/v1.5.0-dev/plugins/LilyPad/LilyPad.cpp#L1193
@@ -61,10 +68,10 @@ private:
 	bool fInterruptFrame = false;
 
 	// Controller Data
-	PadData *padData[2];
+	PadData *padData[2][4];
 
 	// VirtualPads
-	VirtualPad *virtualPads[2];
+	VirtualPad *virtualPads[2][4];
 };
 
 extern InputRecording g_InputRecording;

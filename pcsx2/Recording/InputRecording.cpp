@@ -46,25 +46,25 @@ void SaveStateBase::InputRecordingFreeze()
 InputRecording::InputRecording()
 {
 	// NOTE - No multi-tap support, only two controllers
-    padData[CONTROLLER_PORT_ONE] = new PadData();
-    padData[CONTROLLER_PORT_TWO] = new PadData();
+    padData[CONTROLLER_PORT_ONE][CONTROLLER_SLOT_A] = new PadData();
+	padData[CONTROLLER_PORT_ONE][CONTROLLER_SLOT_B] = new PadData();
+	padData[CONTROLLER_PORT_ONE][CONTROLLER_SLOT_C] = new PadData();
+	padData[CONTROLLER_PORT_ONE][CONTROLLER_SLOT_D] = new PadData();
+	padData[CONTROLLER_PORT_TWO][CONTROLLER_SLOT_A] = new PadData();
+	padData[CONTROLLER_PORT_TWO][CONTROLLER_SLOT_B] = new PadData();
+	padData[CONTROLLER_PORT_TWO][CONTROLLER_SLOT_C] = new PadData();
+	padData[CONTROLLER_PORT_TWO][CONTROLLER_SLOT_D] = new PadData();
 }
 
-void InputRecording::SetVirtualPadPtr(VirtualPad *ptr, int const port)
+void InputRecording::SetVirtualPadPtr(VirtualPad *ptr, const u8 port, const u8 slot)
 {
-	virtualPads[port] = ptr;
+	virtualPads[port][slot] = ptr;
 }
 
 // Main func for handling controller input data
 // - Called by Sio.cpp::sioWriteController
-void InputRecording::ControllerInterrupt(u8 const &data, u8 const &port, u16 const &bufCount, u8 buf[])
+void InputRecording::ControllerInterrupt(u8 const &data, u8 const &port, u8 const &slot, u16 const &bufCount, u8 buf[])
 {
-	// NOTE - No Multi-Tap Support - Only examine controllers 1 / 2
-    if (port != CONTROLLER_PORT_ONE && port != CONTROLLER_PORT_TWO)
-	{
-		return;
-	}
-
 	// We are only interested in reading from the buffer when it contains the controller data.
     // The first byte in the buffer is used to indicate this.
     // A flag is set(fInterruptFrame) so that future interrupts will either be processed or skipped.
@@ -105,7 +105,7 @@ void InputRecording::ControllerInterrupt(u8 const &data, u8 const &port, u16 con
 			return;
 		}
 		u8 tmp = 0;
-		if (InputRecordingData.ReadKeyBuf(tmp, g_FrameCount, port, bufIndex))
+		if (InputRecordingData.ReadKeyBuf(tmp, g_FrameCount, port, slot, bufIndex))
 		{
 			// Overwrite value originally provided by the PAD plugin
 			bufVal = tmp;
@@ -113,27 +113,27 @@ void InputRecording::ControllerInterrupt(u8 const &data, u8 const &port, u16 con
 	}
 
 	// Update controller data state for future VirtualPad / logging usage.
-	padData[port]->UpdateControllerData(bufIndex, bufVal);
+	padData[port][slot]->UpdateControllerData(bufIndex, bufVal);
 
-	if (virtualPads[port] && virtualPads[port]->IsShown())
+	if (virtualPads[port][slot] && virtualPads[port][slot]->IsShown())
 	{
 		// If the VirtualPad updated the PadData, we have to update the buffer
 		// before committing it to the recording / sending it to the game
 		// - Do not do this if we are in replay mode!
-        if (virtualPads[port]->UpdateControllerData(bufIndex, padData[port]) && state != INPUT_RECORDING_MODE_REPLAY)
+        if (virtualPads[port][slot]->UpdateControllerData(bufIndex, padData[port][slot]) && state != INPUT_RECORDING_MODE_REPLAY)
 		{
-			bufVal = padData[port]->PollControllerData(bufIndex);
+			bufVal = padData[port][slot]->PollControllerData(bufIndex);
 		}
 	}
 
 	// If we have reached the end of the pad data, log it out
     if (bufIndex == PadData::END_INDEX_CONTROLLER_BUFFER) {
-		padData[port]->LogPadData(port);
+		padData[port][slot]->LogPadData(port, slot);
 		// As well as re-render the virtual pad UI, if applicable
 		// - Don't render if it's minimized
-        if (virtualPads[port] && virtualPads[port]->IsShown() && !virtualPads[port]->IsIconized())
+        if (virtualPads[port][slot] && virtualPads[port][slot]->IsShown() && !virtualPads[port][slot]->IsIconized())
 		{
-			virtualPads[port]->Redraw();
+			virtualPads[port][slot]->Redraw();
 		}
 	}
 
@@ -141,10 +141,9 @@ void InputRecording::ControllerInterrupt(u8 const &data, u8 const &port, u16 con
 	if (state == INPUT_RECORDING_MODE_RECORD)
 	{
 		InputRecordingData.UpdateFrameMax(g_FrameCount);
-		InputRecordingData.WriteKeyBuf(g_FrameCount, port, bufIndex, bufVal);
+		InputRecordingData.WriteKeyBuf(g_FrameCount, port, slot, bufIndex, bufVal);
 	}
 }
-
 
 // GUI Handler - Stop recording
 void InputRecording::Stop()
@@ -153,25 +152,32 @@ void InputRecording::Stop()
 	if (InputRecordingData.Close())
 	{
 		recordingConLog(L"[REC]: InputRecording Recording Stopped.\n");
+		for (u8 port = 0; port <= CONTROLLER_PORT_TWO; port++)
+		{
+			for (u8 slot = 0; slot <= CONTROLLER_SLOT_D; slot++)
+			{
+				if (InputRecordingData.ActiveSlot(port, slot))
+					virtualPads[port][slot]->ClearReadOnlyMode();
+			}
+		}
 	}
 }
 
 // GUI Handler - Start recording
-void InputRecording::Create(wxString FileName, bool fromSaveState, wxString authorName)
+bool InputRecording::Create(wxString FileName, bool fromSaveState, wxString authorName, bool (&slots)[2][4])
 {
-	g_RecordingControls.Pause();
-	Stop();
-
 	// create
 	if (!InputRecordingData.Open(FileName, true, fromSaveState))
 	{
-		return;
+		return false;
 	}
 	// Set author name
 	if (!authorName.IsEmpty())
 	{
 		InputRecordingData.GetHeader().SetAuthor(authorName);
 	}
+	// Set used slots
+	InputRecordingData.SetSlots(slots);
 	// Set Game Name
 	// Code loosely taken from AppCoreThread.cpp to resolve the Game Name
 	// Fallback is ISO name
@@ -191,33 +197,56 @@ void InputRecording::Create(wxString FileName, bool fromSaveState, wxString auth
 	}
 	InputRecordingData.GetHeader().SetGameName(!gameName.IsEmpty() ? gameName : Path::GetFilename(g_Conf->CurrentIso));
 	InputRecordingData.WriteHeader();
+	InputRecordingData.WriteSaveState();
+	InputRecordingData.WriteSlots();
+	InputRecordingData.WriteMaxFrame();
+	InputRecordingData.WriteUndoCount();
 	state = INPUT_RECORDING_MODE_RECORD;
-    // Ensure VirtualPads aren't set to readOnly mode
-    virtualPads[CONTROLLER_PORT_ONE]->ClearReadOnlyMode();
-    virtualPads[CONTROLLER_PORT_TWO]->ClearReadOnlyMode();
+    // Ensure active VirtualPads aren't set to readOnly mode
+	for (u8 port = 0; port <= CONTROLLER_PORT_TWO; port++)
+	{
+		for (u8 slot = 0; slot <= CONTROLLER_SLOT_D; slot++)
+		{
+			if (InputRecordingData.ActiveSlot(port, slot))
+				virtualPads[port][slot]->ClearReadOnlyMode();
+		}
+	}
 	recordingConLog(wxString::Format(L"[REC]: Started new recording - [%s]\n", FileName));
 
 	// In every case, we reset the g_FrameCount
 	g_FrameCount = 0;
+	return true;
 }
 
 // GUI Handler - Play a recording
-void InputRecording::Play(wxString FileName, bool fromSaveState)
+bool InputRecording::Play(wxString FileName)
 {
-	g_RecordingControls.Pause();
-	Stop();
+	if (state != INPUT_RECORDING_MODE_NONE)
+		Stop();
 
 	if (!InputRecordingData.Open(FileName, false, false))
 	{
-		return;
+		return false;
 	}
 	if (!InputRecordingData.ReadHeaderAndCheck())
 	{
 		recordingConLog(L"[REC]: This file is not a correct InputRecording file.\n");
 		InputRecordingData.Close();
-		return;
+		return false;
 	}
-	// Check author name
+	state = INPUT_RECORDING_MODE_REPLAY;
+	// Set active VirtualPads to readOnly mode
+	for (u8 port = 0; port <= CONTROLLER_PORT_TWO; port++)
+	{
+		for (u8 slot = 0; slot <= CONTROLLER_SLOT_D; slot++)
+		{
+			if (InputRecordingData.ActiveSlot(port, slot))
+				virtualPads[port][slot]->ClearReadOnlyMode();
+		}
+	}
+	// TODO - This should be converted to a single log statement (since we want to guarantee its grouped)
+	recordingConLog(wxString::Format(L"[REC]: Replaying movie - [%s]\n", FileName));
+	// Check ISO name
 	if (!g_Conf->CurrentIso.IsEmpty())
 	{
 		if (Path::GetFilename(g_Conf->CurrentIso) != InputRecordingData.GetHeader().gameName)
@@ -225,17 +254,25 @@ void InputRecording::Play(wxString FileName, bool fromSaveState)
 			recordingConLog(L"[REC]: Information on CD in Movie file is Different.\n");
 		}
 	}
-	state = INPUT_RECORDING_MODE_REPLAY;
-	// Set VirtualPads to readOnly mode
-    virtualPads[CONTROLLER_PORT_ONE]->SetReadOnlyMode();
-    virtualPads[CONTROLLER_PORT_TWO]->SetReadOnlyMode();
-	// TODO - This should be converted to a single log statement (since we want to guarantee its grouped)
-	recordingConLog(wxString::Format(L"[REC]: Replaying movie - [%s]\n", FileName));
 	recordingConLog(wxString::Format(L"[REC]: Recording File Version: %d\n", InputRecordingData.GetHeader().version));
 	recordingConLog(wxString::Format(L"[REC]: Associated Game Name / ISO Filename: %s\n", InputRecordingData.GetHeader().gameName));
 	recordingConLog(wxString::Format(L"[REC]: Author: %s\n", InputRecordingData.GetHeader().author));
 	recordingConLog(wxString::Format(L"[REC]: MaxFrame: %d\n", InputRecordingData.GetMaxFrame()));
 	recordingConLog(wxString::Format(L"[REC]: UndoCount: %d\n", InputRecordingData.GetUndoCount()));
+	if (InputRecordingData.GetHeader().version == 2)
+	{
+		recordingConLog(L"[REC]: Controllers Used:");
+		for (u8 port = 0; port <= CONTROLLER_PORT_TWO; port++)
+		{
+			for (u8 slot = 0; slot <= CONTROLLER_SLOT_D; slot++)
+			{
+				if (InputRecordingData.ActiveSlot(port, slot))
+					recordingConLog(wxString::Format(L" %d%c", port + 1, 'A' + slot));
+			}
+		}
+		recordingConLog(L'\n');
+	}
+	return true;
 }
 
 // Keybind Handler - Toggle between recording input and not
@@ -244,17 +281,29 @@ void InputRecording::RecordModeToggle()
 	if (state == INPUT_RECORDING_MODE_REPLAY)
 	{
 		state = INPUT_RECORDING_MODE_RECORD;
-        // Set VirtualPads to readOnly mode
-        virtualPads[CONTROLLER_PORT_ONE]->ClearReadOnlyMode();
-        virtualPads[CONTROLLER_PORT_TWO]->ClearReadOnlyMode();
+        // Set active VirtualPads to readOnly mode
+		for (u8 port = 0; port <= CONTROLLER_PORT_TWO; port++)
+		{
+			for (u8 slot = 0; slot <= CONTROLLER_SLOT_D; slot++)
+			{
+				if (InputRecordingData.ActiveSlot(port, slot))
+					virtualPads[port][slot]->ClearReadOnlyMode();
+			}
+		}
 		recordingConLog("[REC]: Record mode ON.\n");
 	}
 	else if (state == INPUT_RECORDING_MODE_RECORD)
 	{
 		state = INPUT_RECORDING_MODE_REPLAY;
-        // Set VirtualPads to readOnly mode
-        virtualPads[CONTROLLER_PORT_ONE]->SetReadOnlyMode();
-        virtualPads[CONTROLLER_PORT_TWO]->SetReadOnlyMode();
+        // Set active VirtualPads to readOnly mode
+		for (u8 port = 0; port <= CONTROLLER_PORT_TWO; port++)
+		{
+			for (u8 slot = 0; slot <= CONTROLLER_SLOT_D; slot++)
+			{
+				if (InputRecordingData.ActiveSlot(port, slot))
+					virtualPads[port][slot]->SetReadOnlyMode();
+			}
+		}
 		recordingConLog("[REC]: Replay mode ON.\n");
 	}
 }
@@ -269,4 +318,14 @@ InputRecordingFile & InputRecording::GetInputRecordingData()
 	return InputRecordingData;
 }
 
+void InputRecording::SetMultitapBuffer(const bool port1, const bool port2)
+{
+	multitap_Buffer[0] = port1;
+	multitap_Buffer[1] = port2;
+}
+
+bool InputRecording::GetMultitapBuffer(const u8 port)
+{
+	return multitap_Buffer[port];
+}
 #endif
