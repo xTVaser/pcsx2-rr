@@ -224,7 +224,6 @@ SIO_WRITE sioWriteController(u8 data)
 			//Note: this is a file is currently loaded
 			else if (sio.slot[sio.port] > 0)
 			{
-				recordingConLog(wxString::Format("Y%d-%d\n", sio.port, sio.slot[sio.port]));
 				DEVICE_UNPLUGGED();
 				sio.buf[0] = 0x00;
 				siomode = SIO_DUMMY;
