@@ -220,8 +220,8 @@ SIO_WRITE sioWriteController(u8 data)
 			{
 				g_InputRecording.ControllerInterrupt(data, sio.port, sio.slot[sio.port], sio.bufCount, sio.buf);
 			}
-			//If the port isn't in use at all or if the slot for said port is not the first slot, act as if the slot is unplugged
-			//Note: this is a file is currently loaded
+			//If the slot for the current port is not the first slot, act as if the slot is unplugged
+			// -- Only when a file is loaded
 			else if (sio.slot[sio.port] > 0)
 			{
 				DEVICE_UNPLUGGED();
