@@ -18,7 +18,7 @@
 
 struct InputRecordingHeader
 {
-	u8 version = 1;
+	u8 version = 2;
 	char emu[50] = "PCSX2-1.5.X";
 	char author[255] = "";
 	char gameName[255] = "";
@@ -28,8 +28,6 @@ public:
 	void SetGameName(wxString cdrom);
 	void Init();
 };
-
-static const int RecordingHeaderSize = sizeof(InputRecordingHeader) + 4 + 4;
 
 // Contains info about the starting point of the movie
 struct InputRecordingSavestate
@@ -47,41 +45,52 @@ public:
 	// Movie File Manipulation
 	bool Open(const wxString fn, bool fNewOpen, bool fromSaveState);
 	bool Close();
-	bool WriteKeyBuf(const uint & frame, const uint port, const uint bufIndex, const u8 & buf);
-	bool ReadKeyBuf(u8 & result, const uint & frame, const uint port, const uint bufIndex);
+	bool WriteKeyBuf(const u32 & frame, const u8 port, const u8 slot, const u16 bufIndex, const u8 & buf);
+	bool ReadKeyBuf(u8 & result, const u32 & frame, const u8 port, const u8 slot, const u16 bufIndex);
 
 	// Header
 	InputRecordingHeader& GetHeader();
-	unsigned long& GetMaxFrame();
-	unsigned long& GetUndoCount();
+	u32& GetMaxFrame();
+	u32& GetUndoCount();
 	const wxString & GetFilename();
+	void RetrieveSlots(bool (&slots)[2][4]);
+	bool ActivePort(u8 port);
+	bool ActiveMultitap(u8 port);
+	bool ActiveSlot(u8 port, u8 slot);
 
 	bool WriteHeader();
-	bool WriteMaxFrame();
 	bool WriteSaveState();
+	bool WriteSlots();
+	bool WriteMaxFrame();
+	bool WriteUndoCount();
 
 	bool ReadHeaderAndCheck();
-	void UpdateFrameMax(unsigned long frame);
+	void UpdateFrameMax(u32 frame);
 	void AddUndoCount();
+	void SetSlots(bool slots[2][4]);
 
 private:
-	static const int RecordingSavestateHeaderSize = sizeof(bool);
-	static const int RecordingBlockHeaderSize = 0;
-	static const int RecordingBlockDataSize = 18 * 2;
-	static const int RecordingBlockSize = RecordingBlockHeaderSize + RecordingBlockDataSize;
-	static const int RecordingSeekpointFrameMax = sizeof(InputRecordingHeader);
-	static const int RecordingSeekpointUndoCount = sizeof(InputRecordingHeader) + 4;
-	static const int RecordingSeekpointSaveState = RecordingSeekpointUndoCount + 4;
+	//Commented out as I'm not sure what the plan was/is for this
+	//static const u16 RecordingSavestateHeaderSize = sizeof(bool);
+	u16 RecordingSeekpointSaveState = sizeof(InputRecordingHeader);
+	static const u16 RecordingSeekpointSlots = sizeof(InputRecordingHeader) + 1;
+	u16 RecordingSeekpointFrameMax = RecordingSeekpointSlots + 8;
+	u16 RecordingSeekpointUndoCount = RecordingSeekpointFrameMax + 4;
+	static const u16 RecordingBlockBaseSize = 18;
+	u16 RecordingBlockSize = RecordingBlockBaseSize;
+	
 
 	// Movie File
 	FILE * recordingFile = NULL;
 	wxString filename = "";
-	long GetBlockSeekPoint(const long & frame);
+	u32 GetBlockSeekPoint(const u32& frame);
 
 	// Header
 	InputRecordingHeader header;
+	bool Slots[2][4];
 	InputRecordingSavestate savestate;
-	unsigned long MaxFrame = 0;
-	unsigned long UndoCount = 0;
+	u32 MaxFrame = 0;
+	u32 UndoCount = 0;
+	u16 RecordingHeaderSize = sizeof(InputRecordingHeader) + 1 + 8 + 4 + 4;
 };
 #endif
