@@ -94,7 +94,7 @@ static const TraceLogDescriptor
 TLD_ELF = {
 	L"ELF",			L"E&LF",
 	pxDt("Dumps detailed information for PS2 executables (ELFs).")
-}, 
+},
 
 TLD_eeRecPerf = {
 	L"EErecPerf",	L"EErec &Performance",
@@ -116,24 +116,35 @@ TLD_deci2 = {
 	pxDt("Shows DECI2 debugging logs (EE processor)")
 },
 
-TLD_tasConsole = {
-	L"TAS",			L"TAS Console",
-	pxDt("Shows TAS related logs and information")
+TLD_sysoutConsole = {
+	L"SYSout",		L"System Out",
+	pxDt("Shows strings printed to the system output stream.")
+}
+
+#ifndef DISABLE_RECORDING
+,TLD_recordingConsole = {
+	L"Recording",			L"Recording Console",
+	pxDt("Shows recording related logs and information")
 },
 
 TLD_controlInfo = {
 	L"Controller Info",			L"Controller Info",
-	pxDt("Shows detailed info on controller input values every frame on controller port 1")
-};
+	pxDt("Shows detailed controller input values for port 1, every frame")
+}
+#endif
+; // End init of TraceLogDescriptors
 
 SysConsoleLogPack::SysConsoleLogPack()
-	: ELF				(&TLD_ELF, Color_Gray)
-	, eeRecPerf			(&TLD_eeRecPerf, Color_Gray)
-	, eeConsole			(&TLD_eeConsole)
-	, iopConsole		(&TLD_iopConsole)
-	, deci2				(&TLD_deci2)
-	, tasConsole		(&TLD_tasConsole)
-	, controlInfo		(&TLD_controlInfo)
+	: ELF		   (&TLD_ELF, Color_Gray)
+	, eeRecPerf	   (&TLD_eeRecPerf, Color_Gray)
+	, sysoutConsole(&TLD_sysoutConsole, Color_Gray)
+	, eeConsole	   (&TLD_eeConsole)
+	, iopConsole   (&TLD_iopConsole)
+	, deci2	(&TLD_deci2)
+#ifndef DISABLE_RECORDING
+	, recordingConsole	(&TLD_recordingConsole)
+	, controlInfo	(&TLD_controlInfo)
+#endif
 {
 }
 

@@ -283,6 +283,22 @@ public:
 	}
 };
 
+enum MenuId_LogSources_Offset
+{
+	MenuId_LogSources_Offset_eeConsole = 0,
+	MenuId_LogSources_Offset_iopConsole,
+	MenuId_LogSources_Offset_eeRecPerf,
+
+	MenuId_LogSources_Offset_ELF = 4,
+
+	MenuId_LogSources_Offset_Event = 6,
+	MenuId_LogSources_Offset_Thread,
+	MenuId_LogSources_Offset_sysoutConsole,
+
+	MenuId_LogSources_Offset_recordingConsole = 10,
+	MenuId_LogSources_Offset_controlInfo
+};
+
 // WARNING ConsoleLogSources & ConLogDefaults must have the same size
 static ConsoleLogSource* const ConLogSources[] =
 {
@@ -294,9 +310,12 @@ static ConsoleLogSource* const ConLogSources[] =
 	NULL,
 	(ConsoleLogSource*)&pxConLog_Event,
 	(ConsoleLogSource*)&pxConLog_Thread,
+	(ConsoleLogSource*)&SysConsole.sysoutConsole,
 	NULL,
-	(ConsoleLogSource*)&SysConsole.tasConsole,
+#ifndef DISABLE_RECORDING
+	(ConsoleLogSource*)&SysConsole.recordingConsole,
 	(ConsoleLogSource*)&SysConsole.controlInfo,
+#endif
 };
 
 // WARNING ConsoleLogSources & ConLogDefaults must have the same size
@@ -308,10 +327,10 @@ static const bool ConLogDefaults[] =
 	false,
 	false,
 	false,
+#ifndef DISABLE_RECORDING
 	false,
 	false,
-	false,
-	true,
+#endif
 	false
 };
 
@@ -342,16 +361,6 @@ void ConLog_LoadSaveSettings( IniInterface& ini )
 
 	ConLogInitialized = true;
 }
-
-bool isSourceEnabled(int index) {
-
-	if (ConsoleLogSource* log = ConLogSources[index])
-	{
-		return log->Enabled;
-	}
-	return false;
-}
-
 
 // --------------------------------------------------------------------------------------
 //  ConsoleLogFrame  (implementations)
@@ -575,7 +584,16 @@ void ConsoleLogFrame::OnLoggingChanged()
 		{
 			GetMenuBar()->Check( MenuId_LogSource_Start+i, log->IsActive() );
 		}
+#ifndef DISABLE_RECORDING
+		GetMenuBar()->Enable( MenuId_LogSource_Start + MenuId_LogSources_Offset_recordingConsole, g_Conf->EmuOptions.EnableRecordingTools);
+		GetMenuBar()->Enable( MenuId_LogSource_Start + MenuId_LogSources_Offset_controlInfo, g_Conf->EmuOptions.EnableRecordingTools);
+#endif
 	}
+}
+
+void ConsoleLogFrame::UpdateLogList()
+{
+	OnLoggingChanged();
 }
 
 // Implementation note:  Calls SetColor and Write( text ).  Override those virtuals

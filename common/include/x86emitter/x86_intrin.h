@@ -50,7 +50,8 @@ static __inline__ __attribute__((always_inline)) void cpuid(int CPUInfo[], const
     __cpuid(InfoType, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
 }
 
-// _xgetbv on gcc 8 is broken (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85684).
+#if defined(__clang__) || __GNUC__ < 8 || (__GNUC__ == 8 && __GNUC_MINOR__ < 2)
+// _xgetbv on gcc 8.1 is broken (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85684).
 // It also isn't present on clang and earlier versions of gcc.
 static __inline__ __attribute__((always_inline)) unsigned long long xgetbv(unsigned int index)
 {
@@ -60,11 +61,17 @@ static __inline__ __attribute__((always_inline)) unsigned long long xgetbv(unsig
                          : "c"(index));
     return ((unsigned long long)edx << 32) | eax;
 }
+#else
+#define xgetbv _xgetbv
+#endif
 
 #endif
 
 // Rotate instruction
-#if defined(__clang__)
+#if defined(__clang__) && __clang_major__ < 9
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+
 // Seriously what is so complicated to provided this bunch of intrinsics in clangs.
 static unsigned int _rotr(unsigned int x, int s)
 {
@@ -75,6 +82,8 @@ static unsigned int _rotl(unsigned int x, int s)
 {
     return (x << s) | (x >> (32 - s));
 }
+
+#pragma clang diagnostic pop
 #endif
 
 // Not correctly defined in GCC4.8 and below ! (dunno for VS)

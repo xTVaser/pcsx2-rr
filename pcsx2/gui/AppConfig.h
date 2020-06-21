@@ -96,6 +96,14 @@ enum AspectRatioType
 	AspectRatio_MaxCount
 };
 
+enum FMVAspectRatioSwitchType
+{
+	FMV_AspectRatio_Switch_Off,
+	FMV_AspectRatio_Switch_4_3,
+	FMV_AspectRatio_Switch_16_9,
+	FMV_AspectRatio_Switch_MaxCount
+};
+
 enum MemoryCardType
 {
 	MemoryCard_None,
@@ -205,6 +213,7 @@ public:
 		bool		DisableScreenSaver;
 
 		AspectRatioType AspectRatio;
+		FMVAspectRatioSwitchType FMVAspectRatioSwitch;
 		Fixed100	Zoom;
 		Fixed100	StretchY;
 		Fixed100	OffsetX;
@@ -218,7 +227,6 @@ public:
 		bool		EnableVsyncWindowFlag;
 
 		bool		IsToggleFullscreenOnDoubleClick;
-		bool		IsToggleAspectRatioSwitch;
 
 		GSWindowOptions();
 
@@ -255,6 +263,9 @@ public:
 		wxString OutputInterlaced;
 		wxString Paused;
 		wxString TitleTemplate;
+#ifndef DISABLE_RECORDING
+		wxString RecordingTemplate;
+#endif
 	};
 
 public:
@@ -312,9 +323,11 @@ public:
 	bool		AskOnBoot;
 
 	wxString				CurrentIso;
+    wxString				CurrentBlockdump;
 	wxString				CurrentELF;
 	wxString				CurrentIRX;
 	CDVD_SourceType			CdvdSource;
+	wxString				CurrentGameArgs;
 
 	// Memorycard options - first 2 are default slots, last 6 are multitap 1 and 2
 	// slots (3 each)
@@ -350,7 +363,7 @@ public:
 	static int  GetMaxPresetIndex();
     static bool isOkGetPresetTextAndColor(int n, wxString& label, wxColor& c);
 	
-	bool        IsOkApplyPreset(int n);
+	bool        IsOkApplyPreset(int n, bool ignoreMTVU);
 
 
 	//The next 2 flags are used with ApplyConfigToGui which the presets system use:
