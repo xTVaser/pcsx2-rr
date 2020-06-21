@@ -1,4 +1,9 @@
 # PCSX2-RR  
+## Future of this repository
+PCSX2's re-recording tools have been merged into PCSX2 for quite sometime, meaning that releases will not occur here anymore.  This fork will serve as a staging ground for changes to be merged into the upstream repository.
+
+If you are interested in improving the recording tools or fixing a bug, please consider making a pull-request [on pcsx2's main repository](https://github.com/PCSX2/pcsx2), as well as directing any issues / bug reports there as well.
+
 ## Credit  
 This is a fork of https://github.com/DocSkellington/pcsx2-1.4.0-rr which itself is a fork of https://github.com/pocokhc/pcsx2-1.4.0-rr, which itself is based off the original [pcsx2-rr](<https://code.google.com/archive/p/pcsx2-rr/>). However, since the content has changed a lot and simple merging can not be done, the source code has changed considerably from this original version.
 
