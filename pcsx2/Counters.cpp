@@ -32,9 +32,9 @@
 
 #include "Sio.h"
 
-#include "lua/LuaManager.h"
-#include "TAS/MovieControle.h"
-#include "TAS/KeyEditor.h"
+#ifndef DISABLE_RECORDING
+#	include "Recording/RecordingControls.h"
+#endif
 
 using namespace Threading;
 
@@ -196,26 +196,24 @@ static void vSyncInfoCalc(vSyncTimingInfo* info, Fixed100 framesPerSecond, u32 s
 {
 	// I use fixed point math here to have strict control over rounding errors. --air
 
-	// NOTE: mgs3 likes a /4 vsync, but many games prefer /2.  This seems to indicate a
-	// problem in the counters vsync gates somewhere.
-
 	u64 Frame = ((u64)PS2CLK * 1000000ULL) / (framesPerSecond * 100).ToIntRounded();
-	u64 HalfFrame = Frame / 2;
+	const u64 Scanline = Frame / scansPerFrame;
 
-	// One test we have shows that VBlank lasts for ~22 HBlanks, another we have show that is the time it's off.
-	// There exists a game (Legendz Gekitou! Saga Battle) Which runs REALLY slowly if VBlank is ~22 HBlanks, so the other test wins.
-
-	u64 Blank = HalfFrame / 2; // PAL VBlank Period is off for roughly 22 HSyncs
-
-	//I would have suspected this to be Frame - Blank, but that seems to completely freak it out
-	//and the test results are completely wrong. It seems 100% the same as the PS2 test on this,
-	//So let's roll with it :P
-	u64 Render = HalfFrame - Blank;	// so use the half-frame value for these...
+	// There are two renders and blanks per frame. This matches the PS2 test results.
+	// The PAL and NTSC VBlank periods respectively lasts for approximately 22 and 26 scanlines.
+	// An older test suggests that these periods are actually the periods that VBlank is off, but
+	// Legendz Gekitou! Saga Battle runs very slowly if the VBlank period is inverted.
+	// Some of the more timing sensitive games and their symptoms when things aren't right:
+	// Dynasty Warriors 3 Xtreme Legends - fake save corruption when loading save
+	// Jak II - random speedups
+	// Shadow of Rome - FMV audio issues
+	const u64 HalfFrame = Frame / 2;
+	const u64 Blank = Scanline * (gsVideoMode == GS_VideoMode::NTSC ? 26 : 22);
+	const u64 Render = HalfFrame - Blank;
 
 	// Important!  The hRender/hBlank timers should be 50/50 for best results.
 	//  (this appears to be what the real EE's timing crystal does anyway)
 
-	u64 Scanline = Frame / scansPerFrame;
 	u64 hBlank = Scanline / 2;
 	u64 hRender = Scanline - hBlank;
 
@@ -225,6 +223,8 @@ static void vSyncInfoCalc(vSyncTimingInfo* info, Fixed100 framesPerSecond, u32 s
 		hRender /= 2;
 	}
 
+	//TODO: Carry fixed-point math all the way through the entire vsync and hsync counting processes, and continually apply rounding
+	//as needed for each scheduled v/hsync related event. Much better to handle than this messed state.
 	info->Framerate = framesPerSecond;
 	info->Render = (u32)(Render / 10000);
 	info->Blank = (u32)(Blank / 10000);
@@ -233,13 +233,11 @@ static void vSyncInfoCalc(vSyncTimingInfo* info, Fixed100 framesPerSecond, u32 s
 	info->hBlank = (u32)(hBlank / 10000);
 	info->hScanlinesPerFrame = scansPerFrame;
 
-	// Apply rounding:
-	// To investigate: Why is render rounding prioritized over blank? why skip the latter?
 	if ((Render % 10000) >= 5000) info->Render++;
-	else if ((Blank % 10000) >= 5000) info->Blank++;
+	if ((Blank % 10000) >= 5000) info->Blank++;
 
 	if ((hRender % 10000) >= 5000) info->hRender++;
-	else if ((hBlank % 10000) >= 5000) info->hBlank++;
+	if ((hBlank % 10000) >= 5000) info->hBlank++;
 
 	// Calculate accumulative hSync rounding error per half-frame:
 	if (IsAnalogVideoMode()) // gets off the chart in that mode
@@ -571,17 +569,13 @@ __fi void rcntUpdate_vSync()
 	}
 	else	// VSYNC end / VRENDER begin
 	{
-		//--LuaEngine--//
-		g_Lua.FrameBoundary();
-		//-------------//
 
-		//--TASKeyEditor--//
-		KeyEditor* dlg = wxGetApp().GetKeyEditorPtr();
-		if (dlg)dlg->FrameUpdate();
-		//-----------------//
-
-		g_MovieControle.StopCheck();//--TAS--//
-
+#ifndef DISABLE_RECORDING
+		if (g_Conf->EmuOptions.EnableRecordingTools)
+		{
+			g_RecordingControls.HandleFrameAdvanceAndStop();
+		}
+#endif
 
 		VSyncStart(vsyncCounter.sCycle);
 

@@ -2,6 +2,7 @@
 
 set -ex
 
+# Disabled for now
 clang_syntax_check() {
 	if [ "${CXX}" = "clang++" ]; then
         ./linux_various/check_format.sh
@@ -16,9 +17,10 @@ linux_32_before_install() {
 
 	# Compilers
 	if [ "${CXX}" = "clang++" ]; then
-		sudo apt-key adv --fetch-keys http://apt.llvm.org/llvm-snapshot.gpg.key
-		sudo add-apt-repository -y "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-${VERSION} main"
-		COMPILER_PACKAGE="g++-8-multilib clang-format-${VERSION}"
+		#sudo apt-key adv --fetch-keys http://apt.llvm.org/llvm-snapshot.gpg.key
+		#sudo add-apt-repository -y "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-${VERSION} main"
+		#COMPILER_PACKAGE="g++-8-multilib clang-format-${VERSION}"
+		COMPILER_PACKAGE="g++-8-multilib"
 	fi
 	if [ "${CXX}" = "g++" ]; then
 		COMPILER_PACKAGE="g++-${VERSION}-multilib"
@@ -30,6 +32,7 @@ linux_32_before_install() {
 	# build image. libgtk2.0-dev:i386 and libsdl2-dev:i386 require the 32-bit
 	# versions of the dependencies, and the 2 versions conflict. So those
 	# dependencies must be explicitly installed.
+	# Sometimes it complains about Python so we install that too.
 	sudo apt-get -y install \
 		gir1.2-freedesktop:i386 \
 		gir1.2-gdkpixbuf-2.0:i386 \
@@ -45,6 +48,7 @@ linux_32_before_install() {
 		libglu1-mesa-dev:i386 \
 		libgtk2.0-dev:i386 \
 		liblzma-dev:i386 \
+		libharfbuzz-dev:i386 \
 		libpango1.0-dev:i386 \
 		libpng12-dev:i386 \
 		libsdl2-dev:i386 \
@@ -53,7 +57,10 @@ linux_32_before_install() {
 		libxext-dev:i386 \
 		libxft-dev:i386 \
 		portaudio19-dev:i386 \
+		python:i386 \
 		zlib1g-dev:i386 \
+		libxml2-dev:i386 \
+		libpcap0.8-dev:i386 \
 		${COMPILER_PACKAGE}
 
 	# Manually add ccache symlinks for clang
@@ -107,6 +114,8 @@ linux_64_before_install() {
 		libsoundtouch-dev \
 		libwxgtk3.0-dev \
 		portaudio19-dev \
+		libxml2-dev \
+		libpcap0.8-dev \
 		${COMPILER_PACKAGE}
 }
 
@@ -136,7 +145,7 @@ before_install|script)
 	${TRAVIS_OS_NAME}_${BITS}_${1}
 	;;
 before_script)
-    clang_syntax_check
+#    clang_syntax_check
     ;;
 after_success)
 	${TRAVIS_OS_NAME}_${1}

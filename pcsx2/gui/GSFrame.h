@@ -61,11 +61,14 @@ public:
 	virtual void DoResize();
 	void DoShowMouse();
 	void DirectKeyCommand( wxKeyEvent& evt );
-	virtual void DirectKeyCommand( const KeyAcceleratorCode& kac );
+	void DirectKeyCommand( const KeyAcceleratorCode& kac );
+	void InitDefaultAccelerators();
+#ifndef DISABLE_RECORDING
+	void InitRecordingAccelerators();
+#endif
 
 protected:
 	void AppStatusEvent_OnSettingsApplied();
-	void InitDefaultAccelerators();
 
 	void OnCloseWindow( wxCloseEvent& evt );
 	void OnResize(wxSizeEvent& event);

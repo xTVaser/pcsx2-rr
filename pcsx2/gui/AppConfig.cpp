@@ -640,6 +640,7 @@ void AppConfig::LoadSaveRootItems( IniInterface& ini )
 	ini.Entry( L"CurrentIso", res, res, ini.IsLoading() || IsPortable() );
 	CurrentIso = res.GetFullPath();
 
+	IniEntry( CurrentBlockdump );
 	IniEntry( CurrentELF );
 	IniEntry( CurrentIRX );
 
@@ -817,6 +818,7 @@ AppConfig::GSWindowOptions::GSWindowOptions()
 	DisableScreenSaver		= true;
 
 	AspectRatio				= AspectRatio_4_3;
+	FMVAspectRatioSwitch	= FMV_AspectRatio_Switch_Off;
 	Zoom					= 100;
 	StretchY				= 100;
 	OffsetX					= 0;
@@ -829,7 +831,6 @@ AppConfig::GSWindowOptions::GSWindowOptions()
 	EnableVsyncWindowFlag	= false;
 
 	IsToggleFullscreenOnDoubleClick = true;
-	IsToggleAspectRatioSwitch = false;
 }
 
 void AppConfig::GSWindowOptions::SanityCheck()
@@ -868,7 +869,6 @@ void AppConfig::GSWindowOptions::LoadSave( IniInterface& ini )
 	IniEntry( EnableVsyncWindowFlag );
 
 	IniEntry( IsToggleFullscreenOnDoubleClick );
-	IniEntry( IsToggleAspectRatioSwitch );
 
 	static const wxChar* AspectRatioNames[] =
 	{
@@ -880,6 +880,17 @@ void AppConfig::GSWindowOptions::LoadSave( IniInterface& ini )
 	};
 
 	ini.EnumEntry( L"AspectRatio", AspectRatio, AspectRatioNames, AspectRatio );
+
+	static const wxChar* FMVAspectRatioSwitchNames[] =
+	{
+		L"Off",
+		L"4:3",
+		L"16:9",
+		// WARNING: array must be NULL terminated to compute it size
+		NULL
+	};
+	ini.EnumEntry(L"FMVAspectRatioSwitch", FMVAspectRatioSwitch, FMVAspectRatioSwitchNames, FMVAspectRatioSwitch);
+
 	IniEntry( Zoom );
 
 	if( ini.IsLoading() ) SanityCheck();
@@ -928,7 +939,10 @@ AppConfig::UiTemplateOptions::UiTemplateOptions()
 	OutputProgressive	= L"Progressive";
 	OutputInterlaced	= L"Interlaced";
 	Paused				= L"<PAUSED> ";
-	TitleTemplate		= L"Frame: ${frame} | MaxFrame: ${maxFrame} | Mode: ${mode} | Speed: ${speed} (${vfps}) | Limiter: ${limiter} | ${cpuusage}";
+	TitleTemplate		= L"Slot: ${slot} | Speed: ${speed} (${vfps}) | ${videomode} | Limiter: ${limiter} | ${gsdx} | ${omodei} | ${cpuusage}";
+#ifndef DISABLE_RECORDING
+	RecordingTemplate	= L"Slot: ${slot} | Frame: ${frame}/${maxFrame} | Rec. Mode: ${mode} | Speed: ${speed} (${vfps}) | Limiter: ${limiter}";
+#endif
 }
 
 void AppConfig::UiTemplateOptions::LoadSave(IniInterface& ini)
@@ -945,6 +959,9 @@ void AppConfig::UiTemplateOptions::LoadSave(IniInterface& ini)
 	IniEntry(OutputInterlaced);
 	IniEntry(Paused);
 	IniEntry(TitleTemplate);
+#ifndef DISABLE_RECORDING
+	IniEntry(RecordingTemplate);
+#endif
 }
 
 int AppConfig::GetMaxPresetIndex()
@@ -956,12 +973,12 @@ bool AppConfig::isOkGetPresetTextAndColor( int n, wxString& label, wxColor& c )
 {
 	const wxString presetNamesAndColors[][2] =
 	{
-		{ _t("Safest"),				L"Forest GREEN" },
-		{ _t("Safe (faster)"),		L"Dark Green" },
-		{ _t("Balanced"),			L"Blue" },
-		{ _t("Aggressive"),			L"Purple" },
-		{ _t("Aggressive plus"),	L"Orange"},
-		{ _t("Mostly Harmful"),		L"Red" }
+		{ _t("Safest (No hacks)"),	L"Blue" },
+		{ _t("Safe (Default)"),		L"Dark Green" },
+		{ _t("Balanced"),			L"Forest Green" },
+		{ _t("Aggressive"),			L"Orange" },
+		{ _t("Very Aggressive"),	L"Red"},
+		{ _t("Mostly Harmful"),		L"Purple" }
 	};
 	if( n<0 || n>GetMaxPresetIndex() )
 		return false;
@@ -973,9 +990,11 @@ bool AppConfig::isOkGetPresetTextAndColor( int n, wxString& label, wxColor& c )
 }
 
 
-//Apply one of several (currently 6) configuration subsets.
-//The scope of the subset which each preset controlls is hardcoded here.
-bool AppConfig::IsOkApplyPreset(int n)
+// Apply one of several (currently 6) configuration subsets.
+// The scope of the subset which each preset controlls is hardcoded here.
+// Use ignoreMTVU to avoid updating the MTVU field.
+// Main purpose is for the preset enforcement at launch, to avoid overwriting a user's setting.
+bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 {
 	if (n < 0 || n > GetMaxPresetIndex() )
 	{
@@ -1019,7 +1038,6 @@ bool AppConfig::IsOkApplyPreset(int n)
 	EmuOptions.EnablePatches		= true;
 	EmuOptions.GS					= default_Pcsx2Config.GS;
 	EmuOptions.GS.FrameLimitEnable	= original_GS.FrameLimitEnable;	//Frame limiter is not modified by presets
-	//EmuOptions.GS.VsyncEnable		= original_GS.VsyncEnable;
 	
 	EmuOptions.Cpu					= default_Pcsx2Config.Cpu;
 	EmuOptions.Gamefixes			= default_Pcsx2Config.Gamefixes;
@@ -1028,43 +1046,43 @@ bool AppConfig::IsOkApplyPreset(int n)
 	EmuOptions.Speedhacks.vuThread	= original_SpeedHacks.vuThread;
 	EnableSpeedHacks = true;
 
-	//Actual application of current preset over the base settings which all presets use (mostly pcsx2's default values).
-	//The presets themselves might need some voodoo tuning to be even more useful. Currently they mostly modify Speedhacks.
+	// Actual application of current preset over the base settings which all presets use (mostly pcsx2's default values).
 
-	bool vuUsed=false, eeUsed=false;//used to prevent application of specific lower preset values on fallthrough.
-	switch (n){	//currently implemented such that any preset also applies all lower presets, with few exceptions.
-
-		case 5 :	//Set VU cycle steal to 2 clicks (maximum-1)
-					vuUsed?0:(vuUsed=true, EmuOptions.Speedhacks.VUCycleSteal = 2);
+	bool isRateSet = false, isSkipSet = false, isMTVUSet = ignoreMTVU ? true : false; // used to prevent application of specific lower preset values on fallthrough.
+	switch (n) // Settings will waterfall down to the Safe preset, then stop. So, Balanced and higher will inherit any settings through Safe.
+	{
+		case 5: // Mostly Harmful
+			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = 1); // +1 EE cyclerate
+			isSkipSet ? 0 : (isSkipSet = true, EmuOptions.Speedhacks.EECycleSkip = 1); // +1 EE cycle skip
+            // Fall through
 		
-		case 4 :	//set EE cyclerate to 2 clicks (maximum)
-					eeUsed?0:(eeUsed=true, EmuOptions.Speedhacks.EECycleRate = -2);
+		case 4: // Very Aggressive
+			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = -2); // -2 EE cyclerate
+            // Fall through
 
-		case 3 :	//Set VU cycle steal to 1 click, set VU clamp mode to 'none'
-					vuUsed?0:(vuUsed=true, EmuOptions.Speedhacks.VUCycleSteal = 1);
-					EmuOptions.Cpu.Recompiler.vuOverflow	  =
-					EmuOptions.Cpu.Recompiler.vuExtraOverflow =
-					EmuOptions.Cpu.Recompiler.vuSignOverflow = false; //VU Clamp mode to 'none'
+		case 3: // Aggressive
+			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = -1); // -1 EE cyclerate
+            // Fall through
 
-		//best balanced hacks combo?
-		case 2 :	//set EE cyclerate to 1 click.
-					eeUsed?0:(eeUsed=true, EmuOptions.Speedhacks.EECycleRate = -1);
-					// EE timing hack appears to break the BIOS text and cause slowdowns in a few titles.
-					//EnableGameFixes = true;
-					//EmuOptions.Gamefixes.EETimingHack = true;
+		case 2: // Balanced
+			isMTVUSet ? 0 : (isMTVUSet = true, EmuOptions.Speedhacks.vuThread = true); // Enable MTVU
+            // Fall through
 
-		case 1 :	//Recommended speed hacks.
-					EmuOptions.Speedhacks.IntcStat = true;
-					EmuOptions.Speedhacks.WaitLoop = true;
-					EmuOptions.Speedhacks.vuFlagHack = true;
-					break;
+		case 1: // Safe (Default)
+			EmuOptions.Speedhacks.IntcStat = true;
+			EmuOptions.Speedhacks.WaitLoop = true;
+			EmuOptions.Speedhacks.vuFlagHack = true;
+			
+			// If waterfalling from > Safe, break to avoid MTVU disable.
+			if (n > 1) break;
+            // Fall through
+			
+		case 0: // Safest
+			isMTVUSet ? 0 : (isMTVUSet = true, EmuOptions.Speedhacks.vuThread = false); // Disable MTVU
+			break;
 
-		case 0 :	//Base preset: Mostly pcsx2's defaults.
-					//Force disable MTVU hack on safest preset as it has lots of issues (Crashes/Slow downs) on various games.
-					EmuOptions.Speedhacks.vuThread = false;
-					break;
-
-		default:	Console.WriteLn("Developer Warning: Preset #%d is not implemented. (--> Using application default).", n);
+		default:
+			Console.WriteLn("Developer Warning: Preset #%d is not implemented. (--> Using application default).", n);
 	}
 
 
@@ -1098,7 +1116,7 @@ void RelocateLogfile()
 	if( emuLog == NULL )
 	{
 		emuLogName = newlogname;
-		emuLog = fopen( emuLogName.ToUTF8(), "wb" );
+		emuLog = wxFopen( emuLogName, "wb" );
 	}
 
 	wxGetApp().EnableAllLogging();
@@ -1251,7 +1269,7 @@ static void LoadVmSettings()
 	g_Conf->EmuOptions.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
 
 	if (g_Conf->EnablePresets){
-		g_Conf->IsOkApplyPreset(g_Conf->PresetIndex);
+		g_Conf->IsOkApplyPreset(g_Conf->PresetIndex, true);
 	}
 
 	sApp.DispatchVmSettingsEvent( vmloader );

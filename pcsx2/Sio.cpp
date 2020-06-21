@@ -21,8 +21,11 @@
 #include "Sio.h"
 #include "sio_internal.h"
 
-#include "TAS/KeyMovie.h"
-#include "TAS/TASInputManager.h"
+#ifndef DISABLE_RECORDING
+#	include "Recording/InputRecording.h"
+#	include "Recording/PadData.h"
+#	include "Recording/RecordingInputManager.h"
+#endif
 
 _sio sio;
 _mcd mcds[2][4];
@@ -38,7 +41,8 @@ static const u8 memcard_psx[] = {0x5A, 0x5D, 0x5C, 0x5D, 0x04, 0x00, 0x00, 0x80}
 
 // Memory Card Specs for standard Sony 8mb carts:
 //    Flags (magic sio '+' thingie!), Sector size, eraseBlockSize (in pages), card size (in pages), xor checksum (superblock?), terminator (unused?).
-static const mc_command_0x26_tag mc_sizeinfo_8mb= {'+', 512, 16, 0x4000, 0x52, 0x5A};
+// FIXME variable commented out since it's not used atm.
+// static const mc_command_0x26_tag mc_sizeinfo_8mb= {'+', 512, 16, 0x4000, 0x52, 0x5A};
 
 // Ejection timeout management belongs in the MemoryCardFile plugin, except the plugin
 // interface is not yet complete.
@@ -176,7 +180,7 @@ SIO_WRITE sioWriteStart(u8 data)
 	case 0x81: siomode = SIO_MEMCARD; break;
 
 	default:
-		DevCon.Warning("%s cmd: %02X??\n", __FUNCTION__, data);
+		DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
 		DEVICE_UNPLUGGED();
 		siomode = SIO_DUMMY;
 		break;
@@ -211,33 +215,18 @@ SIO_WRITE sioWriteController(u8 data)
 	default:
 		sio.buf[sio.bufCount] = PADpoll(data);
 
-		//--TAS--//
-		g_KeyMovie.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+#ifndef DISABLE_RECORDING
+		if (g_Conf->EmuOptions.EnableRecordingTools)
+		{
+			g_InputRecording.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+			if (g_InputRecording.IsInterruptFrame())
+			{
+				g_RecordingInput.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+			}
 
-		//--LuaEngine--//
-		if (g_KeyMovie.isInterruptFrame()) {
-			g_TASInput.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+			PadData::LogPadData(sio.port, sio.bufCount, sio.buf);
 		}
-		//------------//
-
-		// -- TAS Debugging Helpful -- //
-		// Prints controlller data every frame //
-		// can use isSourceEnabled if this is a performance hit, but i don't think it will be an issue
-		// std::string converted = std::to_string(sio.buf[sio.bufCount]);
-		if (sio.port == 0 && sio.bufCount > 2) { // skip first two bytes because they dont seem to matter
-			if (sio.bufCount == 3) {
-				controlLog(wxString::Format("\nController Port %d", sio.port));
-				controlLog(wxString::Format("\nPressed Flags - "));
-			}
-			if (sio.bufCount == 5) { // analog sticks
-				controlLog(wxString::Format("\nAnalog Sticks - "));
-			}
-			if (sio.bufCount == 9) { // pressure sensitive bytes
-				controlLog(wxString::Format("\nPressure Bytes - "));
-			}
-			controlLog(wxString::Format("%3d ", sio.buf[sio.bufCount]));
-		}
-
+#endif
 		break;
 	}
 	//Console.WriteLn( "SIO: sent = %02X  From pad data =  %02X  bufCnt %08X ", data, sio.buf[sio.bufCount], sio.bufCount);
@@ -290,7 +279,7 @@ SIO_WRITE sioWriteMultitap(u8 data)
 			break;
 
 		default:
-			DevCon.Warning("%s cmd: %02X??\n", __FUNCTION__, data);
+			DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
 			sio.buf[3] = 0x00;
 			sio.buf[4] = 0x00;
 			sio.buf[5] = 0x00;
@@ -397,7 +386,7 @@ SIO_WRITE memcardErase(u8 data)
 				break;
 
 			default:
-				DevCon.Warning("%s cmd: %02X??\n", __FUNCTION__, data);
+				DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
 				sio.bufCount = -1;
 				//sio.bufSize = 3;
 				//sio.bufCount = 4;
@@ -458,7 +447,7 @@ SIO_WRITE memcardWrite(u8 data)
 				}
 
 			default:
-				DevCon.Warning("%s cmd: %02X??\n", __FUNCTION__, data);
+				DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
 				sio.bufCount = -1;
 				//sio.bufSize = 3;
 				//sio.bufCount = 4;
@@ -548,7 +537,7 @@ SIO_WRITE memcardRead(u8 data)
 				}
 
 			default:
-				DevCon.Warning("%s cmd: %02X??\n", __FUNCTION__, data);
+				DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
 				sio.bufCount = -1;
 				//sio.bufSize = 3;
 				//sio.bufCount = 4;
@@ -729,6 +718,7 @@ SIO_WRITE sioWriteMemcard(u8 data)
 		case 0x11: // On Boot/Probe
 		case 0x12: // On Write/Delete/Recheck?
 			sio2.packet.recvVal3 = 0x8C;
+			// Fall through
 
 		case 0x81: // Checked right after copy/delete
 		case 0xBF: // Wtf?? On game booting?
@@ -739,7 +729,7 @@ SIO_WRITE sioWriteMemcard(u8 data)
 			break;
 
 		default:
-			DevCon.Warning("%s cmd: %02X??\n", __FUNCTION__, data);
+			DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
 			siomode = SIO_DUMMY;
 			break;
 		}
@@ -931,8 +921,8 @@ static void sioWrite8inl(u8 data)
 	if (IS_LAST_BYTE_IN_PACKET != 1) //The following should be set after each byte transfer but the last one.
 		sio.StatReg |= ACK_INP; //Signal that Controller (or MC) has brought the /ACK (Acknowledge) line active low.
 
-		sioInterrupt();
-		//chkTriggerInt();
+	sioInterrupt();
+	//chkTriggerInt();
 	//Console.WriteLn( "SIO0 WR DATA COMMON %02X  INT_STAT= %08X  IOPpc= %08X " , data, psxHu32(0x1070), psxRegs.pc);
 	byteCnt++;
 }
@@ -943,11 +933,11 @@ void sioStatRead() {
 
 if (clrAckCnt > 1) {  //This check can probably be removed...
 	sio.StatReg &= ~ACK_INP; //clear (goes inactive) /ACK line.
-//sio.StatReg &= ~TX_RDY;
-//	sio.StatReg &= ~0x200; //irq
-	//if (byteCnt == 1)
-	//	sio.StatReg &= ~RX_RDY;
-clrAckCnt = 0;
+	// sio.StatReg &= ~TX_RDY;
+	// sio.StatReg &= ~0x200; //irq
+	// if (byteCnt == 1)
+	// 	sio.StatReg &= ~RX_RDY;
+	clrAckCnt = 0;
 }
 	//The /ACK line should go active for >2us, in a time window between 12us and 100us after each byte is sent (received by the controller).
 	//If that doesn't happen, the controller is considered missing.
