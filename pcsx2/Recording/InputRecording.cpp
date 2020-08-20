@@ -130,15 +130,11 @@ void InputRecording::Stop()
 }
 
 // GUI Handler - Start recording
-void InputRecording::Create(wxString FileName, bool fromSaveState, wxString authorName)
+bool InputRecording::Create(wxString FileName, bool fromSaveState, wxString authorName)
 {
-	g_RecordingControls.Pause();
-	Stop();
-
 	if (!InputRecordingData.OpenNew(FileName, fromSaveState))
 	{
-		g_RecordingControls.Unpause();
-		return;
+		return false;
 	}
 	// Set emulator version
 	InputRecordingData.GetHeader().SetEmulatorVersion();
@@ -157,40 +153,28 @@ void InputRecording::Create(wxString FileName, bool fromSaveState, wxString auth
 
 	// In every case, we reset the g_FrameCount
 	g_FrameCount = 0;
+	return true;
 }
 
 // GUI Handler - Play a recording
-void InputRecording::Play(wxString fileName, bool fromSaveState)
+bool InputRecording::Play(wxString fileName, bool fromSaveState)
 {
-	g_RecordingControls.Pause();
-	Stop();
+	if (state != INPUT_RECORDING_MODE_NONE)
+		Stop();
 
 	// Open the file and verify if it can be played
 	if (!InputRecordingData.OpenExisting(fileName))
 	{
-		g_RecordingControls.Unpause();
-		return;
+		return false;
 	}
 	// Either load the savestate, or restart the game
-	if (InputRecordingData.FromSaveState())
+	if (InputRecordingData.GetHeader().savestate)
 	{
-		if (!CoreThread.IsOpen())
+		if (!LoadSavestate())
 		{
-			recordingConLog(L"[REC]: Game is not open, aborting playing input recording which starts on a save-state.\n");
-			g_RecordingControls.Unpause();
-			InputRecordingData.Close();
-			return;
+			Stop();
+			return false;
 		}
-		FILE* ssFileCheck = wxFopen(InputRecordingData.GetFilename() + "_SaveState.p2s", "r");
-		if (ssFileCheck == NULL)
-		{
-			recordingConLog(wxString::Format("[REC]: Could not locate savestate file at location - %s_SaveState.p2s\n", InputRecordingData.GetFilename()));
-			g_RecordingControls.Unpause();
-			InputRecordingData.Close();
-			return;
-		}
-		fclose(ssFileCheck);
-		StateCopy_LoadFromFile(InputRecordingData.GetFilename() + "_SaveState.p2s");
 	}
 	else
 	{
@@ -205,6 +189,7 @@ void InputRecording::Play(wxString fileName, bool fromSaveState)
 			recordingConLog(L"[REC]: Recording was possibly recorded on a different game.\n");
 		}
 	}
+
 	state = INPUT_RECORDING_MODE_REPLAY;
 	recordingConLog(wxString::Format(L"[REC]: Replaying input recording - [%s]\n", InputRecordingData.GetFilename()));
 	recordingConLog(wxString::Format(L"[REC]: PCSX2 Version Used: %s\n", InputRecordingData.GetHeader().emu));
@@ -213,6 +198,30 @@ void InputRecording::Play(wxString fileName, bool fromSaveState)
 	recordingConLog(wxString::Format(L"[REC]: Author: %s\n", InputRecordingData.GetHeader().author));
 	recordingConLog(wxString::Format(L"[REC]: Total Frames: %d\n", InputRecordingData.GetTotalFrames()));
 	recordingConLog(wxString::Format(L"[REC]: Undo Count: %d\n", InputRecordingData.GetUndoCount()));
+	return true;
+}
+
+bool InputRecording::LoadSavestate()
+{
+	if (CoreThread.IsOpen())
+	{
+		FILE* ssFileCheck = wxFopen(InputRecordingData.GetFilename() + "_SaveState.p2s", "r");
+		if (ssFileCheck != nullptr)
+		{
+			fclose(ssFileCheck);
+			StateCopy_LoadFromFile(InputRecordingData.GetFilename() + "_SaveState.p2s");
+			return true;
+		}
+		else
+		{
+			recordingConLog(wxString::Format("[REC]: Could not locate savestate file at location - %s_SaveState.p2s\n", InputRecordingData.GetFilename()));
+		}
+	}
+	else
+	{
+		recordingConLog(L"[REC]: Game is not open, aborting playing input recording which starts on a save-state.\n");
+	}
+	return false;
 }
 
 wxString InputRecording::resolveGameName()

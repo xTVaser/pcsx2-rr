@@ -41,8 +41,9 @@ public:
 	bool IsInterruptFrame();
 
 	void Stop();
-	void Create(wxString filename, bool fromSaveState, wxString authorName);
-	void Play(wxString filename, bool fromSaveState);
+	bool Create(wxString filename, bool fromSaveState, wxString authorName);
+	bool Play(wxString filename, bool fromSaveState);
+	bool LoadSavestate();
 
 private:
 	InputRecordingFile InputRecordingData;

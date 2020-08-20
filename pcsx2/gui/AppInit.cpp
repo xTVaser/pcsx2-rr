@@ -77,10 +77,10 @@ void Pcsx2App::OpenMainFrame()
 	m_id_Disassembler = disassembly->GetId();
 
 #ifndef DISABLE_RECORDING
-	VirtualPad* virtualPad0 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 0);
+	std::unique_ptr<VirtualPad> virtualPad0(std::make_unique<VirtualPad>(mainFrame, wxID_ANY, wxEmptyString, 0));
 	m_id_VirtualPad[0] = virtualPad0->GetId();
 	
-	VirtualPad *virtualPad1 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 1);
+	std::unique_ptr<VirtualPad> virtualPad1(std::make_unique<VirtualPad>(mainFrame, wxID_ANY, wxEmptyString, 1));
 	m_id_VirtualPad[1] = virtualPad1->GetId();
 
 	NewRecordingFrame* newRecordingFrame = new NewRecordingFrame(mainFrame);
