@@ -42,7 +42,7 @@ public:
 
 	void Stop();
 	bool Create(wxString filename, bool fromSaveState, wxString authorName);
-	bool Play(wxString filename, bool fromSaveState);
+	bool Play(wxString filename);
 	bool LoadSavestate();
 
 private:

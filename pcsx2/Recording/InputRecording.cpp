@@ -157,7 +157,7 @@ bool InputRecording::Create(wxString FileName, bool fromSaveState, wxString auth
 }
 
 // GUI Handler - Play a recording
-bool InputRecording::Play(wxString fileName, bool fromSaveState)
+bool InputRecording::Play(wxString fileName)
 {
 	if (state != INPUT_RECORDING_MODE_NONE)
 		Stop();
