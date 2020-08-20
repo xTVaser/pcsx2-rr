@@ -29,20 +29,14 @@ struct InputRecordingFileHeader
 	char emu[50] = "";
 	char author[255] = "";
 	char gameName[255] = "";
-
+	unsigned long totalFrames = 0;
+	unsigned long undoCount = 0;
+	bool savestate = false;
 public:
 	void SetEmulatorVersion();
 	void Init();
 	void SetAuthor(wxString author);
 	void SetGameName(wxString cdrom);
-};
-
-
-// DEPRECATED / Slated for Removal
-struct InputRecordingSavestate
-{
-	// Whether we start from the savestate or from power-on
-	bool fromSavestate = false;
 };
 
 // Handles all operations on the input recording file
@@ -83,29 +77,23 @@ public:
 	bool WriteKeyBuffer(const uint &frame, const uint port, const uint bufIndex, const u8 &buf);
 
 private:
-	static const int controllerPortsSupported = 2;
 	static const int controllerInputBytes = 18;
-	static const int inputBytesPerFrame = controllerInputBytes * controllerPortsSupported;
-	// TODO - version 2, this could be greatly simplified if everything was in the header
-	// + 4 + 4 is the totalFrame and undoCount values
-	static const int headerSize = sizeof(InputRecordingFileHeader) + 4 + 4;
-	// DEPRECATED / Slated for Removal
-	static const int recordingSavestateHeaderSize = sizeof(bool);
-	static const int seekpointTotalFrames = sizeof(InputRecordingFileHeader);
-	static const int seekpointUndoCount = sizeof(InputRecordingFileHeader) + 4;
-	static const int seekpointSaveStateHeader = seekpointUndoCount + 4;
+	static const int seekpointInputData = 570U;
+	static const int seekpointUndoCount = seekpointInputData - 5;
+	static const int seekpointTotalFrames = seekpointUndoCount - 4;
 
 	InputRecordingFileHeader header;
 	wxString filename = "";
-	FILE * recordingFile = NULL;
-	InputRecordingSavestate savestate;
-	unsigned long totalFrames = 0;
-	unsigned long undoCount = 0;
+	FILE* recordingFile = NULL;
+
+	// TODO: Implementation of V2.0 (w/ multitap)
+	// Values placed separate from the above values in preparation
+	static const int padCount = 2;
+	static const int inputBytesPerFrame = controllerInputBytes * padCount;
 
 	// Calculates the position of the current frame in the input recording
 	long getRecordingBlockSeekPoint(const long& frame);
 	bool open(const wxString path, bool newRecording);
 	bool verifyRecordingFileHeader();
-	bool writeSaveState();
 };
 #endif
