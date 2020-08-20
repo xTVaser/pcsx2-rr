@@ -102,7 +102,6 @@ void InputRecordingFile::IncrementUndoCount()
 
 bool InputRecordingFile::open(const wxString path, bool newRecording)
 {
-	Close();
 	if (newRecording)
 	{
 		if ((recordingFile = wxFopen(path, L"wb+")) != nullptr)
