@@ -55,14 +55,14 @@ void InputRecordingFileHeader::SetGameName(wxString _gameName)
 
 bool InputRecordingFile::Close()
 {
-	if (recordingFile == NULL)
+	if (recordingFile != nullptr)
 	{
-		return false;
+		fclose(recordingFile);
+		recordingFile = nullptr;
+		filename = "";
+		return true;
 	}
-	fclose(recordingFile);
-	recordingFile = NULL;
-	filename = "";
-	return true;
+	return false;
 }
 
 const wxString &InputRecordingFile::GetFilename()
@@ -92,13 +92,12 @@ bool InputRecordingFile::FromSaveState()
 
 void InputRecordingFile::IncrementUndoCount()
 {
-	header.undoCount++;
-	if (recordingFile == NULL)
+	if (recordingFile != nullptr)
 	{
-		return;
+		header.undoCount++;
+		fseek(recordingFile, seekpointUndoCount, SEEK_SET);
+		fwrite(&header.undoCount, 4, 1, recordingFile);
 	}
-	fseek(recordingFile, seekpointUndoCount, SEEK_SET);
-	fwrite(&header.undoCount, 4, 1, recordingFile);
 }
 
 bool InputRecordingFile::open(const wxString path, bool newRecording)
@@ -174,66 +173,54 @@ bool InputRecordingFile::OpenExisting(const wxString path)
 
 bool InputRecordingFile::ReadKeyBuffer(u8 &result, const uint &frame, const uint port, const uint bufIndex)
 {
-	if (recordingFile == NULL)
+	if (recordingFile != nullptr)
 	{
-		return false;
+		const u32 seek = getRecordingBlockSeekPoint(frame) + bufIndex;
+		if (fseek(recordingFile, seek, SEEK_SET) == 0 && fread(&result, 1, 1, recordingFile) == 1)
+		{
+			return true;
+		}
 	}
-
-	long seek = getRecordingBlockSeekPoint(frame) + controllerInputBytes * port + bufIndex;
-	if (fseek(recordingFile, seek, SEEK_SET) != 0)
-	{
-		return false;
-	}
-	if (fread(&result, 1, 1, recordingFile) != 1)
-	{
-		return false;
-	}
-
-	return true;
+	return false;
 }
 
 void InputRecordingFile::SetTotalFrames(unsigned long frame)
 {
-	if (recordingFile == NULL || header.totalFrames >= frame)
+	if (recordingFile != nullptr && header.totalFrames < frame)
 	{
-		return;
+		header.totalFrames = frame;
+		fseek(recordingFile, seekpointTotalFrames, SEEK_SET);
+		fwrite(&header.totalFrames, 4, 1, recordingFile);
 	}
-	header.totalFrames = frame;
-	fseek(recordingFile, seekpointTotalFrames, SEEK_SET);
-	fwrite(&header.totalFrames, 4, 1, recordingFile);
 }
 
 bool InputRecordingFile::WriteHeader()
 {
-	if (recordingFile == NULL)
+	if (recordingFile != nullptr)
+	{
+		rewind(recordingFile);
+		// Note: These fwrite calls are separated due to struct memory padding.
+		return fwrite(&header, seekpointTotalFrames, 1, recordingFile) == 1 && fwrite(&header.totalFrames, 9, 1, recordingFile) == 1;
+	}
+	else
 	{
 		return false;
 	}
-	rewind(recordingFile);
-	if (fwrite(&header, seekpointTotalFrames, 1, recordingFile) != 1 || fwrite(&header.totalFrames, 9, 1, recordingFile) != 1)
-	{
-		return false;
-	}
-	return true;
 }
 
 bool InputRecordingFile::WriteKeyBuffer(const uint &frame, const uint port, const uint bufIndex, const u8 &buf)
 {
-	if (recordingFile == NULL)
+	if (recordingFile != nullptr)
 	{
-		return false;
+		const u32 seek = getRecordingBlockSeekPoint(frame) + bufIndex;
+		if (fseek(recordingFile, seek, SEEK_SET) == 0 && fwrite(&buf, 1, 1, recordingFile) == 1)
+		{
+			fflush(recordingFile);
+			return true;
+		}
 	}
-
-	long seek = getRecordingBlockSeekPoint(frame) + 18 * port + bufIndex;
-
-	if (fseek(recordingFile, seek, SEEK_SET) != 0
-		|| fwrite(&buf, 1, 1, recordingFile) != 1)
-	{
-		return false;
-	}
-
-	fflush(recordingFile);
-	return true;
+	//Reaches this return statement if anything else fails
+	return false;
 }
 
 long InputRecordingFile::getRecordingBlockSeekPoint(const long &frame)
@@ -243,7 +230,7 @@ long InputRecordingFile::getRecordingBlockSeekPoint(const long &frame)
 
 bool InputRecordingFile::verifyRecordingFileHeader()
 {
-	if (recordingFile == NULL)
+	if (recordingFile == nullptr)
 	{
 		return false;
 	}
@@ -253,10 +240,15 @@ bool InputRecordingFile::verifyRecordingFileHeader()
 	{
 		return false;
 	}
-	
-	// Check for current verison
-	if (header.version != 1)
+
+	// Check for valid verison
+	switch (header.version)
 	{
+	case 1: // Official V1.0
+		padCount = 2;
+		inputBytesPerFrame = 36;
+		break;
+	default:
 		recordingConLog(wxString::Format("[REC]: Input recording file is not a supported version - %d\n", header.version));
 		return false;
 	}

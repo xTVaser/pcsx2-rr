@@ -84,12 +84,12 @@ private:
 
 	InputRecordingFileHeader header;
 	wxString filename = "";
-	FILE* recordingFile = NULL;
+	FILE* recordingFile = nullptr;
 
 	// TODO: Implementation of V2.0 (w/ multitap)
 	// Values placed separate from the above values in preparation
-	static const int padCount = 2;
-	static const int inputBytesPerFrame = controllerInputBytes * padCount;
+	int padCount;
+	int inputBytesPerFrame;
 
 	// Calculates the position of the current frame in the input recording
 	long getRecordingBlockSeekPoint(const long& frame);
