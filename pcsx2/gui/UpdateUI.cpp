@@ -60,6 +60,7 @@ static void _SaveLoadStuff(bool enabled)
 			if (slot.invalid_cache) Console.WriteLn("Invalid cache. (CRC different or just initialized.)");
 			#endif
 
+			bool wasCacheInvalidated = slot.invalid_cache;
 			if (slot.invalid_cache)
 			{
 				// Pull everything from disk.
@@ -77,8 +78,8 @@ static void _SaveLoadStuff(bool enabled)
 			sMainFrame.EnableMenuItem(slot.load_item_id, !slot.empty);
 			sMainFrame.SetMenuItemLabel(slot.load_item_id, slot.SlotName());
 			sMainFrame.SetMenuItemLabel(slot.save_item_id, slot.SlotName());
+			sGameManagerFrame.getSavestateTab()->updateSlot(slot.slot_num, slot.updated, slot.empty, wasCacheInvalidated);
 		}
-
 	}
 #endif
 }

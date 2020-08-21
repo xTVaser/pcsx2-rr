@@ -168,8 +168,26 @@ void MainEmuFrame::OnMoveAround( wxMoveEvent& evt )
 		{
 			if (!proglog->IsMaximized())
 			{
+				// NOTE - There is only a size gap between the main frame and the logger
+				// because for whatever reason there is an invisible border that extends beyond the frame's size
 				g_Conf->ProgLogBox.DisplayPosition = GetRect().GetTopRight();
 				proglog->SetPosition(g_Conf->ProgLogBox.DisplayPosition);
+			}
+		}
+	}
+
+	if( g_Conf->GameManager.AutoDock )
+	{
+		if (GameManagerFrame* gameManagerFrame = wxGetApp().GetGameManagerFramePtr())
+		{
+			if (!gameManagerFrame->IsMaximized())
+			{
+				// NOTE - There is only a size gap between the main frame and the manager
+				// because for whatever reason there is an invisible border that extends beyond the frame's size
+				int newX = GetRect().GetBottomRight().x + 1 - g_Conf->GameManager.DisplaySize.x;
+				// Add some extra space to the Y coordinate to more closely match the gap between the console logger
+				g_Conf->GameManager.DisplayPosition = wxPoint(newX, GetRect().GetBottomRight().y + 16);
+				gameManagerFrame->SetPosition(g_Conf->GameManager.DisplayPosition);
 			}
 		}
 	}
@@ -181,6 +199,12 @@ void MainEmuFrame::OnLogBoxHidden()
 {
 	g_Conf->ProgLogBox.Visible = false;
 	m_MenuItem_Console.Check( false );
+}
+
+void MainEmuFrame::OnGameManagerHidden()
+{
+	g_Conf->GameManager.Visible = false;
+	m_menuItem_GameManager.Check( false );
 }
 
 // ------------------------------------------------------------------------
@@ -237,6 +261,7 @@ void MainEmuFrame::ConnectMenus()
 #if defined(__unix__)
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_ShowConsole_Stdio, this, MenuId_Console_Stdio);
 #endif
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_ShowGameManager, this, MenuId_GameManager);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_ShowAboutBox, this, MenuId_About);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_ChangeLang, this, MenuId_ChangeLang);
 
@@ -351,7 +376,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 #if defined(__unix__)
 	, m_MenuItem_Console_Stdio( *new wxMenuItem( &m_menuMisc, MenuId_Console_Stdio, _("&Console to Stdio"), wxEmptyString, wxITEM_CHECK ) )
 #endif
-
+	, m_menuItem_GameManager(*new wxMenuItem(&m_menuMisc, MenuId_GameManager, _("&Show Game Manager"), wxEmptyString, wxITEM_CHECK))
 {
 	m_RestartEmuOnDelete = false;
 
@@ -537,6 +562,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 #if defined(__unix__)
 	m_menuMisc.Append( &m_MenuItem_Console_Stdio );
 #endif
+	m_menuMisc.Append(&m_menuItem_GameManager);
 
 	// No dialogs implemented for these yet...
 	//m_menuMisc.Append(41, "Patch Browser...", wxEmptyString, wxITEM_NORMAL);
@@ -576,6 +602,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 #endif
 
 	m_MenuItem_Console.Check( g_Conf->ProgLogBox.Visible );
+	m_menuItem_GameManager.Check(g_Conf->GameManager.Visible);
 
 	ConnectMenus();
 	Bind(wxEVT_MOVE, &MainEmuFrame::OnMoveAround, this);
@@ -625,6 +652,9 @@ void MainEmuFrame::OnFocus( wxFocusEvent& evt )
 	if( ConsoleLogFrame* logframe = wxGetApp().GetProgramLog() )
 		MSW_SetWindowAfter( logframe->GetHandle(), GetHandle() );
 
+	if( GameManagerFrame* gameManagerFrame = wxGetApp().GetGameManagerFramePtr() )
+		MSW_SetWindowAfter( gameManagerFrame->GetHandle(), GetHandle() );
+
 	evt.Skip();
 }
 
@@ -633,6 +663,8 @@ void MainEmuFrame::OnActivate( wxActivateEvent& evt )
 	if( ConsoleLogFrame* logframe = wxGetApp().GetProgramLog() )
 		MSW_SetWindowAfter( logframe->GetHandle(), GetHandle() );
 
+	if( GameManagerFrame* gameManagerFrame = wxGetApp().GetGameManagerFramePtr() )
+		MSW_SetWindowAfter( gameManagerFrame->GetHandle(), GetHandle() );
 }
 
 void MainEmuFrame::OnFrameMenuClose(wxMenuEvent& evt)
