@@ -282,6 +282,9 @@ set(pcsx2GuiSources
 	gui/Debugger/DebuggerLists.cpp
 	gui/Debugger/DisassemblyDialog.cpp
 	gui/Debugger/DebugEvents.cpp
+	gui/GameManager/GameManager.cpp
+	gui/GameManager/SavestateSlotPanel.cpp
+	gui/GameManager/SavestateTab.cpp
 	gui/ExecutorThread.cpp
 	gui/FrameForGS.cpp
 	gui/GlobalCommands.cpp
@@ -309,7 +312,6 @@ set(pcsx2GuiSources
 	gui/Panels/VideoPanel.cpp
 	gui/RecentIsoList.cpp
 	gui/Saveslots.cpp
-	gui/SaveslotPreview.cpp
 	gui/SysState.cpp
 	gui/UpdateUI.cpp
 	)
@@ -340,6 +342,9 @@ set(pcsx2GuiHeaders
 	gui/Dialogs/ConfigurationDialog.h
 	gui/Dialogs/LogOptionsDialog.h
 	gui/Dialogs/ModalPopups.h
+	gui/GameManager/GameManager.h
+	gui/GameManager/SavestateSlotPanel.h
+	gui/GameManager/SavestateTab.h
 	gui/GSFrame.h
 	gui/i18n.h
 	gui/IsoDropTarget.h
@@ -353,7 +358,6 @@ set(pcsx2GuiHeaders
 	gui/pxEventThread.h
 	gui/RecentIsoList.h
 	gui/Saveslots.h
-	gui/SaveslotPreview.h
 	)
 
 # Warning: the declaration of the .h are mandatory in case of resources files. It will ensure the creation

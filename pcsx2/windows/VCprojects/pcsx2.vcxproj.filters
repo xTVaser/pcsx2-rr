@@ -151,6 +151,9 @@
     <Filter Include="Recording\gui">
       <UniqueIdentifier>{93e36831-627f-4529-b709-1f4bad398512}</UniqueIdentifier>
     </Filter>
+    <Filter Include="AppHost\GameManager">
+      <UniqueIdentifier>{5f736024-d931-4a78-aa29-9e99c67f31fd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Utilities\folderdesc.txt">
@@ -871,8 +874,14 @@
     <ClCompile Include="..\..\IPU\IPUdither.cpp">
       <Filter>System\Ps2\IPU</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\gui\SaveslotPreview.cpp">
-      <Filter>AppHost</Filter>
+    <ClCompile Include="..\..\gui\GameManager\GameManager.cpp">
+      <Filter>AppHost\GameManager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gui\GameManager\SavestateSlotPanel.cpp">
+      <Filter>AppHost\GameManager</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gui\GameManager\SavestateTab.cpp">
+      <Filter>AppHost\GameManager</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1325,6 +1334,15 @@
     </ClInclude>
     <ClInclude Include="..\..\Recording\VirtualPad.h">
       <Filter>Recording\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gui\GameManager\GameManager.h">
+      <Filter>AppHost\GameManager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gui\GameManager\SavestateSlotPanel.h">
+      <Filter>AppHost\GameManager</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gui\GameManager\SavestateTab.h">
+      <Filter>AppHost\GameManager</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
