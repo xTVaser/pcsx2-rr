@@ -878,6 +878,7 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 		m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
 	}
 	m_menuRecording.FindChildItem(MenuId_Recording_Restart)->Enable(true);
+	g_RecordingControls.Unpause();
 }
 
 void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
