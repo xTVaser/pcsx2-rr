@@ -72,8 +72,7 @@ void SaveStateBase::InputRecordingFreeze()
 			// Therefore, the best we can do is limit the frame counter within the min/max of the recording
 			if (newFrameCounter < 0)
 			{
-				newFrameCounter = 0;
-				recordingConLog(L"[REC]: Warning, you loaded a savestate outside of the bounds of the original recording. This should be avoided. Savestate's framecount has been ignored.\n");
+				recordingConLog(L"[REC]: Warning, you loaded a savestate outside of the bounds of the original recording. This should be avoided.\n");
 			}
 			else if (newFrameCounter >= (s32)g_InputRecording.GetInputRecordingData().GetMaxFrame())
 			{
@@ -119,7 +118,7 @@ void InputRecording::ControllerInterrupt(u8& data, u8& port, u16& bufCount, u8 b
 			fInterruptFrame = false;
 		}
 	}// We do not want to record or save the first two bytes in the data returned from the PAD plugin
-	else if (fInterruptFrame && bufCount >= 3)
+	else if (fInterruptFrame && bufCount >= 3 && frameCounter >= 0)
 	{
 		// Read or Write
 		if (state == InputRecordingMode::Recording)
@@ -243,6 +242,10 @@ void InputRecording::SetFrameCounter(s32 newFrameCounter)
 void InputRecording::ResetFrameCounter()
 {
 	frameCounter = g_FrameCount - startingFrame;
+	if (frameCounter < 0)
+	{
+		recordingConLog(L"[REC]: Warning, full/fast booting is outside of the bounds of the original recording. This should be avoided.\n");
+	}
 }
 
 void InputRecording::SetStartingFrame(u32 newStartingFrame)
