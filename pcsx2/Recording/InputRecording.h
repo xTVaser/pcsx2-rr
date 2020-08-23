@@ -49,10 +49,10 @@ public:
 	bool IsSavestateInitializing();
 
 	// If there is currently an input recording being played back
-	bool IsRecordingReplaying();
+	bool IsReplaying();
 
 	// If there is currently an input recording being recorded
-	bool IsRecordingRecording();
+	bool IsRecording();
 
 	// String representation of the current recording mode to be interpolated into the title
 	wxString RecordingModeTitleSegment();

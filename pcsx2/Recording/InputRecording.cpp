@@ -154,7 +154,7 @@ u32 InputRecording::GetStartingFrame()
 void InputRecording::IncrementFrameCounter()
 {
 	frameCounter++;
-	if (IsRecordingRecording())
+	if (IsRecording())
 	{
 		GetInputRecordingData().UpdateFrameMax(frameCounter);
 	}
@@ -175,12 +175,12 @@ bool InputRecording::IsSavestateInitializing()
 	return savestateInitializing;
 }
 
-bool InputRecording::IsRecordingReplaying()
+bool InputRecording::IsReplaying()
 {
 	return state == InputRecordingMode::Replaying;
 }
 
-bool InputRecording::IsRecordingRecording()
+bool InputRecording::IsRecording()
 {
 	return state == InputRecordingMode::Recording;
 }
@@ -233,7 +233,7 @@ void InputRecording::SavestateInitialized()
 void InputRecording::SetFrameCounter(s32 newFrameCounter)
 {
 	frameCounter = newFrameCounter;
-	if (IsRecordingRecording())
+	if (IsRecording())
 	{
 		GetInputRecordingData().UpdateFrameMax(frameCounter);
 	}
@@ -318,7 +318,9 @@ void InputRecording::Play(wxString FileName, bool fromSaveState)
 	{
 		return;
 	}
-	// TODO: use an explicit function for loading the savestate that accompanies a recording file.
+	// TODO: add an explicit function that handles loading a TAS file
+	// from frame 0 - whether that be through fast/full boot
+	// or from a base savestate.
 
 	// For if a savestate is loaded - otherwise, starting frame would be misassigned
 	savestateInitializing = true;
