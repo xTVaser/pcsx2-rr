@@ -1144,6 +1144,12 @@ protected:
 void Pcsx2App::SysExecute()
 {
 	SysExecutorThread.PostEvent( new SysExecEvent_Execute() );
+#ifndef DISABLE_RECORDING
+	if (g_Conf->EmuOptions.EnableRecordingTools && g_InputRecording.IsRecordingActive())
+	{
+		g_InputRecording.ResetFrameCounter();
+	}
+#endif
 }
 
 // Executes the specified cdvd source and optional elf file.  This command performs a

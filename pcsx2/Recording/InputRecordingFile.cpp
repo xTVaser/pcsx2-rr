@@ -293,6 +293,9 @@ bool InputRecordingFile::ReadHeaderAndCheck()
 	}
 	else
 	{
+		// TODO: Specify in a recording whether to use Fast or Full boot
+		// Differing number of frames to deal with even tho they both start
+		// with a g_framecount of 0 (I believe anyways)
 		sApp.SysExecute();
 	}
 

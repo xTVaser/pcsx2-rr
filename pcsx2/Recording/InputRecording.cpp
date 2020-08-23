@@ -241,6 +241,11 @@ void InputRecording::SetFrameCounter(s32 newFrameCounter)
 	}
 }
 
+void InputRecording::ResetFrameCounter()
+{
+	frameCounter = g_FrameCount - startingFrame;
+}
+
 void InputRecording::SetStartingFrame(u32 newStartingFrame)
 {
 	startingFrame = newStartingFrame;

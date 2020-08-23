@@ -72,6 +72,10 @@ public:
 	// Set the running frame counter for the input recording to an arbitrary value
 	void SetFrameCounter(s32 newFrameCounter);
 
+	// Set the running frame counter for the input recording to the displacement
+	// from a full/fast boot using g_framecount
+	void ResetFrameCounter();
+
 	// Store the starting internal PCSX2 g_FrameCount value
 	void SetStartingFrame(u32 newStartingFrame);
 	
