@@ -88,7 +88,7 @@ void InputRecordingControls::FrameAdvance()
 {
 	if (g_InputRecording.IsRecordingReplaying() && g_InputRecording.GetFrameCounter() >= g_InputRecording.GetInputRecordingData().GetMaxFrame())
 	{
-		g_InputRecording.RecordModeToggle();
+		g_InputRecording.SetToRecordMode();
 		return;
 	}
 	frameAdvanceMarker = g_InputRecording.GetFrameCounter();
@@ -125,7 +125,7 @@ void InputRecordingControls::Resume()
 {
 	if (g_InputRecording.IsRecordingReplaying() && g_InputRecording.GetFrameCounter() >= g_InputRecording.GetInputRecordingData().GetMaxFrame())
 	{
-		g_InputRecording.RecordModeToggle();
+		g_InputRecording.SetToRecordMode();
 		return;
 	}
 	pauseEmulation = false;
@@ -141,7 +141,7 @@ void InputRecordingControls::TogglePause()
 {
 	if (pauseEmulation && g_InputRecording.IsRecordingReplaying() && g_InputRecording.GetFrameCounter() >= g_InputRecording.GetInputRecordingData().GetMaxFrame())
 	{
-		g_InputRecording.RecordModeToggle();
+		g_InputRecording.SetToRecordMode();
 		return;
 	}
 	pauseEmulation = !pauseEmulation;

@@ -57,6 +57,12 @@ public:
 	// String representation of the current recording mode to be interpolated into the title
 	wxString RecordingModeTitleSegment();
 
+	// Sets input recording to Record Mode
+	void SetToRecordMode();
+
+	// Sets input recording to Replay Mode
+	void SetToReplayMode();
+
 	// Switches between recording and replaying the active input recording file
 	void RecordModeToggle();
 

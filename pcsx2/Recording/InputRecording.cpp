@@ -203,17 +203,27 @@ wxString InputRecording::RecordingModeTitleSegment()
 	}
 }
 
+void InputRecording::SetToRecordMode()
+{
+	state = InputRecordingMode::Recording;
+	recordingConLog("[REC]: Record mode ON.\n");
+}
+
+void InputRecording::SetToReplayMode()
+{
+	state = InputRecordingMode::Replaying;
+	recordingConLog("[REC]: Replay mode ON.\n");
+}
+
 void InputRecording::RecordModeToggle()
 {
 	if (state == InputRecordingMode::Replaying)
 	{
-		state = InputRecordingMode::Recording;
-		recordingConLog("[REC]: Record mode ON.\n");
+		SetToRecordMode();
 	}
 	else if (state == InputRecordingMode::Recording)
 	{
-		state = InputRecordingMode::Replaying;
-		recordingConLog("[REC]: Replay mode ON.\n");
+		SetToReplayMode();
 	}
 }
 
