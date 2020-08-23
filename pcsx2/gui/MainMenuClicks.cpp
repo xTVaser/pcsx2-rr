@@ -846,7 +846,7 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 	const bool notInitiallyPaused = !g_RecordingControls.IsEmulationAndRecordingPaused();
 	if (notInitiallyPaused)
 	{
-		g_RecordingControls.Unpause();
+		g_RecordingControls.Pause();
 	}
 	wxFileDialog openFileDialog(this, _("Select P2M2 record file."), L"", L"",
 		L"p2m2 file(*.p2m2)|*.p2m2", wxFD_OPEN);
