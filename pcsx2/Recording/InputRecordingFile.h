@@ -73,7 +73,7 @@ public:
 	bool WriteSaveState();
 
 	bool ReadHeaderAndCheck();
-	void UpdateFrameMax(unsigned long frame);
+	void UpdateFrameMax(long frame);
 	void AddUndoCount();
 
 	unsigned long recordingFrameCounter = 0;

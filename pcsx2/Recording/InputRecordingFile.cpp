@@ -335,9 +335,9 @@ bool InputRecordingFile::WriteMaxFrame()
 	return true;
 }
 
-void InputRecordingFile::UpdateFrameMax(unsigned long frame)
+void InputRecordingFile::UpdateFrameMax(long frame)
 {
-	if (recordingFile == NULL || totalFrames >= frame)
+	if (recordingFile == NULL || (long)totalFrames >= frame)
 	{
 		return;
 	}
