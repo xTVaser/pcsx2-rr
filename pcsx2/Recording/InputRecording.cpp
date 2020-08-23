@@ -94,11 +94,6 @@ InputRecording g_InputRecording;
 void InputRecording::ControllerInterrupt(u8& data, u8& port, u16& bufCount, u8 buf[])
 {
 	// TODO - Multi-Tap Support
-	// Only examine controllers 1 / 2
-	if (port != 0 && port != 1)
-	{
-		return;
-	}
 
 	/*
 		This appears to try to ensure that we are only paying attention
@@ -111,10 +106,6 @@ void InputRecording::ControllerInterrupt(u8& data, u8& port, u16& bufCount, u8 b
 	if (bufCount == 1)
 	{
 		fInterruptFrame = data == 0x42;
-		if (!fInterruptFrame)
-		{
-			return;
-		}
 	}
 	else if (bufCount == 2)
 	{
@@ -127,28 +118,22 @@ void InputRecording::ControllerInterrupt(u8& data, u8& port, u16& bufCount, u8 b
 		if (buf[bufCount] != 0x5A)
 		{
 			fInterruptFrame = false;
-			return;
 		}
-	}
-
-	// We do not want to record or save the first two bytes in the data returned from the PAD plugin
-	if (!fInterruptFrame || state == InputRecordingMode::NotActive || bufCount < 3)
+	}// We do not want to record or save the first two bytes in the data returned from the PAD plugin
+	else if (fInterruptFrame && bufCount >= 3)
 	{
-		return;
-	}
-
-	// Read or Write
-	const u8& nowBuf = buf[bufCount];
-	if (state == InputRecordingMode::Recording)
-	{
-		inputRecordingData.WriteKeyBuf(frameCounter, port, bufCount - 3, nowBuf);
-	}
-	else if (state == InputRecordingMode::Replaying)
-	{
-		u8 tmp = 0;
-		if (inputRecordingData.ReadKeyBuf(tmp, frameCounter, port, bufCount - 3))
+		// Read or Write
+		if (state == InputRecordingMode::Recording)
 		{
-			buf[bufCount] = tmp;
+			inputRecordingData.WriteKeyBuf(frameCounter, port, bufCount - 3, buf[bufCount]);
+		}
+		else if (state == InputRecordingMode::Replaying)
+		{
+			u8 tmp = 0;
+			if (inputRecordingData.ReadKeyBuf(tmp, frameCounter, port, bufCount - 3))
+			{
+				buf[bufCount] = tmp;
+			}
 		}
 	}
 }

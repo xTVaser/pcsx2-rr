@@ -218,13 +218,16 @@ SIO_WRITE sioWriteController(u8 data)
 #ifndef DISABLE_RECORDING
 		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
-			g_InputRecording.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
-			if (g_InputRecording.IsInterruptFrame())
+			// Ensures that only controllers 1 & 2 are polled
+			if (sio.slot[sio.port] == 0)
 			{
-				g_RecordingInput.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+				g_InputRecording.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+				if (g_InputRecording.IsInterruptFrame())
+				{
+					g_RecordingInput.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+				}
+				PadData::LogPadData(sio.port, sio.bufCount, sio.buf);
 			}
-
-			PadData::LogPadData(sio.port, sio.bufCount, sio.buf);
 		}
 #endif
 		break;
