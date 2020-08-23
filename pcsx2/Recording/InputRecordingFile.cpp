@@ -29,6 +29,9 @@ void InputRecordingFileHeader::Init()
 {
 	memset(author, 0, ArraySize(author));
 	memset(gameName, 0, ArraySize(gameName));
+	memset(emu, 0, ArraySize(emu));
+	undoCount = 0;
+	totalFrames = 0;
 }
 
 void InputRecordingFileHeader::SetEmulatorVersion()
