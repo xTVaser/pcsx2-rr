@@ -837,10 +837,7 @@ void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 	}
 	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
 	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
-	if (g_InputRecording.GetInputRecordingData().FromSaveState())
-	{
-		m_menuRecording.FindChildItem(MenuId_Recording_Restart)->Enable(true);
-	}
+	m_menuRecording.FindChildItem(MenuId_Recording_Restart)->Enable(true);
 }
 
 void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
@@ -880,10 +877,7 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 		m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
 		m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
 	}
-	if (g_InputRecording.GetInputRecordingData().FromSaveState())
-	{
-		m_menuRecording.FindChildItem(MenuId_Recording_Restart)->Enable(true);
-	}
+	m_menuRecording.FindChildItem(MenuId_Recording_Restart)->Enable(true);
 }
 
 void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
@@ -891,10 +885,7 @@ void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
 	g_InputRecording.Stop();
 	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(true);
 	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(false);
-	if (g_InputRecording.GetInputRecordingData().FromSaveState())
-	{
-		m_menuRecording.FindChildItem(MenuId_Recording_Restart)->Enable(false);
-	}
+	m_menuRecording.FindChildItem(MenuId_Recording_Restart)->Enable(false);
 }
 
 void MainEmuFrame::Menu_Recording_Restart_Click(wxCommandEvent&)
