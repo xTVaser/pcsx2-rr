@@ -51,6 +51,9 @@ public:
 	// If there is currently an input recording being played back
 	bool IsRecordingReplaying();
 
+	// If there is currently an input recording being recorded
+	bool IsRecordingRecording();
+
 	// String representation of the current recording mode to be interpolated into the title
 	wxString RecordingModeTitleSegment();
 

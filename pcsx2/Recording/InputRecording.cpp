@@ -156,7 +156,7 @@ u32 InputRecording::GetStartingFrame()
 void InputRecording::IncrementFrameCounter()
 {
 	frameCounter++;
-	if (state == InputRecordingMode::Recording)
+	if (IsRecordingRecording())
 	{
 		GetInputRecordingData().UpdateFrameMax(frameCounter);
 	}
@@ -179,7 +179,12 @@ bool InputRecording::IsSavestateInitializing()
 
 bool InputRecording::IsRecordingReplaying()
 {
-	return IsRecordingActive() && state == InputRecordingMode::Replaying;
+	return state == InputRecordingMode::Replaying;
+}
+
+bool InputRecording::IsRecordingRecording()
+{
+	return state == InputRecordingMode::Recording;
 }
 
 wxString InputRecording::RecordingModeTitleSegment()
@@ -220,7 +225,7 @@ void InputRecording::SavestateInitialized()
 void InputRecording::SetFrameCounter(u32 newFrameCounter)
 {
 	frameCounter = newFrameCounter;
-	if (state == InputRecordingMode::Recording)
+	if (IsRecordingRecording())
 	{
 		GetInputRecordingData().UpdateFrameMax(frameCounter);
 	}
