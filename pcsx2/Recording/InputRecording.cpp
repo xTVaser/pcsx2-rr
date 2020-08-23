@@ -55,7 +55,7 @@ void SaveStateBase::InputRecordingFreeze()
 			g_InputRecording.GetInputRecordingData().AddUndoCount();
 			// Reloading a save-state means the internal recording frame counter may need to be adjusted
 			// Since we persist the g_FrameCount of the beginning of the movie, we can use it to recalculate it
-			u32 newFrameCounter = g_FrameCount - (g_InputRecording.GetStartingFrame());
+			s32 newFrameCounter = g_FrameCount - (g_InputRecording.GetStartingFrame());
 			// It is possible for someone to load a savestate outside of the original recording's context
 			// this should be avoided (hence the log) but I don't think there is a mechanism to reverse loading
 			// the save-state
@@ -138,7 +138,7 @@ void InputRecording::ControllerInterrupt(u8& data, u8& port, u16& bufCount, u8 b
 	}
 }
 
-u32 InputRecording::GetFrameCounter()
+s32 InputRecording::GetFrameCounter()
 {
 	return frameCounter;
 }
@@ -232,7 +232,7 @@ void InputRecording::SavestateInitialized()
 	savestateInitializing = false;
 }
 
-void InputRecording::SetFrameCounter(u32 newFrameCounter)
+void InputRecording::SetFrameCounter(s32 newFrameCounter)
 {
 	frameCounter = newFrameCounter;
 	if (IsRecordingRecording())

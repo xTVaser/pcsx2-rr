@@ -27,7 +27,7 @@ public:
 	void ControllerInterrupt(u8 &data, u8 &port, u16 &BufCount, u8 buf[]);
 
 	// The running frame counter for the input recording
-	u32 GetFrameCounter();
+	s32 GetFrameCounter();
 
 	InputRecordingFile &GetInputRecordingData();
 
@@ -70,7 +70,7 @@ public:
 	void SavestateInitialized();
 
 	// Set the running frame counter for the input recording to an arbitrary value
-	void SetFrameCounter(u32 newFrameCounter);
+	void SetFrameCounter(s32 newFrameCounter);
 
 	// Store the starting internal PCSX2 g_FrameCount value
 	void SetStartingFrame(u32 newStartingFrame);
@@ -94,7 +94,7 @@ private:
 
 	// DEPRECATED: Slated for removal 
 	bool fInterruptFrame = false;
-	u32 frameCounter = 0;
+	s32 frameCounter = 0;
 	InputRecordingFile inputRecordingData;
 	bool savestateInitializing = false;
 	u32 startingFrame = 0;
