@@ -25,7 +25,7 @@
 #include "InputRecording.h"
 #include "InputRecordingControls.h"
 
-#include <vector>
+//#include <vector>
 
 
 // Save or load PCSX2's global frame counter (g_FrameCount) along with each savestate
@@ -39,7 +39,17 @@ void SaveStateBase::InputRecordingFreeze()
 	Freeze(g_FrameCount);
 
 #ifndef DISABLE_RECORDING
-	if (g_InputRecording.IsRecordingActive())
+	// Loading a save-state is an asynchronous task, if we are playing a recording
+	// that starts from a savestate (not power-on) and the starting (pcsx2 internal) frame
+	// marker has not been set (which comes from the save-state), we initialize it.
+	if (g_InputRecording.IsSavestateInitializing())
+	{
+		g_InputRecording.SetStartingFrame(g_FrameCount);
+		g_InputRecording.SavestateInitialized();
+		// TODO - make a function of my own to simplify working with the logging macros
+		recordingConLog(wxString::Format(L"[REC]: Internal Starting Frame: %d\n", g_InputRecording.GetStartingFrame()));
+	}
+	else if (g_InputRecording.IsRecordingActive())
 	{
 		// Explicitly set the frame change tracking variable as to not
 		// detect loading a savestate as a frame being drawn
@@ -50,7 +60,7 @@ void SaveStateBase::InputRecordingFreeze()
 		//
 		// The reason it's also an undo operation when replaying is because the user can switch modes at any time
 		// and begin undoing.  While this isn't impossible to resolve, it's a separate issue and not of the utmost importance (this is just interesting metadata)
-		if (IsLoading() && !g_InputRecording.IsSavestateInitializing())
+		if (IsLoading())
 		{
 			g_InputRecording.GetInputRecordingData().AddUndoCount();
 			// Reloading a save-state means the internal recording frame counter may need to be adjusted
@@ -72,17 +82,6 @@ void SaveStateBase::InputRecordingFreeze()
 			}
 			g_InputRecording.SetFrameCounter(newFrameCounter);
 		}
-	}
-
-	// Loading a save-state is an asynchronous task, if we are playing a recording
-	// that starts from a savestate (not power-on) and the starting (pcsx2 internal) frame
-	// marker has not been set (which comes from the save-state), we initialize it.
-	if (g_InputRecording.IsSavestateInitializing())
-	{
-		g_InputRecording.SetStartingFrame(g_FrameCount);
-		g_InputRecording.SavestateInitialized();
-		// TODO - make a function of my own to simplify working with the logging macros
-		recordingConLog(wxString::Format(L"[REC]: Internal Starting Frame: %d\n", g_InputRecording.GetStartingFrame()));
 	}
 #endif
 }
@@ -249,14 +248,12 @@ void InputRecording::ResetFrameCounter()
 void InputRecording::SetStartingFrame(u32 newStartingFrame)
 {
 	startingFrame = newStartingFrame;
+	frameCounter = 0;
 }
 
 void InputRecording::Stop()
 {
-	// Reset the frame counter when starting a new recording
-	frameCounter = 0;
 	startingFrame = 0;
-	savestateInitializing = false;
 	state = InputRecordingMode::NotActive;
 	if (inputRecordingData.Close())
 	{
@@ -275,11 +272,6 @@ void InputRecording::Create(wxString FileName, bool fromSaveState, wxString auth
 	// that emulation will be paused by the time the recording is actually started
 	// This pause remains here to ensure it's been done.
 	g_InputRecordingControls.PauseImmediately();
-
-	if (fromSaveState)
-	{
-		savestateInitializing = true;
-	}
 
 	if (!inputRecordingData.Open(FileName, true, fromSaveState))
 	{
@@ -300,6 +292,11 @@ void InputRecording::Create(wxString FileName, bool fromSaveState, wxString auth
 	inputRecordingData.WriteHeader();
 	state = InputRecordingMode::Recording;
 	recordingConLog(wxString::Format(L"[REC]: Started new recording - [%s]\n", FileName));
+	if (g_InputRecording.GetInputRecordingData().FromCurrentFrame())
+	{
+		SetStartingFrame(g_FrameCount);
+		recordingConLog(wxString::Format(L"[REC]: Internal Starting Frame: %d\n", startingFrame));
+	}
 }
 
 void InputRecording::Play(wxString FileName, bool fromSaveState)
@@ -318,18 +315,17 @@ void InputRecording::Play(wxString FileName, bool fromSaveState)
 	{
 		return;
 	}
+	// TODO: use an explicit function for loading the savestate that accompanies a recording file.
 
+	// For if a savestate is loaded - otherwise, starting frame would be misassigned
+	savestateInitializing = true;
 	if (!inputRecordingData.ReadHeaderAndCheck())
 	{
 		recordingConLog(L"[REC]: This file is not a correct InputRecording file.\n");
 		inputRecordingData.Close();
 		return;
 	}
-
-	if (inputRecordingData.FromCurrentFrame())
-	{
-		savestateInitializing = true;
-	}
+	savestateInitializing = false;
 
 	if (!g_Conf->CurrentIso.IsEmpty())
 	{
