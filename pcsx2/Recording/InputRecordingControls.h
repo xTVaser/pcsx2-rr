@@ -59,7 +59,7 @@ private:
 	// and should be cleared once a single frame has passed
 	bool frameAdvancing = false;
 	// The input recording frame that frame advancing began on
-	u32 frameAdvanceMarker = 0;
+	s32 frameAdvanceMarker = 0;
 	// Used to detect if the internal PCSX2 g_FrameCount has changed
 	u32 frameCountTracker = -1;
 	// Indicates if we intend to call CoreThread.PauseSelf() on the current or next available vsync

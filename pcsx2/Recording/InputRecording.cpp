@@ -75,7 +75,7 @@ void SaveStateBase::InputRecordingFreeze()
 				newFrameCounter = 0;
 				recordingConLog(L"[REC]: Warning, you loaded a savestate outside of the bounds of the original recording. This should be avoided. Savestate's framecount has been ignored.\n");
 			}
-			else if (newFrameCounter >= g_InputRecording.GetInputRecordingData().GetMaxFrame())
+			else if (newFrameCounter >= (s32)g_InputRecording.GetInputRecordingData().GetMaxFrame())
 			{
 				newFrameCounter = g_InputRecording.GetInputRecordingData().GetMaxFrame();
 				recordingConLog(L"[REC]: Warning, you loaded a savestate outside of the bounds of the original recording. This should be avoided. Savestate's framecount has been ignored.\n");
