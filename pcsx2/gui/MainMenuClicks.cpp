@@ -496,7 +496,7 @@ void MainEmuFrame::Menu_EnableWideScreenPatches_Click( wxCommandEvent& )
 }
 
 #ifndef DISABLE_RECORDING
-void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent&)
+void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent& event)
 {
 	bool checked = GetMenuBar()->IsChecked(MenuId_EnableRecordingTools);
 	// Confirm with User
@@ -526,6 +526,9 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent&)
 	}
 	else
 	{
+		//Closes the TAS file if one is loaded
+		if (g_InputRecording.GetModeState() != INPUT_RECORDING_MODE_NONE)
+			Menu_Recording_Stop_Click(event);
 		GetMenuBar()->Remove(TopLevelMenu_Recording);
 		// Always turn controller logs off, but never turn it on by default
 		SysConsole.controlInfo.Enabled = checked;
