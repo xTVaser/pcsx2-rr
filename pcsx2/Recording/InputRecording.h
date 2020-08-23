@@ -43,7 +43,7 @@ public:
 	void Stop();
 	bool Create(wxString filename, bool fromSaveState, wxString authorName);
 	bool Play(wxString filename);
-	bool GoToFrameZero();
+	bool GoToFirstFrame();
 
 private:
 	InputRecordingFile InputRecordingData;

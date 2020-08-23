@@ -899,7 +899,7 @@ void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
 
 void MainEmuFrame::Menu_Recording_Restart_Click(wxCommandEvent&)
 {
-	if (g_InputRecording.GoToFrameZero())
+	if (g_InputRecording.GoToFirstFrame())
 	{
 		if (g_RecordingControls.IsEmulationAndRecordingPaused() && g_InputRecording.GetModeState() != INPUT_RECORDING_MODE_RECORD)
 		{

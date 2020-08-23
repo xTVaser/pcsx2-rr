@@ -167,7 +167,7 @@ bool InputRecording::Play(wxString fileName)
 	{
 		return false;
 	}
-	if (!GoToFrameZero())
+	if (!GoToFirstFrame())
 	{
 		Stop();
 		return false;
@@ -194,7 +194,7 @@ bool InputRecording::Play(wxString fileName)
 }
 
 // Starts the recording at frame 0 either by loading the accompanying savestate or restarting emulation
-bool InputRecording::GoToFrameZero()
+bool InputRecording::GoToFirstFrame()
 {
 	if (InputRecordingData.GetHeader().savestate)
 	{
