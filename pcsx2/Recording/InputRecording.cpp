@@ -167,18 +167,10 @@ bool InputRecording::Play(wxString fileName)
 	{
 		return false;
 	}
-	// Either load the savestate, or restart the game
-	if (InputRecordingData.GetHeader().savestate)
+	if (!GoToFrameZero())
 	{
-		if (!LoadSavestate())
-		{
-			Stop();
-			return false;
-		}
-	}
-	else
-	{
-		sApp.SysExecute();
+		Stop();
+		return false;
 	}
 
 	// Check if the current game matches with the one used to make the original recording
@@ -201,27 +193,37 @@ bool InputRecording::Play(wxString fileName)
 	return true;
 }
 
-bool InputRecording::LoadSavestate()
+// Starts the recording at frame 0 either by loading the accompanying savestate or restarting emulation
+bool InputRecording::GoToFrameZero()
 {
-	if (CoreThread.IsOpen())
+	if (InputRecordingData.GetHeader().savestate)
 	{
-		FILE* ssFileCheck = wxFopen(InputRecordingData.GetFilename() + "_SaveState.p2s", "r");
-		if (ssFileCheck != nullptr)
+		if (CoreThread.IsOpen())
 		{
-			fclose(ssFileCheck);
-			StateCopy_LoadFromFile(InputRecordingData.GetFilename() + "_SaveState.p2s");
-			return true;
+			FILE* ssFileCheck = wxFopen(InputRecordingData.GetFilename() + "_SaveState.p2s", "r");
+			if (ssFileCheck != nullptr)
+			{
+				fclose(ssFileCheck);
+				StateCopy_LoadFromFile(InputRecordingData.GetFilename() + "_SaveState.p2s");
+				return true;
+			}
+			else
+			{
+				recordingConLog(wxString::Format("[REC]: Could not locate savestate file at location - %s_SaveState.p2s\n", InputRecordingData.GetFilename()));
+				return false;
+			}
 		}
 		else
 		{
-			recordingConLog(wxString::Format("[REC]: Could not locate savestate file at location - %s_SaveState.p2s\n", InputRecordingData.GetFilename()));
+			recordingConLog(L"[REC]: Game is not open, cannot load the save-state accompanying the current recording.\n");
+			return false;
 		}
 	}
 	else
 	{
-		recordingConLog(L"[REC]: Game is not open, aborting playing input recording which starts on a save-state.\n");
+		sApp.SysExecute();
+		return true;
 	}
-	return false;
 }
 
 wxString InputRecording::resolveGameName()
