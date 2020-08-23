@@ -25,8 +25,6 @@
 #include "InputRecording.h"
 #include "InputRecordingControls.h"
 
-//#include <vector>
-
 
 // Save or load PCSX2's global frame counter (g_FrameCount) along with each savestate
 //
