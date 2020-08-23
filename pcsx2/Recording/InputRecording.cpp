@@ -72,12 +72,12 @@ void SaveStateBase::InputRecordingFreeze()
 			// Therefore, the best we can do is limit the frame counter within the min/max of the recording
 			if (newFrameCounter < 0)
 			{
-				recordingConLog(L"[REC]: Warning, you loaded a savestate outside of the bounds of the original recording. This should be avoided.\n");
+				recordingConLog(L"[REC]: Warning, you loaded a savestate placed before frame 0 of the original recording. This should be avoided.\n");
 			}
 			else if (newFrameCounter >= (s32)g_InputRecording.GetInputRecordingData().GetMaxFrame())
 			{
 				newFrameCounter = g_InputRecording.GetInputRecordingData().GetMaxFrame();
-				recordingConLog(L"[REC]: Warning, you loaded a savestate outside of the bounds of the original recording. This should be avoided. Savestate's framecount has been ignored.\n");
+				recordingConLog(L"[REC]: Warning, you loaded a savestate past the bounds of the original recording. This should be avoided. Savestate's framecount has been ignored.\n");
 			}
 			g_InputRecording.SetFrameCounter(newFrameCounter);
 		}
@@ -244,7 +244,7 @@ void InputRecording::ResetFrameCounter()
 	frameCounter = g_FrameCount - startingFrame;
 	if (frameCounter < 0)
 	{
-		recordingConLog(L"[REC]: Warning, full/fast booting is outside of the bounds of the original recording. This should be avoided.\n");
+		recordingConLog(L"[REC]: Warning, full/fast booting places the emulation before frame 0 of the original recording. This should be avoided.\n");
 	}
 }
 
