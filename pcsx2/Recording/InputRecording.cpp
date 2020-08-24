@@ -254,7 +254,6 @@ void InputRecording::SetStartingFrame(u32 newStartingFrame)
 
 void InputRecording::Stop()
 {
-	startingFrame = 0;
 	state = InputRecordingMode::NotActive;
 	if (inputRecordingData.Close())
 	{
@@ -298,6 +297,10 @@ void InputRecording::Create(wxString FileName, bool fromSaveState, wxString auth
 		SetStartingFrame(g_FrameCount);
 		recordingConLog(wxString::Format(L"[REC]: Internal Starting Frame: %d\n", startingFrame));
 	}
+	else
+	{
+		SetStartingFrame(0);
+	}
 }
 
 void InputRecording::Play(wxString FileName, bool fromSaveState)
@@ -328,7 +331,12 @@ void InputRecording::Play(wxString FileName, bool fromSaveState)
 		inputRecordingData.Close();
 		return;
 	}
-	savestateInitializing = false;
+
+	if (!g_InputRecording.GetInputRecordingData().FromCurrentFrame())
+	{
+		savestateInitializing = false;
+		SetStartingFrame(0);
+	}
 
 	if (!g_Conf->CurrentIso.IsEmpty())
 	{
