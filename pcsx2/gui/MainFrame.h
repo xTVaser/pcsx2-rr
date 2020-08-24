@@ -165,6 +165,9 @@ public:
 	void CommitPreset_noTrigger();
 	void AppendKeycodeNamesToMenuOptions();
 	void UpdateStatusBar();
+#ifndef DISABLE_RECORDING
+	void AppendKeycodeNamesToRecordingMenuOptions(MenuIdentifiers menuId, wxString keyCodeStr);
+#endif
 
 protected:
 	void DoGiveHelp(const wxString& text, bool show);
