@@ -239,7 +239,7 @@ void InputRecording::SetFrameCounter(s32 newFrameCounter)
 
 void InputRecording::ResetFrameCounter()
 {
-	frameCounter = g_FrameCount - startingFrame;
+	frameCounter = -startingFrame;
 	if (frameCounter < 0)
 	{
 		recordingConLog(L"[REC]: Warning, full/fast booting places the emulation before frame 0 of the original recording. This should be avoided.\n");
