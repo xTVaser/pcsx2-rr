@@ -248,7 +248,7 @@ struct AppImageIds
 		{
 			Paths		= Plugins		=
 			Speedhacks	= Gamefixes		=
-			Video		= Cpu			= 
+			Video		= Cpu			=
 			MemoryCard	= -1;
 		}
 	} Config;
@@ -391,13 +391,13 @@ public:
 		GsWindowMode			= GsWinMode_Unspecified;
 		ProfilingMode			= false;
 	}
-	
+
 	// Returns TRUE if either speedhacks or gamefixes are being overridden.
 	bool HasCustomHacks() const
 	{
 		return DisableSpeedhacks || ApplyCustomGamefixes;
 	}
-	
+
 	void RemoveCustomHacks()
 	{
 		DisableSpeedhacks = false;
@@ -438,7 +438,7 @@ protected:
 public:
 	void AddListener( IEventListener_Plugins& listener )
 	{
-		m_evtsrc_CorePluginStatus.Add( listener );	
+		m_evtsrc_CorePluginStatus.Add( listener );
 	}
 
 	void AddListener( IEventListener_CoreThread& listener )
@@ -453,7 +453,7 @@ public:
 
 	void RemoveListener( IEventListener_Plugins& listener )
 	{
-		m_evtsrc_CorePluginStatus.Remove( listener );	
+		m_evtsrc_CorePluginStatus.Remove( listener );
 	}
 
 	void RemoveListener( IEventListener_CoreThread& listener )
@@ -468,7 +468,7 @@ public:
 
 	void AddListener( IEventListener_Plugins* listener )
 	{
-		m_evtsrc_CorePluginStatus.Add( listener );	
+		m_evtsrc_CorePluginStatus.Add( listener );
 	}
 
 	void AddListener( IEventListener_CoreThread* listener )
@@ -483,7 +483,7 @@ public:
 
 	void RemoveListener( IEventListener_Plugins* listener )
 	{
-		m_evtsrc_CorePluginStatus.Remove( listener );	
+		m_evtsrc_CorePluginStatus.Remove( listener );
 	}
 
 	void RemoveListener( IEventListener_CoreThread* listener )
@@ -495,12 +495,12 @@ public:
 	{
 		m_evtsrc_AppStatus.Remove( listener );
 	}
-	
+
 	void DispatchEvent( PluginEventType evt );
 	void DispatchEvent( AppEventType evt );
 	void DispatchEvent( CoreThreadStatus evt );
-	void DispatchUiSettingsEvent( IniInterface& ini );
-	void DispatchVmSettingsEvent( IniInterface& ini );
+	void DispatchUiSettingsEvent( nlohmann::json& json );
+	void DispatchVmSettingsEvent( nlohmann::json& json );
 
 	bool HasGUI() { return m_UseGUI; };
 	bool ExitPromptWithNoGUI() { return m_NoGuiExitPrompt; };
@@ -566,9 +566,9 @@ public:
 	void SysExecute();
 	void SysExecute( CDVD_SourceType cdvdsrc, const wxString& elf_override=wxEmptyString );
 	void LogicalVsync();
-	
+
 	SysMainMemory& GetVmReserve();
-	
+
 	GSFrame&			GetGsFrame() const;
 	MainEmuFrame&		GetMainFrame() const;
 
@@ -613,7 +613,7 @@ public:
 	bool HasPendingSaves() const;
 	void StartPendingSave();
 	void ClearPendingSave();
-	
+
 	// --------------------------------------------------------------------------
 	//  App-wide Resources
 	// --------------------------------------------------------------------------
@@ -750,7 +750,7 @@ template<typename DialogType>
 wxWindow* AppOpenDialog( wxWindow* parent=NULL )
 {
 	wxWindow* window = wxFindWindowByName( L"Dialog:" + DialogType::GetNameStatic() );
-	
+
 	if( !window ) window = new DialogType( parent );
 
 	window->Show();

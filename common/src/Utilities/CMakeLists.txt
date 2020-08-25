@@ -50,6 +50,7 @@ set(UtilitiesSources
 set(UtilitiesHeaders
 	../../include/Utilities/Assertions.h
 	../../include/Utilities/boost_spsc_queue.hpp
+	../../include/Utilities/json.hpp
 	../../include/Utilities/CheckedStaticBox.h
 	../../include/Utilities/Console.h
 	../../include/Utilities/Dependencies.h
@@ -82,6 +83,10 @@ set(UtilitiesHeaders
 	PrecompiledHeader.h
 	ThreadingInternal.h
 )
+
+# Typically you don't care so much for a third party library's tests to be
+# run from your own project's code.
+set(JSON_BuildTests OFF CACHE INTERNAL "")
 
 if(APPLE)
 	LIST(APPEND UtilitiesSources

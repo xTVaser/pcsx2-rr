@@ -15,18 +15,21 @@
 
 #include "PrecompiledHeader.h"
 #include "App.h"
-#include "Utilities/IniInterface.h"
+#include "Utilities/json.hpp"
 #include "Utilities/EventSource.inl"
 
 template class EventSource< IEventListener_CoreThread >;
 template class EventSource< IEventListener_Plugins >;
 template class EventSource< IEventListener_AppStatus >;
 
-AppSettingsEventInfo::AppSettingsEventInfo( IniInterface& ini, AppEventType evt_type )
+
+AppSettingsEventInfo::AppSettingsEventInfo( nlohmann::json& j, AppEventType evt_type )
 	: AppEventInfo( evt_type )
-	, m_ini( ini )
 {
+
+	json = j;
 }
+
 
 EventListener_CoreThread::EventListener_CoreThread()
 {
@@ -49,7 +52,7 @@ void IEventListener_CoreThread::DispatchEvent( const CoreThreadStatus& status )
 		case CoreThread_Suspended:	CoreThread_OnSuspended();		break;
 		case CoreThread_Reset:		CoreThread_OnReset();			break;
 		case CoreThread_Stopped:	CoreThread_OnStopped();			break;
-		
+
 		jNO_DEFAULT;
 	}
 }
@@ -76,7 +79,7 @@ void IEventListener_Plugins::DispatchEvent( const PluginEventType& pevt )
 		case CorePlugins_Closed:	CorePlugins_OnClosed();		break;
 		case CorePlugins_Shutdown:	CorePlugins_OnShutdown();	break;
 		case CorePlugins_Unloaded:	CorePlugins_OnUnloaded();	break;
-		
+
 		jNO_DEFAULT;
 	}
 }
@@ -159,16 +162,16 @@ void Pcsx2App::DispatchEvent( CoreThreadStatus evt )
 	CoreThread.RethrowException();
 }
 
-void Pcsx2App::DispatchUiSettingsEvent( IniInterface& ini )
+void Pcsx2App::DispatchUiSettingsEvent( nlohmann::json& json )
 {
 	if( !AffinityAssert_AllowFrom_MainUI() ) return;
-	m_evtsrc_AppStatus.Dispatch( AppSettingsEventInfo( ini, ini.IsSaving() ? AppStatus_UiSettingsSaved : AppStatus_UiSettingsLoaded ) );
+	//m_evtsrc_AppStatus.Dispatch( AppSettingsEventInfo( json, ini.IsSaving() ? AppStatus_UiSettingsSaved : AppStatus_UiSettingsLoaded ) );
 }
 
-void Pcsx2App::DispatchVmSettingsEvent( IniInterface& ini )
+void Pcsx2App::DispatchVmSettingsEvent( nlohmann::json& ini )
 {
 	if( !AffinityAssert_AllowFrom_MainUI() ) return;
-	m_evtsrc_AppStatus.Dispatch( AppSettingsEventInfo( ini, ini.IsSaving() ? AppStatus_VmSettingsSaved : AppStatus_VmSettingsLoaded ) );
+	// /m_evtsrc_AppStatus.Dispatch( AppSettingsEventInfo( ini, ini.IsSaving() ? AppStatus_VmSettingsSaved : AppStatus_VmSettingsLoaded ) );
 }
 
 

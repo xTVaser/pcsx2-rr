@@ -87,15 +87,15 @@ int GIF_Fifo::write(u32* pMem, int size)
 
 	gifRegs.stat.FQC += firsttrans;
 	transsize = firsttrans;
-	
-	
+
+
 	while (transsize-- > 0)
 	{
 		CopyQWC(&data[writepos], pMem);
 		writepos = (writepos + 4) & 63;
 		pMem += 4;
 	}
-	
+
 	CalculateFIFOCSR();
 	return firsttrans;
 }
@@ -131,7 +131,7 @@ int GIF_Fifo::read(bool calledFromDMA)
 		readpos = (oldReadPos + (sizeRead * 4)) & 63; //if we read less than what was in the fifo, move the read position back
 		gifRegs.stat.FQC = fifoSize - sizeRead;
 	}
-		
+
 	if (calledFromDMA == false) {
 		GifDMAInt(sizeRead * BIAS);
 	}
@@ -187,14 +187,14 @@ __fi void gifInterrupt()
 			}
 			return;
 		}
-		
+
 	}
 
 	if (dmacRegs.ctrl.MFD == MFD_GIF) { // GIF MFIFO
 		//Console.WriteLn("GIF MFIFO");
 		gifMFIFOInterrupt();
 		return;
-	}	
+	}
 
 	if (CHECK_GIFFIFOHACK) {
 
@@ -218,7 +218,7 @@ __fi void gifInterrupt()
 			}
 		}
 	}
-	
+
 
 	if (gifUnit.gsSIGNAL.queued) {
 		GIF_LOG("Path 3 Paused");
@@ -239,7 +239,7 @@ __fi void gifInterrupt()
 			}
 		}
 	}
-	
+
 	if (!(gifch.chcr.STR)) return;
 
 	if ((gifch.qwc > 0) || (!gif.gspath3done)) {
@@ -250,12 +250,12 @@ __fi void gifInterrupt()
 			return;
 		}
 		GIFdma();
-		
+
 		return;
 	}
 
-	
-	
+
+
 	if (!CHECK_GIFFIFOHACK)
 	{
 		gifRegs.stat.FQC = 0;
@@ -482,11 +482,11 @@ static u16 QWCinGIFMFIFO(u32 DrainADDR)
 	}
 	else {
 		u32 limit = dmacRegs.rbor.ADDR + dmacRegs.rbsr.RMSK + 16;
-		//Drain is higher than SPR so it has looped round, 
+		//Drain is higher than SPR so it has looped round,
 		//calculate from base to the SPR tag addr and what is left in the top of the ring
 		ret = ((spr0ch.madr - dmacRegs.rbor.ADDR) + (limit - DrainADDR)) >> 4;
 	}
-	if (ret == 0) 
+	if (ret == 0)
 		gif.gifstate |= GIF_STATE_EMPTY;
 
 	SPR_LOG("%x Available of the %x requested", ret, gifch.qwc);
@@ -508,11 +508,11 @@ static __fi bool mfifoGIFrbTransfer()
 	u32 firstTransQWC = needWrap ? MFIFOUntilEnd : qwc;
 	u32 transferred;
 
-	if (!CHECK_GIFFIFOHACK) 
+	if (!CHECK_GIFFIFOHACK)
 	{
 		transferred = gifUnit.TransferGSPacketData(GIF_TRANS_DMA, src, firstTransQWC * 16) / 16; // First part
 	}
-	else 
+	else
 	{
 		transferred = gif_fifo.write((u32*)src, firstTransQWC);
 	}
@@ -522,7 +522,7 @@ static __fi bool mfifoGIFrbTransfer()
 	gifch.madr = dmacRegs.rbor.ADDR + (gifch.madr & dmacRegs.rbsr.RMSK);
 	gifch.tadr = dmacRegs.rbor.ADDR + (gifch.tadr & dmacRegs.rbsr.RMSK);
 
-	if (needWrap && transferred == MFIFOUntilEnd) 
+	if (needWrap && transferred == MFIFOUntilEnd)
 	{ // Need to do second transfer to wrap around
 		u32 transferred2;
 		uint secondTransQWC = qwc - MFIFOUntilEnd;
@@ -540,7 +540,7 @@ static __fi bool mfifoGIFrbTransfer()
 		incGifChAddr(transferred2);
 		gif.mfifocycles += (transferred2 + transferred) * 2; // guessing
 	}
-	else 
+	else
 	{
 		gif.mfifocycles += transferred * 2; // guessing
 	}
@@ -598,7 +598,7 @@ void mfifoGifMaskMem(int id)
 		//These five transfer data following the tag, need to check its within the buffer (Front Mission 4)
 		case TAG_CNT:
 		case TAG_NEXT:
-		case TAG_CALL: 
+		case TAG_CALL:
 		case TAG_RET:
 		case TAG_END:
 			if(gifch.madr < dmacRegs.rbor.ADDR) //probably not needed but we will check anyway.
@@ -622,7 +622,7 @@ void mfifoGIFtransfer()
 {
 	tDMA_TAG *ptag;
 	gif.mfifocycles = 0;
-	
+
 
 	if (gifRegs.ctrl.PSE) { // temporarily stop
 		Console.WriteLn("Gif dma temp paused?");
@@ -715,7 +715,7 @@ void gifMFIFOInterrupt()
 		return;
 	}
 
-	if (CHECK_GIFFIFOHACK) 
+	if (CHECK_GIFFIFOHACK)
 	{
 		if (int amtRead = gif_fifo.read(true))
 		{
@@ -781,13 +781,13 @@ void gifMFIFOInterrupt()
 		gifRegs.stat.FQC = 0;
 		clearFIFOstuff(false);
 	}
-	
+
 	if (spr0ch.madr == gifch.tadr) {
 		FireMFIFOEmpty();
 	}
 
 	gif.gscycles = 0;
-	
+
 	gifch.chcr.STR = false;
 	gif.gifstate = GIF_STATE_READY;
 	hwDmacIrq(DMAC_GIF);

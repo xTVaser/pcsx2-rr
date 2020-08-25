@@ -17,28 +17,27 @@
 
 #include <wx/fileconf.h>
 
-#include "Utilities/IniInterface.h"
 #include "Config.h"
 #include "GS.h"
 #include "gui/GSFrame.h"
 
-void TraceLogFilters::LoadSave( IniInterface& ini )
+/*void TraceLogFilters::LoadSave( nlohmann::json& json )
 {
-	ScopedIniGroup path( ini, L"TraceLog" );
+	//ScopedIniGroup path( json, L"TraceLog" );
 
-	IniEntry( Enabled );
-	
+	//IniEntry( Enabled );
+
 	// Retaining backwards compat of the trace log enablers isn't really important, and
 	// doing each one by hand would be murder.  So let's cheat and just save it as an int:
 
 	IniEntry( EE.bitset );
 	IniEntry( IOP.bitset );
-}
+}*/
 
 Pcsx2Config::SpeedhackOptions::SpeedhackOptions()
 {
 	DisableAll();
-	
+
 	// Set recommended speedhacks to enabled by default. They'll still be off globally on resets.
 	WaitLoop = true;
 	IntcStat = true;
@@ -47,14 +46,13 @@ Pcsx2Config::SpeedhackOptions::SpeedhackOptions()
 
 Pcsx2Config::SpeedhackOptions& Pcsx2Config::SpeedhackOptions::DisableAll()
 {
-	bitset			= 0;
 	EECycleRate		= 0;
 	EECycleSkip		= 0;
-	
+
 	return *this;
 }
 
-void Pcsx2Config::SpeedhackOptions::LoadSave( IniInterface& ini )
+/*void Pcsx2Config::SpeedhackOptions::LoadSave( nlohmann::json& json )
 {
 	ScopedIniGroup path( ini, L"Speedhacks" );
 
@@ -67,7 +65,7 @@ void Pcsx2Config::SpeedhackOptions::LoadSave( IniInterface& ini )
 	IniBitBool( vuThread );
 }
 
-void Pcsx2Config::ProfilerOptions::LoadSave( IniInterface& ini )
+void Pcsx2Config::ProfilerOptions::LoadSave( nlohmann::json& json )
 {
 	ScopedIniGroup path( ini, L"Profiler" );
 
@@ -76,11 +74,11 @@ void Pcsx2Config::ProfilerOptions::LoadSave( IniInterface& ini )
 	IniBitBool( RecBlocks_IOP );
 	IniBitBool( RecBlocks_VU0 );
 	IniBitBool( RecBlocks_VU1 );
-}
+}*/
 
 Pcsx2Config::RecompilerOptions::RecompilerOptions()
 {
-	bitset		= 0;
+	//bitset		= 0;
 
 	//StackFrameChecks	= false;
 	//PreBlockCheckEE	= false;
@@ -140,7 +138,7 @@ void Pcsx2Config::RecompilerOptions::ApplySanityCheck()
 	}
 }
 
-void Pcsx2Config::RecompilerOptions::LoadSave( IniInterface& ini )
+/*void Pcsx2Config::RecompilerOptions::LoadSave( nlohmann::json& json )
 {
 	ScopedIniGroup path( ini, L"Recompiler" );
 
@@ -165,7 +163,7 @@ void Pcsx2Config::RecompilerOptions::LoadSave( IniInterface& ini )
 	IniBitBool( StackFrameChecks );
 	IniBitBool( PreBlockCheckEE );
 	IniBitBool( PreBlockCheckIOP );
-}
+}*/
 
 Pcsx2Config::CpuOptions::CpuOptions()
 {
@@ -181,7 +179,7 @@ void Pcsx2Config::CpuOptions::ApplySanityCheck()
 	Recompiler.ApplySanityCheck();
 }
 
-void Pcsx2Config::CpuOptions::LoadSave( IniInterface& ini )
+/*void Pcsx2Config::CpuOptions::LoadSave( nlohmann::json& json )
 {
 	ScopedIniGroup path( ini, L"CPU" );
 
@@ -194,7 +192,7 @@ void Pcsx2Config::CpuOptions::LoadSave( IniInterface& ini )
 	IniBitfieldEx( sseVUMXCSR.RoundingControl,	"VU.Roundmode" );
 
 	Recompiler.LoadSave( ini );
-}
+}*/
 
 // Default GSOptions
 Pcsx2Config::GSOptions::GSOptions()
@@ -214,7 +212,7 @@ Pcsx2Config::GSOptions::GSOptions()
 	FrameratePAL			= 50.0;
 }
 
-void Pcsx2Config::GSOptions::LoadSave( IniInterface& ini )
+/*void Pcsx2Config::GSOptions::LoadSave( nlohmann::json& json )
 {
 	ScopedIniGroup path( ini, L"GS" );
 
@@ -231,7 +229,7 @@ void Pcsx2Config::GSOptions::LoadSave( IniInterface& ini )
 
 	IniEntry( FramesToDraw );
 	IniEntry( FramesToSkip );
-}
+}*/
 
 int Pcsx2Config::GSOptions::GetVsync() const
 {
@@ -284,7 +282,6 @@ Pcsx2Config::GamefixOptions::GamefixOptions()
 
 Pcsx2Config::GamefixOptions& Pcsx2Config::GamefixOptions::DisableAll()
 {
-	bitset = 0;
 	return *this;
 }
 
@@ -293,21 +290,21 @@ Pcsx2Config::GamefixOptions& Pcsx2Config::GamefixOptions::DisableAll()
 // If an unrecognized tag is encountered, a warning is printed to the console, but no error
 // is generated.  This allows the system to function in the event that future versions of
 // PCSX2 remove old hacks once they become obsolete.
-void Pcsx2Config::GamefixOptions::Set( const wxString& list, bool enabled )
+void Pcsx2Config::GamefixOptions::Set( const std::string& list, bool enabled )
 {
-	wxStringTokenizer izer( list, L",|", wxTOKEN_STRTOK );
-	
-	while( izer.HasMoreTokens() )
-	{
-		wxString token( izer.GetNextToken() );
+	//wxStringTokenizer izer( list, L",|", wxTOKEN_STRTOK );
 
-		GamefixId i;
-		for (i=GamefixId_FIRST; i < pxEnumEnd; ++i)
-		{
-			if( token.CmpNoCase( EnumToString(i) ) == 0 ) break;
-		}
-		if( i < pxEnumEnd ) Set( i );
-	}
+	//while( izer.HasMoreTokens() )
+	//{
+		//wxString token( izer.GetNextToken() );
+
+		//GamefixId i;
+		//for (i=GamefixId_FIRST; i < pxEnumEnd; ++i)
+		//{
+		//	if( token.CmpNoCase( EnumToString(i) ) == 0 ) break;
+		//}
+		//if( i < pxEnumEnd ) Set( i );
+	//}
 }
 
 void Pcsx2Config::GamefixOptions::Set( GamefixId id, bool enabled )
@@ -365,7 +362,7 @@ bool Pcsx2Config::GamefixOptions::Get( GamefixId id ) const
 	return false;		// unreachable, but we still need to suppress warnings >_<
 }
 
-void Pcsx2Config::GamefixOptions::LoadSave( IniInterface& ini )
+/*void Pcsx2Config::GamefixOptions::LoadSave( nlohmann::json& json )
 {
 	ScopedIniGroup path( ini, L"Gamefixes" );
 
@@ -387,7 +384,7 @@ void Pcsx2Config::GamefixOptions::LoadSave( IniInterface& ini )
 	IniBitBool( ScarfaceIbit );
 	IniBitBool( CrashTagTeamRacingIbit );
 	IniBitBool( VU0KickstartHack );
-}
+}*/
 
 
 Pcsx2Config::DebugOptions::DebugOptions()
@@ -401,7 +398,7 @@ Pcsx2Config::DebugOptions::DebugOptions()
 	MemoryViewBytesPerRow = 16;
 }
 
-void Pcsx2Config::DebugOptions::LoadSave( IniInterface& ini )
+/*void Pcsx2Config::DebugOptions::LoadSave( IniInterface& ini )
 {
 	ScopedIniGroup path( ini, L"Debugger" );
 
@@ -412,14 +409,13 @@ void Pcsx2Config::DebugOptions::LoadSave( IniInterface& ini )
 	IniBitfield( WindowWidth );
 	IniBitfield( WindowHeight );
 	IniBitfield( MemoryViewBytesPerRow );
-}
+}*/
 
 
 
 
 Pcsx2Config::Pcsx2Config()
 {
-	bitset = 0;
 	// Set defaults for fresh installs / reset settings
 	McdEnableEjection = true;
 	McdFolderAutoManage = true;
@@ -427,9 +423,9 @@ Pcsx2Config::Pcsx2Config()
 	BackupSavestate = true;
 }
 
-void Pcsx2Config::LoadSave( IniInterface& ini )
+/*void Pcsx2Config::LoadSave( nlohmann::json& json )
 {
-	ScopedIniGroup path( ini, L"EmuCore" );
+	//ScopedIniGroup path( ini, L"EmuCore" );
 
 	IniBitBool( CdvdVerboseReads );
 	IniBitBool( CdvdDumpBlocks );
@@ -452,17 +448,16 @@ void Pcsx2Config::LoadSave( IniInterface& ini )
 
 	// Process various sub-components:
 
-	Speedhacks		.LoadSave( ini );
-	Cpu				.LoadSave( ini );
-	GS				.LoadSave( ini );
-	Gamefixes		.LoadSave( ini );
-	Profiler		.LoadSave( ini );
+	Speedhacks		.LoadSave( json );
+	Cpu				.LoadSave( json );
+	GS				.LoadSave( json );
+	Gamefixes		.LoadSave( json );
+	Profiler		.LoadSave( json );
 
-	Debugger		.LoadSave( ini );
-	Trace			.LoadSave( ini );
+	Debugger		.LoadSave( json );
+	Trace			.LoadSave( json );
 
-	ini.Flush();
-}
+}*/
 
 bool Pcsx2Config::MultitapEnabled( uint port ) const
 {
@@ -470,20 +465,20 @@ bool Pcsx2Config::MultitapEnabled( uint port ) const
 	return (port==0) ? MultitapPort0_Enabled : MultitapPort1_Enabled;
 }
 
-void Pcsx2Config::Load( const wxString& srcfile )
+void Config::load( nlohmann::json jsonStream )
 {
 	//m_IsLoaded = true;
 
-	wxFileConfig cfg( srcfile );
-	IniLoader loader( cfg );
-	LoadSave( loader );
+	//wxFileConfig cfg( srcfile );
+	//IniLoader loader( cfg );
+	//LoadSave( loader );
 }
 
-void Pcsx2Config::Save( const wxString& dstfile )
+void Config::save( std::string& dstfile )
 {
 	//if( !m_IsLoaded ) return;
 
 	wxFileConfig cfg( dstfile );
-	IniSaver saver( cfg );
-	LoadSave( saver );
+	//IniSaver saver( cfg );
+	//LoadSave( saver );
 }

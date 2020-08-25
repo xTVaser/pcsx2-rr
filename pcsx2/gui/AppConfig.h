@@ -26,7 +26,7 @@ enum DocsModeType
 	// friendly to modern computing security requirements; as it isolates all file modification
 	// to a zone of the hard drive that has granted write permissions to the user.
 	DocsFolder_User,
-	
+
 	// uses a custom location for program data. Typically the custom folder is either the
 	// absolute or relative location of the program -- absolute is preferred because it is
 	// considered more secure by MSW standards, due to DLL search rules.
@@ -49,7 +49,7 @@ namespace PathDefs
 	extern wxDirName GetDocuments( DocsModeType mode );
 }
 
-extern DocsModeType		DocsFolderMode;				// 
+extern DocsModeType		DocsFolderMode;				//
 extern bool				UseDefaultSettingsFolder;	// when TRUE, pcsx2 derives the settings folder from the DocsFolderMode
 extern bool				UseDefaultPluginsFolder;
 
@@ -113,7 +113,7 @@ enum MemoryCardType
 };
 
 // =====================================================================================================
-//  Pcsx2 Application Configuration. 
+//  Pcsx2 Application Configuration.
 // =====================================================================================================
 
 class AppConfig
@@ -133,10 +133,10 @@ public:
 		int			FontSize;
 
 		// Color theme by name!
-		wxString	Theme;
+		std::string	Theme;
 
 		ConsoleLogOptions();
-		void LoadSave( IniInterface& conf, const wxChar* title );
+		void LoadSave( nlohmann::json &json, std::string title );
 	};
 
 	// ------------------------------------------------------------------------
@@ -169,7 +169,7 @@ public:
 		wxFileName RunDisc;		// last used location for Disc loading.
 
 		FolderOptions();
-		void LoadSave( IniInterface& conf );
+		void LoadSave( nlohmann::json &json );
 		void ApplyDefaults();
 
 		void Set( FoldersEnum_t folderidx, const wxString& src, bool useDefault );
@@ -185,7 +185,7 @@ public:
 		wxFileName Bios;
 		wxFileName Plugins[PluginId_Count];
 
-		void LoadSave( IniInterface& conf );
+		void LoadSave( nlohmann::json &json );
 
 		const wxFileName& operator[]( PluginsEnum_t pluginidx ) const;
 	};
@@ -207,7 +207,7 @@ public:
 	{
 		// Closes the GS/Video port on escape (good for fullscreen activity)
 		bool		CloseOnEsc;
-		
+
 		bool		DefaultToFullscreen;
 		bool		AlwaysHideMouse;
 		bool		DisableResizeBorders;
@@ -231,7 +231,7 @@ public:
 
 		GSWindowOptions();
 
-		void LoadSave( IniInterface& conf );
+		void LoadSave( nlohmann::json &json );
 		void SanityCheck();
 	};
 
@@ -245,14 +245,14 @@ public:
 		Fixed100	SlomoScalar;
 
 		FramerateOptions();
-		
-		void LoadSave( IniInterface& conf );
+
+		void LoadSave( nlohmann::json &json );
 		void SanityCheck();
 	};
 
 	struct UiTemplateOptions {
 		UiTemplateOptions();
-		void LoadSave(IniInterface& conf);
+		void LoadSave(nlohmann::json &json);
 
 		wxString LimiterUnlimited;
 		wxString LimiterTurbo;
@@ -342,7 +342,7 @@ public:
 	GSWindowOptions			GSWindow;
 	FramerateOptions		Framerate;
 	UiTemplateOptions		Templates;
-	
+
 	// PCSX2-core emulation options, which are passed to the emu core prior to initiating
 	// an emulation session.  Note these are the options saved into the GUI ini file and
 	// which are shown as options in the gui preferences, but *not* necessarily the options
@@ -358,18 +358,18 @@ public:
 
 	bool FullpathMatchTest( PluginsEnum_t pluginId, const wxString& cmpto ) const;
 
-	void LoadSave( IniInterface& ini );
-	void LoadSaveRootItems( IniInterface& ini );
-	void LoadSaveMemcards( IniInterface& ini );
+	void LoadSave( nlohmann::json &json );
+	void LoadSaveRootItems( nlohmann::json &json );
+	void LoadSaveMemcards( nlohmann::json &json );
 
 	static int  GetMaxPresetIndex();
     static bool isOkGetPresetTextAndColor(int n, wxString& label, wxColor& c);
-	
+
 	bool        IsOkApplyPreset(int n, bool ignoreMTVU);
 
 
 	//The next 2 flags are used with ApplyConfigToGui which the presets system use:
-	
+
 	//Indicates that the scope is only for preset-related items.
 	static const int APPLY_FLAG_FROM_PRESET			= 0x01;
 
@@ -383,15 +383,15 @@ extern void AppLoadSettings();
 extern void AppSaveSettings();
 extern void AppApplySettings( const AppConfig* oldconf=NULL );
 
-extern void App_LoadSaveInstallSettings( IniInterface& ini );
+extern void App_LoadSaveInstallSettings( nlohmann::json &json );
 extern void App_SaveInstallSettings( wxConfigBase* ini );
 extern void App_LoadInstallSettings( wxConfigBase* ini );
 
-extern void ConLog_LoadSaveSettings( IniInterface& ini );
-extern void SysTraceLog_LoadSaveSettings( IniInterface& ini );
+extern void ConLog_LoadSaveSettings( nlohmann::json &json );
+extern void SysTraceLog_LoadSaveSettings( nlohmann::json &json );
 
 
-extern wxFileConfig* OpenFileConfig( const wxString& filename );
+extern wxFileConfig* OpenFileConfig( std::string& filename );
 extern void RelocateLogfile();
 extern void AppConfig_OnChangedSettingsFolder( bool overwrite =  false );
 extern wxConfigBase* GetAppConfig();

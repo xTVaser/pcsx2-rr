@@ -17,7 +17,6 @@
 #include "wxGuiTools.h"
 #include "pxStaticText.h"
 #include "Threading.h"
-#include "IniInterface.h"
 
 #include <wx/cshelp.h>
 #include <wx/tooltip.h>
@@ -206,13 +205,13 @@ void wxDialogWithHelpers::SmartCenterFit()
     if (wxConfigBase *cfg = wxConfigBase::Get(false)) {
         wxRect screenRect(GetScreenRect());
 
-        IniLoader loader(cfg);
-        ScopedIniGroup group(loader, L"DialogPositions");
+        //IniLoader loader(cfg);
+        //ScopedIniGroup group(loader, L"DialogPositions");
         cfg->SetRecordDefaults(false);
 
         if (GetWindowStyle() & wxRESIZE_BORDER) {
             wxSize size;
-            loader.Entry(dlgName + L"_Size", size, screenRect.GetSize());
+            //loader.Entry(dlgName + L"_Size", size, screenRect.GetSize());
             SetSize(size);
         }
 
@@ -220,7 +219,7 @@ void wxDialogWithHelpers::SmartCenterFit()
             DoAutoCenter();
         else {
             wxPoint pos;
-            loader.Entry(dlgName + L"_Pos", pos, screenRect.GetPosition());
+            //loader.Entry(dlgName + L"_Pos", pos, screenRect.GetPosition());
             SetPosition(pos);
         }
         cfg->SetRecordDefaults(true);
@@ -276,14 +275,14 @@ void wxDialogWithHelpers::RememberPosition()
         const wxRect screenRect(GetScreenRect());
         if (!dlgName.IsEmpty() && (m_CreatedRect != screenRect)) {
             wxPoint pos(screenRect.GetPosition());
-            IniSaver saver(cfg);
-            ScopedIniGroup group(saver, L"DialogPositions");
+            //IniSaver saver(cfg);
+            //ScopedIniGroup group(saver, L"DialogPositions");
 
             if (GetWindowStyle() & wxRESIZE_BORDER) {
                 wxSize size(screenRect.GetSize());
-                saver.Entry(dlgName + L"_Size", size, screenRect.GetSize());
+                //saver.Entry(dlgName + L"_Size", size, screenRect.GetSize());
             }
-            saver.Entry(dlgName + L"_Pos", pos, screenRect.GetPosition());
+            //saver.Entry(dlgName + L"_Pos", pos, screenRect.GetPosition());
         }
     }
 }
