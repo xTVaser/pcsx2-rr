@@ -229,7 +229,7 @@ protected:
 	void Menu_Recording_New_Click(wxCommandEvent &event);
 	void Menu_Recording_Play_Click(wxCommandEvent &event);
 	void Menu_Recording_Stop_Click(wxCommandEvent &event);
-	void Menu_Recording_Restart_Click(wxCommandEvent& event);
+	void Menu_Recording_Reset_Click(wxCommandEvent& event);
 	void Menu_Recording_VirtualPad_Open_Click(wxCommandEvent &event);
 #endif
 

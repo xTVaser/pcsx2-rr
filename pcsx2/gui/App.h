@@ -194,7 +194,7 @@ enum MenuIdentifiers
 	MenuId_Recording_New,
 	MenuId_Recording_Play,
 	MenuId_Recording_Stop,
-	MenuId_Recording_Restart,
+	MenuId_Recording_Reset,
 	MenuId_Recording_Editor,
 	MenuId_Recording_VirtualPad_Port0,
 	MenuId_Recording_VirtualPad_Port1,
