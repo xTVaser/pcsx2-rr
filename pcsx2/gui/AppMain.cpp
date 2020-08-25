@@ -1147,7 +1147,17 @@ void Pcsx2App::SysExecute()
 #ifndef DISABLE_RECORDING
 	if (g_InputRecording.IsActive())
 	{
-		g_InputRecording.ResetFrameCounter();
+		// Forces inputRecording to wait for a confirmed pause before resetting
+		// frameCounter to the proper value. Ensures that any lingering emulation
+		// before the full/fast boot doesn't increment the already reset value
+		if (!g_InputRecordingControls.isEmulationAndRecordingPaused())
+		{
+			g_InputRecordingControls.Pause();
+			g_InputRecording.ResetFrameCounter();
+			g_InputRecordingControls.Resume();
+		}
+		else
+			g_InputRecording.ResetFrameCounter();
 	}
 #endif
 }
@@ -1161,7 +1171,17 @@ void Pcsx2App::SysExecute( CDVD_SourceType cdvdsrc, const wxString& elf_override
 #ifndef DISABLE_RECORDING
 	if ( g_InputRecording.IsActive())
 	{
-		g_InputRecording.ResetFrameCounter();
+		// Forces inputRecording to wait for a confirmed pause before resetting
+		// frameCounter to the proper value. Ensures that any lingering emulation
+		// before the full/fast boot doesn't increment the already reset value
+		if (!g_InputRecordingControls.isEmulationAndRecordingPaused())
+		{
+			g_InputRecordingControls.Pause();
+			g_InputRecording.ResetFrameCounter();
+			g_InputRecordingControls.Resume();
+		}
+		else
+			g_InputRecording.ResetFrameCounter();
 	}
 #endif
 }
