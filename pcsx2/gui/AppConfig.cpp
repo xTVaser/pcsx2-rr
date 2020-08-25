@@ -102,7 +102,7 @@ namespace PathDefs
 			static const wxDirName retval( L"dumps" );
 			return retval;
 		}
-		
+
 		const wxDirName& Docs()
 		{
 			static const wxDirName retval( L"docs" );
@@ -126,7 +126,7 @@ namespace PathDefs
 			return cwdCache;
 		}
 		else if (InstallationMode == InstallMode_Portable)
-*/		
+*/
 		if (InstallationMode == InstallMode_Registered || InstallationMode == InstallMode_Portable)
 		{
 			static const wxDirName appCache( (wxDirName)
@@ -135,7 +135,7 @@ namespace PathDefs
 		}
 		else
 			pxFail( "Unimplemented user local folder mode encountered." );
-		
+
 		static const wxDirName dotFail(L".");
 		return dotFail;
 	}
@@ -203,7 +203,7 @@ namespace PathDefs
 	{
 		return GetDocuments() + Base::CheatsWS();
 	}
-	
+
 	wxDirName GetDocs()
 	{
 		return AppRoot() + Base::Docs();
@@ -546,7 +546,7 @@ AppConfig::AppConfig()
 }
 
 // ------------------------------------------------------------------------
-void App_LoadSaveInstallSettings( IniInterface& ini )
+void App_LoadSaveInstallSettings( nlohmann::json& json )
 {
 	// Portable installs of PCSX2 should not save any of the following information to
 	// the INI file.  Only the Run First Time Wizard option is saved, and that's done
@@ -652,7 +652,7 @@ void AppConfig::LoadSaveRootItems( IniInterface& ini )
 	IniEntry( EnablePresets );
 	IniEntry( PresetIndex );
 	IniEntry( AskOnBoot );
-	
+
 	#ifdef __WXMSW__
 	IniEntry( McdCompressNTFS );
 	#endif
@@ -753,7 +753,7 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	//when saving in portable mode, we save relative paths if possible
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
 	bool rel = ( ini.IsLoading() || IsPortable() );
-	
+
 	IniEntryDirFile( Bios,  rel);
 	IniEntryDirFile( Snapshots,  rel );
 	IniEntryDirFile( Savestates,  rel );
@@ -803,7 +803,7 @@ void AppConfig::FilenameOptions::LoadSave( IniInterface& ini )
 			ini.Entry( tbl_PluginInfo[i].GetShortname(), Plugins[i], pc );
 	}
 
-	if( needRelativeName ) { 
+	if( needRelativeName ) {
 		wxFileName bios_filename = wxFileName( Bios.GetFullName() );
 		ini.Entry( L"BIOS", bios_filename, pc );
 	} else
@@ -1039,7 +1039,7 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 	EmuOptions.EnablePatches		= true;
 	EmuOptions.GS					= default_Pcsx2Config.GS;
 	EmuOptions.GS.FrameLimitEnable	= original_GS.FrameLimitEnable;	//Frame limiter is not modified by presets
-	
+
 	EmuOptions.Cpu					= default_Pcsx2Config.Cpu;
 	EmuOptions.Gamefixes			= default_Pcsx2Config.Gamefixes;
 	EmuOptions.Speedhacks			= default_Pcsx2Config.Speedhacks;
@@ -1056,7 +1056,7 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = 1); // +1 EE cyclerate
 			isSkipSet ? 0 : (isSkipSet = true, EmuOptions.Speedhacks.EECycleSkip = 1); // +1 EE cycle skip
             // Fall through
-		
+
 		case 4: // Very Aggressive
 			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = -2); // -2 EE cyclerate
             // Fall through
@@ -1073,11 +1073,11 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 			EmuOptions.Speedhacks.IntcStat = true;
 			EmuOptions.Speedhacks.WaitLoop = true;
 			EmuOptions.Speedhacks.vuFlagHack = true;
-			
+
 			// If waterfalling from > Safe, break to avoid MTVU disable.
 			if (n > 1) break;
             // Fall through
-			
+
 		case 0: // Safest
 			isMTVUSet ? 0 : (isMTVUSet = true, EmuOptions.Speedhacks.vuThread = false); // Disable MTVU
 			break;
@@ -1285,7 +1285,7 @@ void AppLoadSettings()
 }
 
 static void SaveUiSettings()
-{	
+{
 	if( !wxFile::Exists( g_Conf->CurrentIso ) )
 		g_Conf->CurrentIso.clear();
 

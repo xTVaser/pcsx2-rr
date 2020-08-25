@@ -55,6 +55,11 @@ struct AppEventInfo
 {
 	AppEventType	evt_type;
 
+	AppEventInfo()
+	{
+
+	}
+
 	AppEventInfo( AppEventType type )
 	{
 		evt_type = type;
@@ -63,13 +68,15 @@ struct AppEventInfo
 
 struct AppSettingsEventInfo : AppEventInfo
 {
-	IniInterface&	m_ini;
+	nlohmann::json&	json;
 
-	AppSettingsEventInfo( IniInterface&	ini, AppEventType evt_type );
+	AppSettingsEventInfo();
 
-	IniInterface& GetIni() const
+	AppSettingsEventInfo( nlohmann::json& json, AppEventType evt_type );
+
+	nlohmann::json& GetJson() const
 	{
-		return const_cast<IniInterface&>(m_ini);
+		return const_cast<nlohmann::json&>(json);
 	}
 };
 

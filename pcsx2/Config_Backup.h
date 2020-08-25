@@ -90,19 +90,22 @@ ImplementEnumOperators( GamefixId );
 // --------------------------------------------------------------------------------------
 struct TraceFiltersEE
 {
-	bool m_EnableAll,		     // Master Enable switch (if false, no logs at all)
-		m_EnableDisasm,
-		m_EnableRegisters,
-		m_EnableEvents;		// Enables logging of event-driven activity -- counters, DMAs, etc.
+	BITFIELD32()
+	bool
+		m_EnableAll		:1,		// Master Enable switch (if false, no logs at all)
+		m_EnableDisasm	:1,
+		m_EnableRegisters:1,
+		m_EnableEvents	:1;		// Enables logging of event-driven activity -- counters, DMAs, etc.
+	BITFIELD_END
 
 	TraceFiltersEE()
 	{
-		//bitset = 0;
+		bitset = 0;
 	}
 
 	bool operator ==( const TraceFiltersEE& right ) const
 	{
-		//return OpEqu( bitset );
+		return OpEqu( bitset );
 	}
 
 	bool operator !=( const TraceFiltersEE& right ) const
@@ -110,7 +113,7 @@ struct TraceFiltersEE
 		return !this->operator ==( right );
 	}
 
-	NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TraceFiltersEE, m_EnableAll, m_EnableDisasm, m_EnableRegisters, m_EnableEvents);
+	NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TraceFiltersEE, bitset);
 };
 
 // --------------------------------------------------------------------------------------
@@ -118,27 +121,29 @@ struct TraceFiltersEE
 // --------------------------------------------------------------------------------------
 struct TraceFiltersIOP
 {
+	BITFIELD32()
 	bool
-		m_EnableAll,		// Master Enable switch (if false, no logs at all)
-		m_EnableDisasm,
-		m_EnableRegisters,
-		m_EnableEvents;		// Enables logging of event-driven activity -- counters, DMAs, etc.
+		m_EnableAll		:1,		// Master Enable switch (if false, no logs at all)
+		m_EnableDisasm	:1,
+		m_EnableRegisters:1,
+		m_EnableEvents	:1;		// Enables logging of event-driven activity -- counters, DMAs, etc.
+	BITFIELD_END
 
 	TraceFiltersIOP()
 	{
-		//bitset = 0;
+		bitset = 0;
 	}
 
 	bool operator ==( const TraceFiltersIOP& right ) const
 	{
-		///return OpEqu( bitset );
+		return OpEqu( bitset );
 	}
 
 	bool operator !=( const TraceFiltersIOP& right ) const
 	{
 		return !this->operator ==( right );
 	}
-	NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TraceFiltersIOP, m_EnableAll, m_EnableDisasm, m_EnableRegisters, m_EnableEvents);
+	NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TraceFiltersIOP, bitset);
 };
 
 // --------------------------------------------------------------------------------------
@@ -192,60 +197,64 @@ struct Pcsx2Config
 {
 	struct ProfilerOptions
 	{
+		BITFIELD32()
 			bool
-				Enabled,			// universal toggle for the profiler.
-				RecBlocks_EE,		// Enables per-block profiling for the EE recompiler [unimplemented]
-				RecBlocks_IOP,	// Enables per-block profiling for the IOP recompiler [unimplemented]
-				RecBlocks_VU0,	// Enables per-block profiling for the VU0 recompiler [unimplemented]
-				RecBlocks_VU1;	// Enables per-block profiling for the VU1 recompiler [unimplemented]
+				Enabled:1,			// universal toggle for the profiler.
+				RecBlocks_EE:1,		// Enables per-block profiling for the EE recompiler [unimplemented]
+				RecBlocks_IOP:1,	// Enables per-block profiling for the IOP recompiler [unimplemented]
+				RecBlocks_VU0:1,	// Enables per-block profiling for the VU0 recompiler [unimplemented]
+				RecBlocks_VU1:1;	// Enables per-block profiling for the VU1 recompiler [unimplemented]
+		BITFIELD_END
 
 		// Default is Disabled, with all recs enabled underneath.
-		//ProfilerOptions() : bitset( 0xfffffffe ) {}
+		ProfilerOptions() : bitset( 0xfffffffe ) {}
 		//void LoadSave( nlohmann::json& conf );
 
 		bool operator ==( const ProfilerOptions& right ) const
 		{
-			//return OpEqu( bitset );
+			return OpEqu( bitset );
 		}
 
 		bool operator !=( const ProfilerOptions& right ) const
 		{
-			//return !OpEqu( bitset );
+			return !OpEqu( bitset );
 		}
 
-		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ProfilerOptions, Enabled, RecBlocks_EE, RecBlocks_IOP, RecBlocks_VU0, RecBlocks_VU1);
+		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ProfilerOptions, bitset);
 	};
 
 	// ------------------------------------------------------------------------
 	struct RecompilerOptions
 	{
+		BITFIELD32()
 			bool
-				EnableEE,
-				EnableIOP,
-				EnableVU0,
-				EnableVU1;
+				EnableEE		:1,
+				EnableIOP		:1,
+				EnableVU0		:1,
+				EnableVU1		:1;
 
 			bool
-				UseMicroVU0,
-				UseMicroVU1;
+				UseMicroVU0		:1,
+				UseMicroVU1		:1;
 
 			bool
-				vuOverflow,
-				vuExtraOverflow,
-				vuSignOverflow,
-				vuUnderflow;
+				vuOverflow		:1,
+				vuExtraOverflow	:1,
+				vuSignOverflow	:1,
+				vuUnderflow		:1;
 
 			bool
-				fpuOverflow,
-				fpuExtraOverflow,
-				fpuFullMode;
+				fpuOverflow		:1,
+				fpuExtraOverflow:1,
+				fpuFullMode		:1;
 
 			bool
-				StackFrameChecks,
-				PreBlockCheckEE,
-				PreBlockCheckIOP;
+				StackFrameChecks:1,
+				PreBlockCheckEE	:1,
+				PreBlockCheckIOP:1;
 			bool
-				EnableEECache;
+				EnableEECache   :1;
+		BITFIELD_END
 
 		RecompilerOptions();
 		void ApplySanityCheck();
@@ -254,17 +263,15 @@ struct Pcsx2Config
 
 		bool operator ==( const RecompilerOptions& right ) const
 		{
-			//return OpEqu( bitset );
+			return OpEqu( bitset );
 		}
 
 		bool operator !=( const RecompilerOptions& right ) const
 		{
-			//return !OpEqu( bitset );
+			return !OpEqu( bitset );
 		}
 
-		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RecompilerOptions, EnableEE, EnableIOP, EnableVU0, EnableVU1, UseMicroVU0, UseMicroVU1,
-		vuOverflow, vuExtraOverflow, vuSignOverflow, vuUnderflow, fpuOverflow, fpuExtraOverflow, fpuFullMode,
-		StackFrameChecks, PreBlockCheckEE, PreBlockCheckIOP, EnableEECache);
+		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(RecompilerOptions, bitset);
 
 	};
 
@@ -316,7 +323,7 @@ struct Pcsx2Config
 
 		int GetVsync() const;
 
-		/*bool operator ==( const GSOptions& right ) const
+		bool operator ==( const GSOptions& right ) const
 		{
 			return
 				OpEqu( SynchronousMTGS )		&&
@@ -332,15 +339,14 @@ struct Pcsx2Config
 
 				OpEqu( FramesToDraw )			&&
 				OpEqu( FramesToSkip );
-		}*/
+		}
 
 		bool operator !=( const GSOptions& right ) const
 		{
-			//return !this->operator ==( right );
+			return !this->operator ==( right );
 		}
 
-		//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GSOptions, SynchronousMTGS, VsyncQueueSize, FrameLimitEnable,
-		//FrameSkipEnable, VsyncEnable, FramesToDraw, FramesToSkip, LimitScalar, FramerateNTSC, FrameratePAL);
+		//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GSOptions, SynchronousMTGS, VsyncQueueSize, FrameLimitEnable, FrameSkipEnable, VsyncEnable, FramesToDraw, FramesToSkip, LimitScalar, FramerateNTSC, FrameratePAL);
 
 	};
 
@@ -348,24 +354,26 @@ struct Pcsx2Config
 	// NOTE: The GUI's GameFixes panel is dependent on the order of bits in this structure.
 	struct GamefixOptions
 	{
+        BITFIELD32()
         bool
-            VuAddSubHack,           // Tri-ace games, they use an encryption algorithm that requires VU ADDI opcode to be bit-accurate.
-            FpuCompareHack,         // Digimon Rumble Arena 2, fixes spinning/hanging on intro-menu.
-            FpuMulHack,             // Tales of Destiny hangs.
-            FpuNegDivHack,          // Gundam games messed up camera-view.
-            XgKickHack,             // Erementar Gerad, adds more delay to VU XGkick instructions. Corrects the color of some graphics, but breaks Tri-ace games and others.
-            IPUWaitHack,            // FFX FMV, makes GIF flush before doing IPU work. Fixes bad graphics overlay.
-            EETimingHack,           // General purpose timing hack.
-            SkipMPEGHack,           // Skips MPEG videos (Katamari and other games need this)
-            OPHFlagHack,            // Bleach Blade Battlers
-            DMABusyHack,            // Denies writes to the DMAC when it's busy. This is correct behaviour but bad timing can cause problems.
-            VIFFIFOHack,            // Pretends to fill the non-existant VIF FIFO Buffer.
-            VIF1StallHack,          // Like above, processes FIFO data before the stall is allowed (to make sure data goes over).
-            GIFFIFOHack,            // Enabled the GIF FIFO (more correct but slower)
-            FMVinSoftwareHack,      // Toggle in and out of software rendering when an FMV runs.
-            GoemonTlbHack,          // Gomeon tlb miss hack. The game need to access unmapped virtual address. Instead to handle it as exception, tlb are preloaded at startup
-            ScarfaceIbit,           // Scarface I bit hack. Needed to stop constant VU recompilation
-            CrashTagTeamRacingIbit; // Crash Tag Team Racing I bit hack. Needed to stop constant VU recompilation
+            VuAddSubHack : 1,           // Tri-ace games, they use an encryption algorithm that requires VU ADDI opcode to be bit-accurate.
+            FpuCompareHack : 1,         // Digimon Rumble Arena 2, fixes spinning/hanging on intro-menu.
+            FpuMulHack : 1,             // Tales of Destiny hangs.
+            FpuNegDivHack : 1,          // Gundam games messed up camera-view.
+            XgKickHack : 1,             // Erementar Gerad, adds more delay to VU XGkick instructions. Corrects the color of some graphics, but breaks Tri-ace games and others.
+            IPUWaitHack : 1,            // FFX FMV, makes GIF flush before doing IPU work. Fixes bad graphics overlay.
+            EETimingHack : 1,           // General purpose timing hack.
+            SkipMPEGHack : 1,           // Skips MPEG videos (Katamari and other games need this)
+            OPHFlagHack : 1,            // Bleach Blade Battlers
+            DMABusyHack : 1,            // Denies writes to the DMAC when it's busy. This is correct behaviour but bad timing can cause problems.
+            VIFFIFOHack : 1,            // Pretends to fill the non-existant VIF FIFO Buffer.
+            VIF1StallHack : 1,          // Like above, processes FIFO data before the stall is allowed (to make sure data goes over).
+            GIFFIFOHack : 1,            // Enabled the GIF FIFO (more correct but slower)
+            FMVinSoftwareHack : 1,      // Toggle in and out of software rendering when an FMV runs.
+            GoemonTlbHack : 1,          // Gomeon tlb miss hack. The game need to access unmapped virtual address. Instead to handle it as exception, tlb are preloaded at startup
+            ScarfaceIbit : 1,           // Scarface I bit hack. Needed to stop constant VU recompilation
+            CrashTagTeamRacingIbit : 1; // Crash Tag Team Racing I bit hack. Needed to stop constant VU recompilation
+		BITFIELD_END
 
 		GamefixOptions();
 		//void LoadSave( nlohmann::json& conf );
@@ -380,24 +388,26 @@ struct Pcsx2Config
 
 		bool operator ==( const GamefixOptions& right ) const
 		{
-			//return OpEqu( bitset );
+			return OpEqu( bitset );
 		}
 
 		bool operator !=( const GamefixOptions& right ) const
 		{
-			//return !OpEqu( bitset );
+			return !OpEqu( bitset );
 		}
 	};
 
 	// ------------------------------------------------------------------------
 	struct SpeedhackOptions
 	{
+		BITFIELD32()
 			bool
-				fastCDVD,		// enables fast CDVD access
-				IntcStat,		// tells Pcsx2 to fast-forward through intc_stat waits.
-				WaitLoop,		// enables constant loop detection and fast-forwarding
-				vuFlagHack,		// microVU specific flag hack
-				vuThread;		// Enable Threaded VU1
+				fastCDVD		:1,		// enables fast CDVD access
+				IntcStat		:1,		// tells Pcsx2 to fast-forward through intc_stat waits.
+				WaitLoop		:1,		// enables constant loop detection and fast-forwarding
+				vuFlagHack		:1,		// microVU specific flag hack
+				vuThread        :1;		// Enable Threaded VU1
+		BITFIELD_END
 
 		s8	EECycleRate;		// EE cycle rate selector (1.0, 1.5, 2.0)
 		u8	EECycleSkip;		// EE Cycle skip factor (0, 1, 2, or 3)
@@ -408,21 +418,23 @@ struct Pcsx2Config
 
 		bool operator ==( const SpeedhackOptions& right ) const
 		{
-			//return OpEqu( bitset ) && OpEqu( EECycleRate ) && OpEqu( EECycleSkip );
+			return OpEqu( bitset ) && OpEqu( EECycleRate ) && OpEqu( EECycleSkip );
 		}
 
 		bool operator !=( const SpeedhackOptions& right ) const
 		{
 			return !this->operator ==( right );
 		}
-
-		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SpeedhackOptions, fastCDVD, IntcStat, WaitLoop, vuFlagHack, vuThread, EECycleRate, EECycleSkip);
 	};
 
 	struct DebugOptions
 	{
-		bool ShowDebuggerOnStart;
-		bool AlignMemoryWindowStart;
+		BITFIELD32()
+			bool
+				ShowDebuggerOnStart	:1;
+			bool
+				AlignMemoryWindowStart :1;
+		BITFIELD_END
 
 		u8 FontWidth;
 		u8 FontHeight;
@@ -435,40 +447,40 @@ struct Pcsx2Config
 
 		bool operator ==( const DebugOptions& right ) const
 		{
-			//return OpEqu( bitset ) && OpEqu( FontWidth ) && OpEqu( FontHeight )
-				//&& OpEqu( WindowWidth ) && OpEqu( WindowHeight ) && OpEqu( MemoryViewBytesPerRow );
+			return OpEqu( bitset ) && OpEqu( FontWidth ) && OpEqu( FontHeight )
+				&& OpEqu( WindowWidth ) && OpEqu( WindowHeight ) && OpEqu( MemoryViewBytesPerRow );
 		}
 
 		bool operator !=( const DebugOptions& right ) const
 		{
 			return !this->operator ==( right );
 		}
-
-		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DebugOptions, ShowDebuggerOnStart, AlignMemoryWindowStart, FontWidth, FontHeight, WindowWidth, MemoryViewBytesPerRow);
 	};
 
+	BITFIELD32()
 		bool
-			CdvdVerboseReads,	// enables cdvd read activity verbosely dumped to the console
-			CdvdDumpBlocks,		// enables cdvd block dumping
-			CdvdShareWrite,		// allows the iso to be modified while it's loaded
-			EnablePatches,		// enables patch detection and application
-			EnableCheats,		// enables cheat detection and application
-			EnableWideScreenPatches,
+			CdvdVerboseReads	:1,		// enables cdvd read activity verbosely dumped to the console
+			CdvdDumpBlocks		:1,		// enables cdvd block dumping
+			CdvdShareWrite		:1,		// allows the iso to be modified while it's loaded
+			EnablePatches		:1,		// enables patch detection and application
+			EnableCheats		:1,		// enables cheat detection and application
+			EnableWideScreenPatches		:1,
 #ifndef DISABLE_RECORDING
-			EnableRecordingTools,
+			EnableRecordingTools :1,
 #endif
 		// when enabled uses BOOT2 injection, skipping sony bios splashes
-			UseBOOT2Injection,
-			BackupSavestate,
+			UseBOOT2Injection	:1,
+			BackupSavestate		:1,
 		// enables simulated ejection of memory cards when loading savestates
-			McdEnableEjection,
-			McdFolderAutoManage,
+			McdEnableEjection	:1,
+			McdFolderAutoManage	:1,
 
-			MultitapPort0_Enabled,
-			MultitapPort1_Enabled,
+			MultitapPort0_Enabled:1,
+			MultitapPort1_Enabled:1,
 
-			ConsoleToStdio,
-			HostFs;
+			ConsoleToStdio		:1,
+			HostFs				:1;
+	BITFIELD_END
 
 	CpuOptions			Cpu;
 	GSOptions			GS;
@@ -482,10 +494,6 @@ struct Pcsx2Config
 	wxFileName			BiosFilename;
 
 	Pcsx2Config();
-
-	NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Pcsx2Config, CdvdVerboseReads, CdvdDumpBlocks, CdvdShareWrite, EnablePatches, EnableCheats, EnableWideScreenPatches,
-	EnableRecordingTools, UseBOOT2Injection, BackupSavestate, McdEnableEjection, McdFolderAutoManage, MultitapPort0_Enabled, MultitapPort1_Enabled,
-	ConsoleToStdio, HostFs);
 	//void LoadSave( nlohmann::json& json );
 
 	//void Load( const std::string& srcfile );
@@ -497,15 +505,15 @@ struct Pcsx2Config
 
 	bool operator ==( const Pcsx2Config& right ) const
 	{
-		//return
-			//OpEqu( bitset )		&&
-			//OpEqu( Cpu )		&&
-			//OpEqu( GS )			&&
-			//OpEqu( Speedhacks )	&&
-			//OpEqu( Gamefixes )	&&
-			//OpEqu( Profiler )	&&
-			//OpEqu( Trace )		&&
-			//OpEqu( BiosFilename );
+		return
+			OpEqu( bitset )		&&
+			OpEqu( Cpu )		&&
+			OpEqu( GS )			&&
+			OpEqu( Speedhacks )	&&
+			OpEqu( Gamefixes )	&&
+			OpEqu( Profiler )	&&
+			OpEqu( Trace )		&&
+			OpEqu( BiosFilename );
 	}
 
 	bool operator !=( const Pcsx2Config& right ) const
