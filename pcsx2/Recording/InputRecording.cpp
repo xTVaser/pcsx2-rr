@@ -47,7 +47,7 @@ void SaveStateBase::InputRecordingFreeze()
 		// TODO - make a function of my own to simplify working with the logging macros
 		recordingConLog(wxString::Format(L"[REC]: Internal Starting Frame: %d\n", g_InputRecording.GetStartingFrame()));
 	}
-	else if (g_InputRecording.IsRecordingActive())
+	else if (g_InputRecording.IsActive())
 	{
 		// Explicitly set the frame change tracking variable as to not
 		// detect loading a savestate as a frame being drawn
@@ -163,7 +163,7 @@ bool InputRecording::IsInterruptFrame()
 	return fInterruptFrame;
 }
 
-bool InputRecording::IsRecordingActive()
+bool InputRecording::IsActive()
 {
 	return state != InputRecordingMode::NotActive;
 }

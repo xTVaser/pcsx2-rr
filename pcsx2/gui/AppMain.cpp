@@ -1145,7 +1145,7 @@ void Pcsx2App::SysExecute()
 {
 	SysExecutorThread.PostEvent( new SysExecEvent_Execute() );
 #ifndef DISABLE_RECORDING
-	if (g_Conf->EmuOptions.EnableRecordingTools && g_InputRecording.IsRecordingActive())
+	if (g_InputRecording.IsActive())
 	{
 		g_InputRecording.ResetFrameCounter();
 	}
@@ -1159,7 +1159,7 @@ void Pcsx2App::SysExecute( CDVD_SourceType cdvdsrc, const wxString& elf_override
 {
 	SysExecutorThread.PostEvent( new SysExecEvent_Execute(cdvdsrc, elf_override) );
 #ifndef DISABLE_RECORDING
-	if (g_Conf->EmuOptions.EnableRecordingTools && g_InputRecording.IsRecordingActive())
+	if ( g_InputRecording.IsActive())
 	{
 		g_InputRecording.ResetFrameCounter();
 	}

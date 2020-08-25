@@ -41,7 +41,7 @@ public:
 	bool IsInterruptFrame();
 
 	// If there is currently an input recording being played back or actively being recorded
-	bool IsRecordingActive();
+	bool IsActive();
 
 	// Whether or not the recording's initial save state has yet to be loaded or saved and 
 	// the rest of the recording can be initialized
