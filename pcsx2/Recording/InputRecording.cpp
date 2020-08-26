@@ -123,9 +123,7 @@ void InputRecording::stop()
 {
 	m_state = INPUT_RECORDING_MODE_NONE;
 	if (m_InputRecordingData.close())
-	{
 		recordingConLog(L"[REC]: InputRecording Recording Stopped.\n");
-	}
 }
 
 // GUI Handler - Start recording
@@ -202,11 +200,8 @@ bool InputRecording::loadFirstFrame()
 			recordingConLog(L"[REC]: Game is not open, cannot load the save-m_state accompanying the current recording.\n");
 		return false;
 	}
-	else
-	{
-		sApp.SysExecute();
-		return true;
-	}
+	sApp.SysExecute();
+	return true;
 }
 
 wxString InputRecording::resolveGameName()

@@ -138,15 +138,12 @@ bool InputRecordingFile::open(const wxString path, bool newRecording)
 			m_filename = path;
 			return true;
 		}
-		else
-		{
-			close();
-			recordingConLog(wxString::Format("[REC]: Input recording file m_header is invalid\n"));
-			return false;
-		}
+		close();
+		recordingConLog(wxString::Format("[REC]: Input recording file m_header is invalid\n"));
+		return false;
 	}
 	recordingConLog(wxString::Format("[REC]: Input Recording file opening failed. Error - %s\n", strerror(errno)));
-	return true;
+	return false;
 }
 
 bool InputRecordingFile::openNew(const wxString path, bool from_savestate)
@@ -188,9 +185,7 @@ bool InputRecordingFile::readKeyBuffer(u8& result, const uint& frame, const uint
 	{
 		const u32 seek = getRecordingBlockSeekPoint(frame) + buf_index;
 		if (fseek(m_recording_file, seek, SEEK_SET) == 0 && fread(&result, 1, 1, m_recording_file) == 1)
-		{
 			return true;
-		}
 	}
 	return false;
 }

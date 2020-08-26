@@ -883,9 +883,7 @@ void MainEmuFrame::Menu_Recording_Reset_Click(wxCommandEvent&)
 	if (g_InputRecording.loadFirstFrame())
 	{
 		if (g_RecordingControls.isRecordingPaused() && g_InputRecording.getModeState() != INPUT_RECORDING_MODE_RECORD)
-		{
 			g_RecordingControls.resume();
-		}
 	}
 }
 
