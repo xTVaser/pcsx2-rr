@@ -366,8 +366,8 @@ class CommandlineOverrides
 {
 public:
 	AppConfig::FilenameOptions	Filenames;
-	wxDirName		SettingsFolder;
-	wxFileName		VmSettingsFile;
+	std::string		SettingsFolder;
+	std::string		VmSettingsFile;
 
 	bool			DisableSpeedhacks;
 	bool			ProfilingMode;
@@ -402,13 +402,13 @@ public:
 
 	bool HasSettingsOverride() const
 	{
-		return SettingsFolder.IsOk() || VmSettingsFile.IsOk();
+		return (SettingsFolder.c_str() != nullptr) || (VmSettingsFile.c_str() != nullptr);
 	}
 
 	bool HasPluginsOverride() const
 	{
 		for( int i=0; i<PluginId_Count; ++i )
-			if( Filenames.Plugins[i].IsOk() ) return true;
+			if( Filenames.Plugins[i].c_str() != nullptr ) return true;
 
 		return false;
 	}

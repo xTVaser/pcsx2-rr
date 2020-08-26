@@ -22,7 +22,7 @@ enum FoldersEnum_t
 	// handled lazily via global variables)
 	FolderId_Plugins = 0,
 	FolderId_Settings,
-	
+
 	FolderId_Bios,
 	FolderId_Snapshots,
 	FolderId_Savestates,
@@ -51,44 +51,44 @@ namespace PathDefs
 {
 	// complete pathnames are returned by these functions (may or may not be absolute)
 
-	extern wxDirName GetSnapshots();
-	extern wxDirName GetBios();
-	extern wxDirName GetPlugins();
-	extern wxDirName GetSavestates();
-	extern wxDirName GetMemoryCards();
-	extern wxDirName GetSettings();
-	extern wxDirName GetLogs();
-	extern wxDirName GetLangs();
-	extern wxDirName GetCheats();
-	extern wxDirName GetCheatsWS();
-	extern wxDirName GetDocs();
+	extern std::string GetSnapshots();
+	extern std::string GetBios();
+	extern std::string GetPlugins();
+	extern std::string GetSavestates();
+	extern std::string GetMemoryCards();
+	extern std::string GetSettings();
+	extern std::string GetLogs();
+	extern std::string GetLangs();
+	extern std::string GetCheats();
+	extern std::string GetCheatsWS();
+	extern std::string GetDocs();
 
-	extern wxDirName Get( FoldersEnum_t folderidx );
+	extern std::string Get( FoldersEnum_t folderidx );
 
 	// Base folder names used to extend out the documents/approot folder base into a complete
 	// path.  These are typically for internal AppConfig use only, barring a few special cases.
 	namespace Base
 	{
-		extern const wxDirName& Snapshots();
-		extern const wxDirName& Savestates();
-		extern const wxDirName& MemoryCards();
-		extern const wxDirName& Settings();
-		extern const wxDirName& Plugins();
-		extern const wxDirName& Logs();
-		extern const wxDirName& Dumps();
-		extern const wxDirName& Langs();
-		extern const wxDirName& Cheats();
-		extern const wxDirName& CheatsWS();
-		extern const wxDirName& Docs();
+		extern const std::string& Snapshots();
+		extern const std::string& Savestates();
+		extern const std::string& MemoryCards();
+		extern const std::string& Settings();
+		extern const std::string& Plugins();
+		extern const std::string& Logs();
+		extern const std::string& Dumps();
+		extern const std::string& Langs();
+		extern const std::string& Cheats();
+		extern const std::string& CheatsWS();
+		extern const std::string& Docs();
 	}
 }
 
 namespace FilenameDefs
 {
-	extern wxFileName GetUiConfig();
-	extern wxFileName GetUiKeysConfig();
-	extern wxFileName GetVmConfig();
-	extern wxFileName GetUsermodeConfig();
-	extern const wxFileName& Memcard( uint port, uint slot );
+	extern std::string GetUiConfig();
+	extern std::string GetUiKeysConfig();
+	extern std::string GetVmConfig();
+	extern std::string GetUsermodeConfig();
+	extern const std::string& Memcard( uint port, uint slot ); // This is going to be a tough motherfucker
 };
 

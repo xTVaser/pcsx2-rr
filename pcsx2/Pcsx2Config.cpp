@@ -78,16 +78,14 @@ void Pcsx2Config::ProfilerOptions::LoadSave( nlohmann::json& json )
 
 Pcsx2Config::RecompilerOptions::RecompilerOptions()
 {
-	//bitset		= 0;
-
-	//StackFrameChecks	= false;
-	//PreBlockCheckEE	= false;
+	StackFrameChecks	= false;
+	PreBlockCheckEE		= false;
 
 	// All recs are enabled by default.
-
 	EnableEE	= true;
 	EnableEECache = false;
 	EnableIOP	= true;
+
 	EnableVU0	= true;
 	EnableVU1	= true;
 
@@ -96,13 +94,15 @@ Pcsx2Config::RecompilerOptions::RecompilerOptions()
 
 	// vu and fpu clamping default to standard overflow.
 	vuOverflow	= true;
-	//vuExtraOverflow = false;
-	//vuSignOverflow = false;
-	//vuUnderflow = false;
+	vuExtraOverflow = false;
+	vuSignOverflow = false;
+	vuUnderflow = false;
 
 	fpuOverflow	= true;
-	//fpuExtraOverflow = false;
-	//fpuFullMode = false;
+	fpuExtraOverflow = false;
+	fpuFullMode = false;
+
+
 }
 
 void Pcsx2Config::RecompilerOptions::ApplySanityCheck()

@@ -518,7 +518,7 @@ extern const Pcsx2Config EmuConfig;
 
 Pcsx2Config::GSOptions&			SetGSConfig();
 Pcsx2Config::RecompilerOptions& SetRecompilerConfig();
-Pcsx2Config::GamefixOptions&	SetGameFixConfig();
+//Pcsx2Config::GamefixOptions&	SetGameFixConfig();
 TraceLogFilters&				SetTraceConfig();
 
 
