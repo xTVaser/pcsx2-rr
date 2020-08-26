@@ -18,7 +18,9 @@
 #include "AppForwardDefs.h"
 #include "PathDefs.h"
 #include "CDVD/CDVDaccess.h"
+#include <fstream>
 #include <memory>
+
 
 enum DocsModeType
 {
@@ -43,30 +45,32 @@ namespace PathDefs
 	// user checks "Use Default paths" option provided on most path selectors.  These are not
 	// used otherwise, in favor of the user-configurable specifications in the ini files.
 
-	extern wxDirName GetUserLocalDataDir();
-	extern wxDirName GetProgramDataDir();
-	extern wxDirName GetDocuments();
-	extern wxDirName GetDocuments( DocsModeType mode );
+	extern std::string GetUserLocalDataDir();
+	extern std::string GetProgramDataDir();
+	extern std::string GetDocuments();
+	extern std::string GetDocuments( DocsModeType mode );
 }
+
+extern nlohmann::json	json;
 
 extern DocsModeType		DocsFolderMode;				//
 extern bool				UseDefaultSettingsFolder;	// when TRUE, pcsx2 derives the settings folder from the DocsFolderMode
 extern bool				UseDefaultPluginsFolder;
 
-extern wxDirName		CustomDocumentsFolder;		// allows the specification of a custom home folder for PCSX2 documents files.
-extern wxDirName		SettingsFolder;				// dictates where the settings folder comes from, *if* UseDefaultSettingsFolder is FALSE.
+extern std::string		CustomDocumentsFolder;		// allows the specification of a custom home folder for PCSX2 documents files.
+extern std::string		SettingsFolder;				// dictates where the settings folder comes from, *if* UseDefaultSettingsFolder is FALSE.
 
-extern wxDirName		InstallFolder;
-extern wxDirName		PluginsFolder;
+extern std::string		InstallFolder;
+extern std::string		PluginsFolder;
 
-extern wxDirName GetSettingsFolder();
-extern wxString  GetVmSettingsFilename();
-extern wxString  GetUiSettingsFilename();
-extern wxString  GetUiKeysFilename();
+extern std::string  GetSettingsFolder();
+extern std::string  GetVmSettingsFilename();
+extern std::string  GetUiSettingsFilename();
+extern std::string  GetUiKeysFilename();
 
-extern wxDirName GetLogFolder();
-extern wxDirName GetCheatsFolder();
-extern wxDirName GetCheatsWsFolder();
+extern std::string GetLogFolder();
+extern std::string GetCheatsFolder();
+extern std::string GetCheatsWsFolder();
 
 enum InstallationModeType
 {
@@ -136,25 +140,23 @@ public:
 		std::string	Theme;
 
 		ConsoleLogOptions();
-		void LoadSave( nlohmann::json &json, std::string title );
+		void LoadSave( nlohmann::json &json, const char* title );
 	};
 
 	// ------------------------------------------------------------------------
 	struct FolderOptions
 	{
-		BITFIELD32()
 			bool
-				UseDefaultBios:1,
-				UseDefaultSnapshots:1,
-				UseDefaultSavestates:1,
-				UseDefaultMemoryCards:1,
-				UseDefaultLogs:1,
-				UseDefaultLangs:1,
-				UseDefaultCheats:1,
-				UseDefaultCheatsWS:1;
-		BITFIELD_END
+				UseDefaultBios,
+				UseDefaultSnapshots,
+				UseDefaultSavestates,
+				UseDefaultMemoryCards,
+				UseDefaultLogs,
+				UseDefaultLangs,
+				UseDefaultCheats,
+				UseDefaultCheatsWS;
 
-		wxDirName
+		std::string
 			Bios,
 			Snapshots,
 			Savestates,
@@ -164,30 +166,29 @@ public:
 			Cheats,
 			CheatsWS;
 
-		wxDirName RunIso;		// last used location for Iso loading.
-		wxDirName RunELF;		// last used location for ELF loading.
-		wxFileName RunDisc;		// last used location for Disc loading.
+		std::string RunIso;		// last used location for Iso loading.
+		std::string RunELF;		// last used location for ELF loading.
 
 		FolderOptions();
 		void LoadSave( nlohmann::json &json );
 		void ApplyDefaults();
 
-		void Set( FoldersEnum_t folderidx, const wxString& src, bool useDefault );
+		void Set( FoldersEnum_t folderidx, const std::string& src, bool useDefault );
 
-		const wxDirName& operator[]( FoldersEnum_t folderidx ) const;
-		wxDirName& operator[]( FoldersEnum_t folderidx );
+		const std::string& operator[]( FoldersEnum_t folderidx ) const;
+		std::string& operator[]( FoldersEnum_t folderidx );
 		bool IsDefault( FoldersEnum_t folderidx ) const;
 	};
 
 	// ------------------------------------------------------------------------
 	struct FilenameOptions
 	{
-		wxFileName Bios;
-		wxFileName Plugins[PluginId_Count];
+		std::string Bios;
+		std::string Plugins[PluginId_Count];
 
 		void LoadSave( nlohmann::json &json );
 
-		const wxFileName& operator[]( PluginsEnum_t pluginidx ) const;
+		const std::string& operator[]( PluginsEnum_t pluginidx ) const;
 	};
 
 	// ------------------------------------------------------------------------
@@ -195,7 +196,7 @@ public:
 	//
 	struct McdOptions
 	{
-		wxFileName	Filename;	// user-configured location of this memory card
+		std::string	Filename;	// user-configured location of this memory card
 		bool		Enabled;	// memory card enabled (if false, memcard will not show up in-game)
 		MemoryCardType Type;	// the memory card implementation that should be used
 	};
@@ -254,18 +255,18 @@ public:
 		UiTemplateOptions();
 		void LoadSave(nlohmann::json &json);
 
-		wxString LimiterUnlimited;
-		wxString LimiterTurbo;
-		wxString LimiterSlowmo;
-		wxString LimiterNormal;
-		wxString OutputFrame;
-		wxString OutputField;
-		wxString OutputProgressive;
-		wxString OutputInterlaced;
-		wxString Paused;
-		wxString TitleTemplate;
+		std::string LimiterUnlimited;
+		std::string LimiterTurbo;
+		std::string LimiterSlowmo;
+		std::string LimiterNormal;
+		std::string OutputFrame;
+		std::string OutputField;
+		std::string OutputProgressive;
+		std::string OutputInterlaced;
+		std::string Paused;
+		std::string TitleTemplate;
 #ifndef DISABLE_RECORDING
-		wxString RecordingTemplate;
+		std::string RecordingTemplate;
 #endif
 	};
 
@@ -274,11 +275,11 @@ public:
 
 	// Because remembering the last used tab on the settings panel is cool (tab is remembered
 	// by it's UTF/ASCII name).
-	wxString	SysSettingsTabName;
-	wxString	McdSettingsTabName;
-	wxString	ComponentsTabName;
-	wxString	AppSettingsTabName;
-	wxString	GameDatabaseTabName;
+	std::string	SysSettingsTabName;
+	std::string	McdSettingsTabName;
+	std::string	ComponentsTabName;
+	std::string	AppSettingsTabName;
+	std::string	GameDatabaseTabName;
 
 	// Currently selected language ID -- wxWidgets version-specific identifier.  This is one side of
 	// a two-part configuration that also includes LanguageCode.
@@ -286,7 +287,7 @@ public:
 
 	// Current language in use (correlates to the universal language codes, such as "en_US", "de_DE", etc).
 	// This code is not always unique, which is why we use the language ID also.
-	wxString	LanguageCode;
+	std::string	LanguageCode;
 
 	int			RecentIsoCount;		// number of files displayed in the Recent Isos list.
 
@@ -324,17 +325,17 @@ public:
 
 	bool		AskOnBoot;
 
-	wxString				CurrentIso;
-    wxString				CurrentBlockdump;
-	wxString				CurrentELF;
-	wxString				CurrentIRX;
+	std::string				CurrentIso;
+    std::string				CurrentBlockdump;
+	std::string				CurrentELF;
+	std::string				CurrentIRX;
 	CDVD_SourceType			CdvdSource;
-	wxString				CurrentGameArgs;
+	std::string				CurrentGameArgs;
 
 	// Memorycard options - first 2 are default slots, last 6 are multitap 1 and 2
 	// slots (3 each)
 	McdOptions				Mcd[8];
-	wxString				GzipIsoIndexTemplate; // for quick-access index with gzipped ISO
+	std::string				GzipIsoIndexTemplate; // for quick-access index with gzipped ISO
 
 	ConsoleLogOptions		ProgLogBox;
 	FolderOptions			Folders;
@@ -352,18 +353,18 @@ public:
 public:
 	AppConfig();
 
-	wxString FullpathToBios() const;
-	wxString FullpathToMcd( uint slot ) const;
-	wxString FullpathTo( PluginsEnum_t pluginId ) const;
+	std::string FullpathToBios() const;
+	std::string FullpathToMcd( uint slot ) const;
+	std::string FullpathTo( PluginsEnum_t pluginId ) const;
 
-	bool FullpathMatchTest( PluginsEnum_t pluginId, const wxString& cmpto ) const;
+	bool FullpathMatchTest( PluginsEnum_t pluginId, const std::string& cmpto ) const;
 
 	void LoadSave( nlohmann::json &json );
 	void LoadSaveRootItems( nlohmann::json &json );
 	void LoadSaveMemcards( nlohmann::json &json );
 
 	static int  GetMaxPresetIndex();
-    static bool isOkGetPresetTextAndColor(int n, wxString& label, wxColor& c);
+    static bool isOkGetPresetTextAndColor(int n, std::string& label, wxColor& c);
 
 	bool        IsOkApplyPreset(int n, bool ignoreMTVU);
 
