@@ -33,9 +33,9 @@ class NewRecordingFrame : public wxDialog
 public:
 	NewRecordingFrame(wxWindow *parent);
 
-	wxString GetFile() const;
-	wxString GetAuthor() const;
-	int GetFrom() const;
+	wxString getFile() const;
+	wxString getAuthor() const;
+	int getFrom() const;
 
 private:
 	wxStaticText *m_fileLabel;

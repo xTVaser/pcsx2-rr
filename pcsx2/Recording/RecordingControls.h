@@ -21,28 +21,28 @@ class RecordingControls
 public:
 
 	// Movie controls main functions
-	bool IsEmulationAndRecordingPaused();
-	void ResumeCoreThreadIfStarted();
-	void HandleFrameAdvanceAndStop();
+	bool isRecordingPaused();
+	void resumeCoreThreadIfStarted();
+	void handleframeAdvanceAndStop();
 
 	// Shortcut Keys
-	void FrameAdvance();
-	void TogglePause();
+	void frameAdvance() noexcept;
+	void togglePause() noexcept;
 
 	// Setters
-	void Pause();
-	void Unpause();
+	void pause() noexcept;
+	void resume() noexcept;
 
 	// Getters
-	bool GetStopFlag();
+	bool getStopFlag() noexcept;
 
 private:
-	uint stopFrameCount = false;
+	uint m_stopFrameCount = 0;
 
-	bool fStop = false;
-	bool fStart = false;
-	bool fFrameAdvance = false;
-	bool fPauseState = false;
+	bool m_Stop = false;
+	bool m_Start = false;
+	bool m_frameAdvance = false;
+	bool m_PauseState = false;
 
 };
 

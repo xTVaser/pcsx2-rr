@@ -25,15 +25,15 @@
 class VirtualPad : public wxFrame
 {
 public:
-	VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, int controllerPort, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_FRAME_STYLE);
+	VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, int controller_port, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_FRAME_STYLE);
 
 	bool Show(bool show = true) override;
 
 private:
-	void SetProperties();
-	void DoLayout();
+	void setProperties();
+	void doLayout();
 
-	int controllerPort;
+	int controller_port;
 
 	wxToggleButton* l2Button;
 	wxSpinCtrl* l2ButtonPressure;

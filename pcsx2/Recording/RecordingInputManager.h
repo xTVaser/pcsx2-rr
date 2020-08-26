@@ -24,7 +24,7 @@ class RecordingInputManager
 public:
 	RecordingInputManager();
 
-	void ControllerInterrupt(u8 &data, u8 &port, u16 & BufCount, u8 buf[]);
+	void ControllerInterrupt(const u8 data, const u8 port, const u16 buf_count, u8(&buf)[512]);
 	// Handles normal keys
 	void SetButtonState(int port, PadData_NormalButton button, int pressure);
 	// Handles analog sticks

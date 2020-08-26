@@ -527,7 +527,7 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent& event)
 	else
 	{
 		//Closes the TAS file if one is loaded
-		if (g_InputRecording.GetModeState() != INPUT_RECORDING_MODE_NONE)
+		if (g_InputRecording.getModeState() != INPUT_RECORDING_MODE_NONE)
 			Menu_Recording_Stop_Click(event);
 		GetMenuBar()->Remove(TopLevelMenu_Recording);
 		// Always turn controller logs off, but never turn it on by default
@@ -813,28 +813,22 @@ void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_Click(wxCommandEvent & eve
 #ifndef DISABLE_RECORDING
 void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 {
-	const bool notInitiallyPaused = !g_RecordingControls.IsEmulationAndRecordingPaused();
-	if (notInitiallyPaused)
+	const bool initially_paused = g_RecordingControls.isRecordingPaused();
+	if (!initially_paused)
+		g_RecordingControls.pause();
+	NewRecordingFrame* new_frame = wxGetApp().GetNewRecordingFramePtr();
+	if (new_frame)
 	{
-		g_RecordingControls.Pause();
-	}
-	NewRecordingFrame* NewRecordingFrame = wxGetApp().GetNewRecordingFramePtr();
-	if (NewRecordingFrame)
-	{
-		if (NewRecordingFrame->ShowModal() == wxID_CANCEL)
+		if (new_frame->ShowModal() == wxID_CANCEL)
 		{
-			if (notInitiallyPaused)
-			{
-				g_RecordingControls.Unpause();
-			}
+			if (!initially_paused)
+				g_RecordingControls.resume();
 			return;
 		}
-		if (!g_InputRecording.Create(NewRecordingFrame->GetFile(), !NewRecordingFrame->GetFrom(), NewRecordingFrame->GetAuthor()))
+		if (!g_InputRecording.create(new_frame->getFile(), !new_frame->getFrom(), new_frame->getAuthor()))
 		{
-			if (notInitiallyPaused)
-			{
-				g_RecordingControls.Unpause();
-			}
+			if (!initially_paused)
+				g_RecordingControls.resume();
 			return;
 		}
 	}
@@ -845,48 +839,40 @@ void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 
 void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 {
-	const bool noTASLoaded = g_InputRecording.GetModeState() == INPUT_RECORDING_MODE_NONE;
-	const bool notInitiallyPaused = !g_RecordingControls.IsEmulationAndRecordingPaused();
-	if (notInitiallyPaused)
-	{
-		g_RecordingControls.Pause();
-	}
-	wxFileDialog openFileDialog(this, _("Select P2M2 record file."), L"", L"",
+	const bool was_recording_loaded = g_InputRecording.getModeState() != INPUT_RECORDING_MODE_NONE;
+	const bool initially_paused = g_RecordingControls.isRecordingPaused();
+	if (!initially_paused)
+		g_RecordingControls.pause();
+	wxFileDialog open_file_dialog(this, _("Select P2M2 record file."), L"", L"",
 		L"p2m2 file(*.p2m2)|*.p2m2", wxFD_OPEN);
-	if (openFileDialog.ShowModal() == wxID_CANCEL)
+	if (open_file_dialog.ShowModal() == wxID_CANCEL)
 	{
-		if (notInitiallyPaused)
-		{
-			g_RecordingControls.Unpause();
-		}
+		if (!initially_paused)
+			g_RecordingControls.resume();
 		return;
 	}
 
-	wxString path = openFileDialog.GetPath();
-	if (!g_InputRecording.Play(path))
+	const wxString path = open_file_dialog.GetPath();
+	if (!g_InputRecording.play(path))
 	{
-		if (!noTASLoaded)
-		{
+		if (was_recording_loaded)
 			Menu_Recording_Stop_Click(event);
-		}
-		if (notInitiallyPaused)
-		{
-			g_RecordingControls.Unpause();
-		}
+		if (!initially_paused)
+			g_RecordingControls.resume();
 		return;
 	}
-	if (noTASLoaded)
+	if (!was_recording_loaded)
 	{
 		m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
 		m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
 		m_menuRecording.FindChildItem(MenuId_Recording_Reset)->Enable(true);
 	}
-	g_RecordingControls.Unpause();
+	g_RecordingControls.resume();
 }
 
 void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
 {
-	g_InputRecording.Stop();
+	g_InputRecording.stop();
 	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(true);
 	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(false);
 	m_menuRecording.FindChildItem(MenuId_Recording_Reset)->Enable(false);
@@ -894,11 +880,11 @@ void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
 
 void MainEmuFrame::Menu_Recording_Reset_Click(wxCommandEvent&)
 {
-	if (g_InputRecording.GoToFirstFrame())
+	if (g_InputRecording.loadFirstFrame())
 	{
-		if (g_RecordingControls.IsEmulationAndRecordingPaused() && g_InputRecording.GetModeState() != INPUT_RECORDING_MODE_RECORD)
+		if (g_RecordingControls.isRecordingPaused() && g_InputRecording.getModeState() != INPUT_RECORDING_MODE_RECORD)
 		{
-			g_RecordingControls.Unpause();
+			g_RecordingControls.resume();
 		}
 	}
 }

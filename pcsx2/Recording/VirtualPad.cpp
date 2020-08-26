@@ -28,7 +28,7 @@ wxEND_EVENT_TABLE()
 // TODO - Problems / Potential improvements:
 // - The UI doesn't update to manual controller inputs and actually overrides the controller when opened (easily noticable with analog stick)
 //   - This is less than ideal, but it's going to take a rather large / focused refactor, in it's current state the virtual pad does what it needs to do (precise inputs, frame by frame)
-VirtualPad::VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, int controllerPort, const wxPoint& pos, const wxSize& size, long style) :
+VirtualPad::VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, int controller_port, const wxPoint& pos, const wxSize& size, long style) :
 	wxFrame(parent, id, title, pos, size, wxDEFAULT_FRAME_STYLE)
 {
 	// Define components
@@ -71,7 +71,7 @@ VirtualPad::VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, i
 	rightAnalogYValPrecise = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -127, 128);
 
 	// Initialize class members
-	VirtualPad::controllerPort = controllerPort;
+	VirtualPad::controller_port = controller_port;
 
 	// NOTE: Order MATTERS, these match enum defined in PadData.h
 	wxToggleButton* tempButtons[16] = {
@@ -119,14 +119,14 @@ VirtualPad::VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, i
 	}
 
 	// Finalize layout
-	SetProperties();
+	setProperties();
 	DoLayout();
 }
 
 
-void VirtualPad::SetProperties()
+void VirtualPad::setProperties()
 {
-	if (controllerPort == 0)
+	if (controller_port == 0)
 	{
 		SetTitle(wxT("Virtual Pad - Port 1"));
 	}
@@ -145,14 +145,14 @@ bool VirtualPad::Show(bool show)
 	}
 	if (show)
 	{
-		g_RecordingInput.SetVirtualPadReading(controllerPort, true);
+		g_RecordingInput.SetVirtualPadReading(controller_port, true);
 	}
 	return true;
 }
 
 void VirtualPad::OnClose(wxCloseEvent & event)
 {
-	g_RecordingInput.SetVirtualPadReading(controllerPort, false);
+	g_RecordingInput.SetVirtualPadReading(controller_port, false);
 	Hide();
 }
 
@@ -181,7 +181,7 @@ void VirtualPad::OnButtonPress(wxCommandEvent & event)
 				pressure = 255;
 			}
 		}
-		g_RecordingInput.SetButtonState(controllerPort, PadData_NormalButton(buttonId), pressure);
+		g_RecordingInput.SetButtonState(controller_port, PadData_NormalButton(buttonId), pressure);
 	}
 }
 
@@ -204,7 +204,7 @@ void VirtualPad::OnPressureChange(wxSpinEvent & event)
 		{
 			pressure = buttonsPressure[spinnerId]->GetValue();
 		}
-		g_RecordingInput.SetButtonState(controllerPort, PadData_NormalButton(spinnerId), pressure);
+		g_RecordingInput.SetButtonState(controller_port, PadData_NormalButton(spinnerId), pressure);
 	}
 }
 
@@ -230,7 +230,7 @@ void VirtualPad::OnAnalogSliderChange(wxCommandEvent & event)
 			analogVals[sliderId]->SetValue(event.GetInt() * -1);
 		}
 
-		g_RecordingInput.UpdateAnalog(controllerPort, PadData_AnalogVector(sliderId), event.GetInt() + 127);
+		g_RecordingInput.UpdateAnalog(controller_port, PadData_AnalogVector(sliderId), event.GetInt() + 127);
 	}
 }
 
@@ -248,11 +248,11 @@ void VirtualPad::OnAnalogValChange(wxSpinEvent & event)
 	if (spinnerId != -1)
 	{
 		analogVals[spinnerId]->SetValue(event.GetInt());
-		g_RecordingInput.UpdateAnalog(controllerPort, PadData_AnalogVector(spinnerId), event.GetInt() + 127);
+		g_RecordingInput.UpdateAnalog(controller_port, PadData_AnalogVector(spinnerId), event.GetInt() + 127);
 	}
 }
 
-void VirtualPad::DoLayout()
+void VirtualPad::doLayout()
 {
 	wxBoxSizer* container = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* analogSticks = new wxBoxSizer(wxHORIZONTAL);

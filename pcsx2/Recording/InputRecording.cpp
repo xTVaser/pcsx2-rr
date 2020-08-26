@@ -37,7 +37,7 @@ void SaveStateBase::InputRecordingFreeze()
 #ifndef DISABLE_RECORDING
 	if (g_FrameCount > 0 && IsLoading())
 	{
-		g_InputRecordingData.IncrementUndoCount();
+		g_InputRecording.getinputRecordingData().incrementUndoCount();
 	}
 #endif
 }
@@ -47,7 +47,7 @@ InputRecording g_InputRecording;
 
 // Main func for handling controller input data
 // - Called by Sio.cpp::sioWriteController
-void InputRecording::ControllerInterrupt(u8& data, u8& port, u16& bufCount, u8 buf[])
+void InputRecording::controllerInterrupt(const u8 data, const u8 port, const u16 buf_count, u8(&buf)[512])
 {
 	// TODO - Multi-Tap Support
 	// Only examine controllers 1 / 2
@@ -64,15 +64,15 @@ void InputRecording::ControllerInterrupt(u8& data, u8& port, u16& bufCount, u8 b
 		See - Lilypad.cpp::PADpoll - https://github.com/PCSX2/pcsx2/blob/v1.5.0-dev/plugins/LilyPad/LilyPad.cpp#L1193
 		0x42 is the magic number for the default read query
 	*/
-	if (bufCount == 1)
+	if (buf_count == 1)
 	{
-		fInterruptFrame = data == 0x42;
-		if (!fInterruptFrame)
+		m_fInterrupt_frame = data == 0x42;
+		if (!m_fInterrupt_frame)
 		{
 			return;
 		}
 	}
-	else if (bufCount == 2)
+	else if (buf_count == 2)
 	{
 		/*
 			See - LilyPad.cpp::PADpoll - https://github.com/PCSX2/pcsx2/blob/v1.5.0-dev/plugins/LilyPad/LilyPad.cpp#L1194
@@ -80,75 +80,70 @@ void InputRecording::ControllerInterrupt(u8& data, u8& port, u16& bufCount, u8 b
 			when the normal READ_DATA_AND_VIBRRATE (0x42)
 			query is executed, this looks like a sanity check
 		*/
-		if (buf[bufCount] != 0x5A)
+		if (buf[buf_count] != 0x5A)
 		{
-			fInterruptFrame = false;
+			m_fInterrupt_frame = false;
 			return;
 		}
 	}
 
-	if (!fInterruptFrame || state == INPUT_RECORDING_MODE_NONE
+	if (!m_fInterrupt_frame || m_state == INPUT_RECORDING_MODE_NONE
 		// We do not want to record or save the first two
 		// bytes in the data returned from LilyPad
-		|| bufCount < 3)
+		|| buf_count < 3)
 	{
 		return;
 	}
 
 	// Read or Write
-	const u8& nowBuf = buf[bufCount];
-	if (state == INPUT_RECORDING_MODE_RECORD)
+	if (m_state == INPUT_RECORDING_MODE_RECORD)
 	{
-		InputRecordingData.SetTotalFrames(g_FrameCount);
-		InputRecordingData.WriteKeyBuffer(g_FrameCount, port, bufCount - 3, nowBuf);
+		m_InputRecordingData.setTotalFrames(g_FrameCount);
+		m_InputRecordingData.writeKeyBuffer(g_FrameCount, port, buf_count - 3, buf[buf_count]);
 	}
-	else if (state == INPUT_RECORDING_MODE_REPLAY)
+	else if (m_state == INPUT_RECORDING_MODE_REPLAY)
 	{
-		if (InputRecordingData.GetTotalFrames() <= g_FrameCount)
+		if (m_InputRecordingData.getTotalFrames() <= g_FrameCount)
 		{
 			// Pause the emulation but the movie is not closed
-			g_RecordingControls.Pause();
+			g_RecordingControls.pause();
 			return;
 		}
 		u8 tmp = 0;
-		if (InputRecordingData.ReadKeyBuffer(tmp, g_FrameCount, port, bufCount - 3))
+		if (m_InputRecordingData.readKeyBuffer(tmp, g_FrameCount, port, buf_count - 3))
 		{
-			buf[bufCount] = tmp;
+			buf[buf_count] = tmp;
 		}
 	}
 }
 
 
 // GUI Handler - Stop recording
-void InputRecording::Stop()
+void InputRecording::stop()
 {
-	state = INPUT_RECORDING_MODE_NONE;
-	if (InputRecordingData.Close())
+	m_state = INPUT_RECORDING_MODE_NONE;
+	if (m_InputRecordingData.close())
 	{
 		recordingConLog(L"[REC]: InputRecording Recording Stopped.\n");
 	}
 }
 
 // GUI Handler - Start recording
-bool InputRecording::Create(wxString FileName, bool fromSaveState, wxString authorName)
+bool InputRecording::create(const wxString FileName, const bool from_savestate, const wxString author_name)
 {
-	if (!InputRecordingData.OpenNew(FileName, fromSaveState))
-	{
+	if (!m_InputRecordingData.openNew(FileName, from_savestate))
 		return false;
-	}
 	// Set emulator version
-	InputRecordingData.GetHeader().SetEmulatorVersion();
+	m_InputRecordingData.getHeader().setEmulatorVersion();
 
 	// Set author name
-	if (!authorName.IsEmpty())
-	{
-		InputRecordingData.GetHeader().SetAuthor(authorName);
-	}
+	if (!author_name.IsEmpty())
+		m_InputRecordingData.getHeader().setAuthor(author_name);
 	// Set Game Name
-	InputRecordingData.GetHeader().SetGameName(resolveGameName());
+	m_InputRecordingData.getHeader().setGameName(resolveGameName());
 	// Write header contents
-	InputRecordingData.WriteHeader();
-	state = INPUT_RECORDING_MODE_RECORD;
+	m_InputRecordingData.writeHeader();
+	m_state = INPUT_RECORDING_MODE_RECORD;
 	recordingConLog(wxString::Format(L"[REC]: Started new recording - [%s]\n", FileName));
 
 	// In every case, we reset the g_FrameCount
@@ -157,67 +152,55 @@ bool InputRecording::Create(wxString FileName, bool fromSaveState, wxString auth
 }
 
 // GUI Handler - Play a recording
-bool InputRecording::Play(wxString fileName)
+bool InputRecording::play(const wxString filename)
 {
-	if (state != INPUT_RECORDING_MODE_NONE)
-		Stop();
+	if (m_state != INPUT_RECORDING_MODE_NONE)
+		stop();
 
 	// Open the file and verify if it can be played
-	if (!InputRecordingData.OpenExisting(fileName))
-	{
+	if (!m_InputRecordingData.openExisting(filename))
 		return false;
-	}
-	if (!GoToFirstFrame())
+	if (!loadFirstFrame())
 	{
-		Stop();
+		stop();
 		return false;
 	}
 
 	// Check if the current game matches with the one used to make the original recording
 	if (!g_Conf->CurrentIso.IsEmpty())
 	{
-		if (resolveGameName() != InputRecordingData.GetHeader().gameName)
-		{
+		if (resolveGameName() != m_InputRecordingData.getGameName())
 			recordingConLog(L"[REC]: Recording was possibly recorded on a different game.\n");
-		}
 	}
 
-	state = INPUT_RECORDING_MODE_REPLAY;
-	recordingConLog(wxString::Format(L"[REC]: Replaying input recording - [%s]\n", InputRecordingData.GetFilename()));
-	recordingConLog(wxString::Format(L"[REC]: PCSX2 Version Used: %s\n", InputRecordingData.GetHeader().emu));
-	recordingConLog(wxString::Format(L"[REC]: Recording File Version: %d\n", InputRecordingData.GetHeader().version));
-	recordingConLog(wxString::Format(L"[REC]: Associated Game Name or ISO Filename: %s\n", InputRecordingData.GetHeader().gameName));
-	recordingConLog(wxString::Format(L"[REC]: Author: %s\n", InputRecordingData.GetHeader().author));
-	recordingConLog(wxString::Format(L"[REC]: Total Frames: %d\n", InputRecordingData.GetTotalFrames()));
-	recordingConLog(wxString::Format(L"[REC]: Undo Count: %d\n", InputRecordingData.GetUndoCount()));
+	m_state = INPUT_RECORDING_MODE_REPLAY;
+	recordingConLog(wxString::Format(L"[REC]: Replaying input recording - [%s]\n", m_InputRecordingData.getFilename()));
+	recordingConLog(wxString::Format(L"[REC]: PCSX2 Version Used: %s\n", m_InputRecordingData.getEmulatorVersion()));
+	recordingConLog(wxString::Format(L"[REC]: Recording File Version: %d\n", m_InputRecordingData.getP2M2Version()));
+	recordingConLog(wxString::Format(L"[REC]: Associated Game Name or ISO Filename: %s\n", m_InputRecordingData.getGameName()));
+	recordingConLog(wxString::Format(L"[REC]: Author: %s\n", m_InputRecordingData.getAuthor()));
+	recordingConLog(wxString::Format(L"[REC]: Total Frames: %d\n", m_InputRecordingData.getTotalFrames()));
+	recordingConLog(wxString::Format(L"[REC]: Undo Count: %d\n", m_InputRecordingData.getUndoCount()));
 	return true;
 }
 
 // Starts the recording at frame 0 either by loading the accompanying savestate or restarting emulation
-bool InputRecording::GoToFirstFrame()
+bool InputRecording::loadFirstFrame()
 {
-	if (InputRecordingData.GetHeader().savestate)
+	if (m_InputRecordingData.fromSaveState())
 	{
 		if (CoreThread.IsOpen())
 		{
-			FILE* ssFileCheck = wxFopen(InputRecordingData.GetFilename() + "_SaveState.p2s", "r");
-			if (ssFileCheck != nullptr)
+			if (wxFileExists(m_InputRecordingData.getFilename() + "_SaveState.p2s"))
 			{
-				fclose(ssFileCheck);
-				StateCopy_LoadFromFile(InputRecordingData.GetFilename() + "_SaveState.p2s");
+				StateCopy_LoadFromFile(m_InputRecordingData.getFilename() + "_SaveState.p2s");
 				return true;
 			}
-			else
-			{
-				recordingConLog(wxString::Format("[REC]: Could not locate savestate file at location - %s_SaveState.p2s\n", InputRecordingData.GetFilename()));
-				return false;
-			}
+			recordingConLog(wxString::Format("[REC]: Could not locate savestate file at location - %s_SaveState.p2s\n", m_InputRecordingData.getFilename()));
 		}
 		else
-		{
-			recordingConLog(L"[REC]: Game is not open, cannot load the save-state accompanying the current recording.\n");
-			return false;
-		}
+			recordingConLog(L"[REC]: Game is not open, cannot load the save-m_state accompanying the current recording.\n");
+		return false;
 	}
 	else
 	{
@@ -229,50 +212,50 @@ bool InputRecording::GoToFirstFrame()
 wxString InputRecording::resolveGameName()
 {
 	// Code loosely taken from AppCoreThread::_ApplySettings to resolve the Game Name
-	wxString gameName;
-	const wxString gameKey(SysGetDiscID());
-	if (!gameKey.IsEmpty())
+	wxString game_name;
+	const wxString game_key(SysGetDiscID());
+	if (!game_key.IsEmpty())
 	{
-		if (IGameDatabase* GameDB = AppHost_GetGameDatabase())
+		if (IGameDatabase* game_database = AppHost_GetGameDatabase())
 		{
 			Game_Data game;
-			if (GameDB->findGame(game, gameKey))
+			if (game_database->findGame(game, game_key))
 			{
-				gameName = game.getString("Name");
-				gameName += L" (" + game.getString("Region") + L")";
+				game_name = game.getString("Name");
+				game_name += L" (" + game.getString("Region") + L")";
 			}
 		}
 	}
-	return !gameName.IsEmpty() ? gameName : Path::GetFilename(g_Conf->CurrentIso);
+	return !game_name.IsEmpty() ? game_name : Path::GetFilename(g_Conf->CurrentIso);
 }
 
 // Keybind Handler - Toggle between recording input and not
-void InputRecording::RecordModeToggle()
+void InputRecording::recordModeToggle()
 {
-	if (state == INPUT_RECORDING_MODE_REPLAY)
+	if (m_state == INPUT_RECORDING_MODE_REPLAY)
 	{
-		state = INPUT_RECORDING_MODE_RECORD;
+		m_state = INPUT_RECORDING_MODE_RECORD;
 		recordingConLog("[REC]: Record mode ON.\n");
 	}
-	else if (state == INPUT_RECORDING_MODE_RECORD)
+	else if (m_state == INPUT_RECORDING_MODE_RECORD)
 	{
-		state = INPUT_RECORDING_MODE_REPLAY;
+		m_state = INPUT_RECORDING_MODE_REPLAY;
 		recordingConLog("[REC]: Replay mode ON.\n");
 	}
 }
 
-INPUT_RECORDING_MODE InputRecording::GetModeState()
+INPUT_RECORDING_MODE InputRecording::getModeState() const noexcept
 {
-	return state;
+	return m_state;
 }
 
-InputRecordingFile& InputRecording::GetInputRecordingData()
+InputRecordingFile& InputRecording::getinputRecordingData() noexcept
 {
-	return InputRecordingData;
+	return m_InputRecordingData;
 }
 
-bool InputRecording::IsInterruptFrame()
+bool InputRecording::isInterruptFrame() const noexcept
 {
-	return fInterruptFrame;
+	return m_fInterrupt_frame;
 }
 #endif

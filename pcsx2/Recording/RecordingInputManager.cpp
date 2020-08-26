@@ -30,42 +30,37 @@ RecordingInputManager::RecordingInputManager()
 	}
 }
 
-void RecordingInputManager::ControllerInterrupt(u8 & data, u8 & port, u16 & BufCount, u8 buf[])
+void RecordingInputManager::ControllerInterrupt(const u8 data, const u8 port, const u16 buf_count, u8(&buf)[512])
 {
-	if (port >= 2)
-	{
-		return;
-	}
-
 	if (virtualPad[port])
 	{
-		int bufIndex = BufCount - 3;
+		int buf_index = buf_count - 3;
 		// first two bytes have nothing of interest in the buffer
 		// already handled by InputRecording.cpp
-		if (BufCount < 3)
+		if (buf_count < 3)
 		{
 			return;
 		}
 
 		// Normal keys
 		// We want to perform an OR, but, since 255 means that no button is pressed and 0 that every button is pressed (and by De Morgan's Laws), we execute an AND.
-		if (BufCount <= 4)
+		if (buf_count <= 4)
 		{
-			buf[BufCount] = buf[BufCount] & pad.buf[port][bufIndex];
+			buf[buf_count] = buf[buf_count] & pad.buf[port][buf_index];
 		}
 		// Analog keys (! overrides !)
-		else if ((BufCount > 4 && BufCount <= 6) && pad.buf[port][bufIndex] != 127)
+		else if ((buf_count > 4 && buf_count <= 6) && pad.buf[port][buf_index] != 127)
 		{
-			buf[BufCount] = pad.buf[port][bufIndex];
+			buf[buf_count] = pad.buf[port][buf_index];
 		}
 		// Pressure sensitivity bytes
-		else if (BufCount > 6)
+		else if (buf_count > 6)
 		{
-			buf[BufCount] = pad.buf[port][bufIndex];
+			buf[buf_count] = pad.buf[port][buf_index];
 		}
 
 		// Updating movie file
-		g_InputRecording.ControllerInterrupt(data, port, BufCount, buf);
+		g_InputRecording.controllerInterrupt(data, port, buf_count, buf);
 	}
 }
 

@@ -477,7 +477,7 @@ namespace Implementations
 	{
 		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
-			g_RecordingControls.FrameAdvance();
+			g_RecordingControls.frameAdvance();
 		}
 	}
 
@@ -485,7 +485,7 @@ namespace Implementations
 	{
 		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
-			g_RecordingControls.TogglePause();
+			g_RecordingControls.togglePause();
 		}
 	}
 
@@ -493,7 +493,7 @@ namespace Implementations
 	{
 		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
-			g_InputRecording.RecordModeToggle();
+			g_InputRecording.recordModeToggle();
 		}
 	}
 

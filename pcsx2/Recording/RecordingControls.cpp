@@ -32,21 +32,21 @@ RecordingControls g_RecordingControls;
 // - Recording is Paused
 // - GSFrame CoreThread is both running AND paused
 //-----------------------------------------------
-bool RecordingControls::IsEmulationAndRecordingPaused()
+bool RecordingControls::isRecordingPaused()
 {
-	return fPauseState && CoreThread.IsOpen() && CoreThread.IsPaused();
+	return m_PauseState && CoreThread.IsOpen() && CoreThread.IsPaused();
 }
 
 //-----------------------------------------------
 // Called after inputs are recorded for that frame, places lock on input recording, effectively releasing resources and resuming CoreThread.
 //-----------------------------------------------
-void RecordingControls::ResumeCoreThreadIfStarted()
+void RecordingControls::resumeCoreThreadIfStarted()
 {
-	if (fStart && CoreThread.IsOpen() && CoreThread.IsPaused())
+	if (m_Start && CoreThread.IsOpen() && CoreThread.IsPaused())
 	{
 		CoreThread.Resume();
-		fStart = false;
-		fPauseState = false;
+		m_Start = false;
+		m_PauseState = false;
 	}
 }
 
@@ -54,15 +54,15 @@ void RecordingControls::ResumeCoreThreadIfStarted()
 // Called at VSYNC End / VRender Begin, updates everything recording related for the next frame,
 // toggles RecordingControl flags back to enable input recording for the next frame.
 //-----------------------------------------------
-void RecordingControls::HandleFrameAdvanceAndStop()
+void RecordingControls::handleframeAdvanceAndStop()
 {
-	if (fFrameAdvance)
+	if (m_frameAdvance)
 	{
-		if (stopFrameCount < g_FrameCount)
+		if (m_stopFrameCount < g_FrameCount)
 		{
-			fFrameAdvance = false;
-			fStop = true;
-			stopFrameCount = g_FrameCount;
+			m_frameAdvance = false;
+			m_Stop = true;
+			m_stopFrameCount = g_FrameCount;
 
 			// We force the frame counter in the title bar to change
 			wxString oldTitle = wxGetApp().GetGsFrame().GetTitle();
@@ -78,43 +78,43 @@ void RecordingControls::HandleFrameAdvanceAndStop()
 			wxGetApp().GetGsFrame().SetTitle(title);
 		}
 	}
-	if (fStop && CoreThread.IsOpen() && CoreThread.IsRunning())
+	if (m_Stop && CoreThread.IsOpen() && CoreThread.IsRunning())
 	{
-		fPauseState = true;
+		m_PauseState = true;
 		CoreThread.PauseSelf();
 	}
 }
 
-bool RecordingControls::GetStopFlag()
+bool RecordingControls::getStopFlag() noexcept
 {
-	return (fStop || fFrameAdvance);
+	return (m_Stop || m_frameAdvance);
 }
 
-void RecordingControls::FrameAdvance()
+void RecordingControls::frameAdvance() noexcept
 {
-	stopFrameCount = g_FrameCount;
-	fFrameAdvance = true;
-	fStop = false;
-	fStart = true;
+	m_stopFrameCount = g_FrameCount;
+	m_frameAdvance = true;
+	m_Stop = false;
+	m_Start = true;
 }
 
-void RecordingControls::TogglePause()
+void RecordingControls::togglePause() noexcept
 {
-	fStop = !fStop;
-	if (fStop == false)
+	m_Stop = !m_Stop;
+	if (m_Stop == false)
 	{
-		fStart = true;
+		m_Start = true;
 	}
 }
 
-void RecordingControls::Pause()
+void RecordingControls::pause() noexcept
 {
-	fStop = true;
+	m_Stop = true;
 }
 
-void RecordingControls::Unpause()
+void RecordingControls::resume() noexcept
 {
-	fStop = false;
-	fStart = true;
+	m_Stop = false;
+	m_Start = true;
 }
 #endif
