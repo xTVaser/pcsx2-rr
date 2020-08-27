@@ -253,12 +253,12 @@ namespace Implementations
 		if( zoom < 0 )
 			return;
 		g_Conf->GSWindow.Zoom = zoom;
-		
+
 		if ( zoom == 0 )
 			OSDlog( Color_StrongBlue, true, "(GSwindow) Zoom: 0 (auto, no black bars)");
 		else
 			OSDlog( Color_StrongBlue, true, "(GSwindow) Zoom: %f", zoom);
-		
+
 		UpdateImagePosition();
 	}
 
@@ -357,7 +357,7 @@ namespace Implementations
 
 	void Sys_TakeSnapshot()
 	{
-		GSmakeSnapshot( g_Conf->Folders.Snapshots.ToUTF8() );
+		GSmakeSnapshot( g_Conf->Folders.Snapshots.c_str() );
 	}
 
 	void Sys_RenderToggle()
@@ -378,7 +378,7 @@ namespace Implementations
 		// --arcum42
 
 		// FIXME: Some of the trace logs will require recompiler resets to be activated properly.
-#ifdef PCSX2_DEVBUILD		
+#ifdef PCSX2_DEVBUILD
 		SetTraceConfig().Enabled = !EmuConfig.Trace.Enabled;
 		Console.WriteLn(EmuConfig.Trace.Enabled ? "Logging Enabled." : "Logging Disabled.");
 #endif

@@ -23,12 +23,11 @@ template class EventSource< IEventListener_Plugins >;
 template class EventSource< IEventListener_AppStatus >;
 
 
-AppSettingsEventInfo::AppSettingsEventInfo( nlohmann::json& j, AppEventType evt_type )
-	: AppEventInfo( evt_type )
+/*AppSettingsEventInfo::AppSettingsEventInfo( nlohmann::json& j, AppEventType evt_type )
 {
 
 	json = j;
-}
+}*/
 
 
 EventListener_CoreThread::EventListener_CoreThread()

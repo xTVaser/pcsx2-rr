@@ -85,11 +85,11 @@ static bool HandlePluginError( BaseException& ex )
 		Msgbox::Alert(ex.FormatDisplayMessage());
 	}
 
-	g_Conf->ComponentsTabName = L"Plugins";
+	g_Conf->ComponentsTabName = "Plugins";
 
 	// TODO: Send a message to the panel to select the failed plugin.
 
-	return AppOpenModalDialog<Dialogs::ComponentsConfigDialog>(L"Plugins") != wxID_CANCEL;
+	return AppOpenModalDialog<Dialogs::ComponentsConfigDialog>("Plugins") != wxID_CANCEL;
 }
 
 class PluginErrorEvent : public pxExceptionEvent
@@ -189,7 +189,7 @@ static bool HandleBIOSError(BaseException& ex)
 		Msgbox::Alert(ex.FormatDisplayMessage() + L"\n\n" + BIOS_GetMsg_Required(), _("PS2 BIOS Error"));
 	}
 
-	g_Conf->ComponentsTabName = L"BIOS";
+	g_Conf->ComponentsTabName = "BIOS";
 
 	return AppOpenModalDialog<Dialogs::ComponentsConfigDialog>(L"BIOS") != wxID_CANCEL;
 }
@@ -252,18 +252,18 @@ public:
 	{
 		m_Method = method;
 	}
-	
+
 	Pcsx2AppMethodEvent( const Pcsx2AppMethodEvent& src )
 		: pxActionEvent( src )
 	{
 		m_Method = src.m_Method;
 	}
-		
+
 	void SetMethod( FnPtr_Pcsx2App method )
 	{
 		m_Method = method;
 	}
-	
+
 protected:
 	void InvokeEvent()
 	{
@@ -485,7 +485,7 @@ void FramerateManager::Reset()
 	Resume();
 }
 
-// 
+//
 void FramerateManager::Resume()
 {
 }
@@ -495,7 +495,7 @@ void FramerateManager::DoFrame()
 	m_fpsqueue_writepos = (m_fpsqueue_writepos + 1) % FramerateQueueDepth;
 	m_fpsqueue[m_fpsqueue_writepos] = GetCPUTicks();
 
-	// intentionally leave 1 on the counter here, since ultimately we want to divide the 
+	// intentionally leave 1 on the counter here, since ultimately we want to divide the
 	// final result (in GetFramerate() by QueueDepth-1.
 	if( m_initpause > 1 ) --m_initpause;
 }
@@ -513,7 +513,7 @@ double FramerateManager::GetFramerate() const
 // ----------------------------------------------------------------------------
 
 // LogicalVsync - Event received from the AppCoreThread (EEcore) for each vsync,
-// roughly 50/60 times a second when frame limiting is enabled, and up to 10,000 
+// roughly 50/60 times a second when frame limiting is enabled, and up to 10,000
 // times a second if not (ok, not quite, but you get the idea... I hope.)
 extern uint eecount_on_last_vdec;
 extern bool FMVstarted;
@@ -709,17 +709,17 @@ void Pcsx2App::HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent&
 		// [TODO]  Bind a listener to the CoreThread status, and automatically close the dialog
 		// if the thread starts responding while we're waiting (not hard in fact, but I'm getting
 		// a little tired, so maybe later!)  --air
-	
+
 		Console.Warning( ex.FormatDiagnosticMessage() );
 		wxDialogWithHelpers dialog( NULL, _("PCSX2 Unresponsive Thread"), wxVERTICAL );
-		
+
 		dialog += dialog.Heading( ex.FormatDisplayMessage() + L"\n\n" +
 			pxE( L"'Ignore' to continue waiting for the thread to respond.\n'Cancel' to attempt to cancel the thread.\n'Terminate' to quit PCSX2 immediately.\n"
 			)
 		);
 
 		int result = pxIssueConfirmation( dialog, MsgButtons().Ignore().Cancel().Custom( _("Terminate") ) );
-		
+
 		if( result == pxID_CUSTOM )
 		{
 			// fastest way to kill the process! (works in Linux and win32, thanks to windows having very
@@ -818,7 +818,7 @@ void Pcsx2App::enterDebugMode()
 	if (dlg)
 		dlg->setDebugMode(true,false);
 }
-	
+
 void Pcsx2App::leaveDebugMode()
 {
 	DisassemblyDialog* dlg = GetDisassemblyPtr();
@@ -846,23 +846,24 @@ void AppApplySettings( const AppConfig* oldconf )
 	// Ensure existence of necessary documents folders.  Plugins and other parts
 	// of PCSX2 rely on them.
 
-	g_Conf->Folders.MemoryCards.Mkdir();
+	/*g_Conf->Folders.MemoryCards.Mkdir();
 	g_Conf->Folders.Savestates.Mkdir();
 	g_Conf->Folders.Snapshots.Mkdir();
 	g_Conf->Folders.Cheats.Mkdir();
-	g_Conf->Folders.CheatsWS.Mkdir();
+	g_Conf->Folders.CheatsWS.Mkdir();*/
+
 
 	g_Conf->EmuOptions.BiosFilename = g_Conf->FullpathToBios();
 
 	RelocateLogfile();
 
-	if( (oldconf == NULL) || (oldconf->LanguageCode.CmpNoCase(g_Conf->LanguageCode)) )
+	/*if( (oldconf == NULL) || (oldconf->LanguageCode.CmpNoCase(g_Conf->LanguageCode)) )
 	{
 		wxDoNotLogInThisScope please;
 		i18n_SetLanguage( g_Conf->LanguageId, g_Conf->LanguageCode );
-	}
-	
-	CorePlugins.SetSettingsFolder( GetSettingsFolder().ToString() );
+	}*/
+
+	CorePlugins.SetSettingsFolder( GetSettingsFolder());
 
 	// Update the compression attribute on the Memcards folder.
 	// Memcards generally compress very well via NTFS compression.
@@ -974,7 +975,7 @@ void Pcsx2App::OpenGsPanel()
 		//
 		// FIXME: Gsdx memory leaks in DX10 have been fixed.  This code may not be needed
 		// anymore.
-		
+
 		const wxSize oldsize( gsFrame->GetSize() );
 		wxSize newsize( oldsize );
 		newsize.DecBy(1);
@@ -982,7 +983,7 @@ void Pcsx2App::OpenGsPanel()
 		gsFrame->SetSize( newsize );
 		gsFrame->SetSize( oldsize );
 	}
-	
+
 	pxAssertDev( !GetCorePlugins().IsOpen( PluginId_GS ), "GS Plugin must be closed prior to opening a new Gs Panel!" );
 
 #ifdef __WXGTK__
@@ -1095,7 +1096,7 @@ public:
 	{
 		return _("Executing PS2 Virtual Machine...");
 	}
-	
+
 	SysExecEvent_Execute()
 		: m_UseCDVDsrc(false)
 		, m_UseELFOverride(false)

@@ -51,6 +51,7 @@ set(UtilitiesHeaders
 	../../include/Utilities/Assertions.h
 	../../include/Utilities/boost_spsc_queue.hpp
 	../../include/Utilities/json.hpp
+	../../include/Utilities/filesystem.hpp
 	../../include/Utilities/CheckedStaticBox.h
 	../../include/Utilities/Console.h
 	../../include/Utilities/Dependencies.h

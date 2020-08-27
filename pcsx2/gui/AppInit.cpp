@@ -40,7 +40,7 @@ using namespace pxSizerFlags;
 void Pcsx2App::DetectCpuAndUserMode()
 {
 	AffinityAssert_AllowFrom_MainUI();
-	
+
 #ifdef _M_X86
 	x86caps.Identify();
 	x86caps.CountCores();
@@ -79,14 +79,14 @@ void Pcsx2App::OpenMainFrame()
 #ifndef DISABLE_RECORDING
 	VirtualPad* virtualPad0 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 0);
 	m_id_VirtualPad[0] = virtualPad0->GetId();
-	
+
 	VirtualPad *virtualPad1 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 1);
 	m_id_VirtualPad[1] = virtualPad1->GetId();
 
 	NewRecordingFrame* newRecordingFrame = new NewRecordingFrame(mainFrame);
 	m_id_NewRecordingFrame = newRecordingFrame->GetId();
 #endif
-	
+
 	if (g_Conf->EmuOptions.Debugger.ShowDebuggerOnStart)
 		disassembly->Show();
 
@@ -115,15 +115,15 @@ void Pcsx2App::OpenProgramLog()
 	EnableAllLogging();
 
 	if( m_current_focus ) m_current_focus->SetFocus();
-	
+
 	// This is test code for printing out all supported languages and their canonical names in wiki-fied
 	// format.  I might use it again soon, so I'm leaving it in for now... --air
 	/*
 	for( int li=wxLANGUAGE_UNKNOWN+1; li<wxLANGUAGE_USER_DEFINED; ++li )
 	{
 		if (const wxLanguageInfo* info = wxLocale::GetLanguageInfo( li ))
-		{			
-			if (i18n_IsLegacyLanguageId((wxLanguage)info->Language)) continue;			
+		{
+			if (i18n_IsLegacyLanguageId((wxLanguage)info->Language)) continue;
 			Console.WriteLn( L"|| %-30s || %-8s ||", info->Description.c_str(), info->CanonicalName.c_str() );
 		}
 	}
@@ -151,7 +151,7 @@ void Pcsx2App::AllocateCoreStuffs()
 			// HadSomeFailures only returns 'true' if an *enabled* cpu type fails to init.  If
 			// the user already has all interps configured, for example, then no point in
 			// popping up this dialog.
-			
+
 			wxDialogWithHelpers exconf( NULL, _("PCSX2 Recompiler Error(s)") );
 
 			wxTextCtrl* scrollableTextArea = new wxTextCtrl(
@@ -165,9 +165,9 @@ void Pcsx2App::AllocateCoreStuffs()
 
 			exconf += 6;
 			exconf += scrollableTextArea	| pxExpand.Border(wxALL, 16);
-			
+
 			Pcsx2Config::RecompilerOptions& recOps = g_Conf->EmuOptions.Cpu.Recompiler;
-			
+
 			if( BaseException* ex = m_CpuProviders->GetException_EE() )
 			{
 				scrollableTextArea->AppendText( L"* R5900 (EE)\n\t" + ex->FormatDisplayMessage() + L"\n\n" );
@@ -281,7 +281,7 @@ bool Pcsx2App::ParseOverrides( wxCmdLineParser& parser )
 	if (parser.Found(L"gamefixes", &dest))
 	{
 		Overrides.ApplyCustomGamefixes = true;
-		Overrides.Gamefixes.Set( dest, true );
+		Overrides.Gamefixes.Set( (std::string)dest, true );
 	}
 
 	if (parser.Found(L"fullscreen"))	Overrides.GsWindowMode = GsWinMode_Fullscreen;
@@ -309,11 +309,11 @@ bool Pcsx2App::ParseOverrides( wxCmdLineParser& parser )
 
 			if( wxID_CANCEL == pxIssueConfirmation( okcan, MsgButtons().OKCancel() ) ) return false;
 		}
-		
+
 		Overrides.Filenames.Plugins[pi->id] = dest;
 
 	} while( ++pi, pi->shortname != NULL );
-	
+
 	return true;
 }
 
@@ -413,7 +413,7 @@ protected:
 		_parent::OnCleanupInThread();
 		wxGetApp().DeleteThread(this);
 	}
-	
+
 	void AppStatusEvent_OnExit()
 	{
 		Block();
@@ -564,7 +564,7 @@ void Pcsx2App::OnScheduledTermination( wxTimerEvent& evt )
 			Console.WriteLn( "(App) %d saves are still pending; exit postponed...", m_PendingSaves );
 			return;
 		}
-		
+
 		Console.Error( "(App) %s pending saves have exceeded OnExit threshold and are being prematurely terminated!", m_PendingSaves );
 	}
 
@@ -634,7 +634,7 @@ void Pcsx2App::CleanupOnExit()
 	// We don't need to unload plugins anyway tho -- shutdown is plenty safe enough for
 	// closing out all the windows.  So just leave it be and let the plugins get unloaded
 	// during the wxApp destructor. -- air
-	
+
 	// FIXME: performing a wxYield() here may fix that problem. -- air
 
 	pxDoAssert = pxAssertImpl_LogIt;
@@ -671,7 +671,7 @@ void Pcsx2App::OnDestroyWindow( wxWindowDestroyEvent& evt )
 	//  * The virtual machine's plugins usually depend on the GS window handle being valid,
 	//    so if the GS window is the one being shut down then we need to make sure to close
 	//    out the Corethread before it vanishes completely from existence.
-	
+
 
 	OnProgramLogClosed( evt.GetId() );
 	OnGsFrameClosed( evt.GetId() );
@@ -696,7 +696,7 @@ protected:
 };
 
 
-Pcsx2App::Pcsx2App() 
+Pcsx2App::Pcsx2App()
 	: SysExecutorThread( new SysEvtHandler() )
 {
 	// Warning: Do not delete this comment block! Gettext will parse it to allow
@@ -744,7 +744,7 @@ Pcsx2App::Pcsx2App()
 
 Pcsx2App::~Pcsx2App()
 {
-	pxDoAssert = pxAssertImpl_LogIt;	
+	pxDoAssert = pxAssertImpl_LogIt;
 	try {
 		vu1Thread.Cancel();
 	}

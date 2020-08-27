@@ -29,11 +29,11 @@ bool					UseDefaultSettingsFolder = true;
 bool					UseDefaultPluginsFolder = true;
 
 
-wxDirName				CustomDocumentsFolder;
-wxDirName				SettingsFolder;
+std::string				CustomDocumentsFolder;
+std::string				SettingsFolder;
 
-wxDirName				InstallFolder;
-wxDirName				PluginsFolder;
+std::string				InstallFolder;
+std::string				PluginsFolder;
 
 // The UserLocalData folder can be redefined depending on whether or not PCSX2 is in
 // "portable install" mode or not.  when PCSX2 has been configured for portable install, the
@@ -41,12 +41,13 @@ wxDirName				PluginsFolder;
 //
 InstallationModeType		InstallationMode;
 
-static wxFileName GetPortableIniPath()
+
+static std::string GetPortableJsonPath()
 {
 	wxString programFullPath = wxStandardPaths::Get().GetExecutablePath();
-	wxDirName programDir( wxFileName(programFullPath).GetPath() );
+	std::string programDir( wxFileName(programFullPath).GetPath() );
 
-	return programDir + "portable.ini";
+	return programDir + "portable.json";
 }
 
 static wxString GetMsg_PortableModeRights()
@@ -55,13 +56,13 @@ static wxString GetMsg_PortableModeRights()
 	);
 };
 
-bool Pcsx2App::TestUserPermissionsRights( const wxDirName& testFolder, wxString& createFailedStr, wxString& accessFailedStr )
+bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder, std::string& createFailedStr, std::string& accessFailedStr )
 {
 	// We need to individually verify read/write permission for each PCSX2 user documents folder.
 	// If any of the folders are not writable, then the user should be informed asap via
 	// friendly and courteous dialog box!
 
-	const wxDirName PermissionFolders[] = 
+	const std::string PermissionFolders[] =
 	{
 		PathDefs::Base::Settings(),
 		PathDefs::Base::MemoryCards(),
@@ -91,13 +92,13 @@ bool Pcsx2App::TestUserPermissionsRights( const wxDirName& testFolder, wxString&
 	{
 		accessFailedStr = (wxString)_("The following folders exist, but are not writable:") + L"\n" + accessme;
 	}
-	
+
 	if (!createme.IsEmpty())
 	{
 		createFailedStr = (wxString)_("The following folders are missing and cannot be created:") + L"\n" + createme;
 	}
 
-	return (createFailedStr.IsEmpty() && accessFailedStr.IsEmpty());
+	return (createFailedStr.empty() && accessFailedStr.empty());
 }
 
 // Portable installations are assumed to be run in either administrator rights mode, or run
@@ -111,29 +112,29 @@ wxConfigBase* Pcsx2App::TestForPortableInstall()
 {
 	InstallationMode = InstallMode_Registered;
 
-	const wxFileName portableIniFile( GetPortableIniPath() );
-	const wxDirName portableDocsFolder( portableIniFile.GetPath() );
+	std::string portableJsonFile( GetPortableJsonPath() );
+	std::string portableDocsFolder( portableJsonFile );
 
-	if (Startup.PortableMode || portableIniFile.FileExists())
+	if (Startup.PortableMode || !portableJsonFile.empty())
 	{
-		wxString FilenameStr = portableIniFile.GetFullPath();
+		std::string FilenameStr = portableJsonFile;
 		if (Startup.PortableMode)
 			Console.WriteLn( L"(UserMode) Portable mode requested via commandline switch!" );
 		else
-			Console.WriteLn( L"(UserMode) Found portable install ini @ %s", WX_STR(FilenameStr) );
+			Console.WriteLn( L"(UserMode) Found portable install json @ %s", WX_STR(FilenameStr) );
 
 		// Just because the portable ini file exists doesn't mean we can actually run in portable
 		// mode.  In order to determine our read/write permissions to the PCSX2, we must try to
 		// modify the configured documents folder, and catch any ensuing error.
 
-		std::unique_ptr<wxFileConfig> conf_portable( OpenFileConfig( portableIniFile.GetFullPath() ) );
+		std::unique_ptr<wxFileConfig> conf_portable( OpenFileConfig( portableJsonFile ) );
 		conf_portable->SetRecordDefaults(false);
 
 		while( true )
 		{
-			wxString accessFailedStr, createFailedStr;
+			std::string accessFailedStr, createFailedStr;
 			if (TestUserPermissionsRights( portableDocsFolder, createFailedStr, accessFailedStr )) break;
-		
+
 			wxDialogWithHelpers dialog( NULL, AddAppName(_("Portable mode error - %s")) );
 
 			wxTextCtrl* scrollText = new wxTextCtrl(
@@ -141,23 +142,23 @@ wxConfigBase* Pcsx2App::TestForPortableInstall()
 				wxTE_READONLY | wxTE_MULTILINE | wxTE_WORDWRAP
 			);
 
-			if (!createFailedStr.IsEmpty())
+			if (!createFailedStr.empty())
 				scrollText->AppendText( createFailedStr + L"\n" );
 
-			if (!accessFailedStr.IsEmpty())
+			if (!accessFailedStr.empty())
 				scrollText->AppendText( accessFailedStr + L"\n" );
 
 			dialog += dialog.Heading( _("PCSX2 has been installed as a portable application but cannot run due to the following errors:" ) );
 			dialog += scrollText | pxExpand.Border(wxALL, 16);
 			dialog += 6;
 			dialog += dialog.Text( GetMsg_PortableModeRights() );
-			
+
 			// [TODO] : Add url for platform-relevant user permissions tutorials?  (low priority)
 
 			wxWindowID result = pxIssueConfirmation( dialog,
 				MsgButtons().Retry().Cancel().Custom(_("Switch to User Documents Mode"), "switchmode")
 			);
-			
+
 			switch (result)
 			{
 				case wxID_CANCEL:
@@ -166,41 +167,41 @@ wxConfigBase* Pcsx2App::TestForPortableInstall()
 				case wxID_RETRY:
 					// do nothing (continues while loop)
 				break;
-				
+
 				case pxID_CUSTOM:
 					wxDialogWithHelpers dialog2( NULL, AddAppName(_("%s is switching to local install mode.")) );
 					dialog2 += dialog2.Heading( _("Try to remove the file called \"portable.ini\" from your installation directory manually." ) );
 					dialog2 += 6;
 					pxIssueConfirmation( dialog2, MsgButtons().OK() );
-					
+
 					return NULL;
 			}
 
 		}
-	
+
 		// Success -- all user-based folders have write access.  PCSX2 should be able to run error-free!
-		// Force-set the custom documents mode, and set the 
+		// Force-set the custom documents mode, and set the
 
 		InstallationMode = InstallMode_Portable;
 		DocsFolderMode = DocsFolder_Custom;
 		CustomDocumentsFolder = portableDocsFolder;
 		return conf_portable.release();
 	}
-	
+
 	return NULL;
 }
 
 // Reset RunWizard so the FTWizard is run again on next PCSX2 start.
 void Pcsx2App::WipeUserModeSettings()
-{	
+{
 	if (InstallationMode == InstallMode_Portable)
 	{
 		// Remove the portable.ini entry "RunWizard" conforming to this instance of PCSX2.
-		wxFileName portableIniFile( GetPortableIniPath() );
-		std::unique_ptr<wxFileConfig> conf_portable( OpenFileConfig( portableIniFile.GetFullPath() ) );
+		std::string portableJsonFile( GetPortableJsonPath() );
+		std::unique_ptr<wxFileConfig> conf_portable( OpenFileConfig( portableJsonFile ) );
 		conf_portable->DeleteEntry(L"RunWizard");
 	}
-	else 
+	else
 	{
 		// Remove the registry entry "RunWizard" conforming to this instance of PCSX2.
 		std::unique_ptr<wxConfigBase> conf_install( OpenInstallSettingsFile() );
@@ -250,9 +251,11 @@ wxConfigBase* Pcsx2App::OpenInstallSettingsFile()
 		usrlocaldir.Mkdir();
 	}
 
-	wxFileName usermodefile( GetAppName() + L"-reg.ini" );
-	usermodefile.SetPath( usrlocaldir.ToString() );
-	conf_install = std::unique_ptr<wxConfigBase>(OpenFileConfig( usermodefile.GetFullPath() ));
+	std::string usermodefile( GetAppName() + L"-reg.json" );
+
+	//usermodefile.SetPath( usrlocaldir.ToString() );
+
+	conf_install = std::unique_ptr<wxConfigBase>(OpenFileConfig( usermodefile));
 #endif
 
 	return conf_install.release();

@@ -72,8 +72,8 @@ Panels::FirstTimeIntroPanel::FirstTimeIntroPanel( wxWindow* parent )
 
 	FastFormatUnicode configFile, faqFile;
 #ifndef DOC_DIR_COMPILATION
-	configFile.Write( L"file:///%s/Docs/Configuration_Guide.pdf", WX_STR(InstallFolder.ToString()) );
-	faqFile.Write( L"file:///%s/Docs/PCSX2_FAQ.pdf", WX_STR(InstallFolder.ToString()) );
+	configFile.Write( L"file:///%s/Docs/Configuration_Guide.pdf", WX_STR(InstallFolder) );
+	faqFile.Write( L"file:///%s/Docs/PCSX2_FAQ.pdf", WX_STR(InstallFolder));
 #else
 	// Each linux distributions have his rules for path so we give them the possibility to
 	// change it with compilation flags. -- Gregory
@@ -105,7 +105,7 @@ Panels::FirstTimeIntroPanel::FirstTimeIntroPanel( wxWindow* parent )
 	*this	+= new wxHyperlinkCtrl( this, wxID_ANY,
 		_("Configuration Guide"), configFile.c_str()
 	) | pxCenter.Border( wxALL, 5 );
-		
+
 	*this	+= new wxHyperlinkCtrl( this, wxID_ANY,
 		_("Readme / FAQ"), faqFile.c_str()
 	) | pxCenter.Border( wxALL, 5 );

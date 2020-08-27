@@ -39,7 +39,7 @@ namespace Dialogs
 	class BaseConfigurationDialog : public BaseApplicableDialog
 	{
 		typedef BaseApplicableDialog _parent;
-	
+
 	protected:
 		wxListbook*			m_listbook;
 		wxArrayString		m_labels;
@@ -101,7 +101,7 @@ namespace Dialogs
 		}
 
 	protected:
-		virtual wxString& GetConfSettingsTabName() const { return g_Conf->SysSettingsTabName; }
+		virtual wxString& GetConfSettingsTabName() const { return (wxString&)g_Conf->SysSettingsTabName; }
 
 		pxCheckBox*		m_check_presets;
 		wxSlider*		m_slider_presets;
@@ -125,7 +125,7 @@ namespace Dialogs
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString& GetConfSettingsTabName() const { return g_Conf->AppSettingsTabName; }
+		virtual wxString& GetConfSettingsTabName() const { return (wxString&)g_Conf->AppSettingsTabName; }
 	};
 
 
@@ -146,7 +146,7 @@ namespace Dialogs
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString& GetConfSettingsTabName() const { return g_Conf->McdSettingsTabName; }
+		virtual wxString& GetConfSettingsTabName() const { return (wxString&)g_Conf->McdSettingsTabName; }
 		//void OnMultitapClicked( wxCommandEvent& evt );
 	};
 
@@ -164,7 +164,7 @@ namespace Dialogs
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString& GetConfSettingsTabName() const { return g_Conf->ComponentsTabName; }
+		virtual wxString& GetConfSettingsTabName() const { return (wxString&)g_Conf->ComponentsTabName; }
 	};
 
 	// --------------------------------------------------------------------------------------
@@ -188,7 +188,7 @@ namespace Dialogs
 	public:
 		virtual ~CreateMemoryCardDialog()  = default;
 		CreateMemoryCardDialog( wxWindow* parent, const wxDirName& mcdpath, const wxString& suggested_mcdfileName);
-	
+
 		//duplicate of MemoryCardFile::Create. Don't know why the existing method isn't used. - avih
 		static bool CreateIt( const wxString& mcdFile, uint sizeInMB, bool isPSX );
 		wxString result_createdMcdFilename;
@@ -214,7 +214,7 @@ namespace Dialogs
 	public:
 		virtual ~ConvertMemoryCardDialog()  = default;
 		ConvertMemoryCardDialog( wxWindow* parent, const wxDirName& mcdPath, const AppConfig::McdOptions& mcdSourceConfig );
-	
+
 	protected:
 		void CreateControls( const MemoryCardType sourceType );
 		void OnOk_Click( wxCommandEvent& evt );

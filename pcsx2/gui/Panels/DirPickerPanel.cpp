@@ -85,7 +85,7 @@ void Panels::DirPickerPanel::Explore_Click( wxCommandEvent &evt )
 //
 // Parameters:
 //  label - label for the StaticBox that surrounds the dir picker control.  If the 'label'
-//  parameter is not specified, the layout of the panel is assumed to be "compact" which 
+//  parameter is not specified, the layout of the panel is assumed to be "compact" which
 //  lacks a static box and compresses itself onto a single line.  Compact mode may be useful
 //  for situations where the expanded format is just too invasive.
 //
@@ -235,7 +235,7 @@ void Panels::DirPickerPanel::Reset()
 		m_pickerCtrl->Enable( IsEnabled() ? ( m_checkCtrl ? !isDefault : true ) : false );
 		m_pickerCtrl->SetPath( GetNormalizedConfigFolder( m_FolderId ) );
 	}
-	
+
 	if (m_textCtrl)
 	{
 		m_textCtrl->Disable();
@@ -259,40 +259,40 @@ void Panels::DirPickerPanel::AppStatusEvent_OnSettingsApplied()
 
 void Panels::DirPickerPanel::Apply()
 {
-	wxDirName path( GetPath() );
+	std::string path( GetPath() );
 
-	if (!path.Exists())
+	if (!path.c_str())
 	{
 		wxDialogWithHelpers dialog( NULL, _("Create folder?") );
 		dialog += dialog.Heading(AddAppName(_("A configured folder does not exist.  Should %s try to create it?")));
 		dialog += 12;
-		dialog += dialog.Heading( path.ToString() );
+		dialog += dialog.Heading( path );
 
 		if( wxID_CANCEL == pxIssueConfirmation( dialog, MsgButtons().Custom(_("Create"), "create").Cancel(), L"CreateNewFolder" ) )
 			throw Exception::CannotApplySettings( this );
 	}
 
 	path.Mkdir();
-	g_Conf->Folders.Set( m_FolderId, path.ToString(), m_checkCtrl ? m_checkCtrl->GetValue() : false );
+	g_Conf->Folders.Set( m_FolderId, path, m_checkCtrl ? m_checkCtrl->GetValue() : false );
 }
 
-wxDirName Panels::DirPickerPanel::GetPath() const
+std::string Panels::DirPickerPanel::GetPath() const
 {
 	// The (x) ? y : z construct doesn't like y and z to be different types in gcc.
 	if (m_pickerCtrl)
-		return wxDirName(m_pickerCtrl->GetPath());
+		return std::string(m_pickerCtrl->GetPath());
 
 	if (m_textCtrl)
-		return wxDirName(m_textCtrl->GetValue());
+		return std::string(m_textCtrl->GetValue());
 
-	return wxDirName(wxEmptyString);
+	return " ";
 }
 
 void Panels::DirPickerPanel::SetPath( const wxString& newPath )
 {
 	if (m_pickerCtrl)
 		m_pickerCtrl->SetPath( newPath );
-		
+
 	if (m_textCtrl)
 		m_textCtrl->SetValue( newPath );
 }

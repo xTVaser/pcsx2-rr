@@ -93,6 +93,7 @@ protected:
 	wxTimer					m_timer_UpdateTitle;
 	wxWindowID				m_id_gspanel;
 	wxStatusBar*			m_statusbar;
+	wxPoint 				m_windowPoint;
 
 	CpuUsageProvider		m_CpuUsage;
 

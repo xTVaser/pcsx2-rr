@@ -247,7 +247,7 @@ static wxString JoinFiletypes( const wxChar** src )
 
 		++src;
 	}
-	
+
 	return dest;
 }
 
@@ -261,7 +261,7 @@ bool MainEmuFrame::_DoSelectIsoBrowser( wxString& result )
 
 	const wxString isoSupportedLabel( JoinString(isoSupportedTypes, L" ") );
 	const wxString isoSupportedList( JoinFiletypes(isoSupportedTypes) );
-	
+
 	wxArrayString isoFilterTypes;
 
 	isoFilterTypes.Add(pxsFmt(_("All Supported (%s)"), WX_STR((isoSupportedLabel + L" .dump" + L" .gz" + L" .cso"))));
@@ -278,8 +278,8 @@ bool MainEmuFrame::_DoSelectIsoBrowser( wxString& result )
 
 	isoFilterTypes.Add(_("All Files (*.*)"));
 	isoFilterTypes.Add(L"*.*");
-	
-	wxFileDialog ctrl( this, _("Select disc image, compressed disc image, or block-dump..."), g_Conf->Folders.RunIso.ToString(), wxEmptyString,
+
+	wxFileDialog ctrl( this, _("Select disc image, compressed disc image, or block-dump..."), g_Conf->Folders.RunIso, wxEmptyString,
 		JoinString(isoFilterTypes, L"|"), wxFD_OPEN | wxFD_FILE_MUST_EXIST );
 
 	if( ctrl.ShowModal() != wxID_CANCEL )
@@ -296,7 +296,7 @@ bool MainEmuFrame::_DoSelectELFBrowser()
 {
 	static const wxChar* elfFilterType = L"ELF Files (.elf)|*.elf;*.ELF";
 
-	wxFileDialog ctrl( this, _("Select ELF file..."), g_Conf->Folders.RunELF.ToString(), wxEmptyString,
+	wxFileDialog ctrl( this, _("Select ELF file..."), g_Conf->Folders.RunELF, wxEmptyString,
 		(wxString)elfFilterType + L"|" + _("All Files (*.*)") + L"|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST );
 
 	if( ctrl.ShowModal() != wxID_CANCEL )
@@ -315,7 +315,7 @@ void MainEmuFrame::_DoBootCdvd()
 
 	if( g_Conf->CdvdSource == CDVD_SourceType::Iso )
 	{
-		bool selector = g_Conf->CurrentIso.IsEmpty();
+		bool selector = g_Conf->CurrentIso.empty();
 
 		if( !selector && !wxFileExists(g_Conf->CurrentIso) )
 		{
@@ -411,7 +411,7 @@ void MainEmuFrame::Menu_IsoBrowse_Click( wxCommandEvent &event )
 		core.AllowResume();
 		return;
 	}
-	
+
 	SwapOrReset_Iso(this, core, isofile, GetMsg_IsoImageChanged());
 	AppSaveSettings();		// save the new iso selection; update menus!
 }
@@ -466,12 +466,12 @@ void MainEmuFrame::Menu_MultitapToggle_Click( wxCommandEvent& )
 void MainEmuFrame::Menu_EnableBackupStates_Click( wxCommandEvent& )
 {
 	g_Conf->EmuOptions.BackupSavestate = GetMenuBar()->IsChecked( MenuId_EnableBackupStates );
-	
+
 	//without the next line, after toggling this menu-checkbox, the change only applies from the 2nd save and onwards
 	//  (1st save after the toggle keeps the old pre-toggle value)..
 	//  wonder what that means for all the other menu checkboxes which only use AppSaveSettings... (avih)
 	AppApplySettings();
-    
+
 	AppSaveSettings();
 }
 
@@ -833,10 +833,10 @@ void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_Click(wxCommandEvent & eve
 	{
 		return;
 	}
-	GSmakeSnapshot(g_Conf->Folders.Snapshots.ToAscii());
+	GSmakeSnapshot(g_Conf->Folders.Snapshots.c_str());
 }
 
-#ifndef DISABLE_RECORDING
+ #ifndef DISABLE_RECORDING
 void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 {
 	g_InputRecording.Stop();

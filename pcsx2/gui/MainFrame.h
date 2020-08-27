@@ -79,7 +79,7 @@ public:
 	{
 		m_menu_cmd = menu_command;
 	}
-	
+
 	virtual ~InvokeMenuCommand_OnSysStateUnlocked() = default;
 
 	virtual void SaveStateAction_OnCreateFinished()
@@ -97,13 +97,15 @@ class MainEmuFrame : public wxFrame,
 	public EventListener_AppStatus
 {
 	typedef wxFrame _parent;
-	
+
 protected:
 	bool			m_RestartEmuOnDelete;
 
 	wxStatusBar&	m_statusbar;
 	wxStaticBitmap*	m_background;
 
+	wxPoint 		m_size;
+	wxPoint 		m_position;
 	wxMenuBar&		m_menubar;
 
 	wxMenu&			m_menuCDVD;
@@ -158,7 +160,7 @@ public:
 	void CreateCaptureMenu();
 	void CreateRecordMenu();
 	void CreateHelpMenu();
-	
+
 	bool Destroy();
 
 	void ApplyConfigToGui(AppConfig& configToApply, int flags = 0);

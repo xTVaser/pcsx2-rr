@@ -73,7 +73,7 @@ wxIniConfig::wxIniConfig(const wxString& strAppName,
     m_strLocalFilename = localFilename;
     if (m_strLocalFilename.empty())
     {
-        m_strLocalFilename = GetAppName() + wxT(".ini");
+        m_strLocalFilename = GetAppName() + wxT(".json");
     }
 
     // append the extension if none given and it's not an absolute file name
@@ -81,7 +81,7 @@ wxIniConfig::wxIniConfig(const wxString& strAppName,
     if ( !wxIsPathSeparator(m_strLocalFilename[0u]) &&
         m_strLocalFilename.Find(wxT('.')) == wxNOT_FOUND )
     {
-        m_strLocalFilename << wxT(".ini");
+        m_strLocalFilename << wxT(".json");
     }
 
     // set root path

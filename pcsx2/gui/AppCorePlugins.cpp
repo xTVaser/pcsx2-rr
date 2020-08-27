@@ -1,6 +1,6 @@
 /*  PCSX2 - PS2 Emulator for PCs
  *  Copyright (C) 2002-2010  PCSX2 Dev Team
- * 
+ *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
  *  ation, either version 3 of the License, or (at your option) any later version.
@@ -70,7 +70,7 @@ public:
 	{
 		m_evt = src.m_evt;
 	}
-	
+
 	void SetEventType( PluginEventType evt ) { m_evt = evt; }
 	PluginEventType GetEventType() { return m_evt; }
 
@@ -90,7 +90,7 @@ static void ConvertPluginFilenames( wxString (&passins)[PluginId_Count] )
 {
 	const PluginInfo* pi = tbl_PluginInfo; do
 	{
-		passins[pi->id] = wxGetApp().Overrides.Filenames[pi->id].GetFullPath();
+		passins[pi->id] = wxGetApp().Overrides.Filenames[pi->id];
 
 		if( passins[pi->id].IsEmpty() || !wxFileExists( passins[pi->id] ) )
 			passins[pi->id] = g_Conf->FullpathTo( pi->id );
@@ -209,17 +209,17 @@ wxIMPLEMENT_DYNAMIC_CLASS( SinglePluginMethodEvent, pxActionEvent );
 static void _SetSettingsFolder()
 {
 	if (wxGetApp().Rpc_TryInvoke( _SetSettingsFolder )) return;
-	CorePlugins.SetSettingsFolder( GetSettingsFolder().ToString() );
+	CorePlugins.SetSettingsFolder( GetSettingsFolder());
 }
 
 static void _SetLogFolder()
 {
 	if (wxGetApp().Rpc_TryInvoke( _SetLogFolder )) return;
-	CorePlugins.SetLogFolder( GetLogFolder().ToString() );
+	CorePlugins.SetLogFolder( GetLogFolder());
 }
 
 void AppCorePlugins::Load( PluginsEnum_t pid, const wxString& srcfile )
-{ 
+{
 	if( !wxThread::IsMain() )
 	{
 		Sleep( 5 );
@@ -227,7 +227,7 @@ void AppCorePlugins::Load( PluginsEnum_t pid, const wxString& srcfile )
 		wxGetApp().ProcessAction( evt);
 		return;
 	}
-	
+
 	_parent::Load( pid, srcfile );
 }
 
@@ -341,8 +341,8 @@ void AppCorePlugins::Open()
 		return;
 	}*/
 
-    SetLogFolder( GetLogFolder().ToString() );
-	SetSettingsFolder( GetSettingsFolder().ToString() );
+    SetLogFolder( GetLogFolder());
+	SetSettingsFolder( GetSettingsFolder());
 
 	if( !NeedsOpen() ) return;
 
@@ -387,7 +387,7 @@ public:
 	{
 		ConvertPluginFilenames( m_folders );
 	}
-	
+
 	wxString GetEventName() const
 	{
 		return L"LoadCorePlugins";
@@ -560,7 +560,7 @@ void SysExecEvent_SaveSinglePlugin::InvokeEvent()
 			memSavingState save( plugstore.get() );
 			GetCorePlugins().Freeze( m_pid, save );
 		}
-			
+
 		GetCorePlugins().Close( m_pid );
 		_post_and_wait( paused_core );
 

@@ -109,7 +109,7 @@ bool MainEmuFrame::Destroy()
 
 		win->Destroy();
 	}
-	
+
 	return _parent::Destroy();
 }
 
@@ -184,8 +184,8 @@ void MainEmuFrame::OnMoveAround( wxMoveEvent& evt )
 		{
 			if (!proglog->IsMaximized())
 			{
-				g_Conf->ProgLogBox.DisplayPosition = GetRect().GetTopRight();
-				proglog->SetPosition(g_Conf->ProgLogBox.DisplayPosition);
+				m_position = GetRect().GetTopRight();
+				proglog->SetPosition(m_position);
 			}
 		}
 	}
@@ -283,19 +283,23 @@ void MainEmuFrame::ConnectMenus()
 
 void MainEmuFrame::InitLogBoxPosition( AppConfig::ConsoleLogOptions& conf )
 {
-	conf.DisplaySize.Set(
-		std::min( std::max( conf.DisplaySize.GetWidth(), 160 ), wxGetDisplayArea().GetWidth() ),
-		std::min( std::max( conf.DisplaySize.GetHeight(), 160 ), wxGetDisplayArea().GetHeight() )
-	);
+	//conf.DisplaySize.Set(
+		//std::min( std::max( conf.DisplaySize[0], 160 ), wxGetDisplayArea().GetWidth() ),
+		//std::min( std::max( conf.DisplaySize[1], 160 ), wxGetDisplayArea().GetHeight() )
+	//);
 
 	if( conf.AutoDock )
 	{
-		conf.DisplayPosition = GetScreenPosition() + wxSize( GetSize().x, 0 );
+		conf.DisplayPosition[0] = GetScreenPosition().x + wxSize( GetSize().x, 0 ).x;
+		conf.DisplayPosition[1] = GetScreenPosition().y + wxSize( GetSize().y, 0 ).y;
+
 	}
-	else if( conf.DisplayPosition != wxDefaultPosition )
+	else if( conf.DisplayPosition[0] != wxDefaultPosition.x )
 	{
-		if( !wxGetDisplayArea().Contains( wxRect( conf.DisplayPosition, conf.DisplaySize ) ) )
-			conf.DisplayPosition = wxDefaultPosition;
+		m_size = {conf.DisplaySize[0], conf.DisplaySize[1]};
+		m_position = {conf.DisplayPosition[0], conf.DisplayPosition[1]};
+		if( !wxGetDisplayArea().Contains( wxRect( m_position, m_size ) ) )
+			m_position = wxDefaultPosition;
 	}
 }
 

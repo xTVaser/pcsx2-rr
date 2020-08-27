@@ -129,7 +129,7 @@ void psxJALR()
 static __fi void execI()
 {
 	// Inject IRX hack
-	if (psxRegs.pc == 0x1630 && g_Conf->CurrentIRX.Length() > 3) {
+	if (psxRegs.pc == 0x1630 && g_Conf->CurrentIRX.length() > 3) {
 		if (iopMemRead32(0x20018) == 0x1F) {
 			// FIXME do I need to increase the module count (0x1F -> 0x20)
 			iopMemWrite32(0x20094, 0xbffc0000);
@@ -142,7 +142,7 @@ static __fi void execI()
 
 	psxRegs.pc+= 4;
 	psxRegs.cycle++;
-	
+
 	if ((psxHu32(HW_ICFG) & (1 << 3)))
 	{
 		//One of the Iop to EE delta clocks to be set in PS1 mode.

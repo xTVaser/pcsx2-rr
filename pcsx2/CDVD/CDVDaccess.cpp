@@ -151,7 +151,7 @@ static int FindDiskType(int mType)
 			{
 				//const cdVolDesc& volDesc = (cdVolDesc&)bleh;
 				//if(volDesc.rootToc.tocSize == 2048)
-				
+
 				//Horrible hack! in CD images position 166 and 171 have block size but not DVD's
 				//It's not always 2048 however (can be 4096)
 				//Test Impossible Mission if thia is changed.
@@ -320,7 +320,7 @@ CDVD_SourceType CDVDsys_GetSourceType()
 void CDVDsys_ChangeSource( CDVD_SourceType type )
 {
 	GetCorePlugins().Close( PluginId_CDVD );
-	
+
 	switch( m_CurrentSourceType = type )
 	{
 		case CDVD_SourceType::Iso:
@@ -379,7 +379,7 @@ bool DoCDVDopen()
 	else if (somepick.IsEmpty())
 		somepick = L"Untitled";
 
-	if (g_Conf->CurrentBlockdump.IsEmpty())
+	if (g_Conf->CurrentBlockdump.empty())
 		g_Conf->CurrentBlockdump = wxGetCwd();
 
 	wxString temp(Path::Combine(g_Conf->CurrentBlockdump, somepick));

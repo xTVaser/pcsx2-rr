@@ -103,7 +103,7 @@ void GSPanel::InitRecordingAccelerators()
 	m_Accels->Map(AAC(wxKeyCode('p')).Shift(), "TogglePause");
 	m_Accels->Map(AAC(wxKeyCode('r')).Shift(), "InputRecordingModeToggle");
 #if defined(__unix__)
-	// Shift+P (80) and Shift+p (112) have two completely different codes 
+	// Shift+P (80) and Shift+p (112) have two completely different codes
 	// On Linux the former is sometimes fired so define bindings for both
 	m_Accels->Map(AAC(wxKeyCode('P')).Shift(), "TogglePause");
 	m_Accels->Map(AAC(wxKeyCode('R')).Shift(), "InputRecordingModeToggle");
@@ -259,7 +259,7 @@ void GSPanel::DoResize()
 		viewport.x += 1; //avoids crash on some systems switching HW><SW in fullscreen aspect ratio's with FMV Software switch.
 	SetSize( viewport );
 	CenterOnParent();
-	
+
 	int cx, cy;
 	GetPosition(&cx, &cy);
 	float unit = .01*(float)std::min(viewport.x, viewport.y);
@@ -511,9 +511,12 @@ static const uint TitleBarUpdateMsWhenRecording = 50;
 #endif
 
 GSFrame::GSFrame( const wxString& title)
-	: wxFrame(NULL, wxID_ANY, title, g_Conf->GSWindow.WindowPos)
+	: wxFrame(NULL, wxID_ANY, title, m_windowPoint)
 	, m_timer_UpdateTitle( this )
 {
+	m_windowPoint.x = g_Conf->GSWindow.WindowPos[0];
+	m_windowPoint.y = g_Conf->GSWindow.WindowPos[1];
+
 	SetIcons( wxGetApp().GetIconBundle() );
 	SetBackgroundColour( *wxBLACK );
 
@@ -582,7 +585,7 @@ void GSFrame::CoreThread_OnResumed()
 #else
 	m_timer_UpdateTitle.Start(TitleBarUpdateMs);
 #endif
-	
+
 	if( !IsShown() ) Show();
 }
 
@@ -648,7 +651,7 @@ void GSFrame::AppStatusEvent_OnSettingsApplied()
 	SetWindowStyle((g_Conf->GSWindow.DisableResizeBorders ? 0 : wxRESIZE_BORDER) | wxCAPTION | wxCLIP_CHILDREN |
 			wxSYSTEM_MENU | wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxCLOSE_BOX);
 	if (!IsFullScreen() && !IsMaximized())
-		SetClientSize(g_Conf->GSWindow.WindowSize);
+		SetClientSize(g_Conf->GSWindow.WindowSize[0], g_Conf->GSWindow.WindowSize[1]);
 	Refresh();
 
 	if( g_Conf->GSWindow.CloseOnEsc )
@@ -754,7 +757,7 @@ void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 #else
 	wxString title = templates.TitleTemplate;
 #endif
-	
+
 	title.Replace(L"${slot}",		pxsFmt(L"%d", States_GetCurrentSlot()));
 	title.Replace(L"${limiter}",	limiterStr);
 	title.Replace(L"${speed}",		pxsFmt(L"%3d%%", lround(percentage)));
@@ -788,8 +791,10 @@ void GSFrame::OnMove( wxMoveEvent& evt )
 
 	// evt.GetPosition() returns the client area position, not the window frame position.
 	if( !g_Conf->GSWindow.IsMaximized && !IsFullScreen() && !IsIconized() && IsVisible() )
-		g_Conf->GSWindow.WindowPos = GetScreenPosition();
-
+	{
+		g_Conf->GSWindow.WindowPos[0] = GetScreenPosition().x;
+		g_Conf->GSWindow.WindowPos[1] = GetScreenPosition().y;
+	}
 	// wxGTK note: X sends gratuitous amounts of OnMove messages for various crap actions
 	// like selecting or deselecting a window, which muck up docking logic.  We filter them
 	// out using 'lastpos' here. :)
@@ -812,7 +817,8 @@ void GSFrame::OnResize( wxSizeEvent& evt )
 
 	if( !IsFullScreen() && !IsMaximized() && IsVisible() )
 	{
-		g_Conf->GSWindow.WindowSize	= GetClientSize();
+		g_Conf->GSWindow.WindowSize[0]	= GetClientSize().GetWidth();
+		g_Conf->GSWindow.WindowSize[1]  = GetClientSize().GetHeight();
 	}
 
 	if( GSPanel* gsPanel = GetViewport() )

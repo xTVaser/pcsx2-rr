@@ -130,8 +130,8 @@ public:
 		// if true, DisplayPos is ignored and the console is automatically docked to the main window.
 		bool		AutoDock;
 		// Display position used if AutoDock is false (ignored otherwise)
-		wxPoint		DisplayPosition;
-		wxSize		DisplaySize;
+		int		DisplayPosition[2];
+		int		DisplaySize[2];
 
 		// Size of the font in points.
 		int			FontSize;
@@ -222,8 +222,8 @@ public:
 		Fixed100	OffsetY;
 
 
-		wxSize		WindowSize;
-		wxPoint		WindowPos;
+		int			WindowSize[2]; // X, Y
+		int			WindowPos[2]; // X, Y
 		bool		IsMaximized;
 		bool		IsFullscreen;
 		bool		EnableVsyncWindowFlag;
