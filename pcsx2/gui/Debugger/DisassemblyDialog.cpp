@@ -56,7 +56,7 @@ DebuggerHelpDialog::DebuggerHelpDialog(wxWindow* parent)
 {
 	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
 
-	auto fileName = Path::Combine(PathDefs::GetDocs(), wxFileName(L"debugger.txt"));
+	auto fileName = (PathDefs::GetDocs() + "debugger.txt");
 
 	wxTextFile file(fileName);
 	wxString text(L"");
@@ -83,7 +83,7 @@ CpuTabPage::CpuTabPage(wxWindow* parent, DebugInterface* _cpu)
 {
 	wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 	SetSizer(mainSizer);
-	
+
 	leftTabs = new wxNotebook(this,wxID_ANY);
 	bottomTabs = new wxNotebook(this,wxID_ANY);
 	disassembly = new CtrlDisassemblyView(this,cpu);
@@ -97,14 +97,14 @@ CpuTabPage::CpuTabPage(wxWindow* parent, DebugInterface* _cpu)
 	wxBoxSizer* miscStuffSizer = new wxBoxSizer(wxHORIZONTAL);
 	cyclesText = new wxStaticText(this,wxID_ANY,L"");
 	miscStuffSizer->Add(cyclesText,0,wxLEFT|wxTOP|wxBOTTOM,2);
-	
+
 	leftTabs->AddPage(registerList,L"Registers");
 	leftTabs->AddPage(functionList,L"Functions");
 
 	wxBoxSizer* registerSizer = new wxBoxSizer(wxVERTICAL);
 	registerSizer->Add(miscStuffSizer,0);
 	registerSizer->Add(leftTabs,1);
-	
+
 	middleSizer->Add(registerSizer,0,wxEXPAND|wxRIGHT,2);
 	middleSizer->Add(disassembly,2,wxEXPAND);
 	mainSizer->Add(middleSizer,3,wxEXPAND|wxBOTTOM,3);
@@ -114,7 +114,7 @@ CpuTabPage::CpuTabPage(wxWindow* parent, DebugInterface* _cpu)
 
 	breakpointList = new BreakpointList(bottomTabs,cpu,disassembly);
 	bottomTabs->AddPage(breakpointList,L"Breakpoints");
-	
+
 	threadList = NULL;
 	stackFrames = NULL;
 	if (cpu == &r5900Debug)
@@ -272,7 +272,7 @@ DisassemblyDialog::DisassemblyDialog(wxWindow* parent):
 	topSizer->Add(topRowSizer, 0, wxLEFT | wxRIGHT | wxTOP, 3);
 
 	// create middle part of the window
-	middleBook = new wxNotebook(panel,wxID_ANY);  
+	middleBook = new wxNotebook(panel,wxID_ANY);
 	middleBook->SetBackgroundColour(wxColour(0xFFF0F0F0));
 	eeTab = new CpuTabPage(middleBook,&r5900Debug);
 	iopTab = new CpuTabPage(middleBook,&r3000Debug);
@@ -283,7 +283,7 @@ DisassemblyDialog::DisassemblyDialog(wxWindow* parent):
 	currentCpu = eeTab;
 
 	CreateStatusBar(1);
-	
+
 	SetMinSize(wxSize(1000,600));
 	panel->GetSizer()->Fit(this);
 
@@ -305,7 +305,7 @@ void DisassemblyDialog::onSizeEvent(wxSizeEvent& event)
 }
 
 void DisassemblyDialog::onBreakRunClicked(wxCommandEvent& evt)
-{	
+{
 	if (r5900Debug.isCpuPaused())
 	{
 		// If the current PC is on a breakpoint, the user doesn't want to do nothing.
@@ -318,12 +318,12 @@ void DisassemblyDialog::onBreakRunClicked(wxCommandEvent& evt)
 }
 
 void DisassemblyDialog::onStepOverClicked(wxCommandEvent& evt)
-{	
+{
 	stepOver();
 }
 
 void DisassemblyDialog::onStepIntoClicked(wxCommandEvent& evt)
-{	
+{
 	stepInto();
 }
 
@@ -361,7 +361,7 @@ void DisassemblyDialog::stepOver()
 {
 	if (!r5900Debug.isAlive() || !r5900Debug.isCpuPaused() || currentCpu == NULL)
 		return;
-	
+
 
 	// todo: breakpoints for iop
 	if (currentCpu != eeTab)
@@ -409,7 +409,7 @@ void DisassemblyDialog::stepInto()
 {
 	if (!r5900Debug.isAlive() || !r5900Debug.isCpuPaused() || currentCpu == NULL)
 		return;
-	
+
 	// todo: breakpoints for iop
 	if (currentCpu != eeTab)
 		return;
@@ -592,7 +592,7 @@ void DisassemblyDialog::gotoPc()
 void DisassemblyDialog::setDebugMode(bool debugMode, bool switchPC)
 {
 	bool running = r5900Debug.isAlive();
-	
+
 	eeTab->Enable(running);
 	iopTab->Enable(running);
 
@@ -627,7 +627,7 @@ void DisassemblyDialog::setDebugMode(bool debugMode, bool switchPC)
 
 			if (switchPC || CBreakPoints::GetBreakpointTriggered())
 				gotoPc();
-			
+
 			if (CBreakPoints::GetBreakpointTriggered())
 			{
 				if (currentCpu != NULL)

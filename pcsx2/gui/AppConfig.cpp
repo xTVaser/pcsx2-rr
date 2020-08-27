@@ -81,12 +81,6 @@ namespace PathDefs
 			return retval;
 		}
 
-		const std::string& Cheats()
-		{
-			static const std::string retval("cheats");
-			return retval;
-		}
-
 		const std::string& CheatsWS()
 		{
 			static const std::string retval("cheats_ws");
@@ -390,22 +384,22 @@ namespace FilenameDefs
 {
 	std::string GetUiConfig()
 	{
-		return (std::string)(pxGetAppName() + "L_ui.ini");
+		return (std::string)(pxGetAppName() + "L_ui.json");
 	}
 
 	std::string GetUiKeysConfig()
 	{
-		return (std::string)(pxGetAppName() + "L_keys.ini");
+		return (std::string)(pxGetAppName() + "L_keys.json");
 	}
 
 	std::string GetVmConfig()
 	{
-		return (std::string)(pxGetAppName() + "L_vm.ini");
+		return (std::string)(pxGetAppName() + "L_vm.json");
 	}
 
 	std::string GetUsermodeConfig()
 	{
-		return ( "usermode.ini" );
+		return ( "usermode.json" );
 	}
 
 	const std::string& Memcard( uint port, uint slot )
@@ -435,7 +429,7 @@ namespace FilenameDefs
 
 std::string AppConfig::FullpathTo( PluginsEnum_t pluginidx ) const
 {
-	//return Path::Combine( PluginsFolder, BaseFilenames[pluginidx] );
+	return (PluginsFolder + BaseFilenames[pluginidx] );
 }
 
 // returns true if the filenames are quite absolutely the equivalent.  Works for all
@@ -446,7 +440,7 @@ bool AppConfig::FullpathMatchTest( PluginsEnum_t pluginId, const std::string& cm
 	// Implementation note: wxFileName automatically normalizes things as needed in it's
 	// equality comparison implementations, so we can do a simple comparison as follows:
 
-	//return wxFileName(cmpto).SameAs( FullpathTo(pluginId) );
+	return wxFileName(cmpto).SameAs( (wxString)FullpathTo(pluginId) );
 }
 
 static std::string GetResolvedFolder(FoldersEnum_t id)
@@ -499,7 +493,7 @@ std::string GetUiKeysFilename()
 //std::string AppConfig::FullpathToBios() const				{ return Path::Combine( Folders.Bios, BaseFilenames.Bios ); }
 std::string AppConfig::FullpathToMcd( uint slot ) const
 {
-	//return Path::Combine( Folders.MemoryCards, Mcd[slot].Filename );
+	return( Folders.MemoryCards + Mcd[slot].Filename );
 }
 
 bool IsPortable()
@@ -607,10 +601,10 @@ void AppConfig::LoadSaveMemcards( nlohmann::json& json )
 
 	for( uint slot=0; slot<2; ++slot )
 	{
-		//ini.Entry( pxsFmt( L"Slot%u_Enable", slot+1 ),
-			//Mcd[slot].Enabled, Mcd[slot].Enabled );
-		//ini.Entry( pxsFmt( L"Slot%u_Filename", slot+1 ),
-			//Mcd[slot].Filename, Mcd[slot].Filename );
+		json["Slot%u_Enable"] = (slot+1,
+			Mcd[slot].Enabled, Mcd[slot].Enabled );
+		json["Slot%u_Filename"] = (slot+1,
+			Mcd[slot].Filename, Mcd[slot].Filename );
 	}
 
 	for( uint slot=2; slot<8; ++slot )
@@ -618,44 +612,44 @@ void AppConfig::LoadSaveMemcards( nlohmann::json& json )
 		int mtport = FileMcd_GetMtapPort(slot)+1;
 		int mtslot = FileMcd_GetMtapSlot(slot)+1;
 
-		//ini.Entry( pxsFmt( L"Multitap%u_Slot%u_Enable", mtport, mtslot ),
-			//Mcd[slot].Enabled, Mcd[slot].Enabled );
-		//ini.Entry( pxsFmt( L"Multitap%u_Slot%u_Filename", mtport, mtslot ),
-			//Mcd[slot].Filename, Mcd[slot].Filename );
+		json["Multitap%u_Slot%u_Enable"] = (mtport, mtslot,
+			Mcd[slot].Enabled, Mcd[slot].Enabled );
+		json["Multitap%u_Slot%u_Filename"] = (mtport, mtslot,
+			Mcd[slot].Filename, Mcd[slot].Filename );
 	}
 }
 
 void AppConfig::LoadSaveRootItems( nlohmann::json &json)
 {
-	/*IniEntry( MainGuiPosition );
-	IniEntry( SysSettingsTabName );
-	IniEntry( McdSettingsTabName );
-	IniEntry( ComponentsTabName );
-	IniEntry( AppSettingsTabName );
-	IniEntry( GameDatabaseTabName );
-	ini.EnumEntry( L"LanguageId", LanguageId, NULL, LanguageId );
-	IniEntry( LanguageCode );
-	IniEntry( RecentIsoCount );
-	IniEntry( GzipIsoIndexTemplate );
-	IniEntry( Listbook_ImageSize );
-	IniEntry( Toolbar_ImageSize );
-	IniEntry( Toolbar_ShowLabels );
+	//IniEntry( MainGuiPosition );
+	json["SysSettingsTabName"] = SysSettingsTabName;
+	json["McdSettingsTabName"] = McdSettingsTabName;
+	json["ComponentsTabName"] = ComponentsTabName;
+	json["AppSettingsTabName"] = AppSettingsTabName;
+	json["GameDatabaseTabName"] = GameDatabaseTabName;
+	json["LanguageId"] = (LanguageId, NULL, LanguageId );
+	json["LanguageCode"] = LanguageCode;
+	json["RecentIsoCount"] = RecentIsoCount;
+	json["GzipIsoIndexTemplate"] = GzipIsoIndexTemplate;
+	json["Listbook_ImageSize"] = Listbook_ImageSize;
+	json["Toolbar_ImageSize"] = Toolbar_ImageSize;
+	json["Toolbar_ShowLabels"] = Toolbar_ShowLabels;
 
 	wxFileName res(CurrentIso);
-	ini.Entry( L"CurrentIso", res, res, ini.IsLoading() || IsPortable() );
+	//json["CurrentIso"] = (res, res, ini.IsLoading() || IsPortable() );
 	CurrentIso = res.GetFullPath();
 
-	IniEntry( CurrentBlockdump );
-	IniEntry( CurrentELF );
-	IniEntry( CurrentIRX );
+	json["CurrentBlockdump"] = CurrentBlockdump;
+	json["CurrentELF"] = CurrentELF;
+	json["CurrentIRX"] = CurrentIRX;
 
-	IniEntry( EnableSpeedHacks );
-	IniEntry( EnableGameFixes );
-	IniEntry( EnableFastBoot );
+	json["EnableSpeedHacks"] = EnableSpeedHacks;
+	json["EnableGameFixes"] = EnableGameFixes;
+	json["EnableFastBoot"] = EnableFastBoot;
 
-	IniEntry( EnablePresets );
-	IniEntry( PresetIndex );
-	IniEntry( AskOnBoot );*/
+	json["EnablePresets"] = EnablePresets;
+	json["PresetIndex"] = PresetIndex;
+	json["AskOnBoot"] =  AskOnBoot;
 
 	#ifdef __WXMSW__
 	IniEntry( McdCompressNTFS );
@@ -682,8 +676,8 @@ void AppConfig::LoadSave( nlohmann::json& json )
 
 // ------------------------------------------------------------------------
 AppConfig::ConsoleLogOptions::ConsoleLogOptions()
-	: DisplayPosition( wxDefaultPosition )
-	, DisplaySize( wxSize( 680, 560 ) )
+	: DisplayPosition{ 100, 100 }
+	, DisplaySize{680, 560}
 	, Theme("Default")
 {
 	Visible		= true;
@@ -693,14 +687,14 @@ AppConfig::ConsoleLogOptions::ConsoleLogOptions()
 
 void AppConfig::ConsoleLogOptions::LoadSave( nlohmann::json& json, const char* logger )
 {
-	/*ScopedIniGroup path( ini, logger );
+	//ScopedIniGroup path( ini, logger );
 
-	IniEntry( Visible );
-	IniEntry( AutoDock );
-	IniEntry( DisplayPosition );
-	IniEntry( DisplaySize );
-	IniEntry( FontSize );
-	IniEntry( Theme );*/
+	json["Visible"] = Visible;
+	json["AutoDock"] = AutoDock;
+	//json["DisplayPosition"] = DisplayPosition;
+	json["DisplaySize"] = DisplaySize;
+	json["FontSize"] = FontSize;
+	json["Theme"] = Theme;
 }
 
 void AppConfig::FolderOptions::ApplyDefaults()
@@ -743,15 +737,14 @@ void AppConfig::FolderOptions::LoadSave( nlohmann::json& json )
 		ApplyDefaults();
 	}*/
 
-	/*IniBitBool( UseDefaultBios );
-	IniBitBool( UseDefaultSnapshots );
-	IniBitBool( UseDefaultSavestates );
-	IniBitBool( UseDefaultMemoryCards );
-	IniBitBool( UseDefaultLogs );
-	IniBitBool( UseDefaultLangs );
-	IniBitBool( UseDefaultPluginsFolder );
-	IniBitBool( UseDefaultCheats );
-	IniBitBool( UseDefaultCheatsWS );*/
+	json["UseDefaultBios"] = UseDefaultBios;
+	json["UseDefaultSavestates"] = UseDefaultSavestates;
+	json["UseDefaultMemoryCards"] = UseDefaultMemoryCards;
+	json["UseDefaultLogs"] = UseDefaultLogs;
+	json["UseDefaultLangs"] = UseDefaultLangs;
+	json["UseDefaultPluginsFolder"] = UseDefaultPluginsFolder;
+	json["UseDefaultCheats"] = UseDefaultCheats;
+	json["UseDefaultCheatsWS"] = UseDefaultCheatsWS;
 
 	//when saving in portable mode, we save relative paths if possible
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
@@ -764,20 +757,19 @@ void AppConfig::FolderOptions::LoadSave( nlohmann::json& json )
 	IniEntryDirFile( Logs,  rel );
 	IniEntryDirFile( Langs,  rel );
 	IniEntryDirFile( Cheats, rel );
-	IniEntryDirFile( CheatsWS, rel );
-	ini.Entry( L"PluginsFolder", PluginsFolder, InstallFolder + PathDefs::Base::Plugins(), rel );
+	IniEntryDirFile( CheatsWS, rel );*/
+	json["PluginsFolder"] = (PluginsFolder, InstallFolder + PathDefs::Base::Plugins(), rel );
 
-	IniEntryDirFile( RunIso, rel );
-	IniEntryDirFile( RunELF, rel );
-	IniEntryDirFile( RunDisc, rel );
+	//IniEntryDirFile( RunIso, rel );
+	//IniEntryDirFile( RunELF, rel );
 
-	if( ini.IsLoading() )
-	{
+	//if( ini.IsLoading() )
+	//{
 		ApplyDefaults();
 
 		for( int i=0; i<FolderId_COUNT; ++i )
-			operator[]( (FoldersEnum_t)i ).Normalize();
-	}*/
+			operator[]( (FoldersEnum_t)i );
+	//}
 }
 
 // ------------------------------------------------------------------------
@@ -804,7 +796,7 @@ void AppConfig::FilenameOptions::LoadSave( nlohmann::json& json )
 			std::string plugin_filename = Plugins[i];
 			//ini.Entry( tbl_PluginInfo[i].GetShortname(), plugin_filename, pc );
 		} //else
-			//ini.Entry( tbl_PluginInfo[i].GetShortname(), Plugins[i], pc );
+		//ini.Entry( tbl_PluginInfo[i].GetShortname(), Plugins[i], pc );
 	}
 
 	if( needRelativeName ) {
@@ -830,8 +822,10 @@ AppConfig::GSWindowOptions::GSWindowOptions()
 	OffsetX					= 0;
 	OffsetY					= 0;
 
-	WindowSize				= wxSize( 640, 480 );
-	WindowPos				= wxDefaultPosition;
+	WindowSize[0]			= 640;
+	WindowSize[1]           = 480;
+	WindowPos[0]			= 100;
+	WindowPos[1]			= 100;
 	IsMaximized				= false;
 	IsFullscreen			= false;
 	EnableVsyncWindowFlag	= false;
@@ -843,16 +837,16 @@ void AppConfig::GSWindowOptions::SanityCheck()
 {
 	// Ensure Conformation of various options...
 
-	WindowSize.x = std::max( WindowSize.x, 8 );
-	WindowSize.x = std::min( WindowSize.x, wxGetDisplayArea().GetWidth()-16 );
+	WindowSize[0] = std::max( WindowSize[0], 8 );
+	WindowSize[0] = std::min( WindowSize[0], wxGetDisplayArea().GetWidth()-16 );
 
-	WindowSize.y = std::max( WindowSize.y, 8 );
-	WindowSize.y = std::min( WindowSize.y, wxGetDisplayArea().GetHeight()-48 );
+	WindowSize[1] = std::max( WindowSize[1], 8 );
+	WindowSize[1] = std::min( WindowSize[1], wxGetDisplayArea().GetHeight()-48 );
 
 	// Make sure the upper left corner of the window is visible enought o grab and
 	// move into view:
-	if( !wxGetDisplayArea().Contains( wxRect( WindowPos, wxSize( 48,48 ) ) ) )
-		WindowPos = wxDefaultPosition;
+	//if( !wxGetDisplayArea().Contains( wxRect( (wxSize)((WindowPos[0], WindowPos[1]), 48,48 )) ) )
+		//WindowPos = wxDefaultPosition;
 
 	if( (uint)AspectRatio >= (uint)AspectRatio_MaxCount )
 		AspectRatio = AspectRatio_4_3;
@@ -862,19 +856,19 @@ void AppConfig::GSWindowOptions::LoadSave( nlohmann::json& json )
 {
 	//ScopedIniGroup path( ini, L"GSWindow" );
 
-	/*IniEntry( CloseOnEsc );
-	IniEntry( DefaultToFullscreen );
-	IniEntry( AlwaysHideMouse );
-	IniEntry( DisableResizeBorders );
-	IniEntry( DisableScreenSaver );
+	json["CloseOnEsc"] = CloseOnEsc;
+	json["DefautlToFullscreen"] = DefaultToFullscreen;
+	json["AlwaysHideMous"] = AlwaysHideMouse;
+	json["DisableResizeBorders"] = DisableResizeBorders;
+	json["DisableScreenSaver"] = DisableScreenSaver;
 
-	IniEntry( WindowSize );
-	IniEntry( WindowPos );
-	IniEntry( IsMaximized );
-	IniEntry( IsFullscreen );
-	IniEntry( EnableVsyncWindowFlag );
+	json["WindowSize"] = WindowSize;
+	json["WindowPos"] =  WindowPos;
+	json["IsMaximized"] = IsMaximized;
+	json["IsFullscreen"] = IsFullscreen;
+	json["EnableVsyncWindowFlag"] = EnableVsyncWindowFlag;
 
-	IniEntry( IsToggleFullscreenOnDoubleClick );*/
+	json["IsToggleFullscreenOnDoubleClick"] = IsToggleFullscreenOnDoubleClick;
 
 	static const char* AspectRatioNames[] =
 	{
@@ -924,14 +918,11 @@ void AppConfig::FramerateOptions::SanityCheck()
 
 void AppConfig::FramerateOptions::LoadSave( nlohmann::json& json )
 {
-	//ScopedIniGroup path( ini, L"Framerate" );
+	//ScopedIniVurboScalar );
+	//json["SlomoScalar"] = SlomoScalar;
 
-	/*IniEntry( NominalScalar );
-	IniEntry( TurboScalar );
-	IniEntry( SlomoScalar );
-
-	IniEntry( SkipOnLimit );
-	IniEntry( SkipOnTurbo );*/
+	json["SkipOnLimit"] = SkipOnLimit;
+	json["SkipOnTurbo"] = SkipOnTurbo;
 }
 
 AppConfig::UiTemplateOptions::UiTemplateOptions()
@@ -1030,7 +1021,6 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 	//
 	//			So, if changing the scope of the presets (making them affect more or less values), the relevant GUI entities
 	//			should me modified to support it.
-
 
 	//Force some settings as a (current) base for all presets.
 

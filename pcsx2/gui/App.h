@@ -603,7 +603,7 @@ public:
 	void CleanupRestartable();
 	void CleanupResources();
 	void WipeUserModeSettings();
-	bool TestUserPermissionsRights( const wxDirName& testFolder, wxString& createFailedStr, wxString& accessFailedStr );
+	bool TestUserPermissionsRights( const std::string& testFolder, std::string& createFailedStr, std::string& accessFailedStr );
 	void EstablishAppUserMode();
 	void ForceFirstTimeWizardOnNextRun();
 

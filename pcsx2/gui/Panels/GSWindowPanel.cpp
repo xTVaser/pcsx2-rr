@@ -154,7 +154,7 @@ void Panels::GSWindowSettingsPanel::ApplyConfigToGui( AppConfig& configToApply, 
 {
 	const AppConfig::GSWindowOptions& conf( configToApply.GSWindow );
 
-	if( !(flags & AppConfig::APPLY_FLAG_FROM_PRESET) )	
+	if( !(flags & AppConfig::APPLY_FLAG_FROM_PRESET) )
 	{//Presets don't control these values
 		m_check_CloseGS		->SetValue( conf.CloseOnEsc );
 		m_check_Fullscreen	->SetValue( conf.DefaultToFullscreen );
@@ -167,8 +167,8 @@ void Panels::GSWindowSettingsPanel::ApplyConfigToGui( AppConfig& configToApply, 
 
 		m_check_DclickFullscreen ->SetValue( conf.IsToggleFullscreenOnDoubleClick );
 
-		m_text_WindowWidth	->ChangeValue( wxsFormat( L"%d", conf.WindowSize.GetWidth() ) );
-		m_text_WindowHeight	->ChangeValue( wxsFormat( L"%d", conf.WindowSize.GetHeight() ) );
+		m_text_WindowWidth	->ChangeValue( wxsFormat( L"%d", conf.WindowSize[0] ) );
+		m_text_WindowHeight	->ChangeValue( wxsFormat( L"%d", conf.WindowSize[1] ) );
 	}
 
 	m_combo_vsync->SetSelection(enum_cast(configToApply.EmuOptions.GS.VsyncEnable));
@@ -200,6 +200,6 @@ void Panels::GSWindowSettingsPanel::Apply()
 			.SetDiagMsg(L"User submitted non-numeric window size parameters!")
 			.SetUserMsg(_("Invalid window dimensions specified: Size cannot contain non-numeric digits! >_<"));
 
-	appconf.WindowSize.x	= xr;
-	appconf.WindowSize.y	= yr;
+	appconf.WindowSize[0]	= xr;
+	appconf.WindowSize[1]	= yr;
 }

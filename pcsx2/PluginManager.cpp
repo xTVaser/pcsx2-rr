@@ -930,7 +930,7 @@ void SysCorePlugins::Load( PluginsEnum_t pid, const wxString& srcfile )
 
 	m_info[pid] = std::make_unique<PluginStatus_t>(pid, srcfile);
 
-	Console.Indent().WriteLn(L"Bound %4s: %s [%s %s]", WX_STR(tbl_PluginInfo[pid].GetShortname()), 
+	Console.Indent().WriteLn(L"Bound %4s: %s [%s %s]", WX_STR(tbl_PluginInfo[pid].GetShortname()),
 		WX_STR(wxFileName(srcfile).GetFullName()), WX_STR(m_info[pid]->Name), WX_STR(m_info[pid]->Version));
 }
 
@@ -940,7 +940,7 @@ void SysCorePlugins::Load( const wxString (&folders)[PluginId_Count] )
 
 	wxDoNotLogInThisScope please;
 
-	Console.WriteLn(Color_StrongBlue, L"\nLoading plugins from %s...", WX_STR(g_Conf->Folders[FolderId_Plugins].ToString()));
+	Console.WriteLn(Color_StrongBlue, L"\nLoading plugins from %s...", WX_STR(g_Conf->Folders[FolderId_Plugins]));
 
 	ConsoleIndentScope indent;
 
@@ -1134,7 +1134,7 @@ void SysCorePlugins::Open()
 #ifdef __linux__
 		// On linux, application have also a channel (named display) to communicate with the
 		// Xserver. The safe rule is 1 thread, 1 channel. In our case we use the display in
-		// several places. Save yourself of multithread headache. Wait few seconds the end of 
+		// several places. Save yourself of multithread headache. Wait few seconds the end of
 		// gsopen -- Gregory
 		if (pi->id == PluginId_GS) GetMTGS().WaitForOpen();
 #else
@@ -1203,7 +1203,7 @@ void SysCorePlugins::Close( PluginsEnum_t pid )
 	pxAssert( (uint)pid < PluginId_Count );
 
 	if( !IsOpen(pid) ) return;
-	
+
 	if( !GetMTGS().IsSelf() )		// stop the spam!
 		Console.Indent().WriteLn( "Closing %s", tbl_PluginInfo[pid].shortname );
 
@@ -1215,7 +1215,7 @@ void SysCorePlugins::Close( PluginsEnum_t pid )
 		case PluginId_USB:	ClosePlugin_USB();	break;
 		case PluginId_DEV9:	ClosePlugin_DEV9();	break;
 		case PluginId_Mcd:	ClosePlugin_Mcd();	break;
-		
+
 		jNO_DEFAULT;
 	}
 
@@ -1240,7 +1240,7 @@ void SysCorePlugins::Close()
 
 	for( int i=PluginId_Count-1; i>=0; --i )
 		Close( tbl_PluginInfo[i].id );
-	
+
 	Console.WriteLn( Color_StrongBlue, "Plugins closed successfully." );
 }
 
@@ -1318,9 +1318,9 @@ bool SysCorePlugins::Shutdown()
 	if( !NeedsShutdown() ) return false;
 
 	pxAssertDev( !NeedsClose(), "Cannot shut down plugins prior to Close()" );
-	
+
 	GetMTGS().Cancel();	// cancel it for speedier shutdown!
-	
+
 	Console.WriteLn( Color_StrongGreen, "Shutting down plugins..." );
 
 	// Shutdown plugins in reverse order (probably doesn't matter...
@@ -1340,7 +1340,7 @@ bool SysCorePlugins::Shutdown()
 	}
 
 	Console.WriteLn( Color_StrongGreen, "Plugins shutdown successfully." );
-	
+
 	return true;
 }
 
@@ -1529,7 +1529,7 @@ void SysCorePlugins::SetSettingsFolder( const wxString& folder )
 	{
 		fixedfolder += wxFileName::GetPathSeparator();
 	}
-	
+
 	if( m_SettingsFolder == fixedfolder ) return;
 	m_SettingsFolder = fixedfolder;
 }

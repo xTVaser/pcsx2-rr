@@ -390,13 +390,13 @@ ConsoleLogFrame::ConsoleLogFrame( MainEmuFrame *parent, const wxString& title, A
 	SetMenuBar( pMenuBar );
 	SetIcons( wxGetApp().GetIconBundle() );
 
-	if (m_conf.Theme.CmpNoCase(L"Dark") == 0)
+	if (m_conf.Theme == "Dark")
 	{
 		m_ColorTable.SetColorScheme_Dark();
 		m_TextCtrl.SetBackgroundColour(darkThemeBgColor);
 		m_TextCtrl.SetDefaultStyle(wxTextAttr(wxNullColour, darkThemeBgColor));
 	}
-	else
+	else if ((m_conf.Theme == "Default") || (m_conf.Theme == "Light"))
 	{
 		m_ColorTable.SetColorScheme_Light();
 		m_TextCtrl.SetBackgroundColour(lightThemeBgColor);
@@ -452,7 +452,7 @@ ConsoleLogFrame::ConsoleLogFrame( MainEmuFrame *parent, const wxString& title, A
 
 	menuSources.Append( MenuId_LogSource_Devel, _("Dev/&Verbose"), _("Shows PCSX2 developer logs"), wxITEM_CHECK );
 	menuSources.Append( MenuId_LogSource_CDVD_Info, _("&CDVD reads"), _("Shows disk read activity"), wxITEM_CHECK );
-	
+
 	menuSources.AppendSeparator();
 
 	uint srcnt = ArraySize(ConLogSources);
@@ -478,7 +478,10 @@ ConsoleLogFrame::ConsoleLogFrame( MainEmuFrame *parent, const wxString& title, A
 	// status bar for menu prompts
 	CreateStatusBar();
 
-	SetSize( wxRect( options.DisplayPosition, options.DisplaySize ) );
+	wxPoint sizePoint = {options.DisplaySize[0], options.DisplaySize[1]};
+	wxPoint posPoint = {options.DisplayPosition[0], options.DisplayPosition[1]};
+
+	SetSize( wxRect( posPoint, sizePoint ) );
 	Show( options.Visible );
 
 	// Bind Events:
@@ -517,11 +520,11 @@ ConsoleLogFrame::ConsoleLogFrame( MainEmuFrame *parent, const wxString& title, A
 
 	OnLoggingChanged();
 
-	if (0==m_conf.Theme.CmpNoCase(L"Dark"))
+	if (m_conf.Theme == "Dark")
 	{
 		pMenuBar->Check(MenuId_ColorScheme_Dark, true);
 	}
-	else //if ((0==m_conf.Theme.CmpNoCase("Default")) || (0==m_conf.Theme.CmpNoCase("Light")))
+	else if ((m_conf.Theme == "Default") || (m_conf.Theme =="Light"))
 	{
 		pMenuBar->Check(MenuId_ColorScheme_Light, true);
 	}
@@ -724,14 +727,20 @@ void ConsoleLogFrame::OnMoveAround( wxMoveEvent& evt )
 		}
 	}
 	if (!IsMaximized())
-		m_conf.DisplayPosition = GetPosition();
+	{
+		m_conf.DisplayPosition[0] = GetPosition().x;
+		m_conf.DisplayPosition[1] = GetPosition().y;
+	}
 	evt.Skip();
 }
 
 void ConsoleLogFrame::OnResize( wxSizeEvent& evt )
 {
 	if (!IsMaximized())
-		m_conf.DisplaySize = GetSize();
+	{
+		m_conf.DisplaySize[0] = GetSize().GetWidth();
+		m_conf.DisplaySize[1] = GetSize().GetHeight();
+	}
 	evt.Skip();
 }
 
@@ -890,10 +899,11 @@ void ConsoleLogFrame::OnToggleTheme(wxCommandEvent& evt)
 			break;
 	}
 
-	if (m_conf.Theme.CmpNoCase(newTheme) == 0)
-		return;
-	m_conf.Theme = newTheme;
-	m_ColorTable.SetFont(m_conf.FontSize);
+	if (m_conf.Theme == newTheme) return;
+	m_conf.Theme = (char*)newTheme;
+
+	m_ColorTable.SetFont( m_conf.FontSize );
+	m_TextCtrl.SetDefaultStyle( m_ColorTable[Color_White] );
 }
 
 void ConsoleLogFrame::OnFontSize( wxCommandEvent& evt )

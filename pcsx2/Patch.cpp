@@ -23,6 +23,8 @@
 
 #include <memory>
 #include <vector>
+#include <locale>
+#include <algorithm>
 #include <wx/textfile.h>
 #include <wx/dir.h>
 #include <wx/txtstrm.h>
@@ -177,22 +179,22 @@ void ForgetLoadedPatches()
 	Patch.clear();
 }
 
-static int _LoadPatchFiles(const wxDirName& folderName, wxString& fileSpec, const wxString& friendlyName, int& numberFoundPatchFiles)
+static int _LoadPatchFiles(const std::string& folderName, std::string& fileSpec, const std::string& friendlyName, int& numberFoundPatchFiles)
 {
 	numberFoundPatchFiles = 0;
 
-	if (!folderName.Exists()) {
-		Console.WriteLn(Color_Red, L"The %s folder ('%s') is inaccessible. Skipping...", WX_STR(friendlyName), WX_STR(folderName.ToString()));
+	if (!folderName.empty()) {
+		Console.WriteLn(Color_Red, L"The %s folder ('%s') is inaccessible. Skipping...", WX_STR(friendlyName), WX_STR(folderName));
 		return 0;
 	}
-	wxDir dir(folderName.ToString());
+	wxDir dir(folderName);
 
 	int before = Patch.size();
 	wxString buffer;
 	wxTextFile f;
-	bool found = dir.GetFirst(&buffer, L"*", wxDIR_FILES);
+	bool found = dir.GetFirst(&buffer, "*", wxDIR_FILES);
 	while (found) {
-		if (buffer.Upper().Matches(fileSpec.Upper())) {
+		if (std::toupper(buffer[0]) == std::toupper(fileSpec[0])) {
 			PatchesCon->WriteLn(Color_Green, L"Found %s file: '%s'", WX_STR(friendlyName), WX_STR(buffer));
 			int before = Patch.size();
 			f.Open(Path::Combine(dir.GetName(), buffer));
@@ -200,7 +202,7 @@ static int _LoadPatchFiles(const wxDirName& folderName, wxString& fileSpec, cons
 			f.Close();
 			int loaded = Patch.size() - before;
 			PatchesCon->WriteLn((loaded ? Color_Green : Color_Gray), L"Loaded %d %s from '%s' at '%s'",
-				loaded, WX_STR(friendlyName), WX_STR(buffer), WX_STR(folderName.ToString()));
+				loaded, WX_STR(friendlyName), WX_STR(buffer), WX_STR(folderName));
 			numberFoundPatchFiles++;
 		}
 		found = dir.GetNext(&buffer);
@@ -241,19 +243,20 @@ int LoadPatchesFromZip(wxString gameCRC, const wxString& patchesArchiveFilename)
 // This routine loads patches from *.pnach files
 // Returns number of patches loaded
 // Note: does not reset previously loaded patches (use ForgetLoadedPatches() for that)
-int LoadPatchesFromDir(wxString name, const wxDirName& folderName, const wxString& friendlyName)
+int LoadPatchesFromDir(std::string name, const std::string& folderName, const std::string& friendlyName)
 {
 	int loaded = 0;
 	int numberFoundPatchFiles;
 
-	wxString filespec = name + L"*.pnach";
+	std::string filespec = name + "*.pnach";
 	loaded += _LoadPatchFiles(folderName, filespec, friendlyName, numberFoundPatchFiles);
 
 	// This comment _might_ be buggy. This function (LoadPatchesFromDir) loads from an explicit folder.
 	// This folder can be cheats or cheats_ws at either the default location or a custom one.
 	// This check only tests the default cheats folder, so the message it produces is possibly misleading.
-	if (folderName.ToString().IsSameAs(PathDefs::GetCheats().ToString()) && numberFoundPatchFiles == 0) {
-		wxString pathName = Path::Combine(folderName, name.MakeUpper() + L".pnach");
+	if (folderName == (PathDefs::GetCheats()) && numberFoundPatchFiles == 0) {
+		std::transform(name.begin(), name.end(),name.begin(), ::toupper);
+		std::string pathName = (folderName + name + ".pnach");
 		PatchesCon->WriteLn(Color_Gray, L"Not found %s file: %s", WX_STR(friendlyName), WX_STR(pathName));
 	}
 

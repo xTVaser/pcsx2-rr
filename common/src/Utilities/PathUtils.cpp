@@ -16,17 +16,16 @@
 #include "PrecompiledHeader.h"
 #include "Path.h"
 
-#include <wx/file.h>
+#include "filesystem.hpp"
 #include <wx/utils.h>
 
 // ---------------------------------------------------------------------------------
 //  wxDirName (implementations)
 // ---------------------------------------------------------------------------------
 
-wxFileName wxDirName::Combine(const wxFileName &right) const
+/*std::string wxDirName::Combine(const std::string &right) const
 {
     pxAssertMsg(IsDir(), L"Warning: Malformed directory name detected during wxDirName concatenation.");
-    if (right.IsAbsolute())
         return right;
 
     // Append any directory parts from right, and then set the filename.
@@ -91,7 +90,7 @@ bool wxDirName::Mkdir()
     if (Exists())
         return true;
     return wxFileName::Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
-}
+}*/
 
 
 // ---------------------------------------------------------------------------------

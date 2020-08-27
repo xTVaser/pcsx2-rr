@@ -328,10 +328,16 @@ CDVD_SourceType CDVDsys_GetSourceType()
 
 void CDVDsys_ChangeSource(CDVD_SourceType type)
 {
+<<<<<<< HEAD
 	if (CDVD != NULL)
 		DoCDVDclose();
 
 	switch (m_CurrentSourceType = type)
+=======
+	GetCorePlugins().Close( PluginId_CDVD );
+
+	switch( m_CurrentSourceType = type )
+>>>>>>> bc83e8d92... Masive refractoring of data types WxDir, WxFileName, WxPoint into string and int array in an attempt to seperate wx from config and some GUI code. Added filessystem.hpp changed configs to .json pcsx2 doesn't compile in this commit and there's still a lot of work to be done.
 	{
 		case CDVD_SourceType::Iso:
 			CDVD = &CDVDapi_Iso;
@@ -392,7 +398,7 @@ bool DoCDVDopen()
 	else if (somepick.IsEmpty())
 		somepick = L"Untitled";
 
-	if (g_Conf->CurrentBlockdump.IsEmpty())
+	if (g_Conf->CurrentBlockdump.empty())
 		g_Conf->CurrentBlockdump = wxGetCwd();
 
 	wxString temp(Path::Combine(g_Conf->CurrentBlockdump, somepick));

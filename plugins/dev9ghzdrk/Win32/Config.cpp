@@ -31,7 +31,7 @@ bool FileExists(std::string szPath)
 }
 
 void SaveConf() {
-	const std::string file(s_strIniPath + "dev9ghz.ini");
+	const std::string file(s_strIniPath + "dev9ghz.json");
 	DeleteFile(file.c_str());
 
 	WritePrivateProfileString("DEV9", "Eth", config.Eth, file.c_str());
@@ -42,7 +42,7 @@ void SaveConf() {
 }
 
 void LoadConf() {
-	const std::string file(s_strIniPath + "dev9ghz.ini");
+	const std::string file(s_strIniPath + "dev9ghz.json");
 	if (FileExists(file.c_str()) == false)
 		return;
 

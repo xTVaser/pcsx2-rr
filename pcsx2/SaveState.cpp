@@ -57,7 +57,7 @@ wxString SaveStateBase::GetFilename( int slot )
 	if (serialName.IsEmpty()) serialName = L"BIOS";
 
 	return (g_Conf->Folders.Savestates +
-		pxsFmt( L"%s (%08X).%02d.p2s", WX_STR(serialName), ElfCRC, slot )).GetFullPath();
+		pxsFmt( L"%s (%08X).%02d.p2s", WX_STR(serialName), ElfCRC, slot ));
 
 	//return (g_Conf->Folders.Savestates +
 	//	pxsFmt( L"%08X.%03d", ElfCRC, slot )).GetFullPath();
@@ -118,7 +118,7 @@ SaveStateBase& SaveStateBase::FreezeBios()
 	// Check the BIOS, and issue a warning if the bios for this state
 	// doesn't match the bios currently being used (chances are it'll still
 	// work fine, but some games are very picky).
-	
+
 	u32 bioscheck = BiosChecksum;
 	char biosdesc[256];
 
@@ -126,7 +126,7 @@ SaveStateBase& SaveStateBase::FreezeBios()
 
 	memzero( biosdesc );
 	memcpy( biosdesc, utf8, std::min( sizeof(biosdesc), utf8.Length() ) );
-	
+
 	Freeze( bioscheck );
 	Freeze( biosdesc );
 
@@ -141,7 +141,7 @@ SaveStateBase& SaveStateBase::FreezeBios()
 			biosdesc, bioscheck
 		);
 	}
-	
+
 	return *this;
 }
 
@@ -163,13 +163,13 @@ SaveStateBase& SaveStateBase::FreezeMainMemory()
 
 	FreezeMem(iopMem->Main, 	Ps2MemSize::IopRam);		// 2 MB main memory
 	FreezeMem(iopHw,			Ps2MemSize::IopHardware);	// hardware memory
-	
+
 	FreezeMem(vuRegs[0].Micro,	VU0_PROGSIZE);
 	FreezeMem(vuRegs[0].Mem,	VU0_MEMSIZE);
 
 	FreezeMem(vuRegs[1].Micro,	VU1_PROGSIZE);
 	FreezeMem(vuRegs[1].Mem,	VU1_MEMSIZE);
-	
+
 	return *this;
 }
 
@@ -178,7 +178,7 @@ SaveStateBase& SaveStateBase::FreezeInternals()
 	vu1Thread.WaitVU(); // Finish VU1 just in-case...
 	// Print this until the MTVU problem in gifPathFreeze is taken care of (rama)
 	if (THREAD_VU1) Console.Warning("MTVU speedhack is enabled, saved states may not be stable");
-	
+
 	if (IsLoading()) PreLoadPrep();
 
 	// Second Block - Various CPU Registers and States
@@ -224,7 +224,7 @@ SaveStateBase& SaveStateBase::FreezeInternals()
 	sio2Freeze();
 	cdrFreeze();
 	cdvdFreeze();
-	
+
 	// technically this is HLE BIOS territory, but we don't have enough such stuff
 	// to merit an HLE Bios sub-section... yet.
 	deci2Freeze();
@@ -233,7 +233,7 @@ SaveStateBase& SaveStateBase::FreezeInternals()
 
 	if( IsLoading() )
 		PostLoadPrep();
-		
+
 	return *this;
 }
 
@@ -254,7 +254,7 @@ SaveStateBase& SaveStateBase::FreezeAll()
 	FreezeBios();
 	FreezeInternals();
 	FreezePlugins();
-	
+
 	return *this;
 }
 

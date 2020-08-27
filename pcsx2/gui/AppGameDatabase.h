@@ -50,7 +50,7 @@ public:
 		DESTRUCTOR_CATCHALL
 	}
 
-	AppGameDatabase& LoadFromFile(const wxString& file = Path::Combine( PathDefs::GetProgramDataDir(), wxFileName(L"GameIndex.dbf") ), const wxString& key = L"Serial" );
+	AppGameDatabase& LoadFromFile(const wxString& file = Path::Combine( PathDefs::GetProgramDataDir(), std::string("GameIndex.dbf") ), const wxString& key = "Serial" );
 };
 
 static wxString compatToStringWX(int compat) {

@@ -54,7 +54,7 @@ namespace Panels
 		virtual ~DirPickerPanel() = default;
 
 		void Reset();
-		wxDirName GetPath() const;
+		std::string GetPath() const;
 		void SetPath( const wxString& src );
 
 		DirPickerPanel& SetStaticDesc( const wxString& msg );
@@ -64,7 +64,7 @@ namespace Panels
 		wxWindowID GetPanelId() const { return m_windowId; }
 
 		// Overrides!
-		
+
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
 		bool Enable( bool enable=true );
@@ -94,7 +94,7 @@ namespace Panels
 
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
-		
+
 		DocsModeType GetDocsMode() const;
 		wxWindowID GetDirPickerId() const { return m_dirpicker_custom ? m_dirpicker_custom->GetId() : 0; }
 
@@ -428,7 +428,7 @@ namespace Panels
 
 		// This method is called when the enumeration contents have changed.  The implementing
 		// class should populate or re-populate listbox/selection components when invoked.
-		// 
+		//
 		virtual void DoRefresh()=0;
 
 		// This method is called when an event has indicated that the enumeration status of the
@@ -440,7 +440,7 @@ namespace Panels
 		// DoRefresh() [which also must be implemented]
 		//
 		virtual bool ValidateEnumerationStatus()=0;
-	
+
 		void OnShow(wxShowEvent& evt);
 	};
 
