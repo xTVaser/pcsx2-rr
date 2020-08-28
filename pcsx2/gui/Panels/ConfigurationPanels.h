@@ -527,7 +527,7 @@ namespace Panels
 			ComboBoxPanel( PluginSelectorPanel* parent );
 			wxComboBox& Get( PluginsEnum_t pid ) { return *m_combobox[pid]; }
 			wxButton& GetConfigButton( PluginsEnum_t pid ) { return *m_configbutton[pid]; }
-			wxDirName GetPluginsPath() const { return m_FolderPicker.GetPath(); }
+			std::string GetPluginsPath() const { return m_FolderPicker.GetPath(); }
 			DirPickerPanel& GetDirPicker() { return m_FolderPicker; }
 			void Reset();
 

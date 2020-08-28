@@ -176,7 +176,7 @@ void InputRecording::Play(wxString FileName, bool fromSaveState)
 		return;
 	}
 	// Check author name
-	if (!g_Conf->CurrentIso.IsEmpty())
+	if (!g_Conf->CurrentIso.empty())
 	{
 		if (resolveGameName() != InputRecordingData.GetHeader().gameName)
 		{

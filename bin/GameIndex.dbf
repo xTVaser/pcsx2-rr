@@ -166,6 +166,7 @@ Region = PAL-M5
 	comment=You must enable the EETimingHack when playing the WRC demo to avoids random hangs.
 	comment=You must change the EE Clamping mode to Full when playing the Klonoa 2 demo to avoids misplaced objects.
 	comment=You must change the VU Clamping mode to extra when playing the Klonoa 2 demo to fixes reflections issues.
+	comment=You must use the ZeroSPU2 plugin when playing the Klonoa 2 demo to avoids bad/missing sounds.
 [/patches]
 ---------------------------------------------
 Serial = PBPX-95517
@@ -30933,7 +30934,12 @@ Region = NTSC-J
 Serial = SLPS-20408
 Name   = Card Captor Sakura - Sakura-Chan to Asobo!
 Region = NTSC-J
-Compat = 5
+Compat = 4
+[patches = 08FB9DCF]
+	comment=Patches by Nachbrenner
+	// Skip eyetoy check.
+	patch=0,EE,013385b0,word,00000000
+[/patches]
 ---------------------------------------------
 Serial = SLPS-20409
 Name   = Phantom Kingdom [Limited Edition]
@@ -37512,7 +37518,7 @@ Compat = 5
 vuClampMode = 2
 ---------------------------------------------
 Serial = SLUS-20532
-Name   = Disney Golf
+Name   = Disney's Golf
 Region = NTSC-U
 Compat = 5
 ---------------------------------------------

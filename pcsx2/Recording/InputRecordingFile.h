@@ -86,7 +86,7 @@ private:
 
 	// Movie File
 	FILE* recordingFile = NULL;
-	wxString filename = "";
+	std::string filename = "";
 	long GetBlockSeekPoint(const long& frame);
 
 	// Header

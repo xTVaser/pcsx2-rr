@@ -199,7 +199,7 @@ class SysExecEvent_ApplyPlugins : public SysExecEvent
 
 protected:
 	ApplyPluginsDialog*	m_dialog;
-	
+
 public:
 	wxString GetEventName() const { return L"PluginSelectorPanel::ApplyPlugins"; }
 
@@ -215,7 +215,7 @@ public:
 protected:
 	void InvokeEvent();
 	void CleanupEvent();
-	
+
 	void PostFinishToDialog();
 };
 
@@ -255,7 +255,7 @@ void SysExecEvent_ApplyPlugins::InvokeEvent()
 	ScopedCoreThreadPause paused_core;
 
 	std::unique_ptr<VmStateBuffer> buffer;
-	
+
 	if( SysHasValidState() )
 	{
 		paused_core.AllowResume();
@@ -268,7 +268,7 @@ void SysExecEvent_ApplyPlugins::InvokeEvent()
 
 		buffer.reset(new VmStateBuffer(L"StateBuffer_ApplyNewPlugins"));
 		memSavingState saveme(buffer.get());
-		
+
 		saveme.FreezeAll();
 	}
 
@@ -278,7 +278,7 @@ void SysExecEvent_ApplyPlugins::InvokeEvent()
 	CorePlugins.Unload();
 	LoadPluginsImmediate();
 	CorePlugins.Init();
-	
+
 	if( buffer ) CoreThread.UploadStateCopy( *buffer );
 
 	PostFinishToDialog();
@@ -297,7 +297,7 @@ void SysExecEvent_ApplyPlugins::PostFinishToDialog()
 
 void SysExecEvent_ApplyPlugins::CleanupEvent()
 {
-	PostFinishToDialog();	
+	PostFinishToDialog();
 	_parent::CleanupEvent();
 }
 
@@ -402,7 +402,7 @@ void Panels::PluginSelectorPanel::DispatchEvent( const PluginEventType& evt )
 		int sel = box.GetSelection();
 		if( sel == wxNOT_FOUND ) continue;
 
-		m_ComponentBoxes->GetConfigButton(pi->id).Enable(
+	m_ComponentBoxes->GetConfigButton(pi->id).Enable(
 			(m_FileList==NULL || m_FileList->Count() == 0) ? false :
 			g_Conf->FullpathMatchTest( pi->id,(*m_FileList)[((uptr)box.GetClientData(sel))] )
 		);
@@ -503,7 +503,7 @@ void Panels::PluginSelectorPanel::Apply()
 	{
 		// Rethrow PluginLoadErrors as a failure to Apply...
 
-		wxString plugname( tbl_PluginInfo[ex.PluginId].GetShortname() );
+		std::string plugname( tbl_PluginInfo[ex.PluginId].GetShortname() );
 
 		throw Exception::CannotApplySettings( this )
 			.SetDiagMsg(ex.FormatDiagnosticMessage())
@@ -566,7 +566,7 @@ bool Panels::PluginSelectorPanel::ValidateEnumerationStatus()
 	// occurs during file enumeration.
 	std::unique_ptr<wxArrayString> pluginlist(new wxArrayString());
 
-	int pluggers = EnumeratePluginsInFolder(m_ComponentBoxes->GetPluginsPath(), pluginlist.get());
+	int pluggers = EnumeratePluginsInFolder((wxDirName)m_ComponentBoxes->GetPluginsPath(), pluginlist.get());
 
 	if( !m_FileList || (*pluginlist != *m_FileList) )
 		validated = false;
@@ -582,7 +582,7 @@ bool Panels::PluginSelectorPanel::ValidateEnumerationStatus()
 	// set the gauge length a little shorter than the plugin count.  2 reasons:
 	//  * some of the plugins might be duds.
 	//  * on high end machines and Win7, the statusbar lags a lot and never gets to 100% before being hidden.
-	
+
 	m_StatusPanel->SetGaugeLength( std::max( 1, (pluggers-1) - (pluggers/8) ) );
 
 	return validated;
@@ -603,7 +603,7 @@ void Panels::PluginSelectorPanel::OnPluginSelected( wxCommandEvent& evt )
 
 			bool isSame = (!CorePlugins.AreLoaded()) || g_Conf->FullpathMatchTest( pi->id, (*m_FileList)[(uptr)box.GetClientData(box.GetSelection())] );
 			m_ComponentBoxes->GetConfigButton( pi->id ).Enable( isSame );
-			
+
 			if( !isSame ) evt.Skip();		// enabled Apply button! :D
 			return;
 		}
@@ -625,7 +625,7 @@ void Panels::PluginSelectorPanel::OnConfigure_Clicked( wxCommandEvent& evt )
 
 	const wxString filename( (*m_FileList)[(uptr)m_ComponentBoxes->Get(pid).GetClientData(sel)] );
 
-	if( CorePlugins.AreLoaded() && !g_Conf->FullpathMatchTest( pid, filename ) )
+	if( CorePlugins.AreLoaded() && !g_Conf->FullpathMatchTest( pid, filename))
 	{
 		Console.Warning( "(PluginSelector) Plugin name mismatch, configuration request ignored." );
 		return;
@@ -635,7 +635,7 @@ void Panels::PluginSelectorPanel::OnConfigure_Clicked( wxCommandEvent& evt )
 
 	if( ConfigureFnptr configfunc = (ConfigureFnptr)dynlib.GetSymbol( tbl_PluginInfo[pid].GetShortname() + L"configure" ) )
 	{
-		
+
 		wxWindowDisabler disabler;
 		wxDoNotLogInThisScope quiettime;
 		ScopedCoreThreadPause paused_core( new SysExecEvent_SaveSinglePlugin(pid) );
@@ -690,7 +690,7 @@ void Panels::PluginSelectorPanel::OnEnumComplete( wxCommandEvent& evt )
 				for( int i = 0; i < count; i++ )
 				{
 					auto str = m_ComponentBoxes->Get(pid).GetString( i );
-					
+
 					if( x86caps.hasAVX2 && str.Contains("AVX2") ) index_avx2 = i;
 					if( x86caps.hasStreamingSIMD4Extensions && str.Contains("SSE4") ) index_sse4 = i;
 					if( str.Contains("SSE2") ) index_sse2 = i;

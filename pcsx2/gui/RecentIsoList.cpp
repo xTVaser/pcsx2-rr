@@ -18,7 +18,7 @@
 #include "AppCoreThread.h"
 #include "RecentIsoList.h"
 #include "IsoDropTarget.h"
-#include "Utilities/IniInterface.h"
+#include "Utilities/json.hpp"
 
 extern wxString GetMsg_IsoImageChanged();
 
@@ -39,8 +39,8 @@ RecentIsoManager::RecentIsoManager( wxMenu* menu, int firstIdForMenuItems_or_wxI
 	m_ClearSeparator = nullptr;
 	m_Clear = nullptr;
 
-	IniLoader loader;
-	LoadListFrom(loader);
+	//IniLoader loader;
+	//LoadListFrom(loader);
 
 	Bind(wxEVT_MENU, &RecentIsoManager::OnChangedSelection, this);
 }
@@ -98,7 +98,7 @@ void RecentIsoManager::RemoveAllFromMenu()
 		m_Menu->Destroy( curitem.ItemPtr );
 		curitem.ItemPtr = NULL;
 	}
-	
+
 	if( m_Separator != nullptr )
 	{
 		m_Menu->Destroy( m_Separator );
@@ -141,13 +141,14 @@ void RecentIsoManager::Repopulate()
 	m_Clear = m_Menu->Append(MenuIdentifiers::MenuId_IsoClear, _("Clear ISO list"));
 }
 
-void RecentIsoManager::Add( const wxString& src )
+void RecentIsoManager::Add( const std::string& src )
 {
-	if( src.IsEmpty() ) return;
+	if( src.empty() ) return;
 
-	wxString normalized( Path::Normalize( src ) );
+	std::string normalized( Path::Normalize( src ) );
 
 	int cnt = m_Items.size();
+	//g().DeleteGroup( L"RecentIso" );
 
 	if( cnt <= 0 )
 	{
@@ -208,9 +209,9 @@ void RecentIsoManager::EnableItems(bool display)
 	}
 }
 
-void RecentIsoManager::LoadListFrom( IniInterface& ini )
+void RecentIsoManager::LoadListFrom( nlohmann::json& json )
 {
-	if (!ini.IsOk()) return;
+	/*if (!ini.IsOk()) return;
 
 	ini.GetConfig().SetRecordDefaults( false );
 
@@ -226,7 +227,7 @@ void RecentIsoManager::LoadListFrom( IniInterface& ini )
 	}
 	Add( g_Conf->CurrentIso );
 
-	ini.GetConfig().SetRecordDefaults( true );
+	ini.GetConfig().SetRecordDefaults( true );*/
 }
 
 void RecentIsoManager::AppStatusEvent_OnSettingsApplied()
@@ -236,29 +237,31 @@ void RecentIsoManager::AppStatusEvent_OnSettingsApplied()
 
 void RecentIsoManager::AppStatusEvent_OnUiSettingsLoadSave( const AppSettingsEventInfo& evt )
 {
-	IniInterface& ini( evt.GetIni() );
+	//IniInterface& ini( evt.GetIni() );
 
-	if( ini.IsSaving() )
-	{
+	nlohmann::json json;
+
+	//if( ini.IsSaving() )
+	//{
 		// Wipe existing recent iso list if we're saving, because our size might have changed
 		// and that could leave some residual entries in the config.
 
-		ini.GetConfig().SetRecordDefaults( false );
+		//ini.GetConfig().SetRecordDefaults( false );
 
-		ini.GetConfig().DeleteGroup( L"RecentIso" );
-		ScopedIniGroup groupie( ini, L"RecentIso" );
+		//ini.GetConfig().DeleteGroup( L"RecentIso" );
+		//ScopedIniGroup groupie( ini, L"RecentIso" );
 
-		int cnt = m_Items.size();
-		for( int i=0; i<cnt; ++i )
-		{
-			wxFileName item_filename = wxFileName(m_Items[i].Filename);
-			ini.Entry( pxsFmt( L"Filename%02d", i ),  item_filename, wxFileName(L""), IsPortable());
-		}
+		//int cnt = m_Items.size();
+		//for( int i=0; i<cnt; ++i )
+		//{
+			//wxFileName item_filename = wxFileName(m_Items[i].Filename);
+		//	ini.Entry( pxsFmt( L"Filename%02d", i ),  item_filename, wxFileName(L""), IsPortable());
+		//}
 
-		ini.GetConfig().SetRecordDefaults( true );
-	}
-	else
-	{
-		LoadListFrom(ini);
-	}
+		//ini.GetConfig().SetRecordDefaults( true );
+	//}
+	//else
+	//{
+	//	LoadListFrom(ini);
+//	}
 }
