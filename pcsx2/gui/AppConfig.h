@@ -357,7 +357,7 @@ public:
 	std::string FullpathToMcd( uint slot ) const;
 	std::string FullpathTo( PluginsEnum_t pluginId ) const;
 
-	bool FullpathMatchTest( PluginsEnum_t pluginId, const std::string& cmpto ) const;
+	bool FullpathMatchTest( PluginsEnum_t pluginId, const wxString& cmpto );
 
 	void LoadSave( nlohmann::json &json );
 	void LoadSaveRootItems( nlohmann::json &json );

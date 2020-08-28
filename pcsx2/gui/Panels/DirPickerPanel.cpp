@@ -272,7 +272,7 @@ void Panels::DirPickerPanel::Apply()
 			throw Exception::CannotApplySettings( this );
 	}
 
-	path.Mkdir();
+	//path.Mkdir();
 	g_Conf->Folders.Set( m_FolderId, path, m_checkCtrl ? m_checkCtrl->GetValue() : false );
 }
 

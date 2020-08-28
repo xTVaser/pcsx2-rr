@@ -83,21 +83,21 @@ public:
 	bool WriteKeyBuffer(const uint &frame, const uint port, const uint bufIndex, const u8 &buf);
 
 private:
-	static const int controllerPortsSupported = 2;
-	static const int controllerInputBytes = 18;
-	static const int inputBytesPerFrame = controllerInputBytes * controllerPortsSupported;
-	// TODO - version 2, this could be greatly simplified if everything was in the header
-	// + 4 + 4 is the totalFrame and undoCount values
-	static const int headerSize = sizeof(InputRecordingFileHeader) + 4 + 4;
-	// DEPRECATED / Slated for Removal
-	static const int recordingSavestateHeaderSize = sizeof(bool);
-	static const int seekpointTotalFrames = sizeof(InputRecordingFileHeader);
-	static const int seekpointUndoCount = sizeof(InputRecordingFileHeader) + 4;
-	static const int seekpointSaveStateHeader = seekpointUndoCount + 4;
+	static const int RecordingSavestateHeaderSize = sizeof(bool);
+	static const int RecordingBlockHeaderSize = 0;
+	static const int RecordingBlockDataSize = 18 * 2;
+	static const int RecordingBlockSize = RecordingBlockHeaderSize + RecordingBlockDataSize;
+	static const int RecordingSeekpointFrameMax = sizeof(InputRecordingHeader);
+	static const int RecordingSeekpointUndoCount = sizeof(InputRecordingHeader) + 4;
+	static const int RecordingSeekpointSaveState = RecordingSeekpointUndoCount + 4;
 
-	InputRecordingFileHeader header;
-	wxString filename = "";
-	FILE* recordingFile = nullptr;
+	// Movie File
+	FILE* recordingFile = NULL;
+	std::string filename = "";
+	long GetBlockSeekPoint(const long& frame);
+
+	// Header
+	InputRecordingHeader header;
 	InputRecordingSavestate savestate;
 
 	// An signed 32-bit frame limit is equivalent to 1.13 years of continuous 60fps footage

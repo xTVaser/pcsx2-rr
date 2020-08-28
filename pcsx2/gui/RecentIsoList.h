@@ -26,12 +26,12 @@ class RecentIsoManager : public wxEvtHandler,
 protected:
 	struct RecentItem
 	{
-		wxString	Filename;
+		std::string	Filename;
 		wxMenuItem*	ItemPtr;
 
 		RecentItem() { ItemPtr = NULL; }
 
-		RecentItem( const wxString& src )
+		RecentItem( const std::string& src )
 			: Filename( src )
 		{
 			ItemPtr = NULL;
@@ -58,12 +58,12 @@ public:
 	void EnableItems(bool display);
 	void Repopulate();
 	void Clear();
-	void Add( const wxString& src );
+	void Add( const std::string& src );
 
 protected:
 	void InsertIntoMenu( int id );
 	void OnChangedSelection( wxCommandEvent& evt );
-	void LoadListFrom( IniInterface& ini );
+	void LoadListFrom( nlohmann::json& json );
 
 	void AppStatusEvent_OnUiSettingsLoadSave( const AppSettingsEventInfo& ini );
 	void AppStatusEvent_OnSettingsApplied();

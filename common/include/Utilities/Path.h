@@ -146,7 +146,7 @@ public:
     size_t GetCount() const { return GetDirCount(); }
 
     // ------------------------------------------------------------------------
-    std::string Combine(const std::string &right) const;
+    wxFileName Combine(const wxFileName &right) const;
     wxDirName Combine(const wxDirName &right) const;
 
     // removes the lastmost directory from the path

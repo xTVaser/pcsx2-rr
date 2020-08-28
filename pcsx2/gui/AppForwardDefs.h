@@ -19,9 +19,9 @@
 //
 // Purpose:
 //   This header file is meant to be a dependency-free include that provides a relatively
-//   full compliment of forward defines for PCSX2/App and wxwidgets types.  When 
+//   full compliment of forward defines for PCSX2/App and wxwidgets types.  When
 //   forward defined in this way, these types can be used by method and class definitions
-//   as either pointers or handles without running into complicated header file 
+//   as either pointers or handles without running into complicated header file
 //   inter-dependence.
 //
 
@@ -40,8 +40,6 @@ struct KeyAcceleratorCode;
 struct GlobalCommandDescriptor;
 class CommandDictionary;
 class AcceleratorDictionary;
-
-class IniInterface;
 
 // wxWidgets forward declarations
 

@@ -66,9 +66,8 @@ bool Panels::BaseSelectorPanel::Show( bool visible )
 	if( visible )
 		OnShown();
 
-	return BaseApplicableConfigPanel::Show( visible );
+		return visible;
 }
-
 void Panels::BaseSelectorPanel::RefreshSelections()
 {
 	ValidateEnumerationStatus();
@@ -147,8 +146,8 @@ bool Panels::BiosSelectorPanel::ValidateEnumerationStatus()
 	// occurs during file enumeration.
 	std::unique_ptr<wxArrayString> bioslist(new wxArrayString());
 
-	if( m_FolderPicker->GetPath().Exists() )
-		wxDir::GetAllFiles(m_FolderPicker->GetPath().ToString(), bioslist.get(), L"*.*", wxDIR_FILES);
+	if( m_FolderPicker->GetPath().c_str() )
+		wxDir::GetAllFiles((wxString)m_FolderPicker->GetPath(), bioslist.get(), L"*.*", wxDIR_FILES);
 
 	if( !m_BiosList || (*bioslist != *m_BiosList) )
 		validated = false;

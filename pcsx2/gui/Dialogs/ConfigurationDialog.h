@@ -187,7 +187,7 @@ namespace Dialogs
 
 	public:
 		virtual ~CreateMemoryCardDialog()  = default;
-		CreateMemoryCardDialog( wxWindow* parent, const wxDirName& mcdpath, const wxString& suggested_mcdfileName);
+		CreateMemoryCardDialog( wxWindow* parent, wxDirName mcdpath, const wxString& suggested_mcdfileName);
 
 		//duplicate of MemoryCardFile::Create. Don't know why the existing method isn't used. - avih
 		static bool CreateIt( const wxString& mcdFile, uint sizeInMB, bool isPSX );

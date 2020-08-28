@@ -226,7 +226,7 @@ static void iIopDumpBlock( int startpc, u8 * ptr )
 	int numused, count;
 
 	Console.WriteLn( "dump1 %x:%x, %x", startpc, psxpc, psxRegs.cycle );
-	g_Conf->Folders.Logs.Mkdir();
+	//g_Conf->Folders.Logs.Mkdir();
 
 	wxString filename( Path::Combine( g_Conf->Folders.Logs, wxsFormat( L"psxdump%.8X.txt", startpc ) ) );
 	AsciiFile f( filename, L"w" );
@@ -1084,7 +1084,7 @@ static void __fastcall iopRecRecompile( const u32 startpc )
 	u32 willbranch3 = 0;
 
 	// Inject IRX hack
-	if (startpc == 0x1630 && g_Conf->CurrentIRX.Length() > 3) {
+	if (startpc == 0x1630 && g_Conf->CurrentIRX.length() > 3) {
 		if (iopMemRead32(0x20018) == 0x1F) {
 			// FIXME do I need to increase the module count (0x1F -> 0x20)
 			iopMemWrite32(0x20094, 0xbffc0000);
@@ -1327,7 +1327,7 @@ R3000Acpu psxRec = {
 	recExecuteBlock,
 	recClearIOP,
 	recShutdown,
-	
+
 	recGetCacheReserve,
 	recSetCacheReserve
 };

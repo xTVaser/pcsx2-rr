@@ -16,6 +16,7 @@
 #pragma once
 
 #include "AppCommon.h"
+#include "Utilities/json.hpp"
 
 #include <wx/dnd.h>
 #include <wx/listctrl.h>
@@ -41,9 +42,9 @@ struct McdSlotItem
 	int			Slot;			//0-7: internal slot. -1: unrelated to an internal slot (the rest of the files at the folder).
 	bool		IsPresent;		//Whether or not a file is associated with this item (true/false when 0<=Slot<=7. Always true when Slot==-1)
 	MemoryCardType Type;		//The implementation used for this memory card
-	
+
 	//Only meaningful when IsPresent==true (a file exists for this item):
-	wxFileName	Filename;		// full pathname
+	std::string	Filename;		// full pathname
 	bool		IsFormatted;
 	bool		IsPSX; // False: PS2 memory card, True: PSX memory card
 	uint		SizeInMB;		// size, in megabytes!
@@ -65,7 +66,7 @@ struct McdSlotItem
 		Slot = -1;
 		SizeInMB = 0;
 		Type = MemoryCard_None;
-		
+
 		IsPSX = false;
 		IsPresent = false;
 		IsEnabled = false;
@@ -89,7 +90,7 @@ public:
 	virtual void RemoveCardFromSlot(const wxFileName cardFile) =0;
 	virtual bool IsNonEmptyFilesystemCards() const =0;
 	virtual bool UiDuplicateCard( McdSlotItem& src, McdSlotItem& dest ) =0;
-	
+
 };
 
 // --------------------------------------------------------------------------------------
@@ -120,7 +121,7 @@ public:
 	virtual void SetCardCount( int length )=0;
 	virtual void SetMcdProvider( IMcdList* face );
 
-	virtual void LoadSaveColumns( IniInterface& ini );
+	virtual void LoadSaveColumns( nlohmann::json& json );
 	virtual const ListViewColumnInfo& GetDefaultColumnInfo( uint idx ) const=0;
 
 	virtual IMcdList& GetMcdProvider();
@@ -162,7 +163,7 @@ namespace Panels
 		, public IMcdList		// derived classes need to implement this
 	{
 		typedef BaseSelectorPanel _parent;
-		
+
 	protected:
 		DirPickerPanel*		m_FolderPicker;
 		BaseMcdListView*	m_listview;
@@ -178,7 +179,7 @@ namespace Panels
 		virtual wxDirName GetMcdPath() const
 		{
 			pxAssert(m_FolderPicker);
-			return m_FolderPicker->GetPath();
+			return (wxDirName)m_FolderPicker->GetPath();
 		}
 
 	public:
@@ -208,12 +209,12 @@ namespace Panels
 		McdSlotItem		m_Cards[8];
 
 		wxButton*		m_button_Rename;
-		
+
 		// Doubles as Create and Delete buttons
 		wxButton*		m_button_Create;
 
 		wxButton*		m_button_Convert;
-		
+
 		// Doubles as Mount and Unmount buttons ("Enable"/"Disable" port)
 //		wxButton*		m_button_Mount;
 
@@ -244,7 +245,7 @@ namespace Panels
 		void OnRenameFile(wxCommandEvent& evt);
 		void OnDuplicateFile(wxCommandEvent& evt);
 		void OnAssignUnassignFile(wxCommandEvent& evt);
-		
+
 		void OnListDrag(wxListEvent& evt);
 		void OnListSelectionChanged(wxListEvent& evt);
 		void OnOpenItemContextMenu(wxListEvent& evt);
@@ -275,7 +276,7 @@ namespace Panels
 		virtual void UiConvertCard( McdSlotItem& card );
 		virtual void UiDeleteCard( McdSlotItem& card );
 		virtual void UiAssignUnassignFile( McdSlotItem& card );
-		
+
 	};
 
 	// --------------------------------------------------------------------------------------
@@ -306,5 +307,5 @@ namespace Panels
 };
 
 //avih: is the first one used??
-extern bool EnumerateMemoryCard( McdSlotItem& dest, const wxFileName& filename );
+//extern bool EnumerateMemoryCard( McdSlotItem& dest, wxFileName& filename );
 //extern bool EnumerateMemoryCard( SimpleMcdItem& dest, const wxFileName& filename );

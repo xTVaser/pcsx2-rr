@@ -264,11 +264,11 @@ void LoadBIOS()
 
 	try
 	{
-		wxString Bios( g_Conf->FullpathToBios() );
-		if( !g_Conf->BaseFilenames.Bios.IsOk() || g_Conf->BaseFilenames.Bios.IsDir() )
-			throw Exception::FileNotFound( Bios )
-				.SetDiagMsg(L"BIOS has not been configured, or the configuration has been corrupted.")
-				.SetUserMsg(_("The PS2 BIOS could not be loaded.  The BIOS has not been configured, or the configuration has been corrupted.  Please re-configure."));
+		std::string Bios( g_Conf->FullpathToBios() );
+		//if( !g_Conf->BaseFilenames.Bios.IsOk() || g_Conf->BaseFilenames.Bios.IsDir() )
+			//throw Exception::FileNotFound( Bios )
+				//.SetDiagMsg(L"BIOS has not been configured, or the configuration has been corrupted.")
+				//.SetUserMsg(_("The PS2 BIOS could not be loaded.  The BIOS has not been configured, or the configuration has been corrupted.  Please re-configure."));
 
 		s64 filesize = Path::GetFileSize( Bios );
 		if( filesize <= 0 )
@@ -299,7 +299,7 @@ void LoadBIOS()
 		LoadExtraRom( L"rom2", eeMem->ROM2 );
 		LoadExtraRom( L"erom", eeMem->EROM );
 
-		if (g_Conf->CurrentIRX.Length() > 3)
+		if (g_Conf->CurrentIRX.length() > 3)
 			LoadIrx(g_Conf->CurrentIRX, &eeMem->ROM[0x3C0000]);
 
 		CurrentBiosInformation = NULL;
