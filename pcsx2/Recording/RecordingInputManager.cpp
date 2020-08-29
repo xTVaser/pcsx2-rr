@@ -25,61 +25,54 @@ RecordingInputManager g_RecordingInput;
 RecordingInputManager::RecordingInputManager()
 {
 	for (u8 i = 0; i < 2; i++)
-	{
-		virtualPad[i] = false;
-	}
+		m_virtualPad[i] = false;
 }
 
-void RecordingInputManager::ControllerInterrupt(const u8 data, const u8 port, const u16 buf_count, u8(&buf)[512])
+void RecordingInputManager::controllerInterrupt(const u8 data, const u8 port, const u16 bufCount, u8(&buf)[512])
 {
-	if (virtualPad[port])
+	if (m_virtualPad[port])
 	{
-		int buf_index = buf_count - 3;
 		// first two bytes have nothing of interest in the buffer
 		// already handled by InputRecording.cpp
-		if (buf_count < 3)
-		{
+		if (bufCount < 3)
 			return;
-		}
-
+		
 		// Normal keys
 		// We want to perform an OR, but, since 255 means that no button is pressed and 0 that every button is pressed (and by De Morgan's Laws), we execute an AND.
-		if (buf_count <= 4)
+		if (bufCount <= 4)
+			buf[bufCount] = buf[bufCount] & m_pad.m_buf[port][bufCount - 3];
+		else
 		{
-			buf[buf_count] = buf[buf_count] & pad.buf[port][buf_index];
-		}
-		// Analog keys (! overrides !)
-		else if ((buf_count > 4 && buf_count <= 6) && pad.buf[port][buf_index] != 127)
-		{
-			buf[buf_count] = pad.buf[port][buf_index];
-		}
-		// Pressure sensitivity bytes
-		else if (buf_count > 6)
-		{
-			buf[buf_count] = pad.buf[port][buf_index];
+			int bufIndex = bufCount - 3;
+			// Analog keys (! overrides !)
+			if ((bufCount > 4 && bufCount <= 6) && m_pad.m_buf[port][bufIndex] != 127)
+				buf[bufCount] = m_pad.m_buf[port][bufIndex];
+			// Pressure sensitivity bytes
+			else if (bufCount > 6)
+				buf[bufCount] = m_pad.m_buf[port][bufIndex];
 		}
 
 		// Updating movie file
-		g_InputRecording.controllerInterrupt(data, port, buf_count, buf);
+		g_InputRecording.controllerInterrupt(data, port, bufCount, buf);
 	}
 }
 
-void RecordingInputManager::SetButtonState(int port, PadData_NormalButton button, int pressure)
+void RecordingInputManager::setButtonState(int port, PadData_NormalButton button, int pressure)
 {
-	std::vector<int> buttons = pad.GetNormalButtons(port);
+	std::vector<int> buttons = m_pad.getNormalButtons(port);
 	buttons[button] = pressure;
-	pad.SetNormalButtons(port, buttons);
+	m_pad.setNormalButtons(port, buttons);
 }
 
-void RecordingInputManager::UpdateAnalog(int port, PadData_AnalogVector vector, int value)
+void RecordingInputManager::updateAnalog(int port, PadData_AnalogVector vector, int value)
 {
-	std::vector<int> vectors = pad.GetAnalogVectors(port);
+	std::vector<int> vectors = m_pad.getAnalogVectors(port);
 	vectors[vector] = value;
-	pad.SetAnalogVectors(port, vectors);
+	m_pad.setAnalogVectors(port, vectors);
 }
 
-void RecordingInputManager::SetVirtualPadReading(int port, bool read)
+void RecordingInputManager::setVirtualPadReading(int port, bool read)
 {
-	virtualPad[port] = read;
+	m_virtualPad[port] = read;
 }
 #endif

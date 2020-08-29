@@ -526,7 +526,7 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent& event)
 	}
 	else
 	{
-		//Closes the TAS file if one is loaded
+		//Properly close any currently loaded recording file before disabling
 		if (g_InputRecording.getModeState() != INPUT_RECORDING_MODE_NONE)
 			Menu_Recording_Stop_Click(event);
 		GetMenuBar()->Remove(TopLevelMenu_Recording);
@@ -813,21 +813,21 @@ void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_Click(wxCommandEvent & eve
 #ifndef DISABLE_RECORDING
 void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 {
-	const bool initially_paused = g_RecordingControls.isRecordingPaused();
-	if (!initially_paused)
+	const bool initiallyPaused = g_RecordingControls.isRecordingPaused();
+	if (!initiallyPaused)
 		g_RecordingControls.pause();
-	NewRecordingFrame* new_frame = wxGetApp().GetNewRecordingFramePtr();
-	if (new_frame)
+	NewRecordingFrame* newFrame = wxGetApp().GetNewRecordingFramePtr();
+	if (newFrame)
 	{
-		if (new_frame->ShowModal() == wxID_CANCEL)
+		if (newFrame->ShowModal() == wxID_CANCEL)
 		{
-			if (!initially_paused)
+			if (!initiallyPaused)
 				g_RecordingControls.resume();
 			return;
 		}
-		if (!g_InputRecording.create(new_frame->getFile(), !new_frame->getFrom(), new_frame->getAuthor()))
+		if (!g_InputRecording.create(newFrame->getFile(), !newFrame->getFrom(), newFrame->getAuthor()))
 		{
-			if (!initially_paused)
+			if (!initiallyPaused)
 				g_RecordingControls.resume();
 			return;
 		}
@@ -839,35 +839,36 @@ void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 
 void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 {
-	const bool was_recording_loaded = g_InputRecording.getModeState() != INPUT_RECORDING_MODE_NONE;
-	const bool initially_paused = g_RecordingControls.isRecordingPaused();
-	if (!initially_paused)
+	const bool initiallyPaused = g_RecordingControls.isRecordingPaused();
+	if (!initiallyPaused)
 		g_RecordingControls.pause();
 	wxFileDialog open_file_dialog(this, _("Select P2M2 record file."), L"", L"",
 		L"p2m2 file(*.p2m2)|*.p2m2", wxFD_OPEN);
 	if (open_file_dialog.ShowModal() == wxID_CANCEL)
 	{
-		if (!initially_paused)
+		if (!initiallyPaused)
 			g_RecordingControls.resume();
 		return;
 	}
 
 	const wxString path = open_file_dialog.GetPath();
+	const bool wasRecordingLoaded = g_InputRecording.getModeState() != INPUT_RECORDING_MODE_NONE;
 	if (!g_InputRecording.play(path))
 	{
-		if (was_recording_loaded)
+		if (wasRecordingLoaded)
 			Menu_Recording_Stop_Click(event);
-		if (!initially_paused)
+		if (!initiallyPaused)
 			g_RecordingControls.resume();
 		return;
 	}
-	if (!was_recording_loaded)
+	if (!wasRecordingLoaded)
 	{
 		m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
 		m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
 		m_menuRecording.FindChildItem(MenuId_Recording_Reset)->Enable(true);
 	}
-	g_RecordingControls.resume();
+	if (!g_InputRecording.getinputRecordingData().fromSaveState())
+		g_RecordingControls.resume();
 }
 
 void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)

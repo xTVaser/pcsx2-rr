@@ -36,8 +36,8 @@ private:
 		void setAuthor(wxString author);
 		void setGameName(wxString cdrom);
 	private:
-		u8 m_p2m2_version = 1;
-		std::array<char, 50> m_emulator;
+		u8 m_fileVersion = 1;
+		std::array<char, 50> m_emulatorVersion;
 		std::array<char, 255> m_author;
 		std::array<char, 255> m_gameName;
 		unsigned long m_totalFrames = 0;
@@ -74,31 +74,31 @@ public:
 	bool openExisting(const wxString path);
 	// Create and open a brand new input recording, either starting from a save-state or from
 	// booting the game
-	bool openNew(const wxString path, bool from_savestate);
+	bool openNew(const wxString path, bool fromSavestate);
 	// Reads the current frame's input data from the file in order to intercept and overwrite
 	// the current frame's value from the emulator
-	bool readKeyBuffer(u8& result, const uint& frame, const uint port, const uint buf_index) const;
+	bool readKeyBuffer(u8& result, const uint& frame, const uint port, const uint bufIndex) const;
 	// Updates the total frame counter and commit it to the recording file
 	void setTotalFrames(unsigned long frames);
 	// Persist the input recording file header's current state to the file
 	bool writeHeader() const;
 	// Writes the current frame's input data to the file so it can be replayed
-	bool writeKeyBuffer(const uint& frame, const uint port, const uint buf_index, const u8& buf);
+	bool writeKeyBuffer(const uint& frame, const uint port, const uint bufIndex, const u8& buf);
 
 private:
-	static const int s_controller_input_bytes = 18;
-	static const int s_seekpoint_input_data = 570U;
-	static const int s_seekpoint_undo_count = s_seekpoint_input_data - 5;
-	static const int s_seekpoint_total_frames = s_seekpoint_undo_count - 4;
+	static const int s_controllerInputBytes = 18;
+	static const int s_seekpointInputData = 570U;
+	static const int s_seekpointUndoCount = s_seekpointInputData - 5;
+	static const int s_seekpointTotalFrames = s_seekpointUndoCount - 4;
 
 	InputRecordingFileHeader m_header;
 	wxString m_filename = "";
-	FILE* m_recording_file = nullptr;
+	FILE* m_recordingFile = nullptr;
 
 	// TODO: Implementation of V2.0 (w/ multitap)
 	// Values placed separate from the above values in preparation
 	int m_padCount;
-	int m_input_bytes_per_frame;
+	int m_inputBytesPerFrame;
 
 	// Calculates the position of the current frame in the input recording
 	long getRecordingBlockSeekPoint(const long& frame) const noexcept;

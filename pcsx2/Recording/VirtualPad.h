@@ -25,7 +25,7 @@
 class VirtualPad : public wxFrame
 {
 public:
-	VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, int controller_port, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_FRAME_STYLE);
+	VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, int controllerPort, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_FRAME_STYLE);
 
 	bool Show(bool show = true) override;
 
@@ -33,59 +33,59 @@ private:
 	void setProperties();
 	void doLayout();
 
-	int controller_port;
+	int m_controllerPort;
 
-	wxToggleButton* l2Button;
-	wxSpinCtrl* l2ButtonPressure;
-	wxToggleButton* l1Button;
-	wxSpinCtrl* l1ButtonPressure;
-	wxToggleButton* r2Button;
-	wxSpinCtrl* r2ButtonPressure;
-	wxToggleButton* r1Button;
-	wxSpinCtrl* r1ButtonPressure;
-	wxToggleButton* upButton;
-	wxSpinCtrl* upButtonPressure;
-	wxToggleButton* leftButton;
-	wxSpinCtrl* leftButtonPressure;
-	wxToggleButton* rightButton;
-	wxSpinCtrl* rightButtonPressure;
-	wxToggleButton* downButton;
-	wxSpinCtrl* downButtonPressure;
-	wxToggleButton* startButton;
-	wxToggleButton* selectButton;
-	wxToggleButton* triangleButton;
-	wxSpinCtrl* triangleButtonPressure;
-	wxToggleButton* squareButton;
-	wxSpinCtrl* squareButtonPressure;
-	wxToggleButton* circleButton;
-	wxSpinCtrl* circleButtonPressure;
-	wxToggleButton* crossButton;
-	wxSpinCtrl* crossButtonPressure;
-	wxSlider* leftAnalogXVal;
-	wxSpinCtrl* leftAnalogXValPrecise;
-	wxToggleButton* l3Button;
-	wxSlider* leftAnalogYVal;
-	wxSpinCtrl* leftAnalogYValPrecise;
-	wxSlider* rightAnalogXVal;
-	wxSpinCtrl* rightAnalogXValPrecise;
-	wxToggleButton* r3Button;
-	wxSlider* rightAnalogYVal;
-	wxSpinCtrl* rightAnalogYValPrecise;
+	wxToggleButton* m_l2Button;
+	wxSpinCtrl* m_l2ButtonPressure;
+	wxToggleButton* m_l1Button;
+	wxSpinCtrl* m_l1ButtonPressure;
+	wxToggleButton* m_r2Button;
+	wxSpinCtrl* m_r2ButtonPressure;
+	wxToggleButton* m_r1Button;
+	wxSpinCtrl* m_r1ButtonPressure;
+	wxToggleButton* m_upButton;
+	wxSpinCtrl* m_upButtonPressure;
+	wxToggleButton* m_leftButton;
+	wxSpinCtrl* m_leftButtonPressure;
+	wxToggleButton* m_rightButton;
+	wxSpinCtrl* m_rightButtonPressure;
+	wxToggleButton* m_downButton;
+	wxSpinCtrl* m_downButtonPressure;
+	wxToggleButton* m_startButton;
+	wxToggleButton* m_selectButton;
+	wxToggleButton* m_triangleButton;
+	wxSpinCtrl* m_triangleButtonPressure;
+	wxToggleButton* m_squareButton;
+	wxSpinCtrl* m_squareButtonPressure;
+	wxToggleButton* m_circleButton;
+	wxSpinCtrl* m_circleButtonPressure;
+	wxToggleButton* m_crossButton;
+	wxSpinCtrl* m_crossButtonPressure;
+	wxSlider* m_leftAnalogXVal;
+	wxSpinCtrl* m_leftAnalogXValPrecise;
+	wxToggleButton* m_l3Button;
+	wxSlider* m_leftAnalogYVal;
+	wxSpinCtrl* m_leftAnalogYValPrecise;
+	wxSlider* m_rightAnalogXVal;
+	wxSpinCtrl* m_rightAnalogXValPrecise;
+	wxToggleButton* m_r3Button;
+	wxSlider* m_rightAnalogYVal;
+	wxSpinCtrl* m_rightAnalogYValPrecise;
 
-	wxToggleButton* buttons[16];
-	int buttonsLength = 16;
-	wxSpinCtrl* buttonsPressure[12];
-	int buttonsPressureLength = 12;
-	wxSlider* analogSliders[4];
-	int analogSlidersLength = 4;
-	wxSpinCtrl* analogVals[4];
-	int analogValsLength = 4;
+	wxToggleButton* m_buttons[16];
+	int m_buttonsLength = 16;
+	wxSpinCtrl* m_buttonsPressure[12];
+	int m_buttonsPressureLength = 12;
+	wxSlider* m_analogSliders[4];
+	int m_analogSlidersLength = 4;
+	wxSpinCtrl* m_analogVals[4];
+	int m_analogValsLength = 4;
 
-	void OnClose(wxCloseEvent &event);
-	void OnButtonPress(wxCommandEvent &event);
-	void OnPressureChange(wxSpinEvent &event);
-	void OnAnalogValChange(wxSpinEvent &event);
-	void OnAnalogSliderChange(wxCommandEvent &event);
+	void onClose(wxCloseEvent &event);
+	void onButtonPress(wxCommandEvent &event);
+	void onPressureChange(wxSpinEvent &event);
+	void onAnalogValChange(wxSpinEvent &event);
+	void onAnalogSliderChange(wxCommandEvent &event);
 	// TODO - reset button
 
 protected:

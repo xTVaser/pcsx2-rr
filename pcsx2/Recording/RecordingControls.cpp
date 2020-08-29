@@ -102,9 +102,7 @@ void RecordingControls::togglePause() noexcept
 {
 	m_Stop = !m_Stop;
 	if (m_Stop == false)
-	{
 		m_Start = true;
-	}
 }
 
 void RecordingControls::pause() noexcept

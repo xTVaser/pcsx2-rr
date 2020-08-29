@@ -29,7 +29,7 @@ enum INPUT_RECORDING_MODE
 class InputRecording
 {
 public:
-	void controllerInterrupt(const u8 data, const u8 port, const u16 buf_count, u8 (&buf)[512]);
+	void controllerInterrupt(const u8 data, const u8 port, const u16 bufCount, u8 (&buf)[512]);
 
 	void recordModeToggle();
 
@@ -38,14 +38,14 @@ public:
 	bool isInterruptFrame() const noexcept;
 
 	void stop();
-	bool create(const wxString filename, const bool from_savestate, const wxString author_name);
+	bool create(const wxString filename, const bool fromSavestate, const wxString authorName);
 	bool play(const wxString filename);
 	bool loadFirstFrame();
 
 private:
 	InputRecordingFile m_InputRecordingData;
 	INPUT_RECORDING_MODE m_state = INPUT_RECORDING_MODE_NONE;
-	bool m_fInterrupt_frame = false;
+	bool m_fInterruptFrame = false;
 	// Resolve the name and region of the game currently loaded using the GameDB
 	// If the game cannot be found in the DB, the fallback is the ISO filename
 	wxString resolveGameName();
