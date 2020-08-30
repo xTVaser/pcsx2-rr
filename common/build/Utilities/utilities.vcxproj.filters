@@ -98,6 +98,9 @@
     <ClCompile Include="..\..\src\Utilities\FastFormatString.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Utilities\IniInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\Utilities\pxTranslate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -211,6 +214,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\Utilities\EmbeddedImage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Utilities\filesystem.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Utilities\json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Utilities\PathUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

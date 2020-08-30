@@ -16,11 +16,7 @@
 #pragma once
 
 #include "x86emitter/tools.h"
-<<<<<<< HEAD
 #include "Utilities/json.hpp"
-=======
-#include "json.hpp"
->>>>>>> f5198b876... Cleared several errors, completely removed IniInterface. Added some filesystem folder creation and functions
 
 enum PluginsEnum_t
 {
@@ -162,11 +158,7 @@ struct TraceLogFilters
 		Enabled	= false;
 	}
 
-<<<<<<< HEAD
 	nlohmann::json LoadSave();
-=======
-	void LoadSave( nlohmann::json  & json );
->>>>>>> f5198b876... Cleared several errors, completely removed IniInterface. Added some filesystem folder creation and functions
 
 	bool operator ==( const TraceLogFilters& right ) const
 	{
@@ -205,11 +197,7 @@ struct Pcsx2Config
 
 		// Default is Disabled, with all recs enabled underneath.
 		//ProfilerOptions() : bitset( 0xfffffffe ) {}
-<<<<<<< HEAD
 		nlohmann::json LoadSave();
-=======
-		void LoadSave( nlohmann::json& conf );
->>>>>>> f5198b876... Cleared several errors, completely removed IniInterface. Added some filesystem folder creation and functions
 
 		bool operator ==( const ProfilerOptions& right ) const
 		{
@@ -260,11 +248,7 @@ struct Pcsx2Config
 		RecompilerOptions();
 		void ApplySanityCheck();
 
-<<<<<<< HEAD
 		nlohmann::json LoadSave();
-=======
-		void LoadSave( nlohmann::json& conf );
->>>>>>> f5198b876... Cleared several errors, completely removed IniInterface. Added some filesystem folder creation and functions
 
 		bool operator ==( const RecompilerOptions& right ) const
 		{
@@ -293,11 +277,7 @@ struct Pcsx2Config
 		SSE_MXCSR sseVUMXCSR;
 
 		CpuOptions();
-<<<<<<< HEAD
 		nlohmann::json LoadSave();
-=======
-		void LoadSave( nlohmann::json& conf );
->>>>>>> f5198b876... Cleared several errors, completely removed IniInterface. Added some filesystem folder creation and functions
 		void ApplySanityCheck();
 
 		bool operator ==( const CpuOptions& right ) const
@@ -332,11 +312,7 @@ struct Pcsx2Config
 		Fixed100	FrameratePAL;
 
 		GSOptions();
-<<<<<<< HEAD
 		nlohmann::json LoadSave();
-=======
-		void LoadSave( nlohmann::json& conf );
->>>>>>> f5198b876... Cleared several errors, completely removed IniInterface. Added some filesystem folder creation and functions
 
 		int GetVsync() const;
 
@@ -392,11 +368,7 @@ struct Pcsx2Config
             CrashTagTeamRacingIbit, // Crash Tag Team Racing I bit hack. Needed to stop constant VU recompilation
             VU0KickstartHack;       // Speed up VU0 at start of program to avoid some VU1 sync issues
 		GamefixOptions();
-<<<<<<< HEAD
 	    nlohmann::json LoadSave();
-=======
-		void LoadSave( nlohmann::json& conf );
->>>>>>> f5198b876... Cleared several errors, completely removed IniInterface. Added some filesystem folder creation and functions
 		GamefixOptions& DisableAll();
 
 		void Set( const std::string& list, bool enabled=true );
@@ -406,7 +378,7 @@ struct Pcsx2Config
 		void Set( GamefixId id, bool enabled=true );
 		void Clear( GamefixId id ) { Set( id, false ); }
 
-		bool operator ==( const GamefixOptions& right ) const
+		/*bool operator ==( const GamefixOptions& right ) const
 		{
 			//return OpEqu( bitset );
 			return true;
@@ -416,7 +388,7 @@ struct Pcsx2Config
 		{
 			//return !OpEqu( bitset );
 			return false;
-		}
+		}*/
 	};
 
 	// ------------------------------------------------------------------------
@@ -433,11 +405,7 @@ struct Pcsx2Config
 		u8	EECycleSkip;		// EE Cycle skip factor (0, 1, 2, or 3)
 
 		SpeedhackOptions();
-<<<<<<< HEAD
 		nlohmann::json LoadSave();
-=======
-		void LoadSave( nlohmann::json& conf );
->>>>>>> f5198b876... Cleared several errors, completely removed IniInterface. Added some filesystem folder creation and functions
 		SpeedhackOptions& DisableAll();
 
 		bool operator ==( const SpeedhackOptions& right ) const
@@ -466,11 +434,7 @@ struct Pcsx2Config
 		u32 MemoryViewBytesPerRow;
 
 		DebugOptions();
-<<<<<<< HEAD
 		nlohmann::json LoadSave();
-=======
-		void LoadSave( nlohmann::json& conf );
->>>>>>> f5198b876... Cleared several errors, completely removed IniInterface. Added some filesystem folder creation and functions
 
 		bool operator ==( const DebugOptions& right ) const
 		{
@@ -524,21 +488,14 @@ struct Pcsx2Config
 
 	Pcsx2Config();
 
-<<<<<<< HEAD
 	bool EnableIPC;
 
 
-=======
->>>>>>> f5198b876... Cleared several errors, completely removed IniInterface. Added some filesystem folder creation and functions
 	//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Pcsx2Config, CdvdVerboseReads, CdvdDumpBlocks, CdvdShareWrite, EnablePatches, EnableCheats, EnableWideScreenPatches,
 	//EnableRecordingTools, UseBOOT2Injection, BackupSavestate, McdEnableEjection, McdFolderAutoManage, MultitapPort0_Enabled, MultitapPort1_Enabled,
 	//ConsoleToStdio, HostFs);
 
-<<<<<<< HEAD
 	nlohmann::json LoadSave();
-=======
-	void LoadSave( nlohmann::json& json );
->>>>>>> f5198b876... Cleared several errors, completely removed IniInterface. Added some filesystem folder creation and functions
 
 	void Load( nlohmann::json loader );
 	//void Load( const wxInputStream& srcstream );
@@ -547,7 +504,7 @@ struct Pcsx2Config
 
 	bool MultitapEnabled( uint port ) const;
 
-	bool operator ==( const Pcsx2Config& right ) const
+	/*bool operator ==( const Pcsx2Config& right ) const
 	{
 		return false;
 			//OpEqu( bitset )		&&
@@ -563,7 +520,7 @@ struct Pcsx2Config
 	bool operator !=( const Pcsx2Config& right ) const
 	{
 		return !this->operator ==( right );
-	}
+	}*/
 };
 
 extern const Pcsx2Config EmuConfig;
