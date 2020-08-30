@@ -18,6 +18,7 @@
 #include "Utilities/json.hpp"
 #include "Utilities/PathUtils.h"
 #include "Dialogs/ModalPopups.h"
+#include "AppConfig.h"
 
 #include <wx/stdpaths.h>
 

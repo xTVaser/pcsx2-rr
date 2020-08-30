@@ -22,6 +22,8 @@
 
 #include "Utilities/json.hpp"
 #include "Utilities/PathUtils.h"
+#include "FixedPointTypes.inl"
+
 
 #include <wx/stdpaths.h>
 #include "DebugTools/Debug.h"
@@ -185,7 +187,7 @@ namespace PathDefs
 		// change it with compilation flags. -- Gregory
 #define xGAMEINDEX_str(s) GAMEINDEX_DIR_str(s)
 #define GAMEINDEX_DIR_str(s) #s
-		return wxDirName( xGAMEINDEX_str(GAMEINDEX_DIR_COMPILATION) );
+		return std::string( xGAMEINDEX_str(GAMEINDEX_DIR_COMPILATION) );
 #endif
 	}
 
@@ -233,7 +235,7 @@ namespace PathDefs
 #else
 #define xPLUGIN_DIR_str(s) PLUGIN_DIR_str(s)
 #define PLUGIN_DIR_str(s) #s
-		return wxDirName( xPLUGIN_DIR_str(PLUGIN_DIR_COMPILATION) );
+		return std::string( xPLUGIN_DIR_str(PLUGIN_DIR_COMPILATION) );
 #endif
 	}
 

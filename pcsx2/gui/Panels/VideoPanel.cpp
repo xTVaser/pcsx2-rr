@@ -17,6 +17,7 @@
 #include "App.h"
 #include "Dialogs/ConfigurationDialog.h"
 #include "ConfigurationPanels.h"
+#include "FixedPointTypes.inl"
 
 #include <wx/spinctrl.h>
 
