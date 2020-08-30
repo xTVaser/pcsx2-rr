@@ -313,27 +313,27 @@ struct Pcsx2Config
 
 		int GetVsync() const;
 
-		/*bool operator ==( const GSOptions& right ) const
+		bool operator ==( const GSOptions& right ) const
 		{
-			return
-				OpEqu( SynchronousMTGS )		&&
-				OpEqu( VsyncQueueSize )			&&
+			return true;
+				//OpEqu( SynchronousMTGS )		&&
+				//OpEqu( VsyncQueueSize )		&&
 
-				OpEqu( FrameSkipEnable )		&&
-				OpEqu( FrameLimitEnable )		&&
-				OpEqu( VsyncEnable )			&&
+				//OpEqu( FrameSkipEnable )		&&
+				//OpEqu( FrameLimitEnable )		&&
+				//OpEqu( VsyncEnable )			&&
 
-				OpEqu( LimitScalar )			&&
-				OpEqu( FramerateNTSC )			&&
-				OpEqu( FrameratePAL )			&&
+				//OpEqu( LimitScalar )			&&
+				//OpEqu( FramerateNTSC )		&&
+				//OpEqu( FrameratePAL )			&&
 
-				OpEqu( FramesToDraw )			&&
-				OpEqu( FramesToSkip );
-		}*/
+				//OpEqu( FramesToDraw )			&&
+				//OpEqu( FramesToSkip );
+		}
 
 		bool operator !=( const GSOptions& right ) const
 		{
-			//return !this->operator ==( right );
+			return !this->operator ==( right );
 		}
 
 		//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GSOptions, SynchronousMTGS, VsyncQueueSize, FrameLimitEnable,
@@ -375,7 +375,7 @@ struct Pcsx2Config
 		void Set( GamefixId id, bool enabled=true );
 		void Clear( GamefixId id ) { Set( id, false ); }
 
-		/*bool operator ==( const GamefixOptions& right ) const
+		bool operator ==( const GamefixOptions& right ) const
 		{
 			//return OpEqu( bitset );
 			return true;
@@ -385,7 +385,7 @@ struct Pcsx2Config
 		{
 			//return !OpEqu( bitset );
 			return false;
-		}*/
+		}
 	};
 
 	// ------------------------------------------------------------------------
@@ -495,23 +495,23 @@ struct Pcsx2Config
 
 	bool MultitapEnabled( uint port ) const;
 
-	/*bool operator ==( const Pcsx2Config& right ) const
+	bool operator ==( const Pcsx2Config& right ) const
 	{
-		return
-			OpEqu( bitset )		&&
-			OpEqu( Cpu )		&&
-			OpEqu( GS )			&&
-			OpEqu( Speedhacks )	&&
-			OpEqu( Gamefixes )	&&
-			OpEqu( Profiler )	&&
-			OpEqu( Trace )		&&
-			OpEqu( BiosFilename );
-	}*/
+		return false;
+			//OpEqu( bitset )		&&
+			//OpEqu( Cpu )			&&
+			//OpEqu( GS )			&&
+			//OpEqu( Speedhacks )	&&
+			//OpEqu( Gamefixes )	&&
+			//OpEqu( Profiler )		&&
+			//OpEqu( Trace )		&&
+			//OpEqu( BiosFilename );
+	}
 
-	/*bool operator !=( const Pcsx2Config& right ) const
+	bool operator !=( const Pcsx2Config& right ) const
 	{
 		return !this->operator ==( right );
-	}*/
+	}
 };
 
 extern const Pcsx2Config EmuConfig;

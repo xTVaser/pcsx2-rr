@@ -184,7 +184,7 @@ static int _LoadPatchFiles(const std::string& folderName, std::string& fileSpec,
 	numberFoundPatchFiles = 0;
 
 	if (!folderName.empty()) {
-		Console.WriteLn(Color_Red, L"The %s folder ('%s') is inaccessible. Skipping...", WX_STR(friendlyName), WX_STR(folderName));
+		Console.WriteLn(Color_Red, L"The %s folder ('%s') is inaccessible. Skipping...", friendlyName, folderName);
 		return 0;
 	}
 	wxDir dir(folderName);
@@ -195,14 +195,14 @@ static int _LoadPatchFiles(const std::string& folderName, std::string& fileSpec,
 	bool found = dir.GetFirst(&buffer, "*", wxDIR_FILES);
 	while (found) {
 		if (std::toupper(buffer[0]) == std::toupper(fileSpec[0])) {
-			PatchesCon->WriteLn(Color_Green, L"Found %s file: '%s'", WX_STR(friendlyName), WX_STR(buffer));
+			PatchesCon->WriteLn(Color_Green, L"Found %s file: '%s'", friendlyName, WX_STR(buffer));
 			int before = Patch.size();
 			f.Open(Path::Combine(dir.GetName(), buffer));
 			inifile_process(f);
 			f.Close();
 			int loaded = Patch.size() - before;
 			PatchesCon->WriteLn((loaded ? Color_Green : Color_Gray), L"Loaded %d %s from '%s' at '%s'",
-				loaded, WX_STR(friendlyName), WX_STR(buffer), WX_STR(folderName));
+				loaded, friendlyName, WX_STR(buffer), folderName);
 			numberFoundPatchFiles++;
 		}
 		found = dir.GetNext(&buffer);
@@ -257,10 +257,10 @@ int LoadPatchesFromDir(std::string name, const std::string& folderName, const st
 	if (folderName == (PathDefs::GetCheats()) && numberFoundPatchFiles == 0) {
 		std::transform(name.begin(), name.end(),name.begin(), ::toupper);
 		std::string pathName = (folderName + name + ".pnach");
-		PatchesCon->WriteLn(Color_Gray, L"Not found %s file: %s", WX_STR(friendlyName), WX_STR(pathName));
+		PatchesCon->WriteLn(Color_Gray, L"Not found %s file: %s", friendlyName, pathName);
 	}
 
-	PatchesCon->WriteLn((loaded ? Color_Green : Color_Gray), L"Overall %d %s loaded", loaded, WX_STR(friendlyName));
+	PatchesCon->WriteLn((loaded ? Color_Green : Color_Gray), L"Overall %d %s loaded", loaded, friendlyName);
 	return loaded;
 }
 
