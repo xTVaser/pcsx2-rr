@@ -28,6 +28,7 @@
 
 #include "Utilities/ThreadingDialogs.h"
 #include "Utilities/SafeArray.inl"
+#include "FixedPointTypes.inl"
 
 // Allows us to force-disable threading for debugging/troubleshooting
 static const bool DisableThreading =
