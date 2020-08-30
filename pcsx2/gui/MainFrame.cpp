@@ -466,8 +466,11 @@ void MainEmuFrame::CreateRecordMenu()
 	m_menuRecording.Append(MenuId_Recording_Play, _("Play"));
 	m_menuRecording.AppendSeparator();
 	m_menuRecording.Append(MenuId_Recording_TogglePause, _("Toggle Pause"));
+	m_menuRecording.FindItem(MenuId_Recording_TogglePause)->Enable(false);
 	m_menuRecording.Append(MenuId_Recording_FrameAdvance, _("Frame Advance"));
+	m_menuRecording.FindItem(MenuId_Recording_FrameAdvance)->Enable(false);
 	m_menuRecording.Append(MenuId_Recording_ToggleRecordingMode, _("Toggle Recording Mode"));
+	m_menuRecording.FindItem(MenuId_Recording_ToggleRecordingMode)->Enable(false);
 	m_menuRecording.AppendSeparator();
 	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port0, _("Virtual Pad (Port 1)"));
 	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port1, _("Virtual Pad (Port 2)"));
@@ -785,11 +788,17 @@ void MainEmuFrame::AppendKeycodeNamesToMenuOptions() {
 }
 
 #ifndef DISABLE_RECORDING
-void MainEmuFrame::appendKeycodeNamesToRecordingMenuOptions(MenuIdentifiers menuId, wxString keyCodeStr) {
+void MainEmuFrame::initializeRecordingMenuItem(MenuIdentifiers menuId, wxString keyCodeStr) {
 	wxMenuItem& item = *m_menuRecording.FindChildItem(menuId);
 	wxString text = item.GetItemLabel();
 	const size_t tabPos = text.rfind(L'\t');
 	item.SetItemLabel(text.Mid(0, tabPos ) + L"\t" + keyCodeStr);
+	item.Enable(true);
+}
+void MainEmuFrame::enableRecordingMenuItem(MenuIdentifiers menuId, bool enable)
+{
+	wxMenuItem& item = *m_menuRecording.FindChildItem(menuId);
+	item.Enable(enable);
 }
 #endif
 
