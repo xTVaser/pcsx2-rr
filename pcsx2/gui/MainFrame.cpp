@@ -469,16 +469,13 @@ void MainEmuFrame::CreateCaptureMenu()
 
 void MainEmuFrame::CreateRecordMenu()
 {
-	m_menuRecording.Append(MenuId_Recording_New, _("New"));
-	m_menuRecording.Append(MenuId_Recording_Stop, _("Stop"))->Enable(false);
-	m_menuRecording.Append(MenuId_Recording_Play, _("Play"));
+	m_menuRecording.Append(MenuId_Recording_New, _("New"), _("Create a new input recording."));
+	m_menuRecording.Append(MenuId_Recording_Stop, _("Stop"), _("Stop the active input recording."))->Enable(false);
+	m_menuRecording.Append(MenuId_Recording_Play, _("Play"), _("Playback an existing input recording."));
 	m_menuRecording.AppendSeparator();
-	m_menuRecording.Append(MenuId_Recording_TogglePause, _("Toggle Pause"));
-	m_menuRecording.FindItem(MenuId_Recording_TogglePause)->Enable(false);
-	m_menuRecording.Append(MenuId_Recording_FrameAdvance, _("Frame Advance"));
-	m_menuRecording.FindItem(MenuId_Recording_FrameAdvance)->Enable(false);
-	m_menuRecording.Append(MenuId_Recording_ToggleRecordingMode, _("Toggle Recording Mode"));
-	m_menuRecording.FindItem(MenuId_Recording_ToggleRecordingMode)->Enable(false);
+	m_menuRecording.Append(MenuId_Recording_TogglePause, _("Toggle Pause"), _("Pause or resume emulation on the fly."))->Enable(false);
+	m_menuRecording.Append(MenuId_Recording_FrameAdvance, _("Frame Advance"), _("Advance emulation forward by a single frame at a time."))->Enable(false);
+	m_menuRecording.Append(MenuId_Recording_ToggleRecordingMode, _("Toggle Recording Mode"), _("Save/playback inputs to/from the recording file."))->Enable(false);
 	m_menuRecording.AppendSeparator();
 	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port0, _("Virtual Pad (Port 1)"));
 	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port1, _("Virtual Pad (Port 2)"));
