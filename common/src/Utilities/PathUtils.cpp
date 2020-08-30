@@ -19,12 +19,13 @@
 
 #include "filesystem.hpp"
 #include <wx/utils.h>
+#include <wx/file.h>
 
 // ---------------------------------------------------------------------------------
 //  wxDirName (implementations)
 // ---------------------------------------------------------------------------------
 
-/*std::string wxDirName::Combine(const std::string &right) const
+wxFileName wxDirName::Combine(const wxFileName &right) const
 {
     pxAssertMsg(IsDir(), L"Warning: Malformed directory name detected during wxDirName concatenation.");
         return right;
@@ -37,6 +38,7 @@
     result.Normalize(wxPATH_NORM_ENV_VARS | wxPATH_NORM_DOTS | wxPATH_NORM_ABSOLUTE, GetPath());
     return result;
 }
+
 
 wxDirName wxDirName::Combine(const wxDirName &right) const
 {
@@ -54,7 +56,7 @@ wxDirName &wxDirName::Normalize(int flags, const wxString &cwd)
         throw Exception::ParseError().SetDiagMsg(L"wxDirName::Normalize operation failed.");
     return *this;
 }
-
+/*
 wxDirName &wxDirName::MakeRelativeTo(const wxString &pathBase)
 {
     pxAssertMsg(IsDir(), L"Warning: Malformed directory name detected during wDirName normalization.");
@@ -70,7 +72,7 @@ wxDirName &wxDirName::MakeAbsolute(const wxString &cwd)
         throw Exception::ParseError().SetDiagMsg(L"wxDirName::MakeAbsolute operation failed.");
     return *this;
 }
-
+*/
 void wxDirName::Rmdir()
 {
     if (!Exists())
@@ -91,7 +93,7 @@ bool wxDirName::Mkdir()
     if (Exists())
         return true;
     return wxFileName::Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
-}*/
+}
 
 
 // ---------------------------------------------------------------------------------
