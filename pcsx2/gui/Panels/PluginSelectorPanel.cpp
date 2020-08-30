@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "App.h"
+#include "AppCorePlugins.h"
 #include "AppSaveStates.h"
 #include "Plugins.h"
 #include "ConfigurationPanels.h"

@@ -501,7 +501,7 @@ std::string GetUiKeysFilename()
 }
 
 
-//std::string AppConfig::FullpathToBios() const				{ return Path::Combine( Folders.Bios, BaseFilenames.Bios ); }
+std::string AppConfig::FullpathToBios() const				{ return std::string(Path::Combine( Folders.Bios, BaseFilenames.Bios )); }
 std::string AppConfig::FullpathToMcd( uint slot ) const
 {
 	return( Folders.MemoryCards + Mcd[slot].Filename );
@@ -1098,9 +1098,9 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 }
 
 
-wxFileConfig* OpenFileConfig( const wxString& filename )
+wxFileConfig* OpenFileConfig( const std::string& filename )
 {
-	return new wxFileConfig( wxEmptyString, wxEmptyString, filename, wxEmptyString, wxCONFIG_USE_RELATIVE_PATH );
+	return new wxFileConfig( wxEmptyString, wxEmptyString, wxString(filename), wxEmptyString, wxCONFIG_USE_RELATIVE_PATH );
 }
 
 void RelocateLogfile()
@@ -1159,7 +1159,7 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 
 	// Bind into wxConfigBase to allow wx to use our config internally, and delete whatever
 	// comes out (cleans up prev config, if one).
-	delete wxConfigBase::Set( OpenFileConfig( jsonFilename ) );
+	delete wxConfigBase::Set( OpenFileConfig( std::string(jsonFilename) ) );
 	GetAppConfig()->SetRecordDefaults(true);
 
 	if( !overwrite )
