@@ -20,7 +20,7 @@
 #include "MSWstuff.h"
 
 #include "Utilities/Console.h"
-#include "Utilities/IniInterface.h"
+#include "Utilities/json.hpp"
 #include "Utilities/SafeArray.inl"
 #include "Dialogs/LogOptionsDialog.h"
 #include "DebugTools/Debug.h"
@@ -346,11 +346,11 @@ static const bool ConLogDefaults[] =
 // are saved as disabled. ConLogInitialized is used to detect and avoid this issue.
 static bool ConLogInitialized = false;
 
-void ConLog_LoadSaveSettings( IniInterface& ini )
+void ConLog_LoadSaveSettings( nlohmann::json& json )
 {
-	ScopedIniGroup path(ini, L"ConsoleLogSources");
+	//ScopedIniGroup path(ini, L"ConsoleLogSources");
 
-	ini.Entry( L"Devel", DevConWriterEnabled, false );
+	json["DevConWriterEnabled"] = false;
 
 	uint srcnt = ArraySize(ConLogSources);
 	for (uint i=0; i<srcnt; ++i)
@@ -358,9 +358,9 @@ void ConLog_LoadSaveSettings( IniInterface& ini )
 		if (ConsoleLogSource* log = ConLogSources[i])
 		{
 			// IsSaving() is for clarity only, since log->Enabled initial value is ignored when loading.
-			if (ini.IsSaving() && !ConLogInitialized)
-				log->Enabled = ConLogDefaults[i];
-			ini.Entry( log->GetCategory() + L"." + log->GetShortName(), log->Enabled, ConLogDefaults[i] );
+			//if (ini.IsSaving() && !ConLogInitialized)
+				//log->Enabled = ConLogDefaults[i];
+			//ini.Entry( log->GetCategory() + L"." + log->GetShortName(), log->Enabled, ConLogDefaults[i] );
 		}
 	}
 

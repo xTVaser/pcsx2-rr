@@ -20,13 +20,16 @@
 
 #include "MemoryCardFile.h"
 
-#include "Utilities/IniInterface.h"
+#include "Utilities/json.hpp"
+#include "Utilities/PathUtils.h"
 
 #include <wx/stdpaths.h>
 #include "DebugTools/Debug.h"
 #include <memory>
 
 nlohmann::json json;
+PathUtils folderUtils;
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // PathDefs Namespace -- contains default values for various pcsx2 path names and locations.
@@ -59,7 +62,7 @@ namespace PathDefs
 
 		const std::string& Settings()
 		{
-			static const std::string retval( "inis" );
+			static const std::string retval( "json" );
 			return retval;
 		}
 
@@ -78,6 +81,12 @@ namespace PathDefs
 		const std::string& Bios()
 		{
 			static const std::string retval("bios");
+			return retval;
+		}
+
+		const std::string& Cheats()
+		{
+			static const std::string retval("cheats");
 			return retval;
 		}
 
@@ -1094,7 +1103,9 @@ wxFileConfig* OpenFileConfig( const wxString& filename )
 
 void RelocateLogfile()
 {
-	//g_Conf->Folders.Logs.Mkdir();
+
+
+	folderUtils.CreateFolder(g_Conf->Folders.Logs);
 
 	std::string newlogname = ( g_Conf->Folders.Logs + "emuLog.txt");
 
@@ -1126,27 +1137,27 @@ void RelocateLogfile()
 //
 void AppConfig_OnChangedSettingsFolder( bool overwrite )
 {
-	//PathDefs::GetDocuments().Mkdir();
-	//GetSettingsFolder().Mkdir();
+	folderUtils.CreateFolder(PathDefs::GetDocuments());
+	folderUtils.CreateFolder(GetSettingsFolder());
 
-	const wxString iniFilename( GetUiSettingsFilename() );
+	const wxString jsonFilename( GetUiSettingsFilename() );
 
 	if( overwrite )
 	{
-		if( wxFileExists( iniFilename ) && !wxRemoveFile( iniFilename ) )
-			throw Exception::AccessDenied(iniFilename)
+		if( wxFileExists( jsonFilename ) && !wxRemoveFile( jsonFilename ) )
+			throw Exception::AccessDenied(jsonFilename)
 				.SetBothMsgs(pxL("Failed to overwrite existing settings file; permission was denied."));
 
-		const wxString vmIniFilename( GetVmSettingsFilename() );
+		const wxString vmJsonFilename( GetVmSettingsFilename() );
 
-		if( wxFileExists( vmIniFilename ) && !wxRemoveFile( vmIniFilename ) )
-			throw Exception::AccessDenied(vmIniFilename)
+		if( wxFileExists( vmJsonFilename ) && !wxRemoveFile( vmJsonFilename ) )
+			throw Exception::AccessDenied(vmJsonFilename)
 				.SetBothMsgs(pxL("Failed to overwrite existing settings file; permission was denied."));
 	}
 
 	// Bind into wxConfigBase to allow wx to use our config internally, and delete whatever
 	// comes out (cleans up prev config, if one).
-	delete wxConfigBase::Set( OpenFileConfig( iniFilename ) );
+	delete wxConfigBase::Set( OpenFileConfig( jsonFilename ) );
 	GetAppConfig()->SetRecordDefaults(true);
 
 	if( !overwrite )
@@ -1213,7 +1224,7 @@ static pxDudConfig _dud_config;
 // --------------------------------------------------------------------------------------
 //  AppIniSaver / AppIniLoader
 // --------------------------------------------------------------------------------------
-class AppIniSaver : public IniSaver
+/*class AppIniSaver : public IniSaver
 {
 public:
 	AppIniSaver();
@@ -1235,7 +1246,7 @@ AppIniSaver::AppIniSaver()
 AppIniLoader::AppIniLoader()
 	: IniLoader( (GetAppConfig() != NULL) ? *GetAppConfig() : _dud_config )
 {
-}
+}*/
 
 static void LoadUiSettings()
 {
@@ -1258,15 +1269,15 @@ static void LoadVmSettings()
 	// are regulated by the PCSX2 UI.
 
 	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
-	//nlohmann::json vmloader( vmini.get() );
-	//g_Conf->EmuOptions.LoadSave( vmloader );
+	nlohmann::json vmloader;
+	g_Conf->EmuOptions.LoadSave( vmloader );
 	g_Conf->EmuOptions.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
 
 	if (g_Conf->EnablePresets){
 		g_Conf->IsOkApplyPreset(g_Conf->PresetIndex, true);
 	}
 
-	//sApp.DispatchVmSettingsEvent( vmloader );
+	sApp.DispatchVmSettingsEvent( vmloader );
 }
 
 void AppLoadSettings()
@@ -1295,10 +1306,10 @@ static void SaveUiSettings()
 static void SaveVmSettings()
 {
 	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
-	//nlohmann::json vmsaver( vmini.get() );
-	//g_Conf->EmuOptions.LoadSave( vmsaver );
+	nlohmann::json vmsaver;
+	g_Conf->EmuOptions.LoadSave( vmsaver );
 
-	//sApp.DispatchVmSettingsEvent( vmsaver );
+	sApp.DispatchVmSettingsEvent( vmsaver );
 }
 
 static void SaveRegSettings()
@@ -1329,7 +1340,7 @@ void AppSaveSettings()
 		return;
 	}
 
-	//Console.WriteLn("Saving ini files...");
+	Console.WriteLn("Saving json files...");
 
 	SaveUiSettings();
 	SaveVmSettings();

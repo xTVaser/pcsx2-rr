@@ -98,9 +98,6 @@
     <ClCompile Include="..\..\src\Utilities\FastFormatString.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\Utilities\IniInterface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Utilities\pxTranslate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

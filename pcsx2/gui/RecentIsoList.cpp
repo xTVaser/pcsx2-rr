@@ -237,8 +237,6 @@ void RecentIsoManager::AppStatusEvent_OnSettingsApplied()
 
 void RecentIsoManager::AppStatusEvent_OnUiSettingsLoadSave( const AppSettingsEventInfo& evt )
 {
-	//IniInterface& ini( evt.GetIni() );
-
 	nlohmann::json json;
 
 	//if( ini.IsSaving() )

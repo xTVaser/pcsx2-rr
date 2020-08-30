@@ -20,7 +20,7 @@
 #include "MSWstuff.h"
 #include "MTVU.h" // for thread cancellation on shutdown
 
-#include "Utilities/IniInterface.h"
+#include "Utilities/json.hpp"
 #include "DebugTools/Debug.h"
 #include "Dialogs/ModalPopups.h"
 

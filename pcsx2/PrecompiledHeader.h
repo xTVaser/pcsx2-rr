@@ -76,6 +76,7 @@ typedef int BOOL;
 #include "Utilities/FixedPointTypes.h"
 #include "Utilities/wxBaseTools.h"
 #include "Utilities/Path.h"
+#include "Utilities/PathUtils.h"
 #include "Utilities/Console.h"
 #include "Utilities/MemcpyFast.h"
 #include "Utilities/General.h"
@@ -87,7 +88,7 @@ typedef void FnType_Void();
 typedef FnType_Void* Fnptr_Void;
 
 // --------------------------------------------------------------------------------------
-//  Compiler/OS specific macros and defines 
+//  Compiler/OS specific macros and defines
 // --------------------------------------------------------------------------------------
 
 #if defined(_MSC_VER)

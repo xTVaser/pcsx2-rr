@@ -15,7 +15,8 @@
 
 #include "PrecompiledHeader.h"
 #include "MainFrame.h"
-#include "Utilities/IniInterface.h"
+#include "Utilities/json.hpp"
+#include "Utilities/PathUtils.h"
 #include "Dialogs/ModalPopups.h"
 
 #include <wx/stdpaths.h>
@@ -40,7 +41,6 @@ std::string				PluginsFolder;
 // UserLocalData folder is the current working directory.
 //
 InstallationModeType		InstallationMode;
-
 
 static std::string GetPortableJsonPath()
 {
@@ -81,11 +81,11 @@ bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder, std::st
 	{
 		wxDirName folder( testFolder + PermissionFolders[i] );
 
-		if (!folder.Mkdir())
-			createme += L"\t" + folder.ToString() + L"\n";
+		//if (!folder.Mkdir())
+			//createme += L"\t" + folder.ToString() + L"\n";
 
-		if (!folder.IsWritable())
-			accessme += L"\t" + folder.ToString() + L"\n";
+		//if (!folder.IsWritable())
+			//accessme += L"\t" + folder.ToString() + L"\n";
 	}
 
 	if (!accessme.IsEmpty())
@@ -105,7 +105,7 @@ bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder, std::st
 // from "insecure media" such as a removable flash drive.  In these cases, the default path for
 // PCSX2 user documents becomes ".", which is the current working directory.
 //
-// Portable installation mode is typically enabled via the presence of an INI file in the
+// Portable installation mode is typically enabled via the presence of an json file in the
 // same directory that PCSX2 is installed to.
 //
 wxConfigBase* Pcsx2App::TestForPortableInstall()
@@ -123,7 +123,7 @@ wxConfigBase* Pcsx2App::TestForPortableInstall()
 		else
 			Console.WriteLn( L"(UserMode) Found portable install json @ %s", WX_STR(FilenameStr) );
 
-		// Just because the portable ini file exists doesn't mean we can actually run in portable
+		// Just because the portable json file exists doesn't mean we can actually run in portable
 		// mode.  In order to determine our read/write permissions to the PCSX2, we must try to
 		// modify the configured documents folder, and catch any ensuing error.
 
@@ -170,7 +170,7 @@ wxConfigBase* Pcsx2App::TestForPortableInstall()
 
 				case pxID_CUSTOM:
 					wxDialogWithHelpers dialog2( NULL, AddAppName(_("%s is switching to local install mode.")) );
-					dialog2 += dialog2.Heading( _("Try to remove the file called \"portable.ini\" from your installation directory manually." ) );
+					dialog2 += dialog2.Heading( _("Try to remove the file called \"portable.json\" from your installation directory manually." ) );
 					dialog2 += 6;
 					pxIssueConfirmation( dialog2, MsgButtons().OK() );
 
@@ -196,7 +196,7 @@ void Pcsx2App::WipeUserModeSettings()
 {
 	if (InstallationMode == InstallMode_Portable)
 	{
-		// Remove the portable.ini entry "RunWizard" conforming to this instance of PCSX2.
+		// Remove the portable.json entry "RunWizard" conforming to this instance of PCSX2.
 		std::string portableJsonFile( GetPortableJsonPath() );
 		std::unique_ptr<wxFileConfig> conf_portable( OpenFileConfig( portableJsonFile ) );
 		conf_portable->DeleteEntry(L"RunWizard");
@@ -230,9 +230,9 @@ wxConfigBase* Pcsx2App::OpenInstallSettingsFile()
 {
 	// Implementation Notes:
 	//
-	// As of 0.9.8 and beyond, PCSX2's versioning should be strong enough to base ini and
+	// As of 0.9.8 and beyond, PCSX2's versioning should be strong enough to base json and
 	// plugin compatibility on version information alone.  This in turn allows us to ditch
-	// the old system (CWD-based ini file mess) in favor of a system that simply stores
+	// the old system (CWD-based json file mess) in favor of a system that simply stores
 	// most core application-level settings in the registry.
 
 	std::unique_ptr<wxConfigBase> conf_install;
@@ -243,12 +243,12 @@ wxConfigBase* Pcsx2App::OpenInstallSettingsFile()
 	// FIXME!!  Linux / Mac
 	// Where the heck should this information be stored?
 
-	wxDirName usrlocaldir( PathDefs::GetUserLocalDataDir() );
+	std::string usrlocaldir( PathDefs::GetUserLocalDataDir() );
 	//wxDirName usrlocaldir( wxStandardPaths::Get().GetDataDir() );
-	if( !usrlocaldir.Exists() )
+	if( !folderUtils.DoesExist(usrlocaldir) )
 	{
-		Console.WriteLn( L"Creating UserLocalData folder: " + usrlocaldir.ToString() );
-		usrlocaldir.Mkdir();
+		Console.WriteLn( L"Creating UserLocalData folder: " + usrlocaldir );
+		 folderUtils.CreateFolder(usrlocaldir);
 	}
 
 	std::string usermodefile( GetAppName() + L"-reg.json" );
@@ -286,7 +286,7 @@ void Pcsx2App::EstablishAppUserMode()
 	//  Run the First Time Wizard!
 	// ----------------------------
 	// Wizard is only run once.  The status of the wizard having been run is stored in
-	// the installation ini file, which can be either the portable install (useful for admins)
+	// the installation json file, which can be either the portable install (useful for admins)
 	// or the registry/user local documents position.
 
 	bool runWiz;

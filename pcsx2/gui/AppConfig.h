@@ -51,6 +51,8 @@ namespace PathDefs
 	extern std::string GetDocuments( DocsModeType mode );
 }
 
+extern PathUtils folderUtils;
+
 extern nlohmann::json	json;
 
 extern DocsModeType		DocsFolderMode;				//

@@ -84,6 +84,7 @@ static inline unsigned int timeGetTime()
 #include "Utilities/Dependencies.h"
 #include "Utilities/StringHelpers.h"
 #include "Utilities/Path.h"
+#include "Utilities/PathUtils.h"
 
 #include <X11/Xutil.h>
 

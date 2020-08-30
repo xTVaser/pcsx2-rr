@@ -25,7 +25,6 @@ template class EventSource< IEventListener_AppStatus >;
 
 /*AppSettingsEventInfo::AppSettingsEventInfo( nlohmann::json& j, AppEventType evt_type )
 {
-
 	json = j;
 }*/
 

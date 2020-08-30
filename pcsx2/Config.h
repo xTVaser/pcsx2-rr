@@ -18,9 +18,6 @@
 #include "x86emitter/tools.h"
 #include "json.hpp"
 
-
-//class IniInterface;
-
 enum PluginsEnum_t
 {
 	PluginId_GS = 0,
@@ -162,7 +159,7 @@ struct TraceLogFilters
 		Enabled	= false;
 	}
 
-	//void LoadSave( nlohmann::json  & json );
+	void LoadSave( nlohmann::json  & json );
 
 	bool operator ==( const TraceLogFilters& right ) const
 	{
@@ -201,7 +198,7 @@ struct Pcsx2Config
 
 		// Default is Disabled, with all recs enabled underneath.
 		//ProfilerOptions() : bitset( 0xfffffffe ) {}
-		//void LoadSave( nlohmann::json& conf );
+		void LoadSave( nlohmann::json& conf );
 
 		bool operator ==( const ProfilerOptions& right ) const
 		{
@@ -250,7 +247,7 @@ struct Pcsx2Config
 		RecompilerOptions();
 		void ApplySanityCheck();
 
-		//void LoadSave( nlohmann::json& conf );
+		void LoadSave( nlohmann::json& conf );
 
 		bool operator ==( const RecompilerOptions& right ) const
 		{
@@ -277,7 +274,7 @@ struct Pcsx2Config
 		SSE_MXCSR sseVUMXCSR;
 
 		CpuOptions();
-		//void LoadSave( nlohmann::json& conf );
+		void LoadSave( nlohmann::json& conf );
 		void ApplySanityCheck();
 
 		bool operator ==( const CpuOptions& right ) const
@@ -312,7 +309,7 @@ struct Pcsx2Config
 		Fixed100	FrameratePAL;
 
 		GSOptions();
-		//void LoadSave( nlohmann::json& conf );
+		void LoadSave( nlohmann::json& conf );
 
 		int GetVsync() const;
 
@@ -368,7 +365,7 @@ struct Pcsx2Config
             CrashTagTeamRacingIbit; // Crash Tag Team Racing I bit hack. Needed to stop constant VU recompilation
 
 		GamefixOptions();
-		//void LoadSave( nlohmann::json& conf );
+		void LoadSave( nlohmann::json& conf );
 		GamefixOptions& DisableAll();
 
 		void Set( const std::string& list, bool enabled=true );
@@ -403,7 +400,7 @@ struct Pcsx2Config
 		u8	EECycleSkip;		// EE Cycle skip factor (0, 1, 2, or 3)
 
 		SpeedhackOptions();
-		//void LoadSave( nlohmann::json& conf );
+		void LoadSave( nlohmann::json& conf );
 		SpeedhackOptions& DisableAll();
 
 		bool operator ==( const SpeedhackOptions& right ) const
@@ -431,7 +428,7 @@ struct Pcsx2Config
 		u32 MemoryViewBytesPerRow;
 
 		DebugOptions();
-		//void LoadSave( nlohmann::json& conf );
+		void LoadSave( nlohmann::json& conf );
 
 		bool operator ==( const DebugOptions& right ) const
 		{
@@ -483,14 +480,15 @@ struct Pcsx2Config
 
 	Pcsx2Config();
 
-	NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Pcsx2Config, CdvdVerboseReads, CdvdDumpBlocks, CdvdShareWrite, EnablePatches, EnableCheats, EnableWideScreenPatches,
-	EnableRecordingTools, UseBOOT2Injection, BackupSavestate, McdEnableEjection, McdFolderAutoManage, MultitapPort0_Enabled, MultitapPort1_Enabled,
-	ConsoleToStdio, HostFs);
-	//void LoadSave( nlohmann::json& json );
+	//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Pcsx2Config, CdvdVerboseReads, CdvdDumpBlocks, CdvdShareWrite, EnablePatches, EnableCheats, EnableWideScreenPatches,
+	//EnableRecordingTools, UseBOOT2Injection, BackupSavestate, McdEnableEjection, McdFolderAutoManage, MultitapPort0_Enabled, MultitapPort1_Enabled,
+	//ConsoleToStdio, HostFs);
 
-	//void Load( const std::string& srcfile );
+	void LoadSave( nlohmann::json& json );
+
+	void Load( nlohmann::json loader );
 	//void Load( const wxInputStream& srcstream );
-	//void Save( const std::string& dstfile );
+	void Save( std::string& dstfile );
 	//void Save( const wxOutputStream& deststream );
 
 	bool MultitapEnabled( uint port ) const;

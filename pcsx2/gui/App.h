@@ -26,6 +26,8 @@
 #include "AppCommon.h"
 #include "AppCoreThread.h"
 #include "RecentIsoList.h"
+#include "Utilities/PathUtils.h"
+
 
 #ifndef DISABLE_RECORDING
 #	include "Recording/VirtualPad.h"
@@ -807,6 +809,8 @@ extern void SysStatus( const wxString& text );
 extern bool				HasMainFrame();
 extern MainEmuFrame&	GetMainFrame();
 extern MainEmuFrame*	GetMainFramePtr();
+
+extern PathUtils		folderUtils;
 
 extern __aligned16 AppCoreThread CoreThread;
 extern __aligned16 SysMtgsThread mtgsThread;
