@@ -661,7 +661,7 @@ void AppConfig::LoadSaveRootItems( nlohmann::json &json)
 	json["AskOnBoot"] =  AskOnBoot;
 
 	#ifdef __WXMSW__
-	IniEntry( McdCompressNTFS );
+	//IniEntry( McdCompressNTFS );
 	#endif
 
 	json["CdvdSource"] = (CdvdSource, CDVD_SourceLabels, CdvdSource );
@@ -1111,7 +1111,7 @@ void RelocateLogfile()
 
 	if( (emuLog != NULL) && (emuLogName != newlogname) )
 	{
-		Console.WriteLn( L"\nRelocating Logfile...\n\tFrom: %s\n\tTo  : %s\n", WX_STR(emuLogName), WX_STR(newlogname) );
+		//Console.WriteLn( L"\nRelocating Logfile...\n\tFrom: %s\n\tTo  : %s\n", WX_STR(emuLogName), WX_STR(newlogname) );
 		wxGetApp().DisableDiskLogging();
 
 		fclose( emuLog );

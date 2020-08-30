@@ -16,7 +16,7 @@
 #pragma once
 
 #include "x86emitter/tools.h"
-#include "json.hpp"
+#include "Utilities/json.hpp"
 
 enum PluginsEnum_t
 {
@@ -375,15 +375,17 @@ struct Pcsx2Config
 		void Set( GamefixId id, bool enabled=true );
 		void Clear( GamefixId id ) { Set( id, false ); }
 
-		bool operator ==( const GamefixOptions& right ) const
+		/*bool operator ==( const GamefixOptions& right ) const
 		{
 			//return OpEqu( bitset );
+			return true;
 		}
 
 		bool operator !=( const GamefixOptions& right ) const
 		{
 			//return !OpEqu( bitset );
-		}
+			return false;
+		}*/
 	};
 
 	// ------------------------------------------------------------------------
@@ -493,23 +495,23 @@ struct Pcsx2Config
 
 	bool MultitapEnabled( uint port ) const;
 
-	bool operator ==( const Pcsx2Config& right ) const
+	/*bool operator ==( const Pcsx2Config& right ) const
 	{
-		//return
-			//OpEqu( bitset )		&&
-			//OpEqu( Cpu )		&&
-			//OpEqu( GS )			&&
-			//OpEqu( Speedhacks )	&&
-			//OpEqu( Gamefixes )	&&
-			//OpEqu( Profiler )	&&
-			//OpEqu( Trace )		&&
-			//OpEqu( BiosFilename );
-	}
+		return
+			OpEqu( bitset )		&&
+			OpEqu( Cpu )		&&
+			OpEqu( GS )			&&
+			OpEqu( Speedhacks )	&&
+			OpEqu( Gamefixes )	&&
+			OpEqu( Profiler )	&&
+			OpEqu( Trace )		&&
+			OpEqu( BiosFilename );
+	}*/
 
-	bool operator !=( const Pcsx2Config& right ) const
+	/*bool operator !=( const Pcsx2Config& right ) const
 	{
 		return !this->operator ==( right );
-	}
+	}*/
 };
 
 extern const Pcsx2Config EmuConfig;
