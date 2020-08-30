@@ -16,7 +16,7 @@
 #include "PrecompiledHeader.h"
 #include "LogOptionsPanels.h"
 
-#include "Utilities/IniInterface.h"
+#include "Utilities/json.hpp"
 #include "DebugTools/Debug.h"
 
 #include <wx/statline.h>
@@ -168,18 +168,18 @@ static SysTraceLog * const traceLogList[] =
 
 static const uint traceLogCount = ArraySize(traceLogList);
 
-void SysTraceLog_LoadSaveSettings( IniInterface& ini )
+void SysTraceLog_LoadSaveSettings( nlohmann::json& json )
 {
-	ScopedIniGroup path(ini, L"TraceLogSources");
+	//ScopedIniGroup path(ini, L"TraceLogSources");
 
-	for (uint i=0; i<traceLogCount; ++i)
-	{
-		if (SysTraceLog* log = traceLogList[i])
-		{
-			pxAssertMsg(log->GetName(), "Trace log without a name!" );
-			ini.Entry( log->GetCategory() + L"." + log->GetShortName(), log->Enabled, false );
-		}
-	}
+	//for (uint i=0; i<traceLogCount; ++i)
+	//{
+		//if (SysTraceLog* log = traceLogList[i])
+		//{
+			//pxAssertMsg(log->GetName(), "Trace log without a name!" );
+			//ini.Entry( log->GetCategory() + L"." + log->GetShortName(), log->Enabled, false );
+		//}
+	//}
 }
 
 static bool traceLogEnabled( const wxString& ident )

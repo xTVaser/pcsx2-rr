@@ -35,7 +35,7 @@ protected:
 
 	key_pair		m_keyPair;
 
-public:	
+public:
 	DBLoaderHelper( wxInputStream& reader, IGameDatabase& db )
 		: m_gamedb(db)
 		, m_reader(reader)
@@ -147,11 +147,11 @@ AppGameDatabase& AppGameDatabase::LoadFromFile(const wxString& _file, const wxSt
 		//           So the games DB was really the only one that suffers from residues of prior installs.
 
 		//wxDirName dir = InstallFolder;
-		wxDirName dir = (wxDirName)wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
-		file = ( dir + file ).GetFullPath();
+		//wxDirName dir = (wxDirName)wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
+		//file = ( dir + file ).GetFullPath();
 	}
-	
-	
+
+
 	if (!wxFileExists(file))
 	{
 		Console.Error(L"(GameDB) Database Not Found! [%s]", WX_STR(file));

@@ -15,6 +15,7 @@
 
 #include "PrecompiledHeader.h"
 #include "Path.h"
+#include "PathUtils.h"
 
 #include "filesystem.hpp"
 #include <wx/utils.h>
@@ -219,4 +220,16 @@ void pxExplore(const wxString &path)
 void pxExplore(const char *path)
 {
     pxExplore(fromUTF8(path));
+}
+
+
+
+bool PathUtils::CreateFolder(std::string path)
+{
+   return fs::create_directory(path);
+}
+
+bool PathUtils::DoesExist(std::string& path)
+{
+    return fs::exists(path);
 }

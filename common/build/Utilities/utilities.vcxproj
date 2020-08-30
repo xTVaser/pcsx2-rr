@@ -68,7 +68,6 @@
     <ClCompile Include="..\..\src\Utilities\Console.cpp" />
     <ClCompile Include="..\..\src\Utilities\Exceptions.cpp" />
     <ClCompile Include="..\..\src\Utilities\FastFormatString.cpp" />
-    <ClCompile Include="..\..\src\Utilities\IniInterface.cpp" />
     <ClCompile Include="..\..\src\Utilities\pxStreams.cpp" />
     <ClCompile Include="..\..\src\Utilities\pxTranslate.cpp" />
     <ClCompile Include="..\..\src\Utilities\pxWindowTextWriter.cpp" />

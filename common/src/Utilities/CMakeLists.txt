@@ -25,7 +25,6 @@ set(UtilitiesSources
 	EventSource.cpp
 	Exceptions.cpp
 	FastFormatString.cpp
-	IniInterface.cpp
 	Linux/LnxHostSys.cpp
 	Mutex.cpp
 	PathUtils.cpp

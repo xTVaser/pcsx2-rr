@@ -36,7 +36,7 @@
 #	include "Recording/InputRecording.h"
 #endif
 
-#include "Utilities/IniInterface.h"
+#include "Utilities/json.hpp"
 #include "Utilities/AppTrait.h"
 
 #include <wx/stdpaths.h>
@@ -70,6 +70,8 @@ std::unique_ptr<AppConfig> g_Conf;
 
 AspectRatioType iniAR;
 bool switchAR;
+
+PathUtils		folderUtils;
 
 static bool HandlePluginError( BaseException& ex )
 {
@@ -846,11 +848,11 @@ void AppApplySettings( const AppConfig* oldconf )
 	// Ensure existence of necessary documents folders.  Plugins and other parts
 	// of PCSX2 rely on them.
 
-	/*g_Conf->Folders.MemoryCards.Mkdir();
-	g_Conf->Folders.Savestates.Mkdir();
-	g_Conf->Folders.Snapshots.Mkdir();
-	g_Conf->Folders.Cheats.Mkdir();
-	g_Conf->Folders.CheatsWS.Mkdir();*/
+	folderUtils.CreateFolder(g_Conf->Folders.MemoryCards);
+	folderUtils.CreateFolder(g_Conf->Folders.Savestates);
+	folderUtils.CreateFolder(g_Conf->Folders.Snapshots);
+	folderUtils.CreateFolder(g_Conf->Folders.Cheats);
+	folderUtils.CreateFolder(g_Conf->Folders.CheatsWS);
 
 
 	g_Conf->EmuOptions.BiosFilename = g_Conf->FullpathToBios();

@@ -302,25 +302,6 @@ bool InputRecording::Play(wxString fileName)
 		initialLoad = true;
 		sApp.SysExecute(g_Conf->CdvdSource);
 	}
-<<<<<<< HEAD
-
-	// Check if the current game matches with the one used to make the original recording
-	if (!g_Conf->CurrentIso.IsEmpty())
-		if (resolveGameName() != inputRecordingData.GetHeader().gameName)
-			recordingConLog(L"[REC]: Recording was possibly constructed for a different game.\n");
-
-	incrementUndo = true;
-	state = InputRecordingMode::Replaying;
-	g_InputRecordingControls.DisableFrameAdvance();
-	recordingConLog(wxString::Format(L"[REC]: Replaying input recording - [%s]\n", inputRecordingData.GetFilename()));
-	recordingConLog(wxString::Format(L"[REC]: PCSX2 Version Used: %s\n", inputRecordingData.GetHeader().emu));
-	recordingConLog(wxString::Format(L"[REC]: Recording File Version: %d\n", inputRecordingData.GetHeader().version));
-	recordingConLog(wxString::Format(L"[REC]: Associated Game Name or ISO Filename: %s\n", inputRecordingData.GetHeader().gameName));
-	recordingConLog(wxString::Format(L"[REC]: Author: %s\n", inputRecordingData.GetHeader().author));
-	recordingConLog(wxString::Format(L"[REC]: Total Frames: %d\n", inputRecordingData.GetTotalFrames()));
-	recordingConLog(wxString::Format(L"[REC]: Undo Count: %d\n", inputRecordingData.GetUndoCount()));
-	return true;
-=======
 	// Check author name
 	if (!g_Conf->CurrentIso.empty())
 	{
@@ -337,7 +318,6 @@ bool InputRecording::Play(wxString fileName)
 	recordingConLog(wxString::Format(L"[REC]: Author: %s\n", InputRecordingData.GetHeader().author));
 	recordingConLog(wxString::Format(L"[REC]: MaxFrame: %d\n", InputRecordingData.GetMaxFrame()));
 	recordingConLog(wxString::Format(L"[REC]: UndoCount: %d\n", InputRecordingData.GetUndoCount()));
->>>>>>> 32ec42990... Fixed all variable types and casts for the first part of this. Removed refrences to Iniloader in favor of nlohmann json. It compiles with a fat list of undefined refrences. I still have to make and format the settings json files.
 }
 
 wxString InputRecording::resolveGameName()

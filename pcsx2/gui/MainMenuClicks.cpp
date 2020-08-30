@@ -28,7 +28,7 @@
 #include "Dialogs/ConfigurationDialog.h"
 #include "Debugger/DisassemblyDialog.h"
 
-#include "Utilities/IniInterface.h"
+#include "Utilities/json.hpp"
 
 #ifndef DISABLE_RECORDING
 #	include "Recording/InputRecording.h"

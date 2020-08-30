@@ -22,7 +22,7 @@
 #include "MemoryCardPanels.h"
 
 #include "Dialogs/ConfigurationDialog.h"
-#include "Utilities/IniInterface.h"
+#include "Utilities/json.hpp"
 #include "../../Sio.h"
 
 #include <wx/filepicker.h>
