@@ -21,6 +21,7 @@
 #include <wx/cshelp.h>
 #include <wx/tooltip.h>
 #include <wx/spinctrl.h>
+#include <wx/confbase.h>
 
 using namespace pxSizerFlags;
 
