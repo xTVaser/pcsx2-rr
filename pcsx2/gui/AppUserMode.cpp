@@ -121,7 +121,7 @@ wxConfigBase* Pcsx2App::TestForPortableInstall()
 		if (Startup.PortableMode)
 			Console.WriteLn( L"(UserMode) Portable mode requested via commandline switch!" );
 		else
-			Console.WriteLn( L"(UserMode) Found portable install json @ %s", WX_STR(FilenameStr) );
+			Console.WriteLn( L"(UserMode) Found portable install json @ %s", FilenameStr );
 
 		// Just because the portable json file exists doesn't mean we can actually run in portable
 		// mode.  In order to determine our read/write permissions to the PCSX2, we must try to

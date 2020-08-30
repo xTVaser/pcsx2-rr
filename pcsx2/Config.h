@@ -378,7 +378,7 @@ struct Pcsx2Config
 		void Set( GamefixId id, bool enabled=true );
 		void Clear( GamefixId id ) { Set( id, false ); }
 
-		/*bool operator ==( const GamefixOptions& right ) const
+		bool operator ==( const GamefixOptions& right ) const
 		{
 			//return OpEqu( bitset );
 			return true;
@@ -388,7 +388,7 @@ struct Pcsx2Config
 		{
 			//return !OpEqu( bitset );
 			return false;
-		}*/
+		}
 	};
 
 	// ------------------------------------------------------------------------
@@ -504,7 +504,7 @@ struct Pcsx2Config
 
 	bool MultitapEnabled( uint port ) const;
 
-	/*bool operator ==( const Pcsx2Config& right ) const
+	bool operator ==( const Pcsx2Config& right ) const
 	{
 		return false;
 			//OpEqu( bitset )		&&
@@ -520,7 +520,7 @@ struct Pcsx2Config
 	bool operator !=( const Pcsx2Config& right ) const
 	{
 		return !this->operator ==( right );
-	}*/
+	}
 };
 
 extern const Pcsx2Config EmuConfig;
