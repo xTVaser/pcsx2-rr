@@ -202,11 +202,13 @@ struct Pcsx2Config
 
 		bool operator ==( const ProfilerOptions& right ) const
 		{
+			return false;
 			//return OpEqu( bitset );
 		}
 
 		bool operator !=( const ProfilerOptions& right ) const
 		{
+			return false;
 			//return !OpEqu( bitset );
 		}
 
@@ -251,11 +253,13 @@ struct Pcsx2Config
 
 		bool operator ==( const RecompilerOptions& right ) const
 		{
+			return false;
 			//return OpEqu( bitset );
 		}
 
 		bool operator !=( const RecompilerOptions& right ) const
 		{
+			return false;
 			//return !OpEqu( bitset );
 		}
 
@@ -407,6 +411,7 @@ struct Pcsx2Config
 
 		bool operator ==( const SpeedhackOptions& right ) const
 		{
+			return false;
 			//return OpEqu( bitset ) && OpEqu( EECycleRate ) && OpEqu( EECycleSkip );
 		}
 
