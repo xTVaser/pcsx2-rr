@@ -148,11 +148,11 @@ bool InputRecording::play(wxString filename)
 	// Check if the current game matches with the one used to make the original recording
 	if (!g_Conf->CurrentIso.IsEmpty())
 		if (resolveGameName() != m_InputRecordingData.getGameName())
-			recordingConLog(L"[REC]: Recording was possibly recorded on a different game.\n");
+			recordingConLog(L"[REC]: Input Recording was possibly created with a different game.\n");
 	m_state = INPUT_RECORDING_MODE_REPLAY;
 	recordingConLog(wxString::Format(L"[REC]: Replaying input recording - [%s]\n", m_InputRecordingData.getFilename()));
 	recordingConLog(wxString::Format(L"[REC]: PCSX2 Version Used: %s\n", m_InputRecordingData.getEmulatorVersion()));
-	recordingConLog(wxString::Format(L"[REC]: Recording File Version: %d\n", m_InputRecordingData.getP2M2Version()));
+	recordingConLog(wxString::Format(L"[REC]: Input Recording File Version: %d\n", m_InputRecordingData.getP2M2Version()));
 	recordingConLog(wxString::Format(L"[REC]: Associated Game Name or ISO Filename: %s\n", m_InputRecordingData.getGameName()));
 	recordingConLog(wxString::Format(L"[REC]: Author: %s\n", m_InputRecordingData.getAuthor()));
 	recordingConLog(wxString::Format(L"[REC]: Total Frames: %d\n", m_InputRecordingData.getTotalFrames()));
