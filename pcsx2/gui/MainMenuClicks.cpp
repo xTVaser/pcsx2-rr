@@ -872,6 +872,7 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 			g_RecordingControls.resume();
 		return;
 	}
+	g_InputRecording.Stop();
 
 	const wxString path = openFileDialog.GetPath();
 	const bool wasRecordingLoaded = g_InputRecording.getModeState() != INPUT_RECORDING_MODE_NONE;
