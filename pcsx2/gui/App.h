@@ -121,7 +121,7 @@ enum MenuIdentifiers
 	MenuId_EnablePatches,
 	MenuId_EnableCheats,
 	MenuId_EnableWideScreenPatches,
-	MenuId_EnableRecordingTools,
+	MenuId_EnableInputRecordingTools,
 	MenuId_EnableLuaTools,
 	MenuId_EnableHostFs,
 

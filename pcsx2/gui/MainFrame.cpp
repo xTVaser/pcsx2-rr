@@ -219,7 +219,7 @@ void MainEmuFrame::ConnectMenus()
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableCheats_Click, this, MenuId_EnableCheats);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableWideScreenPatches_Click, this, MenuId_EnableWideScreenPatches);
 #ifndef DISABLE_RECORDING
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableRecordingTools_Click, this, MenuId_EnableRecordingTools);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableRecordingTools_Click, this, MenuId_EnableInputRecordingTools);
 #endif
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableHostFs_Click, this, MenuId_EnableHostFs);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_SysShutdown_Click, this, MenuId_Sys_Shutdown);
@@ -374,7 +374,7 @@ void MainEmuFrame::CreatePcsx2Menu()
 		_("Enabling Widescreen Patches may occasionally cause issues."), wxITEM_CHECK);
 
 #ifndef DISABLE_RECORDING
-	m_GameSettingsSubmenu.Append(MenuId_EnableRecordingTools, _("Enable &Input Recording Tools"),
+	m_GameSettingsSubmenu.Append(MenuId_EnableInputRecordingTools, _("Enable &Input Recording Tools"),
 		wxEmptyString, wxITEM_CHECK);
 #endif
 
@@ -500,7 +500,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	, m_menuCapture			( *new wxMenu() )
 	, m_submenuVideoCapture	( *new wxMenu() )
 #ifndef DISABLE_RECORDING
-	, m_menuInputRecording(*new wxMenu())
+	, m_menuInputRecording	( *new wxMenu() )
 #endif
 	, m_menuHelp(*new wxMenu())
 	, m_LoadStatesSubmenu( *MakeStatesSubMenu( MenuId_State_Load01, MenuId_State_LoadBackup ) )
@@ -742,7 +742,7 @@ void MainEmuFrame::ApplyConfigToGui(AppConfig& configToApply, int flags)
 		menubar.Check( MenuId_EnableCheats,  configToApply.EmuOptions.EnableCheats );
 		menubar.Check( MenuId_EnableWideScreenPatches,  configToApply.EmuOptions.EnableWideScreenPatches );
 #ifndef DISABLE_RECORDING
-		menubar.Check(MenuId_EnableRecordingTools, configToApply.EmuOptions.EnableRecordingTools);
+		menubar.Check(MenuId_EnableInputRecordingTools, configToApply.EmuOptions.EnableRecordingTools);
 #endif
 		menubar.Check( MenuId_EnableHostFs,  configToApply.EmuOptions.HostFs );
 		menubar.Check( MenuId_Debug_CreateBlockdump, configToApply.EmuOptions.CdvdDumpBlocks );
