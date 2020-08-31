@@ -856,6 +856,7 @@ void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 	}
 	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
 	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
+	m_menuRecording.FindChildItem(MenuId_Recording_Reset)->Enable(true);
 }
 
 void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
@@ -886,6 +887,7 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 	{
 		m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
 		m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
+		m_menuRecording.FindChildItem(MenuId_Recording_Reset)->Enable(true);
 	}
 	if (!g_InputRecording.getInputRecordingData().fromSaveState())
 		g_RecordingControls.resume();
@@ -896,9 +898,17 @@ void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
 	g_InputRecording.stop();
 	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(true);
 	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(false);
+	m_menuRecording.FindChildItem(MenuId_Recording_Reset)->Enable(false);
 }
 
-void MainEmuFrame::Menu_Recording_VirtualPad_Open_Click(wxCommandEvent &event)
+void MainEmuFrame::Menu_Recording_Reset_Click(wxCommandEvent&)
+{
+	if (g_InputRecording.loadFirstFrame())
+		if (!g_InputRecording.getInputRecordingData().fromSaveState() && g_RecordingControls.isRecordingPaused() && g_InputRecording.getModeState() != INPUT_RECORDING_MODE_RECORD)
+			g_RecordingControls.resume();
+}
+
+void MainEmuFrame::Menu_Recording_VirtualPad_Open_Click(wxCommandEvent& event)
 {
 	switch (event.GetId() - MenuId_Recording_VirtualPad_Port0)
 	{
