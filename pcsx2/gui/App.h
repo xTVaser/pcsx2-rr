@@ -76,7 +76,7 @@ enum TopLevelMenuIndices
 	TopLevelMenu_Window,
 	TopLevelMenu_Capture,
 #ifndef DISABLE_RECORDING
-	TopLevelMenu_Recording,
+	TopLevelMenu_InputRecording,
 #endif
 	TopLevelMenu_Help
 };

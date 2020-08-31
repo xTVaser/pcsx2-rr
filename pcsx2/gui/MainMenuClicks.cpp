@@ -516,7 +516,7 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent& event)
 	// If still enabled, add the menu item, else, remove it
 	if (checked)
 	{
-		GetMenuBar()->Insert(TopLevelMenu_Recording, &m_menuInputRecording, _("&Input Recording"));
+		GetMenuBar()->Insert(TopLevelMenu_InputRecording, &m_menuInputRecording, _("&Input Recording"));
 		// Enable Recording Keybindings
 		if (GSFrame* gsFrame = wxGetApp().GetGsFramePtr())
 			if (GSPanel* viewport = gsFrame->GetViewport())
@@ -527,7 +527,7 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent& event)
 		//Properly close any currently loaded recording file before disabling
 		if (g_InputRecording.getModeState() != INPUT_RECORDING_MODE_NONE)
 			Menu_Recording_Stop_Click(event);
-		GetMenuBar()->Remove(TopLevelMenu_Recording);
+		GetMenuBar()->Remove(TopLevelMenu_InputRecording);
 		// Always turn controller logs off, but never turn it on by default
 		SysConsole.controlInfo.Enabled = checked;
 		// Return Keybindings Back to Normal
