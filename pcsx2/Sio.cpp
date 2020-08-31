@@ -222,7 +222,7 @@ SIO_WRITE sioWriteController(u8 data)
 			if (g_InputRecording.isInterruptFrame())
 				g_RecordingInput.controllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
 
-			PadData::LogPadData(sio.port, sio.bufCount, sio.buf);
+			PadData::logPadData(sio.port, sio.bufCount, sio.buf);
 		}
 #endif
 		break;

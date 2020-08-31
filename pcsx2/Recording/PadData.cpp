@@ -26,16 +26,16 @@ PadData::PadData()
 	// TODO - multi-tap support eventually?
 	for (int port = 0; port < 2; port++)
 	{
-		buf[port][0] = 255;
-		buf[port][1] = 255;
-		buf[port][2] = 127;
-		buf[port][3] = 127;
-		buf[port][4] = 127;
-		buf[port][5] = 127;
+		m_buf[port][0] = 255;
+		m_buf[port][1] = 255;
+		m_buf[port][2] = 127;
+		m_buf[port][3] = 127;
+		m_buf[port][4] = 127;
+		m_buf[port][5] = 127;
 	}
 }
 
-void PadData::LogPadData(u8 port, u16 bufCount, u8 buf[512]) {
+void PadData::logPadData(u8 port, u16 bufCount, u8 buf[512]) {
 	// skip first two bytes because they dont seem to matter
 	if (port == 0 && bufCount > 2)
 	{
@@ -52,82 +52,72 @@ void PadData::LogPadData(u8 port, u16 bufCount, u8 buf[512]) {
 	}
 }
 
-std::vector<int> PadData::GetNormalButtons(int port) const
+std::vector<int> PadData::getNormalButtons(int port) const
 {
 	std::vector<int> buttons(PadDataNormalButtonCount);
 	for (int i = 0; i < PadDataNormalButtonCount; i++)
-	{
-		buttons[i] = GetNormalButton(port, PadData_NormalButton(i));
-	}
+		buttons[i] = getNormalButton(port, PadData_NormalButton(i));
 	return buttons;
 }
 
-void PadData::SetNormalButtons(int port, std::vector<int> buttons)
+void PadData::setNormalButtons(int port, std::vector<int> buttons)
 {
 	for (int i = 0; i < PadDataNormalButtonCount; i++)
-	{
-		SetNormalButton(port, PadData_NormalButton(i), buttons[i]);
-	}
+		setNormalButton(port, PadData_NormalButton(i), buttons[i]);
 }
 
-void PadData::SetNormalButton(int port, PadData_NormalButton button, int fpushed)
+void PadData::setNormalButton(int port, PadData_NormalButton button, int fpushed)
 {
 	wxByte keybit[2];
-	GetKeyBit(keybit, button);
-	int pressureByteIndex = GetPressureByte(button);
+	getKeyBit(keybit, button);
+	int pressureByteIndex = getPressureByte(button);
 
 	if (fpushed > 0)
 	{
 		// set whether or not the button is pressed
-		buf[port][0] = ~(~buf[port][0] | keybit[0]);
-		buf[port][1] = ~(~buf[port][1] | keybit[1]);
+		m_buf[port][0] = ~(~m_buf[port][0] | keybit[0]);
+		m_buf[port][1] = ~(~m_buf[port][1] | keybit[1]);
 
 		// if the button supports pressure sensitivity
 		if (pressureByteIndex != -1)
-		{
-			buf[port][6 + pressureByteIndex] = fpushed;
-		}
+			m_buf[port][6 + pressureByteIndex] = fpushed;
 	}
 	else
 	{
-		buf[port][0] = (buf[port][0] | keybit[0]);
-		buf[port][1] = (buf[port][1] | keybit[1]);
+		m_buf[port][0] = (m_buf[port][0] | keybit[0]);
+		m_buf[port][1] = (m_buf[port][1] | keybit[1]);
 
 		// if the button supports pressure sensitivity
 		if (pressureByteIndex != -1)
-		{
-			buf[port][6 + pressureByteIndex] = 0;
-		}
+			m_buf[port][6 + pressureByteIndex] = 0;
 	}
 }
 
-int PadData::GetNormalButton(int port, PadData_NormalButton button) const
+int PadData::getNormalButton(int port, PadData_NormalButton button) const
 {
 	wxByte keybit[2];
-	GetKeyBit(keybit, button);
-	int pressureByteIndex = GetPressureByte(button);
+	getKeyBit(keybit, button);
+	int pressureByteIndex = getPressureByte(button);
 
 	// If the button is pressed on either controller
-	bool f1 = (~buf[port][0] & keybit[0])>0;
-	bool f2 = (~buf[port][1] & keybit[1])>0;
+	bool f1 = (~m_buf[port][0] & keybit[0]) > 0;
+	bool f2 = (~m_buf[port][1] & keybit[1]) > 0;
 
 	if (f1 || f2)
 	{
 		// If the button does not support pressure sensitive inputs
 		// just return 1 for pressed.
 		if (pressureByteIndex == -1)
-		{
 			return 1;
-		}
 		// else return the pressure information
-		return buf[port][6 + pressureByteIndex];
+		return m_buf[port][6 + pressureByteIndex];
 	}
 
 	// else the button isnt pressed at all
 	return 0;
 }
 
-void PadData::GetKeyBit(wxByte keybit[2], PadData_NormalButton button) const
+void PadData::getKeyBit(wxByte keybit[2], PadData_NormalButton button) const
 {
 	switch (button)
 	{
@@ -203,7 +193,7 @@ void PadData::GetKeyBit(wxByte keybit[2], PadData_NormalButton button) const
 
 // Returns an index for the buffer to set the pressure byte
 // Returns -1 if it is a button that does not support pressure sensitivty
-int PadData::GetPressureByte(PadData_NormalButton button) const
+int PadData::getPressureByte(PadData_NormalButton button) const
 {
 	// Pressure Byte Order
 	// R - L - U - D - Tri - Circle - Cross - Sqr - L1 - R1 - L2 - R2
@@ -250,45 +240,37 @@ int PadData::GetPressureByte(PadData_NormalButton button) const
 	}
 }
 
-std::vector<int> PadData::GetAnalogVectors(int port) const
+std::vector<int> PadData::getAnalogVectors(int port) const
 {
 	std::vector<int> vectors(PadDataAnalogVectorCount);
 	for (int i = 0; i < PadDataAnalogVectorCount; i++)
-	{
-		vectors[i] = GetAnalogVector(port, PadData_AnalogVector(i));
-	}
+		vectors[i] = getAnalogVector(port, PadData_AnalogVector(i));
 	return vectors;
 }
 
-void PadData::SetAnalogVectors(int port, std::vector<int> vectors)
+void PadData::setAnalogVectors(int port, std::vector<int> vectors)
 {
 	for (int i = 0; i < PadDataAnalogVectorCount; i++)
-	{
-		SetAnalogVector(port, PadData_AnalogVector(i), vectors[i]);
-	}
+		setAnalogVector(port, PadData_AnalogVector(i), vectors[i]);
 }
 
-void PadData::SetAnalogVector(int port, PadData_AnalogVector vector, int val)
+void PadData::setAnalogVector(int port, PadData_AnalogVector vector, int val)
 {
 	if (val < 0)
-	{
 		val = 0;
-	}
 	else if (val > 255)
-	{
 		val = 255;
-	}
 
-	buf[port][GetAnalogVectorByte(vector)] = val;
+	m_buf[port][getAnalogVectorByte(vector)] = val;
 }
 
-int PadData::GetAnalogVector(int port, PadData_AnalogVector vector) const
+int PadData::getAnalogVector(int port, PadData_AnalogVector vector) const
 {
-	return buf[port][GetAnalogVectorByte(vector)];
+	return m_buf[port][getAnalogVectorByte(vector)];
 }
 
 // Returns an index for the buffer to set the analog's vector
-int PadData::GetAnalogVectorByte(PadData_AnalogVector vector) const
+int PadData::getAnalogVectorByte(PadData_AnalogVector vector) const
 {
 	// Vector Byte Ordering
 	// RX - RY - LX - LY

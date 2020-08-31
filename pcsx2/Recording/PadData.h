@@ -56,34 +56,34 @@ public:
 	PadData();
 	~PadData() {}
 
-	bool fExistKey = false;
-	u8 buf[2][18];
+	bool m_fExistKey = false;
+	u8 m_buf[2][18];
 
 	// Prints controlller data every frame to the Controller Log filter, disabled by default
-	static void LogPadData(u8 port, u16 bufCount, u8 buf[512]);
+	static void logPadData(u8 port, u16 bufCount, u8 buf[512]);
 
 	// Normal Buttons
-	std::vector<int> GetNormalButtons(int port) const;
-	void SetNormalButtons(int port, std::vector<int> buttons);
+	std::vector<int> getNormalButtons(int port) const;
+	void setNormalButtons(int port, std::vector<int> buttons);
 
 	// Analog Vectors
 	// max left/up    : 0
 	// neutral        : 127
 	// max right/down : 255
-	std::vector<int> GetAnalogVectors(int port) const;
+	std::vector<int> getAnalogVectors(int port) const;
 	// max left/up    : 0
 	// neutral        : 127
 	// max right/down : 255
-	void SetAnalogVectors(int port, std::vector<int> vector);
+	void setAnalogVectors(int port, std::vector<int> vector);
 
 private:
-	void SetNormalButton(int port, PadData_NormalButton button, int pressure);
-	int GetNormalButton(int port, PadData_NormalButton button) const;
-	void GetKeyBit(wxByte keybit[2], PadData_NormalButton button) const;
-	int GetPressureByte(PadData_NormalButton button) const;
+	void setNormalButton(int port, PadData_NormalButton button, int pressure);
+	int getNormalButton(int port, PadData_NormalButton button) const;
+	void getKeyBit(wxByte keybit[2], PadData_NormalButton button) const;
+	int getPressureByte(PadData_NormalButton button) const;
 
-	void SetAnalogVector(int port, PadData_AnalogVector vector, int val);
-	int GetAnalogVector(int port, PadData_AnalogVector vector) const;
-	int GetAnalogVectorByte(PadData_AnalogVector vector) const;
+	void setAnalogVector(int port, PadData_AnalogVector vector, int val);
+	int getAnalogVector(int port, PadData_AnalogVector vector) const;
+	int getAnalogVectorByte(PadData_AnalogVector vector) const;
 };
 #endif
