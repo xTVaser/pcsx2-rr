@@ -374,7 +374,7 @@ void MainEmuFrame::CreatePcsx2Menu()
 		_("Enabling Widescreen Patches may occasionally cause issues."), wxITEM_CHECK);
 
 #ifndef DISABLE_RECORDING
-	m_GameSettingsSubmenu.Append(MenuId_EnableRecordingTools, _("Enable &Recording Tools"),
+	m_GameSettingsSubmenu.Append(MenuId_EnableRecordingTools, _("Enable &Input Recording Tools"),
 		wxEmptyString, wxITEM_CHECK);
 #endif
 
@@ -459,14 +459,14 @@ void MainEmuFrame::CreateCaptureMenu()
 
 void MainEmuFrame::CreateRecordMenu()
 {
-	m_menuRecording.Append(MenuId_Recording_New, _("New"));
-	m_menuRecording.Append(MenuId_Recording_Stop, _("Stop"))->Enable(false);
-	m_menuRecording.Append(MenuId_Recording_Play, _("Play"));
-	m_menuRecording.AppendSeparator();
-	m_menuRecording.Append(MenuId_Recording_Reset, _("Reset to First Frame"))->Enable(false);
-	m_menuRecording.AppendSeparator();
-	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port0, _("Virtual Pad (Port 1)"));
-	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port1, _("Virtual Pad (Port 2)"));
+	m_menuInputRecording.Append(MenuId_Recording_New, _("New"));
+	m_menuInputRecording.Append(MenuId_Recording_Stop, _("Stop"))->Enable(false);
+	m_menuInputRecording.Append(MenuId_Recording_Play, _("Play"));
+	m_menuInputRecording.AppendSeparator();
+	m_menuInputRecording.Append(MenuId_Recording_Reset, _("Reset to First Frame"))->Enable(false);
+	m_menuInputRecording.AppendSeparator();
+	m_menuInputRecording.Append(MenuId_Recording_VirtualPad_Port0, _("Virtual Pad (Port 1)"));
+	m_menuInputRecording.Append(MenuId_Recording_VirtualPad_Port1, _("Virtual Pad (Port 2)"));
 }
 
 void MainEmuFrame::CreateHelpMenu()
@@ -500,7 +500,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	, m_menuCapture			( *new wxMenu() )
 	, m_submenuVideoCapture	( *new wxMenu() )
 #ifndef DISABLE_RECORDING
-	, m_menuRecording(*new wxMenu())
+	, m_menuInputRecording(*new wxMenu())
 #endif
 	, m_menuHelp(*new wxMenu())
 	, m_LoadStatesSubmenu( *MakeStatesSubMenu( MenuId_State_Load01, MenuId_State_LoadBackup ) )
@@ -533,9 +533,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 #ifndef DISABLE_RECORDING
 	// Append the Recording options if previously enabled and setting has been picked up from ini
 	if (g_Conf->EmuOptions.EnableRecordingTools)
-	{
-		m_menubar.Append(&m_menuRecording, _("&Recording"));
-	}
+		m_menubar.Append(&m_menuInputRecording, _("&Input Recording"));
 #endif
 	m_menubar.Append( &m_menuHelp,	_("&Help") );
 

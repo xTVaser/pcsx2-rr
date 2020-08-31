@@ -516,7 +516,7 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent& event)
 	// If still enabled, add the menu item, else, remove it
 	if (checked)
 	{
-		GetMenuBar()->Insert(TopLevelMenu_Recording, &m_menuRecording, _("&Recording"));
+		GetMenuBar()->Insert(TopLevelMenu_Recording, &m_menuInputRecording, _("&Input Recording"));
 		// Enable Recording Keybindings
 		if (GSFrame* gsFrame = wxGetApp().GetGsFramePtr())
 			if (GSPanel* viewport = gsFrame->GetViewport())
@@ -854,9 +854,9 @@ void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 			return;
 		}
 	}
-	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
-	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
-	m_menuRecording.FindChildItem(MenuId_Recording_Reset)->Enable(true);
+	m_menuInputRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
+	m_menuInputRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
+	m_menuInputRecording.FindChildItem(MenuId_Recording_Reset)->Enable(true);
 }
 
 void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
@@ -885,9 +885,9 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 	}
 	if (!wasRecordingLoaded)
 	{
-		m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
-		m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
-		m_menuRecording.FindChildItem(MenuId_Recording_Reset)->Enable(true);
+		m_menuInputRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
+		m_menuInputRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
+		m_menuInputRecording.FindChildItem(MenuId_Recording_Reset)->Enable(true);
 	}
 	if (!g_InputRecording.getInputRecordingData().fromSaveState())
 		g_RecordingControls.resume();
@@ -896,9 +896,9 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
 {
 	g_InputRecording.stop();
-	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(true);
-	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(false);
-	m_menuRecording.FindChildItem(MenuId_Recording_Reset)->Enable(false);
+	m_menuInputRecording.FindChildItem(MenuId_Recording_New)->Enable(true);
+	m_menuInputRecording.FindChildItem(MenuId_Recording_Stop)->Enable(false);
+	m_menuInputRecording.FindChildItem(MenuId_Recording_Reset)->Enable(false);
 }
 
 void MainEmuFrame::Menu_Recording_Reset_Click(wxCommandEvent&)
