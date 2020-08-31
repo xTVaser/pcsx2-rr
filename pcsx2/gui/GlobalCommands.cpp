@@ -472,25 +472,19 @@ namespace Implementations
 	void FrameAdvance()
 	{
 		if (g_Conf->EmuOptions.EnableRecordingTools)
-		{
-			g_RecordingControls.FrameAdvance();
-		}
+			g_RecordingControls.frameAdvance();
 	}
 
 	void TogglePause()
 	{
 		if (g_Conf->EmuOptions.EnableRecordingTools)
-		{
-			g_RecordingControls.TogglePause();
-		}
+			g_RecordingControls.togglePause();
 	}
 
 	void InputRecordingModeToggle()
 	{
 		if (g_Conf->EmuOptions.EnableRecordingTools)
-		{
 			g_InputRecording.RecordModeToggle();
-		}
 	}
 
 	void States_SaveSlot(int slot)

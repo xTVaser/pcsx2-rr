@@ -60,7 +60,7 @@ NewRecordingFrame::NewRecordingFrame(wxWindow *parent)
 	Centre();
 }
 
-wxString NewRecordingFrame::GetFile() const
+wxString NewRecordingFrame::getFile() const
 {
 	wxString path = m_filePicker->GetPath();
 	// wxWidget's removes the extension if it contains wildcards
@@ -71,12 +71,12 @@ wxString NewRecordingFrame::GetFile() const
 	return path;
 }
 
-wxString NewRecordingFrame::GetAuthor() const
+wxString NewRecordingFrame::getAuthor() const
 {
 	return m_authorInput->GetValue();
 }
 
-int NewRecordingFrame::GetFrom() const
+int NewRecordingFrame::getFrom() const
 {
 	return m_fromChoice->GetSelection();
 }

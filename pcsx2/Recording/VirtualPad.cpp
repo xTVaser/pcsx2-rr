@@ -22,237 +22,186 @@
 
 #ifndef DISABLE_RECORDING
 wxBEGIN_EVENT_TABLE(VirtualPad, wxFrame)
-	EVT_CLOSE(VirtualPad::OnClose)
+	EVT_CLOSE(VirtualPad::onClose)
 wxEND_EVENT_TABLE()
 
 // TODO - Problems / Potential improvements:
 // - The UI doesn't update to manual controller inputs and actually overrides the controller when opened (easily noticable with analog stick)
 //   - This is less than ideal, but it's going to take a rather large / focused refactor, in it's current state the virtual pad does what it needs to do (precise inputs, frame by frame)
-VirtualPad::VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, int controllerPort, const wxPoint& pos, const wxSize& size, long style) :
+VirtualPad::VirtualPad(wxWindow* parent, wxWindowID id, const wxString& title, int m_controllerPort, const wxPoint& pos, const wxSize& size, long style) :
 	wxFrame(parent, id, title, pos, size, wxDEFAULT_FRAME_STYLE)
 {
 	// Define components
 	SetSize(wxSize(1000, 700));
-	l2Button = new wxToggleButton(this, wxID_ANY, wxT("L2"));
-	l2ButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
-	l1Button = new wxToggleButton(this, wxID_ANY, wxT("L1"));
-	l1ButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
-	r2Button = new wxToggleButton(this, wxID_ANY, wxT("R2"));
-	r2ButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
-	r1Button = new wxToggleButton(this, wxID_ANY, wxT("R1"));
-	r1ButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
-	upButton = new wxToggleButton(this, wxID_ANY, wxT("Up"));
-	upButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
-	leftButton = new wxToggleButton(this, wxID_ANY, wxT("Left"));
-	leftButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
-	rightButton = new wxToggleButton(this, wxID_ANY, wxT("Right"));
-	rightButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
-	downButton = new wxToggleButton(this, wxID_ANY, wxT("Down"));
-	downButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
-	selectButton = new wxToggleButton(this, wxID_ANY, wxT("Select"));
-	startButton = new wxToggleButton(this, wxID_ANY, wxT("Start"));
-	triangleButton = new wxToggleButton(this, wxID_ANY, wxT("Triangle"));
-	triangleButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
-	squareButton = new wxToggleButton(this, wxID_ANY, wxT("Square"));
-	squareButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
-	circleButton = new wxToggleButton(this, wxID_ANY, wxT("Circle"));
-	circleButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
-	crossButton = new wxToggleButton(this, wxID_ANY, wxT("Cross"));
-	crossButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
-	leftAnalogXVal = new wxSlider(this, wxID_ANY, 0, -127, 127);
-	leftAnalogXValPrecise = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -127, 128);
-	l3Button = new wxToggleButton(this, wxID_ANY, wxT("L3"));
-	leftAnalogYVal = new wxSlider(this, wxID_ANY, 0, -127, 127, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL);
-	leftAnalogYValPrecise = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -127, 128);
-	rightAnalogXVal = new wxSlider(this, wxID_ANY, 0, -127, 127);
-	rightAnalogXValPrecise = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -127, 128);
-	r3Button = new wxToggleButton(this, wxID_ANY, wxT("R3"));
-	rightAnalogYVal = new wxSlider(this, wxID_ANY, 0, -127, 127, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL);
-	rightAnalogYValPrecise = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -127, 128);
+	m_l2Button = new wxToggleButton(this, wxID_ANY, wxT("L2"));
+	m_l2ButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
+	m_l1Button = new wxToggleButton(this, wxID_ANY, wxT("L1"));
+	m_l1ButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
+	m_r2Button = new wxToggleButton(this, wxID_ANY, wxT("R2"));
+	m_r2ButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
+	m_r1Button = new wxToggleButton(this, wxID_ANY, wxT("R1"));
+	m_r1ButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
+	m_upButton = new wxToggleButton(this, wxID_ANY, wxT("Up"));
+	m_upButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
+	m_leftButton = new wxToggleButton(this, wxID_ANY, wxT("Left"));
+	m_leftButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
+	m_rightButton = new wxToggleButton(this, wxID_ANY, wxT("Right"));
+	m_rightButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
+	m_downButton = new wxToggleButton(this, wxID_ANY, wxT("Down"));
+	m_downButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
+	m_selectButton = new wxToggleButton(this, wxID_ANY, wxT("Select"));
+	m_startButton = new wxToggleButton(this, wxID_ANY, wxT("Start"));
+	m_triangleButton = new wxToggleButton(this, wxID_ANY, wxT("Triangle"));
+	m_triangleButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
+	m_squareButton = new wxToggleButton(this, wxID_ANY, wxT("Square"));
+	m_squareButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
+	m_circleButton = new wxToggleButton(this, wxID_ANY, wxT("Circle"));
+	m_circleButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
+	m_crossButton = new wxToggleButton(this, wxID_ANY, wxT("Cross"));
+	m_crossButtonPressure = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 255, 255);
+	m_leftAnalogXVal = new wxSlider(this, wxID_ANY, 0, -127, 127);
+	m_leftAnalogXValPrecise = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -127, 128);
+	m_l3Button = new wxToggleButton(this, wxID_ANY, wxT("L3"));
+	m_leftAnalogYVal = new wxSlider(this, wxID_ANY, 0, -127, 127, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL);
+	m_leftAnalogYValPrecise = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -127, 128);
+	m_rightAnalogXVal = new wxSlider(this, wxID_ANY, 0, -127, 127);
+	m_rightAnalogXValPrecise = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -127, 128);
+	m_r3Button = new wxToggleButton(this, wxID_ANY, wxT("R3"));
+	m_rightAnalogYVal = new wxSlider(this, wxID_ANY, 0, -127, 127, wxDefaultPosition, wxDefaultSize, wxSL_VERTICAL);
+	m_rightAnalogYValPrecise = new wxSpinCtrl(this, wxID_ANY, wxT("0"), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, -127, 128);
 
 	// Initialize class members
-	VirtualPad::controllerPort = controllerPort;
+	VirtualPad::m_controllerPort = m_controllerPort;
 
 	// NOTE: Order MATTERS, these match enum defined in PadData.h
 	wxToggleButton* tempButtons[16] = {
 		// Pressure sensitive buttons
-		upButton, rightButton, leftButton, downButton,
-		crossButton, circleButton, squareButton, triangleButton,
-		l1Button, l2Button, r1Button, r2Button,
+		m_upButton, m_rightButton, m_leftButton, m_downButton,
+		m_crossButton, m_circleButton, m_squareButton, m_triangleButton,
+		m_l1Button, m_l2Button, m_r1Button, m_r2Button,
 		// Non-pressure sensitive buttons
-		l3Button, r3Button,
-		selectButton, startButton};
-	std::copy(std::begin(tempButtons), std::end(tempButtons), std::begin(buttons));
+		m_l3Button, m_r3Button,
+		m_selectButton, m_startButton};
+	std::copy(std::begin(tempButtons), std::end(tempButtons), std::begin(m_buttons));
 
 	// NOTE: Order MATTERS, these match enum defined in PadData.h
 	wxSpinCtrl* tempPressureButtons[16] = {
 		// Pressure sensitive buttons
-		upButtonPressure, rightButtonPressure, leftButtonPressure, downButtonPressure,
-		crossButtonPressure, circleButtonPressure, squareButtonPressure, triangleButtonPressure,
-		l1ButtonPressure, l2ButtonPressure, r1ButtonPressure, r2ButtonPressure};
-	std::copy(std::begin(tempPressureButtons), std::end(tempPressureButtons), std::begin(buttonsPressure));
+		m_upButtonPressure, m_rightButtonPressure, m_leftButtonPressure, m_downButtonPressure,
+		m_crossButtonPressure, m_circleButtonPressure, m_squareButtonPressure, m_triangleButtonPressure,
+		m_l1ButtonPressure, m_l2ButtonPressure, m_r1ButtonPressure, m_r2ButtonPressure};
+	std::copy(std::begin(tempPressureButtons), std::end(tempPressureButtons), std::begin(m_buttonsPressure));
 
 	// NOTE: Order MATTERS, these match enum defined in PadData.h
-	wxSlider* tempAnalogSliders[4] = { leftAnalogXVal, leftAnalogYVal, rightAnalogXVal, rightAnalogYVal };
-	std::copy(std::begin(tempAnalogSliders), std::end(tempAnalogSliders), std::begin(analogSliders));
+	wxSlider* tempm_analogSliders[4] = { m_leftAnalogXVal, m_leftAnalogYVal, m_rightAnalogXVal, m_rightAnalogYVal };
+	std::copy(std::begin(tempm_analogSliders), std::end(tempm_analogSliders), std::begin(m_analogSliders));
 
 	// NOTE: Order MATTERS, these match enum defined in PadData.h
-	wxSpinCtrl* tempAnalogVals[4] = { leftAnalogXValPrecise, leftAnalogYValPrecise, rightAnalogXValPrecise, rightAnalogYValPrecise };
-	std::copy(std::begin(tempAnalogVals), std::end(tempAnalogVals), std::begin(analogVals));
+	wxSpinCtrl* tempm_analogVals[4] = { m_leftAnalogXValPrecise, m_leftAnalogYValPrecise, m_rightAnalogXValPrecise, m_rightAnalogYValPrecise };
+	std::copy(std::begin(tempm_analogVals), std::end(tempm_analogVals), std::begin(m_analogVals));
 
 	// Setup event bindings
-	for (int i = 0; i < buttonsLength; i++)
-	{
-		(*buttons[i]).Bind(wxEVT_TOGGLEBUTTON, &VirtualPad::OnButtonPress, this);
-	}
-	for (int i = 0; i < buttonsPressureLength; i++)
-	{
-		(*buttonsPressure[i]).Bind(wxEVT_SPINCTRL, &VirtualPad::OnPressureChange, this);
-	}
-	for (int i = 0; i < analogSlidersLength; i++)
-	{
-		(*analogSliders[i]).Bind(wxEVT_SLIDER, &VirtualPad::OnAnalogSliderChange, this);
-	}
-	for (int i = 0; i < analogValsLength; i++)
-	{
-		(*analogVals[i]).Bind(wxEVT_SPINCTRL, &VirtualPad::OnAnalogValChange, this);
-	}
+	for (int i = 0; i < m_buttonsLength; i++)
+		(*m_buttons[i]).Bind(wxEVT_TOGGLEBUTTON, &VirtualPad::onButtonPress, this);
+	for (int i = 0; i < m_buttonsPressureLength; i++)
+		(*m_buttonsPressure[i]).Bind(wxEVT_SPINCTRL, &VirtualPad::onPressureChange, this);
+	for (int i = 0; i < m_analogSlidersLength; i++)
+		(*m_analogSliders[i]).Bind(wxEVT_SLIDER, &VirtualPad::onAnalogSliderChange, this);
+	for (int i = 0; i < m_analogValsLength; i++)
+		(*m_analogVals[i]).Bind(wxEVT_SPINCTRL, &VirtualPad::onAnalogValChange, this);
 
 	// Finalize layout
-	SetProperties();
-	DoLayout();
+	setProperties();
+	doLayout();
 }
 
 
-void VirtualPad::SetProperties()
+void VirtualPad::setProperties()
 {
-	if (controllerPort == 0)
-	{
-		SetTitle(wxT("Virtual Pad - Port 1"));
-	}
-	else
-	{
-		SetTitle(wxT("Virtual Pad - Port 2"));
-	}
+	SetTitle(wxString::Format("Virtual Pad - Port %d", m_controllerPort + 1));
 	SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
 }
 
 bool VirtualPad::Show(bool show)
 {
 	if (!wxFrame::Show(show))
-	{
 		return false;
-	}
 	if (show)
-	{
-		g_RecordingInput.SetVirtualPadReading(controllerPort, true);
-	}
+		g_RecordingInput.setVirtualPadReading(m_controllerPort, true);
 	return true;
 }
 
-void VirtualPad::OnClose(wxCloseEvent & event)
+void VirtualPad::onClose(wxCloseEvent & event)
 {
-	g_RecordingInput.SetVirtualPadReading(controllerPort, false);
+	g_RecordingInput.setVirtualPadReading(m_controllerPort, false);
 	Hide();
 }
 
-void VirtualPad::OnButtonPress(wxCommandEvent & event)
+void VirtualPad::onButtonPress(wxCommandEvent & event)
 {
 	wxToggleButton* pressedButton = (wxToggleButton*) event.GetEventObject();
-	int buttonId = -1;
-	for (int i = 0; i < buttonsLength; i++)
+	for (int i = 0; i < m_buttonsLength; i++)
 	{
-		if (pressedButton == buttons[i])
+		if (pressedButton == m_buttons[i])
 		{
-			buttonId = i;
+			u8 pressure = 0;
+			if (event.IsChecked())
+				pressure = i < 12 ? m_buttonsPressure[i]->GetValue() : 255;
+			g_RecordingInput.setButtonState(m_controllerPort, PadData_NormalButton(i), pressure);
+			break;
 		}
-	}
-	if (buttonId != -1)
-	{
-		u8 pressure = 0;
-		if (event.IsChecked())
-		{
-			if (buttonId < 12)
-			{
-				pressure = buttonsPressure[buttonId]->GetValue();
-			}
-			else
-			{
-				pressure = 255;
-			}
-		}
-		g_RecordingInput.SetButtonState(controllerPort, PadData_NormalButton(buttonId), pressure);
 	}
 }
 
-void VirtualPad::OnPressureChange(wxSpinEvent & event)
+void VirtualPad::onPressureChange(wxSpinEvent & event)
 {
 	wxSpinCtrl* updatedSpinner = (wxSpinCtrl*) event.GetEventObject();
-	int spinnerId = -1;
-	for (int i = 0; i < buttonsPressureLength; i++)
+	for (int i = 0; i < m_buttonsPressureLength; i++)
 	{
-		if (updatedSpinner == buttonsPressure[i])
+		if (updatedSpinner == m_buttonsPressure[i])
 		{
-			spinnerId = i;
+			u8 pressure = 0;
+			if (event.IsChecked())
+				pressure = m_buttonsPressure[i]->GetValue();
+			g_RecordingInput.setButtonState(m_controllerPort, PadData_NormalButton(i), pressure);
+			break;
 		}
-	}
-
-	if (spinnerId != -1)
-	{
-		u8 pressure = 0;
-		if (event.IsChecked())
-		{
-			pressure = buttonsPressure[spinnerId]->GetValue();
-		}
-		g_RecordingInput.SetButtonState(controllerPort, PadData_NormalButton(spinnerId), pressure);
 	}
 }
 
-void VirtualPad::OnAnalogSliderChange(wxCommandEvent & event)
+void VirtualPad::onAnalogSliderChange(wxCommandEvent & event)
 {
 	wxSlider* movedSlider = (wxSlider*) event.GetEventObject();
-	int sliderId = -1;
-	for (int i = 0; i < analogSlidersLength; i++)
+	for (int i = 0; i < m_analogSlidersLength; i++)
 	{
-		if (movedSlider == analogSliders[i])
+		if (movedSlider == m_analogSliders[i])
 		{
-			sliderId = i;
-		}
-	}
-	if (sliderId != -1)
-	{
-		if (sliderId % 2 == 0)
-		{
-			analogVals[sliderId]->SetValue(event.GetInt());
-		}
-		else
-		{
-			analogVals[sliderId]->SetValue(event.GetInt() * -1);
-		}
+			if (!(i & 1))
+				m_analogVals[i]->SetValue(event.GetInt());
+			else
+				m_analogVals[i]->SetValue(event.GetInt() * -1);
 
-		g_RecordingInput.UpdateAnalog(controllerPort, PadData_AnalogVector(sliderId), event.GetInt() + 127);
+			g_RecordingInput.updateAnalog(m_controllerPort, PadData_AnalogVector(i), event.GetInt() + 127);
+			break;
+		}
 	}
 }
 
-void VirtualPad::OnAnalogValChange(wxSpinEvent & event)
+void VirtualPad::onAnalogValChange(wxSpinEvent & event)
 {
 	wxSpinCtrl* updatedSpinner = (wxSpinCtrl*)event.GetEventObject();
-	int spinnerId = -1;
-	for (int i = 0; i < analogValsLength; i++)
+	for (int i = 0; i < m_analogValsLength; i++)
 	{
-		if (updatedSpinner == analogVals[i])
+		if (updatedSpinner == m_analogVals[i])
 		{
-			spinnerId = i;
+			m_analogVals[i]->SetValue(event.GetInt());
+			g_RecordingInput.updateAnalog(m_controllerPort, PadData_AnalogVector(i), event.GetInt() + 127);
+			break;
 		}
-	}
-	if (spinnerId != -1)
-	{
-		analogVals[spinnerId]->SetValue(event.GetInt());
-		g_RecordingInput.UpdateAnalog(controllerPort, PadData_AnalogVector(spinnerId), event.GetInt() + 127);
 	}
 }
 
-void VirtualPad::DoLayout()
+void VirtualPad::doLayout()
 {
 	wxBoxSizer* container = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* analogSticks = new wxBoxSizer(wxHORIZONTAL);
@@ -299,96 +248,96 @@ void VirtualPad::DoLayout()
 	wxBoxSizer* emptySpace1 = new wxBoxSizer(wxVERTICAL);
 	emptySpace1->Add(0, 0, 0, 0, 0);
 	shoulderButtons->Add(emptySpace1, 2, wxEXPAND, 0);
-	l2ButtonRow->Add(l2Button, 0, wxEXPAND, 0);
-	l2ButtonRow->Add(l2ButtonPressure, 0, wxEXPAND, 0);
+	l2ButtonRow->Add(m_l2Button, 0, wxEXPAND, 0);
+	l2ButtonRow->Add(m_l2ButtonPressure, 0, wxEXPAND, 0);
 	leftShoulderButtons->Add(l2ButtonRow, 1, wxEXPAND, 0);
-	l1ButtonRow->Add(l1Button, 0, wxEXPAND, 0);
-	l1ButtonRow->Add(l1ButtonPressure, 0, wxEXPAND, 0);
+	l1ButtonRow->Add(m_l1Button, 0, wxEXPAND, 0);
+	l1ButtonRow->Add(m_l1ButtonPressure, 0, wxEXPAND, 0);
 	leftShoulderButtons->Add(l1ButtonRow, 1, wxEXPAND, 0);
 	shoulderButtons->Add(leftShoulderButtons, 5, wxEXPAND, 0);
 	emptySpace2->Add(0, 0, 0, 0, 0);
 	shoulderButtons->Add(emptySpace2, 13, wxEXPAND, 0);
-	r2ButtonRow->Add(r2Button, 0, wxEXPAND, 0);
-	r2ButtonRow->Add(r2ButtonPressure, 0, wxEXPAND, 0);
+	r2ButtonRow->Add(m_r2Button, 0, wxEXPAND, 0);
+	r2ButtonRow->Add(m_r2ButtonPressure, 0, wxEXPAND, 0);
 	rightShoulderButtons->Add(r2ButtonRow, 1, wxEXPAND, 0);
-	r1ButtonRow->Add(r1Button, 0, wxEXPAND, 0);
-	r1ButtonRow->Add(r1ButtonPressure, 0, wxEXPAND, 0);
+	r1ButtonRow->Add(m_r1Button, 0, wxEXPAND, 0);
+	r1ButtonRow->Add(m_r1ButtonPressure, 0, wxEXPAND, 0);
 	rightShoulderButtons->Add(r1ButtonRow, 1, wxEXPAND, 0);
 	shoulderButtons->Add(rightShoulderButtons, 5, wxEXPAND, 0);
 	emptySpace3->Add(0, 0, 0, 0, 0);
 	shoulderButtons->Add(emptySpace3, 2, wxEXPAND, 0);
 	container->Add(shoulderButtons, 1, wxBOTTOM | wxEXPAND | wxTOP, 3);
 	dPad->Add(0, 0, 0, 0, 0);
-	dPadUp->Add(upButton, 0, wxEXPAND, 0);
-	dPadUp->Add(upButtonPressure, 0, wxEXPAND, 0);
+	dPadUp->Add(m_upButton, 0, wxEXPAND, 0);
+	dPadUp->Add(m_upButtonPressure, 0, wxEXPAND, 0);
 	dPad->Add(dPadUp, 1, wxEXPAND, 0);
 	dPad->Add(0, 0, 0, 0, 0);
-	dPadLeft->Add(leftButton, 0, wxEXPAND, 0);
-	dPadLeft->Add(leftButtonPressure, 0, wxEXPAND, 0);
+	dPadLeft->Add(m_leftButton, 0, wxEXPAND, 0);
+	dPadLeft->Add(m_leftButtonPressure, 0, wxEXPAND, 0);
 	dPad->Add(dPadLeft, 1, wxEXPAND, 0);
 	dPad->Add(0, 0, 0, 0, 0);
-	dPadRight->Add(rightButton, 0, wxEXPAND, 0);
-	dPadRight->Add(rightButtonPressure, 0, wxEXPAND, 0);
+	dPadRight->Add(m_rightButton, 0, wxEXPAND, 0);
+	dPadRight->Add(m_rightButtonPressure, 0, wxEXPAND, 0);
 	dPad->Add(dPadRight, 1, wxEXPAND, 0);
 	dPad->Add(0, 0, 0, 0, 0);
-	dPadDown->Add(downButton, 0, wxEXPAND, 0);
-	dPadDown->Add(downButtonPressure, 0, wxEXPAND, 0);
+	dPadDown->Add(m_downButton, 0, wxEXPAND, 0);
+	dPadDown->Add(m_downButtonPressure, 0, wxEXPAND, 0);
 	dPad->Add(dPadDown, 1, wxEXPAND, 0);
 	dPad->Add(0, 0, 0, 0, 0);
 	faceButtonRow->Add(dPad, 9, wxEXPAND | wxLEFT | wxRIGHT, 3);
 	emptySpace7->Add(0, 0, 0, 0, 0);
 	middleOfController->Add(emptySpace7, 1, wxEXPAND, 0);
-	startAndSelect->Add(selectButton, 0, 0, 0);
+	startAndSelect->Add(m_selectButton, 0, 0, 0);
 	emptySpace9->Add(0, 0, 0, 0, 0);
 	startAndSelect->Add(emptySpace9, 1, wxEXPAND, 0);
-	startAndSelect->Add(startButton, 0, 0, 0);
+	startAndSelect->Add(m_startButton, 0, 0, 0);
 	middleOfController->Add(startAndSelect, 1, wxEXPAND, 0);
 	emptySpace8->Add(0, 0, 0, 0, 0);
 	middleOfController->Add(emptySpace8, 1, wxEXPAND, 0);
 	faceButtonRow->Add(middleOfController, 8, wxEXPAND | wxLEFT | wxRIGHT, 3);
 	faceButtons->Add(0, 0, 0, 0, 0);
-	triangle->Add(triangleButton, 0, wxEXPAND, 0);
-	triangle->Add(triangleButtonPressure, 0, wxEXPAND, 0);
+	triangle->Add(m_triangleButton, 0, wxEXPAND, 0);
+	triangle->Add(m_triangleButtonPressure, 0, wxEXPAND, 0);
 	faceButtons->Add(triangle, 1, wxEXPAND, 0);
 	faceButtons->Add(0, 0, 0, 0, 0);
-	square->Add(squareButton, 0, wxEXPAND, 0);
-	square->Add(squareButtonPressure, 0, wxEXPAND, 0);
+	square->Add(m_squareButton, 0, wxEXPAND, 0);
+	square->Add(m_squareButtonPressure, 0, wxEXPAND, 0);
 	faceButtons->Add(square, 1, wxEXPAND, 0);
 	faceButtons->Add(0, 0, 0, 0, 0);
-	circle->Add(circleButton, 0, wxEXPAND, 0);
-	circle->Add(circleButtonPressure, 0, wxEXPAND, 0);
+	circle->Add(m_circleButton, 0, wxEXPAND, 0);
+	circle->Add(m_circleButtonPressure, 0, wxEXPAND, 0);
 	faceButtons->Add(circle, 1, wxEXPAND, 0);
 	faceButtons->Add(0, 0, 0, 0, 0);
-	cross->Add(crossButton, 0, wxEXPAND, 0);
-	cross->Add(crossButtonPressure, 0, wxEXPAND, 0);
+	cross->Add(m_crossButton, 0, wxEXPAND, 0);
+	cross->Add(m_crossButtonPressure, 0, wxEXPAND, 0);
 	faceButtons->Add(cross, 1, wxEXPAND, 0);
 	faceButtons->Add(0, 0, 0, 0, 0);
 	faceButtonRow->Add(faceButtons, 9, wxEXPAND | wxLEFT | wxRIGHT, 3);
 	container->Add(faceButtonRow, 4, wxBOTTOM | wxEXPAND | wxTOP, 3);
 	emptySpace4->Add(0, 0, 0, 0, 0);
 	analogSticks->Add(emptySpace4, 6, wxEXPAND, 0);
-	leftAnalogX->Add(leftAnalogXVal, 1, wxALL | wxEXPAND, 0);
-	leftAnalogX->Add(leftAnalogXValPrecise, 0, wxEXPAND, 0);
+	leftAnalogX->Add(m_leftAnalogXVal, 1, wxALL | wxEXPAND, 0);
+	leftAnalogX->Add(m_leftAnalogXValPrecise, 0, wxEXPAND, 0);
 	leftAnalog->Add(leftAnalogX, 1, wxEXPAND, 0);
 	leftAnalogButtonAndGUI->Add(0, 0, 0, 0, 0);
-	leftAnalogButtonAndGUI->Add(l3Button, 0, wxALIGN_CENTER, 0);
+	leftAnalogButtonAndGUI->Add(m_l3Button, 0, wxALIGN_CENTER, 0);
 	leftAnalogYContainer->Add(leftAnalogButtonAndGUI, 1, wxEXPAND, 0);
-	leftAnalogY->Add(leftAnalogYVal, 1, wxALIGN_RIGHT, 0);
-	leftAnalogY->Add(leftAnalogYValPrecise, 0, wxALIGN_RIGHT, 0);
+	leftAnalogY->Add(m_leftAnalogYVal, 1, wxALIGN_RIGHT, 0);
+	leftAnalogY->Add(m_leftAnalogYValPrecise, 0, wxALIGN_RIGHT, 0);
 	leftAnalogYContainer->Add(leftAnalogY, 1, wxEXPAND, 0);
 	leftAnalog->Add(leftAnalogYContainer, 5, wxEXPAND, 0);
 	leftAnalogContainer->Add(leftAnalog, 1, wxEXPAND, 0);
 	analogSticks->Add(leftAnalogContainer, 6, wxEXPAND, 0);
 	emptySpace5->Add(0, 0, 0, 0, 0);
 	analogSticks->Add(emptySpace5, 3, wxEXPAND, 0);
-	rightAnalogX->Add(rightAnalogXVal, 1, wxEXPAND, 0);
-	rightAnalogX->Add(rightAnalogXValPrecise, 0, wxEXPAND, 0);
+	rightAnalogX->Add(m_rightAnalogXVal, 1, wxEXPAND, 0);
+	rightAnalogX->Add(m_rightAnalogXValPrecise, 0, wxEXPAND, 0);
 	rightAnalog->Add(rightAnalogX, 1, wxEXPAND, 0);
 	rightAnalogButtonAndGUI->Add(0, 0, 0, 0, 0);
-	rightAnalogButtonAndGUI->Add(r3Button, 0, wxALIGN_CENTER, 0);
+	rightAnalogButtonAndGUI->Add(m_r3Button, 0, wxALIGN_CENTER, 0);
 	rightAnalogYContainer->Add(rightAnalogButtonAndGUI, 1, wxEXPAND, 0);
-	rightAnalogY->Add(rightAnalogYVal, 1, wxALIGN_RIGHT, 0);
-	rightAnalogY->Add(rightAnalogYValPrecise, 0, wxALIGN_RIGHT | wxEXPAND, 0);
+	rightAnalogY->Add(m_rightAnalogYVal, 1, wxALIGN_RIGHT, 0);
+	rightAnalogY->Add(m_rightAnalogYValPrecise, 0, wxALIGN_RIGHT | wxEXPAND, 0);
 	rightAnalogYContainer->Add(rightAnalogY, 1, wxEXPAND, 0);
 	rightAnalog->Add(rightAnalogYContainer, 5, wxEXPAND, 0);
 	rightAnalogContainer->Add(rightAnalog, 1, wxEXPAND, 0);

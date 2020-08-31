@@ -151,9 +151,7 @@ GSPanel::GSPanel( wxWindow* parent )
 
 #ifndef DISABLE_RECORDING
 	if (g_Conf->EmuOptions.EnableRecordingTools)
-	{
 		InitRecordingAccelerators();
-	}
 #endif
 
 	SetBackgroundColour(wxColour((unsigned long)0));
@@ -572,13 +570,9 @@ void GSFrame::CoreThread_OnResumed()
 {
 #ifndef DISABLE_RECORDING
 	if (g_Conf->EmuOptions.EnableRecordingTools)
-	{
 		m_timer_UpdateTitle.Start(TitleBarUpdateMsWhenRecording);
-	}
 	else
-	{
 		m_timer_UpdateTitle.Start(TitleBarUpdateMs);
-	}
 #else
 	m_timer_UpdateTitle.Start(TitleBarUpdateMs);
 #endif
@@ -621,13 +615,9 @@ bool GSFrame::Show( bool shown )
 		{
 #ifndef DISABLE_RECORDING
 			if (g_Conf->EmuOptions.EnableRecordingTools)
-			{
 				m_timer_UpdateTitle.Start(TitleBarUpdateMsWhenRecording);
-			}
 			else
-			{
 				m_timer_UpdateTitle.Start(TitleBarUpdateMs);
-			}
 #else
 			m_timer_UpdateTitle.Start(TitleBarUpdateMs);
 #endif
@@ -732,7 +722,7 @@ void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 #ifndef DISABLE_RECORDING
 	wxString title;
 	wxString movieMode;
-	switch (g_InputRecording.GetModeState())
+	switch (g_InputRecording.getModeState())
 	{
 		case INPUT_RECORDING_MODE_RECORD:
 			movieMode = "Recording";
@@ -749,7 +739,7 @@ void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 	}
 
 	title.Replace(L"${frame}", pxsFmt(L"%d", g_FrameCount));
-	title.Replace(L"${maxFrame}", pxsFmt(L"%d", g_InputRecording.GetInputRecordingData().GetTotalFrames()));
+	title.Replace(L"${maxFrame}", pxsFmt(L"%d", g_InputRecording.getInputRecordingData().getTotalFrames()));
 	title.Replace(L"${mode}", movieMode);
 #else
 	wxString title = templates.TitleTemplate;

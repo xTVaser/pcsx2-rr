@@ -29,31 +29,27 @@ enum INPUT_RECORDING_MODE
 class InputRecording
 {
 public:
-	InputRecording() {}
-	~InputRecording() {}
-
-	void ControllerInterrupt(u8& data, u8& port, u16& BufCount, u8 buf[]);
+	void controllerInterrupt(const u8 data, const u8 port, const u16 bufCount, u8 (&buf)[512]);
 
 	void RecordModeToggle();
 
-	INPUT_RECORDING_MODE GetModeState();
-	InputRecordingFile& GetInputRecordingData();
-	bool IsInterruptFrame();
+	INPUT_RECORDING_MODE getModeState() const noexcept;
+	InputRecordingFile& getInputRecordingData() noexcept;
+	bool isInterruptFrame() const noexcept;
 
-	void Stop();
-	void Create(wxString filename, bool fromSaveState, wxString authorName);
-	void Play(wxString filename, bool fromSaveState);
+	void stop();
+	bool create(const wxString filename, const bool fromSaveState, const wxString authorName);
+	bool play(wxString filename);
+	bool loadFirstFrame();
 
 private:
-	InputRecordingFile InputRecordingData;
-	INPUT_RECORDING_MODE state = INPUT_RECORDING_MODE_NONE;
-	bool fInterruptFrame = false;
+	InputRecordingFile m_InputRecordingData;
+	INPUT_RECORDING_MODE m_state = INPUT_RECORDING_MODE_NONE;
+	bool m_fInterruptFrame = false;
 	// Resolve the name and region of the game currently loaded using the GameDB
 	// If the game cannot be found in the DB, the fallback is the ISO filename
 	wxString resolveGameName();
 };
 
 extern InputRecording g_InputRecording;
-static InputRecordingFile& g_InputRecordingData = g_InputRecording.GetInputRecordingData();
-static InputRecordingFileHeader& g_InputRecordingHeader = g_InputRecording.GetInputRecordingData().GetHeader();
 #endif

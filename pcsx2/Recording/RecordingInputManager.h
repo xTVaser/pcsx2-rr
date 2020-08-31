@@ -24,16 +24,16 @@ class RecordingInputManager
 public:
 	RecordingInputManager();
 
-	void ControllerInterrupt(u8 &data, u8 &port, u16 & BufCount, u8 buf[]);
+	void controllerInterrupt(const u8 data, const u8 port, const u16 bufCount, u8 (&buf)[512]);
 	// Handles normal keys
-	void SetButtonState(int port, PadData_NormalButton button, int pressure);
+	void setButtonState(int port, PadData_NormalButton button, int pressure);
 	// Handles analog sticks
-	void UpdateAnalog(int port, PadData_AnalogVector vector, int value);
-	void SetVirtualPadReading(int port, bool read);
+	void updateAnalog(int port, PadData_AnalogVector vector, int value);
+	void setVirtualPadReading(int port, bool read);
 
 protected:
-	PadData pad;
-	bool virtualPad[2];
+	PadData m_pad;
+	bool m_virtualPad[2];
 };
 
 extern RecordingInputManager g_RecordingInput;
