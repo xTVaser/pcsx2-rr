@@ -487,6 +487,12 @@ namespace Implementations
 			g_InputRecording.RecordModeToggle();
 	}
 
+	void ResetToFirstFrame()
+	{
+		if (g_InputRecording.getModeState() != INPUT_RECORDING_MODE_NONE)
+			g_InputRecording.loadFirstFrame();
+	}
+
 	void States_SaveSlot(int slot)
 	{
 		States_SetCurrentSlot(slot);
@@ -764,6 +770,7 @@ static const GlobalCommandDescriptor CommandDeclarations[] =
 	{ "FrameAdvance"				, Implementations::FrameAdvance,				NULL, NULL, false },
 	{ "TogglePause"					, Implementations::TogglePause,					NULL, NULL, false },
 	{ "InputRecordingModeToggle"	, Implementations::InputRecordingModeToggle,	NULL, NULL, false },
+	{ "ResetToFirstFrame"			, Implementations::ResetToFirstFrame,			NULL, NULL, false },
 	{ "States_SaveSlot0"			, Implementations::States_SaveSlot0,			NULL, NULL, false },
 	{ "States_SaveSlot1"			, Implementations::States_SaveSlot1,			NULL, NULL, false },
 	{ "States_SaveSlot2"			, Implementations::States_SaveSlot2,			NULL, NULL, false },

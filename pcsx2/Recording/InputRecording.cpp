@@ -21,9 +21,10 @@
 #include "Counters.h"
 #include "MemoryTypes.h"
 #include "SaveState.h"
+#include "ConsoleLogger.h"
 
 #include "InputRecording.h"
-#include "Recording/RecordingControls.h"
+#include "RecordingControls.h"
 
 
 // Tag and save framecount along with savestate
@@ -111,7 +112,7 @@ void InputRecording::stop()
 {
 	m_state = INPUT_RECORDING_MODE_NONE;
 	if (m_InputRecordingData.close())
-		recordingConLog(L"[REC]: InputRecording Recording Stopped.\n");
+		recordingConLog(L"[REC]: Input Recording Stopped.\n");
 }
 
 // GUI Handler - Start recording
@@ -143,11 +144,6 @@ bool InputRecording::play(wxString filename)
 	// Open the file and verify if it can be played
 	if (!m_InputRecordingData.openExisting(filename))
 		return false;
-	if (!loadFirstFrame())
-	{
-		m_InputRecordingData.close();
-		return false;
-	}
 
 	// Check if the current game matches with the one used to make the original recording
 	if (!g_Conf->CurrentIso.IsEmpty())
@@ -161,30 +157,45 @@ bool InputRecording::play(wxString filename)
 	recordingConLog(wxString::Format(L"[REC]: Author: %s\n", m_InputRecordingData.getAuthor()));
 	recordingConLog(wxString::Format(L"[REC]: Total Frames: %d\n", m_InputRecordingData.getTotalFrames()));
 	recordingConLog(wxString::Format(L"[REC]: Undo Count: %d\n", m_InputRecordingData.getUndoCount()));
+
+	if (!loadFirstFrame())
+	{
+		stop();
+		return false;
+	}
 	return true;
 }
 
 // Starts the recording at frame 0 either by loading the accompanying savestate or restarting emulation
 // TODO: fix g_framecount value when loading a savestate (fix-frame-handling branch)
+// Also TODO: Attempt to move this function out of InputRecording, similarly to InputRecordingFreeze(), due to OSDlog
 bool InputRecording::loadFirstFrame()
 {
-	if (m_InputRecordingData.fromSaveState())
+	if (m_state != INPUT_RECORDING_MODE_NONE)
 	{
-		if (CoreThread.IsOpen())
+		if (m_InputRecordingData.fromSaveState())
 		{
-			if (wxFileExists(m_InputRecordingData.getFilename() + "_SaveState.p2s"))
+			if (CoreThread.IsOpen())
 			{
-				StateCopy_LoadFromFile(m_InputRecordingData.getFilename() + "_SaveState.p2s");
-				return true;
+				if (wxFileExists(m_InputRecordingData.getFilename() + "_SaveState.p2s"))
+				{
+					OSDlog(Color_StrongGreen, true, " > Loading %s_SaveState.p2s", m_InputRecordingData.getFilename().c_str());
+					StateCopy_LoadFromFile(m_InputRecordingData.getFilename() + "_SaveState.p2s");
+					return true;
+				}
+				recordingConLog(wxString::Format("[REC]: Could not locate savestate file at location - %s_SaveState.p2s\n", m_InputRecordingData.getFilename()));
 			}
-			recordingConLog(wxString::Format("[REC]: Could not locate savestate file at location - %s_SaveState.p2s\n", m_InputRecordingData.getFilename()));
+			else
+				recordingConLog(L"[REC]: Game is not open, cannot load the savestate accompanying the current recording.\n");
 		}
 		else
-			recordingConLog(L"[REC]: Game is not open, cannot load the savestate accompanying the current recording.\n");
-		return false;
+		{
+			OSDlog(Color_StrongGreen, true, " > Resetting Emulation");
+			sApp.SysExecute();
+			return true;
+		}
 	}
-	sApp.SysExecute();
-	return true;
+	return false;
 }
 
 wxString InputRecording::resolveGameName()
