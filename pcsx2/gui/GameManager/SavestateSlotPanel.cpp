@@ -19,6 +19,7 @@
 
 #include "App.h"
 #include "Saveslots.h"
+#include "Util.h"
 
 // TODO - Known Issues
 // - Loading all bitmaps is a little slow, and it probably shouldn't be, need to track down where the time-waste is
@@ -28,11 +29,19 @@
 //     - https://forums.wxwidgets.org/viewtopic.php?t=20681
 // - I'd like to add savestate version and BIOS information, but havn't figured out how to extract that info _yet_
 // - Likely some unneeded flickering, probably refresh'ing/layout'ing too much
-SavestateSlotPanel::SavestateSlotPanel(wxWindow* parent, int slot, bool isBackup, wxDateTime updatedAt, bool isEmpty, bool isShown)
+SavestateSlotPanel::SavestateSlotPanel(wxWindow* parent, AppConfig::GameManagerOptions& options, int slot, bool isBackup, wxDateTime updatedAt, bool isEmpty, bool isShown)
 	: wxPanel(parent, wxID_ANY)
+	, options(options)
 	, slot(slot)
 	, backup(isBackup)
 {
+	// Determine if the user's system color theme uses light or dark text.
+	// Since the GameManager highlights rows via background color changing
+	// the color must be adjusted according the user's text color.
+	wxColour clr = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+	GuiUtilities::HSLColor hsl = GuiUtilities::rgbToHsl(clr);
+	useDarkColours = hsl.lightness > 200;
+
 	expanded = false;
 	this->updatedAt = updatedAt;
 	this->isEmpty = isEmpty;
@@ -49,11 +58,10 @@ void SavestateSlotPanel::initComponents()
 	expandedMetadataSizer->AddGrowableCol(0);
 
 	// Widget Creation
+	initPreview();
 	collapsedLabel = new wxStaticText(this, wxID_ANY, getLabel(false));
-	collapsedPreview = createPreview(1);
 	expandedLabel = new wxStaticText(this, wxID_ANY, getLabel(true));
 	expandedTimestamp = new wxStaticText(this, wxID_ANY, getTimestamp());
-	expandedPreview = createPreview(2);
 	collapsedBackupLeftPad = new wxStaticText(this, wxID_ANY, "");
 	expandedBackupLeftPad = new wxStaticText(this, wxID_ANY, "");
 
@@ -74,7 +82,7 @@ void SavestateSlotPanel::initComponents()
 	if (States_GetCurrentSlot() == slot)
 	{
 		slotSelected = true;
-		SetBackgroundColour(slotSelectedColour);
+		SetBackgroundColour(useDarkColours ? slotSelectedColourDark : slotSelectedColour);
 	}
 
 	// Bind Events
@@ -83,23 +91,35 @@ void SavestateSlotPanel::initComponents()
 	else
 		bindClickEvents({this, collapsedLabel, collapsedPreview, expandedLabel, expandedTimestamp, expandedPreview});
 
-	// Display Correct Sizer
+	SetMaxSize(wxSize(options.DisplaySize.GetWidth(), -1));
+	// Display Correct Sizerap
 	SetSizer(expanded ? expandedSizer : collapsedSizer, false);
 	collapsedSizer->Show(!expanded);
 	expandedSizer->Show(expanded);
 }
 
-wxGenericStaticBitmap* SavestateSlotPanel::createPreview(int scaleFactor)
+// TODO - confirm if wxGenericStaticBitmap causes issues on linux
+void SavestateSlotPanel::initPreview()
 {
-	wxGenericStaticBitmap* bitmap = new wxGenericStaticBitmap(this, wxID_ANY, wxBitmap());
 	if (States_SlotHasImagePreview(slot))
 	{
-		wxImage img = wxImage(States_SlotImagePreviewPath(slot, backup), wxBITMAP_TYPE_PNG);
-		img.Rescale(baseImageX * scaleFactor, baseImageY * scaleFactor);
-		collapsedPreview->SetMinSize(img.GetSize());
-		collapsedPreview->SetBitmap(wxBitmap(img, wxBITMAP_TYPE_PNG));
+		wxImage img;
+		// TODO - I removed the _T, it _really_ shouldn't be required...but might break linux again
+		if (img.LoadFile(States_SlotImagePreviewPath(slot, backup)))
+		{
+			img.Rescale(baseImageX, baseImageY);
+			collapsedPreview->SetMinSize(img.GetSize());
+			collapsedPreview->SetBitmap(wxBitmap(img, wxBITMAP_TYPE_PNG));
+			img.Rescale(baseImageX * expandedPreviewScaleFactor, baseImageY * expandedPreviewScaleFactor);
+			expandedPreview->SetMinSize(img.GetSize());
+			expandedPreview->SetBitmap(wxBitmap(img, wxBITMAP_TYPE_PNG));
+		}
 	}
-	return bitmap;
+	else
+	{
+		collapsedPreview = new wxStaticBitmap(this, wxID_ANY, wxBitmap());
+		expandedPreview = new wxStaticBitmap(this, wxID_ANY, wxBitmap());
+	}
 }
 
 void SavestateSlotPanel::bindClickEvents(std::vector<wxWindow*> args)
@@ -115,7 +135,7 @@ void SavestateSlotPanel::panelItemClicked(wxMouseEvent& evt)
 {
 	// Deselect all other panels
 	wxGetApp().GetGameManagerFramePtr()->getSavestateTab()->unhighlightSlots();
-	SetBackgroundColour(slotHighlightedColour);
+	SetBackgroundColour(useDarkColours ? slotHighlightedColourDark : slotHighlightedColour);
 	expanded = true;
 	SetSizer(expandedSizer, false);
 	collapsedSizer->Show(!expanded);
@@ -185,17 +205,8 @@ void SavestateSlotPanel::updatePreview()
 {
 	if (isEmpty)
 		return; // Don't render a screenshot for an empty slot, even if it exists
-	if (States_SlotHasImagePreview(slot, backup))
-	{
-		wxImage img = wxImage(States_SlotImagePreviewPath(slot, backup), wxBITMAP_TYPE_PNG);
-		img.Rescale(baseImageX, baseImageY);
-		collapsedPreview->SetMinSize(img.GetSize());
-		collapsedPreview->SetBitmap(wxBitmap(img, wxBITMAP_TYPE_PNG));
-		img.Rescale(baseImageX * 2, baseImageY * 2);
-		expandedPreview->SetBitmap(wxBitmap(img));
-		expandedPreview->SetMinSize(img.GetSize());
-		Refresh();
-	}
+	initPreview();
+	Refresh();
 }
 
 void SavestateSlotPanel::selectSlot(bool selected)
@@ -203,7 +214,7 @@ void SavestateSlotPanel::selectSlot(bool selected)
 	wxGetApp().GetGameManagerFramePtr()->getSavestateTab()->unhighlightSlots();
 	slotSelected = selected;
 	if (selected)
-		SetBackgroundColour(slotSelectedColour);
+		SetBackgroundColour(useDarkColours ? slotSelectedColourDark : slotSelectedColour);
 	else
 		SetBackgroundColour(wxNullColour);
 	Refresh();
@@ -215,7 +226,7 @@ void SavestateSlotPanel::unhighlightAndCollapse()
 	if (slotSelected)
 	{
 		changeDetected = GetBackgroundColour() != slotSelectedColour;
-		SetBackgroundColour(slotSelectedColour);
+		SetBackgroundColour(useDarkColours ? slotSelectedColourDark : slotSelectedColour);
 	}
 	else
 	{

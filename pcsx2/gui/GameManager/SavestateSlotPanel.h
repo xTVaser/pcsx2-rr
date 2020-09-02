@@ -15,13 +15,15 @@
 
 #pragma once
 
-#include <wx/generic/statbmpg.h>
+#include "AppConfig.h"
+
+#include <wx/statbmp.h>
 #include <wx/wx.h>
 
 class SavestateSlotPanel : public wxPanel
 {
 public:
-	SavestateSlotPanel(wxWindow* parent, int slot, bool isBackup, wxDateTime updatedAt, bool isEmpty, bool isShown = true);
+	SavestateSlotPanel(wxWindow* parent, AppConfig::GameManagerOptions& options, int slot, bool isBackup, wxDateTime updatedAt, bool isEmpty, bool isShown = true);
 
 	void setTimestamp(wxDateTime updatedAt);
 	void setIsEmpty(bool isEmpty);
@@ -32,11 +34,18 @@ public:
 	void selectSlot(bool selected = true);
 
 private:
+	AppConfig::GameManagerOptions& options;
+
 	const wxColour slotSelectedColour = wxColour(196, 238, 255);
+	const wxColour slotSelectedColourDark = wxColour(0, 37, 51);
 	const wxColour slotHighlightedColour = wxColour(77, 204, 255);
+	const wxColour slotHighlightedColourDark = wxColour(0, 55, 77);
+
+	bool useDarkColours = false;
 
 	const int baseImageX = 133;
 	const int baseImageY = 100;
+	const int expandedPreviewScaleFactor = 2;
 
 	const int slot = 0;
 	const bool backup = false;
@@ -46,11 +55,11 @@ private:
 	bool isEmpty;
 
 	void initComponents();
+	void initPreview();
 	void bindClickEvents(std::vector<wxWindow*> args);
 	void panelItemClicked(wxMouseEvent& evt);
 	void panelItemDoubleClicked(wxMouseEvent& evt);
 
-	wxGenericStaticBitmap* createPreview(int scaleFactor = 1);
 	wxString getTimestamp();
 	wxString getLabel(bool expandedVersion);
 
@@ -59,7 +68,7 @@ private:
 	wxStaticText* collapsedLabel;
 	// wxWidgets doesn't allow for non-uniform border amounts, so we have to add a dummy element
 	wxStaticText* collapsedBackupLeftPad;
-	wxGenericStaticBitmap* collapsedPreview;
+	wxStaticBitmap* collapsedPreview;
 	/// Expanded Widgets
 	wxBoxSizer* expandedSizer;
 	wxFlexGridSizer* expandedMetadataSizer;
@@ -67,5 +76,5 @@ private:
 	wxStaticText* expandedTimestamp;
 	// wxWidgets doesn't allow for non-uniform border amounts, so we have to add a dummy element
 	wxStaticText* expandedBackupLeftPad;
-	wxGenericStaticBitmap* expandedPreview;
+	wxStaticBitmap* expandedPreview;
 };
