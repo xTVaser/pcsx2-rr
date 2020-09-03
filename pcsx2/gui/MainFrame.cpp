@@ -171,7 +171,7 @@ void MainEmuFrame::OnMoveAround( wxMoveEvent& evt )
 				// On windows, there seems to be an implicit gap between the main frame and the console logger
 				// But on linux this isn't the case, and the windows being so close together looks crowded / slightly cuts off text.
 			#if defined(__unix__)
-				g_Conf->ProgLogBox.DisplayPosition = wxPoint(GetRect().GetTopRight().x + 16, GetRect().GetBottomRight().y);
+				g_Conf->ProgLogBox.DisplayPosition = wxPoint(GetRect().GetTopRight().x + 16, GetRect().GetTopRight().y);
 			#else
 				g_Conf->ProgLogBox.DisplayPosition = GetRect().GetTopRight();
 			#endif

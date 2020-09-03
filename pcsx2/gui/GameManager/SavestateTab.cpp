@@ -46,6 +46,8 @@ SavestateTab::SavestateTab(wxWindow* parent, AppConfig::GameManagerOptions& opti
 
 	savestateContainer->AddGrowableCol(0);
 	SetSizer(savestateContainer);
+
+	refreshSlots();
 }
 
 void SavestateTab::changeSelectedSlot(int slotNum)

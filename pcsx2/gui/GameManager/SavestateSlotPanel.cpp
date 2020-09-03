@@ -61,12 +61,11 @@ void SavestateSlotPanel::initComponents()
 	initPreview();
 	collapsedLabel = new wxStaticText(this, wxID_ANY, getLabel(false));
 	expandedLabel = new wxStaticText(this, wxID_ANY, getLabel(true));
-	expandedTimestamp = new wxStaticText(this, wxID_ANY, getTimestamp());
+	
 	collapsedBackupLeftPad = new wxStaticText(this, wxID_ANY, "");
 	expandedBackupLeftPad = new wxStaticText(this, wxID_ANY, "");
 
 	// Add to Sizers
-	expandedMetadataSizer->Add(expandedLabel, 0, 0, 0);
 	if (backup)
 	{
 		collapsedSizer->Add(collapsedBackupLeftPad, -1, wxLEFT, 15);
@@ -74,9 +73,14 @@ void SavestateSlotPanel::initComponents()
 	}
 	collapsedSizer->Add(collapsedLabel, 2, wxALIGN_CENTER_VERTICAL | wxALL, 10);
 	collapsedSizer->Add(collapsedPreview, 1, wxALL | wxEXPAND, 5);
+	expandedMetadataSizer->Add(expandedLabel, 0, 0, 0);
+	if (!backup)
+	{
+		expandedTimestamp = new wxStaticText(this, wxID_ANY, getTimestamp());
+		expandedMetadataSizer->Add(expandedTimestamp, 0, 0, 0);
+	}	
 	expandedSizer->Add(expandedMetadataSizer, 1, wxALIGN_CENTER_VERTICAL | wxALL, 10);
 	expandedSizer->Add(expandedPreview, 1, wxALL | wxEXPAND, 5);
-	expandedMetadataSizer->Add(expandedTimestamp, 0, 0, 0);
 
 	// Background Coloring
 	if (States_GetCurrentSlot() == slot)
@@ -99,26 +103,30 @@ void SavestateSlotPanel::initComponents()
 }
 
 // TODO - confirm if wxGenericStaticBitmap causes issues on linux
-void SavestateSlotPanel::initPreview()
+void SavestateSlotPanel::initPreview(bool update)
 {
-	if (States_SlotHasImagePreview(slot))
+	if (!update)
+	{
+		// Linux SegFault Especially - Must be initialized before performing operations
+		collapsedPreview = new wxStaticBitmap(this, wxID_ANY, wxBitmap());
+		expandedPreview = new wxStaticBitmap(this, wxID_ANY, wxBitmap());
+	}
+	if (wxFileExists(States_SlotImagePreviewPath(slot, backup)))
 	{
 		wxImage img;
-		// TODO - I removed the _T, it _really_ shouldn't be required...but might break linux again
-		if (img.LoadFile(States_SlotImagePreviewPath(slot, backup)))
+		if (img.LoadFile(States_SlotImagePreviewPath(slot, backup)) && img.IsOk())
 		{
-			img.Rescale(baseImageX, baseImageY);
+			img.Rescale(baseImageX, baseImageY, wxIMAGE_QUALITY_HIGH);
 			collapsedPreview->SetMinSize(img.GetSize());
 			collapsedPreview->SetBitmap(wxBitmap(img, wxBITMAP_TYPE_PNG));
-			img.Rescale(baseImageX * expandedPreviewScaleFactor, baseImageY * expandedPreviewScaleFactor);
+		}
+		// Get the original file again so we are scaling from the original size
+		if (img.LoadFile(States_SlotImagePreviewPath(slot, backup)) && img.IsOk())
+		{
+			img.Rescale(baseImageX * expandedPreviewScaleFactor, baseImageY * expandedPreviewScaleFactor, wxIMAGE_QUALITY_HIGH);
 			expandedPreview->SetMinSize(img.GetSize());
 			expandedPreview->SetBitmap(wxBitmap(img, wxBITMAP_TYPE_PNG));
 		}
-	}
-	else
-	{
-		collapsedPreview = new wxStaticBitmap(this, wxID_ANY, wxBitmap());
-		expandedPreview = new wxStaticBitmap(this, wxID_ANY, wxBitmap());
 	}
 }
 
@@ -144,6 +152,8 @@ void SavestateSlotPanel::panelItemClicked(wxMouseEvent& evt)
 	wxGetApp().GetGameManagerFramePtr()->getSavestateTab()->refreshSlots();
 }
 
+// TODO - forbid this if no game is active... 
+// though Saveslots.cpp seems to already handle it, maybe its the SetCurrentSlot that's the problem
 void SavestateSlotPanel::panelItemDoubleClicked(wxMouseEvent& evt)
 {
 	wxGetApp().GetGameManagerFramePtr()->getSavestateTab()->unhighlightSlots();
@@ -190,13 +200,14 @@ void SavestateSlotPanel::updateLabel()
 	wxString newExpandedTimestamp = getTimestamp();
 	changeDetected = !newCollapsedLabel.IsSameAs(collapsedLabel->GetLabel()) ||
 					 !newExpandedLabel.IsSameAs(expandedLabel->GetLabel()) ||
-					 !newExpandedTimestamp.IsSameAs(expandedTimestamp->GetLabel());
+					 (!backup && !newExpandedTimestamp.IsSameAs(expandedTimestamp->GetLabel()));
 
 	if (changeDetected)
 	{
 		collapsedLabel->SetLabel(newCollapsedLabel);
 		expandedLabel->SetLabel(newExpandedLabel);
-		expandedTimestamp->SetLabel(newExpandedTimestamp);
+		if (!backup)
+			expandedTimestamp->SetLabel(newExpandedTimestamp);
 		Refresh();
 	}
 }
@@ -205,7 +216,7 @@ void SavestateSlotPanel::updatePreview()
 {
 	if (isEmpty)
 		return; // Don't render a screenshot for an empty slot, even if it exists
-	initPreview();
+	initPreview(true);
 	Refresh();
 }
 

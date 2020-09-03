@@ -55,7 +55,7 @@ private:
 	bool isEmpty;
 
 	void initComponents();
-	void initPreview();
+	void initPreview(bool update = false);
 	void bindClickEvents(std::vector<wxWindow*> args);
 	void panelItemClicked(wxMouseEvent& evt);
 	void panelItemDoubleClicked(wxMouseEvent& evt);
