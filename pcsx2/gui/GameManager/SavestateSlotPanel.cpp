@@ -95,8 +95,9 @@ void SavestateSlotPanel::initComponents()
 	else
 		bindClickEvents({this, collapsedLabel, collapsedPreview, expandedLabel, expandedTimestamp, expandedPreview});
 
+	// TODO - since i now require this...need to make resize events from the parent window update it
 	SetMaxSize(wxSize(options.DisplaySize.GetWidth(), -1));
-	// Display Correct Sizerap
+	// Display Correct Sizer
 	SetSizer(expanded ? expandedSizer : collapsedSizer, false);
 	collapsedSizer->Show(!expanded);
 	expandedSizer->Show(expanded);
@@ -108,8 +109,8 @@ void SavestateSlotPanel::initPreview(bool update)
 	if (!update)
 	{
 		// Linux SegFault Especially - Must be initialized before performing operations
-		collapsedPreview = new wxStaticBitmap(this, wxID_ANY, wxBitmap());
-		expandedPreview = new wxStaticBitmap(this, wxID_ANY, wxBitmap());
+		collapsedPreview = new wxGenericStaticBitmap(this, wxID_ANY, wxBitmap());
+		expandedPreview = new wxGenericStaticBitmap(this, wxID_ANY, wxBitmap());
 	}
 	if (wxFileExists(States_SlotImagePreviewPath(slot, backup)))
 	{

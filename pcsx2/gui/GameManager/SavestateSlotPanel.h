@@ -17,6 +17,7 @@
 
 #include "AppConfig.h"
 
+#include <wx/generic/statbmpg.h>
 #include <wx/statbmp.h>
 #include <wx/wx.h>
 
@@ -68,7 +69,7 @@ private:
 	wxStaticText* collapsedLabel;
 	// wxWidgets doesn't allow for non-uniform border amounts, so we have to add a dummy element
 	wxStaticText* collapsedBackupLeftPad;
-	wxStaticBitmap* collapsedPreview;
+	wxGenericStaticBitmap* collapsedPreview;
 	/// Expanded Widgets
 	wxBoxSizer* expandedSizer;
 	wxFlexGridSizer* expandedMetadataSizer;
@@ -76,5 +77,5 @@ private:
 	wxStaticText* expandedTimestamp;
 	// wxWidgets doesn't allow for non-uniform border amounts, so we have to add a dummy element
 	wxStaticText* expandedBackupLeftPad;
-	wxStaticBitmap* expandedPreview;
+	wxGenericStaticBitmap* expandedPreview;
 };
