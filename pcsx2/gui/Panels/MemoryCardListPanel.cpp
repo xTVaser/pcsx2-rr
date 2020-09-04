@@ -526,7 +526,7 @@ void Panels::MemoryCardListPanel_Simple::Apply()
 
 		if (g_Conf->Mcd[slot].Enabled) {
 			used++;
-			Console.WriteLn(L"slot[%d]='%s'", slot, g_Conf->Mcd[slot].Filename);
+			Console.WriteLn(L"slot[%d]='%s'", slot, WX_STR((wxString)g_Conf->Mcd[slot].Filename));
 		}
 	}
 	if (!used)
@@ -632,9 +632,9 @@ void Panels::MemoryCardListPanel_Simple::UiCreateNewCard( McdSlotItem& card )
 		card.Filename  = dialog.result_createdMcdFilename;
 		card.IsPresent = true;
 		if (card.Slot >= 0) {
-			Console.WriteLn(L"Setting new memory card to slot %u: '%s'", card.Slot, card.Filename);
+			Console.WriteLn(L"Setting new memory card to slot %u: '%s'", card.Slot, WX_STR((wxString)card.Filename));
 		} else {
-			Console.WriteLn(L"Created a new unassigned memory card file: '%s'", card.Filename);
+			Console.WriteLn(L"Created a new unassigned memory card file: '%s'", WX_STR((wxString)card.Filename));
 		}
 	} else {
 		card.IsEnabled = false;

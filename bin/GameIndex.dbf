@@ -171,7 +171,6 @@ Region = PAL-M5
 	comment=You must enable the EETimingHack when playing the WRC demo to avoids random hangs.
 	comment=You must change the EE Clamping mode to Full when playing the Klonoa 2 demo to avoids misplaced objects.
 	comment=You must change the VU Clamping mode to extra when playing the Klonoa 2 demo to fixes reflections issues.
-	comment=You must use the ZeroSPU2 plugin when playing the Klonoa 2 demo to avoids bad/missing sounds.
 [/patches]
 ---------------------------------------------
 Serial = PBPX-95517
@@ -1829,6 +1828,7 @@ Serial = SCES-51685
 Name   = Primal
 Region = PAL-E-R
 vuRoundMode = 0 // Fixes SPS.
+vuRoundMode = 0 // Fix SPS.
 ---------------------------------------------
 Serial = SCES-51706
 Name   = Amplitude
@@ -4477,7 +4477,7 @@ Region = NTSC-J
 [patches = A3D63039]
 	// Reduces JPEG quality to its minimum for save file thumbnails. This prevents
 	// the game from calling its own exit function, which was strangely its safety
-	// mechanism for when a captured thumbnail exceeded 4 KB in size. 
+	// mechanism for when a captured thumbnail exceeded 4 KB in size.
 	comment=Save Point Crash Prevention
 	author=pandubz, PSI, turtleli
 	patch=1,EE,20285f48,extended,24040000
@@ -6691,7 +6691,7 @@ Region = PAL-E
 ---------------------------------------------
 Serial = SLED-52597
 Name   = Burnout 3 - Takedown [Demo]
-Region = PAL-Unk 
+Region = PAL-Unk
 ---------------------------------------------
 Serial = SLED-52875
 Name   = Sega Superstars [Demo]
@@ -17475,7 +17475,7 @@ Region = PAL-G
 Serial = SLES-54878
 Name   = Naruto - Ultimate Ninja 2
 Region = PAL-M5
-vuClampMode = 0 // Fixes glow effects. 
+vuClampMode = 0 // Fixes glow effects.
 ---------------------------------------------
 Serial = SLES-54879
 Name   = WWE SmackDown vs. Raw 2008
@@ -30979,12 +30979,7 @@ Region = NTSC-J
 Serial = SLPS-20408
 Name   = Card Captor Sakura - Sakura-Chan to Asobo!
 Region = NTSC-J
-Compat = 4
-[patches = 08FB9DCF]
-	comment=Patches by Nachbrenner
-	// Skip eyetoy check.
-	patch=0,EE,013385b0,word,00000000
-[/patches]
+Compat = 5
 ---------------------------------------------
 Serial = SLPS-20409
 Name   = Phantom Kingdom [Limited Edition]
@@ -32750,7 +32745,7 @@ Region = NTSC-J
 Serial = SLPS-25398
 Name   = Naruto - Narutimett Hero 2
 Region = NTSC-J
-vuClampMode = 0 // Fixes glow effects. 
+vuClampMode = 0 // Fixes glow effects.
 ---------------------------------------------
 Serial = SLPS-25399
 Name   = Keroro Gunsou - Mero Mero Battle Royale
@@ -34740,7 +34735,7 @@ Region = NTSC-J
 [patches = A3D63039]
 	// Reduces JPEG quality to its minimum for save file thumbnails. This prevents
 	// the game from calling its own exit function, which was strangely its safety
-	// mechanism for when a captured thumbnail exceeded 4 KB in size. 
+	// mechanism for when a captured thumbnail exceeded 4 KB in size.
 	comment=Save Point Crash Prevention
 	author=pandubz, PSI, turtleli
 	patch=1,EE,20285f48,extended,24040000
@@ -34753,7 +34748,7 @@ Compat = 5
 [patches = A3D63039]
 	// Reduces JPEG quality to its minimum for save file thumbnails. This prevents
 	// the game from calling its own exit function, which was strangely its safety
-	// mechanism for when a captured thumbnail exceeded 4 KB in size. 
+	// mechanism for when a captured thumbnail exceeded 4 KB in size.
 	comment=Save Point Crash Prevention
 	author=pandubz, PSI, turtleli
 	patch=1,EE,20285f48,extended,24040000
@@ -35191,7 +35186,7 @@ Region = NTSC-J
 [patches = A3D63039]
 	// Reduces JPEG quality to its minimum for save file thumbnails. This prevents
 	// the game from calling its own exit function, which was strangely its safety
-	// mechanism for when a captured thumbnail exceeded 4 KB in size. 
+	// mechanism for when a captured thumbnail exceeded 4 KB in size.
 	comment=Save Point Crash Prevention
 	author=pandubz, PSI, turtleli
 	patch=1,EE,20285f48,extended,24040000
@@ -37272,7 +37267,7 @@ Compat = 5
 [patches = 6D1276AB]
 	// Reduces JPEG quality to its minimum for save file thumbnails. This prevents
 	// the game from calling its own exit function, which was strangely its safety
-	// mechanism for when a captured thumbnail exceeded 4 KB in size. 
+	// mechanism for when a captured thumbnail exceeded 4 KB in size.
 	comment=Save Point Crash Prevention
 	author=pandubz, PSI, turtleli
 	patch=1,EE,20289db0,extended,24040000
@@ -37569,7 +37564,7 @@ Compat = 5
 vuClampMode = 2
 ---------------------------------------------
 Serial = SLUS-20532
-Name   = Disney's Golf
+Name   = Disney Golf
 Region = NTSC-U
 Compat = 5
 ---------------------------------------------
@@ -42536,7 +42531,7 @@ Serial = SLUS-21575
 Name   = Naruto - Ultimate Ninja 2
 Region = NTSC-U
 Compat = 5
-vuClampMode = 0 // Fixes glow effects. 
+vuClampMode = 0 // Fixes glow effects.
 ---------------------------------------------
 Serial = SLUS-21576
 Name   = Rayman - Raving Rabbids
@@ -42666,7 +42661,7 @@ Name   = Sprint Cars 2 - Showdown at Eldora
 Region = NTSC-U
 [patches = 75D13A19]
 	author=kozarovv
-	// Rearrange COP2 instructions to fix bad mac flag stuff. Fix for bouncing vehicles. 
+	// Rearrange COP2 instructions to fix bad mac flag stuff. Fix for bouncing vehicles.
 	patch=1,EE,0027573c,word,48448800
 	patch=1,EE,00275740,word,309000E0
 	patch=1,EE,00275748,word,4BF0116C
@@ -43374,7 +43369,7 @@ Region = NTSC-U
 Compat = 5
 [patches = 1B6C22B9]
 	author=PSI
-	// This game intentionally corrupts a DMA transfer by writing junk values to a buffer just before starting a transfer. 
+	// This game intentionally corrupts a DMA transfer by writing junk values to a buffer just before starting a transfer.
 	// Normally this would require EE data cache, but this patch NOPs out the bad writes. This is likely anti-emulation code.
 	patch=1,EE,003cb014,word,00000000
 	patch=1,EE,003cb124,word,00000000

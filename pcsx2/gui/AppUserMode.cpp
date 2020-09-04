@@ -19,7 +19,6 @@
 #include "Utilities/PathUtils.h"
 #include "Dialogs/ModalPopups.h"
 #include "AppConfig.h"
-
 #include <wx/stdpaths.h>
 
 #ifdef __WXMSW__
@@ -83,7 +82,7 @@ bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder, std::st
 		wxDirName folder( testFolder + PermissionFolders[i] );
 
 		//if (!folder.Mkdir())
-			//createme += L"\t" + folder.ToString() + L"\n";
+			//createme += L"\t" + folder.ToString() + L"\n";wxFileConfig* OpenFileConfig( const std::string& filename )
 
 		//if (!folder.IsWritable())
 			//accessme += L"\t" + folder.ToString() + L"\n";
@@ -113,8 +112,8 @@ wxConfigBase* Pcsx2App::TestForPortableInstall()
 {
 	InstallationMode = InstallMode_Registered;
 
-	std::string portableJsonFile( GetPortableJsonPath() );
-	std::string portableDocsFolder( portableJsonFile );
+	std::string portableJsonFile = GetPortableJsonPath();
+	std::string portableDocsFolder = portableJsonFile;
 
 	if (Startup.PortableMode || !portableJsonFile.empty())
 	{
@@ -122,7 +121,7 @@ wxConfigBase* Pcsx2App::TestForPortableInstall()
 		if (Startup.PortableMode)
 			Console.WriteLn( L"(UserMode) Portable mode requested via commandline switch!" );
 		else
-			Console.WriteLn( L"(UserMode) Found portable install json @ %s", FilenameStr );
+			Console.WriteLn( L"(UserMode) Found portable install json @ %s", WX_STR((wxString)FilenameStr) );
 
 		// Just because the portable json file exists doesn't mean we can actually run in portable
 		// mode.  In order to determine our read/write permissions to the PCSX2, we must try to
