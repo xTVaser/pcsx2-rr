@@ -26,6 +26,8 @@
 
 
 #include <wx/stdpaths.h>
+#include <wx/fileconf.h>
+
 #include "DebugTools/Debug.h"
 #include <memory>
 
@@ -931,8 +933,6 @@ void AppConfig::FramerateOptions::LoadSave( nlohmann::json& json )
 	//ScopedIniVurboScalar );
 	//json["SlomoScalar"] = SlomoScalar;
 
-	json["SkipOnLimit"] = SkipOnLimit;
-	json["SkipOnTurbo"] = SkipOnTurbo;
 }
 
 AppConfig::UiTemplateOptions::UiTemplateOptions()
@@ -1097,15 +1097,13 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 	return true;
 }
 
-
-wxFileConfig* OpenFileConfig( const std::string& filename )
+wxFileConfig* OpenFileConfig( std::string filename )
 {
 	return new wxFileConfig( wxEmptyString, wxEmptyString, wxString(filename), wxEmptyString, wxCONFIG_USE_RELATIVE_PATH );
 }
 
 void RelocateLogfile()
 {
-
 
 	folderUtils.CreateFolder(g_Conf->Folders.Logs);
 
@@ -1159,7 +1157,7 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 
 	// Bind into wxConfigBase to allow wx to use our config internally, and delete whatever
 	// comes out (cleans up prev config, if one).
-	delete wxConfigBase::Set( OpenFileConfig( std::string(jsonFilename) ) );
+	delete wxConfigBase::Set( OpenFileConfig( (std::string)jsonFilename ) );
 	GetAppConfig()->SetRecordDefaults(true);
 
 	if( !overwrite )

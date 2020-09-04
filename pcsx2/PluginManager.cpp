@@ -1094,7 +1094,7 @@ void SysCorePlugins::Load( const wxString (&folders)[PluginId_Count] )
 
 	wxDoNotLogInThisScope please;
 
-	Console.WriteLn(Color_StrongBlue, L"\nLoading plugins from %s...", g_Conf->Folders[FolderId_Plugins]);
+	Console.WriteLn(Color_StrongBlue, L"\nLoading plugins from %s...", WX_STR((wxString)g_Conf->Folders[FolderId_Plugins]));
 
 	ConsoleIndentScope indent;
 	const PluginInfo* pi = tbl_PluginInfo; do

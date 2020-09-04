@@ -394,7 +394,7 @@ extern void ConLog_LoadSaveSettings( nlohmann::json &json );
 extern void SysTraceLog_LoadSaveSettings( nlohmann::json &json );
 
 
-extern wxFileConfig* OpenFileConfig( std::string& filename );
+extern wxFileConfig* OpenFileConfig( std::string filename );
 extern void RelocateLogfile();
 extern void AppConfig_OnChangedSettingsFolder( bool overwrite =  false );
 extern wxConfigBase* GetAppConfig();

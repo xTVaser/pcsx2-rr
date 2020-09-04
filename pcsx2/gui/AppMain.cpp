@@ -71,7 +71,7 @@ std::unique_ptr<AppConfig> g_Conf;
 AspectRatioType iniAR;
 bool switchAR;
 
-PathUtils		folderUtils;
+//PathUtils		folderUtils;
 
 static bool HandlePluginError( BaseException& ex )
 {

@@ -511,7 +511,7 @@ void Panels::PluginSelectorPanel::Apply()
 			.SetDiagMsg(ex.FormatDiagnosticMessage())
 			.SetUserMsg(pxsFmt(
 				_("The selected %s plugin failed to load.\n\nReason: %s\n\n"),
-				plugname, WX_STR(ex.FormatDisplayMessage())
+				WX_STR((wxString)plugname), WX_STR(ex.FormatDisplayMessage())
 			) + GetApplyFailedMsg());
 	}
 }

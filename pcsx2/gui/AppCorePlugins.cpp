@@ -410,7 +410,7 @@ protected:
 //  Public API / Interface
 // --------------------------------------------------------------------------------------
 
-int EnumeratePluginsInFolder(wxDirName& searchpath, wxArrayString* dest)
+int EnumeratePluginsInFolder(wxDirName searchpath, wxArrayString* dest)
 {
 	if (!searchpath.Exists()) return 0;
 
