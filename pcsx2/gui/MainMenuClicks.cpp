@@ -80,8 +80,8 @@ static void WipeSettings()
 	wxGetApp().CleanupRestartable();
 	wxGetApp().CleanupResources();
 
-	wxRemoveFile( GetUiSettingsFilename() );
-	wxRemoveFile( GetVmSettingsFilename() );
+	wxRemoveFile( (std::string)GetUiSettingsFilename() );
+	wxRemoveFile( (std::string)GetVmSettingsFilename() );
 
 	// FIXME: wxRmdir doesn't seem to work here for some reason (possible file sharing issue
 	// with a plugin that leaves a file handle dangling maybe?).  But deleting the inis folder

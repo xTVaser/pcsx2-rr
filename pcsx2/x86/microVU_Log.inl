@@ -1,6 +1,6 @@
 /*  PCSX2 - PS2 Emulator for PCs
  *  Copyright (C) 2002-2010  PCSX2 Dev Team
- * 
+ *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
  *  ation, either version 3 of the License, or (at your option) any later version.
@@ -12,7 +12,7 @@
  *  You should have received a copy of the GNU General Public License along with PCSX2.
  *  If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #pragma once
 
 #include "Utilities/AsciiFile.h"
@@ -47,7 +47,7 @@ void __mVUdumpProgram(microVU& mVU, microProgram& prog) {
 	int bPC		= iPC;
 	mVUbranch	= 0;
 
-	const wxString logname(wxsFormat(L"microVU%d prog - %02d.html", mVU.index, prog.idx));
+	const std::string logname(wxsFormat("microVU%d prog - %02d.html", mVU.index, prog.idx));
 	mVU.logFile = std::unique_ptr<AsciiFile>(new AsciiFile(Path::Combine(g_Conf->Folders.Logs, logname), L"w"));
 
 	mVUlog("<html>\n");

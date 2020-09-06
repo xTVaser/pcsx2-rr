@@ -42,12 +42,12 @@ std::string				PluginsFolder;
 //
 InstallationModeType		InstallationMode;
 
-static std::string GetPortableJsonPath()
+static fs::path GetPortableJsonPath()
 {
-	wxString programFullPath = wxStandardPaths::Get().GetExecutablePath();
-	std::string programDir( wxFileName(programFullPath).GetPath() );
+	fs::path programFullPath = (std::string)wxStandardPaths::Get().GetExecutablePath();
+	fs::path programDir( programFullPath);
 
-	return programDir + "portable.json";
+	return (programDir /= (fs::path)"portable.json").make_preferred();
 }
 
 static wxString GetMsg_PortableModeRights()
@@ -251,7 +251,7 @@ wxConfigBase* Pcsx2App::OpenInstallSettingsFile()
 		 folderUtils.CreateFolder(usrlocaldir);
 	}
 
-	std::string usermodefile( GetAppName() + L"-reg.json" );
+	std::string usermodefile( GetAppName() + "-reg.json" );
 
 	//usermodefile.SetPath( usrlocaldir.ToString() );
 

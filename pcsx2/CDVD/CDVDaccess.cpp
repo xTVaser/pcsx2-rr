@@ -35,6 +35,7 @@
 
 #include "DebugTools/SymbolMap.h"
 #include "AppConfig.h"
+#include "PathUtils.h"
 
 CDVD_API* CDVD = NULL;
 
@@ -328,16 +329,10 @@ CDVD_SourceType CDVDsys_GetSourceType()
 
 void CDVDsys_ChangeSource(CDVD_SourceType type)
 {
-<<<<<<< HEAD
 	if (CDVD != NULL)
 		DoCDVDclose();
 
 	switch (m_CurrentSourceType = type)
-=======
-	GetCorePlugins().Close( PluginId_CDVD );
-
-	switch( m_CurrentSourceType = type )
->>>>>>> bc83e8d92... Masive refractoring of data types WxDir, WxFileName, WxPoint into string and int array in an attempt to seperate wx from config and some GUI code. Added filessystem.hpp changed configs to .json pcsx2 doesn't compile in this commit and there's still a lot of work to be done.
 	{
 		case CDVD_SourceType::Iso:
 			CDVD = &CDVDapi_Iso;
@@ -389,16 +384,18 @@ bool DoCDVDopen()
 		return true;
 	}
 
-	wxString somepick(Path::GetFilenameWithoutExt(m_SourceFilename[CurrentSourceType]));
+	PathUtils pathUtils;
+
+	std::string somepick( Path::GetFilenameWithoutExt( m_SourceFilename[CurrentSourceType] )  );
 	//FWIW Disc serial availability doesn't seem reliable enough, sometimes it's there and sometime it's just null
 	//Shouldn't the serial be available all time? Potentially need to look into Elfreloadinfo() reliability
 	//TODO: Add extra fallback case for CRC.
-	if (somepick.IsEmpty() && !DiscSerial.IsEmpty())
-		somepick = L"Untitled-" + DiscSerial;
-	else if (somepick.IsEmpty())
-		somepick = L"Untitled";
+	if (pathUtils.DoesExist(somepick) && !DiscSerial.IsEmpty())
+		somepick = "Untitled-" + DiscSerial;
+	else if (pathUtils.Empty(somepick))
+		somepick = "Untitled";
 
-	if (g_Conf->CurrentBlockdump.empty())
+	if (pathUtils.Empty(g_Conf->CurrentBlockdump))
 		g_Conf->CurrentBlockdump = wxGetCwd();
 
 	wxString temp(Path::Combine(g_Conf->CurrentBlockdump, somepick));

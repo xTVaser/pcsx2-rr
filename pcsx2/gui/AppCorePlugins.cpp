@@ -17,7 +17,7 @@
 #include "App.h"
 #include "AppSaveStates.h"
 #include "GSFrame.h"
-
+#include "PathUtils.h"
 #include <wx/dir.h>
 #include <wx/file.h>
 
@@ -209,13 +209,13 @@ wxIMPLEMENT_DYNAMIC_CLASS( SinglePluginMethodEvent, pxActionEvent );
 static void _SetSettingsFolder()
 {
 	if (wxGetApp().Rpc_TryInvoke( _SetSettingsFolder )) return;
-	CorePlugins.SetSettingsFolder( GetSettingsFolder());
+	CorePlugins.SetSettingsFolder( (std::string)GetSettingsFolder());
 }
 
 static void _SetLogFolder()
 {
 	if (wxGetApp().Rpc_TryInvoke( _SetLogFolder )) return;
-	CorePlugins.SetLogFolder( GetLogFolder());
+	CorePlugins.SetLogFolder( (std::string)GetLogFolder());
 }
 
 void AppCorePlugins::Load( PluginsEnum_t pid, const wxString& srcfile )
@@ -341,8 +341,8 @@ void AppCorePlugins::Open()
 		return;
 	}*/
 
-    SetLogFolder( GetLogFolder());
-	SetSettingsFolder( GetSettingsFolder());
+    SetLogFolder( (std::string)GetLogFolder());
+	SetSettingsFolder( (std::string)GetSettingsFolder());
 
 	if( !NeedsOpen() ) return;
 
@@ -410,16 +410,18 @@ protected:
 //  Public API / Interface
 // --------------------------------------------------------------------------------------
 
-int EnumeratePluginsInFolder(wxDirName searchpath, wxArrayString* dest)
+int EnumeratePluginsInFolder(std::string searchpath, std::vector<std::string> dest)
 {
-	if (!searchpath.Exists()) return 0;
+	PathUtils path;
 
-	std::unique_ptr<wxArrayString> placebo;
-	wxArrayString* realdest = dest;
-	if (realdest == NULL)
+	if (!path.DoesExist(searchpath)) return 0;
+
+	std::unique_ptr<std::vector<std::string>> placebo;
+	std::vector<std::string> realdest = dest;
+	if (realdest.empty())
 	{
-		placebo = std::make_unique<wxArrayString>();
-		realdest = placebo.get();
+		placebo = std::make_unique<std::vector<std::string>>();
+		realdest = *placebo.get();
 	}
 
 #ifdef __WXMSW__
@@ -431,7 +433,12 @@ int EnumeratePluginsInFolder(wxDirName searchpath, wxArrayString* dest)
 	wxString pattern( L"*%s*" );
 #endif
 
-	wxDir::GetAllFiles( searchpath.ToString(), realdest, pxsFmt( pattern, WX_STR(wxDynamicLibrary::GetDllExt())), wxDIR_FILES );
+    for (const auto & entry : fs::directory_iterator(searchpath))
+	{
+		realdest.push_back(entry.path());
+	}
+
+	//wxDir::GetAllFiles( searchpath.ToString(), realdest, pxsFmt( pattern, WX_STR(wxDynamicLibrary::GetDllExt())), wxDIR_FILES );
 
 	// SECURITY ISSUE:  (applies primarily to Windows, but is a good idea on any platform)
 	//   The search folder order for plugins can vary across operating systems, and in some poorly designed
@@ -442,12 +449,12 @@ int EnumeratePluginsInFolder(wxDirName searchpath, wxArrayString* dest)
 	//
 	// (for details, read: http://msdn.microsoft.com/en-us/library/ff919712.aspx )
 
-	for (uint i=0; i<realdest->GetCount(); ++i )
+	for (uint i=0; i < realdest.size() ; ++i )
 	{
-		(*realdest)[i] = Path::MakeAbsolute((*realdest)[i]);
+		realdest[i] = Path::MakeAbsolute((realdest)[i]);
 	}
 
-	return realdest->GetCount();
+	return realdest.size();
 }
 
 // Posts a message to the App to reload plugins.  Plugins are loaded via a background thread

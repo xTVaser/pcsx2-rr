@@ -187,17 +187,18 @@ static int _LoadPatchFiles(const std::string& folderName, std::string& fileSpec,
 		Console.WriteLn(Color_Red, L"The %s folder ('%s') is inaccessible. Skipping...", WX_STR((wxString)friendlyName), WX_STR((wxString)folderName));
 		return 0;
 	}
-	wxDir dir(folderName);
+	ghc::filesystem::path dir(folderName);
 
 	int before = Patch.size();
-	wxString buffer;
+	std::string buffer;
 	wxTextFile f;
-	bool found = dir.GetFirst(&buffer, "*", wxDIR_FILES);
-	while (found) {
+
+	for (auto& found : dir)
+	{
 		if (std::toupper(buffer[0]) == std::toupper(fileSpec[0])) {
 			PatchesCon->WriteLn(Color_Green, L"Found %s file: '%s'", WX_STR((wxString)friendlyName), WX_STR(buffer));
 			int before = Patch.size();
-			f.Open(Path::Combine(dir.GetName(), buffer));
+			f.Open(Path::Combine(dir, buffer));
 			inifile_process(f);
 			f.Close();
 			int loaded = Patch.size() - before;
@@ -205,7 +206,6 @@ static int _LoadPatchFiles(const std::string& folderName, std::string& fileSpec,
 				loaded, WX_STR((wxString)friendlyName), WX_STR(buffer), WX_STR((wxString)folderName));
 			numberFoundPatchFiles++;
 		}
-		found = dir.GetNext(&buffer);
 	}
 
 	return Patch.size() - before;

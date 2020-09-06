@@ -565,9 +565,9 @@ bool Panels::PluginSelectorPanel::ValidateEnumerationStatus()
 
 	// Impl Note: unique_ptr used so that resources get cleaned up if an exception
 	// occurs during file enumeration.
-	std::unique_ptr<wxArrayString> pluginlist(new wxArrayString());
+	std::unique_ptr<std::vector<std::string>> pluginlist(new std::vector<std::string>());
 
-	int pluggers = EnumeratePluginsInFolder((wxDirName)m_ComponentBoxes->GetPluginsPath(), pluginlist.get());
+	int pluggers = EnumeratePluginsInFolder(m_ComponentBoxes->GetPluginsPath(), *pluginlist.get());
 
 	if( !m_FileList || (*pluginlist != *m_FileList) )
 		validated = false;
@@ -774,7 +774,7 @@ void Panels::PluginSelectorPanel::OnProgress( wxCommandEvent& evt )
 	if( DisableThreading )
 	{
 		const u32 nextidx = evtidx+1;
-		if( nextidx == m_FileList->Count() )
+		if( nextidx == m_FileList->size() )
 		{
 			wxCommandEvent done( pxEvt_EnumerationFinished );
 			GetEventHandler()->AddPendingEvent( done );
@@ -783,11 +783,11 @@ void Panels::PluginSelectorPanel::OnProgress( wxCommandEvent& evt )
 			m_EnumeratorThread->DoNextPlugin( nextidx );
 	}
 
-	m_StatusPanel->AdvanceProgress( (evtidx < m_FileList->Count()-1) ?
+	m_StatusPanel->AdvanceProgress( (evtidx < m_FileList->size()-1) ?
 		(*m_FileList)[evtidx + 1] : wxString(_("Completing tasks..."))
 	);
 
-	EnumeratedPluginInfo& result( m_EnumeratorThread->Results[evtidx] );
+	EnumeratedPluginInfo result( m_EnumeratorThread->Results[evtidx] );
 
 	ForPlugins([&] (const PluginInfo * pi) {
 		const PluginsEnum_t pid = pi->id;

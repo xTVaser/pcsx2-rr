@@ -209,7 +209,7 @@ public:
 // back on wxWidgets APIs internally, but are still helpful because some of wx's file stuff
 // has minor glitches, or requires sloppy wxFileName typecasting.
 //
-namespace Path
+/*namespace Path
 {
 extern bool IsRelative(const wxString &path);
 extern s64 GetFileSize(const wxString &path);
@@ -227,4 +227,4 @@ extern wxString GetFilename(const wxString &src);
 extern wxString GetDirectory(const wxString &src);
 extern wxString GetFilenameWithoutExt(const wxString &src);
 extern wxString GetRootDirectory(const wxString &src);
-}
+}*/

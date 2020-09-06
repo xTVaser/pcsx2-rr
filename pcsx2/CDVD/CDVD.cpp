@@ -97,8 +97,8 @@ static int mg_BIToffset(u8* buffer)
 static void cdvdGetMechaVer(u8* ver)
 {
 	wxFileName mecfile(EmuConfig.BiosFilename);
-	mecfile.SetExt(L"mec");
-	const wxString fname(mecfile.GetFullPath());
+	mecfile.SetExt( L"mec" );
+	const std::string fname( mecfile.GetFullPath() );
 
 	// Likely a bad idea to go further
 	if (mecfile.IsDir())
@@ -144,7 +144,7 @@ static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 {
 	wxFileName nvmfile(EmuConfig.BiosFilename);
 	nvmfile.SetExt(L"nvm");
-	const wxString fname(nvmfile.GetFullPath());
+	const std::string fname(nvmfile.GetFullPath());
 
 	// Likely a bad idea to go further
 	if (nvmfile.IsDir())
@@ -327,7 +327,7 @@ static MutexRecursive Mutex_NewDiskCB;
 static __fi ElfObject* loadElf(const wxString filename)
 {
 	if (filename.StartsWith(L"host"))
-		return new ElfObject(filename.After(':'), Path::GetFileSize(filename.After(':')));
+		return new ElfObject(filename.After(':'), Path::GetFileSize((std::string)filename.After(':')));
 
 	// Mimic PS2 behavior!
 	// Much trial-and-error with changing the ISOFS and BOOT2 contents of an image have shown that

@@ -424,7 +424,7 @@ class Pcsx2StandardPaths : public wxStandardPaths
 public:
 	wxString GetResourcesDir() const
 	{
-		return Path::Combine( GetDataDir(), L"Langs" );
+		return Path::Combine( (std::string)GetDataDir(), "Langs" );
 	}
 
 #ifdef __POSIX__
@@ -438,18 +438,19 @@ public:
 		// Note: GetUserLocalDataDir() on linux return $HOME/.pcsx2 unfortunately it does not follow the XDG standard
 		// So we re-implement it, to follow the standard.
 		wxDirName user_local_dir;
-		wxDirName default_config_dir = (wxDirName)Path::Combine( L".config", pxGetAppName() );
-		wxString xdg_home_value;
-		if( wxGetEnv(L"XDG_CONFIG_HOME", &xdg_home_value) ) {
-			if ( xdg_home_value.IsEmpty() ) {
+		std::string default_config_dir = Path::Combine( ".config", (std::string)pxGetAppName() );
+		wxString* xdg_home_value;
+		if( wxGetEnv(L"XDG_CONFIG_HOME", xdg_home_value) ) {
+			if ( ghc::filesystem::is_empty((std::string)*xdg_home_value)  ) {
 				// variable exist but it is empty. So use the default value
-				user_local_dir = (wxDirName)Path::Combine( GetUserConfigDir() , default_config_dir);
+				user_local_dir = (wxDirName)Path::Combine( (std::string)GetUserConfigDir() , default_config_dir);
 			} else {
-				user_local_dir = (wxDirName)Path::Combine( xdg_home_value, pxGetAppName());
+				user_local_dir = (wxDirName)Path::Combine( (std::string)*xdg_home_value, (std::string)pxGetAppName());
 			}
 		} else {
 			// variable do not exist
-			user_local_dir = (wxDirName)Path::Combine( GetUserConfigDir() , default_config_dir);
+			user_local_dir = (wxDirName)Path::Combine( (std::string
+			)GetUserConfigDir() , default_config_dir);
 		}
 
 		cache_dir = user_local_dir.ToString();
@@ -848,34 +849,40 @@ void AppApplySettings( const AppConfig* oldconf )
 	// Ensure existence of necessary documents folders.  Plugins and other parts
 	// of PCSX2 rely on them.
 
-	folderUtils.CreateFolder(g_Conf->Folders.MemoryCards);
-	folderUtils.CreateFolder(g_Conf->Folders.Savestates);
-	folderUtils.CreateFolder(g_Conf->Folders.Snapshots);
-	folderUtils.CreateFolder(g_Conf->Folders.Cheats);
-	folderUtils.CreateFolder(g_Conf->Folders.CheatsWS);
-
-
-	g_Conf->EmuOptions.BiosFilename = g_Conf->FullpathToBios();
-
-	RelocateLogfile();
-
-	/*if( (oldconf == NULL) || (oldconf->LanguageCode.CmpNoCase(g_Conf->LanguageCode)) )
+	if (folderUtils.CreateFolder(g_Conf->Folders.MemoryCards) &&
+	folderUtils.CreateFolder(g_Conf->Folders.Savestates) &&
+	folderUtils.CreateFolder(g_Conf->Folders.Snapshots) &&
+	folderUtils.CreateFolder(g_Conf->Folders.Cheats) &&
+	folderUtils.CreateFolder(g_Conf->Folders.CheatsWS))
 	{
-		wxDoNotLogInThisScope please;
-		i18n_SetLanguage( g_Conf->LanguageId, g_Conf->LanguageCode );
-	}*/
 
-	CorePlugins.SetSettingsFolder( GetSettingsFolder());
+		g_Conf->EmuOptions.BiosFilename = g_Conf->FullpathToBios();
 
-	// Update the compression attribute on the Memcards folder.
-	// Memcards generally compress very well via NTFS compression.
+		RelocateLogfile();
 
-	#ifdef __WXMSW__
-	NTFS_CompressFile( g_Conf->Folders.MemoryCards, g_Conf->McdCompressNTFS );
-	#endif
-	sApp.DispatchEvent( AppStatus_SettingsApplied );
+		/*if( (oldconf == NULL) || (oldconf->LanguageCode.CmpNoCase(g_Conf->LanguageCode)) )
+		{
+			wxDoNotLogInThisScope please;
+			i18n_SetLanguage( g_Conf->LanguageId, g_Conf->LanguageCode );
+		}*/
 
-	paused_core.AllowResume();
+		CorePlugins.SetSettingsFolder( (std::string)GetSettingsFolder());
+
+		// Update the compression attribute on the Memcards folder.
+		// Memcards generally compress very well via NTFS compression.
+
+		#ifdef __WXMSW__
+		NTFS_CompressFile( g_Conf->Folders.MemoryCards, g_Conf->McdCompressNTFS );
+		#endif
+		sApp.DispatchEvent( AppStatus_SettingsApplied );
+
+		paused_core.AllowResume();
+	}
+
+	else
+	{
+		return;
+	}
 }
 
 // Invokes the specified Pcsx2App method, or posts the method to the main thread if the calling
