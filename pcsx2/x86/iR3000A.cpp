@@ -228,7 +228,7 @@ static void iIopDumpBlock( int startpc, u8 * ptr )
 	Console.WriteLn( "dump1 %x:%x, %x", startpc, psxpc, psxRegs.cycle );
 	//g_Conf->Folders.Logs.Mkdir();
 
-	wxString filename( Path::Combine( g_Conf->Folders.Logs, wxsFormat( L"psxdump%.8X.txt", startpc ) ) );
+	wxString filename( Path::Combine( g_Conf->Folders.Logs, (std::string)wxsFormat( L"psxdump%.8X.txt", startpc ) ) );
 	AsciiFile f( filename, L"w" );
 
 	f.Printf("Dump PSX register data: 0x%x\n\n", (uptr)&psxRegs);

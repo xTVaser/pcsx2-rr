@@ -112,7 +112,7 @@ static wxString INDEX_TEMPLATE_KEY(L"$(f)");
 //   then it's relative to base (not to cwd)
 // No checks are performed if the result file name can be created.
 // If this proves useful, we can move it into Path:: . Right now there's no need.
-static wxString ApplyTemplate(const wxString &name, const wxDirName &base,
+static wxString ApplyTemplate(const wxString &name, const ghc::filesystem::path &base,
                               const wxString &fileTemplate, const wxString &filename,
                               bool canEndWithKey)
 {
@@ -131,13 +131,13 @@ static wxString ApplyTemplate(const wxString &name, const wxDirName &base,
 		return L"";
 	}
 
-	wxString fname(filename);
+	std::string fname(filename);
 	if (first > 0)
 		fname = Path::GetFilename(fname); // without path
 
 	tem.Replace(key, fname);
 	if (first > 0)
-		tem = Path::Combine(base, tem); // ignores appRoot if tem is absolute
+		tem = Path::Combine(base, (std::string)tem); // ignores appRoot if tem is absolute
 
 	return tem;
 }
@@ -171,8 +171,8 @@ static void TestTemplate(const wxDirName &base, const wxString &fname, bool canE
 
 static wxString iso2indexname(const wxString& isoname) {
 	//testTemplate(isoname);
-	wxDirName appRoot = // TODO: have only one of this in PCSX2. Right now have few...
-	    (wxDirName)(wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath());
+	ghc::filesystem::path appRoot = // TODO: have only one of this in PCSX2. Right now have few...
+	    (std::string)(wxStandardPaths::Get().GetExecutablePath());
 	//TestTemplate(appRoot, isoname, false);
 	return ApplyTemplate(L"gzip index", appRoot, g_Conf->GzipIsoIndexTemplate, isoname, false);
 }

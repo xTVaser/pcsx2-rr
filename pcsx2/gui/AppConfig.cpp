@@ -46,73 +46,73 @@ namespace PathDefs
 {
 	namespace Base
 	{
-		const std::string& Snapshots()
+		const fs::path& Snapshots()
 		{
 			static const std::string retval( "snaps" );
 			return retval;
 		}
 
-		const std::string& Savestates()
+		const fs::path& Savestates()
 		{
 			static const std::string retval( "sstates" );
 			return retval;
 		}
 
-		const std::string& MemoryCards()
+		const fs::path& MemoryCards()
 		{
 			static const std::string retval( "memcards" );
 			return retval;
 		}
 
-		const std::string& Settings()
+		const fs::path& Settings()
 		{
 			static const std::string retval( "json" );
 			return retval;
 		}
 
-		const std::string& Plugins()
+		const fs::path& Plugins()
 		{
 			static const std::string retval( "plugins" );
 			return retval;
 		}
 
-		const std::string& Logs()
+		const fs::path& Logs()
 		{
 			static const std::string retval( "logs" );
 			return retval;
 		}
 
-		const std::string& Bios()
+		const fs::path& Bios()
 		{
 			static const std::string retval("bios");
 			return retval;
 		}
 
-		const std::string& Cheats()
+		const fs::path& Cheats()
 		{
 			static const std::string retval("cheats");
 			return retval;
 		}
 
-		const std::string& CheatsWS()
+		const fs::path& CheatsWS()
 		{
 			static const std::string retval("cheats_ws");
 			return retval;
 		}
 
-		const std::string& Langs()
+		const fs::path& Langs()
 		{
 			static const std::string retval( "Langs" );
 			return retval;
 		}
 
-		const std::string& Dumps()
+		const fs::path& Dumps()
 		{
 			static const std::string retval( "dumps" );
 			return retval;
 		}
 
-		const std::string& Docs()
+		const fs::path& Docs()
 		{
 			static const std::string retval( "docs" );
 			return retval;
@@ -125,14 +125,14 @@ namespace PathDefs
 
 	//The installer installs the folders which are relative to AppRoot (that's plugins/langs)
 	//  relative to the exe folder, and not relative to cwd. So the exe should be default AppRoot. - avih
-	const std::string& AppRoot()
+	fs::path AppRoot()
 	{
 		//AffinityAssert_AllowFrom_MainUI();
 
 		if (InstallationMode == InstallMode_Registered)
 		{
-			static const std::string cwdCache( (std::string)Path::Normalize(wxGetCwd()) );
-			return cwdCache;
+			//static const std::string cwdCache( (std::string)Path::Normalize(wxGetCwd()) );
+			//return cwdCache;
 		}
 		else if (InstallationMode == InstallMode_Portable)
 
@@ -150,14 +150,14 @@ namespace PathDefs
 	}
 
     // Specifies the main configuration folder.
-    std::string GetUserLocalDataDir()
+    fs::path GetUserLocalDataDir()
     {
-        return std::string(wxStandardPaths::Get().GetUserLocalDataDir());
+        return fs::path((std::string)wxStandardPaths::Get().GetUserLocalDataDir()).make_preferred();
     }
 
 	// Fetches the path location for user-consumable documents -- stuff users are likely to want to
 	// share with other programs: screenshots, memory cards, and savestates.
-	std::string GetDocuments( DocsModeType mode )
+	fs::path GetDocuments( DocsModeType mode )
 	{
 		switch( mode )
 		{
@@ -165,7 +165,7 @@ namespace PathDefs
 			// Move all user data file into central configuration directory (XDG_CONFIG_DIR)
 			case DocsFolder_User:	return GetUserLocalDataDir();
 #else
-			case DocsFolder_User:	return (std::string)Path::Combine( wxStandardPaths::Get().GetDocumentsDir(), pxGetAppName() );
+			case DocsFolder_User:	return Path::Combine((std::string)wxStandardPaths::Get().GetDocumentsDir(), (std::string)pxGetAppName() );
 #endif
 			case DocsFolder_Custom: return CustomDocumentsFolder;
 
@@ -175,12 +175,12 @@ namespace PathDefs
 		return GetDocuments(mode);
 	}
 
-	std::string GetDocuments()
+	fs::path GetDocuments()
 	{
 		return GetDocuments( DocsFolderMode );
 	}
 
-	std::string GetProgramDataDir()
+	fs::path GetProgramDataDir()
 	{
 #ifndef GAMEINDEX_DIR_COMPILATION
 		return AppRoot();
@@ -193,47 +193,48 @@ namespace PathDefs
 #endif
 	}
 
-	std::string GetSnapshots()
+	fs::path GetSnapshots()
 	{
-		return GetDocuments() + Base::Snapshots();
+		return (fs::path)(GetDocuments() /= Base::Snapshots()).make_preferred();
 	}
 
-	std::string GetBios()
+	fs::path GetBios()
 	{
-		return GetDocuments() + Base::Bios();;
+		std::cout << "DOCS: " << GetDocuments() << std::endl;
+		return (GetDocuments() /= Base::Bios()).make_preferred();
 	}
 
-	std::string GetCheats()
+	fs::path GetCheats()
 	{
-		return GetDocuments() + Base::Cheats();
+		return (GetDocuments() /= Base::Cheats()).make_preferred();
 	}
 
-	std::string GetCheatsWS()
+	fs::path GetCheatsWS()
 	{
-		return GetDocuments() + Base::CheatsWS();
+		return (GetDocuments() /= Base::CheatsWS()).make_preferred();
 	}
 
-	std::string GetDocs()
+	fs::path GetDocs()
 	{
-		return AppRoot() + Base::Docs();
+		return (AppRoot() /= Base::Docs()).make_preferred();
 	}
 
-	std::string GetSavestates()
+	fs::path GetSavestates()
 	{
-		return GetDocuments() + Base::Savestates();
+		return (GetDocuments() /= Base::Savestates()).make_preferred();
 	}
 
-	std::string GetMemoryCards()
+	fs::path GetMemoryCards()
 	{
-		return GetDocuments() + Base::MemoryCards();
+		return (GetDocuments() /= Base::MemoryCards()).make_preferred();
 	}
 
-	std::string GetPlugins()
+	fs::path GetPlugins()
 	{
 		// Each linux distributions have his rules for path so we give them the possibility to
 		// change it with compilation flags. -- Gregory
 #ifndef PLUGIN_DIR_COMPILATION
-		return AppRoot() + Base::Plugins();
+		return (AppRoot() /= Base::Plugins()).make_preferred();
 #else
 #define xPLUGIN_DIR_str(s) PLUGIN_DIR_str(s)
 #define PLUGIN_DIR_str(s) #s
@@ -241,19 +242,19 @@ namespace PathDefs
 #endif
 	}
 
-	std::string GetSettings()
+	fs::path GetSettings()
 	{
-		return GetDocuments() + Base::Settings();
+		return (GetDocuments() /= Base::Settings()).make_preferred();
 	}
 
-	std::string GetLogs()
+	fs::path GetLogs()
 	{
-		return GetDocuments() + Base::Logs();
+		return (GetDocuments() /= Base::Logs()).make_preferred();
 	}
 
-	std::string GetLangs()
+	fs::path GetLangs()
 	{
-		return AppRoot() + Base::Langs();
+		return (AppRoot() /= Base::Langs()).make_preferred();
 	}
 
 	std::string Get( FoldersEnum_t folderidx )
@@ -461,45 +462,45 @@ static std::string GetResolvedFolder(FoldersEnum_t id)
 	return g_Conf->Folders.IsDefault(id) ? PathDefs::Get(id) : g_Conf->Folders[id];
 }
 
-std::string GetLogFolder()
+fs::path GetLogFolder()
 {
 	return GetResolvedFolder(FolderId_Logs);
 }
 
-std::string GetCheatsFolder()
+fs::path GetCheatsFolder()
 {
 	return GetResolvedFolder(FolderId_Cheats);
 }
 
-std::string GetCheatsWsFolder()
+fs::path GetCheatsWsFolder()
 {
 	return GetResolvedFolder(FolderId_CheatsWS);
 }
 
-std::string GetSettingsFolder()
+fs::path GetSettingsFolder()
 {
 	if( wxGetApp().Overrides.SettingsFolder.c_str() != nullptr )
 		return wxGetApp().Overrides.SettingsFolder;
 
-	return UseDefaultSettingsFolder ? PathDefs::GetSettings() : SettingsFolder;
+	return UseDefaultSettingsFolder ? (std::string)PathDefs::GetSettings() : SettingsFolder;
 }
 
-std::string GetVmSettingsFilename()
+fs::path GetVmSettingsFilename()
 {
-	std::string fname( (wxGetApp().Overrides.VmSettingsFile.c_str() != nullptr) ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
-	return (GetSettingsFolder() + fname);
+	fs::path fname( (wxGetApp().Overrides.VmSettingsFile.c_str() != nullptr) ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
+	return (GetSettingsFolder() /= fname).make_preferred();
 }
 
-std::string GetUiSettingsFilename()
+fs::path GetUiSettingsFilename()
 {
-	std::string fname( FilenameDefs::GetUiConfig() );
-	return (GetSettingsFolder() + fname);
+	fs::path fname( FilenameDefs::GetUiConfig() );
+	return (GetSettingsFolder() /= fname).make_preferred();
 }
 
-std::string GetUiKeysFilename()
+fs::path GetUiKeysFilename()
 {
-	std::string fname( FilenameDefs::GetUiKeysConfig() );
-	return (GetSettingsFolder() + fname);
+	fs::path fname( FilenameDefs::GetUiKeysConfig() );
+	return (GetSettingsFolder() /= fname).make_preferred();
 }
 
 
@@ -588,7 +589,7 @@ void App_LoadSaveInstallSettings( nlohmann::json& json )
 	json["Install_Dir"] = (	InstallFolder,	((std::string(wxStandardPaths::Get().GetExecutablePath()))));
 	//SetFullBaseDir( InstallFolder );
 
-	json["PluginsFolder"]	= (PluginsFolder, InstallFolder + PathDefs::Base::Plugins() );
+	json["PluginsFolder"]	= (PluginsFolder =((fs::path)InstallFolder /= PathDefs::Base::Plugins()).make_preferred());
 
 	//ini.Flush();
 }
@@ -770,7 +771,7 @@ void AppConfig::FolderOptions::LoadSave( nlohmann::json& json )
 	IniEntryDirFile( Langs,  rel );
 	IniEntryDirFile( Cheats, rel );
 	IniEntryDirFile( CheatsWS, rel );*/
-	json["PluginsFolder"] = (PluginsFolder, InstallFolder + PathDefs::Base::Plugins(), rel );
+	json["PluginsFolder"] = (PluginsFolder, ((fs::path)InstallFolder /= PathDefs::Base::Plugins()).make_preferred(), rel );
 
 	//IniEntryDirFile( RunIso, rel );
 	//IniEntryDirFile( RunELF, rel );
@@ -1105,7 +1106,8 @@ wxFileConfig* OpenFileConfig( std::string filename )
 void RelocateLogfile()
 {
 
-	folderUtils.CreateFolder(g_Conf->Folders.Logs);
+	if (!folderUtils.CreateFolder(g_Conf->Folders.Logs))
+	return;
 
 	std::string newlogname = ( g_Conf->Folders.Logs + "emuLog.txt");
 
@@ -1137,8 +1139,11 @@ void RelocateLogfile()
 //
 void AppConfig_OnChangedSettingsFolder( bool overwrite )
 {
-	folderUtils.CreateFolder(PathDefs::GetDocuments());
-	folderUtils.CreateFolder(GetSettingsFolder());
+	if (!folderUtils.CreateFolder(PathDefs::GetDocuments()))
+	return;
+
+	if(folderUtils.CreateFolder(GetSettingsFolder()))
+	return;
 
 	const wxString jsonFilename( GetUiSettingsFilename() );
 

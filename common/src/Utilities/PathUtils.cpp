@@ -14,7 +14,6 @@
  */
 
 #include "PrecompiledHeader.h"
-#include "Path.h"
 #include "PathUtils.h"
 
 #include "filesystem.hpp"
@@ -101,19 +100,18 @@ bool wxDirName::Mkdir()
 // ---------------------------------------------------------------------------------
 
 
-bool Path::IsRelative(const wxString &path)
+bool Path::IsRelative(const std::string &path)
 {
     return wxDirName(path).IsRelative();
 }
 
 // Returns -1 if the file does not exist.
-s64 Path::GetFileSize(const wxString &path)
+s64 Path::GetFileSize(const std::string &path)
 {
     if (!wxFile::Exists(path.c_str()))
         return -1;
     return (s64)wxFileName::GetSize(path).GetValue();
 }
-
 
 wxString Path::Normalize(const wxString &src)
 {
@@ -121,56 +119,56 @@ wxString Path::Normalize(const wxString &src)
     normalize.Normalize();
     return normalize.GetFullPath();
 }
-
 wxString Path::Normalize(const wxDirName &src)
 {
     return wxDirName(src).Normalize().ToString();
 }
 
-wxString Path::MakeAbsolute(const wxString &src)
+std::string Path::MakeAbsolute(const std::string &src)
 {
-    wxFileName absolute(src);
-    absolute.MakeAbsolute();
-    return absolute.GetFullPath();
+    return ghc::filesystem::absolute(src);
 }
 
 // Concatenates two pathnames together, inserting delimiters (backslash on win32)
 // as needed! Assumes the 'dest' is allocated to at least g_MaxPath length.
 //
-wxString Path::Combine(const wxString &srcPath, const wxString &srcFile)
+std::string Path::Combine(fs::path srcPath, fs::path srcFile)
 {
-    return (wxDirName(srcPath) + srcFile).GetFullPath();
-}
+    fs::path combined = (srcPath /= srcFile);
 
-wxString Path::Combine(const wxDirName &srcPath, const wxFileName &srcFile)
+    combined.make_preferred();
+
+    return combined;
+}
+/*std::string Path::Combine(const wxDirName &srcPath, const wxFileName &srcFile)
 {
     return (srcPath + srcFile).GetFullPath();
 }
 
-wxString Path::Combine(const wxString &srcPath, const wxDirName &srcFile)
+std::string Path::Combine(const wxString &srcPath, const wxDirName &srcFile)
 {
     return (wxDirName(srcPath) + srcFile).ToString();
-}
+}*/
 
 // Replaces the extension of the file with the one given.
 // This function works for path names as well as file names.
-wxString Path::ReplaceExtension(const wxString &src, const wxString &ext)
+std::string Path::ReplaceExtension(const wxString &src, const wxString &ext)
 {
     wxFileName jojo(src);
     jojo.SetExt(ext);
-    return jojo.GetFullPath();
+    return (std::string)jojo.GetFullPath();
 }
 
-wxString Path::ReplaceFilename(const wxString &src, const wxString &newfilename)
+std::string Path::ReplaceFilename(const wxString &src, const wxString &newfilename)
 {
     wxFileName jojo(src);
     jojo.SetFullName(newfilename);
-    return jojo.GetFullPath();
+    return (std::string)jojo.GetFullPath();
 }
 
-wxString Path::GetFilename(const wxString &src)
+std::string Path::GetFilename(const std::string &src)
 {
-    return wxFileName(src).GetFullName();
+    return ghc::filesystem::absolute(src);
 }
 
 wxString Path::GetFilenameWithoutExt(const wxString &src)
@@ -178,21 +176,21 @@ wxString Path::GetFilenameWithoutExt(const wxString &src)
     return wxFileName(src).GetName();
 }
 
-wxString Path::GetDirectory(const wxString &src)
+std::string Path::GetDirectory(const std::string &src)
 {
-    return wxFileName(src).GetPath();
+    return src;
 }
 
 
 // returns the base/root directory of the given path.
 // Example /this/that/something.txt -> dest == "/"
-wxString Path::GetRootDirectory(const wxString &src)
+std::string Path::GetRootDirectory(const wxString &src)
 {
     size_t pos = src.find_first_of(wxFileName::GetPathSeparators());
     if (pos == wxString::npos)
-        return wxString();
+        return std::string();
     else
-        return wxString(src.begin(), src.begin() + pos);
+        return std::string(src.begin(), src.begin() + pos);
 }
 
 // ------------------------------------------------------------------------
@@ -224,8 +222,6 @@ void pxExplore(const char *path)
     pxExplore(fromUTF8(path));
 }
 
-
-
 bool PathUtils::CreateFolder(std::string path)
 {
    return fs::create_directory(path);
@@ -234,4 +230,9 @@ bool PathUtils::CreateFolder(std::string path)
 bool PathUtils::DoesExist(std::string& path)
 {
     return fs::exists(path);
+}
+
+bool PathUtils::Empty(std::string path)
+{
+    return fs::is_empty(path);
 }

@@ -58,7 +58,7 @@ static void CDVDREAD_INT(u32 eCycle)
 		if(eCycle < Cdvd_FullSeek_Cycles)
 			eCycle = 3000;
 	}
-	
+
 	PSX_INT(IopEvt_CdvdRead, eCycle);
 }
 
@@ -95,7 +95,7 @@ static void cdvdGetMechaVer(u8* ver)
 {
 	wxFileName mecfile(EmuConfig.BiosFilename);
 	mecfile.SetExt( L"mec" );
-	const wxString fname( mecfile.GetFullPath() );
+	const std::string fname( mecfile.GetFullPath() );
 
 	// Likely a bad idea to go further
 	if (mecfile.IsDir())
@@ -140,7 +140,7 @@ static void cdvdNVM(u8 *buffer, int offset, size_t bytes, bool read)
 {
 	wxFileName nvmfile(EmuConfig.BiosFilename);
 	nvmfile.SetExt(L"nvm");
-	const wxString fname(nvmfile.GetFullPath());
+	const std::string fname(nvmfile.GetFullPath());
 
 	// Likely a bad idea to go further
 	if (nvmfile.IsDir())
@@ -322,7 +322,7 @@ static MutexRecursive Mutex_NewDiskCB;
 static __fi ElfObject* loadElf( const wxString filename )
 {
 	if (filename.StartsWith(L"host"))
-		return new ElfObject(filename.After(':'), Path::GetFileSize(filename.After(':')));
+		return new ElfObject(filename.After(':'), Path::GetFileSize((std::string)filename.After(':')));
 
 	// Mimic PS2 behavior!
 	// Much trial-and-error with changing the ISOFS and BOOT2 contents of an image have shown that
@@ -408,7 +408,7 @@ void cdvdReloadElfInfo(wxString elfoverride)
 			Console.SetTitle(DiscSerial);
 			return;
 		}
-		
+
 		// Isn't a disc we recognize?
 		if(discType == 0)  return;
 
@@ -468,7 +468,7 @@ void cdvdReadKey(u8, u16, u32 arg2, u8* key)
 	key[ 2] = (key_0_3&0x00FF0000)>>16;
 	key[ 3] = (key_0_3&0xFF000000)>>24;
 	key[ 4] = key_4;
-	
+
     switch (arg2)
     {
         case 75:
@@ -535,10 +535,10 @@ s32 cdvdCtrlTrayClose()
 	cdvd.Status = CDVD_STATUS_PAUSE;
 	cdvd.Ready = CDVD_READY1;
 	cdvd.TrayTimeout = 0; // Reset so it can't get closed twice by cdvdVsync()
-	
+
 	cdvdDetectDisk();
 	GetCoreThread().ApplySettings(g_Conf->EmuOptions);
-	
+
 	return 0; // needs to be 0 for success according to homebrew test "CDVD"
 }
 
@@ -639,7 +639,7 @@ void cdvdNewDiskCB()
 {
 	ScopedTryLock lock( Mutex_NewDiskCB );
 	if( lock.Failed() ) return;
-	
+
 	DoCDVDresetDiskTypeCache();
 	cdvdDetectDisk();
 }

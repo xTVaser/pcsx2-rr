@@ -45,10 +45,10 @@ namespace PathDefs
 	// user checks "Use Default paths" option provided on most path selectors.  These are not
 	// used otherwise, in favor of the user-configurable specifications in the ini files.
 
-	extern std::string GetUserLocalDataDir();
-	extern std::string GetProgramDataDir();
-	extern std::string GetDocuments();
-	extern std::string GetDocuments( DocsModeType mode );
+	extern fs::path GetUserLocalDataDir();
+	extern fs::path GetProgramDataDir();
+	extern fs::path GetDocuments();
+	extern fs::path GetDocuments( DocsModeType mode );
 }
 
 extern PathUtils folderUtils;
@@ -65,14 +65,14 @@ extern std::string		SettingsFolder;				// dictates where the settings folder com
 extern std::string		InstallFolder;
 extern std::string		PluginsFolder;
 
-extern std::string  GetSettingsFolder();
-extern std::string  GetVmSettingsFilename();
-extern std::string  GetUiSettingsFilename();
-extern std::string  GetUiKeysFilename();
+extern fs::path  GetSettingsFolder();
+extern fs::path  GetVmSettingsFilename();
+extern fs::path  GetUiSettingsFilename();
+extern fs::path  GetUiKeysFilename();
 
-extern std::string GetLogFolder();
-extern std::string GetCheatsFolder();
-extern std::string GetCheatsWsFolder();
+extern fs::path GetLogFolder();
+extern fs::path GetCheatsFolder();
+extern fs::path GetCheatsWsFolder();
 
 enum InstallationModeType
 {
