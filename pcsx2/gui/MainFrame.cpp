@@ -576,27 +576,8 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	// background logo size, which is what it'll eventually be resized to.
 	wxSize backsize(m_background->GetBitmap().GetWidth(), m_background->GetBitmap().GetHeight());
 
-	wxString wintitle;
-	if (PCSX2_isReleaseVersion)
-	{
-		// stable releases, with a simple title.
-		wintitle.Printf(L"%s  %d.%d.%d", pxGetAppName().c_str(), PCSX2_VersionHi, PCSX2_VersionMid, PCSX2_VersionLo);
-	}
-	else
-	{
-		// beta / development editions, which feature revision number and compile date.
-		if (strlen(GIT_REV) > 5)
-		{
-			wintitle.Printf(L"%s %s", pxGetAppName().c_str(), GIT_REV);
-		}
-		else
-		{
-			wintitle.Printf(L"%s  %d.%d.%d-%lld%s (git)", pxGetAppName().c_str(), PCSX2_VersionHi, PCSX2_VersionMid,
-							PCSX2_VersionLo, SVN_REV, SVN_MODS ? L"m" : wxEmptyString);
-		}
-	}
-
-	SetTitle(wintitle);
+	wxString wintitle = "PCSX2 - 128MB - [27598fe]";
+	SetTitle( wintitle );
 
 	// Ideally the __WXMSW__ port should use the embedded IDI_ICON2 icon, because wxWidgets sucks and
 	// loses the transparency information when loading bitmaps into icons.  But for some reason

@@ -1,0 +1,7 @@
+gametitle=Jak and Daxter - The Precursor Legacy - (U) - (SCUS-97124)
+comment=Enables Developer/Debug Mode - Credit to water111 for discovering / documenting the required ELF edits
+
+// NOP Disabling DebugSegment
+patch=0,EE,00100290,word,00000000
+// NOP Disabling MasterDebug
+patch=0,EE,0010029c,word,00000000
