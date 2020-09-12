@@ -18,8 +18,7 @@
 #ifdef _WIN32
 #	include <Windows.h>
 #	undef Yield
-#elif defined(__linux__)
-#	include <libaio.h>
+#elif defined(__linux__)qwdqw
 #elif defined(__POSIX__)
 #	include <aio.h>
 #endif
@@ -27,7 +26,7 @@
 
 class AsyncFileReader
 {
-protected:
+protected:qwd
 	AsyncFileReader() : m_dataoffset(0), m_blocksize(0) {}
 
 	wxString m_filename;
@@ -35,44 +34,18 @@ protected:
 	int m_dataoffset;
 	uint m_blocksize;
 
-public:
-	virtual ~AsyncFileReader(void) {};
-
-	virtual bool Open(const wxString& fileName)=0;
-
-	virtual int ReadSync(void* pBuffer, uint sector, uint count)=0;
-
-	virtual void BeginRead(void* pBuffer, uint sector, uint count)=0;
-	virtual int FinishRead(void)=0;
-	virtual void CancelRead(void)=0;
-
-	virtual void Close(void)=0;
-
-	virtual uint GetBlockCount(void) const=0;
-
-	virtual void SetBlockSize(uint bytes) {}
+public:qwd qw
+	virtual d qw bool Open(const wxStrqw, uint sedqwd
 	virtual void SetDataOffset(int bytes) {}
 
-	uint GetBlockSize() const { return m_blocksize; }
-
-	const wxString& GetFilename() const
-	{
-		return m_filename;
+	uint GetBlockSize() conqwde;
 	}
 };
-
-class FlatFileReader : public AsyncFileReader
-{
+dqeReader
+{wd
 	DeclareNoncopyableObject( FlatFileReader );
 
-#ifdef _WIN32
-	HANDLE hOverlappedFile;
-
-	OVERLAPPED asyncOperationContext;
-
-	HANDLE hEvent;
-
-	bool asyncInProgress;
+#ifdef _WIN32qw
 #elif defined(__linux__)
 	int m_fd; // FIXME don't know if overlap as an equivalent on linux
 	io_context_t m_aio_context;
