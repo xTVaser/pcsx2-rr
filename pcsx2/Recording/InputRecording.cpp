@@ -44,6 +44,7 @@ void SaveStateBase::InputRecordingFreeze()
 	// marker has not been set (which comes from the save-state), we initialize it.
 	if (g_InputRecording.IsInitialLoad())
 	{
+		g_InputRecordingControls.SetFrameCountTracker(g_FrameCount);
 		g_InputRecording.SetStartingFrame(g_FrameCount);
 	}
 	else if (g_InputRecording.IsActive())
@@ -73,13 +74,14 @@ void Pcsx2App::RecordingReset()
 	// marker has not been set, we initialize it.
 	if (g_InputRecording.IsInitialLoad())
 	{
+		g_InputRecordingControls.SetFrameCountTracker(0);
 		g_InputRecording.SetStartingFrame(0);
 	}
 	else if (g_InputRecording.IsActive())
 	{
 		// Explicitly set the frame change tracking variable as to not
 		// detect rebooting as a frame being drawn
-		g_InputRecordingControls.SetFrameCountTracker(g_FrameCount);
+		g_InputRecordingControls.SetFrameCountTracker(0);
 		g_InputRecording.SetFrameCounter(0);
 	}
 }
