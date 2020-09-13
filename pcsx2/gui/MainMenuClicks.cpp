@@ -902,6 +902,7 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 	const bool initiallyPaused = g_InputRecordingControls.IsRecordingPaused();
 	if (!initiallyPaused)
 		g_InputRecordingControls.PauseImmediately();
+
 	wxFileDialog openFileDialog(this, _("Select P2M2 record file."), L"", L"",
 		L"p2m2 file(*.p2m2)|*.p2m2", wxFD_OPEN);
 	if (openFileDialog.ShowModal() == wxID_CANCEL)
@@ -912,21 +913,23 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 	}
 
 	wxString path = openFileDialog.GetPath();
-	const bool recordingLoaded = g_InputRecording.IsActive();
-	if (!g_InputRecording.Play(path))
+	const bool wasRecordingActive = g_InputRecording.IsActive();
+	// TODO (future PR) - a warning about closing active recording would be a good idea
+	const bool playSuccessful = g_InputRecording.Play(path);
+
+	if (!playSuccessful)
 	{
-		if (recordingLoaded)
-			Menu_Recording_Stop_Click(event);
 		if (!initiallyPaused)
 			g_InputRecordingControls.Resume();
 		return;
 	}
-	if (!recordingLoaded)
-	{
-		m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
-		m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
-	}
-	g_InputRecordingControls.Resume();
+
+	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
+	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
+
+	// Resume power-on recordings, otherwise problems occur
+	if (!g_InputRecording.GetInputRecordingData().FromSaveState())
+		g_InputRecordingControls.Resume();
 }
 
 void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
