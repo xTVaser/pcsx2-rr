@@ -35,6 +35,8 @@ std::string				SettingsFolder;
 
 std::string				InstallFolder;
 std::string				PluginsFolder;
+	
+PathUtils path;
 
 // The UserLocalData folder can be redefined depending on whether or not PCSX2 is in
 // "portable install" mode or not.  when PCSX2 has been configured for portable install, the
@@ -44,10 +46,10 @@ InstallationModeType		InstallationMode;
 
 static fs::path GetPortableJsonPath()
 {
-	fs::path programFullPath = (std::string)wxStandardPaths::Get().GetExecutablePath();
+	std::string programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
 	fs::path programDir( programFullPath);
 
-	return (programDir /= (fs::path)"portable.json").make_preferred();
+	return Path::Combine(programDir, "portable.json");
 }
 
 static wxString GetMsg_PortableModeRights()
@@ -62,43 +64,47 @@ bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder, std::st
 	// If any of the folders are not writable, then the user should be informed asap via
 	// friendly and courteous dialog box!
 
+
 	const std::string PermissionFolders[] =
 	{
-		PathDefs::Base::Settings(),
-		PathDefs::Base::MemoryCards(),
-		PathDefs::Base::Savestates(),
-		PathDefs::Base::Snapshots(),
-		PathDefs::Base::Logs(),
-		PathDefs::Base::CheatsWS(),
+		"json",
+		"memcards",
+		"sstates",
+		"snapshots",
+		"logs",
+		"cheats_ws",
 		#ifdef PCSX2_DEVBUILD
-		PathDefs::Base::Dumps(),
+		"dumps",
 		#endif
 	};
 
-	FastFormatUnicode createme, accessme;
+	std::string createme, accessme;
 
 	for (uint i=0; i<ArraySize(PermissionFolders); ++i)
 	{
-		wxDirName folder( testFolder + PermissionFolders[i] );
+		fs::path folder(Path::Combine(testFolder, PermissionFolders[i]));
 
-		//if (!folder.Mkdir())
-			//createme += L"\t" + folder.ToString() + L"\n";wxFileConfig* OpenFileConfig( const std::string& filename )
+		if (! fs::exists(folder))
+		{
+			Path::Combine(createme, (std::string)folder); 
+			wxFileConfig* OpenFileConfig( const std::string& filename );
+		}
 
 		//if (!folder.IsWritable())
 			//accessme += L"\t" + folder.ToString() + L"\n";
 	}
 
-	if (!accessme.IsEmpty())
+	if (!path.Empty(accessme))
 	{
 		accessFailedStr = (wxString)_("The following folders exist, but are not writable:") + L"\n" + accessme;
 	}
 
-	if (!createme.IsEmpty())
+	if (!path.Empty(createme))
 	{
 		createFailedStr = (wxString)_("The following folders are missing and cannot be created:") + L"\n" + createme;
 	}
 
-	return (createFailedStr.empty() && accessFailedStr.empty());
+	return (path.Empty(createFailedStr) && path.Empty(accessFailedStr));
 }
 
 // Portable installations are assumed to be run in either administrator rights mode, or run
@@ -278,7 +284,7 @@ void Pcsx2App::EstablishAppUserMode()
 	std::unique_ptr<wxConfigBase> conf_install;
 
 	conf_install = std::unique_ptr<wxConfigBase>(TestForPortableInstall());
-	if (!conf_install)
+	if (conf_install == nullptr)
 		conf_install = std::unique_ptr<wxConfigBase>(OpenInstallSettingsFile());
 
 	conf_install->SetRecordDefaults(false);

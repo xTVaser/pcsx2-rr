@@ -62,25 +62,9 @@ namespace PathDefs
 	extern fs::path GetCheats();
 	extern fs::path GetCheatsWS();
 	extern fs::path GetDocs();
+	extern fs::path AppRoot();
 
 	extern std::string Get( FoldersEnum_t folderidx );
-
-	// Base folder names used to extend out the documents/approot folder base into a complete
-	// path.  These are typically for internal AppConfig use only, barring a few special cases.
-	namespace Base
-	{
-		extern const std::string& Snapshots();
-		extern const std::string& Savestates();
-		extern const std::string& MemoryCards();
-		extern const std::string& Settings();
-		extern const std::string& Plugins();
-		extern const std::string& Logs();
-		extern const std::string& Dumps();
-		extern const std::string& Langs();
-		extern const std::string& Cheats();
-		extern const std::string& CheatsWS();
-		extern const std::string& Docs();
-	}
 }
 
 namespace FilenameDefs
