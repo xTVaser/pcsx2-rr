@@ -34,91 +34,8 @@
 nlohmann::json json;
 PathUtils folderUtils;
 
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// PathDefs Namespace -- contains default values for various pcsx2 path names and locations.
-//
-// Note: The members of this namespace are intended for default value initialization only.
-// Most of the time you should use the path folder assignments in Conf() instead, since those
-// are user-configurable.
-//
 namespace PathDefs
 {
-	namespace Base
-	{
-		const std::string& Snapshots()
-		{
-			static const std::string retval( "snaps" );
-			return retval;
-		}
-
-		const std::string& Savestates()
-		{
-			static const std::string retval( "sstates" );
-			return retval;
-		}
-
-		const std::string& MemoryCards()
-		{
-			static const std::string retval( "memcards" );
-			return retval;
-		}
-
-		const std::string& Settings()
-		{
-			static const std::string retval( "json" );
-			return retval;
-		}
-
-		const std::string& Plugins()
-		{
-			static const std::string retval( "plugins" );
-			return retval;
-		}
-
-		const std::string& Logs()
-		{
-			static const std::string retval( "logs" );
-			return retval;
-		}
-
-		const std::string& Bios()
-		{
-			static const std::string retval("bios");
-			return retval;
-		}
-
-		const std::string& Cheats()
-		{
-			static const std::string retval("cheats");
-			return retval;
-		}
-
-		const std::string& CheatsWS()
-		{
-			static const std::string retval("cheats_ws");
-			return retval;
-		}
-
-		const std::string& Langs()
-		{
-			static const std::string retval( "Langs" );
-			return retval;
-		}
-
-		const std::string& Dumps()
-		{
-			static const std::string retval( "dumps" );
-			return retval;
-		}
-
-		const std::string& Docs()
-		{
-			static const std::string retval( "docs" );
-			return retval;
-		}
-	};
-
 	// Specifies the root folder for the application install.
 	// (currently it's the CWD, but in the future I intend to move all binaries to a "bin"
 	// sub folder, in which case the approot will become "..") [- Air?]
@@ -139,7 +56,7 @@ namespace PathDefs
 		if (InstallationMode == InstallMode_Registered || InstallationMode == InstallMode_Portable)
 		{
 			static const std::string appCache( (std::string)
-				std::string(wxStandardPaths::Get().GetExecutablePath()));
+			std::string(wxStandardPaths::Get().GetExecutablePath()));
 			return appCache;
 		}
 		else
@@ -149,18 +66,18 @@ namespace PathDefs
 		return dotFail;
 	}
 
-    // Specifies the main configuration folder.
-    fs::path GetUserLocalDataDir()
-    {
-        return fs::path((std::string)wxStandardPaths::Get().GetUserLocalDataDir()).make_preferred();
-    }
+	// Specifies the main configuration folder.
+	fs::path GetUserLocalDataDir()
+	{
+    	return fs::path((std::string)wxStandardPaths::Get().GetUserLocalDataDir()).make_preferred();
+	}
 
 	// Fetches the path location for user-consumable documents -- stuff users are likely to want to
 	// share with other programs: screenshots, memory cards, and savestates.
 	fs::path GetDocuments( DocsModeType mode )
 	{
-		switch( mode )
-		{
+	switch( mode )
+	{
 #ifdef XDG_STD
 			// Move all user data file into central configuration directory (XDG_CONFIG_DIR)
 			case DocsFolder_User:	return GetUserLocalDataDir();
@@ -185,8 +102,8 @@ namespace PathDefs
 #ifndef GAMEINDEX_DIR_COMPILATION
 		return AppRoot();
 #else
-		// Each linux distributions have his rules for path so we give them the possibility to
-		// change it with compilation flags. -- Gregory
+	// Each linux distributions have his rules for path so we give them the possibility to
+	// change it with compilation flags. -- Gregory
 #define xGAMEINDEX_str(s) GAMEINDEX_DIR_str(s)
 #define GAMEINDEX_DIR_str(s) #s
 		return std::string( xGAMEINDEX_str(GAMEINDEX_DIR_COMPILATION) );
@@ -195,37 +112,37 @@ namespace PathDefs
 
 	fs::path GetSnapshots()
 	{
-		return (GetDocuments() / Base::Snapshots()).make_preferred();
+		return (GetDocuments() / "snapshots").make_preferred();
 	}
 
 	fs::path GetBios()
 	{
-		return (GetDocuments() / Base::Bios()).make_preferred();
+		return (GetDocuments() / "bios").make_preferred();
 	}
 
 	fs::path GetCheats()
 	{
-		return (GetDocuments() / Base::Cheats()).make_preferred();
+		return (GetDocuments() / "cheats").make_preferred();
 	}
 
 	fs::path GetCheatsWS()
 	{
-		return (GetDocuments() / Base::CheatsWS()).make_preferred();
+		return (GetDocuments() / "cheats_ws").make_preferred();
 	}
 
 	fs::path GetDocs()
 	{
-		return (AppRoot() / Base::Docs()).make_preferred();
+		return (AppRoot() / "docs").make_preferred();
 	}
 
 	fs::path GetSavestates()
 	{
-		return (GetDocuments() / Base::Savestates()).make_preferred();
+		return (GetDocuments() / "sstates").make_preferred();
 	}
 
 	fs::path GetMemoryCards()
 	{
-		return (GetDocuments() / Base::MemoryCards()).make_preferred();
+		return (GetDocuments() / "memcards").make_preferred();
 	}
 
 	fs::path GetPlugins()
@@ -233,7 +150,7 @@ namespace PathDefs
 		// Each linux distributions have his rules for path so we give them the possibility to
 		// change it with compilation flags. -- Gregory
 #ifndef PLUGIN_DIR_COMPILATION
-		return (AppRoot() /= Base::Plugins()).make_preferred();
+		return (AppRoot() / "plugins").make_preferred();
 #else
 #define xPLUGIN_DIR_str(s) PLUGIN_DIR_str(s)
 #define PLUGIN_DIR_str(s) #s
@@ -243,17 +160,17 @@ namespace PathDefs
 
 	fs::path GetSettings()
 	{
-		return (GetDocuments() /= Base::Settings()).make_preferred();
+		return (GetDocuments() / "json").make_preferred();
 	}
 
 	fs::path GetLogs()
 	{
-		return (GetDocuments() /= Base::Logs()).make_preferred();
+		return (GetDocuments() / "logs").make_preferred();
 	}
 
 	fs::path GetLangs()
 	{
-		return (AppRoot() /= Base::Langs()).make_preferred();
+		return (AppRoot() / "langs").make_preferred();
 	}
 
 	std::string Get( FoldersEnum_t folderidx )
@@ -278,7 +195,6 @@ namespace PathDefs
 		return std::string(); // Aw hell naw
 	}
 };
-
 std::string& AppConfig::FolderOptions::operator[]( FoldersEnum_t folderidx )
 {
 	switch( folderidx )
@@ -487,19 +403,19 @@ fs::path GetSettingsFolder()
 fs::path GetVmSettingsFilename()
 {
 	fs::path fname( (wxGetApp().Overrides.VmSettingsFile.c_str() != nullptr) ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
-	return (GetSettingsFolder() /= fname).make_preferred();
+	return (GetSettingsFolder() / fname).make_preferred();
 }
 
 fs::path GetUiSettingsFilename()
 {
 	fs::path fname( FilenameDefs::GetUiConfig() );
-	return (GetSettingsFolder() /= fname).make_preferred();
+	return (GetSettingsFolder() / fname).make_preferred();
 }
 
 fs::path GetUiKeysFilename()
 {
 	fs::path fname( FilenameDefs::GetUiKeysConfig() );
-	return (GetSettingsFolder() /= fname).make_preferred();
+	return (GetSettingsFolder() / fname).make_preferred();
 }
 
 
@@ -588,7 +504,7 @@ void App_LoadSaveInstallSettings( nlohmann::json& json )
 	json["Install_Dir"] = (	InstallFolder,	((std::string(wxStandardPaths::Get().GetExecutablePath()))));
 	//SetFullBaseDir( InstallFolder );
 
-	json["PluginsFolder"]	= (PluginsFolder =((fs::path)InstallFolder /= PathDefs::Base::Plugins()).make_preferred());
+	json["PluginsFolder"]	= (PluginsFolder =((fs::path)InstallFolder / "plugins"  ).make_preferred());
 
 	//ini.Flush();
 }
@@ -769,7 +685,7 @@ void AppConfig::FolderOptions::LoadSave( nlohmann::json& json )
 	IniEntryDirFile( Langs,  rel );
 	IniEntryDirFile( Cheats, rel );
 	IniEntryDirFile( CheatsWS, rel );*/
-	json["PluginsFolder"] = (PluginsFolder, ((fs::path)InstallFolder /= PathDefs::Base::Plugins()).make_preferred(), rel );
+	json["PluginsFolder"] = (PluginsFolder, ((fs::path)InstallFolder / "plugins").make_preferred(), rel );
 
 	//IniEntryDirFile( RunIso, rel );
 	//IniEntryDirFile( RunELF, rel );
@@ -1144,7 +1060,6 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 	return;
 
 	const wxString jsonFilename( GetUiSettingsFilename() );
-
 	if( overwrite )
 	{
 		if( wxFileExists( jsonFilename ) && !wxRemoveFile( jsonFilename ) )

@@ -583,7 +583,7 @@ namespace Panels
 		virtual bool ValidateEnumerationStatus();
 
 		int FileCount() const { return m_FileList->size(); }
-		const wxString& GetFilename( int i ) const { return (*m_FileList)[i]; }
+		const std::string& GetFilename( int i ) const { return (*m_FileList.get())[i]; }
 
 		friend class EnumThread;
 	};

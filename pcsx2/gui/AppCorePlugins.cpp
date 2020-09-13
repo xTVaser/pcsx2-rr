@@ -410,51 +410,44 @@ protected:
 //  Public API / Interface
 // --------------------------------------------------------------------------------------
 
-int EnumeratePluginsInFolder(std::string searchpath, std::vector<std::string> dest)
+int EnumeratePluginsInFolder(std::string searchpath, std::vector<std::string>& dest)
 {
-	PathUtils path;
+    PathUtils path;
 
-	if (!path.DoesExist(searchpath)) return 0;
-
-	std::unique_ptr<std::vector<std::string>> placebo;
-	std::vector<std::string> realdest = dest;
-	if (realdest.empty())
-	{
-		placebo = std::make_unique<std::vector<std::string>>();
-		realdest = *placebo.get();
-	}
+    if (!path.DoesExist(searchpath)) return 0;
 
 #ifdef __WXMSW__
-	// Windows pretty well has a strict "must end in .dll" rule.
-	wxString pattern( L"*%s" );
+    // Windows pretty well has a strict "must end in .dll" rule.
+    wxString pattern( L"*%s" );
 #else
-	// Other platforms seem to like to version their libs after the .so extension:
-	//    blah.so.3.1.fail?
-	wxString pattern( L"*%s*" );
+    // Other platforms seem to like to version their libs after the .so extension:
+    //    blah.so.3.1.fail?
+    wxString pattern( L"*%s*" );
 #endif
 
     for (const auto & entry : fs::directory_iterator(searchpath))
-	{
-		realdest.push_back(entry.path());
-	}
+    {
+        dest.push_back(entry.path());
+    }
 
-	//wxDir::GetAllFiles( searchpath.ToString(), realdest, pxsFmt( pattern, WX_STR(wxDynamicLibrary::GetDllExt())), wxDIR_FILES );
+    //wxDir::GetAllFiles( searchpath.ToString(), realdest, pxsFmt( pattern, WX_STR(wxDynamicLibrary::GetDllExt())), wxDIR_FILES );
 
-	// SECURITY ISSUE:  (applies primarily to Windows, but is a good idea on any platform)
-	//   The search folder order for plugins can vary across operating systems, and in some poorly designed
-	//   cases (old versions of windows), the search order is a security hazard because it does not
-	//   search where you might really expect.  In our case wedo not want *any* searching.  The only
-	//   plugins we want to load are the ones we found in the directly the user specified, so make
-	//   sure all paths are FULLY QUALIFIED ABSOLUTE PATHS.
-	//
-	// (for details, read: http://msdn.microsoft.com/en-us/library/ff919712.aspx )
+    // SECURITY ISSUE:  (applies primarily to Windows, but is a good idea on any platform)
+    //   The search folder order for plugins can vary across operating systems, and in some poorly designed
+    //   cases (old versions of windows), the search order is a security hazard because it does not
+    //   search where you might really expect.  In our case wedo not want *any* searching.  The only
+    //   plugins we want to load are the ones we found in the directly the user specified, so make
+    //   sure all paths are FULLY QUALIFIED ABSOLUTE PATHS.
+    //
+    // (for details, read: http://msdn.microsoft.com/en-us/library/ff919712.aspx )
 
-	for (uint i=0; i < realdest.size() ; ++i )
-	{
-		realdest[i] = Path::MakeAbsolute((realdest)[i]);
-	}
+    for (auto& path : dest)
+    {
+        path = Path::MakeAbsolute(path);
+    }
 
-	return realdest.size();
+    return dest.size();
+
 }
 
 // Posts a message to the App to reload plugins.  Plugins are loaded via a background thread
