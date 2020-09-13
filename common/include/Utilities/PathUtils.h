@@ -23,9 +23,9 @@ extern wxString Normalize(const wxString &srcpath);
 extern wxString Normalize(const wxDirName &srcpath);
 extern std::string MakeAbsolute(const std::string &srcpath);
 
-extern std::string Combine(fs::path srcPath, fs::path srcFile);
+extern fs::path Combine(fs::path srcPath, fs::path srcFile);
 //extern std::string Combine(const wxDirName &srcPath, const wxFileName &srcFile);
-//extern std::string Combine(const wxString &srcPath, const wxDirName &srcFile);
+extern std::string Combine(const std::string &srcPath, const std::string &srcFile);
 extern std::string ReplaceExtension(const wxString &src, const wxString &ext);
 extern std::string ReplaceFilename(const wxString &src, const wxString &newfilename);
 extern std::string GetFilename(const std::string &src);

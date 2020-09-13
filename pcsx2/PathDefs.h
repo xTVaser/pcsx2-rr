@@ -69,17 +69,17 @@ namespace PathDefs
 	// path.  These are typically for internal AppConfig use only, barring a few special cases.
 	namespace Base
 	{
-		extern const fs::path& Snapshots();
-		extern const fs::path& Savestates();
-		extern const fs::path& MemoryCards();
-		extern const fs::path& Settings();
-		extern const fs::path& Plugins();
-		extern const fs::path& Logs();
-		extern const fs::path& Dumps();
-		extern const fs::path& Langs();
-		extern const fs::path& Cheats();
-		extern const fs::path& CheatsWS();
-		extern const fs::path& Docs();
+		extern const std::string& Snapshots();
+		extern const std::string& Savestates();
+		extern const std::string& MemoryCards();
+		extern const std::string& Settings();
+		extern const std::string& Plugins();
+		extern const std::string& Logs();
+		extern const std::string& Dumps();
+		extern const std::string& Langs();
+		extern const std::string& Cheats();
+		extern const std::string& CheatsWS();
+		extern const std::string& Docs();
 	}
 }
 

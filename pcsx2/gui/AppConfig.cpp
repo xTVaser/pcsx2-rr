@@ -46,73 +46,73 @@ namespace PathDefs
 {
 	namespace Base
 	{
-		const fs::path& Snapshots()
+		const std::string& Snapshots()
 		{
 			static const std::string retval( "snaps" );
 			return retval;
 		}
 
-		const fs::path& Savestates()
+		const std::string& Savestates()
 		{
 			static const std::string retval( "sstates" );
 			return retval;
 		}
 
-		const fs::path& MemoryCards()
+		const std::string& MemoryCards()
 		{
 			static const std::string retval( "memcards" );
 			return retval;
 		}
 
-		const fs::path& Settings()
+		const std::string& Settings()
 		{
 			static const std::string retval( "json" );
 			return retval;
 		}
 
-		const fs::path& Plugins()
+		const std::string& Plugins()
 		{
 			static const std::string retval( "plugins" );
 			return retval;
 		}
 
-		const fs::path& Logs()
+		const std::string& Logs()
 		{
 			static const std::string retval( "logs" );
 			return retval;
 		}
 
-		const fs::path& Bios()
+		const std::string& Bios()
 		{
 			static const std::string retval("bios");
 			return retval;
 		}
 
-		const fs::path& Cheats()
+		const std::string& Cheats()
 		{
 			static const std::string retval("cheats");
 			return retval;
 		}
 
-		const fs::path& CheatsWS()
+		const std::string& CheatsWS()
 		{
 			static const std::string retval("cheats_ws");
 			return retval;
 		}
 
-		const fs::path& Langs()
+		const std::string& Langs()
 		{
 			static const std::string retval( "Langs" );
 			return retval;
 		}
 
-		const fs::path& Dumps()
+		const std::string& Dumps()
 		{
 			static const std::string retval( "dumps" );
 			return retval;
 		}
 
-		const fs::path& Docs()
+		const std::string& Docs()
 		{
 			static const std::string retval( "docs" );
 			return retval;
@@ -165,7 +165,7 @@ namespace PathDefs
 			// Move all user data file into central configuration directory (XDG_CONFIG_DIR)
 			case DocsFolder_User:	return GetUserLocalDataDir();
 #else
-			case DocsFolder_User:	return Path::Combine((std::string)wxStandardPaths::Get().GetDocumentsDir(), (std::string)pxGetAppName() );
+			case DocsFolder_User:	return Path::Combine(wxStandardPaths::Get().GetDocumentsDir().ToStdString(), pxGetAppName().ToStdString());
 #endif
 			case DocsFolder_Custom: return CustomDocumentsFolder;
 
@@ -195,38 +195,37 @@ namespace PathDefs
 
 	fs::path GetSnapshots()
 	{
-		return (fs::path)(GetDocuments() /= Base::Snapshots()).make_preferred();
+		return (GetDocuments() / Base::Snapshots()).make_preferred();
 	}
 
 	fs::path GetBios()
 	{
-		std::cout << "DOCS: " << GetDocuments() << std::endl;
-		return (GetDocuments() /= Base::Bios()).make_preferred();
+		return (GetDocuments() / Base::Bios()).make_preferred();
 	}
 
 	fs::path GetCheats()
 	{
-		return (GetDocuments() /= Base::Cheats()).make_preferred();
+		return (GetDocuments() / Base::Cheats()).make_preferred();
 	}
 
 	fs::path GetCheatsWS()
 	{
-		return (GetDocuments() /= Base::CheatsWS()).make_preferred();
+		return (GetDocuments() / Base::CheatsWS()).make_preferred();
 	}
 
 	fs::path GetDocs()
 	{
-		return (AppRoot() /= Base::Docs()).make_preferred();
+		return (AppRoot() / Base::Docs()).make_preferred();
 	}
 
 	fs::path GetSavestates()
 	{
-		return (GetDocuments() /= Base::Savestates()).make_preferred();
+		return (GetDocuments() / Base::Savestates()).make_preferred();
 	}
 
 	fs::path GetMemoryCards()
 	{
-		return (GetDocuments() /= Base::MemoryCards()).make_preferred();
+		return (GetDocuments() / Base::MemoryCards()).make_preferred();
 	}
 
 	fs::path GetPlugins()
@@ -644,7 +643,6 @@ void AppConfig::LoadSaveRootItems( nlohmann::json &json)
 	json["LanguageId"] = (LanguageId, NULL, LanguageId );
 	json["LanguageCode"] = LanguageCode;
 	json["RecentIsoCount"] = RecentIsoCount;
-	json["GzipIsoIndexTemplate"] = GzipIsoIndexTemplate;
 	json["Listbook_ImageSize"] = Listbook_ImageSize;
 	json["Toolbar_ImageSize"] = Toolbar_ImageSize;
 	json["Toolbar_ShowLabels"] = Toolbar_ShowLabels;

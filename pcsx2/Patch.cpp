@@ -187,7 +187,7 @@ static int _LoadPatchFiles(const std::string& folderName, std::string& fileSpec,
 		Console.WriteLn(Color_Red, L"The %s folder ('%s') is inaccessible. Skipping...", WX_STR((wxString)friendlyName), WX_STR((wxString)folderName));
 		return 0;
 	}
-	ghc::filesystem::path dir(folderName);
+	std::string dir(folderName);
 
 	int before = Patch.size();
 	std::string buffer;

@@ -137,7 +137,7 @@ static wxString ApplyTemplate(const wxString &name, const ghc::filesystem::path 
 
 	tem.Replace(key, fname);
 	if (first > 0)
-		tem = Path::Combine(base, (std::string)tem); // ignores appRoot if tem is absolute
+		tem = Path::Combine((std::string)base, (std::string)tem); // ignores appRoot if tem is absolute
 
 	return tem;
 }
