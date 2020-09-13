@@ -132,24 +132,25 @@ std::string Path::MakeAbsolute(const std::string &src)
 // Concatenates two pathnames together, inserting delimiters (backslash on win32)
 // as needed! Assumes the 'dest' is allocated to at least g_MaxPath length.
 //
-std::string Path::Combine(fs::path srcPath, fs::path srcFile)
+fs::path Path::Combine(fs::path srcPath, fs::path srcFile)
 {
-    fs::path combined = (srcPath /= srcFile);
-
-    combined.make_preferred();
+    fs::path combined = (srcPath / srcFile).make_preferred();
 
     return combined;
 }
 /*std::string Path::Combine(const wxDirName &srcPath, const wxFileName &srcFile)
 {
     return (srcPath + srcFile).GetFullPath();
-}
-
-std::string Path::Combine(const wxString &srcPath, const wxDirName &srcFile)
-{
-    return (wxDirName(srcPath) + srcFile).ToString();
 }*/
 
+std::string Path::Combine(const std::string &srcPath, const std::string &srcFile)
+{
+    fs::path srcP = srcPath;
+
+    fs::path srcF = srcFile;
+
+    return ( srcP / srcF).make_preferred();
+}
 // Replaces the extension of the file with the one given.
 // This function works for path names as well as file names.
 std::string Path::ReplaceExtension(const wxString &src, const wxString &ext)
