@@ -113,6 +113,11 @@ void InputRecording::ControllerInterrupt(u8& data, u8& port, u16& bufCount, u8 b
 	}
 }
 
+bool InputRecording::IsActive()
+{
+	return state != INPUT_RECORDING_MODE_NONE;
+}
+
 
 // GUI Handler - Stop recording
 void InputRecording::Stop()

@@ -1024,7 +1024,7 @@ void Pcsx2App::OpenGsPanel()
 	// Disable recording controls that only make sense if the game is running
 	sMainFrame.enableRecordingMenuItem(MenuId_Recording_FrameAdvance, true);
 	sMainFrame.enableRecordingMenuItem(MenuId_Recording_TogglePause, true);
-	sMainFrame.enableRecordingMenuItem(MenuId_Recording_ToggleRecordingMode, true);
+	sMainFrame.enableRecordingMenuItem(MenuId_Recording_ToggleRecordingMode, g_InputRecording.IsActive());
 #endif
 }
 

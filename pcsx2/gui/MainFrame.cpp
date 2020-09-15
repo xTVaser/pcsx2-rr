@@ -785,12 +785,12 @@ void MainEmuFrame::AppendKeycodeNamesToMenuOptions() {
 }
 
 #ifndef DISABLE_RECORDING
-void MainEmuFrame::initializeRecordingMenuItem(MenuIdentifiers menuId, wxString keyCodeStr) {
+void MainEmuFrame::initializeRecordingMenuItem(MenuIdentifiers menuId, wxString keyCodeStr, bool enable) {
 	wxMenuItem& item = *m_menuRecording.FindChildItem(menuId);
 	wxString text = item.GetItemLabel();
 	const size_t tabPos = text.rfind(L'\t');
 	item.SetItemLabel(text.Mid(0, tabPos ) + L"\t" + keyCodeStr);
-	item.Enable(true);
+	item.Enable(enable);
 }
 void MainEmuFrame::enableRecordingMenuItem(MenuIdentifiers menuId, bool enable)
 {
