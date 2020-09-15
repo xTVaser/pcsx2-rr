@@ -930,8 +930,9 @@ void MainEmuFrame::Menu_Recording_New_Click(wxCommandEvent &event)
 			return;
 		}
 	}
-	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
-	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
+	enableRecordingMenuItem(MenuId_Recording_New, false);
+	enableRecordingMenuItem(MenuId_Recording_Stop, true);
+	enableRecordingMenuItem(MenuId_Recording_ToggleRecordingMode, true);
 }
 
 void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
@@ -960,16 +961,18 @@ void MainEmuFrame::Menu_Recording_Play_Click(wxCommandEvent &event)
 	}
 	if (!recordingLoaded)
 	{
-		m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(false);
-		m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(true);
+		enableRecordingMenuItem(MenuId_Recording_New, false);
+		enableRecordingMenuItem(MenuId_Recording_Stop, true);
+		enableRecordingMenuItem(MenuId_Recording_ToggleRecordingMode, true);
 	}
 }
 
 void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent &event)
 {
 	g_InputRecording.Stop();
-	m_menuRecording.FindChildItem(MenuId_Recording_New)->Enable(true);
-	m_menuRecording.FindChildItem(MenuId_Recording_Stop)->Enable(false);
+	enableRecordingMenuItem(MenuId_Recording_New, true);
+	enableRecordingMenuItem(MenuId_Recording_Stop, false);
+	enableRecordingMenuItem(MenuId_Recording_ToggleRecordingMode, false);
 }
 
 void MainEmuFrame::Menu_Recording_TogglePause_Click(wxCommandEvent& event)
