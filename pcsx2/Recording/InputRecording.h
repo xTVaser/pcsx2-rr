@@ -34,6 +34,9 @@ public:
 
 	void ControllerInterrupt(u8& data, u8& port, u16& BufCount, u8 buf[]);
 
+	// If there is currently an input recording being played back or actively being recorded
+	bool IsActive();
+
 	void RecordModeToggle();
 
 	INPUT_RECORDING_MODE GetModeState();
