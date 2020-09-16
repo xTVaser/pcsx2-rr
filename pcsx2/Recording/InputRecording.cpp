@@ -302,6 +302,7 @@ bool InputRecording::Play(wxString fileName)
 		initialLoad = true;
 		sApp.SysExecute(g_Conf->CdvdSource);
 	}
+<<<<<<< HEAD
 	// Check author name
 	if (!g_Conf->CurrentIso.empty())
 	{
@@ -318,6 +319,25 @@ bool InputRecording::Play(wxString fileName)
 	recordingConLog(wxString::Format(L"[REC]: Author: %s\n", InputRecordingData.GetHeader().author));
 	recordingConLog(wxString::Format(L"[REC]: MaxFrame: %d\n", InputRecordingData.GetMaxFrame()));
 	recordingConLog(wxString::Format(L"[REC]: UndoCount: %d\n", InputRecordingData.GetUndoCount()));
+=======
+
+	// Check if the current game matches with the one used to make the original recording
+	if (!fs::is_empty(g_Conf->CurrentIso))
+		if (resolveGameName() != inputRecordingData.GetHeader().gameName)
+			recordingConLog(L"[REC]: Recording was possibly constructed for a different game.\n");
+
+	incrementUndo = true;
+	state = InputRecordingMode::Replaying;
+	g_InputRecordingControls.DisableFrameAdvance();
+	recordingConLog(wxString::Format(L"[REC]: Replaying input recording - [%s]\n", inputRecordingData.GetFilename()));
+	recordingConLog(wxString::Format(L"[REC]: PCSX2 Version Used: %s\n", inputRecordingData.GetHeader().emu));
+	recordingConLog(wxString::Format(L"[REC]: Recording File Version: %d\n", inputRecordingData.GetHeader().version));
+	recordingConLog(wxString::Format(L"[REC]: Associated Game Name or ISO Filename: %s\n", inputRecordingData.GetHeader().gameName));
+	recordingConLog(wxString::Format(L"[REC]: Author: %s\n", inputRecordingData.GetHeader().author));
+	recordingConLog(wxString::Format(L"[REC]: Total Frames: %d\n", inputRecordingData.GetTotalFrames()));
+	recordingConLog(wxString::Format(L"[REC]: Undo Count: %d\n", inputRecordingData.GetUndoCount()));
+	return true;
+>>>>>>> 341eec743... cleaned up added WX
 }
 
 wxString InputRecording::resolveGameName()
@@ -337,7 +357,7 @@ wxString InputRecording::resolveGameName()
 			}
 		}
 	}
-	return !gameName.IsEmpty() ? gameName : Path::GetFilename(g_Conf->CurrentIso);
+	return !gameName.IsEmpty() ? gameName : (wxString)Path::GetFilename(g_Conf->CurrentIso);
 }
 
 #endif

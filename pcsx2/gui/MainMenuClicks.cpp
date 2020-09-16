@@ -181,11 +181,11 @@ wxWindowID SwapOrReset_Iso( wxWindow* owner, IScopedCoreThread& core_control, co
 //   wxID_CANCEL - User canceled the action outright.
 //   wxID_RESET  - User wants to reset the emu in addition to swap discs
 //   (anything else) - Standard swap, no reset.  (hotswap!)
-wxWindowID SwapOrReset_Disc( wxWindow* owner, IScopedCoreThread& core, const wxString driveLetter)
+wxWindowID SwapOrReset_Disc( wxWindow* owner, IScopedCoreThread& core, const std::string driveLetter)
 {
 	wxWindowID result = wxID_CANCEL;
 
-	if ((g_Conf->CdvdSource == CDVD_SourceType::Disc) && (driveLetter == g_Conf->Folders.RunDisc.GetPath()))
+	if ((g_Conf->CdvdSource == CDVD_SourceType::Disc) && (driveLetter == g_Conf->Folders.RunDisc))
 	{
 		core.AllowResume();
 		return result;
@@ -324,13 +324,13 @@ bool MainEmuFrame::_DoSelectIsoBrowser( wxString& result )
 	isoFilterTypes.Add(_("All Files (*.*)"));
 	isoFilterTypes.Add(L"*.*");
 
-	wxFileDialog ctrl( this, _("Select disc image, compressed disc image, or block-dump..."), g_Conf->Folders.RunIso, wxEmptyString,
+	wxFileDialog ctrl( this, _("Select disc image, compressed disc image, or block-dump..."), g_Conf->Folders.RunIso.string(), wxEmptyString,
 		JoinString(isoFilterTypes, L"|"), wxFD_OPEN | wxFD_FILE_MUST_EXIST );
 
 	if( ctrl.ShowModal() != wxID_CANCEL )
 	{
 		result = ctrl.GetPath();
-		g_Conf->Folders.RunIso = wxFileName( result ).GetPath();
+		g_Conf->Folders.RunIso = result.ToStdString();
 		return true;
 	}
 
@@ -341,12 +341,12 @@ bool MainEmuFrame::_DoSelectELFBrowser()
 {
 	static const wxChar* elfFilterType = L"ELF Files (.elf)|*.elf;*.ELF";
 
-	wxFileDialog ctrl( this, _("Select ELF file..."), g_Conf->Folders.RunELF, wxEmptyString,
+	wxFileDialog ctrl( this, _("Select ELF file..."), g_Conf->Folders.RunELF.string(), wxEmptyString,
 		(wxString)elfFilterType + L"|" + _("All Files (*.*)") + L"|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST );
 
 	if( ctrl.ShowModal() != wxID_CANCEL )
 	{
-		g_Conf->Folders.RunELF = wxFileName( ctrl.GetPath() ).GetPath();
+		g_Conf->Folders.RunELF = wxFileName( ctrl.GetPath() ).GetPath().ToStdString();
 		g_Conf->CurrentELF = ctrl.GetPath();
 		return true;
 	}

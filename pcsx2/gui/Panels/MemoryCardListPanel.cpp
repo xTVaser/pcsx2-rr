@@ -526,7 +526,7 @@ void Panels::MemoryCardListPanel_Simple::Apply()
 
 		if (g_Conf->Mcd[slot].Enabled) {
 			used++;
-			Console.WriteLn(L"slot[%d]='%s'", slot, WX_STR((wxString)g_Conf->Mcd[slot].Filename));
+			Console.WriteLn(L"slot[%d]='%s'", slot, (wxString)g_Conf->Mcd[slot].Filename);
 		}
 	}
 	if (!used)
@@ -548,12 +548,12 @@ void Panels::MemoryCardListPanel_Simple::AppStatusEvent_OnSettingsApplied()
 			wxString errMsg;
 			if (isValidNewFilename(m_Cards[slot].Filename, GetMcdPath(), errMsg, 5)) {
 				if (!Dialogs::CreateMemoryCardDialog::CreateIt(targetFile, 8, false)) {
-					Console.Error(L"Automatic creation of memory card '%s' failed. Hope for the best...", WX_STR(targetFile));
+					Console.Error(L"Automatic creation of memory card '%s' failed. Hope for the best...", targetFile);
 				} else {
-					Console.WriteLn(L"Memory card created: '%s'.", WX_STR(targetFile));
+					Console.WriteLn(L"Memory card created: '%s'.", targetFile);
 				}
 			} else {
-				Console.Error(L"Memory card was enabled, but it had an invalid file name. Aborting automatic creation. Hope for the best... (%s)", WX_STR(errMsg));
+				Console.Error(L"Memory card was enabled, but it had an invalid file name. Aborting automatic creation. Hope for the best... (%s)", errMsg);
 			}
 		}
 
@@ -632,9 +632,9 @@ void Panels::MemoryCardListPanel_Simple::UiCreateNewCard( McdSlotItem& card )
 		card.Filename  = dialog.result_createdMcdFilename;
 		card.IsPresent = true;
 		if (card.Slot >= 0) {
-			Console.WriteLn(L"Setting new memory card to slot %u: '%s'", card.Slot, WX_STR((wxString)card.Filename));
+			Console.WriteLn(L"Setting new memory card to slot %u: '%s'", card.Slot, (wxString)card.Filename);
 		} else {
-			Console.WriteLn(L"Created a new unassigned memory card file: '%s'", WX_STR((wxString)card.Filename));
+			Console.WriteLn(L"Created a new unassigned memory card file: '%s'", (wxString)card.Filename);
 		}
 	} else {
 		card.IsEnabled = false;

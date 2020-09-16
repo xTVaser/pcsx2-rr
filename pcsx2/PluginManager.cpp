@@ -930,8 +930,8 @@ void SysCorePlugins::Load( PluginsEnum_t pid, const wxString& srcfile )
 
 	m_info[pid] = std::make_unique<PluginStatus_t>(pid, srcfile);
 
-	Console.Indent().WriteLn(L"Bound %4s: %s [%s %s]", WX_STR(tbl_PluginInfo[pid].GetShortname()),
-		WX_STR(wxFileName(srcfile).GetFullName()), WX_STR(m_info[pid]->Name), WX_STR(m_info[pid]->Version));
+	Console.Indent().WriteLn(L"Bound %4s: %s [%s %s]", tbl_PluginInfo[pid].GetShortname(),
+		wxFileName(srcfile).GetFullName(), m_info[pid]->Name, m_info[pid]->Version);
 }
 
 void SysCorePlugins::Load( const wxString (&folders)[PluginId_Count] )
@@ -940,7 +940,7 @@ void SysCorePlugins::Load( const wxString (&folders)[PluginId_Count] )
 
 	wxDoNotLogInThisScope please;
 
-	Console.WriteLn(Color_StrongBlue, L"\nLoading plugins from %s...", WX_STR((wxString)g_Conf->Folders[FolderId_Plugins]));
+	Console.WriteLn(Color_StrongBlue, L"\nLoading plugins from %s...", (wxString)g_Conf->Folders[FolderId_Plugins]);
 
 	ConsoleIndentScope indent;
 

@@ -29,7 +29,6 @@
 
 #include "Utilities/ThreadingDialogs.h"
 #include "Utilities/SafeArray.inl"
-#include "FixedPointTypes.inl"
 
 // Allows us to force-disable threading for debugging/troubleshooting
 static const bool DisableThreading =
@@ -510,7 +509,7 @@ void Panels::PluginSelectorPanel::Apply()
 			.SetDiagMsg(ex.FormatDiagnosticMessage())
 			.SetUserMsg(pxsFmt(
 				_("The selected %s plugin failed to load.\n\nReason: %s\n\n"),
-				WX_STR((wxString)plugname), WX_STR(ex.FormatDisplayMessage())
+				(wxString)plugname, ex.FormatDisplayMessage()
 			) + GetApplyFailedMsg());
 	}
 }
@@ -784,7 +783,7 @@ void Panels::PluginSelectorPanel::OnProgress( wxCommandEvent& evt )
 	}
 
 	m_StatusPanel->AdvanceProgress( (evtidx < m_FileList->size()-1) ?
-		(*m_FileList)[evtidx + 1] : wxString(_("Completing tasks..."))
+		(*m_FileList)[evtidx + 1] : ("Completing tasks...")
 	);
 
 	EnumeratedPluginInfo result( m_EnumeratorThread->Results[evtidx] );

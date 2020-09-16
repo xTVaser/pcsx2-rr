@@ -22,7 +22,6 @@
 
 #include "Utilities/json.hpp"
 #include "Utilities/PathUtils.h"
-#include "FixedPointTypes.inl"
 
 
 #include <wx/stdpaths.h>
@@ -30,6 +29,7 @@
 
 #include "DebugTools/Debug.h"
 #include <memory>
+#include <iomanip>
 
 nlohmann::json json;
 PathUtils folderUtils;
@@ -69,7 +69,8 @@ namespace PathDefs
 	// Specifies the main configuration folder.
 	fs::path GetUserLocalDataDir()
 	{
-    	return fs::path((std::string)wxStandardPaths::Get().GetUserLocalDataDir()).make_preferred();
+		fs::path temp = wxStandardPaths::Get().GetUserLocalDataDir().ToStdString();
+    	return temp;
 	}
 
 	// Fetches the path location for user-consumable documents -- stuff users are likely to want to
@@ -132,7 +133,7 @@ namespace PathDefs
 
 	fs::path GetDocs()
 	{
-		return (AppRoot() / "docs").make_preferred();
+		return (AppRoot().parent_path() / "docs").make_preferred();
 	}
 
 	fs::path GetSavestates()
@@ -150,7 +151,7 @@ namespace PathDefs
 		// Each linux distributions have his rules for path so we give them the possibility to
 		// change it with compilation flags. -- Gregory
 #ifndef PLUGIN_DIR_COMPILATION
-		return (AppRoot() / "plugins").make_preferred();
+		return (AppRoot().parent_path() / "plugins").make_preferred();
 #else
 #define xPLUGIN_DIR_str(s) PLUGIN_DIR_str(s)
 #define PLUGIN_DIR_str(s) #s
@@ -160,17 +161,20 @@ namespace PathDefs
 
 	fs::path GetSettings()
 	{
-		return (GetDocuments() / "json").make_preferred();
+		fs::path docPath = GetDocuments();
+		fs::path path = GetDocuments() / "json";
+		// make_preferred() is causing issues?
+		return path;
 	}
 
 	fs::path GetLogs()
 	{
-		return (GetDocuments() / "logs").make_preferred();
+		return (GetDocuments().parent_path() / "logs").make_preferred();
 	}
 
 	fs::path GetLangs()
 	{
-		return (AppRoot() / "langs").make_preferred();
+		return (AppRoot().parent_path() / "langs").make_preferred();
 	}
 
 	std::string Get( FoldersEnum_t folderidx )
@@ -313,17 +317,17 @@ namespace FilenameDefs
 {
 	std::string GetUiConfig()
 	{
-		return (std::string)(pxGetAppName() + "L_ui.json");
+		return pxGetAppName().ToStdString() + "_ui.json";
 	}
 
 	std::string GetUiKeysConfig()
 	{
-		return (std::string)(pxGetAppName() + "L_keys.json");
+		return pxGetAppName().ToStdString() + "_keys.json";
 	}
 
 	std::string GetVmConfig()
 	{
-		return (std::string)(pxGetAppName() + "L_vm.json");
+		return pxGetAppName().ToStdString() + "_vm.json";
 	}
 
 	std::string GetUsermodeConfig()
@@ -358,7 +362,7 @@ namespace FilenameDefs
 
 std::string AppConfig::FullpathTo( PluginsEnum_t pluginidx ) const
 {
-	return (PluginsFolder + BaseFilenames[pluginidx] );
+	return Path::Combine(PluginsFolder,  BaseFilenames[pluginidx] );
 }
 
 // returns true if the filenames are quite absolutely the equivalent.  Works for all
@@ -394,16 +398,17 @@ fs::path GetCheatsWsFolder()
 
 fs::path GetSettingsFolder()
 {
-	if( wxGetApp().Overrides.SettingsFolder.c_str() != nullptr )
+	if( !wxGetApp().Overrides.SettingsFolder.empty() )
 		return wxGetApp().Overrides.SettingsFolder;
 
-	return UseDefaultSettingsFolder ? (std::string)PathDefs::GetSettings() : SettingsFolder;
+	return UseDefaultSettingsFolder ? PathDefs::GetSettings().string() : SettingsFolder;
 }
 
 fs::path GetVmSettingsFilename()
 {
-	fs::path fname( (wxGetApp().Overrides.VmSettingsFile.c_str() != nullptr) ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
-	return (GetSettingsFolder() / fname).make_preferred();
+    fs::path fname( !wxGetApp().Overrides.VmSettingsFile.empty() ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
+	std::cout << "Path: " << Path::Combine(GetSettingsFolder(), fname) << std::endl;
+    return Path::Combine(GetSettingsFolder(), fname);
 }
 
 fs::path GetUiSettingsFilename()
@@ -418,11 +423,14 @@ fs::path GetUiKeysFilename()
 	return (GetSettingsFolder() / fname).make_preferred();
 }
 
+std::string AppConfig::FullpathToBios() const				
+{ 
+	return std::string(Path::Combine( Folders.Bios, BaseFilenames.Bios )); 
+}
 
-std::string AppConfig::FullpathToBios() const				{ return std::string(Path::Combine( Folders.Bios, BaseFilenames.Bios )); }
 std::string AppConfig::FullpathToMcd( uint slot ) const
 {
-	return( Folders.MemoryCards + Mcd[slot].Filename );
+	return Path::Combine( Folders.MemoryCards, Mcd[slot].Filename );
 }
 
 bool IsPortable()
@@ -504,23 +512,18 @@ void App_LoadSaveInstallSettings( nlohmann::json& json )
 	json["Install_Dir"] = (	InstallFolder,	((std::string(wxStandardPaths::Get().GetExecutablePath()))));
 	//SetFullBaseDir( InstallFolder );
 
-	json["PluginsFolder"]	= (PluginsFolder =((fs::path)InstallFolder / "plugins"  ).make_preferred());
+	json["PluginsFolder"] = (PluginsFolder = Path::Combine(InstallFolder, "plugins" ));
 
-	//ini.Flush();
 }
 
-void App_LoadInstallSettings( wxConfigBase* ini )
+void App_LoadInstallSettings( nlohmann::json *json)
 {
-	//IniLoader loader( ini );
-	nlohmann::json json;
-	App_LoadSaveInstallSettings( json );
+	App_LoadSaveInstallSettings( *json );
 }
 
-void App_SaveInstallSettings( wxConfigBase* ini )
+void App_SaveInstallSettings( nlohmann::json *json )
 {
-	//IniSaver saver( ini );
-	nlohmann::json json;
-	App_LoadSaveInstallSettings( json );
+	App_LoadSaveInstallSettings( *json );
 }
 
 // ------------------------------------------------------------------------
@@ -563,9 +566,9 @@ void AppConfig::LoadSaveRootItems( nlohmann::json &json)
 	json["Toolbar_ImageSize"] = Toolbar_ImageSize;
 	json["Toolbar_ShowLabels"] = Toolbar_ShowLabels;
 
-	wxFileName res(CurrentIso);
-	//json["CurrentIso"] = (res, res, ini.IsLoading() || IsPortable() );
-	CurrentIso = res.GetFullPath();
+	std::string res = CurrentIso;
+	json["CurrentIso"] = (res, res, IsPortable() );
+	CurrentIso = res;
 
 	json["CurrentBlockdump"] = CurrentBlockdump;
 	json["CurrentELF"] = CurrentELF;
@@ -619,7 +622,7 @@ void AppConfig::ConsoleLogOptions::LoadSave( nlohmann::json& json, const char* l
 
 	json["Visible"] = Visible;
 	json["AutoDock"] = AutoDock;
-	//json["DisplayPosition"] = DisplayPosition;
+	json["DisplayPosition"] = DisplayPosition;
 	json["DisplaySize"] = DisplaySize;
 	json["FontSize"] = FontSize;
 	json["Theme"] = Theme;
@@ -651,14 +654,14 @@ AppConfig::FolderOptions::FolderOptions()
 
 	, RunIso	( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
 	, RunELF	( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
-	, RunDisc	( PathDefs::GetDocuments().GetFilename() )
+	, RunDisc	( PathDefs::GetDocuments() )
 {
 	//bitset = 0xffffffff;
 }
 
 void AppConfig::FolderOptions::LoadSave( nlohmann::json& json )
 {
-	/*ScopedIniGroup path( ini, L"Folders" );
+	/*ScopedIniGroup path( ini, L"Folders" )
 
 	if( ini.IsSaving() )
 	{
@@ -678,18 +681,18 @@ void AppConfig::FolderOptions::LoadSave( nlohmann::json& json )
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
 	bool rel = false; //( ini.IsLoading() || IsPortable() );
 
-	/*IniEntryDirFile( Bios,  rel);
-	IniEntryDirFile( Snapshots,  rel );
-	IniEntryDirFile( Savestates,  rel );
-	IniEntryDirFile( MemoryCards,  rel );
-	IniEntryDirFile( Logs,  rel );
-	IniEntryDirFile( Langs,  rel );
-	IniEntryDirFile( Cheats, rel );
-	IniEntryDirFile( CheatsWS, rel );*/
-	json["PluginsFolder"] = (PluginsFolder, ((fs::path)InstallFolder / "plugins").make_preferred(), rel );
+	json[Bios] = rel;
+	json[Snapshots] =  rel;
+	json[Savestates] = rel;
+	json[MemoryCards] = rel;
+	json[Logs] = rel;
+	json[Langs] = rel;
+	json[Cheats] = rel;
+	json[CheatsWS] = rel;
+	json[PluginsFolder] = (PluginsFolder, Path::Combine(InstallFolder, "plugins"), rel );
 
-	//IniEntryDirFile( RunIso, rel );
-	//IniEntryDirFile( RunELF, rel );
+	json[ RunIso] = rel;
+	json[ RunELF] = rel;
 
 	//if( ini.IsLoading() )
 	//{
@@ -847,7 +850,7 @@ void AppConfig::FramerateOptions::SanityCheck()
 void AppConfig::FramerateOptions::LoadSave( nlohmann::json& json )
 {
 	//ScopedIniVurboScalar );
-	//json["SlomoScalar"] = SlomoScalar;
+	//json["SlomoScalar"] = SlomoScalar; // Fixed int 100 
 
 }
 
@@ -983,9 +986,7 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 
 		case 3: // Aggressive
 			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = -1); // -1 EE cyclerate
-            // Fall through
-
-		case 2: // Balanced
+            // Fall throughaaad
 			isMTVUSet ? 0 : (isMTVUSet = true, EmuOptions.Speedhacks.vuThread = true); // Enable MTVU
             // Fall through
 
@@ -1013,35 +1014,47 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 	return true;
 }
 
-wxFileConfig* OpenFileConfig( std::string filename )
+nlohmann::json* OpenFileConfig( std::string filename )
 {
-	return new wxFileConfig( wxEmptyString, wxEmptyString, wxString(filename), wxEmptyString, wxCONFIG_USE_RELATIVE_PATH );
+    // TODO - might want a common function to wrap the parse handling, probably want a graceful exit in the case of an invalid config file
+	std::ifstream in(filename);
+	nlohmann::json* json = new nlohmann::json();
+	try {
+		*json = json->parse(in);
+	} catch(nlohmann::json::parse_error) {
+		Console.WriteLn("JSON - AHHHHHHH!");
+	}
+	return json;
 }
 
 void RelocateLogfile()
 {
 
-	if (!folderUtils.CreateFolder(g_Conf->Folders.Logs))
-	return;
-
+    if (!folderUtils.DoesExist(g_Conf->Folders.Logs))
+    {
+	    if (!folderUtils.CreateFolder(g_Conf->Folders.Logs))
+	    {
+		    return;
+		}
+    }
 	std::string newlogname = ( g_Conf->Folders.Logs + "emuLog.txt");
 
-	if( (emuLog != NULL) && (emuLogName != newlogname) )
+	if( (emuLog != nullptr) && (emuLogName != newlogname) )
 	{
 		//Console.WriteLn( L"\nRelocating Logfile...\n\tFrom: %s\n\tTo  : %s\n", WX_STR(emuLogName), WX_STR(newlogname) );
-		wxGetApp().DisableDiskLogging();
+		//wxGetApp().DisableDiskLogging();
 
 		fclose( emuLog );
-		emuLog = NULL;
+		emuLog = nullptr;
 	}
 
-	if( emuLog == NULL )
+	if( emuLog == nullptr )
 	{
 		emuLogName = newlogname;
 		emuLog = wxFopen( emuLogName, "wb" );
 	}
 
-	wxGetApp().EnableAllLogging();
+	//wxGetApp().EnableAllLogging();
 }
 
 // Parameters:
@@ -1054,30 +1067,38 @@ void RelocateLogfile()
 //
 void AppConfig_OnChangedSettingsFolder( bool overwrite )
 {
-	if (!folderUtils.CreateFolder(PathDefs::GetDocuments()))
-	return;
-
-	if(folderUtils.CreateFolder(GetSettingsFolder()))
-	return;
-
-	const wxString jsonFilename( GetUiSettingsFilename() );
+	if (!folderUtils.DoesExist(PathDefs::GetDocuments().string()))
+	{
+		if (!folderUtils.CreateFolder(PathDefs::GetDocuments()))
+		{
+			return;
+		}
+	}
+	if (!folderUtils.DoesExist(GetSettingsFolder()))
+	{
+		if(folderUtils.CreateFolder(GetSettingsFolder()))
+		{
+			return;
+		}
+	}
+	std::string jsonFilename = GetUiSettingsFilename();
 	if( overwrite )
 	{
-		if( wxFileExists( jsonFilename ) && !wxRemoveFile( jsonFilename ) )
+		if( folderUtils.DoesExist ( jsonFilename ) && !fs::remove( jsonFilename ) )
 			throw Exception::AccessDenied(jsonFilename)
 				.SetBothMsgs(pxL("Failed to overwrite existing settings file; permission was denied."));
 
-		const wxString vmJsonFilename( GetVmSettingsFilename() );
+		std::string vmJsonFilename = GetVmSettingsFilename();
 
-		if( wxFileExists( vmJsonFilename ) && !wxRemoveFile( vmJsonFilename ) )
+		if( folderUtils.DoesExist( vmJsonFilename ) && !fs::remove( vmJsonFilename ) )
 			throw Exception::AccessDenied(vmJsonFilename)
 				.SetBothMsgs(pxL("Failed to overwrite existing settings file; permission was denied."));
 	}
 
 	// Bind into wxConfigBase to allow wx to use our config internally, and delete whatever
 	// comes out (cleans up prev config, if one).
-	delete wxConfigBase::Set( OpenFileConfig( (std::string)jsonFilename ) );
-	GetAppConfig()->SetRecordDefaults(true);
+	//delete wxConfigBase::Set( OpenFileConfig( (std::string)jsonFilename ) );
+	//GetAppConfig()->SetRecordDefaults(true);
 
 	if( !overwrite )
 		AppLoadSettings();
@@ -1176,20 +1197,20 @@ static void LoadUiSettings()
 	g_Conf = std::make_unique<AppConfig>();
 	g_Conf->LoadSave( loader );
 
-	if( !wxFile::Exists( g_Conf->CurrentIso ) )
+	if( !folderUtils.DoesExist( g_Conf->CurrentIso ) )
 	{
 		g_Conf->CurrentIso.clear();
 	}
 
 #if defined(_WIN32)
-	if( !g_Conf->Folders.RunDisc.DirExists() )
+	if( !folderUtils.DoesExist(g_Conf->Folders.RunDisc) )
 	{
-		g_Conf->Folders.RunDisc.Clear();
+		//g_Conf->Folders.RunDisc.Clear();
 	}
 #else
-	if (!g_Conf->Folders.RunDisc.Exists())
+	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
 	{
-		g_Conf->Folders.RunDisc.Clear();
+		//g_Conf->Folders.RunDisc.Clear();
 	}
 #endif
 
@@ -1200,8 +1221,7 @@ static void LoadVmSettings()
 {
 	// Load virtual machine options and apply some defaults overtop saved items, which
 	// are regulated by the PCSX2 UI.
-
-	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
+	std::unique_ptr<nlohmann::json> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
 	nlohmann::json vmloader;
 	g_Conf->EmuOptions.LoadSave( vmloader );
 	g_Conf->EmuOptions.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
@@ -1223,20 +1243,20 @@ void AppLoadSettings()
 
 static void SaveUiSettings()
 {
-	if( !wxFile::Exists( g_Conf->CurrentIso ) )
+	if( !folderUtils.DoesExist( g_Conf->CurrentIso ) )
 	{
 		g_Conf->CurrentIso.clear();
 	}
 
 #if defined(_WIN32)
-	if (!g_Conf->Folders.RunDisc.DirExists())
+	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc()))
 	{
-		g_Conf->Folders.RunDisc.Clear();
+		fs::path::clear(Folders.RunDisc.Clear());
 	}
 #else
-	if (!g_Conf->Folders.RunDisc.Exists())
+	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
 	{
-		g_Conf->Folders.RunDisc.Clear();
+		g_Conf->Folders.RunDisc.clear();
 	}
 #endif
 
@@ -1248,28 +1268,44 @@ static void SaveUiSettings()
 	SysTraceLog_LoadSaveSettings( saver );
 
 	sApp.DispatchUiSettingsEvent( saver );
+	std::ofstream file(GetUiSettingsFilename());
+	file << std::setw(4) << saver << std::endl;
 }
 
 static void SaveVmSettings()
 {
-	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
-	nlohmann::json vmsaver;
+
+	if (!folderUtils.DoesExist(GetVmSettingsFilename()))
+	{
+		std::string filePath = GetVmSettingsFilename().string();
+
+		nlohmann::json j = { };
+
+		std::ofstream file(filePath);
+		file << std::setw(4) << j << std::endl;
+	}
+
+	std::unique_ptr<nlohmann::json> vmjson( OpenFileConfig( GetVmSettingsFilename()));
+	nlohmann::json vmsaver = *vmjson.get();
 	g_Conf->EmuOptions.LoadSave( vmsaver );
 
-	sApp.DispatchVmSettingsEvent( vmsaver );
+	std::ofstream file( GetVmSettingsFilename());
+	file << std::setw(4) << vmsaver << std::endl;
+
+	//sApp.DispatchVmSettingsEvent( vmsaver );
 }
 
 static void SaveRegSettings()
 {
-	std::unique_ptr<wxConfigBase> conf_install;
+	bool conf_install;
 
 	if (InstallationMode == InstallMode_Portable) return;
 
 	// sApp. macro cannot be use because you need the return value of OpenInstallSettingsFile method
-	if( Pcsx2App* __app_ = (Pcsx2App*)wxApp::GetInstance() ) conf_install = std::unique_ptr<wxConfigBase>((*__app_).OpenInstallSettingsFile());
-	conf_install->SetRecordDefaults(false);
+	//if( Pcsx2App* __app_ = (Pcsx2App*)wxApp::GetInstance() ) conf_install = std::unique_ptr<nlohmann::json>((*__app_).OpenInstallSettingsFile());
+	//conf_install->SetRecordDefaults(false);
 
-	App_SaveInstallSettings( conf_install.get() );
+	//App_SaveInstallSettings( conf_install.get() );
 }
 
 void AppSaveSettings()

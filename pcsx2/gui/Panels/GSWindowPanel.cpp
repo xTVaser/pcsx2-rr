@@ -15,7 +15,6 @@
 
 #include "PrecompiledHeader.h"
 #include "ConfigurationPanels.h"
-#include "FixedPointTypes.inl"
 
 using namespace pxSizerFlags;
 

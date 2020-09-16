@@ -1,6 +1,7 @@
 #ifndef PATHUTILS_H
 #define PATHUTILS_H
 #include "filesystem.hpp"
+#include "FixedPointTypes.inl"
 #include "Path.h"
 namespace fs = ghc::filesystem;
 class PathUtils
@@ -11,7 +12,9 @@ class PathUtils
 
     bool CreateFolder(std::string path);
     bool Empty(std::string); // Is the folder empty
-    bool DoesExist(std::string &path); // Does the path exist
+    bool DoesExist(std::string path); // Does the path exist
+    bool DoesExist(fs::path path); // Does the path exist
+
 };
 
 namespace Path

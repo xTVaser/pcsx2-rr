@@ -32,8 +32,6 @@
 
 #include "Sio.h"
 
-#include "FixedPointTypes.inl"
-
 #ifndef DISABLE_RECORDING
 #	include "Recording/InputRecordingControls.h"
 #endif

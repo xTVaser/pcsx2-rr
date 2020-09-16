@@ -608,8 +608,8 @@ public:
 	void EstablishAppUserMode();
 	void ForceFirstTimeWizardOnNextRun();
 
-	wxConfigBase* OpenInstallSettingsFile();
-	wxConfigBase* TestForPortableInstall();
+	nlohmann::json* OpenInstallSettingsFile();
+	nlohmann::json* TestForPortableInstall();
 
 	bool HasPendingSaves() const;
 	void StartPendingSave();

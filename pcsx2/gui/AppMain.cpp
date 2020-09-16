@@ -438,19 +438,18 @@ public:
 		// Note: GetUserLocalDataDir() on linux return $HOME/.pcsx2 unfortunately it does not follow the XDG standard
 		// So we re-implement it, to follow the standard.
 		wxDirName user_local_dir;
-		std::string default_config_dir = Path::Combine( ".config", (std::string)pxGetAppName() );
-		wxString* xdg_home_value;
-		if( wxGetEnv(L"XDG_CONFIG_HOME", xdg_home_value) ) {
-			if ( ghc::filesystem::is_empty((std::string)*xdg_home_value)  ) {
+		wxDirName default_config_dir = (wxDirName)Path::Combine( ".config", pxGetAppName().ToStdString() );
+		wxString xdg_home_value;
+		if( wxGetEnv(L"XDG_CONFIG_HOME", &xdg_home_value) ) {
+			if ( xdg_home_value.IsEmpty() ) {
 				// variable exist but it is empty. So use the default value
-				user_local_dir = (wxDirName)Path::Combine( (std::string)GetUserConfigDir() , default_config_dir);
+				user_local_dir = (wxDirName)Path::Combine( GetUserConfigDir().ToStdString() , default_config_dir.ToString().ToStdString());
 			} else {
-				user_local_dir = (wxDirName)Path::Combine( (std::string)*xdg_home_value, (std::string)pxGetAppName());
+				user_local_dir = (wxDirName)Path::Combine( xdg_home_value.ToStdString(), pxGetAppName().ToStdString());
 			}
 		} else {
 			// variable do not exist
-			user_local_dir = (wxDirName)Path::Combine( (std::string
-			)GetUserConfigDir() , default_config_dir);
+				user_local_dir = (wxDirName)Path::Combine( GetUserConfigDir().ToStdString() , default_config_dir.ToString().ToStdString());
 		}
 
 		cache_dir = user_local_dir.ToString();
@@ -849,40 +848,76 @@ void AppApplySettings( const AppConfig* oldconf )
 	// Ensure existence of necessary documents folders.  Plugins and other parts
 	// of PCSX2 rely on them.
 
-	if (folderUtils.CreateFolder(g_Conf->Folders.MemoryCards) &&
-	folderUtils.CreateFolder(g_Conf->Folders.Savestates) &&
-	folderUtils.CreateFolder(g_Conf->Folders.Snapshots) &&
-	folderUtils.CreateFolder(g_Conf->Folders.Cheats) &&
-	folderUtils.CreateFolder(g_Conf->Folders.CheatsWS))
+	if (!folderUtils.DoesExist(g_Conf->Folders.MemoryCards) && 
+	folderUtils.DoesExist(g_Conf->Folders.Savestates) &&
+	folderUtils.DoesExist(g_Conf->Folders.Snapshots) &&
+	folderUtils.DoesExist(g_Conf->Folders.Cheats) &&
+	folderUtils.DoesExist(g_Conf->Folders.CheatsWS) &&
+	folderUtils.DoesExist(g_Conf->Folders.Logs))
 	{
 
-		g_Conf->EmuOptions.BiosFilename = g_Conf->FullpathToBios();
-
-		RelocateLogfile();
-
-		/*if( (oldconf == NULL) || (oldconf->LanguageCode.CmpNoCase(g_Conf->LanguageCode)) )
+		if (folderUtils.CreateFolder(g_Conf->Folders.MemoryCards) &&
+		folderUtils.CreateFolder(g_Conf->Folders.Savestates) &&
+		folderUtils.CreateFolder(g_Conf->Folders.Snapshots) &&
+		folderUtils.CreateFolder(g_Conf->Folders.Cheats) &&
+		folderUtils.CreateFolder(g_Conf->Folders.CheatsWS) &&
+		folderUtils.CreateFolder(g_Conf->Folders.Logs))
 		{
-			wxDoNotLogInThisScope please;
-			i18n_SetLanguage( g_Conf->LanguageId, g_Conf->LanguageCode );
-		}*/
 
-		CorePlugins.SetSettingsFolder( (std::string)GetSettingsFolder());
+			g_Conf->EmuOptions.BiosFilename = g_Conf->FullpathToBios();
 
-		// Update the compression attribute on the Memcards folder.
-		// Memcards generally compress very well via NTFS compression.
+			RelocateLogfile();
 
-		#ifdef __WXMSW__
-		NTFS_CompressFile( g_Conf->Folders.MemoryCards, g_Conf->McdCompressNTFS );
-		#endif
-		sApp.DispatchEvent( AppStatus_SettingsApplied );
+			/*if( (oldconf == NULL) || (oldconf->LanguageCode.CmpNoCase(g_Conf->LanguageCode)) )
+			{
+				wxDoNotLogInThisScope please;
+				i18n_SetLanguage( g_Conf->LanguageId, g_Conf->LanguageCode );
+			}*/
 
-		paused_core.AllowResume();
+			CorePlugins.SetSettingsFolder( (std::string)GetSettingsFolder());
+
+			// Update the compression attribute on the Memcards folder.
+			// Memcards generally compress very well via NTFS compression.
+
+			#ifdef __WXMSW__
+			NTFS_CompressFile( g_Conf->Folders.MemoryCards, g_Conf->McdCompressNTFS );
+			#endif
+			sApp.DispatchEvent( AppStatus_SettingsApplied );
+
+			paused_core.AllowResume();
+		}
+	
+		else
+		{
+			return;
+		}
 	}
 
 	else
 	{
-		return;
+			g_Conf->EmuOptions.BiosFilename = g_Conf->FullpathToBios();
+
+			RelocateLogfile();
+
+			/*if( (oldconf == NULL) || (oldconf->LanguageCode.CmpNoCase(g_Conf->LanguageCode)) )
+			{
+				wxDoNotLogInThisScope please;
+				i18n_SetLanguage( g_Conf->LanguageId, g_Conf->LanguageCode );
+			}*/
+
+			CorePlugins.SetSettingsFolder( (std::string)GetSettingsFolder());
+
+			// Update the compression attribute on the Memcards folder.
+			// Memcards generally compress very well via NTFS compression.
+
+			#ifdef __WXMSW__
+			NTFS_CompressFile( g_Conf->Folders.MemoryCards, g_Conf->McdCompressNTFS );
+			#endif
+			sApp.DispatchEvent( AppStatus_SettingsApplied );
+
+			paused_core.AllowResume();
 	}
+	
 }
 
 // Invokes the specified Pcsx2App method, or posts the method to the main thread if the calling
@@ -1197,9 +1232,9 @@ void SysUpdateIsoSrcFile( const wxString& newIsoFile )
 void SysUpdateDiscSrcDrive( const wxString& newDiscDrive )
 {
 #if defined(_WIN32)
-	g_Conf->Folders.RunDisc = wxFileName::DirName(newDiscDrive);
+	g_Conf->Folders.RunDisc = newDiscDrive.ToStdString();
 #else
-	g_Conf->Folders.RunDisc = wxFileName(newDiscDrive);
+	g_Conf->Folders.RunDisc = newDiscDrive.ToStdString();
 #endif
 	AppSaveSettings();
 	sMainFrame.UpdateCdvdSrcSelection();
