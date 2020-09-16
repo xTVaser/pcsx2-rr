@@ -29,6 +29,8 @@ DocsModeType			DocsFolderMode = DocsFolder_User;
 bool					UseDefaultSettingsFolder = true;
 bool					UseDefaultPluginsFolder = true;
 
+std::vector<std::string> ErrorFolders;
+
 
 std::string				CustomDocumentsFolder;
 std::string				SettingsFolder;
@@ -37,17 +39,30 @@ std::string				InstallFolder;
 std::string				PluginsFolder;
 	
 PathUtils path;
+	
+const std::string PermissionFolders[] =
+{
+	"json",
+	"memcards",
+	"sstates",
+	"snapshots",
+	"logs",
+	"cheats_ws",
+	#ifdef PCSX2_DEVBUILD
+	"dumps",
+	#endif
+};
 
 // The UserLocalData folder can be redefined depending on whether or not PCSX2 is in
 // "portable install" mode or not.  when PCSX2 has been configured for portable install, the
 // UserLocalData folder is the current working directory.
-//
 InstallationModeType		InstallationMode;
 
 static fs::path GetPortableJsonPath()
 {
-	std::string programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
-	fs::path programDir( programFullPath);
+	fs::path programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
+	
+	fs::path programDir( programFullPath.parent_path());
 
 	return Path::Combine(programDir, "portable.json");
 }
@@ -60,51 +75,31 @@ static wxString GetMsg_PortableModeRights()
 
 bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder, std::string& createFailedStr, std::string& accessFailedStr )
 {
-	// We need to individually verify read/write permission for each PCSX2 user documents folder.
-	// If any of the folders are not writable, then the user should be informed asap via
-	// friendly and courteous dialog box!
-
-
-	const std::string PermissionFolders[] =
-	{
-		"json",
-		"memcards",
-		"sstates",
-		"snapshots",
-		"logs",
-		"cheats_ws",
-		#ifdef PCSX2_DEVBUILD
-		"dumps",
-		#endif
-	};
 
 	std::string createme, accessme;
 
-	for (uint i=0; i<ArraySize(PermissionFolders); ++i)
-	{
-		fs::path folder(Path::Combine(testFolder, PermissionFolders[i]));
 
-		if (! fs::exists(folder))
+	for (int i = 0; i < 5; ++i)
+	{
+		fs::path folder = Path::Combine(testFolder, PermissionFolders[i]);
+	
+		if (!path.CreateFolder(folder))
 		{
-			Path::Combine(createme, (std::string)folder); 
+			ErrorFolders.push_back(folder); 
 			wxFileConfig* OpenFileConfig( const std::string& filename );
 		}
-
-		//if (!folder.IsWritable())
-			//accessme += L"\t" + folder.ToString() + L"\n";
 	}
 
-	if (!path.Empty(accessme))
+	for (int i = 0; i < ErrorFolders.size(); i++)
 	{
-		accessFailedStr = (wxString)_("The following folders exist, but are not writable:") + L"\n" + accessme;
+		if (!path.Empty(ErrorFolders[i]))
+		{
+			createFailedStr = (wxString)_("The following folders are missing and cannot be created:") + L"\n" + ErrorFolders[i];
+		}
+
+		return (path.Empty(ErrorFolders[i]));	
 	}
 
-	if (!path.Empty(createme))
-	{
-		createFailedStr = (wxString)_("The following folders are missing and cannot be created:") + L"\n" + createme;
-	}
-
-	return (path.Empty(createFailedStr) && path.Empty(accessFailedStr));
 }
 
 // Portable installations are assumed to be run in either administrator rights mode, or run
@@ -118,8 +113,8 @@ wxConfigBase* Pcsx2App::TestForPortableInstall()
 {
 	InstallationMode = InstallMode_Registered;
 
-	std::string portableJsonFile = GetPortableJsonPath();
-	std::string portableDocsFolder = portableJsonFile;
+	fs::path portableJsonFile = GetPortableJsonPath();
+	fs::path portableDocsFolder = portableJsonFile;
 
 	if (Startup.PortableMode || !portableJsonFile.empty())
 	{
@@ -132,14 +127,13 @@ wxConfigBase* Pcsx2App::TestForPortableInstall()
 		// Just because the portable json file exists doesn't mean we can actually run in portable
 		// mode.  In order to determine our read/write permissions to the PCSX2, we must try to
 		// modify the configured documents folder, and catch any ensuing error.
-
 		std::unique_ptr<wxFileConfig> conf_portable( OpenFileConfig( portableJsonFile ) );
 		conf_portable->SetRecordDefaults(false);
 
 		while( true )
 		{
 			std::string accessFailedStr, createFailedStr;
-			if (TestUserPermissionsRights( portableDocsFolder, createFailedStr, accessFailedStr )) break;
+			if (TestUserPermissionsRights( portableDocsFolder.parent_path(), createFailedStr, accessFailedStr )) break;
 
 			wxDialogWithHelpers dialog( NULL, AddAppName(_("Portable mode error - %s")) );
 
@@ -148,10 +142,10 @@ wxConfigBase* Pcsx2App::TestForPortableInstall()
 				wxTE_READONLY | wxTE_MULTILINE | wxTE_WORDWRAP
 			);
 
-			if (!createFailedStr.empty())
+			if (!path.Empty(createFailedStr))
 				scrollText->AppendText( createFailedStr + L"\n" );
 
-			if (!accessFailedStr.empty())
+			if (!path.Empty(accessFailedStr))
 				scrollText->AppendText( accessFailedStr + L"\n" );
 
 			dialog += dialog.Heading( _("PCSX2 has been installed as a portable application but cannot run due to the following errors:" ) );
@@ -251,10 +245,10 @@ wxConfigBase* Pcsx2App::OpenInstallSettingsFile()
 
 	std::string usrlocaldir( PathDefs::GetUserLocalDataDir() );
 	//wxDirName usrlocaldir( wxStandardPaths::Get().GetDataDir() );
-	if( !folderUtils.DoesExist(usrlocaldir) )
+	if( !path.DoesExist(usrlocaldir) )
 	{
 		Console.WriteLn( L"Creating UserLocalData folder: " + usrlocaldir );
-		 folderUtils.CreateFolder(usrlocaldir);
+		 path.CreateFolder(usrlocaldir);
 	}
 
 	std::string usermodefile( GetAppName() + "-reg.json" );
