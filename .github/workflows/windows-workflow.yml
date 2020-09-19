@@ -83,6 +83,13 @@ jobs:
           path: |
             ./3rdparty/
 
+      - name: Cache GSdx
+        uses: actions/cache@v2
+        with:
+          key: gsdx-${{ hashFiles('./plugins/GSdx') }}
+          path: |
+            ./plugins/GSdx/
+
       - name: Build PCSX2
         env:
           UseMultiToolTask: "true"
