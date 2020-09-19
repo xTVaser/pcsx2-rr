@@ -62,10 +62,32 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>PrecompiledHeader.h</PrecompiledHeaderFile>
       <EnableEnhancedInstructionSet>NoExtensions</EnableEnhancedInstructionSet>
+      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</MultiProcessorCompilation>
+      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Devel|Win32'">true</MultiProcessorCompilation>
+      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</MultiProcessorCompilation>
+      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Devel|x64'">true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <LargeAddressAware>Yes</LargeAddressAware>
     </Link>
+    <CustomBuild>
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</BuildInParallel>
+    </CustomBuild>
+    <CustomBuild>
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</BuildInParallel>
+    </CustomBuild>
+    <CustomBuild>
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Devel|Win32'">true</BuildInParallel>
+    </CustomBuild>
+    <CustomBuild>
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
+    </CustomBuild>
+    <CustomBuild>
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Devel|x64'">true</BuildInParallel>
+    </CustomBuild>
+    <CustomBuild>
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</BuildInParallel>
+    </CustomBuild>
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="..\..\Utilities\folderdesc.txt" />
