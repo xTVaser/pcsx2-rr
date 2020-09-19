@@ -80,7 +80,8 @@ jobs:
         env:
           UseMultiToolTask: "true"
           EnforceProcessCountAcrossBuilds: "true"
-        run: msbuild "buildbot.xml" /m /v:m /fl1 /t:ReleaseAll /p:Platform=${{ matrix.platform }}
+        # NOTE - buildbot.xml has nothing to do with the CI tool 'buildbot' it is just MSBuild configuration
+        run: msbuild "buildbot.xml" -m -v:q -t:GithubActions -p:Platform=${{ matrix.platform }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2

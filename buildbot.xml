@@ -73,6 +73,15 @@
       <ConfigCPU Include="Release AVX2;Release SSE4"/>
     </ItemGroup>
   </Target>
+  <Target Name="GithubActions">
+    <PropertyGroup>
+      <BaseConfiguration>Release</BaseConfiguration>
+      <BuildInParallel>true</BuildInParallel>
+    </PropertyGroup>
+    <ItemGroup>
+      <ConfigCPU Include="Release AVX2"/>
+    </ItemGroup>
+  </Target>
   <Target Name="AppVeyor">
     <PropertyGroup>
       <BaseConfiguration>Release</BaseConfiguration>
