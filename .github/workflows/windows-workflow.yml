@@ -76,6 +76,13 @@ jobs:
         with:
           vs-version: 16.7
 
+      - name: Cache 3rdparty
+        uses: actions/cache@v2
+        with:
+          key: 3rdparty-${{ hashFiles('./3rdparty') }}
+          path: |
+            ./3rdparty/
+
       - name: Build PCSX2
         env:
           UseMultiToolTask: "true"
