@@ -13,7 +13,8 @@
   <!-- Add common build  properties here. -->
   <PropertyGroup>
     <CreateHardLinksIfPossible>true</CreateHardLinksIfPossible>
-    <CompileFastPlz>BuildInParallel=True;
+    <CompileFastPlz>
+      BuildInParallel=True;
       CreateHardLinksForCopyFilesToOutputDirectoryIfPossible=$(CreateHardLinksIfPossible);
       CreateHardLinksForCopyAdditionalFilesIfPossible=$(CreateHardLinksIfPossible);
       CreateHardLinksForCopyLocalIfPossible=$(CreateHardLinksIfPossible);
@@ -40,11 +41,11 @@
     </ItemGroup>
     <Delete Files="@(CruftToDelete)" />
   </Target>
-  <Target Name="InternalBuild" AfterTargets="DebugAll;DevelAll;ReleaseAll;AppVeyor">
-    <MSBuild Projects="@(SolutionSet)" BuildInParallel="false" Properties="Configuration=$(BaseConfiguration)" Targets="Clean" />
-    <MSBuild Projects="@(ProjectSetCPU)" BuildInParallel="false" Properties="Configuration=%(ConfigCPU.Identity)" Targets="Clean" />
+  <Target Name="InternalBuild" AfterTargets="DebugAll;DevelAll;ReleaseAll;AppVeyor;GithubActions">
+    <MSBuild Projects="@(SolutionSet)" BuildInParallel="true" Properties="Configuration=$(BaseConfiguration)" Targets="Clean" />
+    <MSBuild Projects="@(ProjectSetCPU)" BuildInParallel="true" Properties="Configuration=%(ConfigCPU.Identity)" Targets="Clean" />
     <CallTarget Targets="CleanCruft" />
-    <MSBuild Projects="@(SolutionSet)" BuildInParallel="false" Properties="Configuration=$(BaseConfiguration);$(CompileFastPlz)" Targets="Build" />
+    <MSBuild Projects="@(SolutionSet)" BuildInParallel="true" Properties="Configuration=$(BaseConfiguration);$(CompileFastPlz)" Targets="Build" />
     <MSBuild Projects="@(ProjectSetCPU)" BuildInParallel="true" Properties="Configuration=%(ConfigCPU.Identity);BuildProjectReferences=false;$(CompileFastPlz)" Targets="@(TargetsSetCPU)" />
   </Target>
   <Target Name="DebugAll">
