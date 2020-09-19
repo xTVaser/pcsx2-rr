@@ -22,29 +22,9 @@
     </CompileFastPlz>
   </PropertyGroup>
   <!-- Add all the custom targets here. -->
-  <Target Name="CleanBloat" AfterTargets="InternalBuild">
-    <ItemGroup>
-      <BloatToDelete Include="$(MSBuildProjectDirectory)\bin\**\*.bsc"/>
-      <BloatToDelete Include="$(MSBuildProjectDirectory)\bin\**\*.exp"/>
-      <BloatToDelete Include="$(MSBuildProjectDirectory)\bin\**\*.ilk"/>
-      <BloatToDelete Include="$(MSBuildProjectDirectory)\bin\**\*.iobj"/>
-      <BloatToDelete Include="$(MSBuildProjectDirectory)\bin\**\*.ipdb"/>
-      <BloatToDelete Include="$(MSBuildProjectDirectory)\bin\**\*.lib"/>
-      <BloatToDelete Include="$(MSBuildProjectDirectory)\bin\**\*.pdb"/>
-    </ItemGroup>
-    <Delete Files="@(BloatToDelete)" />
-  </Target>
-  <Target Name="CleanCruft">
-    <ItemGroup>
-      <CruftToDelete Include="$(MSBuildProjectDirectory)\**\svnrev.h"/>
-      <CruftToDelete Include="$(MSBuildProjectDirectory)\**\*.CppClean.log" />
-    </ItemGroup>
-    <Delete Files="@(CruftToDelete)" />
-  </Target>
   <Target Name="InternalBuild" AfterTargets="DebugAll;DevelAll;ReleaseAll;AppVeyor;GithubActions">
-    <MSBuild Projects="@(SolutionSet)" BuildInParallel="true" Properties="Configuration=$(BaseConfiguration)" Targets="Clean" />
-    <MSBuild Projects="@(ProjectSetCPU)" BuildInParallel="true" Properties="Configuration=%(ConfigCPU.Identity)" Targets="Clean" />
-    <CallTarget Targets="CleanCruft" />
+    <MSBuild Projects="@(SolutionSet)" BuildInParallel="true" Properties="Configuration=$(BaseConfiguration)" />
+    <MSBuild Projects="@(ProjectSetCPU)" BuildInParallel="true" Properties="Configuration=%(ConfigCPU.Identity)" />
     <MSBuild Projects="@(SolutionSet)" BuildInParallel="true" Properties="Configuration=$(BaseConfiguration);$(CompileFastPlz)" Targets="Build" />
     <MSBuild Projects="@(ProjectSetCPU)" BuildInParallel="true" Properties="Configuration=%(ConfigCPU.Identity);BuildProjectReferences=false;$(CompileFastPlz)" Targets="@(TargetsSetCPU)" />
   </Target>
