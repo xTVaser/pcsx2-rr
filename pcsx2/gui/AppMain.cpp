@@ -438,19 +438,18 @@ public:
 		// Note: GetUserLocalDataDir() on linux return $HOME/.pcsx2 unfortunately it does not follow the XDG standard
 		// So we re-implement it, to follow the standard.
 		wxDirName user_local_dir;
-		std::string default_config_dir = Path::Combine( ".config", (std::string)pxGetAppName() );
-		wxString* xdg_home_value;
-		if( wxGetEnv(L"XDG_CONFIG_HOME", xdg_home_value) ) {
-			if ( ghc::filesystem::is_empty((std::string)*xdg_home_value)  ) {
+		wxDirName default_config_dir = (wxDirName)Path::Combine( ".config", pxGetAppName().ToStdString() );
+		wxString xdg_home_value;
+		if( wxGetEnv(L"XDG_CONFIG_HOME", &xdg_home_value) ) {
+			if ( xdg_home_value.IsEmpty() ) {
 				// variable exist but it is empty. So use the default value
-				user_local_dir = (wxDirName)Path::Combine( (std::string)GetUserConfigDir() , default_config_dir);
+				user_local_dir = (wxDirName)Path::Combine( GetUserConfigDir().ToStdString() , default_config_dir.ToString().ToStdString());
 			} else {
-				user_local_dir = (wxDirName)Path::Combine( (std::string)*xdg_home_value, (std::string)pxGetAppName());
+				user_local_dir = (wxDirName)Path::Combine( xdg_home_value.ToStdString(), pxGetAppName().ToStdString());
 			}
 		} else {
 			// variable do not exist
-			user_local_dir = (wxDirName)Path::Combine( (std::string
-			)GetUserConfigDir() , default_config_dir);
+				user_local_dir = (wxDirName)Path::Combine( GetUserConfigDir().ToStdString() , default_config_dir.ToString().ToStdString());
 		}
 
 		cache_dir = user_local_dir.ToString();

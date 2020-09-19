@@ -69,7 +69,8 @@ namespace PathDefs
 	// Specifies the main configuration folder.
 	fs::path GetUserLocalDataDir()
 	{
-    	return fs::path((std::string)wxStandardPaths::Get().GetUserLocalDataDir()).make_preferred();
+		fs::path temp = wxStandardPaths::Get().GetUserLocalDataDir().ToStdString();
+    	return temp;
 	}
 
 	// Fetches the path location for user-consumable documents -- stuff users are likely to want to
@@ -313,17 +314,17 @@ namespace FilenameDefs
 {
 	std::string GetUiConfig()
 	{
-		return (std::string)(pxGetAppName() + "L_ui.json");
+		return Path::Combine(pxGetAppName().ToStdString(), "_ui.json");
 	}
 
 	std::string GetUiKeysConfig()
 	{
-		return (std::string)(pxGetAppName() + "L_keys.json");
+		return Path::Combine(pxGetAppName().ToStdString(), "_keys.json");
 	}
 
 	std::string GetVmConfig()
 	{
-		return (std::string)(pxGetAppName() + "L_vm.json");
+		return Path::Combine(pxGetAppName().ToStdString(), "_vm.json");
 	}
 
 	std::string GetUsermodeConfig()
@@ -358,7 +359,7 @@ namespace FilenameDefs
 
 std::string AppConfig::FullpathTo( PluginsEnum_t pluginidx ) const
 {
-	return (PluginsFolder + BaseFilenames[pluginidx] );
+	return Path::Combine(PluginsFolder,  BaseFilenames[pluginidx] );
 }
 
 // returns true if the filenames are quite absolutely the equivalent.  Works for all
@@ -509,18 +510,14 @@ void App_LoadSaveInstallSettings( nlohmann::json& json )
 	//ini.Flush();
 }
 
-void App_LoadInstallSettings( wxConfigBase* ini )
+void App_LoadInstallSettings( nlohmann::json *json)
 {
-	//IniLoader loader( ini );
-	nlohmann::json json;
-	App_LoadSaveInstallSettings( json );
+	App_LoadSaveInstallSettings( *json );
 }
 
-void App_SaveInstallSettings( wxConfigBase* ini )
+void App_SaveInstallSettings( nlohmann::json *json )
 {
-	//IniSaver saver( ini );
-	nlohmann::json json;
-	App_LoadSaveInstallSettings( json );
+	App_LoadSaveInstallSettings( *json );
 }
 
 // ------------------------------------------------------------------------
@@ -1012,11 +1009,16 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 	return true;
 }
 
-wxFileConfig* OpenFileConfig( std::string filename )
+nlohmann::json* OpenFileConfig( std::string filename )
 {
-	return new wxFileConfig( wxEmptyString, wxEmptyString, wxString(filename), wxEmptyString, wxCONFIG_USE_RELATIVE_PATH );
-}
+	std::ifstream in;
+	in.open(filename);
 
+	nlohmann::json* json;
+	json->parse(in);
+	
+	return json;
+}
 void RelocateLogfile()
 {
 
@@ -1075,7 +1077,7 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 
 	// Bind into wxConfigBase to allow wx to use our config internally, and delete whatever
 	// comes out (cleans up prev config, if one).
-	delete wxConfigBase::Set( OpenFileConfig( (std::string)jsonFilename ) );
+	//delete wxConfigBase::Set( OpenFileConfig( (std::string)jsonFilename ) );
 	GetAppConfig()->SetRecordDefaults(true);
 
 	if( !overwrite )
@@ -1186,7 +1188,7 @@ static void LoadVmSettings()
 	// Load virtual machine options and apply some defaults overtop saved items, which
 	// are regulated by the PCSX2 UI.
 
-	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
+	std::unique_ptr<nlohmann::json> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
 	nlohmann::json vmloader;
 	g_Conf->EmuOptions.LoadSave( vmloader );
 	g_Conf->EmuOptions.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
@@ -1223,7 +1225,7 @@ static void SaveUiSettings()
 
 static void SaveVmSettings()
 {
-	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
+	std::unique_ptr<nlohmann::json> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
 	nlohmann::json vmsaver;
 	g_Conf->EmuOptions.LoadSave( vmsaver );
 
@@ -1232,15 +1234,15 @@ static void SaveVmSettings()
 
 static void SaveRegSettings()
 {
-	std::unique_ptr<wxConfigBase> conf_install;
+	bool conf_install;
 
 	if (InstallationMode == InstallMode_Portable) return;
 
 	// sApp. macro cannot be use because you need the return value of OpenInstallSettingsFile method
-	if( Pcsx2App* __app_ = (Pcsx2App*)wxApp::GetInstance() ) conf_install = std::unique_ptr<wxConfigBase>((*__app_).OpenInstallSettingsFile());
-	conf_install->SetRecordDefaults(false);
+	//if( Pcsx2App* __app_ = (Pcsx2App*)wxApp::GetInstance() ) conf_install = std::unique_ptr<wxConfigBase>((*__app_).OpenInstallSettingsFile());
+	//conf_install->SetRecordDefaults(false);
 
-	App_SaveInstallSettings( conf_install.get() );
+	//App_SaveInstallSettings( conf_install.get() );
 }
 
 void AppSaveSettings()

@@ -387,14 +387,14 @@ extern void AppSaveSettings();
 extern void AppApplySettings( const AppConfig* oldconf=NULL );
 
 extern void App_LoadSaveInstallSettings( nlohmann::json &json );
-extern void App_SaveInstallSettings( wxConfigBase* ini );
-extern void App_LoadInstallSettings( wxConfigBase* ini );
+extern void App_SaveInstallSettings( nlohmann::json *json );
+extern void App_LoadInstallSettings( nlohmann::json *json );
 
 extern void ConLog_LoadSaveSettings( nlohmann::json &json );
 extern void SysTraceLog_LoadSaveSettings( nlohmann::json &json );
 
 
-extern wxFileConfig* OpenFileConfig( std::string filename );
+extern nlohmann::json* OpenFileConfig( std::string filename );
 extern void RelocateLogfile();
 extern void AppConfig_OnChangedSettingsFolder( bool overwrite =  false );
 extern wxConfigBase* GetAppConfig();
