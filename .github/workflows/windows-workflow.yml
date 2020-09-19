@@ -37,7 +37,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2019]
-        platform: [Win32, x64]
+        platform: [Win32]
         experimental: [false]
 
     name: ${{ matrix.os }}-${{ matrix.platform }}
@@ -74,10 +74,13 @@ jobs:
       - name: Setup msbuild
         uses: microsoft/setup-msbuild@v1.0.1
         with:
-          vs-version: 15.0
+          vs-version: 16.7
 
       - name: Build PCSX2
-        run: msbuild "buildbot.xml" /m /v:m /fl1 /t:ReleaseAll /p:Platform=${{ matrix.platform }}
+        env:
+          UseMultiToolTask: "true"
+          EnforceProcessCountAcrossBuilds: "true"
+        run: msbuild "buildbot.xml" /MP /v:m /fl1 /t:ReleaseAll /p:Platform=${{ matrix.platform }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
