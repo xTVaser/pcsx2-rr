@@ -22,7 +22,6 @@
 
 #include "Utilities/json.hpp"
 #include "Utilities/PathUtils.h"
-#include "FixedPointTypes.inl"
 
 
 #include <wx/stdpaths.h>

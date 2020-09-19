@@ -17,7 +17,7 @@
 #include "App.h"
 #include "AppSaveStates.h"
 #include "GSFrame.h"
-#include "PathUtils.h"
+#include "Utilities/PathUtils.h"
 #include <wx/dir.h>
 #include <wx/file.h>
 

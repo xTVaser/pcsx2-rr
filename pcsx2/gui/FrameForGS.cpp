@@ -21,7 +21,6 @@
 #include "Counters.h"
 #include "GS.h"
 #include "MSWstuff.h"
-#include "FixedPointTypes.inl"
 
 #include "ConsoleLogger.h"
 

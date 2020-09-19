@@ -20,7 +20,6 @@
 #include "Config.h"
 #include "GS.h"
 #include "gui/GSFrame.h"
-#include "FixedPointTypes.inl"
 
 void TraceLogFilters::LoadSave( nlohmann::json& json )
 {

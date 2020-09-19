@@ -35,7 +35,7 @@
 
 #include "DebugTools/SymbolMap.h"
 #include "AppConfig.h"
-#include "PathUtils.h"
+#include "Utilities/PathUtils.h"
 
 const wxChar* CDVD_SourceLabels[] =
 {

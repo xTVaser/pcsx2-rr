@@ -29,7 +29,6 @@
 
 #include "Utilities/ThreadingDialogs.h"
 #include "Utilities/SafeArray.inl"
-#include "FixedPointTypes.inl"
 
 // Allows us to force-disable threading for debugging/troubleshooting
 static const bool DisableThreading =
@@ -511,7 +510,7 @@ void Panels::PluginSelectorPanel::Apply()
 			.SetDiagMsg(ex.FormatDiagnosticMessage())
 			.SetUserMsg(pxsFmt(
 				_("The selected %s plugin failed to load.\n\nReason: %s\n\n"),
-				WX_STR((wxString)plugname), WX_STR(ex.FormatDisplayMessage())
+				(wxString)plugname, ex.FormatDisplayMessage()
 			) + GetApplyFailedMsg());
 	}
 }

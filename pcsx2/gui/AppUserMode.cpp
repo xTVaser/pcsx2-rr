@@ -126,7 +126,7 @@ nlohmann::json* Pcsx2App::TestForPortableInstall()
 		if (Startup.PortableMode)
 			Console.WriteLn( L"(UserMode) Portable mode requested via commandline switch!" );
 		else
-			Console.WriteLn( L"(UserMode) Found portable install json @ %s", WX_STR((wxString)FilenameStr) );
+			Console.WriteLn( L"(UserMode) Found portable install json @ %s", (wxString)FilenameStr);
 
 		// Just because the portable json file exists doesn't mean we can actually run in portable
 		// mode.  In order to determine our read/write permissions to the PCSX2, we must try to
@@ -247,11 +247,12 @@ nlohmann::json* Pcsx2App::OpenInstallSettingsFile()
 	std::unique_ptr<nlohmann::json> conf_install;
 
 #ifdef __WXMSW__
-	conf_install = std::unique_ptr<wxConfigBase>(new wxRegConfig());
+	//conf_install = std::unique_ptr<nlohmann::json>(new wxRegConfig());
 #else
 	// FIXME!!  Linux / Mac
 	// Where the heck should this information be stored?
 
+	fs::path usrlocaldir = PathDefs::GetUserLocalDataDir();
 	fs::path usrlocaldir = PathDefs::GetUserLocalDataDir();
 	//wxDirName usrlocaldir( wxStandardPaths::Get().GetDataDir() );
 	if( !fs::exists(usrlocaldir))

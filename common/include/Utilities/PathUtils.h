@@ -1,6 +1,7 @@
 #ifndef PATHUTILS_H
 #define PATHUTILS_H
 #include "filesystem.hpp"
+#include "FixedPointTypes.inl"
 #include "Path.h"
 namespace fs = ghc::filesystem;
 class PathUtils

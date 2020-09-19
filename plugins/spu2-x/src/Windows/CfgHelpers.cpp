@@ -18,6 +18,7 @@
 #include "Global.h"
 #include "Dialogs.h"
 
+#include "Utilities/PathUtils.h"
 #include "Utilities/StringHelpers.h"
 
 extern uptr gsWindowHandle;
@@ -55,7 +56,15 @@ static wxString CfgFile(L"inis/SPU2-X.ini");
 
 void CfgSetSettingsDir(const char *dir)
 {
-    CfgFile = Path::Combine((dir == NULL) ? wxString(L"inis") : wxString::FromUTF8(dir), L"SPU2-X.ini");
+	if (dir == nullptr)
+	{
+		dir = "inis";
+	}
+
+	else
+	{
+		CfgFile = Path::Combine((std::string)dir, "SPU2-X.ini");
+	}
 }
 
 

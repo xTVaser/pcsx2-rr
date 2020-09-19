@@ -59,24 +59,24 @@ wxString RegDumpFileName;
 
 void CfgSetLogDir(const char *dir)
 {
-    LogsFolder = (dir == NULL) ? wxString(L"logs") : wxString(dir, wxConvFile);
-    DumpsFolder = (dir == NULL) ? wxString(L"logs") : wxString(dir, wxConvFile);
+    LogsFolder = (dir == NULL) ? wxString("logs") : wxString(dir, wxConvFile);
+    DumpsFolder = (dir == NULL) ? wxString("logs") : wxString(dir, wxConvFile);
     LogLocationSetByPcsx2 = (dir != NULL);
 }
 
 FILE *OpenBinaryLog(const fs::path &logfile)
 {
-    return wxFopen(Path::Combine(LogsFolder, logfile), L"wb");
+	return wxFopen(Path::Combine((std::string)LogsFolder, (std::string)logfile), L"wb");
 }
 
 FILE *OpenLog(const fs::path &logfile)
 {
-    return wxFopen(Path::Combine(LogsFolder, logfile), L"w");
+    return wxFopen(Path::Combine((std::string)LogsFolder, (std::string)logfile), L"w");
 }
 
 FILE *OpenDump(const fs::path &logfile)
 {
-    return wxFopen(Path::Combine(DumpsFolder, logfile), L"w");
+	return wxFopen(Path::Combine((std::string)DumpsFolder, (std::string)logfile), L"w");
 }
 
 namespace DebugConfig

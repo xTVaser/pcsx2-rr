@@ -18,7 +18,6 @@
 #include "GSFrame.h"
 #include "ApplyState.h"
 #include "ConsoleLogger.h"
-#include "FixedPointTypes.inl"
 
 #include "AppAccelerators.h"
 #include "AppSaveStates.h"

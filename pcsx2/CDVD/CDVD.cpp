@@ -30,7 +30,6 @@
 #include "Elfheader.h"
 #include "ps2/BiosTools.h"
 #include "GameDatabase.h"
-#include "FixedPointTypes.inl"
 
 // This typically reflects the Sony-assigned serial code for the Disc, if one exists.
 //  (examples:  SLUS-2113, etc).
@@ -119,7 +118,7 @@ static void cdvdGetMechaVer(u8* ver)
 
 	size_t ret = fp.Read(ver, 4);
 	if (ret != 4)
-		Console.Error(L"Failed to read from %s. Did only %zu/4 bytes", WX_STR(fname), ret);
+		Console.Error(L"Failed to read from %s. Did only %zu/4 bytes", fname, ret);
 }
 
 NVMLayout* getNvmLayout()
@@ -179,7 +178,7 @@ static void cdvdNVM(u8 *buffer, int offset, size_t bytes, bool read)
 
 	if (ret != bytes)
 		Console.Error(L"Failed to %s %s. Did only %zu/%zu bytes",
-				read ? L"read from" : L"write to", WX_STR(fname), ret, bytes);
+				read ? L"read from" : L"write to", fname, ret, bytes);
 }
 
 static void cdvdReadNVM(u8 *dst, int offset, int bytes) {
