@@ -67,7 +67,6 @@ jobs:
             ./3rdparty/gtest
 
       - name: Checkout Submodules
-        if: steps.cache-submodules.outputs.cache-hit != 'true'
         run: git submodule update --init --recursive
 
       - name: Prepare Artifact Git Info
