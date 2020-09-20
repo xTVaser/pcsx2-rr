@@ -144,6 +144,13 @@ void GSPanel::InitRecordingAccelerators()
 
 	recordingConLog(L"Initialized Recording Key Bindings\n");
 }
+
+void GSPanel::RemoveRecordingAccelerators()
+{
+	m_Accels.reset(new AcceleratorDictionary);
+	InitDefaultAccelerators();
+	recordingConLog(L"Disabled Recording Key Bindings\n");
+}
 #endif
 
 GSPanel::GSPanel( wxWindow* parent )
