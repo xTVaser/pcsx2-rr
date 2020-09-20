@@ -32,7 +32,7 @@
 #include "Debugger/DisassemblyDialog.h"
 
 #ifndef DISABLE_RECORDING
-#	include "Recording/RecordingControls.h"
+#	include "Recording/InputRecordingControls.h"
 #	include "Recording/InputRecording.h"
 #endif
 
@@ -620,7 +620,7 @@ void Pcsx2App::HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent&
 #ifndef DISABLE_RECORDING
 		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
-			if (g_RecordingControls.IsEmulationAndRecordingPaused())
+			if (g_InputRecordingControls.IsPaused())
 			{
 				// When the GSFrame CoreThread is paused, so is the logical VSync
 				// Meaning that we have to grab the user-input through here to potentially
@@ -633,7 +633,7 @@ void Pcsx2App::HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent&
 					}
 				}
 			}
-			g_RecordingControls.ResumeCoreThreadIfStarted();
+			g_InputRecordingControls.ResumeCoreThreadIfStarted();
 		}
 #endif
 		(handler->*func)(event);
@@ -1059,7 +1059,7 @@ void Pcsx2App::OnProgramLogClosed( wxWindowID id )
 void Pcsx2App::OnMainFrameClosed( wxWindowID id )
 {
 #ifndef DISABLE_RECORDING
-	if (g_Conf->EmuOptions.EnableRecordingTools)
+	if (g_InputRecording.IsActive())
 	{
 		g_InputRecording.Stop();
 	}
@@ -1152,6 +1152,9 @@ void Pcsx2App::SysExecute()
 void Pcsx2App::SysExecute( CDVD_SourceType cdvdsrc, const wxString& elf_override )
 {
 	SysExecutorThread.PostEvent( new SysExecEvent_Execute(cdvdsrc, elf_override) );
+#ifndef DISABLE_RECORDING
+	g_InputRecording.RecordingReset();
+#endif
 }
 
 // Returns true if there is a "valid" virtual machine state from the user's perspective.  This
@@ -1177,8 +1180,19 @@ void SysStatus( const wxString& text )
 void SysUpdateIsoSrcFile( const wxString& newIsoFile )
 {
 	g_Conf->CurrentIso = newIsoFile;
-	sMainFrame.UpdateIsoSrcSelection();
 	sMainFrame.UpdateStatusBar();
+	sMainFrame.UpdateCdvdSrcSelection();
+}
+
+void SysUpdateDiscSrcDrive( const wxString& newDiscDrive )
+{
+#if defined(_WIN32)
+	g_Conf->Folders.RunDisc = wxFileName::DirName(newDiscDrive);
+#else
+	g_Conf->Folders.RunDisc = wxFileName(newDiscDrive);
+#endif
+	AppSaveSettings();
+	sMainFrame.UpdateCdvdSrcSelection();
 }
 
 bool HasMainFrame()

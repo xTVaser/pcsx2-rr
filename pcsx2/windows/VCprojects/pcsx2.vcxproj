@@ -147,11 +147,21 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\CDVD\BlockdumpFileReader.cpp" />
+    <ClCompile Include="..\..\CDVD\CDVDdiscReader.cpp" />
+    <ClCompile Include="..\..\CDVD\CDVDdiscThread.cpp" />
     <ClCompile Include="..\..\CDVD\ChunksCache.cpp" />
     <ClCompile Include="..\..\CDVD\CompressedFileReader.cpp" />
     <ClCompile Include="..\..\CDVD\CsoFileReader.cpp" />
     <ClCompile Include="..\..\CDVD\GzippedFileReader.cpp" />
     <ClCompile Include="..\..\CDVD\OutputIsoFile.cpp" />
+    <ClCompile Include="..\..\CDVD\Linux\DriveUtility.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\CDVD\Linux\IOCtlSrc.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\..\CDVD\Windows\DriveUtility.cpp" />
+    <ClCompile Include="..\..\CDVD\Windows\IOCtlSrc.cpp" />
     <ClCompile Include="..\..\DebugTools\Breakpoints.cpp" />
     <ClCompile Include="..\..\DebugTools\DebugInterface.cpp" />
     <ClCompile Include="..\..\DebugTools\DisassemblyManager.cpp" />
@@ -175,8 +185,11 @@
     <ClCompile Include="..\..\gui\Debugger\DebuggerLists.cpp" />
     <ClCompile Include="..\..\gui\Debugger\DisassemblyDialog.cpp" />
     <ClCompile Include="..\..\gui\Dialogs\McdConfigDialog.cpp" />
+    <ClCompile Include="..\..\gui\DriveList.cpp" />
     <ClCompile Include="..\..\gui\Panels\MemoryCardListView.cpp" />
     <ClCompile Include="..\..\IopGte.cpp" />
+    <ClCompile Include="..\..\IPC.cpp" />
+    <ClCompile Include="..\..\FW.cpp" />
     <ClCompile Include="..\..\IPU\IPUdma.cpp" />
     <ClCompile Include="..\..\IPU\IPUdither.cpp" />
     <ClCompile Include="..\..\Linux\LnxConsolePipe.cpp">
@@ -192,12 +205,12 @@
     <ClCompile Include="..\..\ps2\Iop\PsxBios.cpp" />
     <ClCompile Include="..\..\ps2\LegacyDmac.cpp" />
     <ClCompile Include="..\..\ps2\pgif.cpp" />
+    <ClCompile Include="..\..\Recording\InputRecordingControls.cpp" />
     <ClCompile Include="..\..\ShiftJisToUnicode.cpp" />
     <ClCompile Include="..\..\sif2.cpp" />
     <ClCompile Include="..\..\Recording\InputRecording.cpp" />
     <ClCompile Include="..\..\Recording\NewRecordingFrame.cpp" />
     <ClCompile Include="..\..\Recording\InputRecordingFile.cpp" />
-    <ClCompile Include="..\..\Recording\RecordingControls.cpp" />
     <ClCompile Include="..\..\Recording\PadData.cpp" />
     <ClCompile Include="..\..\Recording\RecordingInputManager.cpp" />
     <ClCompile Include="..\..\Recording\VirtualPad.cpp" />
@@ -387,12 +400,6 @@
     <ClCompile Include="..\..\Linux\LnxKeyCodes.cpp">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\cheats\browser.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\cheats\cheats.cpp">
-      <ExcludedFromBuild>true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\..\gui\Saveslots.cpp" />
     <ClCompile Include="..\..\gui\SysState.cpp" />
     <ClCompile Include="..\..\ZipTools\thread_gzip.cpp" />
@@ -401,6 +408,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\AsyncFileReader.h" />
+    <ClInclude Include="..\..\CDVD\CDVDdiscReader.h" />
     <ClInclude Include="..\..\CDVD\ChunksCache.h" />
     <ClInclude Include="..\..\CDVD\CompressedFileReader.h" />
     <ClInclude Include="..\..\CDVD\CompressedFileReaderUtils.h" />
@@ -420,6 +428,7 @@
     <ClInclude Include="..\..\GameDatabase.h" />
     <ClInclude Include="..\..\Gif_Unit.h" />
     <ClInclude Include="..\..\gui\AppGameDatabase.h" />
+    <ClInclude Include="..\..\gui\DriveList.h" />
     <ClInclude Include="..\..\gui\Saveslots.h" />
     <ClInclude Include="..\..\gui\Debugger\BreakpointWindow.h" />
     <ClInclude Include="..\..\gui\Debugger\CtrlDisassemblyView.h" />
@@ -430,15 +439,17 @@
     <ClInclude Include="..\..\gui\Debugger\DisassemblyDialog.h" />
     <ClInclude Include="..\..\gui\Panels\MemoryCardPanels.h" />
     <ClInclude Include="..\..\IopGte.h" />
+    <ClInclude Include="..\..\IPC.h" />
+    <ClInclude Include="..\..\FW.h" />
     <ClInclude Include="..\..\IPU\IPUdma.h" />
     <ClInclude Include="..\..\Mdec.h" />
     <ClInclude Include="..\..\Patch.h" />
     <ClInclude Include="..\..\PrecompiledHeader.h" />
     <ClInclude Include="..\..\ps2\pgif.h" />
     <ClInclude Include="..\..\Recording\InputRecording.h" />
+    <ClInclude Include="..\..\Recording\InputRecordingControls.h" />
     <ClInclude Include="..\..\Recording\NewRecordingFrame.h" />
     <ClInclude Include="..\..\Recording\InputRecordingFile.h" />
-    <ClInclude Include="..\..\Recording\RecordingControls.h" />
     <ClInclude Include="..\..\Recording\PadData.h" />
     <ClInclude Include="..\..\Recording\RecordingInputManager.h" />
     <ClInclude Include="..\..\Recording\VirtualPad.h" />
@@ -573,7 +584,6 @@
     <ClInclude Include="..\..\gui\MainFrame.h" />
     <ClInclude Include="..\..\gui\pxEventThread.h" />
     <ClInclude Include="..\..\gui\RecentIsoList.h" />
-    <ClInclude Include="..\cheats\cheats.h" />
     <ClInclude Include="..\..\ZipTools\ThreadedZipTools.h" />
   </ItemGroup>
   <ItemGroup>

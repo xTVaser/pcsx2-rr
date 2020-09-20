@@ -79,8 +79,8 @@ void Pcsx2App::OpenMainFrame()
 #ifndef DISABLE_RECORDING
 	VirtualPad* virtualPad0 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 0);
 	m_id_VirtualPad[0] = virtualPad0->GetId();
-	
-	VirtualPad *virtualPad1 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 1);
+
+	VirtualPad* virtualPad1 = new VirtualPad(mainFrame, wxID_ANY, wxEmptyString, 1);
 	m_id_VirtualPad[1] = virtualPad1->GetId();
 
 	NewRecordingFrame* newRecordingFrame = new NewRecordingFrame(mainFrame);
@@ -229,7 +229,7 @@ void Pcsx2App::OnInitCmdLine( wxCmdLineParser& parser )
 	parser.AddOption( wxEmptyString,L"elf",			_("executes an ELF image"), wxCMD_LINE_VAL_STRING );
 	parser.AddOption( wxEmptyString,L"irx",			_("executes an IRX image"), wxCMD_LINE_VAL_STRING );
 	parser.AddSwitch( wxEmptyString,L"nodisc",		_("boots an empty DVD tray; use to enter the PS2 system menu") );
-	parser.AddSwitch( wxEmptyString,L"usecd",		_("boots from the CDVD plugin (overrides IsoFile parameter)") );
+	parser.AddSwitch( wxEmptyString,L"usecd",		_("boots from the disc drive (overrides IsoFile parameter)") );
 
 	parser.AddSwitch( wxEmptyString,L"nohacks",		_("disables all speedhacks") );
 	parser.AddOption( wxEmptyString,L"gamefixes",	_("use the specified comma or pipe-delimited list of gamefixes.") + fixlist, wxCMD_LINE_VAL_STRING );
@@ -363,7 +363,7 @@ bool Pcsx2App::OnCmdLineParsed( wxCmdLineParser& parser )
 
 	if( parser.Found(L"usecd") )
 	{
-		Startup.CdvdSource	= CDVD_SourceType::Plugin;
+		Startup.CdvdSource	= CDVD_SourceType::Disc;
 		Startup.SysAutoRun	= true;
 	}
 

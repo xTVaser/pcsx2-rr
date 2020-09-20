@@ -33,7 +33,6 @@ option(USE_VTUNE "Plug VTUNE to profile GSdx JIT.")
 #-------------------------------------------------------------------------------
 # Graphical option
 #-------------------------------------------------------------------------------
-option(OPENCL_API "Add OpenCL support on GSdx")
 option(REBUILD_SHADER "Rebuild GLSL/CG shader (developer option)")
 option(BUILD_REPLAY_LOADERS "Build GS replayer to ease testing (developer option)")
 
@@ -193,13 +192,13 @@ if(${PCSX2_TARGET_ARCHITECTURES} MATCHES "i386")
             if (USE_ICC)
                 set(ARCH_FLAG "-msse2")
             else()
-                set(ARCH_FLAG "-msse -msse2 -mfxsr -mxsave -march=i686")
+                set(ARCH_FLAG "-msse -msse2 -mfxsr -march=i686")
             endif()
         else()
             # AVX requires some fix of the ABI (mangling) (default 2)
             # Note: V6 requires GCC 4.7
             #set(ARCH_FLAG "-march=native -fabi-version=6")
-            set(ARCH_FLAG "-mfxsr -mxsave -march=native")
+            set(ARCH_FLAG "-mfxsr -march=native")
         endif()
     endif()
 

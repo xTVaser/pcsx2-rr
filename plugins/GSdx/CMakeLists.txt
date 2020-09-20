@@ -44,10 +44,6 @@ if(XDG_STD)
 endif()
 
 
-if(OPENCL_FOUND)
-    set(GSdxFinalFlags ${GSdxFinalFlags} -DENABLE_OPENCL)
-endif()
-
 set(GSdxSources
     GS.cpp
     GSAlignedClass.cpp
@@ -108,7 +104,6 @@ set(GSdxSources
     Renderers/OpenGL/GSShaderOGL.cpp
     Renderers/OpenGL/GSTextureCacheOGL.cpp
     Renderers/OpenGL/GSTextureOGL.cpp
-    Renderers/OpenCL/GSRendererCL.cpp
     Window/GSSetting.cpp
     Window/GSWnd.cpp
     )
@@ -176,7 +171,6 @@ set(GSdxHeaders
     Renderers/OpenGL/GSTextureOGL.h
     Renderers/OpenGL/GSUniformBufferOGL.h
     Renderers/OpenGL/GSVertexArrayOGL.h
-    Renderers/OpenCL/GSRendererCL.h
     Window/GSCaptureDlg.h
     Window/GSDialog.h
     Window/GSSetting.h
@@ -250,10 +244,6 @@ if(USE_VTUNE)
     set(GSdxFinalLibs ${GSdxFinalLibs} ${VTUNE_LIBRARIES})
 endif()
 
-if(OPENCL_FOUND)
-    set(GSdxFinalLibs ${GSdxFinalLibs} ${OPENCL_LIBRARIES})
-endif()
-
 if(APPLE)
     find_library(APPKIT_LIBRARY AppKit)
     set(GSdxFinalFlags ${GSdxFinalFlags} -fobjc-arc)
@@ -263,7 +253,6 @@ endif()
 set(RESOURCE_FILES
     res/logo-ogl.bmp
     res/fxaa.fx
-    res/tfx.cl
     res/glsl/common_header.glsl
     res/glsl/convert.glsl
     res/glsl/interlace.glsl

@@ -124,6 +124,7 @@ protected:
 	wxMenu&			m_GameSettingsSubmenu;
 
 	wxMenuItem*		m_menuItem_RecentIsoMenu;
+	wxMenuItem*		m_menuItem_DriveListMenu;
 	wxMenuItem&		m_MenuItem_Console;
 #if defined(__unix__)
 	wxMenuItem&		m_MenuItem_Console_Stdio;
@@ -144,7 +145,7 @@ public:
 	void OnLogBoxHidden();
 
 	bool IsPaused() const { return GetMenuBar()->IsChecked( MenuId_Sys_SuspendResume ); }
-	void UpdateIsoSrcSelection();
+	void UpdateCdvdSrcSelection();
 	void RemoveCdvdMenu();
 	void EnableMenuItem( int id, bool enable );
 	void CheckMenuItem(int id, bool checked);
@@ -192,6 +193,7 @@ protected:
 	void Menu_EnableBackupStates_Click(wxCommandEvent &event);
 	void Menu_EnablePatches_Click(wxCommandEvent &event);
 	void Menu_EnableCheats_Click(wxCommandEvent &event);
+	void Menu_EnableIPC_Click(wxCommandEvent &event);
 	void Menu_EnableWideScreenPatches_Click(wxCommandEvent &event);
 #ifndef DISABLE_RECORDING
 	void Menu_EnableRecordingTools_Click(wxCommandEvent &event);

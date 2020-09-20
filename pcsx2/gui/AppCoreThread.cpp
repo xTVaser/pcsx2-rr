@@ -178,7 +178,6 @@ void AppCoreThread::ChangeCdvdSource()
 	// Fast change of the CDVD source only -- a Pause will suffice.
 
 	ScopedCoreThreadPause paused_core;
-	GetCorePlugins().Close( PluginId_CDVD );
 	CDVDsys_ChangeSource( cdvdsrc );
 	paused_core.AllowResume();
 
@@ -541,7 +540,6 @@ void AppCoreThread::OnResumeInThread( bool isSuspended )
 {
 	if( m_resetCdvd )
 	{
-		GetCorePlugins().Close( PluginId_CDVD );
 		CDVDsys_ChangeSource( g_Conf->CdvdSource );
 		cdvdCtrlTrayOpen();
 		m_resetCdvd = false;

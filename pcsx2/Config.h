@@ -24,9 +24,7 @@ enum PluginsEnum_t
 	PluginId_GS = 0,
 	PluginId_PAD,
 	PluginId_SPU2,
-	PluginId_CDVD,
 	PluginId_USB,
-	PluginId_FW,
 	PluginId_DEV9,
 	PluginId_Count,
 
@@ -59,6 +57,7 @@ enum GamefixId
 	Fix_GoemonTlbMiss,
 	Fix_ScarfaceIbit,
 	Fix_CrashTagTeamIbit,
+	Fix_VU0Kickstart,
 
 	GamefixId_COUNT
 };
@@ -361,7 +360,8 @@ struct Pcsx2Config
             FMVinSoftwareHack : 1,      // Toggle in and out of software rendering when an FMV runs.
             GoemonTlbHack : 1,          // Gomeon tlb miss hack. The game need to access unmapped virtual address. Instead to handle it as exception, tlb are preloaded at startup
             ScarfaceIbit : 1,           // Scarface I bit hack. Needed to stop constant VU recompilation
-            CrashTagTeamRacingIbit : 1; // Crash Tag Team Racing I bit hack. Needed to stop constant VU recompilation
+            CrashTagTeamRacingIbit : 1, // Crash Tag Team Racing I bit hack. Needed to stop constant VU recompilation
+            VU0KickstartHack : 1;       // Speed up VU0 at start of program to avoid some VU1 sync issues
 		BITFIELD_END
 
 		GamefixOptions();
@@ -453,6 +453,7 @@ struct Pcsx2Config
 			CdvdShareWrite		:1,		// allows the iso to be modified while it's loaded
 			EnablePatches		:1,		// enables patch detection and application
 			EnableCheats		:1,		// enables cheat detection and application
+			EnableIPC		    :1,		// enables inter-process communication 
 			EnableWideScreenPatches		:1,
 #ifndef DISABLE_RECORDING
 			EnableRecordingTools :1,

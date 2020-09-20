@@ -56,6 +56,7 @@ set(pcsx2Sources
 	GameDatabase.cpp
 	Dump.cpp
 	Elfheader.cpp
+	FW.cpp
 	FiFo.cpp
 	FPU.cpp
 	Gif.cpp
@@ -75,6 +76,7 @@ set(pcsx2Sources
 	IopIrq.cpp
 	IopMem.cpp
 	IopSio2.cpp
+	IPC.cpp
 	Mdec.cpp
 	Memory.cpp
 	MMI.cpp
@@ -134,6 +136,7 @@ set(pcsx2Headers
 	Dump.h
 	GameDatabase.h
 	Elfheader.h
+	FW.h
 	Gif.h
 	Gif_Unit.h
 	GS.h
@@ -147,6 +150,7 @@ set(pcsx2Headers
 	IopHw.h
 	IopMem.h
 	IopSio2.h
+	IPC.h
 	Mdec.h
 	MTVU.h
 	Memory.h
@@ -181,7 +185,9 @@ set(pcsx2CDVDSources
 	CDVD/CdRom.cpp
 	CDVD/CDVDaccess.cpp
 	CDVD/CDVD.cpp
+	CDVD/CDVDdiscReader.cpp
 	CDVD/CDVDisoReader.cpp
+	CDVD/CDVDdiscThread.cpp
 	CDVD/InputIsoFile.cpp
 	CDVD/OutputIsoFile.cpp
 	CDVD/ChunksCache.cpp
@@ -199,6 +205,7 @@ set(pcsx2CDVDHeaders
 	CDVD/CDVDaccess.h
 	CDVD/CDVD.h
 	CDVD/CDVD_internal.h
+	CDVD/CDVDdiscReader.h
 	CDVD/CDVDisoReader.h
 	CDVD/ChunksCache.h
 	CDVD/CompressedFileReader.h
@@ -282,6 +289,7 @@ set(pcsx2GuiSources
 	gui/Debugger/DebuggerLists.cpp
 	gui/Debugger/DisassemblyDialog.cpp
 	gui/Debugger/DebugEvents.cpp
+	gui/DriveList.cpp
 	gui/ExecutorThread.cpp
 	gui/FrameForGS.cpp
 	gui/GlobalCommands.cpp
@@ -339,6 +347,7 @@ set(pcsx2GuiHeaders
 	gui/Dialogs/ConfigurationDialog.h
 	gui/Dialogs/LogOptionsDialog.h
 	gui/Dialogs/ModalPopups.h
+	gui/DriveList.h
 	gui/GSFrame.h
 	gui/i18n.h
 	gui/IsoDropTarget.h
@@ -399,6 +408,8 @@ set(pcsx2IPUHeaders
 
 # Linux sources
 set(pcsx2LinuxSources
+	CDVD/Linux/DriveUtility.cpp
+	CDVD/Linux/IOCtlSrc.cpp
 	gui/CpuUsageProviderLnx.cpp
 	Linux/LnxConsolePipe.cpp
 	Linux/LnxKeyCodes.cpp
@@ -406,6 +417,8 @@ set(pcsx2LinuxSources
     )
 
 set(pcsx2OSXSources
+	CDVD/Linux/DriveUtility.cpp
+	CDVD/Linux/IOCtlSrc.cpp
 	gui/CpuUsageProviderLnx.cpp
 	Linux/LnxConsolePipe.cpp
 #	Linux/LnxKeyCodes.cpp
@@ -413,6 +426,8 @@ set(pcsx2OSXSources
 	)
 
 set(pcsx2FreeBSDSources
+	CDVD/Linux/DriveUtility.cpp
+	CDVD/Linux/IOCtlSrc.cpp
 	gui/CpuUsageProviderLnx.cpp
 	Linux/LnxConsolePipe.cpp
 	Linux/LnxKeyCodes.cpp
@@ -463,10 +478,10 @@ set(pcsx2RDebugHeaders
 # Recording sources
 set(pcsx2RecordingSources
 	Recording/InputRecording.cpp
+	Recording/InputRecordingControls.cpp
 	Recording/InputRecordingFile.cpp
 	Recording/NewRecordingFrame.cpp
 	Recording/PadData.cpp
-	Recording/RecordingControls.cpp
 	Recording/RecordingInputManager.cpp
 	Recording/VirtualPad.cpp
 )
@@ -474,10 +489,10 @@ set(pcsx2RecordingSources
 # Recording headers
 set(pcsx2RecordingHeaders
 	Recording/InputRecording.h
+	Recording/InputRecordingControls.h
 	Recording/InputRecordingFile.h
 	Recording/NewRecordingFrame.h
 	Recording/PadData.h
-	Recording/RecordingControls.h
 	Recording/RecordingInputManager.h
 	Recording/VirtualPad.h
 )
@@ -512,9 +527,9 @@ set(pcsx2ZipToolsHeaders
 
 # Windows sources
 set(pcsx2WindowsSources
+	CDVD/Windows/DriveUtility.cpp
+	CDVD/Windows/IOCtlSrc.cpp
 	gui/CpuUsageProviderMSW.cpp
-	windows/cheats/browser.cpp
-	windows/cheats/cheats.cpp
 	windows/FlatFileReaderWindows.cpp
 	windows/Optimus.cpp
 	windows/PatchBrowser.cpp
@@ -526,7 +541,6 @@ set(pcsx2WindowsSources
 
 # Windows headers
 set(pcsx2WindowsHeaders
-	windows/cheats/cheats.h
 	windows/resource.h
 	windows/Win32.h)
 
@@ -631,7 +645,12 @@ set(Common
 if(Linux)
 	set(Platform
 		${pcsx2LinuxSources}
-		${pcsx2LinuxHeaders})
+		${pcsx2LinuxHeaders}
+		)
+		
+	set(Platform_Libs
+		${LIBUDEV_LIBRARIES}
+		)
 endif()
 
 # Windows
@@ -667,6 +686,7 @@ set(pcsx2FinalLibs
     ${ZLIB_LIBRARIES}
     ${AIO_LIBRARIES}
     ${GCOV_LIBRARIES}
+    ${Platform_Libs}
 )
 
 if(BUILTIN_GS)

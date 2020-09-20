@@ -725,8 +725,9 @@ AppConfig::FolderOptions::FolderOptions()
 	, Cheats		( PathDefs::GetCheats() )
 	, CheatsWS      ( PathDefs::GetCheatsWS() )
 
-	, RunIso( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
-	, RunELF( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
+	, RunIso	( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
+	, RunELF	( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
+	, RunDisc	( PathDefs::GetDocuments().GetFilename() )
 {
 	bitset = 0xffffffff;
 }
@@ -766,6 +767,7 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 
 	IniEntryDirFile( RunIso, rel );
 	IniEntryDirFile( RunELF, rel );
+	IniEntryDirFile( RunDisc, rel );
 
 	if( ini.IsLoading() )
 	{
@@ -1254,7 +1256,21 @@ static void LoadUiSettings()
 	g_Conf->LoadSave( loader );
 
 	if( !wxFile::Exists( g_Conf->CurrentIso ) )
+	{
 		g_Conf->CurrentIso.clear();
+	}
+
+#if defined(_WIN32)
+	if( !g_Conf->Folders.RunDisc.DirExists() )
+	{
+		g_Conf->Folders.RunDisc.Clear();
+	}
+#else
+	if (!g_Conf->Folders.RunDisc.Exists())
+	{
+		g_Conf->Folders.RunDisc.Clear();
+	}
+#endif
 
 	sApp.DispatchUiSettingsEvent( loader );
 }
@@ -1287,7 +1303,21 @@ void AppLoadSettings()
 static void SaveUiSettings()
 {	
 	if( !wxFile::Exists( g_Conf->CurrentIso ) )
+	{
 		g_Conf->CurrentIso.clear();
+	}
+
+#if defined(_WIN32)
+	if (!g_Conf->Folders.RunDisc.DirExists())
+	{
+		g_Conf->Folders.RunDisc.Clear();
+	}
+#else
+	if (!g_Conf->Folders.RunDisc.Exists())
+	{
+		g_Conf->Folders.RunDisc.Clear();
+	}
+#endif
 
 	sApp.GetRecentIsoManager().Add( g_Conf->CurrentIso );
 
