@@ -62,7 +62,7 @@ jobs:
           path: |
             ./3rdparty/xz
             ./3rdparty/gtest
-            ./git/modules/
+            ./.git/modules/
 
       - name: Checkout Submodules
         if: steps.cache-submodules.outputs.cache-hit != 'true'
