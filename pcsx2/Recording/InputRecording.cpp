@@ -219,7 +219,6 @@ void InputRecording::SetFrameCounter(u32 newGFrameCount)
 	}
 }
 
-void InputRecording::SetStartingFrame(u32 newStartingFrame)
 {
 	startingFrame = newStartingFrame;
 	// TODO - make a function of my own to simplify working with the logging macros
