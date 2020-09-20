@@ -73,21 +73,20 @@ void MainEmuFrame::UpdateStatusBar()
 #endif
 }
 
-void MainEmuFrame::UpdateIsoSrcSelection()
+void MainEmuFrame::UpdateCdvdSrcSelection()
 {
 	MenuIdentifiers cdsrc = MenuId_Src_Iso;
 
 	switch( g_Conf->CdvdSource )
 	{
 		case CDVD_SourceType::Iso:		cdsrc = MenuId_Src_Iso;		break;
-		case CDVD_SourceType::Plugin:	cdsrc = MenuId_Src_Plugin;	break;
+		case CDVD_SourceType::Disc:		cdsrc = MenuId_Src_Disc;	break;
 		case CDVD_SourceType::NoDisc:	cdsrc = MenuId_Src_NoDisc;	break;
 
 		jNO_DEFAULT
 	}
 	sMenuBar.Check( cdsrc, true );
 	UpdateStatusBar();
-	EnableCdvdPluginSubmenu( cdsrc == MenuId_Src_Plugin );
 }
 
 bool MainEmuFrame::Destroy()
@@ -217,9 +216,10 @@ void MainEmuFrame::ConnectMenus()
 
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnablePatches_Click, this, MenuId_EnablePatches);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableCheats_Click, this, MenuId_EnableCheats);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableIPC_Click, this, MenuId_EnableIPC);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableWideScreenPatches_Click, this, MenuId_EnableWideScreenPatches);
 #ifndef DISABLE_RECORDING
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableRecordingTools_Click, this, MenuId_EnableRecordingTools);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableRecordingTools_Click, this, MenuId_EnableInputRecording);
 #endif
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_EnableHostFs_Click, this, MenuId_EnableHostFs);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_SysShutdown_Click, this, MenuId_Sys_Shutdown);
@@ -229,7 +229,7 @@ void MainEmuFrame::ConnectMenus()
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_IsoBrowse_Click, this, MenuId_IsoBrowse);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_IsoClear_Click, this, MenuId_IsoClear);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_CdvdSource_Click, this, MenuId_Src_Iso);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_CdvdSource_Click, this, MenuId_Src_Plugin);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_CdvdSource_Click, this, MenuId_Src_Disc);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_CdvdSource_Click, this, MenuId_Src_NoDisc);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Ask_On_Boot_Click, this, MenuId_Ask_On_Booting);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Debug_CreateBlockdump_Click, this, MenuId_Debug_CreateBlockdump);
@@ -373,11 +373,14 @@ void MainEmuFrame::CreatePcsx2Menu()
 	m_GameSettingsSubmenu.Append(MenuId_EnableCheats,	_("Enable &Cheats"),
 		wxEmptyString, wxITEM_CHECK);
 
+	m_GameSettingsSubmenu.Append(MenuId_EnableIPC,	_("Enable &IPC"),
+		wxEmptyString, wxITEM_CHECK);
+
 	m_GameSettingsSubmenu.Append(MenuId_EnableWideScreenPatches,	_("Enable &Widescreen Patches"),
 		_("Enabling Widescreen Patches may occasionally cause issues."), wxITEM_CHECK);
 
 #ifndef DISABLE_RECORDING
-	m_GameSettingsSubmenu.Append(MenuId_EnableRecordingTools, _("Enable &Recording Tools"),
+	m_GameSettingsSubmenu.Append(MenuId_EnableInputRecording, _("Enable &Input Recording"),
 		wxEmptyString, wxITEM_CHECK);
 #endif
 
@@ -403,21 +406,27 @@ void MainEmuFrame::CreateCdvdMenu()
 {
 	// ------------------------------------------------------------------------
 	wxMenu& isoRecents( wxGetApp().GetRecentIsoMenu() );
+ 	wxMenu& driveList ( wxGetApp().GetDriveListMenu() );
 
 	m_menuItem_RecentIsoMenu = m_menuCDVD.AppendSubMenu(&isoRecents, _("ISO &Selector"));
-	m_menuCDVD.Append( GetPluginMenuId_Settings(PluginId_CDVD), _("Plugin &Menu"), m_PluginMenuPacks[PluginId_CDVD] );
+ 	m_menuItem_DriveListMenu = m_menuCDVD.AppendSubMenu(&driveList, _("D&rive Selector"));
 
 	m_menuCDVD.AppendSeparator();
 	m_menuCDVD.Append( MenuId_Src_Iso,		_("&ISO"),		_("Makes the specified ISO image the CDVD source."), wxITEM_RADIO );
-	m_menuCDVD.Append( MenuId_Src_Plugin,	_("&Plugin"),	_("Uses an external plugin as the CDVD source."), wxITEM_RADIO );
+ 	m_menuCDVD.Append( MenuId_Src_Disc,		_("&Disc"),		_("Uses a disc drive as the CDVD source."), wxITEM_RADIO );
 	m_menuCDVD.Append( MenuId_Src_NoDisc,	_("&No disc"),	_("Use this to boot into your virtual PS2's BIOS configuration."), wxITEM_RADIO );
+
+#if defined(__FREEBSD__) || defined(__APPLE__)
+	m_menuItem_DriveListMenu->Enable(false);
+	m_menuCDVD.Enable(MenuId_Src_Disc, false);
+#endif
 }
 
 
 void MainEmuFrame::CreateConfigMenu()
 {
 	m_menuConfig.Append(MenuId_Config_SysSettings,	_("Emulation &Settings...") );
-	m_menuConfig.Append(MenuId_Config_McdSettings,	_("&Memory cards...") );
+	m_menuConfig.Append(MenuId_Config_McdSettings,	_("&Memory Cards...") );
 	m_menuConfig.Append(MenuId_Config_BIOS,			_("&Plugin/BIOS Selector...") );
 
 	m_menuConfig.AppendSeparator();
@@ -427,7 +436,6 @@ void MainEmuFrame::CreateConfigMenu()
 	m_menuConfig.Append(MenuId_Config_PAD,		_("&Controllers (PAD)"),m_PluginMenuPacks[PluginId_PAD]);
 	m_menuConfig.Append(MenuId_Config_DEV9,		_("&Dev9"),				m_PluginMenuPacks[PluginId_DEV9]);
 	m_menuConfig.Append(MenuId_Config_USB,		_("&USB"),				m_PluginMenuPacks[PluginId_USB]);
-	m_menuConfig.Append(MenuId_Config_FireWire,	_("&Firewire"),			m_PluginMenuPacks[PluginId_FW]);
 
 	m_menuConfig.AppendSeparator();
 	m_menuConfig.Append(MenuId_Config_Multitap0Toggle,	_("Multitap &1"),	wxEmptyString, wxITEM_CHECK );
@@ -435,8 +443,8 @@ void MainEmuFrame::CreateConfigMenu()
 
 	m_menuConfig.AppendSeparator();
 
-	m_menuConfig.Append(MenuId_ChangeLang,			L"Change &language..." ); // Always in English
-	m_menuConfig.Append(MenuId_Config_ResetAll,	_("C&lear all settings..."),
+	m_menuConfig.Append(MenuId_ChangeLang,			L"Change &Language..." ); // Always in English
+	m_menuConfig.Append(MenuId_Config_ResetAll,	_("C&lear All Settings..."),
 		AddAppName(_("Clears all %s settings and re-runs the startup wizard.")));
 }
 
@@ -454,8 +462,8 @@ void MainEmuFrame::CreateWindowsMenu()
 void MainEmuFrame::CreateCaptureMenu()
 {
 	m_menuCapture.Append(MenuId_Capture_Video, _("Video"), &m_submenuVideoCapture);
-	m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Start Recording"));
-	m_submenuVideoCapture.Append(MenuId_Capture_Video_Stop, _("Stop Recording"))->Enable(false);
+	m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Start Screenrecorder"));
+	m_submenuVideoCapture.Append(MenuId_Capture_Video_Stop, _("Stop Screenrecorder"))->Enable(false);
 
 	m_menuCapture.Append(MenuId_Capture_Screenshot, _("Screenshot"));
 }
@@ -535,7 +543,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	// Append the Recording options if previously enabled and setting has been picked up from ini
 	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
-		m_menubar.Append(&m_menuRecording, _("&Recording"));
+		m_menubar.Append(&m_menuRecording, _("&Input Record"));
 	}
 #endif
 	m_menubar.Append( &m_menuHelp,	_("&Help") );
@@ -709,7 +717,7 @@ void MainEmuFrame::ApplyCoreStatus()
 	case CDVD_SourceType::Iso:
 		label = _("Boot ISO");
 		break;
-	case CDVD_SourceType::Plugin:
+	case CDVD_SourceType::Disc:
 		label = _("Boot CDVD");
 		break;
 	case CDVD_SourceType::NoDisc:
@@ -743,9 +751,10 @@ void MainEmuFrame::ApplyConfigToGui(AppConfig& configToApply, int flags)
 	{//these should not be affected by presets
 		menubar.Check( MenuId_EnableBackupStates, configToApply.EmuOptions.BackupSavestate );
 		menubar.Check( MenuId_EnableCheats,  configToApply.EmuOptions.EnableCheats );
+		menubar.Check( MenuId_EnableIPC,  configToApply.EmuOptions.EnableIPC );
 		menubar.Check( MenuId_EnableWideScreenPatches,  configToApply.EmuOptions.EnableWideScreenPatches );
 #ifndef DISABLE_RECORDING
-		menubar.Check(MenuId_EnableRecordingTools, configToApply.EmuOptions.EnableRecordingTools);
+		menubar.Check( MenuId_EnableInputRecording, configToApply.EmuOptions.EnableRecordingTools);
 #endif
 		menubar.Check( MenuId_EnableHostFs,  configToApply.EmuOptions.HostFs );
 		menubar.Check( MenuId_Debug_CreateBlockdump, configToApply.EmuOptions.CdvdDumpBlocks );
@@ -758,7 +767,7 @@ void MainEmuFrame::ApplyConfigToGui(AppConfig& configToApply, int flags)
 		menubar.Check( MenuId_Config_FastBoot, configToApply.EnableFastBoot );
 	}
 
-	UpdateIsoSrcSelection();	//shouldn't be affected by presets but updates from g_Conf anyway and not from configToApply, so no problem here.
+	UpdateCdvdSrcSelection();	//shouldn't be affected by presets but updates from g_Conf anyway and not from configToApply, so no problem here.
 }
 
 //write pending preset settings from the gui to g_Conf,

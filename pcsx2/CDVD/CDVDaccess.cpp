@@ -20,7 +20,7 @@
 #define ENABLE_TIMESTAMPS
 
 #ifdef _WIN32
-#	include <wx/msw/wrapwin.h>
+#include <wx/msw/wrapwin.h>
 #endif
 
 #include <ctype.h>
@@ -37,13 +37,14 @@
 #include "AppConfig.h"
 #include "Utilities/PathUtils.h"
 
+CDVD_API* CDVD = NULL;
+
 const wxChar* CDVD_SourceLabels[] =
-{
-	L"ISO",
-	L"Plugin",
-	L"NoDisc",
-	NULL
-};
+	{
+		L"ISO",
+		L"Disc",
+		L"NoDisc",
+		NULL};
 
 // ----------------------------------------------------------------------------
 // diskTypeCached
@@ -57,7 +58,7 @@ static int diskTypeCached = -1;
 
 // used to bridge the gap between the old getBuffer api and the new getBuffer2 api.
 int lastReadSize;
-u32 lastLSN;		// needed for block dumping
+u32 lastLSN; // needed for block dumping
 
 // Records last read block length for block dumping
 //static int plsn = 0;
@@ -68,7 +69,7 @@ static OutputIsoFile blockDumpFile;
 // relying on DEP exceptions -- and a little more reliable too.
 static void CheckNullCDVD()
 {
-	pxAssertDev( CDVD != NULL, "Invalid CDVD object state (null pointer exception)" );
+	pxAssertDev(CDVD != NULL, "Invalid CDVD object state (null pointer exception)");
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -78,42 +79,46 @@ static int CheckDiskTypeFS(int baseType)
 {
 	IsoFSCDVD isofs;
 	IsoDirectory rootdir(isofs);
-	try {
-		IsoFile file( rootdir, L"SYSTEM.CNF;1");
+	try
+	{
+		IsoFile file(rootdir, L"SYSTEM.CNF;1");
 
 		int size = file.getLength();
 
 		std::unique_ptr<char[]> buffer(new char[file.getLength() + 1]);
-		file.read(buffer.get(),size);
-		buffer[size]='\0';
+		file.read(buffer.get(), size);
+		buffer[size] = '\0';
 
 		char* pos = strstr(buffer.get(), "BOOT2");
 		if (pos == NULL)
 		{
 			pos = strstr(buffer.get(), "BOOT");
-			if (pos == NULL)  return CDVD_TYPE_ILLEGAL;
+			if (pos == NULL)
+				return CDVD_TYPE_ILLEGAL;
 			return CDVD_TYPE_PSCD;
 		}
 
-		return (baseType==CDVD_TYPE_DETCTCD) ? CDVD_TYPE_PS2CD : CDVD_TYPE_PS2DVD;
+		return (baseType == CDVD_TYPE_DETCTCD) ? CDVD_TYPE_PS2CD : CDVD_TYPE_PS2DVD;
 	}
-	catch( Exception::FileNotFound& )
+	catch (Exception::FileNotFound&)
 	{
 	}
 
-	try {
-		IsoFile file( rootdir, L"PSX.EXE;1");
+	try
+	{
+		IsoFile file(rootdir, L"PSX.EXE;1");
 		return CDVD_TYPE_PSCD;
 	}
-	catch( Exception::FileNotFound& )
+	catch (Exception::FileNotFound&)
 	{
 	}
 
-	try {
-		IsoFile file( rootdir, L"VIDEO_TS/VIDEO_TS.IFO;1");
+	try
+	{
+		IsoFile file(rootdir, L"VIDEO_TS/VIDEO_TS.IFO;1");
 		return CDVD_TYPE_DVDV;
 	}
-	catch( Exception::FileNotFound& )
+	catch (Exception::FileNotFound&)
 	{
 	}
 
@@ -141,7 +146,7 @@ static int FindDiskType(int mType)
 		static u8 bleh[CD_FRAMESIZE_RAW];
 		cdvdTD td;
 
-		CDVD->getTD(0,&td);
+		CDVD->getTD(0, &td);
 		if (td.lsn > 452849)
 		{
 			iCDType = CDVD_TYPE_DETCTDVDS;
@@ -156,7 +161,7 @@ static int FindDiskType(int mType)
 				//Horrible hack! in CD images position 166 and 171 have block size but not DVD's
 				//It's not always 2048 however (can be 4096)
 				//Test Impossible Mission if thia is changed.
-				if(*(u16*)(bleh+166) == *(u16*)(bleh+171))
+				if (*(u16*)(bleh + 166) == *(u16*)(bleh + 171))
 					iCDType = CDVD_TYPE_DETCTCD;
 				else
 					iCDType = CDVD_TYPE_DETCTDVDS;
@@ -169,16 +174,17 @@ static int FindDiskType(int mType)
 		s32 dlt = 0;
 		u32 l1s = 0;
 
-		if(CDVD->getDualInfo(&dlt,&l1s)==0)
+		if (CDVD->getDualInfo(&dlt, &l1s) == 0)
 		{
-			if (dlt > 0) iCDType = CDVD_TYPE_DETCTDVDD;
+			if (dlt > 0)
+				iCDType = CDVD_TYPE_DETCTDVDD;
 		}
 	}
 
-	switch(iCDType)
+	switch (iCDType)
 	{
 		case CDVD_TYPE_DETCTCD:
-			Console.WriteLn(" * CDVD Disk Open: CD, %d tracks (%d to %d):", tn.etrack-tn.strack+1,tn.strack,tn.etrack);
+			Console.WriteLn(" * CDVD Disk Open: CD, %d tracks (%d to %d):", tn.etrack - tn.strack + 1, tn.strack, tn.etrack);
 			break;
 
 		case CDVD_TYPE_DETCTDVDS:
@@ -191,34 +197,34 @@ static int FindDiskType(int mType)
 	}
 
 	audioTracks = dataTracks = 0;
-	for(int i = tn.strack; i <= tn.etrack; i++)
+	for (int i = tn.strack; i <= tn.etrack; i++)
 	{
-		cdvdTD td,td2;
+		cdvdTD td, td2;
 
-		CDVD->getTD(i,&td);
+		CDVD->getTD(i, &td);
 
 		if (tn.etrack > i)
-			CDVD->getTD(i+1,&td2);
+			CDVD->getTD(i + 1, &td2);
 		else
-			CDVD->getTD(0,&td2);
+			CDVD->getTD(0, &td2);
 
 		int tlength = td2.lsn - td.lsn;
 
 		if (td.type == CDVD_AUDIO_TRACK)
 		{
 			audioTracks++;
-			Console.WriteLn(" * * Track %d: Audio (%d sectors)", i,tlength);
+			Console.WriteLn(" * * Track %d: Audio (%d sectors)", i, tlength);
 		}
 		else
 		{
 			dataTracks++;
-			Console.WriteLn(" * * Track %d: Data (Mode %d) (%d sectors)", i,((td.type==CDVD_MODE1_TRACK)?1:2),tlength);
+			Console.WriteLn(" * * Track %d: Data (Mode %d) (%d sectors)", i, ((td.type == CDVD_MODE1_TRACK) ? 1 : 2), tlength);
 		}
 	}
 
 	if (dataTracks > 0)
 	{
-		iCDType=CheckDiskTypeFS(iCDType);
+		iCDType = CheckDiskTypeFS(iCDType);
 	}
 
 	if (audioTracks > 0)
@@ -226,13 +232,13 @@ static int FindDiskType(int mType)
 		switch (iCDType)
 		{
 			case CDVD_TYPE_PS2CD:
-				iCDType=CDVD_TYPE_PS2CDDA;
+				iCDType = CDVD_TYPE_PS2CDDA;
 				break;
 			case CDVD_TYPE_PSCD:
-				iCDType=CDVD_TYPE_PSCDDA;
+				iCDType = CDVD_TYPE_PSCDDA;
 				break;
 			default:
-				iCDType=CDVD_TYPE_CDDA;
+				iCDType = CDVD_TYPE_CDDA;
 				break;
 		}
 	}
@@ -254,7 +260,10 @@ static void DetectDiskType()
 	// Paranoid mode: do not trust the plugin's detection system to work correctly.
 	// (.. and there's no reason plugins should be doing their own detection anyway).
 
-	switch(baseMediaType)
+	//TODO_CDVD We're not using CDVD plugins anymore but I believe both ISO and Disc use their own
+	//detection system. Possible code reduction here
+
+	switch (baseMediaType)
 	{
 #if 0
 		case CDVD_TYPE_CDDA:
@@ -285,10 +294,10 @@ static void DetectDiskType()
 	diskTypeCached = FindDiskType(mType);
 }
 
-static wxString			m_SourceFilename[3];
-static CDVD_SourceType	m_CurrentSourceType = CDVD_SourceType::NoDisc;
+static wxString m_SourceFilename[3];
+static CDVD_SourceType m_CurrentSourceType = CDVD_SourceType::NoDisc;
 
-void CDVDsys_SetFile( CDVD_SourceType srctype, const wxString& newfile )
+void CDVDsys_SetFile(CDVD_SourceType srctype, const wxString& newfile)
 {
 	m_SourceFilename[enum_cast(srctype)] = newfile;
 
@@ -300,7 +309,7 @@ void CDVDsys_SetFile( CDVD_SourceType srctype, const wxString& newfile )
 		if (n == wxNOT_FOUND)
 			symName = newfile + L".sym";
 		else
-			symName = newfile.substr(0,n) + L".sym";
+			symName = newfile.substr(0, n) + L".sym";
 
 		wxCharBuffer buf = symName.ToUTF8();
 		symbolMap.LoadNocashSym(buf);
@@ -308,7 +317,7 @@ void CDVDsys_SetFile( CDVD_SourceType srctype, const wxString& newfile )
 	}
 }
 
-const wxString& CDVDsys_GetFile( CDVD_SourceType srctype )
+const wxString& CDVDsys_GetFile(CDVD_SourceType srctype)
 {
 	return m_SourceFilename[enum_cast(srctype)];
 }
@@ -318,25 +327,32 @@ CDVD_SourceType CDVDsys_GetSourceType()
 	return m_CurrentSourceType;
 }
 
-void CDVDsys_ChangeSource( CDVD_SourceType type )
+void CDVDsys_ChangeSource(CDVD_SourceType type)
 {
+<<<<<<< HEAD
 	GetCorePlugins().Close( PluginId_CDVD );
 
 	switch( m_CurrentSourceType = type )
+=======
+	if (CDVD != NULL)
+		DoCDVDclose();
+
+	switch (m_CurrentSourceType = type)
+>>>>>>> master/master
 	{
 		case CDVD_SourceType::Iso:
 			CDVD = &CDVDapi_Iso;
-		break;
+			break;
+
+		case CDVD_SourceType::Disc:
+			CDVD = &CDVDapi_Disc;
+			break;
 
 		case CDVD_SourceType::NoDisc:
 			CDVD = &CDVDapi_NoDisc;
-		break;
+			break;
 
-		case CDVD_SourceType::Plugin:
-			CDVD = &CDVDapi_Plugin;
-		break;
-
-		jNO_DEFAULT;
+			jNO_DEFAULT;
 	}
 }
 
@@ -346,7 +362,7 @@ bool DoCDVDopen()
 
 	// the new disk callback is set on Init also, but just in case the plugin clears it for
 	// some reason on close, we re-send here:
-	CDVD->newDiskCB( cdvdNewDiskCB );
+	CDVD->newDiskCB(cdvdNewDiskCB);
 
 	// Win32 Fail: the old CDVD api expects MBCS on Win32 platforms, but generating a MBCS
 	// from unicode is problematic since we need to know the codepage of the text being
@@ -355,13 +371,16 @@ bool DoCDVDopen()
 	// question marks if the filename is another language.
 	// Likely Fix: Force new versions of CDVD plugins to expect UTF8 instead.
 
-	auto CurrentSourceType = enum_cast(m_CurrentSourceType);
-	int ret = CDVD->open( !m_SourceFilename[CurrentSourceType].IsEmpty() ?
-		static_cast<const char*>(m_SourceFilename[CurrentSourceType].ToUTF8()) : (char*)NULL
-	);
+	//TODO_CDVD check if ISO and Disc use UTF8
 
-	if( ret == -1 ) return false;	// error! (handled by caller)
-	if( ret == 1 )	throw Exception::CancelEvent(L"User canceled the CDVD plugin's open dialog.");
+	auto CurrentSourceType = enum_cast(m_CurrentSourceType);
+	int ret = CDVD->open(!m_SourceFilename[CurrentSourceType].IsEmpty() ?
+							 static_cast<const char*>(m_SourceFilename[CurrentSourceType].ToUTF8()) :
+							 (char*)NULL);
+
+	if (ret == -1)
+		return false; // error! (handled by caller)
+	//if( ret == 1 )	throw Exception::CancelEvent(L"User canceled the CDVD plugin's open dialog."); <--- TODO_CDVD is this still needed?
 
 	int cdtype = DoCDVDdetectDiskType();
 
@@ -371,9 +390,13 @@ bool DoCDVDopen()
 		return true;
 	}
 
+<<<<<<< HEAD
 	PathUtils pathUtils;
 
 	std::string somepick( Path::GetFilenameWithoutExt( m_SourceFilename[CurrentSourceType] )  );
+=======
+	wxString somepick(Path::GetFilenameWithoutExt(m_SourceFilename[CurrentSourceType]));
+>>>>>>> master/master
 	//FWIW Disc serial availability doesn't seem reliable enough, sometimes it's there and sometime it's just null
 	//Shouldn't the serial be available all time? Potentially need to look into Elfreloadinfo() reliability
 	//TODO: Add extra fallback case for CRC.
@@ -388,12 +411,11 @@ bool DoCDVDopen()
 	wxString temp(Path::Combine(g_Conf->CurrentBlockdump, somepick));
 
 #ifdef ENABLE_TIMESTAMPS
-	wxDateTime curtime( wxDateTime::GetTimeNow() );
+	wxDateTime curtime(wxDateTime::GetTimeNow());
 
-	temp += pxsFmt( L" (%04d-%02d-%02d %02d-%02d-%02d)",
-		curtime.GetYear(), curtime.GetMonth(), curtime.GetDay(),
-		curtime.GetHour(), curtime.GetMinute(), curtime.GetSecond()
-	);
+	temp += pxsFmt(L" (%04d-%02d-%02d %02d-%02d-%02d)",
+				   curtime.GetYear(), curtime.GetMonth(), curtime.GetDay(),
+				   curtime.GetHour(), curtime.GetMinute(), curtime.GetSecond());
 #endif
 	temp += L".dump";
 
@@ -402,23 +424,23 @@ bool DoCDVDopen()
 
 	blockDumpFile.Create(temp, 2);
 
-	if( blockDumpFile.IsOpened() )
+	if (blockDumpFile.IsOpened())
 	{
-		int  blockofs	= 0;
-		uint blocksize	= CD_FRAMESIZE_RAW;
-		uint blocks		= td.lsn;
+		int blockofs = 0;
+		uint blocksize = CD_FRAMESIZE_RAW;
+		uint blocks = td.lsn;
 
 		// hack: Because of limitations of the current cdvd design, we can't query the blocksize
 		// of the underlying media.  So lets make a best guess:
 
-		switch(cdtype)
+		switch (cdtype)
 		{
 			case CDVD_TYPE_PS2DVD:
 			case CDVD_TYPE_DVDV:
 			case CDVD_TYPE_DETCTDVDS:
 			case CDVD_TYPE_DETCTDVDD:
 				blocksize = 2048;
-			break;
+				break;
 		}
 		blockDumpFile.WriteHeader(blockofs, blocksize, blocks);
 	}
@@ -432,7 +454,7 @@ void DoCDVDclose()
 	CheckNullCDVD();
 	//blockDumpFile.Close();
 
-	if( CDVD->close != NULL )
+	if (CDVD->close != NULL)
 		CDVD->close();
 
 	DoCDVDresetDiskTypeCache();
@@ -441,7 +463,7 @@ void DoCDVDclose()
 s32 DoCDVDreadSector(u8* buffer, u32 lsn, int mode)
 {
 	CheckNullCDVD();
-	int ret = CDVD->readSector(buffer,lsn,mode);
+	int ret = CDVD->readSector(buffer, lsn, mode);
 
 	if (ret == 0 && blockDumpFile.IsOpened())
 	{
@@ -465,31 +487,33 @@ s32 DoCDVDreadTrack(u32 lsn, int mode)
 	CheckNullCDVD();
 
 	// TEMP: until all the plugins use the new CDVDgetBuffer style
+	// TODO: The CDVD api only uses the new getBuffer style. Why is this temp?
+	// lastReadSize is needed for block dumps
 	switch (mode)
 	{
-	case CDVD_MODE_2352:
-		lastReadSize = 2352;
-		break;
-	case CDVD_MODE_2340:
-		lastReadSize = 2340;
-		break;
-	case CDVD_MODE_2328:
-		lastReadSize = 2328;
-		break;
-	case CDVD_MODE_2048:
-		lastReadSize = 2048;
-		break;
+		case CDVD_MODE_2352:
+			lastReadSize = 2352;
+			break;
+		case CDVD_MODE_2340:
+			lastReadSize = 2340;
+			break;
+		case CDVD_MODE_2328:
+			lastReadSize = 2328;
+			break;
+		case CDVD_MODE_2048:
+			lastReadSize = 2048;
+			break;
 	}
 
 	//DevCon.Warning("CDVD readTrack(lsn=%d,mode=%d)",params lsn, lastReadSize);
 	lastLSN = lsn;
-	return CDVD->readTrack(lsn,mode);
+	return CDVD->readTrack(lsn, mode);
 }
 
 s32 DoCDVDgetBuffer(u8* buffer)
 {
 	CheckNullCDVD();
-	int ret = CDVD->getBuffer2(buffer);
+	const int ret = CDVD->getBuffer(buffer);
 
 	if (ret == 0 && blockDumpFile.IsOpened())
 	{
@@ -517,7 +541,8 @@ s32 DoCDVDgetBuffer(u8* buffer)
 s32 DoCDVDdetectDiskType()
 {
 	CheckNullCDVD();
-	if(diskTypeCached < 0) DetectDiskType();
+	if (diskTypeCached < 0)
+		DetectDiskType();
 	return diskTypeCached;
 }
 
@@ -546,10 +571,9 @@ s32 CALLBACK NODISCreadTrack(u32 lsn, int mode)
 	return -1;
 }
 
-// return can be NULL (for async modes)
-u8* CALLBACK NODISCgetBuffer()
+s32 CALLBACK NODISCgetBuffer(u8* buffer)
 {
-	return NULL;
+	return -1;
 }
 
 s32 CALLBACK NODISCreadSubQ(u32 lsn, cdvdSubQ* subq)
@@ -557,12 +581,12 @@ s32 CALLBACK NODISCreadSubQ(u32 lsn, cdvdSubQ* subq)
 	return -1;
 }
 
-s32 CALLBACK NODISCgetTN(cdvdTN *Buffer)
+s32 CALLBACK NODISCgetTN(cdvdTN* Buffer)
 {
 	return -1;
 }
 
-s32 CALLBACK NODISCgetTD(u8 Track, cdvdTD *Buffer)
+s32 CALLBACK NODISCgetTD(u8 Track, cdvdTD* Buffer)
 {
 	return -1;
 }
@@ -587,16 +611,11 @@ s32 CALLBACK NODISCdummyS32()
 	return 0;
 }
 
-void CALLBACK NODISCnewDiskCB(void (* /* callback */)())
+void CALLBACK NODISCnewDiskCB(void (*/* callback */)())
 {
 }
 
 s32 CALLBACK NODISCreadSector(u8* tempbuffer, u32 lsn, int mode)
-{
-	return -1;
-}
-
-s32 CALLBACK NODISCgetBuffer2(u8* buffer)
 {
 	return -1;
 }
@@ -607,23 +626,22 @@ s32 CALLBACK NODISCgetDualInfo(s32* dualType, u32* _layer1start)
 }
 
 CDVD_API CDVDapi_NoDisc =
-{
-	NODISCclose,
-	NODISCopen,
-	NODISCreadTrack,
-	NODISCgetBuffer,
-	NODISCreadSubQ,
-	NODISCgetTN,
-	NODISCgetTD,
-	NODISCgetTOC,
-	NODISCgetDiskType,
-	NODISCgetTrayStatus,
-	NODISCdummyS32,
-	NODISCdummyS32,
+	{
+		NODISCclose,
+		NODISCopen,
+		NODISCreadTrack,
+		NODISCgetBuffer,
+		NODISCreadSubQ,
+		NODISCgetTN,
+		NODISCgetTD,
+		NODISCgetTOC,
+		NODISCgetDiskType,
+		NODISCgetTrayStatus,
+		NODISCdummyS32,
+		NODISCdummyS32,
 
-	NODISCnewDiskCB,
+		NODISCnewDiskCB,
 
-	NODISCreadSector,
-	NODISCgetBuffer2,
-	NODISCgetDualInfo,
+		NODISCreadSector,
+		NODISCgetDualInfo,
 };

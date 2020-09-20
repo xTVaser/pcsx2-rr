@@ -265,7 +265,8 @@ const wxChar *const tbl_GamefixNames[] =
 	L"FMVinSoftware",
 	L"GoemonTlb",
 	L"ScarfaceIbit",
-    L"CrashTagTeamRacingIbit"
+	L"CrashTagTeamRacingIbit",
+	L"VU0Kickstart"
 };
 
 const __fi wxChar* EnumToString( GamefixId id )
@@ -327,7 +328,8 @@ void Pcsx2Config::GamefixOptions::Set( GamefixId id, bool enabled )
 		case Fix_FMVinSoftware:	FMVinSoftwareHack	= enabled;  break;
 		case Fix_GoemonTlbMiss: GoemonTlbHack		= enabled;  break;
 		case Fix_ScarfaceIbit:  ScarfaceIbit        = enabled;  break;
-        case Fix_CrashTagTeamIbit: CrashTagTeamRacingIbit = enabled; break;
+		case Fix_CrashTagTeamIbit: CrashTagTeamRacingIbit = enabled; break;
+		case Fix_VU0Kickstart:	VU0KickstartHack	= enabled; break;
 		jNO_DEFAULT;
 	}
 }
@@ -353,7 +355,8 @@ bool Pcsx2Config::GamefixOptions::Get( GamefixId id ) const
 		case Fix_FMVinSoftware:	return FMVinSoftwareHack;
 		case Fix_GoemonTlbMiss: return GoemonTlbHack;
 		case Fix_ScarfaceIbit:  return ScarfaceIbit;
-        case Fix_CrashTagTeamIbit: return CrashTagTeamRacingIbit;
+		case Fix_CrashTagTeamIbit: return CrashTagTeamRacingIbit;
+		case Fix_VU0Kickstart:	return VU0KickstartHack;
 		jNO_DEFAULT;
 	}
 	return false;		// unreachable, but we still need to suppress warnings >_<

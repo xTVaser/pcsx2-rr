@@ -161,8 +161,6 @@ void ConsoleLogFrame::ColorArray::SetFont( int fontsize )
 
 	for (size_t i = Color_StrongBlack; i < ConsoleColors_Count; ++i)
 		m_table[i].SetFont(fixedB);
-
-	SetColorScheme_Light();
 }
 
 void ConsoleLogFrame::ColorArray::SetColorScheme_Dark()
@@ -395,15 +393,20 @@ ConsoleLogFrame::ConsoleLogFrame( MainEmuFrame *parent, const wxString& title, A
 	if (m_conf.Theme == "Dark")
 	{
 		m_ColorTable.SetColorScheme_Dark();
-		m_TextCtrl.SetBackgroundColour( wxColor( 38, 41, 48 ) );
+		m_TextCtrl.SetBackgroundColour(darkThemeBgColor);
+		m_TextCtrl.SetDefaultStyle(wxTextAttr(wxNullColour, darkThemeBgColor));
 	}
-	else if ((m_conf.Theme == "Default") || (m_conf.Theme == "Light"))
+	else
 	{
 		m_ColorTable.SetColorScheme_Light();
-		m_TextCtrl.SetBackgroundColour( wxColor( 230, 235, 242 ) );
+		m_TextCtrl.SetBackgroundColour(lightThemeBgColor);
+		m_TextCtrl.SetDefaultStyle(wxTextAttr(wxNullColour, lightThemeBgColor));
 	}
 
-	m_TextCtrl.SetDefaultStyle( m_ColorTable[DefaultConsoleColor] );
+	// TODO - SetDefaultStyle _should_ be returning a wxTextAttr with both foreground and background color info
+	// but I don't want to mess with it too much in fear of breaking existing functionality.
+	// instead, i just set the background color individually above
+	m_TextCtrl.SetDefaultStyle(m_ColorTable[DefaultConsoleColor]);
 
 	// SetDefaultStyle only sets the style of text in the control.  We need to
 	// also set the font of the control, so that sizing logic knows what font we use:
@@ -418,7 +421,7 @@ ConsoleLogFrame::ConsoleLogFrame( MainEmuFrame *parent, const wxString& title, A
 
 	menuFontSizes.Append( MenuId_FontSize_Small,	_("&Small"),	_t("Fits a lot of log in a microcosmically small area."),
 		wxITEM_RADIO )->Check( options.FontSize == 7 );
-	menuFontSizes.Append( MenuId_FontSize_Normal,	_("&Normal font"),_t("It's what I use (the programmer guy)."),
+	menuFontSizes.Append( MenuId_FontSize_Normal,	_("&Normal Font"),_t("It's what I use (the programmer guy)."),
 		wxITEM_RADIO )->Check( options.FontSize == 8 );
 	menuFontSizes.Append( MenuId_FontSize_Large,	_("&Large"),	_t("Its nice and readable."),
 		wxITEM_RADIO )->Check( options.FontSize == 10 );
@@ -426,8 +429,8 @@ ConsoleLogFrame::ConsoleLogFrame( MainEmuFrame *parent, const wxString& title, A
 		wxITEM_RADIO )->Check( options.FontSize == 12 );
 
 	menuFontSizes.AppendSeparator();
-	menuFontSizes.Append( MenuId_ColorScheme_Light,	_("&Light theme"),	_t("Default soft-tone color scheme."), wxITEM_RADIO );
-	menuFontSizes.Append( MenuId_ColorScheme_Dark,	_("&Dark theme"),	_t("Modern dark color scheme."), wxITEM_RADIO );
+	menuFontSizes.Append( MenuId_ColorScheme_Light,	_("&Light Theme"),	_t("Default soft-tone color scheme."), wxITEM_RADIO );
+	menuFontSizes.Append( MenuId_ColorScheme_Dark,	_("&Dark Theme"),	_t("Modern dark color scheme."), wxITEM_RADIO );
 
 	// The "Always on Top" option currently doesn't work
 	//menuAppear.AppendSeparator();
@@ -435,7 +438,9 @@ ConsoleLogFrame::ConsoleLogFrame( MainEmuFrame *parent, const wxString& title, A
 	//	_t("When checked the log window will be visible over other foreground windows."), wxITEM_CHECK );
 
 	menuLog.Append(wxID_SAVE,	_("&Save..."),		_("Save log contents to file"));
+#ifdef PCSX2_DEVBUILD
 	menuLog.Append(MenuId_Log_Settings,	_("&Settings..."),		_("Open the logging settings dialog"));
+#endif
 	menuLog.Append(wxID_CLEAR,	_("C&lear"),		_("Clear the log window contents"));
 	menuLog.AppendSeparator();
 	menuLog.AppendCheckItem(MenuId_AutoDock, _("Auto&dock"), _("Dock log window to main PCSX2 window"))->Check(m_conf.AutoDock);
@@ -463,8 +468,8 @@ ConsoleLogFrame::ConsoleLogFrame( MainEmuFrame *parent, const wxString& title, A
 	}
 
 	menuSources.AppendSeparator();
-	menuSources.Append( MenuId_LogSource_EnableAll,		_("&Enable all"),	_("Enables all log source filters.") );
-	menuSources.Append( MenuId_LogSource_DisableAll,	_("&Disable all"),	_("Disables all log source filters.") );
+	menuSources.Append( MenuId_LogSource_EnableAll,		_("&Enable All"),	_("Enables all log source filters.") );
+	menuSources.Append( MenuId_LogSource_DisableAll,	_("&Disable All"),	_("Disables all log source filters.") );
 	menuSources.Append( MenuId_LogSource_SetDefault,	_("&Restore Default"), _("Restore default source filters.") );
 
 	pMenuBar->Append(&menuLog,		_("&Log"));
@@ -871,32 +876,33 @@ void ConsoleLogFrame::OnToggleSource( wxCommandEvent& evt )
 	}
 }
 
-void ConsoleLogFrame::OnToggleTheme( wxCommandEvent& evt )
+void ConsoleLogFrame::OnToggleTheme(wxCommandEvent& evt)
 {
 	evt.Skip();
-
 	const wxChar* newTheme = L"Default";
-
-	switch( evt.GetId() )
+	switch (evt.GetId())
 	{
-		case MenuId_ColorScheme_Light:
-			newTheme = L"Default";
-			m_ColorTable.SetColorScheme_Light();
-			m_TextCtrl.SetBackgroundColour( wxColor( 230, 235, 242 ) );
-		break;
-
 		case MenuId_ColorScheme_Dark:
 			newTheme = L"Dark";
 			m_ColorTable.SetColorScheme_Dark();
-			m_TextCtrl.SetBackgroundColour( wxColor( 38, 41, 48 ) );
-		break;
+			m_TextCtrl.SetBackgroundColour(darkThemeBgColor);
+			m_TextCtrl.SetDefaultStyle(wxTextAttr(wxNullColour, darkThemeBgColor));
+			m_TextCtrl.Clear();
+			break;
+		case MenuId_ColorScheme_Light:
+		default:
+			newTheme = L"Default";
+			m_ColorTable.SetColorScheme_Light();
+			m_TextCtrl.SetBackgroundColour(lightThemeBgColor);
+			m_TextCtrl.SetDefaultStyle(wxTextAttr(wxNullColour, lightThemeBgColor));
+			m_TextCtrl.Clear();
+			break;
 	}
 
-	if (m_conf.Theme == newTheme) return;
-	m_conf.Theme = (char*)newTheme;
-
-	m_ColorTable.SetFont( m_conf.FontSize );
-	m_TextCtrl.SetDefaultStyle( m_ColorTable[Color_White] );
+	if (m_conf.Theme.CmpNoCase(newTheme) == 0)
+		return;
+	m_conf.Theme = newTheme;
+	m_ColorTable.SetFont(m_conf.FontSize);
 }
 
 void ConsoleLogFrame::OnFontSize( wxCommandEvent& evt )

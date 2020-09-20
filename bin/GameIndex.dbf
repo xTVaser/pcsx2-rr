@@ -1826,7 +1826,10 @@ Serial = SCES-51685
 Name   = Primal
 Region = PAL-E-R
 vuRoundMode = 0 // Fixes SPS.
+<<<<<<< HEAD
 vuRoundMode = 0 // Fix SPS.
+=======
+>>>>>>> master/master
 ---------------------------------------------
 Serial = SCES-51706
 Name   = Amplitude
@@ -5188,14 +5191,6 @@ Serial = SCUS-97258
 Name   = Amplitude
 Region = NTSC-U
 Compat = 5
-[patches = 2f7b4db8]
-	author=Prafull
-	// Fix SPS on characters.
-	// Fixed by rearranging COP2 instructions.
-	patch=1,EE,00215e00,word,48228000
-	patch=1,EE,00215e04,word,48236000
-	patch=1,EE,00215e08,word,4a0055b8
-[/patches]
 ---------------------------------------------
 Serial = SCUS-97259
 Name   = NHL FaceOff 2003 [Demo]
@@ -9794,7 +9789,7 @@ Name   = LEGO Dome Racers
 Region = PAL-M8
 ---------------------------------------------
 Serial = SLES-51307
-Name   = Wild Arms 3
+Name   = Wild ARMs 3
 Region = PAL-E
 ---------------------------------------------
 Serial = SLES-51308
@@ -14252,6 +14247,7 @@ Serial = SLES-53363
 Name   = Shin Megami Tensei: Lucifer's Call
 Region = PAL-M3
 Compat = 5
+eeRoundMode = 0 // Fixes commands not being visible
 ---------------------------------------------
 Serial = SLES-53366
 Name   = Killer 7
@@ -14344,7 +14340,9 @@ Region = PAL-E
 Serial = SLES-53402
 Name   = Taxi Rider
 Region = PAL-E
-Compat = 4
+Compat = 5
+eeRoundMode = 2 // Positive rounding fixes white models
+vuRoundMode = 2 // Positive rounding fixes white models
 ---------------------------------------------
 Serial = SLES-53403
 Name   = Demolition Girl
@@ -17819,11 +17817,7 @@ Region = PAL-E
 Serial = SLES-55109
 Name   = Spiderwick Chronicles, The
 Region = PAL-E
-[patches = D5D1D002]
-	comment=Patch by Prafull
-	// Fixes hanging at boot.
-	patch=1,EE,0011f6a4,word,00000000 //5460fff6
-[/patches]
+vuRoundMode = 0 // Fixes invisible wall collision in bedroom.
 ---------------------------------------------
 Serial = SLES-55110
 Name   = Odin Sphere
@@ -42738,7 +42732,7 @@ Region = NTSC-U
 Compat = 4
 ---------------------------------------------
 Serial = SLUS-21615
-Name   = Wild Arms 5
+Name   = Wild ARMs 5
 Region = NTSC-U
 Compat = 5
 ---------------------------------------------
@@ -43211,11 +43205,7 @@ Serial = SLUS-21716
 Name   = Spiderwick Chronicles, The
 Region = NTSC-U
 Compat = 5
-[patches = 23B262A5]
-	comment=Patch by Prafull
-	// Fixes hang at boot.
-	patch=1,EE,0011f6a4,word,00000000
-[/patches]
+vuRoundMode = 0 // Fixes invisible wall collision in bedroom.
 ---------------------------------------------
 Serial = SLUS-21717
 Name   = Dora the Explorer - Dora Saves the Mermaids

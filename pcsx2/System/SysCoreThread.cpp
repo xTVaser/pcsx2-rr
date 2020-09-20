@@ -24,12 +24,15 @@
 #include "Patch.h"
 #include "SysThreads.h"
 #include "MTVU.h"
+#include "IPC.h"
+#include "FW.h"
 
 #include "../DebugTools/MIPSAnalyst.h"
 #include "../DebugTools/SymbolMap.h"
 
 #include "Utilities/PageFaultSource.h"
 #include "Utilities/Threading.h"
+#include "IopBios.h"
 
 #ifdef __WXMSW__
 #	include <wx/msw/wrapwin.h>
@@ -64,12 +67,14 @@ SysCoreThread::~SysCoreThread()
 void SysCoreThread::Cancel( bool isBlocking )
 {
 	m_hasActiveMachine = false;
+	R3000A::ioman::reset();
 	_parent::Cancel();
 }
 
 bool SysCoreThread::Cancel( const wxTimeSpan& span )
 {
 	m_hasActiveMachine = false;
+	R3000A::ioman::reset();
 	return _parent::Cancel( span );
 }
 
@@ -123,6 +128,7 @@ void SysCoreThread::ResetQuick()
 
 	m_resetVirtualMachine	= true;
 	m_hasActiveMachine		= false;
+	R3000A::ioman::reset();
 }
 
 void SysCoreThread::Reset()
@@ -239,6 +245,13 @@ void SysCoreThread::GameStartingInThread()
 #ifdef USE_SAVESLOT_UI_UPDATES
 	UI_UpdateSysControls();
 #endif
+	if (EmuConfig.EnableIPC && m_IpcState == OFF)
+	{
+		m_IpcState = ON;
+		m_socketIpc = std::make_unique<SocketIPC>(this);
+	}
+	if (m_IpcState == ON && m_socketIpc->m_end)
+		m_socketIpc->Start();
 }
 
 bool SysCoreThread::StateCheckInThread()
@@ -275,11 +288,15 @@ void SysCoreThread::ExecuteTaskInThread()
 void SysCoreThread::OnSuspendInThread()
 {
 	GetCorePlugins().Close();
+	DoCDVDclose();
+	FWclose();
 }
 
 void SysCoreThread::OnResumeInThread( bool isSuspended )
 {
 	GetCorePlugins().Open();
+	DoCDVDopen();
+	FWopen();
 }
 
 
@@ -291,8 +308,11 @@ void SysCoreThread::OnCleanupInThread()
 	m_hasActiveMachine		= false;
 	m_resetVirtualMachine	= true;
 
+	R3000A::ioman::reset();
 	// FIXME: temporary workaround for deadlock on exit, which actually should be a crash
 	vu1Thread.WaitVU();
+	DoCDVDclose();
+	FWclose();
 	GetCorePlugins().Close();
 	GetCorePlugins().Shutdown();
 

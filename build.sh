@@ -99,7 +99,7 @@ run_cppcheck()
 
     define=""
     for undef in _WINDOWS _M_AMD64 _MSC_VER WIN32 __INTEL_COMPILER __x86_64__ \
-    __SSE4_1__ __SSSE3__ __SSE__ __AVX2__ __USE_ISOC11 ASAN_WORKAROUND ENABLE_OPENCL ENABLE_OGL_DEBUG \
+    __SSE4_1__ __SSSE3__ __SSE__ __AVX2__ __USE_ISOC11 ASAN_WORKAROUND ENABLE_OGL_DEBUG \
     XBYAK_USE_MMAP_ALLOCATOR MAP_ANONYMOUS MAP_ANON XBYAK_DISABLE_AVX512
     do
         define="$define -U$undef"
@@ -219,7 +219,6 @@ for ARG in "$@"; do
         --no-cross-multilib ) useCross=0; ;;
         --coverity          ) CoverityBuild=1; cleanBuild=1; ;;
         --vtune             ) flags="$flags -DUSE_VTUNE=TRUE" ;;
-        --opencl            ) flags="$flags -DOPENCL_API=TRUE" ;;
         -D*                 ) flags="$flags $ARG" ;;
 
         *)
@@ -238,7 +237,6 @@ for ARG in "$@"; do
             echo
             echo "** Developer option **"
             echo "--cross-multilib: Build a 32bit PCSX2 on a 64bit machine using multilib."
-            echo "--opencl        : Enable experimental OpenCL support"
             echo
             echo "** Distribution Compatibilities **"
             echo "--sdl12         : Build with SDL1.2 (requires if wx is linked against SDL1.2)"
