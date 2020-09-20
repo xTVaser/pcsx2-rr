@@ -329,16 +329,10 @@ CDVD_SourceType CDVDsys_GetSourceType()
 
 void CDVDsys_ChangeSource(CDVD_SourceType type)
 {
-<<<<<<< HEAD
-	GetCorePlugins().Close( PluginId_CDVD );
-
-	switch( m_CurrentSourceType = type )
-=======
 	if (CDVD != NULL)
 		DoCDVDclose();
 
 	switch (m_CurrentSourceType = type)
->>>>>>> master/master
 	{
 		case CDVD_SourceType::Iso:
 			CDVD = &CDVDapi_Iso;
@@ -390,13 +384,9 @@ bool DoCDVDopen()
 		return true;
 	}
 
-<<<<<<< HEAD
 	PathUtils pathUtils;
 
 	std::string somepick( Path::GetFilenameWithoutExt( m_SourceFilename[CurrentSourceType] )  );
-=======
-	wxString somepick(Path::GetFilenameWithoutExt(m_SourceFilename[CurrentSourceType]));
->>>>>>> master/master
 	//FWIW Disc serial availability doesn't seem reliable enough, sometimes it's there and sometime it's just null
 	//Shouldn't the serial be available all time? Potentially need to look into Elfreloadinfo() reliability
 	//TODO: Add extra fallback case for CRC.

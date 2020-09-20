@@ -96,13 +96,8 @@ static int mg_BIToffset(u8* buffer)
 static void cdvdGetMechaVer(u8* ver)
 {
 	wxFileName mecfile(EmuConfig.BiosFilename);
-<<<<<<< HEAD
 	mecfile.SetExt( L"mec" );
 	const std::string fname( mecfile.GetFullPath() );
-=======
-	mecfile.SetExt(L"mec");
-	const wxString fname(mecfile.GetFullPath());
->>>>>>> master/master
 
 	// Likely a bad idea to go further
 	if (mecfile.IsDir())
@@ -188,11 +183,7 @@ static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 
 	if (ret != bytes)
 		Console.Error(L"Failed to %s %s. Did only %zu/%zu bytes",
-<<<<<<< HEAD
 				read ? L"read from" : L"write to", fname, ret, bytes);
-=======
-					  read ? L"read from" : L"write to", WX_STR(fname), ret, bytes);
->>>>>>> master/master
 }
 
 static void cdvdReadNVM(u8* dst, int offset, int bytes)
@@ -479,42 +470,6 @@ void cdvdReadKey(u8, u16, u32 arg2, u8* key)
 	key_14 = ((numbers & 0x003E0) >> 2) | 0x04;                            // numbers = F8  extra   = 04  unused = 03
 
 	// store key values
-<<<<<<< HEAD
-	key[ 0] = (key_0_3&0x000000FF)>> 0;
-	key[ 1] = (key_0_3&0x0000FF00)>> 8;
-	key[ 2] = (key_0_3&0x00FF0000)>>16;
-	key[ 3] = (key_0_3&0xFF000000)>>24;
-	key[ 4] = key_4;
-
-    switch (arg2)
-    {
-        case 75:
-            key[14] = key_14;
-            key[15] = 0x05;
-            break;
-
-//      case 3075:
-//          key[15] = 0x01;
-//          break;
-
-        case 4246:
-            // 0x0001F2F707 = sector 0x0001F2F7  dec 0x07
-            key[ 0] = 0x07;
-            key[ 1] = 0xF7;
-            key[ 2] = 0xF2;
-            key[ 3] = 0x01;
-            key[ 4] = 0x00;
-            key[15] = 0x01;
-            break;
-
-        default:
-            key[15] = 0x01;
-            break;
-    }
-
-	DevCon.WriteLn( "CDVD.KEY = %02X,%02X,%02X,%02X,%02X,%02X,%02X",
-		cdvd.Key[0],cdvd.Key[1],cdvd.Key[2],cdvd.Key[3],cdvd.Key[4],cdvd.Key[14],cdvd.Key[15] );
-=======
 	key[0] = (key_0_3 & 0x000000FF) >> 0;
 	key[1] = (key_0_3 & 0x0000FF00) >> 8;
 	key[2] = (key_0_3 & 0x00FF0000) >> 16;
@@ -549,7 +504,6 @@ void cdvdReadKey(u8, u16, u32 arg2, u8* key)
 
 	DevCon.WriteLn("CDVD.KEY = %02X,%02X,%02X,%02X,%02X,%02X,%02X",
 				   cdvd.Key[0], cdvd.Key[1], cdvd.Key[2], cdvd.Key[3], cdvd.Key[4], cdvd.Key[14], cdvd.Key[15]);
->>>>>>> master/master
 }
 
 s32 cdvdGetToc(void* toc)
@@ -692,14 +646,9 @@ void SaveStateBase::cdvdFreeze()
 
 void cdvdNewDiskCB()
 {
-<<<<<<< HEAD
-	ScopedTryLock lock( Mutex_NewDiskCB );
-	if( lock.Failed() ) return;
-=======
 	ScopedTryLock lock(Mutex_NewDiskCB);
 	if (lock.Failed())
 		return;
->>>>>>> master/master
 
 	DoCDVDresetDiskTypeCache();
 	cdvdDetectDisk();
