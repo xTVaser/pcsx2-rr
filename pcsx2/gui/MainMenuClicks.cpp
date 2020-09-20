@@ -518,6 +518,7 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent& event)
 	if (checked)
 	{
 		GetMenuBar()->Insert(TopLevelMenu_InputRecording, &m_menuRecording, _("&Input Record"));
+		SysConsole.recordingConsole.Enabled = true;
 		// Enable Recording Keybindings
 		if (GSFrame* gsFrame = wxGetApp().GetGsFramePtr())
 		{
@@ -540,15 +541,15 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent& event)
 		{
 			if (GSPanel* viewport = gsFrame->GetViewport())
 			{
-				viewport->InitDefaultAccelerators();
+				viewport->RemoveRecordingAccelerators();
 			}
 		}
+		SysConsole.recordingConsole.Enabled = false;
 		if (g_RecordingControls.IsEmulationAndRecordingPaused())
 			g_RecordingControls.Unpause();
 	}
 
 	g_Conf->EmuOptions.EnableRecordingTools = checked;
-	SysConsole.recordingConsole.Enabled = checked;
 	// Enable Recording Logs
 	ConsoleLogFrame* progLog = wxGetApp().GetProgramLog();
 	progLog->UpdateLogList();
