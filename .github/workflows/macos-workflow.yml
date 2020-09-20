@@ -1,0 +1,89 @@
+name: MacOS Build
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - .gitignore
+      - "**/*.md"
+      - .clang-format
+      - debian-packager/
+      - bin/PCSX2_keys.ini.default
+      - "plugins/LilyPad/**"
+      - .travis.yml # TODO - remove with travis-ci
+      - appveyor.yml # TODO - remove with appveyor
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - .gitignore
+      - "**/*.md"
+      - .clang-format
+      - debian-packager/
+      - bin/PCSX2_keys.ini.default
+      - "plugins/LilyPad/**"
+      - .travis.yml # TODO - remove with travis-ci
+      - appveyor.yml # TODO - remove with appveyor
+
+jobs:
+  build:
+    strategy:
+      # Prevent one build from failing everything (although maybe those should be included as experimental builds instead)
+      fail-fast: false
+      matrix:
+        os: [macos-10.15]
+        platform: [x64]
+        experimental: [false]
+
+    name: ${{ matrix.os }}-${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+    # Set some sort of timeout in the event of run-away builds.  We are limited on concurrent jobs so, get rid of them.
+    timeout-minutes: 30
+
+    steps:
+      # NOTE - useful for debugging
+      # - name: Dump GitHub context
+      #   env:
+      #     GITHUB_CONTEXT: ${{ toJson(github) }}
+      #   run: |
+      #     echo "$GITHUB_CONTEXT"
+      #     echo ${{ github.event.pull_request.title }}
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Cache Submodules
+        id: cache-submodules
+        uses: actions/cache@v2
+        with:
+          key: submodules-${{ hashFiles('./.gitmodules') }}
+          path: |
+            ./3rdparty/xz
+            ./3rdparty/gtest
+            ./.git/modules/
+
+      - name: Checkout Submodules
+        if: steps.cache-submodules.outputs.cache-hit != 'true'
+        run: git submodule update --init --recursive --jobs 2
+
+      - name: Install Packages
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        # Packages we don't need that depend on packages that are updated when we install our dependencies
+        # If we don't uninstall them we end up sitting around waiting for them and all their dependencies to be updated as well
+        run: |
+          brew remove git gnupg postgresql
+          brew remove libevent libpq libssh2 p11-kit unbound aria2 curl-openssl gnutls nghttp2 php
+          brew install sound-touch portaudio wxmac gtk+ sdl2
+          brew upgrade cmake
+
+      - name: Generate CMake Files
+        run: cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_BUILD_PO=FALSE -B build .
+
+      - name: Build PCSX2
+        working-directory: ./build
+        run: make -j2 install
