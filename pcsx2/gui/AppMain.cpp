@@ -1198,7 +1198,7 @@ void SysUpdateDiscSrcDrive( const wxString& newDiscDrive )
 #if defined(_WIN32)
 	g_Conf->Folders.RunDisc = wxFileName::DirName(newDiscDrive);
 #else
-	g_Conf->Folders.RunDisc = wxFileName(newDiscDrive);
+	g_Conf->Folders.RunDisc = newDiscDrive;
 #endif
 	AppSaveSettings();
 	sMainFrame.UpdateCdvdSrcSelection();

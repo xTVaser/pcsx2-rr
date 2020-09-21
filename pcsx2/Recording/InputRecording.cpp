@@ -304,7 +304,7 @@ bool InputRecording::Play(wxString fileName)
 	}
 
 	// Check if the current game matches with the one used to make the original recording
-	if (!g_Conf->CurrentIso.IsEmpty())
+	if (!fs::is_empty(g_Conf->CurrentIso))
 		if (resolveGameName() != inputRecordingData.GetHeader().gameName)
 			recordingConLog(L"[REC]: Recording was possibly constructed for a different game.\n");
 
@@ -338,7 +338,7 @@ wxString InputRecording::resolveGameName()
 			}
 		}
 	}
-	return !gameName.IsEmpty() ? gameName : Path::GetFilename(g_Conf->CurrentIso);
+	return !gameName.IsEmpty() ? gameName : (wxString)Path::GetFilename(g_Conf->CurrentIso);
 }
 
 #endif

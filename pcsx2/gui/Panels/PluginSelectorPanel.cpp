@@ -784,7 +784,7 @@ void Panels::PluginSelectorPanel::OnProgress( wxCommandEvent& evt )
 	}
 
 	m_StatusPanel->AdvanceProgress( (evtidx < m_FileList->size()-1) ?
-		(*m_FileList)[evtidx + 1] : wxString(_("Completing tasks..."))
+		(*m_FileList)[evtidx + 1] : ("Completing tasks...")
 	);
 
 	EnumeratedPluginInfo result( m_EnumeratorThread->Results[evtidx] );

@@ -139,7 +139,7 @@ public:
 		int			FontSize;
 
 		// Color theme by name!
-		std::string	Theme;
+		wxString	Theme;
 
 		ConsoleLogOptions();
 		void LoadSave( nlohmann::json &json, const char* title );

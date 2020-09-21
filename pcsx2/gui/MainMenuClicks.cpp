@@ -185,7 +185,7 @@ wxWindowID SwapOrReset_Disc( wxWindow* owner, IScopedCoreThread& core, const wxS
 {
 	wxWindowID result = wxID_CANCEL;
 
-	if ((g_Conf->CdvdSource == CDVD_SourceType::Disc) && (driveLetter == g_Conf->Folders.RunDisc.GetPath()))
+	if ((g_Conf->CdvdSource == CDVD_SourceType::Disc) && (driveLetter == g_Conf->Folders.RunDisc))
 	{
 		core.AllowResume();
 		return result;

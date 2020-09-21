@@ -253,7 +253,6 @@ nlohmann::json* Pcsx2App::OpenInstallSettingsFile()
 	// Where the heck should this information be stored?
 
 	fs::path usrlocaldir = PathDefs::GetUserLocalDataDir();
-	fs::path usrlocaldir = PathDefs::GetUserLocalDataDir();
 	//wxDirName usrlocaldir( wxStandardPaths::Get().GetDataDir() );
 	if( !fs::exists(usrlocaldir))
 	{

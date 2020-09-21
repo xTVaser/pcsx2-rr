@@ -482,9 +482,12 @@ struct Pcsx2Config
 
 	TraceLogFilters		Trace;
 
-	wxFileName			BiosFilename;
+	std::string			BiosFilename;
 
 	Pcsx2Config();
+
+	bool EnableIPC;
+
 
 	//NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Pcsx2Config, CdvdVerboseReads, CdvdDumpBlocks, CdvdShareWrite, EnablePatches, EnableCheats, EnableWideScreenPatches,
 	//EnableRecordingTools, UseBOOT2Injection, BackupSavestate, McdEnableEjection, McdFolderAutoManage, MultitapPort0_Enabled, MultitapPort1_Enabled,

@@ -20,7 +20,7 @@
 #define ENABLE_TIMESTAMPS
 
 #ifdef _WIN32
-#include <wx/msw/wrapwin.h>
+#include <wx/msw/wrapwin.h>libudev-devel
 #endif
 
 #include <ctype.h>

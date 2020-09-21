@@ -647,7 +647,7 @@ AppConfig::FolderOptions::FolderOptions()
 
 	, RunIso	( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
 	, RunELF	( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
-	, RunDisc	( PathDefs::GetDocuments().GetFilename() )
+	, RunDisc	( PathDefs::GetDocuments() )
 {
 	//bitset = 0xffffffff;
 }
@@ -1188,9 +1188,9 @@ static void LoadUiSettings()
 		g_Conf->Folders.RunDisc.Clear();
 	}
 #else
-	if (!g_Conf->Folders.RunDisc.Exists())
+	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
 	{
-		g_Conf->Folders.RunDisc.Clear();
+		//g_Conf->Folders.RunDisc.Clear();
 	}
 #endif
 
@@ -1235,9 +1235,9 @@ static void SaveUiSettings()
 		g_Conf->Folders.RunDisc.Clear();
 	}
 #else
-	if (!g_Conf->Folders.RunDisc.Exists())
+	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
 	{
-		g_Conf->Folders.RunDisc.Clear();
+		//g_Conf->Folders.RunDisc.Clear();
 	}
 #endif
 
