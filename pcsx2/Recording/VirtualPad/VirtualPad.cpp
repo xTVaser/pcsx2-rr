@@ -47,7 +47,7 @@
 #include "Recording/VirtualPad/img/upPressed.h"
 
 VirtualPad::VirtualPad(wxWindow* parent, int controllerPort, AppConfig::InputRecordingOptions& options)
-	: wxFrame(parent, wxID_ANY, wxEmptyString)
+	: wxFrame(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX))
 	, options(options)
 {
 	// Images at 1.00 scale are designed to work well on HiDPI (4k) at 150% scaling (default recommended setting on windows)
@@ -60,11 +60,11 @@ VirtualPad::VirtualPad(wxWindow* parent, int controllerPort, AppConfig::InputRec
 	const wxRect screen = display.GetClientArea();
 	if (screen.height > 1080 && screen.height <= 1440) // 1440p display
 	{
-		scalingFactor = 0.75;
+		scalingFactor = 0.75f;
 	}
 	else if (screen.height <= 1080) // 1080p display
 	{
-		scalingFactor = 0.5;
+		scalingFactor = 0.5f;
 	} // otherwise use default 1.0 scaling
 
 	virtualPadData = VirtualPadData();
@@ -82,20 +82,20 @@ VirtualPad::VirtualPad(wxWindow* parent, int controllerPort, AppConfig::InputRec
 	InitPressureButtonGuiElements(virtualPadData.up, NewBitmap(EmbeddedImage<res_upPressed>().Get(), wxPoint(186, 227)), this, wxPoint(175, 605), true);
 	InitPressureButtonGuiElements(virtualPadData.left, NewBitmap(EmbeddedImage<res_leftPressed>().Get(), wxPoint(110, 302)), this, wxPoint(175, 645), true);
 
-	InitPressureButtonGuiElements(virtualPadData.l1, NewBitmap(EmbeddedImage<res_l1Pressed>().Get(), wxPoint(156, 98)), this, wxPoint(170, 135));
-	InitPressureButtonGuiElements(virtualPadData.l2, NewBitmap(EmbeddedImage<res_l2Pressed>().Get(), wxPoint(156, 57)), this, wxPoint(170, 18));
-	InitPressureButtonGuiElements(virtualPadData.r1, NewBitmap(EmbeddedImage<res_r1Pressed>().Get(), wxPoint(921, 98)), this, wxPoint(1035, 135), true);
-	InitPressureButtonGuiElements(virtualPadData.r2, NewBitmap(EmbeddedImage<res_r2Pressed>().Get(), wxPoint(921, 57)), this, wxPoint(1035, 18), true);
+	InitPressureButtonGuiElements(virtualPadData.l1, NewBitmap(EmbeddedImage<res_l1Pressed>().Get(), wxPoint(156, 98)), this, wxPoint(170, 132));
+	InitPressureButtonGuiElements(virtualPadData.l2, NewBitmap(EmbeddedImage<res_l2Pressed>().Get(), wxPoint(156, 57)), this, wxPoint(170, 17));
+	InitPressureButtonGuiElements(virtualPadData.r1, NewBitmap(EmbeddedImage<res_r1Pressed>().Get(), wxPoint(921, 98)), this, wxPoint(1035, 132), true);
+	InitPressureButtonGuiElements(virtualPadData.r2, NewBitmap(EmbeddedImage<res_r2Pressed>().Get(), wxPoint(921, 57)), this, wxPoint(1035, 17), true);
 
-	InitNormalButtonGuiElements(virtualPadData.select, NewBitmap(EmbeddedImage<res_selectPressed>().Get(), wxPoint(457, 313)), this, wxPoint(530, 320));
-	InitNormalButtonGuiElements(virtualPadData.start, NewBitmap(EmbeddedImage<res_startPressed>().Get(), wxPoint(688, 311)), this, wxPoint(650, 320));
-	InitNormalButtonGuiElements(virtualPadData.l3, NewBitmap(EmbeddedImage<res_r3Pressed>().Get(), wxPoint(726, 453)), this, wxPoint(440, 835)); // TODO - text for L3 / R3
-	InitNormalButtonGuiElements(virtualPadData.r3, NewBitmap(EmbeddedImage<res_l3Pressed>().Get(), wxPoint(336, 453)), this, wxPoint(844, 835)); // TODO - text for L3 / R3
+	InitNormalButtonGuiElements(virtualPadData.select, NewBitmap(EmbeddedImage<res_selectPressed>().Get(), wxPoint(457, 313)), this, wxPoint(526, 315));
+	InitNormalButtonGuiElements(virtualPadData.start, NewBitmap(EmbeddedImage<res_startPressed>().Get(), wxPoint(688, 311)), this, wxPoint(650, 315));
+	InitNormalButtonGuiElements(virtualPadData.l3, NewBitmap(EmbeddedImage<res_l3Pressed>().Get(), wxPoint(336, 454)), this, wxPoint(430, 690)); // TODO - text for L3 / R3
+	InitNormalButtonGuiElements(virtualPadData.r3, NewBitmap(EmbeddedImage<res_r3Pressed>().Get(), wxPoint(726, 454)), this, wxPoint(820, 690)); // TODO - text for L3 / R3
 
-	InitAnalogStickGuiElements(virtualPadData.leftAnalog, this, wxPoint(405, 522), 101, wxPoint(312, 642), wxPoint(525, 431), false, wxPoint(507, 662), wxPoint(507, 622));
-	InitAnalogStickGuiElements(virtualPadData.rightAnalog, this, wxPoint(795, 522), 101, wxPoint(703, 642), wxPoint(648, 431), true, wxPoint(695, 662), wxPoint(695, 622), true);
+	InitAnalogStickGuiElements(virtualPadData.leftAnalog, this, wxPoint(404, 522), 101, wxPoint(314, 642), wxPoint(529, 433), false, wxPoint(507, 662), wxPoint(507, 622));
+	InitAnalogStickGuiElements(virtualPadData.rightAnalog, this, wxPoint(795, 522), 101, wxPoint(705, 642), wxPoint(647, 433), true, wxPoint(696, 662), wxPoint(696, 622), true);
 
-	ignoreRealControllerBox = new wxCheckBox(this, wxID_ANY, wxEmptyString, ScaledPoint(575, 135), wxDefaultSize);
+	ignoreRealControllerBox = new wxCheckBox(this, wxID_ANY, wxEmptyString, ScaledPoint(586, 135), wxDefaultSize);
 	Bind(wxEVT_CHECKBOX, &VirtualPad::OnIgnoreRealController, this, ignoreRealControllerBox->GetId());
 
 	// Bind Window Events
@@ -116,8 +116,10 @@ VirtualPad::VirtualPad(wxWindow* parent, int controllerPort, AppConfig::InputRec
 	SetBackgroundColour(*wxWHITE);
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 	// This window does not allow for resizing for sake of simplicity: all images are scaled initially and stored, ready to be rendered
-	SetWindowStyle(wxDEFAULT_FRAME_STYLE & ~wxRESIZE_BORDER);
-	SetDoubleBuffered(true);
+	
+	//SetWindowStyle();
+	//Refresh();
+	SetDoubleBuffered(false);
 }
 
 void VirtualPad::OnMoveAround(wxMoveEvent& event)
@@ -350,13 +352,7 @@ ImageFile VirtualPad::NewBitmap(wxImage resource, wxPoint imgCoord)
 ImageFile VirtualPad::NewBitmap(float scalingFactor, wxImage resource, wxPoint imgCoord)
 {
 	wxBitmap bitmap = wxBitmap(resource.Rescale(resource.GetWidth() * scalingFactor, resource.GetHeight() * scalingFactor, wxIMAGE_QUALITY_HIGH));
-
-	ImageFile image = ImageFile();
-	image.image = bitmap;
-	image.width = bitmap.GetWidth();
-	image.height = bitmap.GetHeight();
-	image.coords = ScaledPoint(imgCoord);
-	return image;
+	return ImageFile{bitmap, ScaledPoint(imgCoord), (u32)bitmap.GetWidth(), (u32)bitmap.GetHeight()};
 }
 
 void VirtualPad::InitNormalButtonGuiElements(ControllerNormalButton& button, ImageFile image, wxWindow* parentWindow, wxPoint checkboxCoord)
@@ -370,9 +366,8 @@ void VirtualPad::InitNormalButtonGuiElements(ControllerNormalButton& button, Ima
 
 void VirtualPad::InitPressureButtonGuiElements(ControllerPressureButton& button, ImageFile image, wxWindow* parentWindow, wxPoint pressureSpinnerCoord, bool rightAlignedCoord)
 {
-	const int spinnerWidth = 100;
-	const wxPoint scaledPoint = ScaledPoint(pressureSpinnerCoord.x, pressureSpinnerCoord.y, spinnerWidth, rightAlignedCoord);
-	wxSpinCtrl* spinner = new wxSpinCtrl(parentWindow, wxID_ANY, wxEmptyString, scaledPoint, ScaledSize(spinnerWidth, wxDefaultSize.GetHeight()), wxSP_ARROW_KEYS, 0, 255, 0);
+	const wxPoint scaledPoint = ScaledPoint(pressureSpinnerCoord, 100, rightAlignedCoord);
+	wxSpinCtrl* spinner = new wxSpinCtrl(parentWindow, wxID_ANY, wxEmptyString, scaledPoint, ScaledSize(100, 38), wxSP_ARROW_KEYS, 0, 255, 0);
 
 	button.icon = image;
 	button.pressureSpinner = spinner;
@@ -395,8 +390,8 @@ void VirtualPad::InitAnalogStickGuiElements(AnalogStick& analog, wxWindow* paren
 
 	wxSlider* xSlider = new wxSlider(parentWindow, wxID_ANY, 127, 0, 255, ScaledPoint(xSliderPoint), ScaledSize(185, 30));
 	wxSlider* ySlider = new wxSlider(parentWindow, wxID_ANY, 127, 0, 255, ScaledPoint(ySliderPoint), ScaledSize(30, 185), flipYSlider ? wxSL_LEFT : wxSL_RIGHT);
-	wxSpinCtrl* xSpinner = new wxSpinCtrl(parentWindow, wxID_ANY, wxEmptyString, xSpinnerScaledPoint, ScaledSize(90, wxDefaultSize.GetHeight()), wxSP_ARROW_KEYS, 0, 255, 127);
-	wxSpinCtrl* ySpinner = new wxSpinCtrl(parentWindow, wxID_ANY, wxEmptyString, ySpinnerScaledPoint, ScaledSize(90, wxDefaultSize.GetHeight()), wxSP_ARROW_KEYS, 0, 255, 127);
+	wxSpinCtrl* xSpinner = new wxSpinCtrl(parentWindow, wxID_ANY, wxEmptyString, xSpinnerScaledPoint, ScaledSize(90, 38), wxSP_ARROW_KEYS, 0, 255, 127);
+	wxSpinCtrl* ySpinner = new wxSpinCtrl(parentWindow, wxID_ANY, wxEmptyString, ySpinnerScaledPoint, ScaledSize(90, 38), wxSP_ARROW_KEYS, 0, 255, 127);
 
 	analog.xVector.slider = xSlider;
 	analog.yVector.slider = ySlider;
