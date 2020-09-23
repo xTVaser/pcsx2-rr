@@ -25,6 +25,7 @@
 #include "wx/gdicmn.h"
 #include "wx/slider.h"
 #include "wx/spinctrl.h"
+#include "wx/dcbuffer.h"
 
 struct ImageFile
 {

@@ -28,15 +28,11 @@ void ControllerNormalButton::UpdateGuiElement(std::queue<VirtualPadElement*>& re
 	// This boolean is set when we parse the PadData in VirtualPadData::UpdateVirtualPadData
 	// Updating wxWidget elements can be expensive, we only want to do this if required
 	if (button.widgetUpdateRequired)
-	{
 		button.pressedBox->SetValue(button.pressed);
-	}
 
 	// We only render the button if it is pressed
 	if (button.pressed)
-	{
 		renderQueue.push(this);
-	}
 	// However, if the button has been drawn to the screen in the past
 	// we need to ensure the screen is cleared.
 	// This is needed in the scenario where only a single button is being pressed/released
@@ -52,14 +48,10 @@ void ControllerPressureButton::UpdateGuiElement(std::queue<VirtualPadElement*>& 
 {
 	ControllerPressureButton& button = *this;
 	if (button.widgetUpdateRequired)
-	{
 		button.pressureSpinner->SetValue(button.pressure);
-	}
 
 	if (button.pressed)
-	{
 		renderQueue.push(this);
-	}
 	else if (button.currentlyRendered)
 	{
 		button.currentlyRendered = false;
@@ -83,9 +75,7 @@ void AnalogStick::UpdateGuiElement(std::queue<VirtualPadElement*>& renderQueue, 
 
 	// We render the analog sticks as long as they are not in the neutral position
 	if (!(analogStick.xVector.val == PadData::ANALOG_VECTOR_NEUTRAL && analogStick.yVector.val == PadData::ANALOG_VECTOR_NEUTRAL))
-	{
 		renderQueue.push(this);
-	}
 	else if (analogStick.currentlyRendered)
 	{
 		analogStick.currentlyRendered = false;
@@ -97,26 +87,18 @@ void ControllerNormalButton::EnableWidgets(bool enable)
 {
 	ControllerNormalButton& button = *this;
 	if (enable)
-	{
 		button.pressedBox->Enable();
-	}
 	else
-	{
 		button.pressedBox->Disable();
-	}
 }
 
 void ControllerPressureButton::EnableWidgets(bool enable)
 {
 	ControllerPressureButton& button = *this;
 	if (enable)
-	{
 		button.pressureSpinner->Enable();
-	}
 	else
-	{
 		button.pressureSpinner->Disable();
-	}
 }
 
 void AnalogStick::EnableWidgets(bool enable)
