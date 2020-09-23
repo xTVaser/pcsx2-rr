@@ -20,6 +20,7 @@
 #include <math.h>
 
 #include "App.h"
+#include "MSWstuff.h"
 #include "Utilities/EmbeddedImage.h"
 #include "wx/dcbuffer.h"
 #include "wx/display.h"
@@ -46,6 +47,7 @@
 #include "Recording/VirtualPad/img/trianglePressed.h"
 #include "Recording/VirtualPad/img/upPressed.h"
 
+
 VirtualPad::VirtualPad(wxWindow* parent, int controllerPort, AppConfig::InputRecordingOptions& options)
 	: wxFrame(parent, wxID_ANY, wxEmptyString)
 	, options(options)
@@ -58,10 +60,13 @@ VirtualPad::VirtualPad(wxWindow* parent, int controllerPort, AppConfig::InputRec
 	// windows are dragged between differing monitors!
 	wxDisplay display(wxDisplay::GetFromWindow(this));
 	const wxRect screen = display.GetClientArea();
+	float dpiScale = MSW_GetDPIScale(); // linux returns 1.0
 	if (screen.height > 1080 && screen.height <= 1440) // 1440p display
-		scalingFactor = 0.75;
+		scalingFactor = 0.75 * dpiScale;
 	else if (screen.height <= 1080) // 1080p display
-		scalingFactor = 0.5;
+	{
+		scalingFactor = 0.5 * dpiScale;
+	}
 	// otherwise use default 1.0 scaling
 
 	virtualPadData = VirtualPadData();
