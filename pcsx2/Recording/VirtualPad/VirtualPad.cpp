@@ -91,13 +91,13 @@ VirtualPad::VirtualPad(wxWindow* parent, int controllerPort, AppConfig::InputRec
 
 	InitNormalButtonGuiElements(virtualPadData.select, NewBitmap(EmbeddedImage<res_selectPressed>().Get(), wxPoint(457, 313)), this, wxPoint(530, 315));
 	InitNormalButtonGuiElements(virtualPadData.start, NewBitmap(EmbeddedImage<res_startPressed>().Get(), wxPoint(688, 311)), this, wxPoint(646, 315));
-	InitNormalButtonGuiElements(virtualPadData.l3, NewBitmap(EmbeddedImage<res_r3Pressed>().Get(), wxPoint(336, 453)), this, wxPoint(560, 640));
-	InitNormalButtonGuiElements(virtualPadData.r3, NewBitmap(EmbeddedImage<res_l3Pressed>().Get(), wxPoint(726, 453)), this, wxPoint(615, 640));
+	InitNormalButtonGuiElements(virtualPadData.l3, NewBitmap(EmbeddedImage<res_l3Pressed>().Get(), wxPoint(336, 453)), this, wxPoint(560, 640));
+	InitNormalButtonGuiElements(virtualPadData.r3, NewBitmap(EmbeddedImage<res_r3Pressed>().Get(), wxPoint(726, 453)), this, wxPoint(615, 640));
 
-	InitAnalogStickGuiElements(virtualPadData.leftAnalog, this, wxPoint(405, 522), 102, wxPoint(312, 642), wxPoint(525, 431), false, wxPoint(500, 685), wxPoint(566, 425), true);
-	InitAnalogStickGuiElements(virtualPadData.rightAnalog, this, wxPoint(795, 522), 102, wxPoint(703, 642), wxPoint(648, 431), true, wxPoint(700, 685), wxPoint(635, 425));
+	InitAnalogStickGuiElements(virtualPadData.leftAnalog, this, wxPoint(404, 522), 100, wxPoint(314, 642), wxPoint(530, 432), false, wxPoint(504, 685), wxPoint(570, 425), true);
+	InitAnalogStickGuiElements(virtualPadData.rightAnalog, this, wxPoint(794, 522), 100, wxPoint(706, 642), wxPoint(648, 432), true, wxPoint(700, 685), wxPoint(635, 425));
 
-	ignoreRealControllerBox = new wxCheckBox(this, wxID_ANY, wxEmptyString, ScaledPoint(wxPoint(575, 130)), wxDefaultSize);
+	ignoreRealControllerBox = new wxCheckBox(this, wxID_ANY, wxEmptyString, ScaledPoint(wxPoint(586, 130)), wxDefaultSize);
 	Bind(wxEVT_CHECKBOX, &VirtualPad::OnIgnoreRealController, this, ignoreRealControllerBox->GetId());
 
 	// Bind Window Events
