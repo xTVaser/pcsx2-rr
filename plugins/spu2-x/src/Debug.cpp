@@ -102,14 +102,14 @@ void DoFullDump()
     u8 c = 0, v = 0;
 
     if (MemDump()) {
-        dump = fopen(wxString(MemDumpFileName).ToUTF8(), "wb");
+        dump = fopen(MemDumpFileName, "wb");
         if (dump) {
             fwrite(_spu2mem, 0x200000, 1, dump);
             fclose(dump);
         }
     }
     if (RegDump()) {
-        dump = fopen(wxString(RegDumpFileName).ToUTF8(), "wb");
+        dump = fopen(RegDumpFileName, "wb");
         if (dump) {
             fwrite(spu2regs, 0x2000, 1, dump);
             fclose(dump);
@@ -118,7 +118,7 @@ void DoFullDump()
 
     if (!CoresDump())
         return;
-    dump = fopen(wxString(CoresDumpFileName).ToUTF8(), "wt");
+    dump = fopen(CoresDumpFileName, "wt");
     if (dump) {
         for (c = 0; c < 2; c++) {
             fprintf(dump, "#### CORE %d DUMP.\n", c);

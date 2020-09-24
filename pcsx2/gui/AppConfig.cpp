@@ -1177,15 +1177,15 @@ static void LoadUiSettings()
 	g_Conf = std::make_unique<AppConfig>();
 	g_Conf->LoadSave( loader );
 
-	if( !wxFile::Exists( g_Conf->CurrentIso ) )
+	if( !folderUtils.DoesExist( g_Conf->CurrentIso ) )
 	{
 		g_Conf->CurrentIso.clear();
 	}
 
 #if defined(_WIN32)
-	if( !g_Conf->Folders.RunDisc.DirExists() )
+	if( !folderUtils.DoesExist(g_Conf->Folders.RunDisc) )
 	{
-		g_Conf->Folders.RunDisc.Clear();
+		//g_Conf->Folders.RunDisc.Clear();
 	}
 #else
 	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
@@ -1230,10 +1230,10 @@ static void SaveUiSettings()
 	}
 
 #if defined(_WIN32)
-	if (!g_Conf->Folders.RunDisc.DirExists())
+	/*if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc()))
 	{
-		g_Conf->Folders.RunDisc.Clear();
-	}
+		//->Folders.RunDisc.Clear();
+	}*/
 #else
 	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
 	{

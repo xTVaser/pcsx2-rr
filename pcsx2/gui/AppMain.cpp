@@ -1196,7 +1196,7 @@ void SysUpdateIsoSrcFile( const wxString& newIsoFile )
 void SysUpdateDiscSrcDrive( const wxString& newDiscDrive )
 {
 #if defined(_WIN32)
-	g_Conf->Folders.RunDisc = wxFileName::DirName(newDiscDrive);
+	g_Conf->Folders.RunDisc = newDiscDrive;
 #else
 	g_Conf->Folders.RunDisc = newDiscDrive;
 #endif

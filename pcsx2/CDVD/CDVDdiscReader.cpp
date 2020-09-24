@@ -184,7 +184,7 @@ void StopKeepAliveThread()
 s32 CALLBACK DISCopen(const char* pTitle)
 {
 #if defined(_WIN32)
-	std::wstring drive = g_Conf->Folders.RunDisc.GetPath().ToStdWstring();
+	std::wstring drive = (wxString)g_Conf->Folders.RunDisc;
 #else
 	std::string drive = g_Conf->Folders.RunDisc;
 #endif
