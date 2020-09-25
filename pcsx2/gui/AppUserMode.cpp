@@ -202,19 +202,16 @@ void Pcsx2App::WipeUserModeSettings()
 	{
 		// Remove the portable.json entry "RunWizard" conforming to this instance of PCSX2.
 		std::string portableJsonFile( GetPortableJsonPath() );
-		//std::unique_ptr<wxFileConfig> conf_portable( OpenFileConfig( portableJsonFile ) );
-		//conf_portable->DeleteEntry(L"RunWizard");
-		in.open(portableJsonFile);
-		json.parse(in);
+		std::unique_ptr<nlohmann::json> conf_portable( OpenFileConfig( portableJsonFile ) );
+		json = *conf_portable.get();
 		json["RunWizard"] = 0;
 	}
 	else
 	{
 		// Remove the registry entry "RunWizard" conforming to this instance of PCSX2.
-		//std::unique_ptr<wxConfigBase> conf_install( OpenInstallSettingsFile() );
-		//in.open(OpenInstallSettingsFile());
-		//json.parse(in);
-		//json["RunWizard"] = 0;
+		std::unique_ptr<nlohmann::json> conf_install( OpenInstallSettingsFile() );		
+		json = *conf_install.get();
+		json["RunWizard"] = 0;
 	}
 }
 
@@ -253,25 +250,23 @@ nlohmann::json* Pcsx2App::OpenInstallSettingsFile()
 	// Where the heck should this information be stored?
 
 	fs::path usrlocaldir = PathDefs::GetUserLocalDataDir();
-	//wxDirName usrlocaldir( wxStandardPaths::Get().GetDataDir() );
+	//fs::path usrlocaldir( wxStandardPaths::Get().GetDataDir() );
 	if( !fs::exists(usrlocaldir))
 	{
 		Console.WriteLn( "Creating UserLocalData folder: " + (std::string)usrlocaldir );
 		path.CreateFolder(usrlocaldir);
 	}
 
-	fs::path usermodefile(Path::Combine(GetAppName().ToStdString(), "-reg.json" ));
+	std::string usermodefile = (GetAppName().ToStdString() + "-reg.json" );
 
 	std::cout << "USERMODE: " << usermodefile << std::endl;
 
-	//usermodefile.SetPath( usrlocaldir.ToString() );
-
 	in.open(usermodefile);
-	conf_install->parse(in);
+	json = nlohmann::json::parse(in);
 
 #endif
 
-	return conf_install.release();
+	return &json;
 }
 
 
