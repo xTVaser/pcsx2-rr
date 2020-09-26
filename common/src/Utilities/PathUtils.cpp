@@ -233,6 +233,11 @@ bool PathUtils::DoesExist(std::string& path)
     return fs::exists(path);
 }
 
+bool PathUtils::DoesExist(fs::path& path)
+{
+    return fs::exists(path);
+}
+
 bool PathUtils::Empty(std::string path)
 {
     return fs::is_empty(path);

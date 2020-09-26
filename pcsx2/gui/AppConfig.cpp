@@ -1011,14 +1011,13 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 
 nlohmann::json* OpenFileConfig( std::string filename )
 {
-	std::ifstream in;
-	in.open(filename);
-
-	nlohmann::json* json;
-	json->parse(in);
-	
+    // TODO - might want a common function to wrap the parse handling, probably want a graceful exit in the case of an invalid config file
+	std::ifstream in(filename);
+	nlohmann::json* json = new nlohmann::json(); 
+	*json = json->parse(in);
 	return json;
 }
+
 void RelocateLogfile()
 {
 
