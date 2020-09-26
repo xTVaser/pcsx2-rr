@@ -46,8 +46,8 @@ static bool LogLocationSetByPcsx2 = false;
 static wxString CfgLogsFolder;
 static wxString CfgDumpsFolder;
 
-static fs::path LogsFolder;
-static fs::path DumpsFolder;
+static std::string LogsFolder;
+static std::string DumpsFolder;
 
 wxString AccessLogFileName;
 wxString DMA4LogFileName;
@@ -59,24 +59,24 @@ wxString RegDumpFileName;
 
 void CfgSetLogDir(const char *dir)
 {
-    LogsFolder = (dir == NULL) ? wxString("logs") : wxString(dir, wxConvFile);
-    DumpsFolder = (dir == NULL) ? wxString("logs") : wxString(dir, wxConvFile);
+    LogsFolder = std::string((dir == NULL) ? wxString("logs") : wxString(dir, wxConvFile));
+    DumpsFolder = std::string((dir == NULL) ? wxString("logs") : wxString(dir, wxConvFile));
     LogLocationSetByPcsx2 = (dir != NULL);
 }
 
-FILE *OpenBinaryLog(const fs::path &logfile)
+FILE *OpenBinaryLog(const wxString &logfile)
 {
-	return wxFopen(Path::Combine((std::string)LogsFolder, (std::string)logfile), L"wb");
+    return wxFopen(Path::Combine(LogsFolder, (std::string)logfile), L"wb");
 }
 
-FILE *OpenLog(const fs::path &logfile)
+FILE *OpenLog(const wxString &logfile)
 {
-    return wxFopen(Path::Combine((std::string)LogsFolder, (std::string)logfile), L"w");
+    return wxFopen(Path::Combine(LogsFolder, (std::string)logfile), L"w");
 }
 
-FILE *OpenDump(const fs::path &logfile)
+FILE *OpenDump(const wxString &logfile)
 {
-	return wxFopen(Path::Combine((std::string)DumpsFolder, (std::string)logfile), L"w");
+    return wxFopen(Path::Combine(DumpsFolder, (std::string)logfile), L"w");
 }
 
 namespace DebugConfig
@@ -117,8 +117,8 @@ void ReadSettings()
     CfgReadStr(Section, L"Reg_Dump_Filename", RegDumpFileName, L"SPU2regs.dat");
 
     if (!LogLocationSetByPcsx2) {
-        LogsFolder = CfgLogsFolder;
-        DumpsFolder = CfgLogsFolder;
+        LogsFolder = std::string(CfgLogsFolder);
+        DumpsFolder = std::string(CfgLogsFolder);
     }
 }
 
