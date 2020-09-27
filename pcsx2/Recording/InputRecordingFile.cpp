@@ -25,6 +25,42 @@
 
 #ifndef DISABLE_RECORDING
 
+#include <ryml.hpp>
+
+// not needed by ryml, just for these examples (and below)
+#include <iostream>
+
+// convenience functions to print a node
+void show_keyval(ryml::NodeRef n)
+{
+	std::cout << n.key() << ": " << n.val() << "\n";
+}
+void show_val(ryml::NodeRef n)
+{
+	std::cout << n.val() << "\n";
+}
+    
+int ye()
+{
+	// ryml can parse in situ (and read-only buffers too):
+	char src[] = "{foo: 1, bar: [2, 3]}";
+	ryml::substr srcview = src_; // a mutable view to the source buffer
+	// there are also overloads for reusing the tree and parser
+	ryml::Tree tree = ryml::parse(srcview);
+
+	// get a reference to the "foo" node
+	ryml::NodeRef node = tree["foo"];
+
+	show_keyval(node);  // "foo: 1"
+	show_val(node["bar"][0]);  // "2"
+	show_val(node["bar"][1]);  // "3"
+
+	// deserializing:
+	int foo;
+	node >> foo; // now foo == 1
+}
+
+
 void InputRecordingFileHeader::Init()
 {
 	memset(author, 0, ArraySize(author));
