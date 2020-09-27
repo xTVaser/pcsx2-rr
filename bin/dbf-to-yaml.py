@@ -192,9 +192,13 @@ with open(inputPath, "r") as fInput, open(outputPath, "a+") as output:
                                     " " * currentIndentAmount, patch["crc"]
                                 )
                             )
-                        output.write(
-                            "{}  content: |-\n".format(" " * currentIndentAmount)
-                        )
+                            output.write(
+                                "{}  content: |-\n".format(" " * currentIndentAmount)
+                            )
+                        else:
+                            output.write(
+                                "{}- content: |-\n".format(" " * currentIndentAmount)
+                            )
                         currentIndentAmount += 4
                         for patchLine in patch["content"]:
                             output.write(
@@ -224,7 +228,7 @@ with open(inputPath, "r") as fInput, open(outputPath, "a+") as output:
                     "patches": [],
                     "danglingComments": [],
                 }
-                # print("Processed {} Games".format(gamesProcessed))
+                print("Processed {} Games".format(gamesProcessed))
             else:
                 # To save my sanity, store the non-1-liner settings until the end, as they technically can be given in any order
                 # we can't backtrack lines!

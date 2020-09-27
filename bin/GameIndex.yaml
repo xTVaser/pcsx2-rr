@@ -166,7 +166,7 @@ PBPX-95506:
   name: "Playstation 2 - Demo Disc 2001"
   region: "PAL-M5"
   patches:
-      content: |-
+    - content: |-
         "// 7ACF7E03"
         "comment=You must enable the EETimingHack when playing the WRC demo to avoids random hangs."
         "comment=You must change the EE Clamping mode to Full when playing the Klonoa 2 demo to avoids misplaced objects."
@@ -1215,7 +1215,7 @@ SCES-50006:
   region: "PAL-M5"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "// 04F9D87F"
         "comment=- This gamedisc supports multiple languages through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
@@ -1440,7 +1440,7 @@ SCES-50878:
   region: "PAL-M5"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "// CRC 2251E14D, F48F994A"
         "comment=patches by Shadow Lady"
         "// IPU BUSY! fix..."
@@ -1648,7 +1648,7 @@ SCES-51608:
   gameFixes:
     - "VU0KickstartHack" #  Fixes Character SPS.
   patches:
-      content: |-
+    - content: |-
         "comment=- This gamedisc supports multiple languages through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
 SCES-51610:
@@ -1892,7 +1892,7 @@ SCES-52460:
   gameFixes:
     - "VU0KickstartHack" #  Fixes Character SPS.
   patches:
-      content: |-
+    - content: |-
         "comment=- This gamedisc supports multiple languages through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
 SCES-52529:
@@ -1926,7 +1926,7 @@ SCES-52677:
   region: "PAL-M7"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "// D859B1B4"
         "comment=- This gamedisc supports widescreen through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
@@ -2186,7 +2186,7 @@ SCES-53851:
   gameFixes:
     - "XgKickHack" #  Fixes SPS.
   patches:
-      content: |-
+    - content: |-
         "// CRC C040B6AB, Unknown"
         "comment=Swapping a COP2 op into place to make the flags work without delays."
         "patch=0,EE,002E2B44,word,48449000"
@@ -4101,7 +4101,7 @@ SCPS-56008:
   region: "NTSC-K"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "// BCF04BF3"
         "comment=- At least when using GSdx in D3D11 Hardware mode, and due to missing"
         "comment=-  rendering-fixes, black stripes can show up on ghosts,"
@@ -6442,7 +6442,7 @@ SLES-50211:
   region: "PAL-M3"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "comment=- This gamedisc supports multiple languages."
         "comment=- Language selection is done through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
@@ -7470,7 +7470,7 @@ SLES-50821:
   region: "PAL-M5"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "// 22E91837"
         "comment=- At least when using GSdx in D3D11 Hardware mode, and due to missing"
         "comment=-  rendering-fixes, black stripes can show up on ghosts,"
@@ -8279,7 +8279,7 @@ SLES-51227:
   region: "PAL-M10"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "// 54AD76D7"
         "comment=- This gamedisc supports multiple languages and widescreen."
         "comment=- Language & widescreen selection is done through the BIOS configuration."
@@ -9313,7 +9313,7 @@ SLES-51843:
   region: "PAL-M5"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "comment=You need to set the EE cycle speed to -1 to be able to load the game."
 SLES-51845:
   name: "Barbie - Horse Adventure"
@@ -9884,7 +9884,7 @@ SLES-52149:
   region: "PAL-M5"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "comment=- This gamedisc supports multiple languages."
         "comment=- Language selection is done through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
@@ -11460,7 +11460,7 @@ SLES-53007:
   region: "PAL-M5"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "comment=- This gamedisc supports multiple languages."
         "comment=- Language selection is done through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
@@ -11799,7 +11799,7 @@ SLES-53154:
   name: "Bard's Tale, The"
   region: "PAL-M8"
   patches:
-      content: |-
+    - content: |-
         "comment=- This gamedisc supports multiple languages."
         "comment=- Language selection is done through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
@@ -12445,7 +12445,7 @@ SLES-53539:
   region: "PAL-M4"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "author=atomic83github"
         "// Found with the help of the dev-9 plugin and the PS4 emu."
         "// This is a game bug trigger by a timing issue."
@@ -12469,7 +12469,7 @@ SLES-53540:
   region: "PAL-M4"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "author=atomic83github"
         "// Found with the help of the dev-9 plugin and the PS4 emu."
         "// This is a game bug trigger by a timing issue."
@@ -12734,7 +12734,7 @@ SLES-53667:
   region: "PAL-M5"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "comment=- This gamedisc supports multiple languages."
         "comment=- Language selection is done through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
@@ -13035,7 +13035,7 @@ SLES-53826:
   region: "PAL-M5"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "comment=- This gamedisc supports multiple languages."
         "comment=- Language selection is done through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
@@ -13180,7 +13180,7 @@ SLES-53908:
   region: "PAL-M8"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "comment=- This gamedisc supports multiple languages."
         "comment=- Language selection is done through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
@@ -14505,7 +14505,7 @@ SLES-54674:
   region: "PAL-M10"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "comment=- This gamedisc supports multiple languages."
         "comment=- Language selection is done through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
@@ -15385,7 +15385,7 @@ SLES-55442:
   region: "PAL-M8"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "comment=- This gamedisc supports multiple languages."
         "comment=- Language selection is done through the BIOS configuration."
         "comment=- Implementation requires Full boot - 'Boot CDVD (full)'."
@@ -19250,7 +19250,7 @@ SLPM-65232:
   region: "NTSC-J"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "// 08995DEE"
         "comment=- This disc has the same CRC as SLUS-20484, the NTSC-U disc."
 SLPM-65233:
@@ -26201,7 +26201,7 @@ SLPS-25074:
   region: "NTSC-J"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "// 9883194E"
         "comment=- At least when using GSdx in D3D11 Hardware mode, and due to missing"
         "comment=-  rendering-fixes, black stripes can show up on ghosts,"
@@ -26270,7 +26270,7 @@ SLPS-25100:
   region: "NTSC-J"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "// CRC 26173F9A, 7c359c94"
         "comment=Patches by Shadow Lady"
         "// IPU BUSY! fix..."
@@ -29511,7 +29511,7 @@ SLUS-20071:
   region: "NTSC-U"
   compat: 5
   patches:
-      content: |-
+    - content: |-
         "// 23AF6876 DVD Version."
         "// 51068006 CD Version."
         "comment=Patch by Benji229, Pseudonym, Prafull, kozarovv and refraction"
@@ -30725,7 +30725,7 @@ name: "Fatal Frame"
 region: "NTSC-U"
 compat: 5
 patches:
-    content: |-
+  - content: |-
       "// 339A0B8C"
       "comment=- At least when using GSdx in D3D11 Hardware mode, and due to missing"
       "comment=-  rendering-fixes, black stripes can show up on ghosts,"
@@ -31122,7 +31122,7 @@ name: "Devil May Cry 2 [Disc1of2]"
 region: "NTSC-U"
 compat: 5
 patches:
-    content: |-
+  - content: |-
       "// 08995DEE"
       "comment=- This disc has the same CRC as SLPM-65232, the NTSC-J disc."
 SLUS-20485:
@@ -32217,7 +32217,7 @@ name: "Growlanser Generations [Disc2of2]"
 region: "NTSC-U"
 compat: 5
 patches:
-    content: |-
+  - content: |-
       "// CRC 4AD529BB, 4CD3663F"
       "comment=IPU freeze fix"
       "patch=0,EE,00109d04,word,00000000"
@@ -32730,7 +32730,7 @@ name: "Worms 3D"
 region: "NTSC-U"
 compat: 5
 patches:
-    content: |-
+  - content: |-
       "comment=You need to set the EE cycle speed to -1 to be able to load the game."
 SLUS-20895:
 name: "Bujingai - The Forsaken City"
@@ -33237,7 +33237,7 @@ name: "Ghost in the Shell - Stand Alone Complex"
 region: "NTSC-U"
 compat: 5
 patches:
-    content: |-
+  - content: |-
       "// CRC US 95CC86EF, RU 28557423"
       "comment=Rearranging COP2 ops so as to avoid macflag bad stuff"
       "// Solves door problems, possibly other issues later on (nobody ever got that far :P)."
