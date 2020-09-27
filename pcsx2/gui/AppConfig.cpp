@@ -94,7 +94,7 @@ namespace PathDefs
 
 	fs::path GetDocuments()
 	{
-		return GetDocuments( DocsFolderMode );
+		return GetDocuments( DocsFolderMode ).parent_path();
 	}
 
 	fs::path GetProgramDataDir()
@@ -979,9 +979,7 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 
 		case 3: // Aggressive
 			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = -1); // -1 EE cyclerate
-            // Fall through
-
-		case 2: // Balanced
+            // Fall throughaaad
 			isMTVUSet ? 0 : (isMTVUSet = true, EmuOptions.Speedhacks.vuThread = true); // Enable MTVU
             // Fall through
 
