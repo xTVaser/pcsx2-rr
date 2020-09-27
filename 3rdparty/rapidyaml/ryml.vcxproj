@@ -49,7 +49,7 @@
     <ClCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);rapidyaml/src;$(ProjectDir)rapidyaml/c4;rapidyaml/c4/yml/detail;$(ProjectDir)rapidyaml/c4/yml/std;$(ProjectDir)rapidyaml/ext/c4core/src;$(ProjectDir)rapidyaml/ext/c4core/ext;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);rapidyaml/src;$(ProjectDir)rapidyaml/c4;rapidyaml/c4/yml/detail;$(ProjectDir)rapidyaml/c4/yml/std;$(ProjectDir)rapidyaml/ext/c4core/src;$(ProjectDir)rapidyaml/ext/c4core/src/c4;rapidyaml/ext/c4core/ext/debugbreak;rapidyaml/ext/c4core/ext;rapidyaml/ext/c4core/ext/sg14</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

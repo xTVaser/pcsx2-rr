@@ -128,50 +128,12 @@ void DBLoaderHelper::ReadGames()
 	}
 }
 
-#include <ryml.hpp>
-
-// not needed by ryml, just for these examples (and below)
-#include <iostream>
-
-// convenience functions to print a node
-void show_keyval(ryml::NodeRef n)
-{
-	std::cout << n.key() << ": " << n.val() << "\n";
-}
-void show_val(ryml::NodeRef n)
-{
-	std::cout << n.val() << "\n";
-}
-    
-int testYaml()
-{
-	// ryml can parse in situ (and read-only buffers too):
-	char src[] = "{foo: 1, bar: [2, 3]}";
-	c4::substr srcview = src; // a mutable view to the source buffer
-	// there are also overloads for reusing the tree and parser
-	ryml::Tree tree = ryml::parse(srcview);
-
-	// get a reference to the "foo" node
-	ryml::NodeRef node = tree["foo"];
-
-	show_keyval(node);  // "foo: 1"
-	show_val(node["bar"][0]);  // "2"
-	show_val(node["bar"][1]);  // "3"
-
-	// deserializing:
-	int foo;
-	node >> foo; // now foo == 1
-	return 0;
-}
-
 // --------------------------------------------------------------------------------------
 //  AppGameDatabase  (implementations)
 // --------------------------------------------------------------------------------------
 
 AppGameDatabase& AppGameDatabase::LoadFromFile(const wxString& _file, const wxString& key )
 {
-	testYaml();
-
 	wxString file(_file);
 	if( wxFileName(file).IsRelative() )
 	{

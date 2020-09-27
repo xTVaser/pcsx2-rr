@@ -49,7 +49,7 @@
     <ClCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>$(ProjectDir);rapidyaml/ext/c4core/src/;rapidyaml/ext/c4core/src/c4;rapidyaml/ext/c4core/src/c4/std;rapidyaml/ext/c4core/ext/;rapidyaml/ext/c4core/ext/debugbreak;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);rapidyaml/ext/c4core/src/;rapidyaml/ext/c4core/src/c4;rapidyaml/ext/c4core/src/c4/std;rapidyaml/ext/c4core/ext/;rapidyaml/ext/c4core/ext/debugbreak;rapidyaml/ext/c4core/ext/sg14;</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -105,6 +105,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rapidyaml\ext\c4core\ext\debugbreak\debugbreak.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="rapidyaml\ext\c4core\ext\sg14\inplace_function.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

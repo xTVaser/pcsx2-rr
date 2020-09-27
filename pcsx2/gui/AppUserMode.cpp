@@ -281,8 +281,30 @@ void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 	json["RunWizard"] = true;
 }
 
+#include <ryml.hpp>
+    
+int testYaml()
+{
+	// ryml can parse in situ (and read-only buffers too):
+	char src[] = "{foo: 1, bar: [2, 3]}";
+	c4::substr srcview = src; // a mutable view to the source buffer
+	// there are also overloads for reusing the tree and parser
+	ryml::Tree tree = ryml::parse(srcview);
+
+	// get a reference to the "foo" node
+	ryml::NodeRef node = tree["foo"];
+
+	// deserializing:
+	int foo;
+	node >> foo; // now foo == 1
+	return 0;
+}
+
 void Pcsx2App::EstablishAppUserMode()
 {
+	testYaml();
+
+
 	std::unique_ptr<nlohmann::json> conf_install;
 	conf_install = std::unique_ptr<nlohmann::json>(TestForPortableInstall());
 
