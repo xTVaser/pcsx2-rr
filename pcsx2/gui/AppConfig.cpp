@@ -1021,27 +1021,31 @@ nlohmann::json* OpenFileConfig( std::string filename )
 void RelocateLogfile()
 {
 
-	if (!folderUtils.CreateFolder(g_Conf->Folders.Logs))
-	return;
-
+    if (!folderUtils.DoesExist(g_Conf->Folders.Logs))
+    {
+	    if (!folderUtils.CreateFolder(g_Conf->Folders.Logs))
+	    {
+		    return;
+		}
+    }
 	std::string newlogname = ( g_Conf->Folders.Logs + "emuLog.txt");
 
-	if( (emuLog != NULL) && (emuLogName != newlogname) )
+	if( (emuLog != nullptr) && (emuLogName != newlogname) )
 	{
 		//Console.WriteLn( L"\nRelocating Logfile...\n\tFrom: %s\n\tTo  : %s\n", WX_STR(emuLogName), WX_STR(newlogname) );
-		wxGetApp().DisableDiskLogging();
+		//wxGetApp().DisableDiskLogging();
 
 		fclose( emuLog );
-		emuLog = NULL;
+		emuLog = nullptr;
 	}
 
-	if( emuLog == NULL )
+	if( emuLog == nullptr )
 	{
 		emuLogName = newlogname;
 		emuLog = wxFopen( emuLogName, "wb" );
 	}
 
-	wxGetApp().EnableAllLogging();
+	//wxGetApp().EnableAllLogging();
 }
 
 // Parameters:
@@ -1054,22 +1058,30 @@ void RelocateLogfile()
 //
 void AppConfig_OnChangedSettingsFolder( bool overwrite )
 {
-	if (!folderUtils.CreateFolder(PathDefs::GetDocuments()))
-	return;
-
-	if(folderUtils.CreateFolder(GetSettingsFolder()))
-	return;
-
-	const wxString jsonFilename( GetUiSettingsFilename() );
+	if (!folderUtils.DoesExist(PathDefs::GetDocuments().string()))
+	{
+		if (!folderUtils.CreateFolder(PathDefs::GetDocuments()))
+		{
+			return;
+		}
+	}
+	if (!folderUtils.DoesExist(PathDefs::GetDocuments()))
+	{
+		if(folderUtils.CreateFolder(GetSettingsFolder()))
+		{
+			return;
+		}
+	}
+	std::string jsonFilename = GetUiSettingsFilename();
 	if( overwrite )
 	{
-		if( wxFileExists( jsonFilename ) && !wxRemoveFile( jsonFilename ) )
+		if( folderUtils.DoesExist ( jsonFilename ) && !fs::remove( jsonFilename ) )
 			throw Exception::AccessDenied(jsonFilename)
 				.SetBothMsgs(pxL("Failed to overwrite existing settings file; permission was denied."));
 
-		const wxString vmJsonFilename( GetVmSettingsFilename() );
+		std::string vmJsonFilename = GetVmSettingsFilename();
 
-		if( wxFileExists( vmJsonFilename ) && !wxRemoveFile( vmJsonFilename ) )
+		if( folderUtils.DoesExist( vmJsonFilename ) && !fs::remove( vmJsonFilename ) )
 			throw Exception::AccessDenied(vmJsonFilename)
 				.SetBothMsgs(pxL("Failed to overwrite existing settings file; permission was denied."));
 	}
@@ -1077,7 +1089,7 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 	// Bind into wxConfigBase to allow wx to use our config internally, and delete whatever
 	// comes out (cleans up prev config, if one).
 	//delete wxConfigBase::Set( OpenFileConfig( (std::string)jsonFilename ) );
-	GetAppConfig()->SetRecordDefaults(true);
+	//GetAppConfig()->SetRecordDefaults(true);
 
 	if( !overwrite )
 		AppLoadSettings();

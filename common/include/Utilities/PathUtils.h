@@ -12,8 +12,8 @@ class PathUtils
 
     bool CreateFolder(std::string path);
     bool Empty(std::string); // Is the folder empty
-    bool DoesExist(std::string &path); // Does the path exist
-    bool DoesExist(fs::path &path); // Does the path exist
+    bool DoesExist(std::string path); // Does the path exist
+    bool DoesExist(fs::path path); // Does the path exist
 
 };
 

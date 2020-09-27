@@ -848,40 +848,76 @@ void AppApplySettings( const AppConfig* oldconf )
 	// Ensure existence of necessary documents folders.  Plugins and other parts
 	// of PCSX2 rely on them.
 
-	if (folderUtils.CreateFolder(g_Conf->Folders.MemoryCards) &&
-	folderUtils.CreateFolder(g_Conf->Folders.Savestates) &&
-	folderUtils.CreateFolder(g_Conf->Folders.Snapshots) &&
-	folderUtils.CreateFolder(g_Conf->Folders.Cheats) &&
-	folderUtils.CreateFolder(g_Conf->Folders.CheatsWS))
+	if (!folderUtils.DoesExist(g_Conf->Folders.MemoryCards) && 
+	folderUtils.DoesExist(g_Conf->Folders.Savestates) &&
+	folderUtils.DoesExist(g_Conf->Folders.Snapshots) &&
+	folderUtils.DoesExist(g_Conf->Folders.Cheats) &&
+	folderUtils.DoesExist(g_Conf->Folders.CheatsWS) &&
+	folderUtils.DoesExist(g_Conf->Folders.Logs))
 	{
 
-		g_Conf->EmuOptions.BiosFilename = g_Conf->FullpathToBios();
-
-		RelocateLogfile();
-
-		/*if( (oldconf == NULL) || (oldconf->LanguageCode.CmpNoCase(g_Conf->LanguageCode)) )
+		if (folderUtils.CreateFolder(g_Conf->Folders.MemoryCards) &&
+		folderUtils.CreateFolder(g_Conf->Folders.Savestates) &&
+		folderUtils.CreateFolder(g_Conf->Folders.Snapshots) &&
+		folderUtils.CreateFolder(g_Conf->Folders.Cheats) &&
+		folderUtils.CreateFolder(g_Conf->Folders.CheatsWS) &&
+		folderUtils.CreateFolder(g_Conf->Folders.Logs))
 		{
-			wxDoNotLogInThisScope please;
-			i18n_SetLanguage( g_Conf->LanguageId, g_Conf->LanguageCode );
-		}*/
 
-		CorePlugins.SetSettingsFolder( (std::string)GetSettingsFolder());
+			g_Conf->EmuOptions.BiosFilename = g_Conf->FullpathToBios();
 
-		// Update the compression attribute on the Memcards folder.
-		// Memcards generally compress very well via NTFS compression.
+			RelocateLogfile();
 
-		#ifdef __WXMSW__
-		NTFS_CompressFile( g_Conf->Folders.MemoryCards, g_Conf->McdCompressNTFS );
-		#endif
-		sApp.DispatchEvent( AppStatus_SettingsApplied );
+			/*if( (oldconf == NULL) || (oldconf->LanguageCode.CmpNoCase(g_Conf->LanguageCode)) )
+			{
+				wxDoNotLogInThisScope please;
+				i18n_SetLanguage( g_Conf->LanguageId, g_Conf->LanguageCode );
+			}*/
 
-		paused_core.AllowResume();
+			CorePlugins.SetSettingsFolder( (std::string)GetSettingsFolder());
+
+			// Update the compression attribute on the Memcards folder.
+			// Memcards generally compress very well via NTFS compression.
+
+			#ifdef __WXMSW__
+			NTFS_CompressFile( g_Conf->Folders.MemoryCards, g_Conf->McdCompressNTFS );
+			#endif
+			sApp.DispatchEvent( AppStatus_SettingsApplied );
+
+			paused_core.AllowResume();
+		}
+	
+		else
+		{
+			return;
+		}
 	}
 
 	else
 	{
-		return;
+			g_Conf->EmuOptions.BiosFilename = g_Conf->FullpathToBios();
+
+			RelocateLogfile();
+
+			/*if( (oldconf == NULL) || (oldconf->LanguageCode.CmpNoCase(g_Conf->LanguageCode)) )
+			{
+				wxDoNotLogInThisScope please;
+				i18n_SetLanguage( g_Conf->LanguageId, g_Conf->LanguageCode );
+			}*/
+
+			CorePlugins.SetSettingsFolder( (std::string)GetSettingsFolder());
+
+			// Update the compression attribute on the Memcards folder.
+			// Memcards generally compress very well via NTFS compression.
+
+			#ifdef __WXMSW__
+			NTFS_CompressFile( g_Conf->Folders.MemoryCards, g_Conf->McdCompressNTFS );
+			#endif
+			sApp.DispatchEvent( AppStatus_SettingsApplied );
+
+			paused_core.AllowResume();
 	}
+	
 }
 
 // Invokes the specified Pcsx2App method, or posts the method to the main thread if the calling
