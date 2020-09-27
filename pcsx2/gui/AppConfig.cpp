@@ -160,7 +160,10 @@ namespace PathDefs
 
 	fs::path GetSettings()
 	{
-		return (GetDocuments() / "json").make_preferred();
+		fs::path docPath = GetDocuments();
+		fs::path path = GetDocuments() / "json";
+		// make_preferred() is causing issues?
+		return path;
 	}
 
 	fs::path GetLogs()
@@ -313,17 +316,17 @@ namespace FilenameDefs
 {
 	std::string GetUiConfig()
 	{
-		return Path::Combine(pxGetAppName().ToStdString(), "_ui.json");
+		return pxGetAppName().ToStdString() + "_ui.json";
 	}
 
 	std::string GetUiKeysConfig()
 	{
-		return Path::Combine(pxGetAppName().ToStdString(), "_keys.json");
+		return pxGetAppName().ToStdString() + "_keys.json";
 	}
 
 	std::string GetVmConfig()
 	{
-		return Path::Combine(pxGetAppName().ToStdString(), "_vm.json");
+		return pxGetAppName().ToStdString() + "_vm.json";
 	}
 
 	std::string GetUsermodeConfig()
@@ -394,7 +397,7 @@ fs::path GetCheatsWsFolder()
 
 fs::path GetSettingsFolder()
 {
-	if( wxGetApp().Overrides.SettingsFolder.c_str() != nullptr )
+	if( !wxGetApp().Overrides.SettingsFolder.empty() )
 		return wxGetApp().Overrides.SettingsFolder;
 
 	return UseDefaultSettingsFolder ? (std::string)PathDefs::GetSettings() : SettingsFolder;
@@ -402,8 +405,8 @@ fs::path GetSettingsFolder()
 
 fs::path GetVmSettingsFilename()
 {
-	fs::path fname( (wxGetApp().Overrides.VmSettingsFile.c_str() != nullptr) ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
-	return (GetSettingsFolder() / fname).make_preferred();
+    fs::path fname( !wxGetApp().Overrides.VmSettingsFile.empty() ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
+    return Path::Combine(GetSettingsFolder(), fname);
 }
 
 fs::path GetUiSettingsFilename()
@@ -1011,8 +1014,12 @@ nlohmann::json* OpenFileConfig( std::string filename )
 {
     // TODO - might want a common function to wrap the parse handling, probably want a graceful exit in the case of an invalid config file
 	std::ifstream in(filename);
-	nlohmann::json* json = new nlohmann::json(); 
-	*json = json->parse(in);
+	nlohmann::json* json = new nlohmann::json();
+	try {
+		*json = json->parse(in);
+	} catch(nlohmann::json::parse_error) {
+		Console.WriteLn("JSON - AHHHHHHH!");
+	}
 	return json;
 }
 
@@ -1210,7 +1217,6 @@ static void LoadVmSettings()
 {
 	// Load virtual machine options and apply some defaults overtop saved items, which
 	// are regulated by the PCSX2 UI.
-
 	std::unique_ptr<nlohmann::json> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
 	nlohmann::json vmloader;
 	g_Conf->EmuOptions.LoadSave( vmloader );

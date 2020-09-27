@@ -65,9 +65,7 @@ InstallationModeType		InstallationMode;
 static fs::path GetPortableJsonPath()
 {
 	fs::path programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
-	
 	fs::path programDir( programFullPath.parent_path());
-
 	return Path::Combine(programDir, "portable.json");
 }
 
@@ -127,7 +125,7 @@ nlohmann::json* Pcsx2App::TestForPortableInstall()
 	InstallationMode = 	InstallMode_Portable;
 
 	fs::path portableJsonFile = GetPortableJsonPath();
-	fs::path portableDocsFolder = portableJsonFile;
+	fs::path portableDocsFolder = portableJsonFile.parent_path();
 	std::string FilenameStr = portableJsonFile.string();
 
 	std::cout << "PATH: " << FilenameStr << std::endl;
@@ -147,7 +145,7 @@ nlohmann::json* Pcsx2App::TestForPortableInstall()
 		while( true ) // ?? why a whole loop here
 		{
 			std::string accessFailedStr, createFailedStr;
-			if (TestUserPermissionsRights( portableDocsFolder.parent_path(), createFailedStr, accessFailedStr )) break;
+			if (TestUserPermissionsRights( portableDocsFolder, createFailedStr, accessFailedStr )) break;
 
 			wxDialogWithHelpers dialog( NULL, AddAppName(_("Portable mode error - %s")) );
 
@@ -288,6 +286,7 @@ void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 
 void Pcsx2App::EstablishAppUserMode()
 {
+
 	std::unique_ptr<nlohmann::json> conf_install;
 	conf_install = std::unique_ptr<nlohmann::json>(TestForPortableInstall());
 
