@@ -168,7 +168,7 @@ namespace PathDefs
 
 	fs::path GetLogs()
 	{
-		return (GetDocuments() / "logs").make_preferred();
+		return (GetDocuments().parent_path() / "logs").make_preferred();
 	}
 
 	fs::path GetLangs()
@@ -1017,7 +1017,7 @@ nlohmann::json* OpenFileConfig( std::string filename )
 {
     // TODO - might want a common function to wrap the parse handling, probably want a graceful exit in the case of an invalid config file
 	std::ifstream in(filename);
-	nlohmann::json* json;
+	nlohmann::json* json = new nlohmann::json();
 	try {
 		*json = json->parse(in);
 	} catch(nlohmann::json::parse_error) {
