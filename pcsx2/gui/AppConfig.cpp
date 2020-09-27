@@ -94,7 +94,7 @@ namespace PathDefs
 
 	fs::path GetDocuments()
 	{
-		return GetDocuments( DocsFolderMode ).parent_path();
+		return GetDocuments( DocsFolderMode );
 	}
 
 	fs::path GetProgramDataDir()
@@ -132,7 +132,7 @@ namespace PathDefs
 
 	fs::path GetDocs()
 	{
-		return (AppRoot() / "docs").make_preferred();
+		return (AppRoot().parent_path() / "docs").make_preferred();
 	}
 
 	fs::path GetSavestates()
@@ -173,7 +173,7 @@ namespace PathDefs
 
 	fs::path GetLangs()
 	{
-		return (AppRoot() / "langs").make_preferred();
+		return (AppRoot().parent_path() / "langs").make_preferred();
 	}
 
 	std::string Get( FoldersEnum_t folderidx )
@@ -400,12 +400,13 @@ fs::path GetSettingsFolder()
 	if( !wxGetApp().Overrides.SettingsFolder.empty() )
 		return wxGetApp().Overrides.SettingsFolder;
 
-	return UseDefaultSettingsFolder ? (std::string)PathDefs::GetSettings() : SettingsFolder;
+	return UseDefaultSettingsFolder ? PathDefs::GetSettings().string() : SettingsFolder;
 }
 
 fs::path GetVmSettingsFilename()
 {
     fs::path fname( !wxGetApp().Overrides.VmSettingsFile.empty() ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
+	std::cout << "Path: " << Path::Combine(GetSettingsFolder(), fname) << std::endl;
     return Path::Combine(GetSettingsFolder(), fname);
 }
 
@@ -421,11 +422,14 @@ fs::path GetUiKeysFilename()
 	return (GetSettingsFolder() / fname).make_preferred();
 }
 
+std::string AppConfig::FullpathToBios() const				
+{ 
+	return std::string(Path::Combine( Folders.Bios, BaseFilenames.Bios )); 
+}
 
-std::string AppConfig::FullpathToBios() const				{ return std::string(Path::Combine( Folders.Bios, BaseFilenames.Bios )); }
 std::string AppConfig::FullpathToMcd( uint slot ) const
 {
-	return( Folders.MemoryCards + Mcd[slot].Filename );
+	return Path::Combine( Folders.MemoryCards, Mcd[slot].Filename );
 }
 
 bool IsPortable()
@@ -507,9 +511,8 @@ void App_LoadSaveInstallSettings( nlohmann::json& json )
 	json["Install_Dir"] = (	InstallFolder,	((std::string(wxStandardPaths::Get().GetExecutablePath()))));
 	//SetFullBaseDir( InstallFolder );
 
-	json["PluginsFolder"]	= (PluginsFolder =((fs::path)InstallFolder / "plugins"  ).make_preferred());
+	json["PluginsFolder"] = (PluginsFolder = Path::Combine(InstallFolder, "plugins" ));
 
-	//ini.Flush();
 }
 
 void App_LoadInstallSettings( nlohmann::json *json)
@@ -562,9 +565,9 @@ void AppConfig::LoadSaveRootItems( nlohmann::json &json)
 	json["Toolbar_ImageSize"] = Toolbar_ImageSize;
 	json["Toolbar_ShowLabels"] = Toolbar_ShowLabels;
 
-	wxFileName res(CurrentIso);
-	//json["CurrentIso"] = (res, res, ini.IsLoading() || IsPortable() );
-	CurrentIso = res.GetFullPath();
+	std::string res = CurrentIso;
+	json["CurrentIso"] = (res, res, IsPortable() );
+	CurrentIso = res;
 
 	json["CurrentBlockdump"] = CurrentBlockdump;
 	json["CurrentELF"] = CurrentELF;
@@ -618,7 +621,7 @@ void AppConfig::ConsoleLogOptions::LoadSave( nlohmann::json& json, const char* l
 
 	json["Visible"] = Visible;
 	json["AutoDock"] = AutoDock;
-	//json["DisplayPosition"] = DisplayPosition;
+	json["DisplayPosition"] = DisplayPosition;
 	json["DisplaySize"] = DisplaySize;
 	json["FontSize"] = FontSize;
 	json["Theme"] = Theme;
@@ -657,7 +660,7 @@ AppConfig::FolderOptions::FolderOptions()
 
 void AppConfig::FolderOptions::LoadSave( nlohmann::json& json )
 {
-	/*ScopedIniGroup path( ini, L"Folders" );
+	/*ScopedIniGroup path( ini, L"Folders" )
 
 	if( ini.IsSaving() )
 	{
@@ -677,18 +680,18 @@ void AppConfig::FolderOptions::LoadSave( nlohmann::json& json )
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
 	bool rel = false; //( ini.IsLoading() || IsPortable() );
 
-	/*IniEntryDirFile( Bios,  rel);
-	IniEntryDirFile( Snapshots,  rel );
-	IniEntryDirFile( Savestates,  rel );
-	IniEntryDirFile( MemoryCards,  rel );
-	IniEntryDirFile( Logs,  rel );
-	IniEntryDirFile( Langs,  rel );
-	IniEntryDirFile( Cheats, rel );
-	IniEntryDirFile( CheatsWS, rel );*/
-	json["PluginsFolder"] = (PluginsFolder, ((fs::path)InstallFolder / "plugins").make_preferred(), rel );
+	json[Bios] = rel;
+	json[Snapshots] =  rel;
+	json[Savestates] = rel;
+	json[MemoryCards] = rel;
+	json[Logs] = rel;
+	json[Langs] = rel;
+	json[Cheats] = rel;
+	json[CheatsWS] = rel;
+	json[PluginsFolder] = (PluginsFolder, Path::Combine(InstallFolder, "plugins"), rel );
 
-	//IniEntryDirFile( RunIso, rel );
-	//IniEntryDirFile( RunELF, rel );
+	json[ RunIso] = rel;
+	json[ RunELF] = rel;
 
 	//if( ini.IsLoading() )
 	//{
@@ -846,7 +849,7 @@ void AppConfig::FramerateOptions::SanityCheck()
 void AppConfig::FramerateOptions::LoadSave( nlohmann::json& json )
 {
 	//ScopedIniVurboScalar );
-	//json["SlomoScalar"] = SlomoScalar;
+	//json["SlomoScalar"] = SlomoScalar; // Fixed int 100 
 
 }
 
@@ -1014,7 +1017,7 @@ nlohmann::json* OpenFileConfig( std::string filename )
 {
     // TODO - might want a common function to wrap the parse handling, probably want a graceful exit in the case of an invalid config file
 	std::ifstream in(filename);
-	nlohmann::json* json = new nlohmann::json();
+	nlohmann::json* json;
 	try {
 		*json = json->parse(in);
 	} catch(nlohmann::json::parse_error) {
@@ -1070,7 +1073,7 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 			return;
 		}
 	}
-	if (!folderUtils.DoesExist(PathDefs::GetDocuments()))
+	if (!folderUtils.DoesExist(GetSettingsFolder()))
 	{
 		if(folderUtils.CreateFolder(GetSettingsFolder()))
 		{
