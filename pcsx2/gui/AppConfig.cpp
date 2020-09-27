@@ -1287,7 +1287,10 @@ static void SaveVmSettings()
 	nlohmann::json vmsaver = *vmjson.get();
 	g_Conf->EmuOptions.LoadSave( vmsaver );
 
-	sApp.DispatchVmSettingsEvent( vmsaver );
+	std::ofstream file( GetVmSettingsFilename());
+	file << std::setw(4) << vmsaver << std::endl;
+
+	//sApp.DispatchVmSettingsEvent( vmsaver );
 }
 
 static void SaveRegSettings()
