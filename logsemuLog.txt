@@ -1,4 +1,4 @@
-PCSX2 1.7.0-20200927104157 
+PCSX2 1.7.0-20200927115300 
 Savestate version: 0x9a0e0000
 
 Host Machine Init:
@@ -36,7 +36,7 @@ Reserving memory for recompilers...
 	VIF0 Unpack Recompiler Cache     @ 0x56000000 -> 0x56800000 [8mb]
 	VIF1 Unpack Recompiler Cache     @ 0x58000000 -> 0x58800000 [8mb]
 
-Loading plugins from p<...
+Loading plugins from 0;...
 	Bound 
 	Bound 
 	Bound 
@@ -44,23 +44,28 @@ Loading plugins from p<...
 	Bound 
 Plugins loaded successfully.
 
+pxGetTranslation: Long message detected, maybe use pxE() instead?
+Message: P
+
+(PCSX2:26543): Gtk-WARNING **: 12:41:43.112: gtk_menu_attach_to_widget(): menu already attached to GtkMenuItem
 Saving json files...
 Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
-JSON - AHHHHHHH!
-Saving json files...
 Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
-JSON - AHHHHHHH!
-Saving json files...
-JSON - AHHHHHHH!
 Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
 Saving json files...
 Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
-JSON - AHHHHHHH!
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
 Saving json files...
 Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
-JSON - AHHHHHHH!
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
 (GameDB) Database Not Found! [/home/musungo/coding/pcsx2/bin/PCSX2/GameIndex.dbf]
-Saving json files...
-Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
-JSON - AHHHHHHH!
-(GameDB) Unloading...

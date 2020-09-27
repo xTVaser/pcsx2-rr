@@ -1232,9 +1232,9 @@ void SysUpdateIsoSrcFile( const wxString& newIsoFile )
 void SysUpdateDiscSrcDrive( const wxString& newDiscDrive )
 {
 #if defined(_WIN32)
-	g_Conf->Folders.RunDisc = newDiscDrive;
+	g_Conf->Folders.RunDisc = newDiscDrive.ToStdString();
 #else
-	g_Conf->Folders.RunDisc = newDiscDrive;
+	g_Conf->Folders.RunDisc = newDiscDrive.ToStdString();
 #endif
 	AppSaveSettings();
 	sMainFrame.UpdateCdvdSrcSelection();

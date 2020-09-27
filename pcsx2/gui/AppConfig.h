@@ -168,9 +168,9 @@ public:
 			Cheats,
 			CheatsWS;
 
-		std::string RunIso;		// last used location for Iso loading.
-		std::string RunELF;		// last used location for ELF loading.
-		std::string RunDisc;		// last used location for Disc loading.
+		fs::path RunIso;		// last used location for Iso loading.
+		fs::path RunELF;		// last used location for ELF loading.
+		fs::path RunDisc;		// last used location for Disc loading.
 
 		FolderOptions();
 		void LoadSave( nlohmann::json &json );

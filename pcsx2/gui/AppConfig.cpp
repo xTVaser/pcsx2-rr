@@ -1249,14 +1249,14 @@ static void SaveUiSettings()
 	}
 
 #if defined(_WIN32)
-	/*if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc()))
+	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc()))
 	{
-		//->Folders.RunDisc.Clear();
-	}*/
+		fs::path::clear(Folders.RunDisc.Clear());
+	}
 #else
 	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
 	{
-		//g_Conf->Folders.RunDisc.Clear();
+		g_Conf->Folders.RunDisc.clear();
 	}
 #endif
 
@@ -1268,6 +1268,8 @@ static void SaveUiSettings()
 	SysTraceLog_LoadSaveSettings( saver );
 
 	sApp.DispatchUiSettingsEvent( saver );
+	std::ofstream file(GetUiSettingsFilename());
+	file << std::setw(4) << saver << std::endl;
 }
 
 static void SaveVmSettings()
@@ -1325,7 +1327,7 @@ void AppSaveSettings()
 
 	SaveUiSettings();
 	SaveVmSettings();
-	//SaveRegSettings(); // save register because of PluginsFolder change
+	SaveRegSettings(); // save register because of PluginsFolder change
 
 	isPosted = false;
 }

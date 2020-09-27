@@ -22,7 +22,7 @@ class DriveListManager : public wxEvtHandler
 protected:
 	struct DriveListItem
 	{
-		wxString driveLetter;
+		std::string driveLetter;
 		wxMenuItem* itemPtr;
 
 		DriveListItem() { itemPtr = NULL; }
@@ -57,4 +57,4 @@ struct DriveList
 	DriveList();
 };
 
-extern wxWindowID SwapOrReset_Disc(wxWindow* owner, IScopedCoreThread& core, const wxString driveLetter);
+extern wxWindowID SwapOrReset_Disc(wxWindow* owner, IScopedCoreThread& core, const std::string driveLetter);
