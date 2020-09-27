@@ -1,0 +1,66 @@
+PCSX2 1.7.0-20200927104157 
+Savestate version: 0x9a0e0000
+
+Host Machine Init:
+	Operating System =  Linux 5.8.10-1-default x86_64
+	Physical RAM     =  15894 MB
+	CPU name         =  AMD Ryzen 7 3700X 8-Core Processor
+	Vendor/Model     =  AuthenticAMD (stepping 00)
+	CPU speed        =  3.589 ghz (16 logical threads)
+	x86PType         =  Standard OEM
+	x86Flags         =  178bfbff 7ed8320b
+	x86EFlags        =  2fd3fbff
+
+x86 Features Detected:
+	SSE2.. SSE3.. SSSE3.. SSE4.1.. SSE4.2.. AVX.. AVX2.. FMA
+	SSE4a 
+	Pcsx2 was compiled as 64-bits.
+
+	Shutdown DEV9
+	Shutdown USB
+	Shutdown SPU2
+	Shutdown PAD
+	Shutdown GS
+Plugins shutdown successfully.
+Main Memory Manager              @ 0x40000000 -> 0x68000000 [640mb]
+Installing POSIX SIGSEGV handler...
+Mapping host memory for virtual systems...
+	EE Main Memory                   @ 0x40000000 -> 0x42884000 [40mb]
+	IOP Main Memory (2mb)            @ 0x44000000 -> 0x44211000 [2mb]
+	VU0/1 on-chip memory             @ 0x48000000 -> 0x4800A000 [40kb]
+Reserving memory for recompilers...
+	Micro VU0 Recompiler Cache       @ 0x5C000000 -> 0x60000000 [64mb]
+	Micro VU1 Recompiler Cache       @ 0x60000000 -> 0x64000000 [64mb]
+	R5900-32 Recompiler Cache        @ 0x50000000 -> 0x54000000 [64mb]
+	R3000A Recompiler Cache          @ 0x54000000 -> 0x56000000 [32mb]
+	VIF0 Unpack Recompiler Cache     @ 0x56000000 -> 0x56800000 [8mb]
+	VIF1 Unpack Recompiler Cache     @ 0x58000000 -> 0x58800000 [8mb]
+
+Loading plugins from p<...
+	Bound 
+	Bound 
+	Bound 
+	Bound 
+	Bound 
+Plugins loaded successfully.
+
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+JSON - AHHHHHHH!
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+JSON - AHHHHHHH!
+Saving json files...
+JSON - AHHHHHHH!
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+JSON - AHHHHHHH!
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+JSON - AHHHHHHH!
+(GameDB) Database Not Found! [/home/musungo/coding/pcsx2/bin/PCSX2/GameIndex.dbf]
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+JSON - AHHHHHHH!
+(GameDB) Unloading...

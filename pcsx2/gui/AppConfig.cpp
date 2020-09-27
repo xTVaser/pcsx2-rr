@@ -29,6 +29,7 @@
 
 #include "DebugTools/Debug.h"
 #include <memory>
+#include <iomanip>
 
 nlohmann::json json;
 PathUtils folderUtils;
@@ -1271,7 +1272,18 @@ static void SaveUiSettings()
 
 static void SaveVmSettings()
 {
-	std::unique_ptr<nlohmann::json> vmjson( OpenFileConfig( GetVmSettingsFilename() ) );
+
+	if (!folderUtils.DoesExist(GetVmSettingsFilename()))
+	{
+		std::string filePath = GetVmSettingsFilename().string();
+
+		nlohmann::json j = { };
+
+		std::ofstream file(filePath);
+		file << std::setw(4) << j << std::endl;
+	}
+
+	std::unique_ptr<nlohmann::json> vmjson( OpenFileConfig( GetVmSettingsFilename()));
 	nlohmann::json vmsaver = *vmjson.get();
 	g_Conf->EmuOptions.LoadSave( vmsaver );
 
