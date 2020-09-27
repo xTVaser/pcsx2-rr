@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SvnRootDir)\3rdparty\;$(SvnRootDir)\3rdparty\soundtouch\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SvnRootDir)\3rdparty\;$(SvnRootDir)\3rdparty\soundtouch\;$(SolutionDir)\3rdparty\rapidyaml\rapidyaml\ext\c4core\ext;$(SolutionDir)\3rdparty\rapidyaml\rapidyaml\ext\c4core\src;$(SolutionDir)\3rdparty\rapidyaml\rapidyaml\ext\c4core\src\c4;$(SolutionDir)\3rdparty\rapidyaml\rapidyaml\ext\c4core\src\c4\std;$(SolutionDir)\3rdparty\rapidyaml\rapidyaml\src;$(SolutionDir)\3rdparty\rapidyaml\rapidyaml\src\c4;$(SolutionDir)\3rdparty\rapidyaml\rapidyaml\src\c4\yml;$(SolutionDir)\3rdparty\rapidyaml\rapidyaml\src\c4\yml\detail;$(SolutionDir)\3rdparty\rapidyaml\rapidyaml\src\c4\yml\std;$(SolutionDir)\3rdparty\rapidyaml\rapidyaml\ext\c4core\ext\debugbreak;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SvnRootDir)\deps\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
