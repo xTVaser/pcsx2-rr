@@ -150,7 +150,7 @@ namespace PathDefs
 		// Each linux distributions have his rules for path so we give them the possibility to
 		// change it with compilation flags. -- Gregory
 #ifndef PLUGIN_DIR_COMPILATION
-		return (AppRoot() / "plugins").make_preferred();
+		return (AppRoot().parent_path() / "plugins").make_preferred();
 #else
 #define xPLUGIN_DIR_str(s) PLUGIN_DIR_str(s)
 #define PLUGIN_DIR_str(s) #s
@@ -1239,7 +1239,7 @@ void AppLoadSettings()
 
 static void SaveUiSettings()
 {
-	if( !wxFile::Exists( g_Conf->CurrentIso ) )
+	if( !folderUtils.DoesExist( g_Conf->CurrentIso ) )
 	{
 		g_Conf->CurrentIso.clear();
 	}
@@ -1268,8 +1268,8 @@ static void SaveUiSettings()
 
 static void SaveVmSettings()
 {
-	std::unique_ptr<nlohmann::json> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
-	nlohmann::json vmsaver;
+	std::unique_ptr<nlohmann::json> vmjson( OpenFileConfig( GetVmSettingsFilename() ) );
+	nlohmann::json vmsaver = *vmjson.get();
 	g_Conf->EmuOptions.LoadSave( vmsaver );
 
 	sApp.DispatchVmSettingsEvent( vmsaver );
@@ -1282,7 +1282,7 @@ static void SaveRegSettings()
 	if (InstallationMode == InstallMode_Portable) return;
 
 	// sApp. macro cannot be use because you need the return value of OpenInstallSettingsFile method
-	//if( Pcsx2App* __app_ = (Pcsx2App*)wxApp::GetInstance() ) conf_install = std::unique_ptr<wxConfigBase>((*__app_).OpenInstallSettingsFile());
+	//if( Pcsx2App* __app_ = (Pcsx2App*)wxApp::GetInstance() ) conf_install = std::unique_ptr<nlohmann::json>((*__app_).OpenInstallSettingsFile());
 	//conf_install->SetRecordDefaults(false);
 
 	//App_SaveInstallSettings( conf_install.get() );
@@ -1307,7 +1307,7 @@ void AppSaveSettings()
 
 	SaveUiSettings();
 	SaveVmSettings();
-	SaveRegSettings(); // save register because of PluginsFolder change
+	//SaveRegSettings(); // save register because of PluginsFolder change
 
 	isPosted = false;
 }
