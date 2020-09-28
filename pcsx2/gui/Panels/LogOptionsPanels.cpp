@@ -177,7 +177,7 @@ nlohmann::json SysTraceLog_LoadSaveSettings()
 		if (SysTraceLog* log = traceLogList[i])
 		{
 			pxAssertMsg(log->GetName(), "Trace log without a name!" );
-			trace[log->GetCategory()] = ("." + log->GetShortName(), log->Enabled, false );
+			//trace[log->GetCategory()] = ("." + log->GetShortName(), log->Enabled, false );
 		}
 	}
 

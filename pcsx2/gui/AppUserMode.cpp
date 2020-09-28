@@ -320,6 +320,6 @@ void Pcsx2App::EstablishAppUserMode()
 	AppSaveSettings();
 
 	// Wizard completed successfully, so let's not torture the user with this crap again!
-	json["RunWizard"] = false;
+//	json["RunWizard"] = 0;
 }
 
