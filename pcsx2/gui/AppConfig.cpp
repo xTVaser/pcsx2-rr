@@ -527,15 +527,15 @@ void App_SaveInstallSettings( nlohmann::json *json )
 }
 
 // ------------------------------------------------------------------------
-void AppConfig::LoadSaveMemcards( nlohmann::json& json )
+nlohmann::json AppConfig::LoadSaveMemcards()
 {
-	//ScopedIniGroup path( ini, L"MemoryCards" );
-
+	nlohmann::json memcards;
+	
 	for( uint slot=0; slot<2; ++slot )
 	{
-		json["Slot%u_Enable"] = (slot+1,
+		memcards["Slot%u_Enable"] = (slot+1,
 			Mcd[slot].Enabled, Mcd[slot].Enabled );
-		json["Slot%u_Filename"] = (slot+1,
+		memcards["Slot%u_Filename"] = (slot+1,
 			Mcd[slot].Filename, Mcd[slot].Filename );
 	}
 
@@ -544,16 +544,19 @@ void AppConfig::LoadSaveMemcards( nlohmann::json& json )
 		int mtport = FileMcd_GetMtapPort(slot)+1;
 		int mtslot = FileMcd_GetMtapSlot(slot)+1;
 
-		json["Multitap%u_Slot%u_Enable"] = (mtport, mtslot,
+		memcards["Multitap%u_Slot%u_Enable"] = (mtport, mtslot,
 			Mcd[slot].Enabled, Mcd[slot].Enabled );
-		json["Multitap%u_Slot%u_Filename"] = (mtport, mtslot,
+		memcards["Multitap%u_Slot%u_Filename"] = (mtport, mtslot,
 			Mcd[slot].Filename, Mcd[slot].Filename );
 	}
+
+	return memcards;
 }
 
-void AppConfig::LoadSaveRootItems( nlohmann::json &json)
+nlohmann::json AppConfig::LoadSaveRootItems()
 {
-	//IniEntry( MainGuiPosition );
+	nlohmann::json json;
+
 	json["SysSettingsTabName"] = SysSettingsTabName;
 	json["McdSettingsTabName"] = McdSettingsTabName;
 	json["ComponentsTabName"] = ComponentsTabName;
@@ -587,22 +590,25 @@ void AppConfig::LoadSaveRootItems( nlohmann::json &json)
 	#endif
 
 	json["CdvdSource"] = (CdvdSource, CDVD_SourceLabels, CdvdSource );
+
+	return json;
 }
 
 // ------------------------------------------------------------------------
-void AppConfig::LoadSave( nlohmann::json& json )
+nlohmann::json AppConfig::LoadSave()
 {
-	LoadSaveRootItems( json );
-	LoadSaveMemcards( json );
+	json.push_back(LoadSaveRootItems());
+	json.push_back(LoadSaveMemcards());
 
 	// Process various sub-components:
-	ProgLogBox		.LoadSave( json, "ProgramLog" );
+    json.push_back(ProgLogBox.LoadSave());
 
-	Folders			.LoadSave( json );
-	BaseFilenames	.LoadSave( json );
-	GSWindow		.LoadSave( json );
-	Framerate		.LoadSave( json );
-	Templates		.LoadSave( json );
+	json.push_back(Folders.LoadSave());
+	json.push_back(BaseFilenames.LoadSave());
+	json.push_back(GSWindow.LoadSave());
+	json.push_back(Framerate.LoadSave());
+	//json.push_back(Templates.LoadSave());
+	return json;
 }
 
 // ------------------------------------------------------------------------
@@ -616,16 +622,20 @@ AppConfig::ConsoleLogOptions::ConsoleLogOptions()
 	FontSize	= 8;
 }
 
-void AppConfig::ConsoleLogOptions::LoadSave( nlohmann::json& json, const char* logger )
+nlohmann::json AppConfig::ConsoleLogOptions::LoadSave()
 {
 	//ScopedIniGroup path( ini, logger );
 
-	json["Visible"] = Visible;
-	json["AutoDock"] = AutoDock;
-	json["DisplayPosition"] = DisplayPosition;
-	json["DisplaySize"] = DisplaySize;
-	json["FontSize"] = FontSize;
-	json["Theme"] = Theme;
+	nlohmann::json console;
+
+	console["Visible"] = Visible;
+	console["AutoDock"] = AutoDock;
+	console["DisplayPosition"] = DisplayPosition;
+	console["DisplaySize"] = DisplaySize;
+	console["FontSize"] = FontSize;
+	console["Theme"] = Theme;
+
+	return console;
 }
 
 void AppConfig::FolderOptions::ApplyDefaults()
@@ -659,48 +669,43 @@ AppConfig::FolderOptions::FolderOptions()
 	//bitset = 0xffffffff;
 }
 
-void AppConfig::FolderOptions::LoadSave( nlohmann::json& json )
+nlohmann::json AppConfig::FolderOptions::LoadSave()
 {
-	/*ScopedIniGroup path( ini, L"Folders" )
 
-	if( ini.IsSaving() )
-	{
-		ApplyDefaults();
-	}*/
+	nlohmann::json folder;
 
-	json["UseDefaultBios"] = UseDefaultBios;
-	json["UseDefaultSavestates"] = UseDefaultSavestates;
-	json["UseDefaultMemoryCards"] = UseDefaultMemoryCards;
-	json["UseDefaultLogs"] = UseDefaultLogs;
-	json["UseDefaultLangs"] = UseDefaultLangs;
-	json["UseDefaultPluginsFolder"] = UseDefaultPluginsFolder;
-	json["UseDefaultCheats"] = UseDefaultCheats;
-	json["UseDefaultCheatsWS"] = UseDefaultCheatsWS;
+	folder["UseDefaultBios"] = UseDefaultBios;
+	folder["UseDefaultSavestates"] = UseDefaultSavestates;
+	folder["UseDefaultMemoryCards"] = UseDefaultMemoryCards;
+	folder["UseDefaultLogs"] = UseDefaultLogs;
+	folder["UseDefaultLangs"] = UseDefaultLangs;
+	folder["UseDefaultPluginsFolder"] = UseDefaultPluginsFolder;
+	folder["UseDefaultCheats"] = UseDefaultCheats;
+	folder["UseDefaultCheatsWS"] = UseDefaultCheatsWS;
 
 	//when saving in portable mode, we save relative paths if possible
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
-	bool rel = false; //( ini.IsLoading() || IsPortable() );
+	bool rel = IsPortable();
 
-	json[Bios] = rel;
-	json[Snapshots] =  rel;
-	json[Savestates] = rel;
-	json[MemoryCards] = rel;
-	json[Logs] = rel;
-	json[Langs] = rel;
-	json[Cheats] = rel;
-	json[CheatsWS] = rel;
-	json[PluginsFolder] = (PluginsFolder, Path::Combine(InstallFolder, "plugins"), rel );
+	folder[Bios] = rel;
+	folder[Snapshots] =  rel;
+	folder[Savestates] = rel;
+	folder[MemoryCards] = rel;
+	folder[Logs] = rel;
+	folder[Langs] = rel;
+	folder[Cheats] = rel;
+	folder[CheatsWS] = rel;
+	folder[PluginsFolder] = (PluginsFolder, Path::Combine(InstallFolder, "plugins"), rel );
 
-	json[ RunIso] = rel;
-	json[ RunELF] = rel;
+	folder[RunIso] = rel;
+	folder[RunELF] = rel;
 
-	//if( ini.IsLoading() )
-	//{
-		ApplyDefaults();
+//		ApplyDefaults();
 
 		for( int i=0; i<FolderId_COUNT; ++i )
 			operator[]( (FoldersEnum_t)i );
-	//}
+
+	return folder;
 }
 
 // ------------------------------------------------------------------------
@@ -710,9 +715,10 @@ const std::string& AppConfig::FilenameOptions::operator[]( PluginsEnum_t plugini
 	return Plugins[pluginidx];
 }
 
-void AppConfig::FilenameOptions::LoadSave( nlohmann::json& json )
+nlohmann::json AppConfig::FilenameOptions::LoadSave()
 {
-	//ScopedIniGroup path( ini, L"Filenames" );
+
+	nlohmann::json appC;
 
 	static const std::string pc( "Please Configure" );
 
@@ -725,16 +731,19 @@ void AppConfig::FilenameOptions::LoadSave( nlohmann::json& json )
 	{
 		if ( needRelativeName ) {
 			std::string plugin_filename = Plugins[i];
-			//ini.Entry( tbl_PluginInfo[i].GetShortname(), plugin_filename, pc );
+			appC[tbl_PluginInfo[i].GetShortname()] = (plugin_filename, pc );
 		} //else
-		//ini.Entry( tbl_PluginInfo[i].GetShortname(), Plugins[i], pc );
+		appC[tbl_PluginInfo[i].GetShortname()] = (Plugins[i], pc );
 	}
 
 	if( needRelativeName ) {
 		std::string bios_filename = Bios;
-		json["BIOS"] = (bios_filename, pc );
+		appC["BIOS"] = (bios_filename, pc );
 	} else
-		json["BIOS"] = ( Bios, pc );
+		appC ["BIOS"] = pc;
+
+
+   return appC;
 }
 
 // ------------------------------------------------------------------------
@@ -783,23 +792,25 @@ void AppConfig::GSWindowOptions::SanityCheck()
 		AspectRatio = AspectRatio_4_3;
 }
 
-void AppConfig::GSWindowOptions::LoadSave( nlohmann::json& json )
+nlohmann::json AppConfig::GSWindowOptions::LoadSave()
 {
 	//ScopedIniGroup path( ini, L"GSWindow" );
 
-	json["CloseOnEsc"] = CloseOnEsc;
-	json["DefautlToFullscreen"] = DefaultToFullscreen;
-	json["AlwaysHideMous"] = AlwaysHideMouse;
-	json["DisableResizeBorders"] = DisableResizeBorders;
-	json["DisableScreenSaver"] = DisableScreenSaver;
+	nlohmann::json gs;
 
-	json["WindowSize"] = WindowSize;
-	json["WindowPos"] =  WindowPos;
-	json["IsMaximized"] = IsMaximized;
-	json["IsFullscreen"] = IsFullscreen;
-	json["EnableVsyncWindowFlag"] = EnableVsyncWindowFlag;
+	gs["CloseOnEsc"] = CloseOnEsc;
+	gs["DefautlToFullscreen"] = DefaultToFullscreen;
+	gs["AlwaysHideMous"] = AlwaysHideMouse;
+	gs["DisableResizeBorders"] = DisableResizeBorders;
+	gs["DisableScreenSaver"] = DisableScreenSaver;
 
-	json["IsToggleFullscreenOnDoubleClick"] = IsToggleFullscreenOnDoubleClick;
+	gs["WindowSize"] = WindowSize;
+	gs["WindowPos"] =  WindowPos;
+	gs["IsMaximized"] = IsMaximized;
+	gs["IsFullscreen"] = IsFullscreen;
+	gs["EnableVsyncWindowFlag"] = EnableVsyncWindowFlag;
+
+	gs["IsToggleFullscreenOnDoubleClick"] = IsToggleFullscreenOnDoubleClick;
 
 	static const char* AspectRatioNames[] =
 	{
@@ -810,7 +821,7 @@ void AppConfig::GSWindowOptions::LoadSave( nlohmann::json& json )
 		NULL
 	};
 
-	json["AspectRatio"] = (AspectRatio, AspectRatioNames, AspectRatio );
+	gs["AspectRatio"] = (AspectRatio, AspectRatioNames, AspectRatio );
 
 	static const char* FMVAspectRatioSwitchNames[] =
 	{
@@ -820,11 +831,11 @@ void AppConfig::GSWindowOptions::LoadSave( nlohmann::json& json )
 		// WARNING: array must be NULL terminated to compute it size
 		NULL
 	};
-	json["FMVAspectRatioSwitch"] = (FMVAspectRatioSwitch, FMVAspectRatioSwitchNames, FMVAspectRatioSwitch);
+	gs["FMVAspectRatioSwitch"] = (FMVAspectRatioSwitch, FMVAspectRatioSwitchNames, FMVAspectRatioSwitch);
 
-	//IniEntry( Zoom );
+	//gs["Zoom"] = Zoom;
 
-	//if( ini.IsLoading() ) SanityCheck();
+	return gs;
 }
 
 // ----------------------------------------------------------------------------
@@ -838,6 +849,15 @@ AppConfig::FramerateOptions::FramerateOptions()
 	SkipOnTurbo				= false;
 }
 
+
+nlohmann::json AppConfig::FramerateOptions::LoadSave()
+{
+	//ScopedIniVurboScalar );
+	//json["SlomoScalar"] = SlomoScalar; // Fixed int 100 
+
+	return NULL;
+}
+
 void AppConfig::FramerateOptions::SanityCheck()
 {
 	// Ensure Conformation of various options...
@@ -847,12 +867,6 @@ void AppConfig::FramerateOptions::SanityCheck()
 	SlomoScalar		.ConfineTo( 0.05, 10.0 );
 }
 
-void AppConfig::FramerateOptions::LoadSave( nlohmann::json& json )
-{
-	//ScopedIniVurboScalar );
-	//json["SlomoScalar"] = SlomoScalar; // Fixed int 100 
-
-}
 
 AppConfig::UiTemplateOptions::UiTemplateOptions()
 {
@@ -871,24 +885,26 @@ AppConfig::UiTemplateOptions::UiTemplateOptions()
 #endif
 }
 
-void AppConfig::UiTemplateOptions::LoadSave(nlohmann::json& json)
+/*nlohmann::json AppConfig::UiTemplateOptions::LoadSave();
 {
-	//ScopedIniGroup path(ini, L"UiTemplates");
+	nlohmann::json ui;
 
-	/*IniEntry(LimiterUnlimited);
-	IniEntry(LimiterTurbo);
-	IniEntry(LimiterSlowmo);
-	IniEntry(LimiterNormal);
-	IniEntry(OutputFrame);
-	IniEntry(OutputField);
-	IniEntry(OutputProgressive);
-	IniEntry(OutputInterlaced);
-	IniEntry(Paused);
-	IniEntry(TitleTemplate);
+	ui["LimiterUnlimited"] = LimiterUnlimited;
+	ui["LimiterTurbo"] = LimiterTurbo;
+	ui["LimiterSlowmo"] = LimiterSlowmo;
+	ui["LimiterNormal"] = LimiterNormal;
+	ui["OutputFrame"] = OutputFrame;
+	ui["OutputField"] = OutputField;
+	ui["OutputProgressive"] = OutputProgressive;
+	ui["OutputInterlaced"] = OutputInterlaced;
+	ui["Paused"] = Paused;
+	ui["TitleTemplate"] = TitleTemplate;
 #ifndef DISABLE_RECORDING
-	IniEntry(RecordingTemplate);
-#endif*/
-}
+	ui["RecordingTemplate"] = RecordingTemplate;
+#endif
+
+return ui;
+}*/
 
 int AppConfig::GetMaxPresetIndex()
 {
@@ -1190,12 +1206,12 @@ AppIniLoader::AppIniLoader()
 
 static void LoadUiSettings()
 {
-	nlohmann::json loader;
-	ConLog_LoadSaveSettings( loader );
-	SysTraceLog_LoadSaveSettings( loader );
+	auto loader = nlohmann::json::array();
+	loader.push_back(ConLog_LoadSaveSettings());
+	loader.push_back(SysTraceLog_LoadSaveSettings());
 
 	g_Conf = std::make_unique<AppConfig>();
-	g_Conf->LoadSave( loader );
+	loader.push_back(g_Conf->LoadSave());
 
 	if( !folderUtils.DoesExist( g_Conf->CurrentIso ) )
 	{
@@ -1222,15 +1238,15 @@ static void LoadVmSettings()
 	// Load virtual machine options and apply some defaults overtop saved items, which
 	// are regulated by the PCSX2 UI.
 	std::unique_ptr<nlohmann::json> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
-	nlohmann::json vmloader;
-	g_Conf->EmuOptions.LoadSave( vmloader );
+	auto vmloader = nlohmann::json::array();
+	vmloader.push_back(g_Conf->EmuOptions.LoadSave());
 	g_Conf->EmuOptions.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
 
 	if (g_Conf->EnablePresets){
 		g_Conf->IsOkApplyPreset(g_Conf->PresetIndex, true);
 	}
 
-	sApp.DispatchVmSettingsEvent( vmloader );
+	//sApp.DispatchVmSettingsEvent( vmloader );
 }
 
 void AppLoadSettings()
@@ -1263,11 +1279,11 @@ static void SaveUiSettings()
 	sApp.GetRecentIsoManager().Add( g_Conf->CurrentIso );
 
 	nlohmann::json saver;
-	g_Conf->LoadSave( saver );
-	ConLog_LoadSaveSettings( saver );
-	SysTraceLog_LoadSaveSettings( saver );
+	saver.push_back(g_Conf->LoadSave());
+	saver.push_back(ConLog_LoadSaveSettings());
+	saver.push_back(SysTraceLog_LoadSaveSettings());
 
-	sApp.DispatchUiSettingsEvent( saver );
+	//sApp.DispatchUiSettingsEvent( saver );
 	std::ofstream file(GetUiSettingsFilename());
 	file << std::setw(4) << saver << std::endl;
 }
@@ -1287,7 +1303,7 @@ static void SaveVmSettings()
 
 	std::unique_ptr<nlohmann::json> vmjson( OpenFileConfig( GetVmSettingsFilename()));
 	nlohmann::json vmsaver = *vmjson.get();
-	g_Conf->EmuOptions.LoadSave( vmsaver );
+	vmsaver.push_back(g_Conf->EmuOptions.LoadSave());
 
 	std::ofstream file( GetVmSettingsFilename());
 	file << std::setw(4) << vmsaver << std::endl;

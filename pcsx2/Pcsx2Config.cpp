@@ -21,7 +21,7 @@
 #include "GS.h"
 #include "gui/GSFrame.h"
 
-void TraceLogFilters::LoadSave( nlohmann::json& json )
+nlohmann::json TraceLogFilters::LoadSave()
 {
 	//ScopedIniGroup path( json, L"TraceLog" );
 
@@ -32,6 +32,8 @@ void TraceLogFilters::LoadSave( nlohmann::json& json )
 
 	//json.push_back(EE);
 	//json.push_back(IOP);
+
+	return NULL;
 }
 
 Pcsx2Config::SpeedhackOptions::SpeedhackOptions()
@@ -52,28 +54,31 @@ Pcsx2Config::SpeedhackOptions& Pcsx2Config::SpeedhackOptions::DisableAll()
 	return *this;
 }
 
-void Pcsx2Config::SpeedhackOptions::LoadSave( nlohmann::json& json )
+nlohmann::json Pcsx2Config::SpeedhackOptions::LoadSave()
 {
-	//ScopedIniGroup path( ini, L"Speedhacks" );
+	nlohmann::json speedHacks;
 
-	json["EECycleRate"] = EECycleRate;
-	json["EECycleSkip"] = EECycleSkip;
-	json["fastCDVD"] = fastCDVD;
-	json["IntcStat"] = IntcStat;
-	json["WaitLoop"] = WaitLoop;
-	json["vuFlagHack"] = vuFlagHack;
-	json["vuThread"] = vuThread;
+	speedHacks["EECycleRate"] = EECycleRate;
+	speedHacks["EECycleSkip"] = EECycleSkip;
+	speedHacks["fastCDVD"] = fastCDVD;
+	speedHacks["IntcStat"] = IntcStat;
+	speedHacks["WaitLoop"] = WaitLoop;
+	speedHacks["vuFlagHack"] = vuFlagHack;
+	speedHacks["vuThread"] = vuThread;
+
+	return speedHacks;
 }
 
-void Pcsx2Config::ProfilerOptions::LoadSave( nlohmann::json& json )
+nlohmann::json Pcsx2Config::ProfilerOptions::LoadSave()
 {
-	//ScopedIniGroup path( ini, L"Profiler" );
+	nlohmann::json profiler;
+	profiler["Enabled"] = Enabled;
+	profiler["RecBlocks_EE"] = RecBlocks_EE;
+	profiler["RecBlocks_IOP"] = RecBlocks_IOP;
+	profiler["RecBlocks_VU0"] = RecBlocks_VU0;
+	profiler["RecBlocks_VU1"] = RecBlocks_VU1;
 
-	json["Enabled"] = Enabled;
-	json["RecBlocks_EE"] = RecBlocks_EE;
-	json["RecBlocks_IOP"] = RecBlocks_IOP;
-	json["RecBlocks_VU0"] = RecBlocks_VU0;
-	json["RecBlocks_VU1"] = RecBlocks_VU1;
+    return profiler;
 }
 
 Pcsx2Config::RecompilerOptions::RecompilerOptions()
@@ -138,31 +143,33 @@ void Pcsx2Config::RecompilerOptions::ApplySanityCheck()
 	}
 }
 
-void Pcsx2Config::RecompilerOptions::LoadSave( nlohmann::json& json )
+nlohmann::json Pcsx2Config::RecompilerOptions::LoadSave()
 {
-	//ScopedIniGroup path( ini, L"Recompiler" );
+	nlohmann::json recomp;
 
-	json["EnableEE"] = EnableEE;
-	json["EnableIOP"] = EnableIOP;
-	json["EnableEECache"] = EnableEECache;
-	json["EnableVU0"] = EnableVU0;
-	json["EnableVU1"] = EnableVU1;
+	recomp["EnableEE"] = EnableEE;
+	recomp["EnableIOP"] = EnableIOP;
+	recomp["EnableEECache"] = EnableEECache;
+	recomp["EnableVU0"] = EnableVU0;
+	recomp["EnableVU1"] = EnableVU1;
 
-	json["UseMicroVU0"] = UseMicroVU0;
-	json["UseMicroVU1"] = UseMicroVU1;
+	//recomp["UseMicroVU0"] = UseMicroVU0;
+	//recomp["UseMicroVU1"] = UseMicroVU1;
 
-	json["vuOverflow"] = vuOverflow;
-	json["vuExtraOverflow"] = vuExtraOverflow;
-	json["vuSignOverflow"] = vuSignOverflow;
-	json["vuUnderflow"] = vuUnderflow;
+	recomp["vuOverflow"] = vuOverflow;
+	recomp["vuExtraOverflow"] = vuExtraOverflow;
+	recomp["vuSignOverflow"] = vuSignOverflow;
+	recomp["vuUnderflow"] = vuUnderflow;
 
-	json["fpuOverflow"] = fpuOverflow;
-	json["fpuExtraOverflow"] = fpuExtraOverflow;
-	json["fpuFullMode"] = fpuFullMode;
+	recomp["fpuOverflow"] = fpuOverflow;
+	recomp["fpuExtraOverflow"] = fpuExtraOverflow;
+	recomp["fpuFullMode"] = fpuFullMode;
 
-	json["StackFrameChecks"] = StackFrameChecks;
-	json["PreBlockCheckEE"] = PreBlockCheckEE;
-	json["PreBlockCheckIOP"] = PreBlockCheckIOP;
+	recomp["StackFrameChecks"] = StackFrameChecks;
+	recomp["PreBlockCheckEE"] = PreBlockCheckEE;
+	recomp["PreBlockCheckIOP"] = PreBlockCheckIOP;
+
+	return recomp;
 }
 
 Pcsx2Config::CpuOptions::CpuOptions()
@@ -179,7 +186,7 @@ void Pcsx2Config::CpuOptions::ApplySanityCheck()
 	Recompiler.ApplySanityCheck();
 }
 
-void Pcsx2Config::CpuOptions::LoadSave( nlohmann::json& json )
+nlohmann::json Pcsx2Config::CpuOptions::LoadSave()
 {
 	//ScopedIniGroup path( ini, L"CPU" );
 
@@ -191,7 +198,9 @@ void Pcsx2Config::CpuOptions::LoadSave( nlohmann::json& json )
 	//IniBitBoolEx( sseVUMXCSR.FlushToZero,		"VU.FlushToZero" );
 	//IniBitfieldEx( sseVUMXCSR.RoundingControl,	"VU.Roundmode" );
 
-	Recompiler.LoadSave( json );
+	//Recompiler.LoadSave();
+
+	return NULL;
 }
 
 // Default GSOptions
@@ -212,23 +221,26 @@ Pcsx2Config::GSOptions::GSOptions()
 	FrameratePAL			= 50.0;
 }
 
-void Pcsx2Config::GSOptions::LoadSave( nlohmann::json& json )
+nlohmann::json Pcsx2Config::GSOptions::LoadSave()
 {
-	//ScopedIniGroup path( ini, L"GS" );
+	nlohmann::json gs;
 
-	json["SynchronousMTGS"] = SynchronousMTGS;
-	json["VsyncQueueSize"] = VsyncQueueSize;
+	gs["SynchronousMTGS"] = SynchronousMTGS;
+	gs["VsyncQueueSize"] = VsyncQueueSize;
 
-	json["FrameLimitEnable"] = FrameLimitEnable;
-	json["FrameSkipEnable"] = FrameSkipEnable;
+	gs["FrameLimitEnable"] = FrameLimitEnable;
+	gs["FrameSkipEnable"] = FrameSkipEnable;
 	//ini.EnumEntry( L"VsyncEnable", VsyncEnable, NULL, VsyncEnable );
 
 	//json["LimitScalar"] = LimitScalar;
 	//json["FramerateNTSC"] = FramerateNTSC;
 	//json["FrameratePAL"] = FrameratePAL;
 
-	json["FramesToDraw"] = FramesToDraw;
-	json["FramesToSkip"] = FramesToSkip;
+	gs["FramesToDraw"] = FramesToDraw;
+	gs["FramesToSkip"] = FramesToSkip;
+
+
+
 }
 
 int Pcsx2Config::GSOptions::GetVsync() const
@@ -362,27 +374,30 @@ bool Pcsx2Config::GamefixOptions::Get( GamefixId id ) const
 	return false;		// unreachable, but we still need to suppress warnings >_<
 }
 
-void Pcsx2Config::GamefixOptions::LoadSave( nlohmann::json& json )
+nlohmann::json Pcsx2Config::GamefixOptions::LoadSave()
 {
-	//ScopedIniGroup path( ini, L"Gamefixes" );
 
-	json["VuAddSubHack"] = VuAddSubHack;
-	json["FpuCompareHack"] = FpuCompareHack;
-	json["FpuMulHack"] = FpuMulHack;
-	json["FpuNegDivHack"] = FpuNegDivHack;
-	json["XgKickHack"] = XgKickHack;
-	json["IPUWaitHack"] = IPUWaitHack;
-	json["EETimingHack"] = EETimingHack;
-	json["SkipMPEGHack"] = SkipMPEGHack;
-	json["OPHFlagHack"] = OPHFlagHack;
-	json["DMABusyHack"] = DMABusyHack;
-	json["VIFFIFOHack"] = VIFFIFOHack;
-	json["VIF1StallHack"] = VIF1StallHack;
-	json["GIFFIFOHack"] = GIFFIFOHack;
-	json["FMVinSoftwareHack"] = FMVinSoftwareHack;
-	json["GoemonTlbHack"] = GoemonTlbHack;
-	json["ScarfaceIbit"] = ScarfaceIbit;
-    json["CrashTagTeamRacingIbit"] = CrashTagTeamRacingIbit;
+	nlohmann::json gameFix;
+
+	gameFix["VuAddSubHack"] = VuAddSubHack;
+	gameFix["FpuCompareHack"] = FpuCompareHack;
+	gameFix["FpuMulHack"] = FpuMulHack;
+	gameFix["FpuNegDivHack"] = FpuNegDivHack;
+	gameFix["XgKickHack"] = XgKickHack;
+	gameFix["IPUWaitHack"] = IPUWaitHack;
+	gameFix["EETimingHack"] = EETimingHack;
+	gameFix["SkipMPEGHack"] = SkipMPEGHack;
+	gameFix["OPHFlagHack"] = OPHFlagHack;
+	gameFix["DMABusyHack"] = DMABusyHack;
+	gameFix["VIFFIFOHack"] = VIFFIFOHack;
+	gameFix["VIF1StallHack"] = VIF1StallHack;
+	gameFix["GIFFIFOHack"] = GIFFIFOHack;
+	gameFix["FMVinSoftwareHack"] = FMVinSoftwareHack;
+	gameFix["GoemonTlbHack"] = GoemonTlbHack;
+	gameFix["ScarfaceIbit"] = ScarfaceIbit;
+    gameFix["CrashTagTeamRacingIbit"] = CrashTagTeamRacingIbit;
+
+    return gameFix;
 }
 
 
@@ -397,17 +412,18 @@ Pcsx2Config::DebugOptions::DebugOptions()
 	MemoryViewBytesPerRow = 16;
 }
 
-void Pcsx2Config::DebugOptions::LoadSave( nlohmann::json& json )
+nlohmann::json Pcsx2Config::DebugOptions::LoadSave()
 {
-	//ScopedIniGroup path( ini, L"Debugger" );
+	nlohmann::json debugger;
 
-	json["ShowDebuggerOnStart"] = ShowDebuggerOnStart;
-	json["AlignMemoryWindowStart"] = AlignMemoryWindowStart;
-	json["FontWidth"] = FontWidth;
-	json["FontHeight"] = FontHeight;
-	json["WindowWidth"] = WindowWidth;
-	json["WindowHeight"] = WindowHeight;
-	json["MemoryViewBytesPerRow"] = MemoryViewBytesPerRow;
+	debugger["ShowDebuggerOnStart"] = ShowDebuggerOnStart;
+	debugger["AlignMemoryWindowStart"] = AlignMemoryWindowStart;
+	debugger["FontWidth"] = FontWidth;
+	debugger["FontHeight"] = FontHeight;
+	debugger["WindowWidth"] = WindowWidth;
+	debugger["WindowHeight"] = WindowHeight;
+	debugger["MemoryViewBytesPerRow"] = MemoryViewBytesPerRow;
+	return debugger;
 }
 
 Pcsx2Config::Pcsx2Config()
@@ -419,39 +435,45 @@ Pcsx2Config::Pcsx2Config()
 	BackupSavestate = true;
 }
 
-void Pcsx2Config::LoadSave( nlohmann::json& json )
+nlohmann::json Pcsx2Config::LoadSave()
 {
-	//ScopedIniGroup path( ini, L"EmuCore" );
+	nlohmann::json core;
 
-	json["CdvdVerboseReads"] = CdvdVerboseReads;
-	json["CdvdDumpBlocks"] = CdvdDumpBlocks;
-	json["CdvdShareWrite"] = CdvdShareWrite;
-	json["EnablePatches"] = EnablePatches;
-	json["EnableCheats"] = EnableCheats;
-	json["EnableWideScreenPatches"] = EnableWideScreenPatches;
+	core["CdvdVerboseReads"] = CdvdVerboseReads;
+	core["CdvdDumpBlocks"] = CdvdDumpBlocks;
+	core["CdvdShareWrite"] = CdvdShareWrite;
+	core["EnablePatches"] = EnablePatches;
+	core["EnableCheats"] = EnableCheats;
+	core["EnableWideScreenPatches"] = EnableWideScreenPatches;
 #ifndef DISABLE_RECORDING
-	json["EnableRecordingTools"] = EnableRecordingTools;
+	core["EnableRecordingTools"] = EnableRecordingTools;
 #endif
-	json["ConsoleToStdio"] = ConsoleToStdio;
-	json["HostFs"] = HostFs;
+	core["ConsoleToStdio"] = ConsoleToStdio;
+	core["HostFs"] = HostFs;
 
-	json["BackupSavestate"] = BackupSavestate;
-	json["McdEnableEjection"] = McdEnableEjection;
-	json["McdFolderAutoManage"] = McdFolderAutoManage;
-	json["MultitapPort0_Enabled"] = MultitapPort0_Enabled;
-	json["MultitapPort1_Enabled"] = MultitapPort1_Enabled;
+	core["BackupSavestate"] = BackupSavestate;
+	core["McdEnableEjection"] = McdEnableEjection;
+	core["McdFolderAutoManage"] = McdFolderAutoManage;
+	core["MultitapPort0_Enabled"] = MultitapPort0_Enabled;
+	core["MultitapPort1_Enabled"] = MultitapPort1_Enabled;
 
 	// Process various sub-components:
 
-	Speedhacks		.LoadSave( json );
-	Cpu				.LoadSave( json );
-	GS				.LoadSave( json );
-	Gamefixes		.LoadSave( json );
-	Profiler		.LoadSave( json );
+	auto array = nlohmann::json::array();
 
-	Debugger		.LoadSave( json );
-	Trace			.LoadSave( json );
+	array.push_back(core);
 
+	array.push_back(Recompiler.LoadSave());
+	array.push_back(Speedhacks.LoadSave());
+	array.push_back(Cpu.LoadSave());
+	array.push_back(GS.LoadSave());
+	array.push_back(Gamefixes.LoadSave());
+	array.push_back(Profiler.LoadSave());
+
+	array.push_back(Debugger.LoadSave());
+	array.push_back(Trace.LoadSave());
+
+	return array;
 }
 
 bool Pcsx2Config::MultitapEnabled( uint port ) const
@@ -466,7 +488,7 @@ void Pcsx2Config::Load( nlohmann::json loader )
 
 	//wxFileConfig cfg( srcfile );
 	//IniLoader loader( cfg );
-	LoadSave( loader );
+	//LoadSave( loader );
 }
 
 void Pcsx2Config::Save( std::string& dstfile )
@@ -475,5 +497,5 @@ void Pcsx2Config::Save( std::string& dstfile )
 
 	wxFileConfig cfg( dstfile );
 	nlohmann::json saver;
-	LoadSave( saver );
+	//LoadSave( saver );
 }
