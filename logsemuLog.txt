@@ -36,7 +36,7 @@ Reserving memory for recompilers...
 	VIF0 Unpack Recompiler Cache     @ 0x56000000 -> 0x56800000 [8mb]
 	VIF1 Unpack Recompiler Cache     @ 0x58000000 -> 0x58800000 [8mb]
 
-Loading plugins from 0;...
+Loading plugins from 
 	Bound 
 	Bound 
 	Bound 
@@ -47,7 +47,7 @@ Plugins loaded successfully.
 pxGetTranslation: Long message detected, maybe use pxE() instead?
 Message: P
 
-(PCSX2:26543): Gtk-WARNING **: 12:41:43.112: gtk_menu_attach_to_widget(): menu already attached to GtkMenuItem
+(PCSX2:27408): Gtk-WARNING **: 12:52:20.822: gtk_menu_attach_to_widget(): menu already attached to GtkMenuItem
 Saving json files...
 Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
 Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
@@ -69,3 +69,111 @@ Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
 Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
 Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
 (GameDB) Database Not Found! [/home/musungo/coding/pcsx2/bin/PCSX2/GameIndex.dbf]
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Saving json files...
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+HLE Host: Will load ELF: 
+
+HLE Notice: ELF does not have a path.
+
+Initializing plugins...
+	Init GS
+	Init PAD
+	Init SPU2
+	Init USB
+	Init DEV9
+Plugins initialized successfully.
+
+Patches: No CRC found, using 00000000 instead.
+The  folder ('
+Overall 0  loaded
+[wx] can't open file '/home/musungo/coding/pcsx2/bin/PCSX2/cheats_ws.zip' (error 20: Not a directory)
+(Wide Screen Cheats DB) Patches Loaded: 0
+Opening plugins...
+Saving json files...
+	Opening GS
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Path: "/home/musungo/coding/pcsx2/bin/json/PCSX2_vm.json"
+Initialized Recording Key Bindings
+EGL: Supported extensions: EGL_EXT_platform_base EGL_EXT_device_base EGL_EXT_device_enumeration EGL_EXT_device_query EGL_KHR_client_get_all_proc_addresses EGL_EXT_client_extensions EGL_KHR_debug EGL_KHR_platform_x11 EGL_EXT_platform_x11 EGL_EXT_platform_device EGL_KHR_platform_wayland EGL_EXT_platform_wayland EGL_MESA_platform_gbm EGL_KHR_platform_gbm EGL_MESA_platform_surfaceless
+EGL: select X11 platform
+No protocol specified
+No protocol specified
+OpenGL information. GPU: GeForce RTX 2070/PCIe/SSE2. Vendor: NVIDIA Corporation. Driver: NVIDIA 450.66
+INFO: GL_ARB_sparse_texture is available
+INFO: GL_ARB_sparse_texture2 is available
+INFO: GL_ARB_gpu_shader5 is available
+INFO: GL_ARB_shader_image_load_store is available
+INFO: GL_ARB_compute_shader is available
+INFO: GL_ARB_shader_storage_buffer_object is available
+INFO: GL_ARB_texture_view is available
+INFO: GL_ARB_vertex_attrib_binding is available
+INFO: GL_ARB_clear_texture is available
+INFO: GL_ARB_multi_bind is available
+INFO: GL_ARB_direct_state_access is available
+INFO: GL_ARB_texture_barrier is available
+INFO: GL_ARB_get_texture_sub_image is available
+
+Current Renderer: OpenGL (Hardware renderer)
+Available VRAM/RAM:3840MB for textures
+GSdx Lookup CRC:00000000
+	Opening PAD
+GSdx Lookup CRC:00000000
+	Opening SPU2
+Request SDL audio driver: pulseaudio
+Opened SDL audio driver: pulseaudio	Opening USB
+
+	Opening DEV9
+McdSlot 0 [File]: /home/musungo/coding/pcsx2/bin/memcards/Mcd001.ps2
+(FileMcd) Creating new 8MB memory card: /home/musungo/coding/pcsx2/bin/memcards/Mcd001.ps2
+McdSlot 1 [File]: /home/musungo/coding/pcsx2/bin/memcards/Mcd002.ps2
+(FileMcd) Creating new 8MB memory card: /home/musungo/coding/pcsx2/bin/memcards/Mcd002.ps2
+Plugins opened successfully.
+isoFile open ok: /run/media/musungo/Data/roms/Sony - PlayStation 2/Fatal Frame II - Crimson Butterfly (USA).cso
+	Image type  = DVD
+	blocks      = 1597088
+	offset      = 0
+	blocksize   = 2048
+	blockoffset = 24
+ * CDVD Disk Open: DVD, Single layer or unknown:
+ * * Track 1: Data (Mode 1) (1597088 sectors)
+(IsoFS) Block 0x10: Primary partition info.
+(IsoFS) Filesystem is ISO9660
+Closing plugins...
+	Closing DEV9
+	Closing USB
+	Closing SPU2
+	Closing PAD
+	Closing GS
+Delete 0 Shaders, 34 Programs, 28 Pipelines
+Plugins closed successfully.
+Shutting down plugins...
+	Shutdown DEV9
+	Shutdown USB
+	Shutdown SPU2
+	Shutdown PAD
+	Shutdown GS
+Plugins shutdown successfully.
+(p) STL Runtime Error : No such file or directory: 'Fatal Frame II - Crimson Butterfly (USA)'
