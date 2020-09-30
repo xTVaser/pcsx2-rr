@@ -66,7 +66,6 @@ if [ "${PLATFORM}" == "x86" ]; then
 fi
 
 ${SUDO} apt-get -qq update
-# TODO - needed? sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 
 # Install packages needed for building
 BUILD_PACKAGE_STR=""
