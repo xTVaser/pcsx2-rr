@@ -222,78 +222,81 @@ void AppCoreThread::OnPauseDebug()
 // Load Game Settings found in database
 // (game fixes, round modes, clamp modes, etc...)
 // Returns number of gamefixes set
+// TODO
 static int loadGameSettings(Pcsx2Config& dest, const Game_Data& game) {
-	if( !game.IsOk() ) return 0;
+	//if( !game.IsOk() ) return 0;
 
-	int  gf  = 0;
+	//int  gf  = 0;
 
-	if (game.keyExists("eeRoundMode"))
-	{
-		SSE_RoundMode eeRM = (SSE_RoundMode)game.getInt("eeRoundMode");
-		if (EnumIsValid(eeRM))
-		{
-			PatchesCon->WriteLn("(GameDB) Changing EE/FPU roundmode to %d [%s]", eeRM, EnumToString(eeRM));
-			dest.Cpu.sseMXCSR.SetRoundMode(eeRM);
-			++gf;
-		}
-	}
+	//if (game.keyExists("eeRoundMode"))
+	//{
+	//	SSE_RoundMode eeRM = (SSE_RoundMode)game.getInt("eeRoundMode");
+	//	if (EnumIsValid(eeRM))
+	//	{
+	//		PatchesCon->WriteLn("(GameDB) Changing EE/FPU roundmode to %d [%s]", eeRM, EnumToString(eeRM));
+	//		dest.Cpu.sseMXCSR.SetRoundMode(eeRM);
+	//		++gf;
+	//	}
+	//}
 
-	if (game.keyExists("vuRoundMode"))
-	{
-		SSE_RoundMode vuRM = (SSE_RoundMode)game.getInt("vuRoundMode");
-		if (EnumIsValid(vuRM))
-		{
-			PatchesCon->WriteLn("(GameDB) Changing VU0/VU1 roundmode to %d [%s]", vuRM, EnumToString(vuRM));
-			dest.Cpu.sseVUMXCSR.SetRoundMode(vuRM);
-			++gf;
-		}
-	}
+	//if (game.keyExists("vuRoundMode"))
+	//{
+	//	SSE_RoundMode vuRM = (SSE_RoundMode)game.getInt("vuRoundMode");
+	//	if (EnumIsValid(vuRM))
+	//	{
+	//		PatchesCon->WriteLn("(GameDB) Changing VU0/VU1 roundmode to %d [%s]", vuRM, EnumToString(vuRM));
+	//		dest.Cpu.sseVUMXCSR.SetRoundMode(vuRM);
+	//		++gf;
+	//	}
+	//}
 
-	if (game.keyExists("eeClampMode")) {
-		int clampMode = game.getInt("eeClampMode");
-		PatchesCon->WriteLn("(GameDB) Changing EE/FPU clamp mode [mode=%d]", clampMode);
-		dest.Cpu.Recompiler.fpuOverflow			= (clampMode >= 1);
-		dest.Cpu.Recompiler.fpuExtraOverflow	= (clampMode >= 2);
-		dest.Cpu.Recompiler.fpuFullMode			= (clampMode >= 3);
-		gf++;
-	}
+	//if (game.keyExists("eeClampMode")) {
+	//	int clampMode = game.getInt("eeClampMode");
+	//	PatchesCon->WriteLn("(GameDB) Changing EE/FPU clamp mode [mode=%d]", clampMode);
+	//	dest.Cpu.Recompiler.fpuOverflow			= (clampMode >= 1);
+	//	dest.Cpu.Recompiler.fpuExtraOverflow	= (clampMode >= 2);
+	//	dest.Cpu.Recompiler.fpuFullMode			= (clampMode >= 3);
+	//	gf++;
+	//}
 
-	if (game.keyExists("vuClampMode")) {
-		int clampMode = game.getInt("vuClampMode");
-		PatchesCon->WriteLn("(GameDB) Changing VU0/VU1 clamp mode [mode=%d]", clampMode);
-		dest.Cpu.Recompiler.vuOverflow			= (clampMode >= 1);
-		dest.Cpu.Recompiler.vuExtraOverflow		= (clampMode >= 2);
-		dest.Cpu.Recompiler.vuSignOverflow		= (clampMode >= 3);
-		gf++;
-	}
+	//if (game.keyExists("vuClampMode")) {
+	//	int clampMode = game.getInt("vuClampMode");
+	//	PatchesCon->WriteLn("(GameDB) Changing VU0/VU1 clamp mode [mode=%d]", clampMode);
+	//	dest.Cpu.Recompiler.vuOverflow			= (clampMode >= 1);
+	//	dest.Cpu.Recompiler.vuExtraOverflow		= (clampMode >= 2);
+	//	dest.Cpu.Recompiler.vuSignOverflow		= (clampMode >= 3);
+	//	gf++;
+	//}
 
 
-	if (game.keyExists("mvuFlagSpeedHack")) {
-		bool vuFlagHack = game.getInt("mvuFlagSpeedHack") ? 1 : 0;
-		PatchesCon->WriteLn("(GameDB) Changing mVU flag speed hack [mode=%d]", vuFlagHack);
-		dest.Speedhacks.vuFlagHack = vuFlagHack;
-		gf++;
-	}
+	//if (game.keyExists("mvuFlagSpeedHack")) {
+	//	bool vuFlagHack = game.getInt("mvuFlagSpeedHack") ? 1 : 0;
+	//	PatchesCon->WriteLn("(GameDB) Changing mVU flag speed hack [mode=%d]", vuFlagHack);
+	//	dest.Speedhacks.vuFlagHack = vuFlagHack;
+	//	gf++;
+	//}
 
-	for( GamefixId id=GamefixId_FIRST; id<pxEnumEnd; ++id )
-	{
-		wxString key( EnumToString(id) );
-		key += L"Hack";
+	//for( GamefixId id=GamefixId_FIRST; id<pxEnumEnd; ++id )
+	//{
+	//	wxString key( EnumToString(id) );
+	//	key += L"Hack";
 
-		if (game.keyExists(key))
-		{
-			bool enableIt = game.getBool(key);
-			dest.Gamefixes.Set(id, enableIt);
-			PatchesCon->WriteLn(L"(GameDB) %s Gamefix: " + key, enableIt ? L"Enabled" : L"Disabled");
-			gf++;
+	//	if (game.keyExists(key))
+	//	{
+	//		bool enableIt = game.getBool(key);
+	//		dest.Gamefixes.Set(id, enableIt);
+	//		PatchesCon->WriteLn(L"(GameDB) %s Gamefix: " + key, enableIt ? L"Enabled" : L"Disabled");
+	//		gf++;
 
-			// The LUT is only used for 1 game so we allocate it only when the gamefix is enabled (save 4MB)
-			if (id == Fix_GoemonTlbMiss && enableIt)
-				vtlb_Alloc_Ppmap();
-		}
-	}
+	//		// The LUT is only used for 1 game so we allocate it only when the gamefix is enabled (save 4MB)
+	//		if (id == Fix_GoemonTlbMiss && enableIt)
+	//			vtlb_Alloc_Ppmap();
+	//	}
+	//}
 
-	return gf;
+	//return gf;
+
+	return 0;
 }
 
 // Used to track the current game serial/id, and used to disable verbose logging of
@@ -397,7 +400,8 @@ static void _ApplySettings( const Pcsx2Config& src, Pcsx2Config& fixup )
 	{
 		if (IGameDatabase* GameDB = AppHost_GetGameDatabase() )
 		{
-			Game_Data game;
+			// TODO
+			/*Game_Data game;
 			if (GameDB->findGame(game, curGameKey))
 			{
 				int compat = game.getInt("Compat");
@@ -405,18 +409,18 @@ static void _ApplySettings( const Pcsx2Config& src, Pcsx2Config& fixup )
 				gameName  += L" (" + game.getString("Region") + L")";
 				gameCompat = L" [Status = "+compatToStringWX(compat)+L"]";
 				gameMemCardFilter = game.getString("MemCardFilter");
-			}
+			}*/
 
-			if (fixup.EnablePatches)
-			{
-				if (int patches = LoadPatchesFromGamesDB(gameCRC, game))
-				{
-					gamePatch.Printf(L" [%d Patches]", patches);
-					PatchesCon->WriteLn(Color_Green, "(GameDB) Patches Loaded: %d", patches);
-				}
-				if (int fixes = loadGameSettings(fixup, game))
-					gameFixes.Printf(L" [%d Fixes]", fixes);
-			}
+			//if (fixup.EnablePatches)
+			//{
+			//	if (int patches = LoadPatchesFromGamesDB(gameCRC, game))
+			//	{
+			//		gamePatch.Printf(L" [%d Patches]", patches);
+			//		PatchesCon->WriteLn(Color_Green, "(GameDB) Patches Loaded: %d", patches);
+			//	}
+			//	if (int fixes = loadGameSettings(fixup, game))
+			//		gameFixes.Printf(L" [%d Fixes]", fixes);
+			//}
 		}
 	}
 

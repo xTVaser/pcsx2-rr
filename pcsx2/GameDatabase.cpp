@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2010  PCSX2 Dev Team
+ *  Copyright (C) 2002-2020  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -14,63 +14,118 @@
  */
 
 #include "PrecompiledHeader.h"
+
 #include "GameDatabase.h"
 
-BaseGameDatabaseImpl::BaseGameDatabaseImpl()
-	: gHash( 9900 )
-	, m_baseKey( L"Serial" )
+#include "yaml-cpp/yaml.h"
+#include <iostream>
+
+bool YamlGameDatabaseImpl::initDatabase(const std::string filePath)
 {
-}
+	std::ifstream dbFile(filePath);
 
-// Sets the current game to the one matching the serial id given
-// Returns true if game found, false if not found...
-bool BaseGameDatabaseImpl::findGame(Game_Data& dest, const wxString& id) {
-
-	GameDataHash::const_iterator iter( gHash.find(id) );
-	if( iter == gHash.end() ) {
-		dest.clear();
+	if (!dbFile.good())
+	{
+		std::cerr << "Can't open the given gamedb file\n";
 		return false;
 	}
-	dest = iter->second;
-	return true;
+
+	// TODO - wrap for parser errors
+	// invalid yaml seems to throw an abort, not great, but it might have just been because i gave it a REALLY screwed up file
+	try
+	{
+		// yaml-cpp definitely takes longer to parse this giant file, but the library feels more mature
+		// rapidyaml exists and I have it mostly setup which could be easily dropped in as a replacement
+		// the problem i ran into with rapidyaml is there is a lack of usage/documentation as it's new
+		// and i didn't like the default way it handles exceptions.
+		//
+		// TODO - make sure this happens in a separate thread
+		// TODO - exception handling - invalid yaml?
+		gameDb = YAML::LoadFile(filePath);
+	}
+	catch (const std::exception& e)
+	{
+		std::cout << "TODO!";
+	}
 }
 
-Game_Data* BaseGameDatabaseImpl::createNewGame( const wxString& id )
+/// TODO - the following helper functions can realistically be put in some sort of general yaml utility library
+// TODO - might be a way to condense this with templates? get it working first
+std::string safeGetString(const YAML::Node& n, std::string key, std::string default = "")
 {
-	return &gHash.emplace(id, Game_Data{id}).first->second;
+	if (!n[key])
+		return default;
+	// TODO - test this safety consideration (parse a value that isn't actually a string
+	return n[key].as<std::string>();
 }
 
-// Searches the current game's data to see if the given key exists
-bool Game_Data::keyExists(const wxString& key) const {
-	for (auto it = kList.begin(); it != kList.end(); ++it) {
-		if (it->CompareKey(key)) {
-			return true;
-		}
-	}
-	return false;
+int safeGetInt(const YAML::Node& n, std::string key, int default = 0)
+{
+	if (!n[key])
+		return default;
+	// TODO - test this safety consideration (parse a value that isn't actually a string
+	return n[key].as<int>();
 }
 
-// Gets a string representation of the 'value' for the given key
-wxString Game_Data::getString(const wxString& key) const {
-	for (auto it = kList.begin(); it != kList.end(); ++it) {
-		if (it->CompareKey(key)) {
-			return it->value;
-		}
-	}
-	return wxString();
+std::vector<std::string> safeGetStringList(const YAML::Node& n, std::string key, std::vector<std::string> default = {})
+{
+	if (!n[key])
+		return default;
+	// TODO - test this safety consideration (parse a value that isn't actually a string
+	return n[key].as<std::vector<std::string>>();
 }
 
-void Game_Data::writeString(const wxString& key, const wxString& value) {
-	for (auto it = kList.begin(); it != kList.end(); ++it) {
-		if (it->CompareKey(key)) {
-			if( value.IsEmpty() )
-				kList.erase(it);
-			else
-				it->value = value;
-			return;
+void operator>>(const YAML::Node& n, GameDatabaseSchema::GameEntry& v)
+{
+	try
+	{
+		v.name = safeGetString(n, "name");
+		v.region = safeGetString(n, "region");
+		v.compat = static_cast<GameDatabaseSchema::Compatibility>(safeGetInt(n, "compat"));
+		v.eeRoundMode = static_cast<GameDatabaseSchema::RoundMode>(safeGetInt(n, "eeRoundMode"));
+		v.vuRoundMode = static_cast<GameDatabaseSchema::RoundMode>(safeGetInt(n, "vuRoundMode"));
+		v.eeClampMode = static_cast<GameDatabaseSchema::ClampMode>(safeGetInt(n, "eeClampMode"));
+		v.vuClampMode = static_cast<GameDatabaseSchema::ClampMode>(safeGetInt(n, "vuClampMode"));
+		v.gameFixes = safeGetStringList(n, "gameFixes");
+		v.speedHacks = safeGetStringList(n, "speedHacks");
+		v.memcardFilters = safeGetStringList(n, "memcardFilters");
+
+		if (YAML::Node patches = n["patches"])
+		{
+			for (YAML::const_iterator it = patches.begin(); it != patches.end(); ++it)
+			{
+				YAML::Node key = it->first;
+				YAML::Node val = it->second;
+				GameDatabaseSchema::Patch patch;
+				patch.crc = safeGetString(val, "crc");
+				patch.content = safeGetStringList(val, "content");
+				v.patches.push_back(patch);
+			}
 		}
 	}
-	if( !value.IsEmpty() ) {
-		kList.push_back(key_pair(key, value));
+	catch (std::exception& e)
+	{
+		v.isValid = false;
 	}
+}
+
+// TODO - yaml error handling - https://github.com/biojppm/rapidyaml#custom-allocators-and-error-handlers
+
+GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::findGame(const std::string serial)
+{
+	GameDatabaseSchema::GameEntry entry;
+	if (YAML::Node game = gameDb[serial])
+	{
+		game >> entry;
+		return entry;
+	}
+	entry.isValid = false;
+	return entry;
+}
+
+// TODO - why is there a create game option, is writing to the file from the application...actually a thing...it has to be commited to the repo?
+// (i think just badly named, investigate)
+bool YamlGameDatabaseImpl::createNewGame(const std::string serial, GameDatabaseSchema::GameEntry& entry)
+{
+	return true;
 }

@@ -1827,7 +1827,6 @@ XgKickHack = 1 // Fixes SPS.
 Serial = SCES-51685
 Name   = Primal
 Region = PAL-E-R
-vuRoundMode = 0 // Fixes SPS.
 vuRoundMode = 0 // Fix SPS.
 ---------------------------------------------
 Serial = SCES-51706

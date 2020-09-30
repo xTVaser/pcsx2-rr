@@ -399,9 +399,10 @@ void Panels::PluginSelectorPanel::DispatchEvent( const PluginEventType& evt )
 	ForPlugins([&] (const PluginInfo * pi) {
 		wxComboBox& box( m_ComponentBoxes->Get(pi->id) );
 		int sel = box.GetSelection();
-		if (sel != wxNOT_FOUND) {
-			m_ComponentBoxes->GetConfigButton(pi->id).Enable(
-			(m_FileList==NULL || m_FileList->Count() == 0) ? false :
+		if( sel == wxNOT_FOUND ) continue;
+
+	m_ComponentBoxes->GetConfigButton(pi->id).Enable(
+			(m_FileList==NULL || m_FileList->size() == 0) ? false :
 			g_Conf->FullpathMatchTest( pi->id,(*m_FileList)[((uptr)box.GetClientData(sel))] )
 		);
 		}

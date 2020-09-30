@@ -240,7 +240,7 @@ nlohmann::json Pcsx2Config::GSOptions::LoadSave()
 	gs["FramesToSkip"] = FramesToSkip;
 
 
-
+	return gs;
 }
 
 int Pcsx2Config::GSOptions::GetVsync() const

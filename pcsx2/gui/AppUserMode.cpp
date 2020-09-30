@@ -286,6 +286,9 @@ void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 
 void Pcsx2App::EstablishAppUserMode()
 {
+	wxGetApp().GetGameDatabase();
+
+
 
 	std::unique_ptr<nlohmann::json> conf_install;
 	conf_install = std::unique_ptr<nlohmann::json>(TestForPortableInstall());
@@ -320,6 +323,10 @@ void Pcsx2App::EstablishAppUserMode()
 	AppSaveSettings();
 
 	// Wizard completed successfully, so let's not torture the user with this crap again!
+<<<<<<< HEAD
 	json["RunWizard"] = false;
+=======
+//	json["RunWizard"] = 0;
+>>>>>>> yaml/yaml-cpp
 }
 

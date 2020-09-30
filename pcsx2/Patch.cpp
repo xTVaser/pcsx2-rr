@@ -137,7 +137,7 @@ void TrimPatches(wxString& s)
 // Returns number of patches loaded
 int LoadPatchesFromGamesDB(const wxString& crc, const Game_Data& game)
 {
-	bool patchFound = false;
+	/*bool patchFound = false;
 	wxString patch;
 
 	if (game.IsOk())
@@ -154,7 +154,8 @@ int LoadPatchesFromGamesDB(const wxString& crc, const Game_Data& game)
 
 	if (patchFound) TrimPatches(patch);
 
-	return Patch.size();
+	return Patch.size();*/
+	return 0;
 }
 
 void inifile_processString(const wxString& inStr)
@@ -216,7 +217,7 @@ static int _LoadPatchFiles(const std::string& folderName, std::string& fileSpec,
 // Note: does not reset previously loaded patches (use ForgetLoadedPatches() for that)
 // Note: only load patches from the root folder of the zip
 int LoadPatchesFromZip(wxString gameCRC, const wxString& patchesArchiveFilename) {
-	gameCRC.MakeUpper();
+	/*gameCRC.MakeUpper();
 
 	int before = Patch.size();
 
@@ -236,7 +237,8 @@ int LoadPatchesFromZip(wxString gameCRC, const wxString& patchesArchiveFilename)
 			}
 		}
 	}
-	return Patch.size() - before;
+	return Patch.size() - before;*/
+	return 0;
 }
 
 

@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2010  PCSX2 Dev Team
+ *  Copyright (C) 2002-2020  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -15,147 +15,119 @@
 
 #pragma once
 
-//#include "Common.h"
-#include "AppConfig.h"
+#include "yaml-cpp/yaml.h"
 
-// _Target_ is defined by R300A.h and R5900.h and the definition leaks to here.
-// The problem, at least with Visual Studio 2019 on Windows,
-// is that unordered_map includes xhash which uses _Target_ as a template
-// parameter. Unless we undef it here, the build breaks with a cryptic error message.
-#undef _Target_
-#include <unordered_map>
-#include <wx/wfstream.h>
+#include <vector>
+#include <string>
 
-struct	key_pair;
-struct	Game_Data;
-
-struct StringHash
+// Since this is kinda yaml specific, might be a good idea to
+// relocate this into the yaml class
+// or put the serialization methods inside the yaml
+class GameDatabaseSchema
 {
-	std::size_t operator()( const wxString& src ) const
+public:
+	enum class Compatibility
 	{
-#ifdef _WIN32
-		return std::hash<std::wstring>{}(src.ToStdWstring());
-#else
-		return std::hash<std::string>{}({src.utf8_str()});
-#endif
-	}
+		Unknown = 0,
+		Nothing,
+		Intro,
+		Menu,
+		InGame,
+		Playable,
+		Perfect
+	};
+
+	enum class RoundMode
+	{
+		Nearest = 0,
+		NegativeInfinity,
+		PositiveInfinity,
+		ChopZero
+	};
+
+	enum class ClampMode
+	{
+		Disabled = 0,
+		Normal,
+		Extra,
+		Full
+	};
+
+	// No point in using enums because i need to convert from a string then
+	// left here incase i turn these into lists to validate against
+	/*enum class GameFix
+	{
+		VuAddSubHack = 0,
+		FpuCompareHack,
+		FpuMulHack,
+		FpuNegDivHack,
+		XgKickHack,
+		IPUWaitHack,
+		EETimingHack,
+		SkipMPEGHack,
+		OPHFLagHack,
+		DMABusyHack,
+		VIFFIFOHack,
+		VIF1StallHack,
+		GIFFIFOHack,
+		FMVinSoftwareHack,
+		ScarfaceIbitHack,
+		CrashTagTeamRacingIbit,
+		VU0KickstartHack,
+	};
+
+	enum class SpeedHacks
+	{
+		mvuFlagSpeedHack = 0
+	};*/
+
+	struct Patch
+	{
+		std::string crc;
+		std::vector<std::string> content;
+	};
+
+	struct GameEntry
+	{
+		bool isValid = true;
+		std::string name;
+		std::string region;
+		Compatibility compat = Compatibility::Unknown;
+		RoundMode eeRoundMode = RoundMode::Nearest;
+		RoundMode vuRoundMode = RoundMode::Nearest;
+		ClampMode eeClampMode = ClampMode::Disabled;
+		ClampMode vuClampMode = ClampMode::Disabled;
+		std::vector<std::string> gameFixes;
+		std::vector<std::string> speedHacks;
+		std::vector<std::string> memcardFilters;
+		std::vector<Patch> patches;
+	};
 };
 
-
-typedef std::vector<key_pair>	KeyPairArray;
-
-struct key_pair {
-	wxString key;
-	wxString value;
-	
-	key_pair() {}
-	key_pair(const wxString& _key, const wxString& _value)
-		: key(_key) , value(_value) {}
-
-	void Clear() {
-		key.clear();
-		value.clear();
-	}
-
-	// Performs case-insensitive compare against the key value.
-	bool CompareKey( const wxString& cmpto ) const {
-		return key.CmpNoCase(cmpto) == 0;
-	}
-	
-	bool IsOk() const {
-		return !key.IsEmpty();
-	}
-};
-
-// --------------------------------------------------------------------------------------
-//  Game_Data
-// --------------------------------------------------------------------------------------
-struct Game_Data
-{
-	wxString		id;				// Serial Identification Code
-	KeyPairArray	kList;			// List of all (key, value) pairs for game data
-
-	Game_Data(const wxString& _id = wxEmptyString)
-		: id(_id) {}
-	
-	// Performs a case-insensitive compare of two IDs, returns TRUE if the IDs match
-	// or FALSE if the ids differ in a case-insensitive way.
-	bool CompareId( const wxString& _id ) const {
-		return id.CmpNoCase(_id) == 0;
-	}
-	
-	void clear() {
-		id.clear();
-		kList.clear();
-	}
-
-	bool keyExists(const wxString& key) const;
-	wxString getString(const wxString& key) const;
-	void writeString(const wxString& key, const wxString& value);
-
-	bool IsOk() const {
-		return !id.IsEmpty();
-	}
-
-	bool sectionExists(const wxString& key, const wxString& value) const {
-		return keyExists("[" + key + (value.empty() ? "" : " = ") + value + "]");
-	}
-
-	wxString getSection(const wxString& key, const wxString& value) const {
-		return getString("[" + key + (value.empty() ? "" : " = ") + value + "]");
-	}
-
-	// Gets an integer representation of the 'value' for the given key
-	int getInt(const wxString& key) const {
-		unsigned long val;
-		getString(key).ToULong(&val);
-		return val;
-	}
-
-	// Gets a u8 representation of the 'value' for the given key
-	u8 getU8(const wxString& key) const {
-		return (u8)wxAtoi(getString(key));
-	}
-
-	// Gets a bool representation of the 'value' for the given key
-	bool getBool(const wxString& key) const {
-		return !!wxAtoi(getString(key));
-	}
-};
-
-// --------------------------------------------------------------------------------------
-//  IGameDatabase
-// --------------------------------------------------------------------------------------
 class IGameDatabase
 {
 public:
-	virtual ~IGameDatabase() = default;
-
-	virtual wxString getBaseKey() const=0;
-	virtual bool findGame(Game_Data& dest, const wxString& id)=0;
-	virtual Game_Data* createNewGame( const wxString& id )=0;
+	virtual bool initDatabase(const std::string filePath) = 0;
+	virtual GameDatabaseSchema::GameEntry findGame(const std::string serial) = 0;
+	virtual bool createNewGame(const std::string serial, GameDatabaseSchema::GameEntry& entry) = 0;
 };
 
-using GameDataHash = std::unordered_map<wxString, Game_Data, StringHash>;
-
-// --------------------------------------------------------------------------------------
-//  BaseGameDatabaseImpl 
-// --------------------------------------------------------------------------------------
-class BaseGameDatabaseImpl : public IGameDatabase
+class YamlGameDatabaseImpl : public IGameDatabase
 {
-protected:
-	GameDataHash	gHash;			// hash table of game serials matched to their gList indexes!
-	wxString		m_baseKey;
-
 public:
-	BaseGameDatabaseImpl();
-	virtual ~BaseGameDatabaseImpl() = default;
+	bool initDatabase(const std::string filePath);
 
-	wxString getBaseKey() const { return m_baseKey; }
-	void setBaseKey( const wxString& key ) { m_baseKey = key; }
+	// For reading from YAML, no need to write unless we are saving to the file...which we aren't
+	
+	friend void operator >> (const YAML::Node& node, GameDatabaseSchema::GameEntry& v);
 
-	bool findGame(Game_Data& dest, const wxString& id);
-	Game_Data* createNewGame( const wxString& id );
+	// TODO - i got rid of returning pointer types because...why?
+	// if the consumer wants a pointer, they can handle that but we retain a reference to the parsed db anyway
+	GameDatabaseSchema::GameEntry findGame(const std::string serial) override;
+	bool createNewGame(const std::string serial, GameDatabaseSchema::GameEntry& entry) override;
+
+private:
+	YAML::Node gameDb;
 };
 
 extern IGameDatabase* AppHost_GetGameDatabase();

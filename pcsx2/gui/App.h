@@ -26,6 +26,7 @@
 #include "AppCommon.h"
 #include "AppCoreThread.h"
 #include "RecentIsoList.h"
+#include "Utilities/PathUtils.h"
 #include "DriveList.h"
 #include "Utilities/PathUtils.h"
 
