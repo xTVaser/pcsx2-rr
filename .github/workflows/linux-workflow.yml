@@ -94,7 +94,7 @@ jobs:
         # TODO - give the file executable permissions and commit it
         run: |
           chmod +x .github/workflows/scripts/linux/install-packages.sh
-          ./.github/workflows/scripts/build-linux.sh install_packages
+          ./.github/workflows/scripts/linux/build-linux.sh install_packages
 
       - name: Generate CMake
         env:
