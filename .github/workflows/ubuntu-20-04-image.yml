@@ -10,9 +10,9 @@ on:
     branches:
       - master
   # TODO - REMOVE THIS ONCE DONE
-  # pull_request:
-  #   branches:
-  #     - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   build:
@@ -51,5 +51,6 @@ jobs:
         with:
           context: .
           file: ./.github/workflows/docker/ubuntu-20-04.Dockerfile
+          build-args: ENV_PLATFORM=${{ matrix.platform }}
           push: true
           tags: xtvaser/pcsx2-ci:${{ matrix.os }}-${{ matrix.platform }}
