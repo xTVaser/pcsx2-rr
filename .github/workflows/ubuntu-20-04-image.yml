@@ -26,9 +26,6 @@ jobs:
 
     name: ${{ matrix.os }}-${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
-    # What if dockerhub is down?  Hope they fallback to just using the `runs-on`
-    container:
-      image: xtvaser/actionsci:${{ matrix.os}}-${{ matrix.platform}}
     continue-on-error: ${{ matrix.experimental }}
     # Set some sort of timeout in the event of run-away builds.  We are limited on concurrent jobs so, get rid of them.
     timeout-minutes: 30
