@@ -40,6 +40,9 @@ jobs:
 
     name: ${{ matrix.os }}-${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
+    # What if dockerhub is down?  Hope they fallback to just using the `runs-on`
+    container:
+      image: xtvaser/actionsci:${{ matrix.os}}-${{ matrix.platform}}
     continue-on-error: ${{ matrix.experimental }}
     # Set some sort of timeout in the event of run-away builds.  We are limited on concurrent jobs so, get rid of them.
     timeout-minutes: 30
@@ -82,23 +85,28 @@ jobs:
         uses: actions/cache@v2
         with:
           path: .ccache
-          key: ${{ matrix.os }}-${{ matrix.platform }}-${{ matrix.compiler }}-${{ matrix.compiler-version }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
-          restore-keys: |
-            ${{ matrix.os }}-${{ matrix.platform }}-${{ matrix.compiler }}-${{ matrix.compiler-version }}-ccache-
+          key: ${{ matrix.os }}-${{ matrix.platform }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
+          restore-keys: ${{ matrix.os }}-${{ matrix.platform }}-ccache-
 
       - name: Install Packages
         env:
           PLATFORM: ${{ matrix.platform }}
         # TODO - give the file executable permissions and commit it
         run: |
-          chmod +x .github/workflows/scripts/build-linux.sh
+          chmod +x .github/workflows/scripts/linux/install-packages.sh
           ./.github/workflows/scripts/build-linux.sh install_packages
 
-      - name: Build PCSX2
+      - name: Generate CMake
         env:
           PLATFORM: ${{ matrix.platform }}
         # TODO - give the file executable permissions and commit it
         run: |
-          chmod +x .github/workflows/scripts/build-linux.sh
-          ./.github/workflows/scripts/build-linux.sh generate_cmake
-          ./.github/workflows/scripts/build-linux.sh compile
+          chmod +x .github/workflows/scripts/linux/gen-cmake.sh
+          ./.github/workflows/scripts/linux/gen-cmake.sh
+
+      - name: Build PCSX2
+        working-directory: ./build
+        # TODO - give the file executable permissions and commit it
+        run: |
+          chmod +x .github/workflows/scripts/linux/build.sh
+          ./.github/workflows/scripts/linux/build.sh

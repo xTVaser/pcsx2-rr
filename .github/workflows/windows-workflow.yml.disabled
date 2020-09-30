@@ -89,7 +89,7 @@ jobs:
 
       - name: Verify VS Project Files
         shell: powershell
-        run: .\.github\workflows\scripts\validate-vs-filters.ps1
+        run: ./.github/workflows/scripts/windows/validate-vs-filters.ps1
 
       - name: Setup msbuild
         uses: microsoft/setup-msbuild@v1.0.1

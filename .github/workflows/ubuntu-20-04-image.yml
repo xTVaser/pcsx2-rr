@@ -1,0 +1,45 @@
+# Builds the ubuntu 20-04 image to speed up PR build times
+# There is still no official way to cache docker images between builds so it seems - https://github.community/t/cache-a-docker-image-built-in-workflow/16260/9
+# All of the workaround community-made actions just use dockerhub as the cache
+
+name: Push Ubuntu CI Images
+
+# Controls when the action will run. Triggers the workflow only on pushes to the master branch
+on:
+  push:
+    branches:
+      - master
+  # TODO - REMOVE THIS ONCE DONE
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    strategy:
+      # Prevent one build from failing everything (although maybe those should be included as experimental builds instead)
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04]
+        platform: [x86, x64]
+        experimental: [false]
+
+    name: ${{ matrix.os }}-${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    # What if dockerhub is down?  Hope they fallback to just using the `runs-on`
+    container:
+      image: xtvaser/actionsci:${{ matrix.os}}-${{ matrix.platform}}
+    continue-on-error: ${{ matrix.experimental }}
+    # Set some sort of timeout in the event of run-away builds.  We are limited on concurrent jobs so, get rid of them.
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Build Docker Image
+        working-directory: ./.github/workflows
+        run: docker build -e PLATFORM=${{ matrix.platform }} -f docker/ubuntu-20-04.Dockerfile
+
+      - name: Tag and Push
+        run: echo "not yet!"
