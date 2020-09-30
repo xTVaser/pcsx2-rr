@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
     # Set some sort of timeout in the event of run-away builds.  We are limited on concurrent jobs so, get rid of them.
-    timeout-minutes: 30
+    timeout-minutes: 5
 
     steps:
       - name: Checkout Repository
@@ -46,7 +46,7 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v2
         with:
-          context: ./.github/workflows
-          file: ./docker/ubuntu-20-04.Dockerfile
+          context: .
+          file: ./.github/workflows/docker/ubuntu-20-04.Dockerfile
           push: true
           tags: xtvaser/pcsx2-ci:${{ matrix.os }}-${{ matrix.platform }}
