@@ -1,9 +1,16 @@
 #ifndef PATHUTILS_H
 #define PATHUTILS_H
-#include "filesystem.hpp"
+
 #include "FixedPointTypes.inl"
 #include "Path.h"
+#ifdef Apple
+#include "filesystem.hpp"
 namespace fs = ghc::filesystem;
+#else
+#include <filesystem>
+namespace fs = std::filesystem;
+#endif
+
 class PathUtils
 {
     private:
