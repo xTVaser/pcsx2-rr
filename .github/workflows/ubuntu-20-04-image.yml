@@ -9,10 +9,6 @@ on:
   push:
     branches:
       - master
-  # TODO - REMOVE THIS ONCE DONE
-  pull_request:
-    branches:
-      - master
 
 jobs:
   build:
