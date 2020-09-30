@@ -323,10 +323,6 @@ void Pcsx2App::EstablishAppUserMode()
 	AppSaveSettings();
 
 	// Wizard completed successfully, so let's not torture the user with this crap again!
-<<<<<<< HEAD
 	json["RunWizard"] = false;
-=======
-//	json["RunWizard"] = 0;
->>>>>>> yaml/yaml-cpp
 }
 
