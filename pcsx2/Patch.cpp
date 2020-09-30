@@ -137,7 +137,7 @@ void TrimPatches(wxString& s)
 // Returns number of patches loaded
 int LoadPatchesFromGamesDB(const wxString& crc, const Game_Data& game)
 {
-	bool patchFound = false;
+	/*bool patchFound = false;
 	wxString patch;
 
 	if (game.IsOk())
@@ -154,7 +154,8 @@ int LoadPatchesFromGamesDB(const wxString& crc, const Game_Data& game)
 
 	if (patchFound) TrimPatches(patch);
 
-	return Patch.size();
+	return Patch.size();*/
+	return 0;
 }
 
 void inifile_processString(const wxString& inStr)
@@ -216,7 +217,7 @@ static int _LoadPatchFiles(const std::string& folderName, std::string& fileSpec,
 // Note: does not reset previously loaded patches (use ForgetLoadedPatches() for that)
 // Note: only load patches from the root folder of the zip
 int LoadPatchesFromZip(wxString gameCRC, const wxString& patchesArchiveFilename) {
-	gameCRC.MakeUpper();
+	/*gameCRC.MakeUpper();
 
 	int before = Patch.size();
 
@@ -236,7 +237,8 @@ int LoadPatchesFromZip(wxString gameCRC, const wxString& patchesArchiveFilename)
 			}
 		}
 	}
-	return Patch.size() - before;
+	return Patch.size() - before;*/
+	return 0;
 }
 
 
@@ -254,14 +256,15 @@ int LoadPatchesFromDir(std::string name, const std::string& folderName, const st
 	// This comment _might_ be buggy. This function (LoadPatchesFromDir) loads from an explicit folder.
 	// This folder can be cheats or cheats_ws at either the default location or a custom one.
 	// This check only tests the default cheats folder, so the message it produces is possibly misleading.
-	if (folderName == (PathDefs::GetCheats()) && numberFoundPatchFiles == 0) {
+	/*if (folderName == (PathDefs::GetCheats()) && numberFoundPatchFiles == 0) {
 		std::transform(name.begin(), name.end(),name.begin(), ::toupper);
 		std::string pathName = (folderName + name + ".pnach");
 		PatchesCon->WriteLn(Color_Gray, L"Not found %s file: %s", (wxString)friendlyName, (wxString)pathName);
 	}
 
-	PatchesCon->WriteLn((loaded ? Color_Green : Color_Gray), L"Overall %d %s loaded", loaded, (wxString)friendlyName);
-	return loaded;
+	PatchesCon->WriteLn((loaded ? Color_Green : Color_Gray), L"Overall %d %s loaded", loaded, (wxString)friendlyName);*/
+	return 0;
+	//return loaded;
 }
 
 static u32 StrToU32(const wxString& str, int base = 10)

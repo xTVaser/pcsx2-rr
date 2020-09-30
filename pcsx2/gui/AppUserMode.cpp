@@ -134,7 +134,7 @@ nlohmann::json* Pcsx2App::TestForPortableInstall()
 		std::unique_ptr<nlohmann::json> conf_portable( OpenFileConfig( portableJsonFile ) );
 		//conf_portable->SetRecordDefaults(false);
 		
-		while( true )
+		while( true ) // ?? why a whole loop here
 		{
 			std::string accessFailedStr, createFailedStr;
 			if (TestUserPermissionsRights( portableDocsFolder.parent_path(), createFailedStr, accessFailedStr )) break;
@@ -283,6 +283,10 @@ void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 
 void Pcsx2App::EstablishAppUserMode()
 {
+	wxGetApp().GetGameDatabase();
+
+
+
 	std::unique_ptr<nlohmann::json> conf_install;
 	conf_install = std::unique_ptr<nlohmann::json>(TestForPortableInstall());
 

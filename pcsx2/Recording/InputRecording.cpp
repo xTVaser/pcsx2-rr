@@ -330,12 +330,12 @@ wxString InputRecording::resolveGameName()
 	{
 		if (IGameDatabase* GameDB = AppHost_GetGameDatabase())
 		{
-			Game_Data game;
+			/*Game_Data game;
 			if (GameDB->findGame(game, gameKey))
 			{
 				gameName = game.getString("Name");
 				gameName += L" (" + game.getString("Region") + L")";
-			}
+			}*/
 		}
 	}
 	return !gameName.IsEmpty() ? gameName : (wxString)Path::GetFilename(g_Conf->CurrentIso);
