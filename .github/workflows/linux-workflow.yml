@@ -108,5 +108,5 @@ jobs:
         working-directory: ./build
         # TODO - give the file executable permissions and commit it
         run: |
-          chmod +x .github/workflows/scripts/linux/build.sh
-          USE_SUDO=false ./.github/workflows/scripts/linux/build.sh
+          chmod +x ../.github/workflows/scripts/linux/build.sh
+          USE_SUDO=false ./../.github/workflows/scripts/linux/build.sh
