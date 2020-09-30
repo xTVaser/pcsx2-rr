@@ -77,7 +77,7 @@ oprofile_data/
 /bin/bios
 /bin/dumps
 /bin/help
-/bin/inis
+/bin/json
 /bin/logs
 /bin/memcards
 /bin/plugins

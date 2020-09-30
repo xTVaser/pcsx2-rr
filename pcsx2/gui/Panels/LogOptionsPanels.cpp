@@ -168,18 +168,20 @@ static SysTraceLog * const traceLogList[] =
 
 static const uint traceLogCount = ArraySize(traceLogList);
 
-void SysTraceLog_LoadSaveSettings( nlohmann::json& json )
+nlohmann::json SysTraceLog_LoadSaveSettings()
 {
-	//ScopedIniGroup path(ini, L"TraceLogSources");
+	nlohmann::json trace;
 
-	//for (uint i=0; i<traceLogCount; ++i)
-	//{
-		//if (SysTraceLog* log = traceLogList[i])
-		//{
-			//pxAssertMsg(log->GetName(), "Trace log without a name!" );
-			//ini.Entry( log->GetCategory() + L"." + log->GetShortName(), log->Enabled, false );
-		//}
-	//}
+	for (uint i=0; i<traceLogCount; ++i)
+	{
+		if (SysTraceLog* log = traceLogList[i])
+		{
+			pxAssertMsg(log->GetName(), "Trace log without a name!" );
+			//trace[log->GetCategory()] = ("." + log->GetShortName(), log->Enabled, false );
+		}
+	}
+
+	return trace;
 }
 
 static bool traceLogEnabled( const wxString& ident )

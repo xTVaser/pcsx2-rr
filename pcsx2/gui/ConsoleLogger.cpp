@@ -344,11 +344,12 @@ static const bool ConLogDefaults[] =
 // are saved as disabled. ConLogInitialized is used to detect and avoid this issue.
 static bool ConLogInitialized = false;
 
-void ConLog_LoadSaveSettings( nlohmann::json& json )
+nlohmann::json ConLog_LoadSaveSettings()
 {
-	//ScopedIniGroup path(ini, L"ConsoleLogSources");
 
-	json["DevConWriterEnabled"] = false;
+	nlohmann::json console;
+
+	console["DevConWriterEnabled"] = false;
 
 	uint srcnt = ArraySize(ConLogSources);
 	for (uint i=0; i<srcnt; ++i)
@@ -363,6 +364,8 @@ void ConLog_LoadSaveSettings( nlohmann::json& json )
 	}
 
 	ConLogInitialized = true;
+
+	return console;
 }
 
 // --------------------------------------------------------------------------------------

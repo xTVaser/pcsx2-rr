@@ -185,7 +185,7 @@ static int _LoadPatchFiles(const std::string& folderName, std::string& fileSpec,
 	numberFoundPatchFiles = 0;
 
 	if (!folderName.empty()) {
-		Console.WriteLn(Color_Red, L"The %s folder ('%s') is inaccessible. Skipping...", (wxString)friendlyName, (wxString)folderName);
+		Console.WriteLn(Color_Red, L"The %s folder ('%s') is inaccessible. Skipping...", friendlyName, folderName);
 		return 0;
 	}
 	std::string dir(folderName);
@@ -197,14 +197,14 @@ static int _LoadPatchFiles(const std::string& folderName, std::string& fileSpec,
 	for (auto& found : dir)
 	{
 		if (std::toupper(buffer[0]) == std::toupper(fileSpec[0])) {
-			PatchesCon->WriteLn(Color_Green, L"Found %s file: '%s'", (wxString)friendlyName, buffer);
+			PatchesCon->WriteLn(Color_Green, L"Found %s file: '%s'", friendlyName, buffer);
 			int before = Patch.size();
 			f.Open(Path::Combine(dir, buffer));
 			inifile_process(f);
 			f.Close();
 			int loaded = Patch.size() - before;
 			PatchesCon->WriteLn((loaded ? Color_Green : Color_Gray), L"Loaded %d %s from '%s' at '%s'",
-				loaded, (wxString)friendlyName, buffer, (wxString)folderName);
+				loaded, friendlyName, buffer, folderName);
 			numberFoundPatchFiles++;
 		}
 	}

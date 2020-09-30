@@ -142,7 +142,7 @@ public:
 		wxString	Theme;
 
 		ConsoleLogOptions();
-		void LoadSave( nlohmann::json &json, const char* title );
+		nlohmann::json LoadSave();
 	};
 
 	// ------------------------------------------------------------------------
@@ -168,12 +168,12 @@ public:
 			Cheats,
 			CheatsWS;
 
-		std::string RunIso;		// last used location for Iso loading.
-		std::string RunELF;		// last used location for ELF loading.
-		std::string RunDisc;		// last used location for Disc loading.
+		fs::path RunIso;		// last used location for Iso loading.
+		fs::path RunELF;		// last used location for ELF loading.
+		fs::path RunDisc;		// last used location for Disc loading.
 
 		FolderOptions();
-		void LoadSave( nlohmann::json &json );
+		nlohmann::json LoadSave();
 		void ApplyDefaults();
 
 		void Set( FoldersEnum_t folderidx, const std::string& src, bool useDefault );
@@ -189,7 +189,7 @@ public:
 		std::string Bios;
 		std::string Plugins[PluginId_Count];
 
-		void LoadSave( nlohmann::json &json );
+		nlohmann::json LoadSave();
 
 		const std::string& operator[]( PluginsEnum_t pluginidx ) const;
 	};
@@ -235,7 +235,7 @@ public:
 
 		GSWindowOptions();
 
-		void LoadSave( nlohmann::json &json );
+		nlohmann::json LoadSave();
 		void SanityCheck();
 	};
 
@@ -250,13 +250,15 @@ public:
 
 		FramerateOptions();
 
-		void LoadSave( nlohmann::json &json );
+		nlohmann::json LoadSave();
 		void SanityCheck();
 	};
 
 	struct UiTemplateOptions {
 		UiTemplateOptions();
-		void LoadSave(nlohmann::json &json);
+		
+		
+		nlohmann::json LoadSave();
 
 		std::string LimiterUnlimited;
 		std::string LimiterTurbo;
@@ -362,9 +364,9 @@ public:
 
 	bool FullpathMatchTest( PluginsEnum_t pluginId, const wxString& cmpto );
 
-	void LoadSave( nlohmann::json &json );
-	void LoadSaveRootItems( nlohmann::json &json );
-	void LoadSaveMemcards( nlohmann::json &json );
+	nlohmann::json LoadSave();
+	nlohmann::json LoadSaveRootItems();
+	nlohmann::json LoadSaveMemcards();
 
 	static int  GetMaxPresetIndex();
     static bool isOkGetPresetTextAndColor(int n, std::string& label, wxColor& c);
@@ -391,8 +393,8 @@ extern void App_LoadSaveInstallSettings( nlohmann::json &json );
 extern void App_SaveInstallSettings( nlohmann::json *json );
 extern void App_LoadInstallSettings( nlohmann::json *json );
 
-extern void ConLog_LoadSaveSettings( nlohmann::json &json );
-extern void SysTraceLog_LoadSaveSettings( nlohmann::json &json );
+extern nlohmann::json ConLog_LoadSaveSettings();
+extern nlohmann::json SysTraceLog_LoadSaveSettings();
 
 
 extern nlohmann::json* OpenFileConfig( std::string filename );

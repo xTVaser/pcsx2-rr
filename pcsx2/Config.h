@@ -158,7 +158,7 @@ struct TraceLogFilters
 		Enabled	= false;
 	}
 
-	void LoadSave( nlohmann::json  & json );
+	nlohmann::json LoadSave();
 
 	bool operator ==( const TraceLogFilters& right ) const
 	{
@@ -197,7 +197,7 @@ struct Pcsx2Config
 
 		// Default is Disabled, with all recs enabled underneath.
 		//ProfilerOptions() : bitset( 0xfffffffe ) {}
-		void LoadSave( nlohmann::json& conf );
+		nlohmann::json LoadSave();
 
 		bool operator ==( const ProfilerOptions& right ) const
 		{
@@ -248,7 +248,7 @@ struct Pcsx2Config
 		RecompilerOptions();
 		void ApplySanityCheck();
 
-		void LoadSave( nlohmann::json& conf );
+		nlohmann::json LoadSave();
 
 		bool operator ==( const RecompilerOptions& right ) const
 		{
@@ -277,7 +277,7 @@ struct Pcsx2Config
 		SSE_MXCSR sseVUMXCSR;
 
 		CpuOptions();
-		void LoadSave( nlohmann::json& conf );
+		nlohmann::json LoadSave();
 		void ApplySanityCheck();
 
 		bool operator ==( const CpuOptions& right ) const
@@ -312,7 +312,7 @@ struct Pcsx2Config
 		Fixed100	FrameratePAL;
 
 		GSOptions();
-		void LoadSave( nlohmann::json& conf );
+		nlohmann::json LoadSave();
 
 		int GetVsync() const;
 
@@ -368,7 +368,7 @@ struct Pcsx2Config
             CrashTagTeamRacingIbit, // Crash Tag Team Racing I bit hack. Needed to stop constant VU recompilation
             VU0KickstartHack;       // Speed up VU0 at start of program to avoid some VU1 sync issues
 		GamefixOptions();
-		void LoadSave( nlohmann::json& conf );
+	    nlohmann::json LoadSave();
 		GamefixOptions& DisableAll();
 
 		void Set( const std::string& list, bool enabled=true );
@@ -405,7 +405,7 @@ struct Pcsx2Config
 		u8	EECycleSkip;		// EE Cycle skip factor (0, 1, 2, or 3)
 
 		SpeedhackOptions();
-		void LoadSave( nlohmann::json& conf );
+		nlohmann::json LoadSave();
 		SpeedhackOptions& DisableAll();
 
 		bool operator ==( const SpeedhackOptions& right ) const
@@ -434,7 +434,7 @@ struct Pcsx2Config
 		u32 MemoryViewBytesPerRow;
 
 		DebugOptions();
-		void LoadSave( nlohmann::json& conf );
+		nlohmann::json LoadSave();
 
 		bool operator ==( const DebugOptions& right ) const
 		{
@@ -480,6 +480,8 @@ struct Pcsx2Config
 	ProfilerOptions		Profiler;
 	DebugOptions		Debugger;
 
+	RecompilerOptions   Recompiler;
+
 	TraceLogFilters		Trace;
 
 	std::string			BiosFilename;
@@ -493,7 +495,7 @@ struct Pcsx2Config
 	//EnableRecordingTools, UseBOOT2Injection, BackupSavestate, McdEnableEjection, McdFolderAutoManage, MultitapPort0_Enabled, MultitapPort1_Enabled,
 	//ConsoleToStdio, HostFs);
 
-	void LoadSave( nlohmann::json& json );
+	nlohmann::json LoadSave();
 
 	void Load( nlohmann::json loader );
 	//void Load( const wxInputStream& srcstream );

@@ -29,6 +29,7 @@
 
 #include "DebugTools/Debug.h"
 #include <memory>
+#include <iomanip>
 
 nlohmann::json json;
 PathUtils folderUtils;
@@ -132,7 +133,7 @@ namespace PathDefs
 
 	fs::path GetDocs()
 	{
-		return (AppRoot() / "docs").make_preferred();
+		return (AppRoot().parent_path() / "docs").make_preferred();
 	}
 
 	fs::path GetSavestates()
@@ -150,7 +151,7 @@ namespace PathDefs
 		// Each linux distributions have his rules for path so we give them the possibility to
 		// change it with compilation flags. -- Gregory
 #ifndef PLUGIN_DIR_COMPILATION
-		return (AppRoot() / "plugins").make_preferred();
+		return (AppRoot().parent_path() / "plugins").make_preferred();
 #else
 #define xPLUGIN_DIR_str(s) PLUGIN_DIR_str(s)
 #define PLUGIN_DIR_str(s) #s
@@ -160,17 +161,20 @@ namespace PathDefs
 
 	fs::path GetSettings()
 	{
-		return (GetDocuments() / "json").make_preferred();
+		fs::path docPath = GetDocuments();
+		fs::path path = GetDocuments() / "json";
+		// make_preferred() is causing issues?
+		return path;
 	}
 
 	fs::path GetLogs()
 	{
-		return (GetDocuments() / "logs").make_preferred();
+		return (GetDocuments().parent_path() / "logs").make_preferred();
 	}
 
 	fs::path GetLangs()
 	{
-		return (AppRoot() / "langs").make_preferred();
+		return (AppRoot().parent_path() / "langs").make_preferred();
 	}
 
 	std::string Get( FoldersEnum_t folderidx )
@@ -313,17 +317,17 @@ namespace FilenameDefs
 {
 	std::string GetUiConfig()
 	{
-		return Path::Combine(pxGetAppName().ToStdString(), "_ui.json");
+		return pxGetAppName().ToStdString() + "_ui.json";
 	}
 
 	std::string GetUiKeysConfig()
 	{
-		return Path::Combine(pxGetAppName().ToStdString(), "_keys.json");
+		return pxGetAppName().ToStdString() + "_keys.json";
 	}
 
 	std::string GetVmConfig()
 	{
-		return Path::Combine(pxGetAppName().ToStdString(), "_vm.json");
+		return pxGetAppName().ToStdString() + "_vm.json";
 	}
 
 	std::string GetUsermodeConfig()
@@ -394,16 +398,17 @@ fs::path GetCheatsWsFolder()
 
 fs::path GetSettingsFolder()
 {
-	if( wxGetApp().Overrides.SettingsFolder.c_str() != nullptr )
+	if( !wxGetApp().Overrides.SettingsFolder.empty() )
 		return wxGetApp().Overrides.SettingsFolder;
 
-	return UseDefaultSettingsFolder ? (std::string)PathDefs::GetSettings() : SettingsFolder;
+	return UseDefaultSettingsFolder ? PathDefs::GetSettings().string() : SettingsFolder;
 }
 
 fs::path GetVmSettingsFilename()
 {
-	fs::path fname( (wxGetApp().Overrides.VmSettingsFile.c_str() != nullptr) ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
-	return (GetSettingsFolder() / fname).make_preferred();
+    fs::path fname( !wxGetApp().Overrides.VmSettingsFile.empty() ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
+	std::cout << "Path: " << Path::Combine(GetSettingsFolder(), fname) << std::endl;
+    return Path::Combine(GetSettingsFolder(), fname);
 }
 
 fs::path GetUiSettingsFilename()
@@ -418,11 +423,14 @@ fs::path GetUiKeysFilename()
 	return (GetSettingsFolder() / fname).make_preferred();
 }
 
+std::string AppConfig::FullpathToBios() const				
+{ 
+	return std::string(Path::Combine( Folders.Bios, BaseFilenames.Bios )); 
+}
 
-std::string AppConfig::FullpathToBios() const				{ return std::string(Path::Combine( Folders.Bios, BaseFilenames.Bios )); }
 std::string AppConfig::FullpathToMcd( uint slot ) const
 {
-	return( Folders.MemoryCards + Mcd[slot].Filename );
+	return Path::Combine( Folders.MemoryCards, Mcd[slot].Filename );
 }
 
 bool IsPortable()
@@ -504,9 +512,8 @@ void App_LoadSaveInstallSettings( nlohmann::json& json )
 	json["Install_Dir"] = (	InstallFolder,	((std::string(wxStandardPaths::Get().GetExecutablePath()))));
 	//SetFullBaseDir( InstallFolder );
 
-	json["PluginsFolder"]	= (PluginsFolder =((fs::path)InstallFolder / "plugins"  ).make_preferred());
+	json["PluginsFolder"] = (PluginsFolder = Path::Combine(InstallFolder, "plugins" ));
 
-	//ini.Flush();
 }
 
 void App_LoadInstallSettings( nlohmann::json *json)
@@ -520,15 +527,15 @@ void App_SaveInstallSettings( nlohmann::json *json )
 }
 
 // ------------------------------------------------------------------------
-void AppConfig::LoadSaveMemcards( nlohmann::json& json )
+nlohmann::json AppConfig::LoadSaveMemcards()
 {
-	//ScopedIniGroup path( ini, L"MemoryCards" );
-
+	nlohmann::json memcards;
+	
 	for( uint slot=0; slot<2; ++slot )
 	{
-		json["Slot%u_Enable"] = (slot+1,
+		memcards["Slot%u_Enable"] = (slot+1,
 			Mcd[slot].Enabled, Mcd[slot].Enabled );
-		json["Slot%u_Filename"] = (slot+1,
+		memcards["Slot%u_Filename"] = (slot+1,
 			Mcd[slot].Filename, Mcd[slot].Filename );
 	}
 
@@ -537,16 +544,19 @@ void AppConfig::LoadSaveMemcards( nlohmann::json& json )
 		int mtport = FileMcd_GetMtapPort(slot)+1;
 		int mtslot = FileMcd_GetMtapSlot(slot)+1;
 
-		json["Multitap%u_Slot%u_Enable"] = (mtport, mtslot,
+		memcards["Multitap%u_Slot%u_Enable"] = (mtport, mtslot,
 			Mcd[slot].Enabled, Mcd[slot].Enabled );
-		json["Multitap%u_Slot%u_Filename"] = (mtport, mtslot,
+		memcards["Multitap%u_Slot%u_Filename"] = (mtport, mtslot,
 			Mcd[slot].Filename, Mcd[slot].Filename );
 	}
+
+	return memcards;
 }
 
-void AppConfig::LoadSaveRootItems( nlohmann::json &json)
+nlohmann::json AppConfig::LoadSaveRootItems()
 {
-	//IniEntry( MainGuiPosition );
+	nlohmann::json json;
+
 	json["SysSettingsTabName"] = SysSettingsTabName;
 	json["McdSettingsTabName"] = McdSettingsTabName;
 	json["ComponentsTabName"] = ComponentsTabName;
@@ -559,9 +569,9 @@ void AppConfig::LoadSaveRootItems( nlohmann::json &json)
 	json["Toolbar_ImageSize"] = Toolbar_ImageSize;
 	json["Toolbar_ShowLabels"] = Toolbar_ShowLabels;
 
-	wxFileName res(CurrentIso);
-	//json["CurrentIso"] = (res, res, ini.IsLoading() || IsPortable() );
-	CurrentIso = res.GetFullPath();
+	std::string res = CurrentIso;
+	json["CurrentIso"] = (res, res, IsPortable() );
+	CurrentIso = res;
 
 	json["CurrentBlockdump"] = CurrentBlockdump;
 	json["CurrentELF"] = CurrentELF;
@@ -580,22 +590,25 @@ void AppConfig::LoadSaveRootItems( nlohmann::json &json)
 	#endif
 
 	json["CdvdSource"] = (CdvdSource, CDVD_SourceLabels, CdvdSource );
+
+	return json;
 }
 
 // ------------------------------------------------------------------------
-void AppConfig::LoadSave( nlohmann::json& json )
+nlohmann::json AppConfig::LoadSave()
 {
-	LoadSaveRootItems( json );
-	LoadSaveMemcards( json );
+	json.push_back(LoadSaveRootItems());
+	json.push_back(LoadSaveMemcards());
 
 	// Process various sub-components:
-	ProgLogBox		.LoadSave( json, "ProgramLog" );
+    json.push_back(ProgLogBox.LoadSave());
 
-	Folders			.LoadSave( json );
-	BaseFilenames	.LoadSave( json );
-	GSWindow		.LoadSave( json );
-	Framerate		.LoadSave( json );
-	Templates		.LoadSave( json );
+	json.push_back(Folders.LoadSave());
+	json.push_back(BaseFilenames.LoadSave());
+	json.push_back(GSWindow.LoadSave());
+	json.push_back(Framerate.LoadSave());
+	//json.push_back(Templates.LoadSave());
+	return json;
 }
 
 // ------------------------------------------------------------------------
@@ -609,16 +622,20 @@ AppConfig::ConsoleLogOptions::ConsoleLogOptions()
 	FontSize	= 8;
 }
 
-void AppConfig::ConsoleLogOptions::LoadSave( nlohmann::json& json, const char* logger )
+nlohmann::json AppConfig::ConsoleLogOptions::LoadSave()
 {
 	//ScopedIniGroup path( ini, logger );
 
-	json["Visible"] = Visible;
-	json["AutoDock"] = AutoDock;
-	//json["DisplayPosition"] = DisplayPosition;
-	json["DisplaySize"] = DisplaySize;
-	json["FontSize"] = FontSize;
-	json["Theme"] = Theme;
+	nlohmann::json console;
+
+	console["Visible"] = Visible;
+	console["AutoDock"] = AutoDock;
+	console["DisplayPosition"] = DisplayPosition;
+	console["DisplaySize"] = DisplaySize;
+	console["FontSize"] = FontSize;
+	console["Theme"] = Theme;
+
+	return console;
 }
 
 void AppConfig::FolderOptions::ApplyDefaults()
@@ -652,48 +669,43 @@ AppConfig::FolderOptions::FolderOptions()
 	//bitset = 0xffffffff;
 }
 
-void AppConfig::FolderOptions::LoadSave( nlohmann::json& json )
+nlohmann::json AppConfig::FolderOptions::LoadSave()
 {
-	/*ScopedIniGroup path( ini, L"Folders" );
 
-	if( ini.IsSaving() )
-	{
-		ApplyDefaults();
-	}*/
+	nlohmann::json folder;
 
-	json["UseDefaultBios"] = UseDefaultBios;
-	json["UseDefaultSavestates"] = UseDefaultSavestates;
-	json["UseDefaultMemoryCards"] = UseDefaultMemoryCards;
-	json["UseDefaultLogs"] = UseDefaultLogs;
-	json["UseDefaultLangs"] = UseDefaultLangs;
-	json["UseDefaultPluginsFolder"] = UseDefaultPluginsFolder;
-	json["UseDefaultCheats"] = UseDefaultCheats;
-	json["UseDefaultCheatsWS"] = UseDefaultCheatsWS;
+	folder["UseDefaultBios"] = UseDefaultBios;
+	folder["UseDefaultSavestates"] = UseDefaultSavestates;
+	folder["UseDefaultMemoryCards"] = UseDefaultMemoryCards;
+	folder["UseDefaultLogs"] = UseDefaultLogs;
+	folder["UseDefaultLangs"] = UseDefaultLangs;
+	folder["UseDefaultPluginsFolder"] = UseDefaultPluginsFolder;
+	folder["UseDefaultCheats"] = UseDefaultCheats;
+	folder["UseDefaultCheatsWS"] = UseDefaultCheatsWS;
 
 	//when saving in portable mode, we save relative paths if possible
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
-	bool rel = false; //( ini.IsLoading() || IsPortable() );
+	bool rel = IsPortable();
 
-	/*IniEntryDirFile( Bios,  rel);
-	IniEntryDirFile( Snapshots,  rel );
-	IniEntryDirFile( Savestates,  rel );
-	IniEntryDirFile( MemoryCards,  rel );
-	IniEntryDirFile( Logs,  rel );
-	IniEntryDirFile( Langs,  rel );
-	IniEntryDirFile( Cheats, rel );
-	IniEntryDirFile( CheatsWS, rel );*/
-	json["PluginsFolder"] = (PluginsFolder, ((fs::path)InstallFolder / "plugins").make_preferred(), rel );
+	folder[Bios] = rel;
+	folder[Snapshots] =  rel;
+	folder[Savestates] = rel;
+	folder[MemoryCards] = rel;
+	folder[Logs] = rel;
+	folder[Langs] = rel;
+	folder[Cheats] = rel;
+	folder[CheatsWS] = rel;
+	folder[PluginsFolder] = (PluginsFolder, Path::Combine(InstallFolder, "plugins"), rel );
 
-	//IniEntryDirFile( RunIso, rel );
-	//IniEntryDirFile( RunELF, rel );
+	folder[RunIso] = rel;
+	folder[RunELF] = rel;
 
-	//if( ini.IsLoading() )
-	//{
-		ApplyDefaults();
+//		ApplyDefaults();
 
 		for( int i=0; i<FolderId_COUNT; ++i )
 			operator[]( (FoldersEnum_t)i );
-	//}
+
+	return folder;
 }
 
 // ------------------------------------------------------------------------
@@ -703,9 +715,10 @@ const std::string& AppConfig::FilenameOptions::operator[]( PluginsEnum_t plugini
 	return Plugins[pluginidx];
 }
 
-void AppConfig::FilenameOptions::LoadSave( nlohmann::json& json )
+nlohmann::json AppConfig::FilenameOptions::LoadSave()
 {
-	//ScopedIniGroup path( ini, L"Filenames" );
+
+	nlohmann::json appC;
 
 	static const std::string pc( "Please Configure" );
 
@@ -718,16 +731,19 @@ void AppConfig::FilenameOptions::LoadSave( nlohmann::json& json )
 	{
 		if ( needRelativeName ) {
 			std::string plugin_filename = Plugins[i];
-			//ini.Entry( tbl_PluginInfo[i].GetShortname(), plugin_filename, pc );
+			//appC[tbl_PluginInfo[i].GetShortname()] = (plugin_filename, pc );
 		} //else
-		//ini.Entry( tbl_PluginInfo[i].GetShortname(), Plugins[i], pc );
+		//appC[tbl_PluginInfo[i].GetShortname()] = (Plugins[i], pc );
 	}
 
 	if( needRelativeName ) {
 		std::string bios_filename = Bios;
-		json["BIOS"] = (bios_filename, pc );
+		appC["BIOS"] = (bios_filename, pc );
 	} else
-		json["BIOS"] = ( Bios, pc );
+		appC ["BIOS"] = pc;
+
+
+   return appC;
 }
 
 // ------------------------------------------------------------------------
@@ -776,23 +792,25 @@ void AppConfig::GSWindowOptions::SanityCheck()
 		AspectRatio = AspectRatio_4_3;
 }
 
-void AppConfig::GSWindowOptions::LoadSave( nlohmann::json& json )
+nlohmann::json AppConfig::GSWindowOptions::LoadSave()
 {
 	//ScopedIniGroup path( ini, L"GSWindow" );
 
-	json["CloseOnEsc"] = CloseOnEsc;
-	json["DefautlToFullscreen"] = DefaultToFullscreen;
-	json["AlwaysHideMous"] = AlwaysHideMouse;
-	json["DisableResizeBorders"] = DisableResizeBorders;
-	json["DisableScreenSaver"] = DisableScreenSaver;
+	nlohmann::json gs;
 
-	json["WindowSize"] = WindowSize;
-	json["WindowPos"] =  WindowPos;
-	json["IsMaximized"] = IsMaximized;
-	json["IsFullscreen"] = IsFullscreen;
-	json["EnableVsyncWindowFlag"] = EnableVsyncWindowFlag;
+	gs["CloseOnEsc"] = CloseOnEsc;
+	gs["DefautlToFullscreen"] = DefaultToFullscreen;
+	gs["AlwaysHideMous"] = AlwaysHideMouse;
+	gs["DisableResizeBorders"] = DisableResizeBorders;
+	gs["DisableScreenSaver"] = DisableScreenSaver;
 
-	json["IsToggleFullscreenOnDoubleClick"] = IsToggleFullscreenOnDoubleClick;
+	gs["WindowSize"] = WindowSize;
+	gs["WindowPos"] =  WindowPos;
+	gs["IsMaximized"] = IsMaximized;
+	gs["IsFullscreen"] = IsFullscreen;
+	gs["EnableVsyncWindowFlag"] = EnableVsyncWindowFlag;
+
+	gs["IsToggleFullscreenOnDoubleClick"] = IsToggleFullscreenOnDoubleClick;
 
 	static const char* AspectRatioNames[] =
 	{
@@ -803,7 +821,7 @@ void AppConfig::GSWindowOptions::LoadSave( nlohmann::json& json )
 		NULL
 	};
 
-	json["AspectRatio"] = (AspectRatio, AspectRatioNames, AspectRatio );
+	gs["AspectRatio"] = (AspectRatio, AspectRatioNames, AspectRatio );
 
 	static const char* FMVAspectRatioSwitchNames[] =
 	{
@@ -813,11 +831,11 @@ void AppConfig::GSWindowOptions::LoadSave( nlohmann::json& json )
 		// WARNING: array must be NULL terminated to compute it size
 		NULL
 	};
-	json["FMVAspectRatioSwitch"] = (FMVAspectRatioSwitch, FMVAspectRatioSwitchNames, FMVAspectRatioSwitch);
+	gs["FMVAspectRatioSwitch"] = (FMVAspectRatioSwitch, FMVAspectRatioSwitchNames, FMVAspectRatioSwitch);
 
-	//IniEntry( Zoom );
+	//gs["Zoom"] = Zoom;
 
-	//if( ini.IsLoading() ) SanityCheck();
+	return gs;
 }
 
 // ----------------------------------------------------------------------------
@@ -831,6 +849,15 @@ AppConfig::FramerateOptions::FramerateOptions()
 	SkipOnTurbo				= false;
 }
 
+
+nlohmann::json AppConfig::FramerateOptions::LoadSave()
+{
+	//ScopedIniVurboScalar );
+	//json["SlomoScalar"] = SlomoScalar; // Fixed int 100 
+
+	return NULL;
+}
+
 void AppConfig::FramerateOptions::SanityCheck()
 {
 	// Ensure Conformation of various options...
@@ -840,12 +867,6 @@ void AppConfig::FramerateOptions::SanityCheck()
 	SlomoScalar		.ConfineTo( 0.05, 10.0 );
 }
 
-void AppConfig::FramerateOptions::LoadSave( nlohmann::json& json )
-{
-	//ScopedIniVurboScalar );
-	//json["SlomoScalar"] = SlomoScalar;
-
-}
 
 AppConfig::UiTemplateOptions::UiTemplateOptions()
 {
@@ -864,24 +885,26 @@ AppConfig::UiTemplateOptions::UiTemplateOptions()
 #endif
 }
 
-void AppConfig::UiTemplateOptions::LoadSave(nlohmann::json& json)
+/*nlohmann::json AppConfig::UiTemplateOptions::LoadSave();
 {
-	//ScopedIniGroup path(ini, L"UiTemplates");
+	nlohmann::json ui;
 
-	/*IniEntry(LimiterUnlimited);
-	IniEntry(LimiterTurbo);
-	IniEntry(LimiterSlowmo);
-	IniEntry(LimiterNormal);
-	IniEntry(OutputFrame);
-	IniEntry(OutputField);
-	IniEntry(OutputProgressive);
-	IniEntry(OutputInterlaced);
-	IniEntry(Paused);
-	IniEntry(TitleTemplate);
+	ui["LimiterUnlimited"] = LimiterUnlimited;
+	ui["LimiterTurbo"] = LimiterTurbo;
+	ui["LimiterSlowmo"] = LimiterSlowmo;
+	ui["LimiterNormal"] = LimiterNormal;
+	ui["OutputFrame"] = OutputFrame;
+	ui["OutputField"] = OutputField;
+	ui["OutputProgressive"] = OutputProgressive;
+	ui["OutputInterlaced"] = OutputInterlaced;
+	ui["Paused"] = Paused;
+	ui["TitleTemplate"] = TitleTemplate;
 #ifndef DISABLE_RECORDING
-	IniEntry(RecordingTemplate);
-#endif*/
-}
+	ui["RecordingTemplate"] = RecordingTemplate;
+#endif
+
+return ui;
+}*/
 
 int AppConfig::GetMaxPresetIndex()
 {
@@ -979,9 +1002,7 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 
 		case 3: // Aggressive
 			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = -1); // -1 EE cyclerate
-            // Fall through
-
-		case 2: // Balanced
+            // Fall throughaaad
 			isMTVUSet ? 0 : (isMTVUSet = true, EmuOptions.Speedhacks.vuThread = true); // Enable MTVU
             // Fall through
 
@@ -1011,34 +1032,45 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 
 nlohmann::json* OpenFileConfig( std::string filename )
 {
-	// TODO - might want a common function to wrap the parse handling, probably want a graceful exit in the case of an invalid config file
+    // TODO - might want a common function to wrap the parse handling, probably want a graceful exit in the case of an invalid config file
 	std::ifstream in(filename);
-	nlohmann::json json = json.parse(in);
-	return &json;
+	nlohmann::json* json = new nlohmann::json();
+	try {
+		*json = json->parse(in);
+	} catch(nlohmann::json::parse_error) {
+		Console.WriteLn("JSON - AHHHHHHH!");
+	}
+	return json;
 }
+
 void RelocateLogfile()
 {
-	if (!folderUtils.CreateFolder(g_Conf->Folders.Logs))
-	return;
 
+    if (!folderUtils.DoesExist(g_Conf->Folders.Logs))
+    {
+	    if (!folderUtils.CreateFolder(g_Conf->Folders.Logs))
+	    {
+		    return;
+		}
+    }
 	std::string newlogname = ( g_Conf->Folders.Logs + "emuLog.txt");
 
-	if( (emuLog != NULL) && (emuLogName != newlogname) )
+	if( (emuLog != nullptr) && (emuLogName != newlogname) )
 	{
 		//Console.WriteLn( L"\nRelocating Logfile...\n\tFrom: %s\n\tTo  : %s\n", WX_STR(emuLogName), WX_STR(newlogname) );
-		wxGetApp().DisableDiskLogging();
+		//wxGetApp().DisableDiskLogging();
 
 		fclose( emuLog );
-		emuLog = NULL;
+		emuLog = nullptr;
 	}
 
-	if( emuLog == NULL )
+	if( emuLog == nullptr )
 	{
 		emuLogName = newlogname;
 		emuLog = wxFopen( emuLogName, "wb" );
 	}
 
-	wxGetApp().EnableAllLogging();
+	//wxGetApp().EnableAllLogging();
 }
 
 // Parameters:
@@ -1051,22 +1083,30 @@ void RelocateLogfile()
 //
 void AppConfig_OnChangedSettingsFolder( bool overwrite )
 {
-	if (!folderUtils.CreateFolder(PathDefs::GetDocuments()))
-	return;
-
-	if(folderUtils.CreateFolder(GetSettingsFolder()))
-	return;
-
-	const wxString jsonFilename( GetUiSettingsFilename() );
+	if (!folderUtils.DoesExist(PathDefs::GetDocuments().string()))
+	{
+		if (!folderUtils.CreateFolder(PathDefs::GetDocuments()))
+		{
+			return;
+		}
+	}
+	if (!folderUtils.DoesExist(GetSettingsFolder()))
+	{
+		if(folderUtils.CreateFolder(GetSettingsFolder()))
+		{
+			return;
+		}
+	}
+	std::string jsonFilename = GetUiSettingsFilename();
 	if( overwrite )
 	{
-		if( wxFileExists( jsonFilename ) && !wxRemoveFile( jsonFilename ) )
+		if( folderUtils.DoesExist ( jsonFilename ) && !fs::remove( jsonFilename ) )
 			throw Exception::AccessDenied(jsonFilename)
 				.SetBothMsgs(pxL("Failed to overwrite existing settings file; permission was denied."));
 
-		const wxString vmJsonFilename( GetVmSettingsFilename() );
+		std::string vmJsonFilename = GetVmSettingsFilename();
 
-		if( wxFileExists( vmJsonFilename ) && !wxRemoveFile( vmJsonFilename ) )
+		if( folderUtils.DoesExist( vmJsonFilename ) && !fs::remove( vmJsonFilename ) )
 			throw Exception::AccessDenied(vmJsonFilename)
 				.SetBothMsgs(pxL("Failed to overwrite existing settings file; permission was denied."));
 	}
@@ -1074,7 +1114,7 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 	// Bind into wxConfigBase to allow wx to use our config internally, and delete whatever
 	// comes out (cleans up prev config, if one).
 	//delete wxConfigBase::Set( OpenFileConfig( (std::string)jsonFilename ) );
-	GetAppConfig()->SetRecordDefaults(true);
+	//GetAppConfig()->SetRecordDefaults(true);
 
 	if( !overwrite )
 		AppLoadSettings();
@@ -1166,12 +1206,12 @@ AppIniLoader::AppIniLoader()
 
 static void LoadUiSettings()
 {
-	nlohmann::json loader;
-	ConLog_LoadSaveSettings( loader );
-	SysTraceLog_LoadSaveSettings( loader );
+	auto loader = nlohmann::json::array();
+	loader.push_back(ConLog_LoadSaveSettings());
+	loader.push_back(SysTraceLog_LoadSaveSettings());
 
 	g_Conf = std::make_unique<AppConfig>();
-	g_Conf->LoadSave( loader );
+	loader.push_back(g_Conf->LoadSave());
 
 	if( !folderUtils.DoesExist( g_Conf->CurrentIso ) )
 	{
@@ -1197,17 +1237,16 @@ static void LoadVmSettings()
 {
 	// Load virtual machine options and apply some defaults overtop saved items, which
 	// are regulated by the PCSX2 UI.
-
 	std::unique_ptr<nlohmann::json> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
-	nlohmann::json vmloader;
-	g_Conf->EmuOptions.LoadSave( vmloader );
+	auto vmloader = nlohmann::json::array();
+	vmloader.push_back(g_Conf->EmuOptions.LoadSave());
 	g_Conf->EmuOptions.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
 
 	if (g_Conf->EnablePresets){
 		g_Conf->IsOkApplyPreset(g_Conf->PresetIndex, true);
 	}
 
-	sApp.DispatchVmSettingsEvent( vmloader );
+	//sApp.DispatchVmSettingsEvent( vmloader );
 }
 
 void AppLoadSettings()
@@ -1220,40 +1259,56 @@ void AppLoadSettings()
 
 static void SaveUiSettings()
 {
-	if( !wxFile::Exists( g_Conf->CurrentIso ) )
+	if( !folderUtils.DoesExist( g_Conf->CurrentIso ) )
 	{
 		g_Conf->CurrentIso.clear();
 	}
 
 #if defined(_WIN32)
-	/*if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc()))
+	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
 	{
-		//->Folders.RunDisc.Clear();
-	}*/
+		g_Conf->Folders.RunDisc.clear();
+	}
 #else
 	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
 	{
-		//g_Conf->Folders.RunDisc.Clear();
+		g_Conf->Folders.RunDisc.clear();
 	}
 #endif
 
 	sApp.GetRecentIsoManager().Add( g_Conf->CurrentIso );
 
 	nlohmann::json saver;
-	g_Conf->LoadSave( saver );
-	ConLog_LoadSaveSettings( saver );
-	SysTraceLog_LoadSaveSettings( saver );
+	saver.push_back(g_Conf->LoadSave());
+	saver.push_back(ConLog_LoadSaveSettings());
+	saver.push_back(SysTraceLog_LoadSaveSettings());
 
-	sApp.DispatchUiSettingsEvent( saver );
+	//sApp.DispatchUiSettingsEvent( saver );
+	std::ofstream file(GetUiSettingsFilename());
+	file << std::setw(4) << saver << std::endl;
 }
 
 static void SaveVmSettings()
 {
-	std::unique_ptr<nlohmann::json> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
-	nlohmann::json vmsaver;
-	g_Conf->EmuOptions.LoadSave( vmsaver );
 
-	sApp.DispatchVmSettingsEvent( vmsaver );
+	if (!folderUtils.DoesExist(GetVmSettingsFilename()))
+	{
+		std::string filePath = GetVmSettingsFilename().string();
+
+		nlohmann::json j = { };
+
+		std::ofstream file(filePath);
+		file << std::setw(4) << j << std::endl;
+	}
+
+	std::unique_ptr<nlohmann::json> vmjson( OpenFileConfig( GetVmSettingsFilename()));
+	nlohmann::json vmsaver = *vmjson.get();
+	vmsaver.push_back(g_Conf->EmuOptions.LoadSave());
+
+	std::ofstream file( GetVmSettingsFilename());
+	file << std::setw(4) << vmsaver << std::endl;
+
+	//sApp.DispatchVmSettingsEvent( vmsaver );
 }
 
 static void SaveRegSettings()
@@ -1263,7 +1318,7 @@ static void SaveRegSettings()
 	if (InstallationMode == InstallMode_Portable) return;
 
 	// sApp. macro cannot be use because you need the return value of OpenInstallSettingsFile method
-	//if( Pcsx2App* __app_ = (Pcsx2App*)wxApp::GetInstance() ) conf_install = std::unique_ptr<wxConfigBase>((*__app_).OpenInstallSettingsFile());
+	//if( Pcsx2App* __app_ = (Pcsx2App*)wxApp::GetInstance() ) conf_install = std::unique_ptr<nlohmann::json>((*__app_).OpenInstallSettingsFile());
 	//conf_install->SetRecordDefaults(false);
 
 	//App_SaveInstallSettings( conf_install.get() );

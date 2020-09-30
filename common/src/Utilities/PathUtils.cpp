@@ -228,7 +228,12 @@ bool PathUtils::CreateFolder(std::string path)
    return fs::create_directory(path);
 }
 
-bool PathUtils::DoesExist(std::string& path)
+bool PathUtils::DoesExist(std::string path)
+{
+    return fs::exists(path);
+}
+
+bool PathUtils::DoesExist(fs::path path)
 {
     return fs::exists(path);
 }
