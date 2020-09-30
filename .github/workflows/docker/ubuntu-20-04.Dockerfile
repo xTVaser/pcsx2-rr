@@ -7,14 +7,15 @@
 # This is done to prevent surprises when a PR is merged, that it either breaks master builds
 # or was never going to build properly initially, before the merge.
 #
-# This dockerfile is assumed to be built in the .github/workflows/ directory
+# This dockerfile is assumed to be built from the root directory
+
 FROM ubuntu:20.04
 
-COPY . .
+COPY .github/ .github/
 
 # Pass in - PLATFORM <x86|x64> to the docker build command
 ARG ENV_PLATFORM=x86
 ENV PLATFORM=$ENV_PLATFORM
 
-RUN chmod +x ./scripts/linux/install-packages.sh
-RUN USE_SUDO=false ./scripts/linux/install-packages.sh
+RUN chmod +x .github/workflows/scripts/linux/install-packages.sh
+RUN USE_SUDO=false ./.github/workflows/scripts/linux/install-packages.sh
