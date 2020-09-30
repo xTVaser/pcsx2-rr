@@ -21,7 +21,7 @@ include(Pcsx2Utils)
 check_no_parenthesis_in_path()
 detectOperatingSystem()
 check_compiler_version("7.0" "7.0")
-
+set(CMAKE_CXX_FLAGS "-std=c++17 -lstdc++fs")  
 #-------------------------------------------------------------------------------
 # Include specific module
 # BuildParameters Must be done before SearchForStuff

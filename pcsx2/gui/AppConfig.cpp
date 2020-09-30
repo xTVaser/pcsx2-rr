@@ -731,15 +731,9 @@ nlohmann::json AppConfig::FilenameOptions::LoadSave()
 	{
 		if ( needRelativeName ) {
 			std::string plugin_filename = Plugins[i];
-<<<<<<< HEAD
 			appC[tbl_PluginInfo[i].GetShortname()] = (plugin_filename, pc );
 		} //else
 		appC[tbl_PluginInfo[i].GetShortname()] = (Plugins[i], pc );
-=======
-			//appC[tbl_PluginInfo[i].GetShortname()] = (plugin_filename, pc );
-		} //else
-		//appC[tbl_PluginInfo[i].GetShortname()] = (Plugins[i], pc );
->>>>>>> yaml/yaml-cpp
 	}
 
 	if( needRelativeName ) {
@@ -1271,15 +1265,9 @@ static void SaveUiSettings()
 	}
 
 #if defined(_WIN32)
-<<<<<<< HEAD
 	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc()))
 	{
 		fs::path::clear(Folders.RunDisc.Clear());
-=======
-	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
-	{
-		g_Conf->Folders.RunDisc.clear();
->>>>>>> yaml/yaml-cpp
 	}
 #else
 	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))

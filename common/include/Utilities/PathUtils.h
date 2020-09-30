@@ -3,7 +3,7 @@
 
 #include "FixedPointTypes.inl"
 #include "Path.h"
-#ifdef Apple
+#ifdef __APPLE__
 #include "filesystem.hpp"
 namespace fs = ghc::filesystem;
 #else
