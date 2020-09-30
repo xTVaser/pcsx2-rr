@@ -73,7 +73,7 @@ for i in "${BUILD_PACKAGES[@]}"; do
 	BUILD_PACKAGE_STR="${BUILD_PACKAGE_STR} ${i}"
 done
 echo "Will install the following packages for building - ${BUILD_PACKAGE_STR}"
-${SUDO} apt remove gcc-9 g++-9
+${SUDO} apt remove -y gcc-9 g++-9
 ${SUDO} apt-get -y install ${BUILD_PACKAGE_STR}
 
 ${SUDO} update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10
