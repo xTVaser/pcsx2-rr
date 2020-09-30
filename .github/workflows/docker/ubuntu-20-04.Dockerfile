@@ -19,7 +19,7 @@ ENV PLATFORM=$ENV_PLATFORM
 
 # Install dependencies not directly related to building / using pcsx2
 RUN apt-get update
-RUN apt-get install git
+RUN apt-get install -y git
 
 RUN chmod +x .github/workflows/scripts/linux/install-packages.sh
 RUN USE_SUDO=false ./.github/workflows/scripts/linux/install-packages.sh
