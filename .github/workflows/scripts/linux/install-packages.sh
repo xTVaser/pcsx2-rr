@@ -2,7 +2,7 @@
 
 set -e
 
-USE_SUDO=${USE_SUDO:-false}
+USE_SUDO=${USE_SUDO:-true}
 SUDO=""
 if [ "${USE_SUDO}" == "true" ]; then
 	SUDO="sudo"
