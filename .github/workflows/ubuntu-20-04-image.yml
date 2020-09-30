@@ -36,7 +36,9 @@ jobs:
 
       - name: Build Docker Image
         working-directory: ./.github/workflows
-        run: docker build -e PLATFORM=${{ matrix.platform }} -f docker/ubuntu-20-04.Dockerfile
+        env:
+          ENV_PLATFORM: ${{ matrix.platform }}
+        run: docker build --build-arg ENV_PLATFORM -f docker/ubuntu-20-04.Dockerfile
 
       - name: Tag and Push
         run: echo "not yet!"
