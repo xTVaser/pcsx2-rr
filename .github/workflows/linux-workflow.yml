@@ -94,7 +94,7 @@ jobs:
         # TODO - give the file executable permissions and commit it
         run: |
           chmod +x .github/workflows/scripts/linux/install-packages.sh
-          ./.github/workflows/scripts/linux/install-packages.sh
+          USE_SUDO=false ./.github/workflows/scripts/linux/install-packages.sh
 
       - name: Generate CMake
         env:
@@ -102,11 +102,11 @@ jobs:
         # TODO - give the file executable permissions and commit it
         run: |
           chmod +x .github/workflows/scripts/linux/gen-cmake.sh
-          ./.github/workflows/scripts/linux/gen-cmake.sh
+          USE_SUDO=false ./.github/workflows/scripts/linux/gen-cmake.sh
 
       - name: Build PCSX2
         working-directory: ./build
         # TODO - give the file executable permissions and commit it
         run: |
           chmod +x .github/workflows/scripts/linux/build.sh
-          ./.github/workflows/scripts/linux/build.sh
+          USE_SUDO=false ./.github/workflows/scripts/linux/build.sh
