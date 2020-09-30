@@ -17,4 +17,4 @@ ARG ENV_PLATFORM=x86
 ENV PLATFORM=$ENV_PLATFORM
 
 RUN chmod +x ./scripts/linux/install-packages.sh
-RUN ./scripts/linux/install-packages.sh
+RUN USE_SUDO=false ./scripts/linux/install-packages.sh

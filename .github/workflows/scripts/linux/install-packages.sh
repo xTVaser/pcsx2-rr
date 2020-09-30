@@ -2,6 +2,12 @@
 
 set -e
 
+USE_SUDO=${USE_SUDO:-false}
+SUDO=""
+if [ "${USE_SUDO}" == "true" ]; then
+	SUDO="sudo"
+fi
+
 # Packages - Build Environment
 declare -a BUILD_PACKAGES=(
 	"ccache"
@@ -56,10 +62,10 @@ ARCH=""
 echo "${PLATFORM}"
 if [ "${PLATFORM}" == "x86" ]; then
 	ARCH=":i386"
-	sudo dpkg --add-architecture i386
+	${SUDO} dpkg --add-architecture i386
 fi
 
-sudo apt-get -qq update
+${SUDO} apt-get -qq update
 # TODO - needed? sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 
 # Install packages needed for building
@@ -68,13 +74,13 @@ for i in "${BUILD_PACKAGES[@]}"; do
 	BUILD_PACKAGE_STR="${BUILD_PACKAGE_STR} ${i}"
 done
 echo "Will install the following packages for building - ${BUILD_PACKAGE_STR}"
-sudo apt remove gcc-9 g++-9
-sudo apt-get -y install ${BUILD_PACKAGE_STR}
+${SUDO} apt remove gcc-9 g++-9
+${SUDO} apt-get -y install ${BUILD_PACKAGE_STR}
 
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
-sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 30
-sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 30
+${SUDO} update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 10
+${SUDO} update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 10
+${SUDO} update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 30
+${SUDO} update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 30
 
 # Install packages needed by pcsx2
 PCSX2_PACKAGES_STR=""
@@ -82,4 +88,4 @@ for i in "${PCSX2_PACKAGES[@]}"; do
 	PCSX2_PACKAGES_STR="${PCSX2_PACKAGES_STR} ${i}${ARCH}"
 done
 echo "Will install the following packages for pcsx2 - ${PCSX2_PACKAGES_STR}"
-sudo apt-get -y install ${PCSX2_PACKAGES_STR}
+${SUDO} apt-get -y install ${PCSX2_PACKAGES_STR}
