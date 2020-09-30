@@ -18,6 +18,7 @@ ARG ENV_PLATFORM=x86
 ENV PLATFORM=$ENV_PLATFORM
 
 # Install dependencies not directly related to building / using pcsx2
+RUN apt-get update
 RUN apt-get install git
 
 RUN chmod +x .github/workflows/scripts/linux/install-packages.sh
