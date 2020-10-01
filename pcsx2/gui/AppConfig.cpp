@@ -1267,7 +1267,7 @@ static void SaveUiSettings()
 #if defined(_WIN32)
 	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc()))
 	{
-		fs::path::clear(Folders.RunDisc.Clear());
+		g_Conf->Folders.RunDisc.clear();
 	}
 #else
 	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))

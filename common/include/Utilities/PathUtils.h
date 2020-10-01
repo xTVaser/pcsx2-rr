@@ -3,13 +3,9 @@
 
 #include "FixedPointTypes.inl"
 #include "Path.h"
-#ifdef __APPLE__
 #include "filesystem.hpp"
+
 namespace fs = ghc::filesystem;
-#else
-#include <filesystem>
-namespace fs = std::filesystem;
-#endif
 
 class PathUtils
 {
