@@ -21,7 +21,6 @@ include(Pcsx2Utils)
 check_no_parenthesis_in_path()
 detectOperatingSystem()
 check_compiler_version("7.0" "7.0")
-set(CMAKE_CXX_FLAGS "-std=c++17 -lstdc++fs")  
 #-------------------------------------------------------------------------------
 # Include specific module
 # BuildParameters Must be done before SearchForStuff
@@ -45,6 +44,7 @@ endif()
 if(common_libs)
     add_subdirectory(common/src/Utilities)
     add_subdirectory(common/src/x86emitter)
+    add_subdirectory(3rdparty/yaml-cpp/yaml-cpp)
 endif()
 
 # make pcsx2
@@ -62,6 +62,8 @@ if(ACTUALLY_ENABLE_TESTS)
     add_subdirectory(3rdparty/gtest EXCLUDE_FROM_ALL)
     add_subdirectory(tests/ctest)
 endif()
+
+
 
 #-------------------------------------------------------------------------------
 
@@ -95,3 +97,4 @@ else()
         INSTALL(FILES "${CMAKE_SOURCE_DIR}/linux_various/PCSX2-linux.sh"          DESTINATION "${CMAKE_SOURCE_DIR}/bin")
     endif()
 endif()
+
