@@ -102,15 +102,18 @@ bool wxDirName::Mkdir()
 
 bool Path::IsRelative(const std::string &path)
 {
-    return wxDirName(path).IsRelative();
+	fs::path temp = path;
+
+    return temp.is_relative();
 }
 
 // Returns -1 if the file does not exist.
 s64 Path::GetFileSize(const std::string &path)
 {
-    if (!wxFile::Exists(path.c_str()))
+
+    if (!fs::exists(path.c_str()))
         return -1;
-    return (s64)wxFileName::GetSize(path).GetValue();
+    return (s64)fs::file_size(path);
 }
 
 wxString Path::Normalize(const wxString &src)
@@ -188,10 +191,10 @@ std::string Path::GetDirectory(const std::string &src)
 std::string Path::GetRootDirectory(const wxString &src)
 {
     size_t pos = src.find_first_of(wxFileName::GetPathSeparators());
-    if (pos == wxString::npos)
+    if (pos == 0)
         return std::string();
     else
-        return std::string(src.begin(), src.begin() + pos);
+        return fs::path(src.begin(), src.begin() + pos);
 }
 
 // ------------------------------------------------------------------------

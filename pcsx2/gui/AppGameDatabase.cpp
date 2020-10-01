@@ -18,11 +18,11 @@
 #include "App.h"
 #include "AppGameDatabase.h"
 
-AppGameDatabase& AppGameDatabase::LoadFromFile(const wxString& _file, const wxString& key)
+AppGameDatabase& AppGameDatabase::LoadFromFile(const std::string& _file, const wxString& key)
 {
 	// TODO - remove wx usage from here, but also get the right path, hard-coding for simplicity on my part
-	wxString file("C:\\Users\\xtvas\\Repositories\\pcsx2\\bin\\GameIndex.yaml");
-	if (wxFileName(file).IsRelative())
+	fs::path file("C:\\Users\\xtvas\\Repositories\\pcsx2\\bin\\GameIndex.yaml");
+	if (file.is_relative())
 	{
 		// InstallFolder is the preferred base directory for the DB file, but the registry can point to previous
 		// installs if uninstall wasn't done properly.
@@ -39,9 +39,10 @@ AppGameDatabase& AppGameDatabase::LoadFromFile(const wxString& _file, const wxSt
 	}
 
 
-	if (!wxFileExists(file))
+	if (! folderUtils.DoesExist(file))
 	{
-		Console.Error(L"(GameDB) Database Not Found! [%s]", WX_STR(file));
+		wxString temp = file.c_str();
+		Console.Error(L"(GameDB) Database Not Found! [%s]", WX_STR(temp));
 		return *this;
 	}
 

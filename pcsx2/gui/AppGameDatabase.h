@@ -17,7 +17,6 @@
 
 #include "GameDatabase.h"
 
-
 class AppGameDatabase : public YamlGameDatabaseImpl
 {
 public:
@@ -31,7 +30,7 @@ public:
 		DESTRUCTOR_CATCHALL
 	}
 
-	AppGameDatabase& LoadFromFile(const wxString& file = Path::Combine((std::string)PathDefs::GetProgramDataDir(), std::string("GameIndex.dbf")), const wxString& key = "Serial");
+	AppGameDatabase& LoadFromFile(const std::string& file = Path::Combine((std::string)PathDefs::GetProgramDataDir(), std::string("GameIndex.dbf")), const wxString& key = "Serial");
 };
 
 static wxString compatToStringWX(int compat)
