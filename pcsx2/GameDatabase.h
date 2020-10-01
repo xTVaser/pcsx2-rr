@@ -115,7 +115,7 @@ public:
 class YamlGameDatabaseImpl : public IGameDatabase
 {
 public:
-	bool initDatabase(const std::string filePath);
+	bool initDatabase(const std::string filePath) override;
 
 	// For reading from YAML, no need to write unless we are saving to the file...which we aren't
 	

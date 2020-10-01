@@ -18,18 +18,9 @@
 #include "GameDatabase.h"
 
 #include "yaml-cpp/yaml.h"
-#include <iostream>
 
 bool YamlGameDatabaseImpl::initDatabase(const std::string filePath)
 {
-	std::ifstream dbFile(filePath);
-
-	if (!dbFile.good())
-	{
-		std::cerr << "Can't open the given gamedb file\n";
-		return false;
-	}
-
 	// TODO - wrap for parser errors
 	// invalid yaml seems to throw an abort, not great, but it might have just been because i gave it a REALLY screwed up file
 	try
