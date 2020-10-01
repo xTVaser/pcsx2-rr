@@ -90,10 +90,9 @@ static void PostPluginStatus( PluginEventType pevt )
 	sApp.PostAction( CorePluginsEvent( pevt ) );
 }
 
-static void ConvertPluginFilenames( wxString (&passins)[PluginId_Count] )
+static void ConvertPluginFilenames(wxString (&passins)[PluginId_Count])
 {
-	const PluginInfo* pi = tbl_PluginInfo; do
-	{
+	ForPlugins([&] (const PluginInfo * pi) {
 		passins[pi->id] = wxGetApp().Overrides.Filenames[pi->id];
 
 		if( passins[pi->id].IsEmpty() || !wxFileExists( passins[pi->id] ) )

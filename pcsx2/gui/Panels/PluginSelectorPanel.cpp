@@ -390,24 +390,24 @@ void Panels::PluginSelectorPanel::ComboBoxPanel::Reset()
 	}
 }
 
-void Panels::PluginSelectorPanel::DispatchEvent( const PluginEventType& evt )
+void Panels::PluginSelectorPanel::DispatchEvent(const PluginEventType& evt)
 {
-	if( (evt != CorePlugins_Loaded) && (evt != CorePlugins_Unloaded) ) return;		// everything else we don't care about
+	if ((evt != CorePlugins_Loaded) && (evt != CorePlugins_Unloaded))
+		return; // everything else we don't care about
 
-	if( IsBeingDeleted() ) return;
+	if (IsBeingDeleted())
+		return;
 
-	ForPlugins([&] (const PluginInfo * pi) {
-		wxComboBox& box( m_ComponentBoxes->Get(pi->id) );
+	ForPlugins([&](const PluginInfo* pi) {
+		wxComboBox& box(m_ComponentBoxes->Get(pi->id));
 		int sel = box.GetSelection();
-		if( sel == wxNOT_FOUND ) continue;
-
-	m_ComponentBoxes->GetConfigButton(pi->id).Enable(
-			(m_FileList==NULL || m_FileList->size() == 0) ? false :
-			g_Conf->FullpathMatchTest( pi->id,(*m_FileList)[((uptr)box.GetClientData(sel))] )
-		);
+		if (sel != wxNOT_FOUND)
+		{
+			m_ComponentBoxes->GetConfigButton(pi->id).Enable(
+				(m_FileList == NULL || m_FileList->size() == 0) ? false :
+                                                                  g_Conf->FullpathMatchTest(pi->id, (*m_FileList)[((uptr)box.GetClientData(sel))]));
 		}
 	});
-
 }
 
 Panels::PluginSelectorPanel::PluginSelectorPanel( wxWindow* parent )

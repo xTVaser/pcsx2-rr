@@ -315,7 +315,7 @@ bool Pcsx2App::ParseOverrides( wxCmdLineParser& parser )
 
 		Overrides.Filenames.Plugins[pi->id] = dest;
 
-	} while( ++pi, pi->shortname != NULL );
+	});
 
 	return true;
 }

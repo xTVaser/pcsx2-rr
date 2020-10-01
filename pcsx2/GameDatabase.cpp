@@ -38,6 +38,8 @@ bool YamlGameDatabaseImpl::initDatabase(const std::string filePath)
 	{
 		std::cout << "TODO!";
 	}
+
+	return true;
 }
 
 /// TODO - the following helper functions can realistically be put in some sort of general yaml utility library
