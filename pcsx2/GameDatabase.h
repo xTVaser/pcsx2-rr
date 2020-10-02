@@ -125,6 +125,11 @@ public:
 private:
 	YAML::Node gameDb;
 	GameDatabaseSchema::GameEntry entryFromYaml(const YAML::Node& node);
+
+	// TODO move these into a generic library
+	std::string safeGetString(const YAML::Node& n, std::string key, std::string def = "");
+	int safeGetInt(const YAML::Node& n, std::string key, int def = 0);
+	std::vector<std::string> safeGetStringList(const YAML::Node& n, std::string key, std::vector<std::string> def = {});
 };
 
 extern IGameDatabase* AppHost_GetGameDatabase();

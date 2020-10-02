@@ -25,5 +25,3 @@ static const bool PCSX2_isReleaseVersion = 0;
 class SysCoreThread;
 
 class CpuInitializerSet;
-
-struct GameDatabaseSchema::GameEntry;

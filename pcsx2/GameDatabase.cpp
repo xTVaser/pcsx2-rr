@@ -128,7 +128,7 @@ GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::findGame(const std::string s
 	
 	GameDatabaseSchema::GameEntry entry;
 	entry.isValid = false;
-	return entry;*/
+	return entry;
 }
 
 // TODO - why is there a create game option, is writing to the file from the application...actually a thing...it has to be commited to the repo?
