@@ -18,7 +18,7 @@
 #include "App.h"
 #include "AppGameDatabase.h"
 
-AppGameDatabase& AppGameDatabase::LoadFromFile(const std::string& _file, const wxString& key)
+AppGameDatabase& AppGameDatabase::LoadFromFile(const std::string& _file)
 {
 	// TODO - remove wx usage from here, but also get the right path, hard-coding for simplicity on my part
 	fs::path file("C:\\Users\\xtvas\\Repositories\\pcsx2\\bin\\GameIndex.yaml");

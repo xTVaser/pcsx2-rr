@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include "GameDatabase.h"
+
 static const int PCSX2_VersionHi	= 1;
 static const int PCSX2_VersionMid	= 7;
 static const int PCSX2_VersionLo	= 0;
@@ -24,4 +26,4 @@ class SysCoreThread;
 
 class CpuInitializerSet;
 
-struct Game_Data;
+struct GameDatabaseSchema::GameEntry;

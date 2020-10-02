@@ -101,7 +101,7 @@ namespace PatchFunc
 // The following LoadPatchesFrom* functions:
 // - do not reset/unload previously loaded patches (use ForgetLoadedPatches() for that)
 // - do not actually patch the emulation memory (that happens at ApplyLoadedPatches(...) )
-extern int  LoadPatchesFromGamesDB(const wxString& name, const Game_Data& game);
+extern int  LoadPatchesFromGamesDB(const wxString& crc, const GameDatabaseSchema::GameEntry& game);
 extern int  LoadPatchesFromDir(std::string name, const std::string& folderName, const std::string& friendlyName);
 extern int  LoadPatchesFromZip(wxString gameCRC, const wxString& cheatsArchiveFilename);
 

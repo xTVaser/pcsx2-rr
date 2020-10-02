@@ -30,24 +30,24 @@ public:
 		DESTRUCTOR_CATCHALL
 	}
 
-	AppGameDatabase& LoadFromFile(const std::string& file = Path::Combine((std::string)PathDefs::GetProgramDataDir(), std::string("GameIndex.dbf")), const wxString& key = "Serial");
+	AppGameDatabase& LoadFromFile(const std::string& file = Path::Combine((std::string)PathDefs::GetProgramDataDir(), std::string("GameIndex.yaml")));
 };
 
-static wxString compatToStringWX(int compat)
+static wxString compatToStringWX(GameDatabaseSchema::Compatibility compat)
 {
 	switch (compat)
 	{
-		case 6:
+		case GameDatabaseSchema::Compatibility::Perfect:
 			return L"Perfect";
-		case 5:
+		case GameDatabaseSchema::Compatibility::Playable:
 			return L"Playable";
-		case 4:
+		case GameDatabaseSchema::Compatibility::InGame:
 			return L"In-Game";
-		case 3:
+		case GameDatabaseSchema::Compatibility::Menu:
 			return L"Menu";
-		case 2:
+		case GameDatabaseSchema::Compatibility::Intro:
 			return L"Intro";
-		case 1:
+		case GameDatabaseSchema::Compatibility::Nothing:
 			return L"Nothing";
 		default:
 			return L"Unknown";

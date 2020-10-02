@@ -19,18 +19,33 @@
 
 #include "yaml-cpp/yaml.h"
 
+std::string GameDatabaseSchema::GameEntry::memcardFiltersAsString()
+{
+	if (memcardFilters.empty())
+		return "";
+
+	std::string filters;
+	for (int i = 0; i < memcardFilters.size(); i++)
+	{
+		std::string f = memcardFilters.at(i);
+		filters.append(f);
+		if (i != memcardFilters.size() - 1)
+			filters.append(",");
+	}
+	return filters;
+}
+
+// yaml-cpp definitely takes longer to parse this giant file, but the library feels more mature
+// rapidyaml exists and I have it mostly setup in another branch which could be easily dropped in as a replacement if needed
+//
+// the problem i ran into with rapidyaml is there is a lack of usage/documentation as it's new
+// and i didn't like the default way it handles exceptions (seemed to be configurable, but i didn't have much luck)
+
 bool YamlGameDatabaseImpl::initDatabase(const std::string filePath)
 {
-	// TODO - wrap for parser errors
-	// invalid yaml seems to throw an abort, not great, but it might have just been because i gave it a REALLY screwed up file
 	try
 	{
-		// yaml-cpp definitely takes longer to parse this giant file, but the library feels more mature
-		// rapidyaml exists and I have it mostly setup which could be easily dropped in as a replacement
-		// the problem i ran into with rapidyaml is there is a lack of usage/documentation as it's new
-		// and i didn't like the default way it handles exceptions.
-		//
-		// TODO - make sure this happens in a separate thread
+		// TODO - make sure this happens in a separate thread (but where would i join the thread...first access?)
 		// TODO - exception handling - invalid yaml?
 		gameDb = YAML::LoadFile(filePath);
 	}
@@ -68,50 +83,50 @@ std::vector<std::string> YamlGameDatabaseImpl::safeGetStringList(const YAML::Nod
 	return n[key].as<std::vector<std::string>>();
 }
 
-/*void YamlGameDatabaseImpl::operator>>(const YAML::Node& n, GameDatabaseSchema::GameEntry& v)
+GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::entryFromYaml(const YAML::Node& node)
 {
+	GameDatabaseSchema::GameEntry entry;
 	try
 	{
-		v.name = safeGetString(n, "name");
-		v.region = safeGetString(n, "region");
-		v.compat = static_cast<GameDatabaseSchema::Compatibility>(safeGetInt(n, "compat"));
-		v.eeRoundMode = static_cast<GameDatabaseSchema::RoundMode>(safeGetInt(n, "eeRoundMode"));
-		v.vuRoundMode = static_cast<GameDatabaseSchema::RoundMode>(safeGetInt(n, "vuRoundMode"));
-		v.eeClampMode = static_cast<GameDatabaseSchema::ClampMode>(safeGetInt(n, "eeClampMode"));
-		v.vuClampMode = static_cast<GameDatabaseSchema::ClampMode>(safeGetInt(n, "vuClampMode"));
-		v.gameFixes = safeGetStringList(n, "gameFixes");
-		v.speedHacks = safeGetStringList(n, "speedHacks");
-		v.memcardFilters = safeGetStringList(n, "memcardFilters");
+		entry.name = safeGetString(node, "name");
+		entry.region = safeGetString(node, "region");
+		entry.compat = static_cast<GameDatabaseSchema::Compatibility>(safeGetInt(node, "compat"));
+		entry.eeRoundMode = static_cast<GameDatabaseSchema::RoundMode>(safeGetInt(node, "eeRoundMode"));
+		entry.vuRoundMode = static_cast<GameDatabaseSchema::RoundMode>(safeGetInt(node, "vuRoundMode"));
+		entry.eeClampMode = static_cast<GameDatabaseSchema::ClampMode>(safeGetInt(node, "eeClampMode"));
+		entry.vuClampMode = static_cast<GameDatabaseSchema::ClampMode>(safeGetInt(node, "vuClampMode"));
+		entry.gameFixes = safeGetStringList(node, "gameFixes");
+		entry.speedHacks = safeGetStringList(node, "speedHacks");
+		entry.memcardFilters = safeGetStringList(node, "memcardFilters");
 
-		if (YAML::Node patches = n["patches"])
+		if (YAML::Node patches = node["patches"])
 		{
 			for (YAML::const_iterator it = patches.begin(); it != patches.end(); ++it)
 			{
 				YAML::Node key = it->first;
 				YAML::Node val = it->second;
-				GameDatabaseSchema::Patch patch;
-				patch.crc = safeGetString(val, "crc");
-				patch.content = safeGetStringList(val, "content");
-				v.patches.push_back(patch);
+				GameDatabaseSchema::PatchCollection patchCol;
+				patchCol.author = safeGetString(val, "author");
+				patchCol.patchLines = safeGetStringList(val, "patchLines");
+				entry.patches[key.as<std::string>()] = patchCol;
 			}
 		}
 	}
 	catch (std::exception& e)
 	{
-		v.isValid = false;
+		entry.isValid = false;
 	}
-}*/
+	return entry;
+}
 
 // TODO - yaml error handling - https://github.com/biojppm/rapidyaml#custom-allocators-and-error-handlers
 
 GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::findGame(const std::string serial)
 {
-	/*GameDatabaseSchema::GameEntry entry;
 	if (YAML::Node game = gameDb[serial])
-	{
-		game >> entry;
-		return entry;
-	}
+		return entryFromYaml(game);
+	
+	GameDatabaseSchema::GameEntry entry;
 	entry.isValid = false;
 	return entry;*/
 }

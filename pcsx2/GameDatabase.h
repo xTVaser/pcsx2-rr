@@ -17,6 +17,7 @@
 
 #include "yaml-cpp/yaml.h"
 
+#include <unordered_map>
 #include <vector>
 #include <string>
 
@@ -81,10 +82,10 @@ public:
 		mvuFlagSpeedHack = 0
 	};*/
 
-	struct Patch
+	struct PatchCollection
 	{
-		std::string crc;
-		std::vector<std::string> content;
+		std::string author;
+		std::vector<std::string> patchLines;
 	};
 
 	struct GameEntry
@@ -100,7 +101,9 @@ public:
 		std::vector<std::string> gameFixes;
 		std::vector<std::string> speedHacks;
 		std::vector<std::string> memcardFilters;
-		std::vector<Patch> patches;
+		std::unordered_map<std::string, PatchCollection> patches;
+
+		std::string memcardFiltersAsString();
 	};
 };
 
@@ -116,23 +119,12 @@ class YamlGameDatabaseImpl : public IGameDatabase
 {
 public:
 	bool initDatabase(const std::string filePath) override;
-
-	// For reading from YAML, no need to write unless we are saving to the file...which we aren't
-	
-	//friend void operator >> (const YAML::Node& node, GameDatabaseSchema::GameEntry& v);
-
-	int safeGetInt(const YAML::Node& n, std::string key, int def = 0);
-	std::string safeGetString(const YAML::Node& n, std::string key, std::string def = "");
-
-	std::vector<std::string> safeGetStringList(const YAML::Node& n, std::string key, std::vector<std::string> def = {});
-
-	// TODO - i got rid of returning pointer types because...why?
-	// if the consumer wants a pointer, they can handle that but we retain a reference to the parsed db anyway
 	GameDatabaseSchema::GameEntry findGame(const std::string serial) override;
 	bool createNewGame(const std::string serial, GameDatabaseSchema::GameEntry& entry) override;
 
 private:
 	YAML::Node gameDb;
+	GameDatabaseSchema::GameEntry entryFromYaml(const YAML::Node& node);
 };
 
 extern IGameDatabase* AppHost_GetGameDatabase();

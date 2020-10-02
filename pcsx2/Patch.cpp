@@ -123,40 +123,32 @@ static void inifile_command(const wxString& cmd)
 	/*int code = */PatchTableExecute(set, commands_patch);
 }
 
-// This routine receives a string containing patches, trims it,
-// Then sends the command to be parsed.
-void TrimPatches(wxString& s)
-{
-	wxStringTokenizer tkn( s, L"\n" );
-
-	while(tkn.HasMoreTokens()) {
-		inifile_command(tkn.GetNextToken());
-	}
-}
-
 // This routine loads patches from the game database (but not the config/game fixes/hacks)
 // Returns number of patches loaded
-int LoadPatchesFromGamesDB(const wxString& crc, const Game_Data& game)
+int LoadPatchesFromGamesDB(const wxString& crc, const GameDatabaseSchema::GameEntry& game)
 {
-	/*bool patchFound = false;
-	wxString patch;
-
-	if (game.IsOk())
+	if (game.isValid)
 	{
-		if (game.sectionExists(L"patches", crc)) {
-			patch = game.getSection(L"patches", crc);
-			patchFound = true;
+		GameDatabaseSchema::PatchCollection patchCollection;
+		if (game.patches.count(std::string(crc)) == 1)
+		{
+			patchCollection = game.patches.at(std::string(crc));
 		}
-		else if (game.keyExists(L"[patches]")) {
-			patch = game.getString(L"[patches]");
-			patchFound = true;
+		else if (game.patches.count("default") == 1)
+		{
+			patchCollection = game.patches.at("default");
+		}
+
+		if (patchCollection.patchLines.size() > 0)
+		{
+			for each(std::string line in patchCollection.patchLines)
+			{
+				inifile_command(line);
+			}
 		}
 	}
 
-	if (patchFound) TrimPatches(patch);
-
-	return Patch.size();*/
-	return 0;
+	return Patch.size();
 }
 
 void inifile_processString(const wxString& inStr)

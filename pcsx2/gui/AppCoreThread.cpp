@@ -223,7 +223,7 @@ void AppCoreThread::OnPauseDebug()
 // (game fixes, round modes, clamp modes, etc...)
 // Returns number of gamefixes set
 // TODO
-static int loadGameSettings(Pcsx2Config& dest, const Game_Data& game) {
+static int loadGameSettings(Pcsx2Config& dest, const GameDatabaseSchema::GameEntry& game) {
 	//if( !game.IsOk() ) return 0;
 
 	//int  gf  = 0;
@@ -400,27 +400,25 @@ static void _ApplySettings( const Pcsx2Config& src, Pcsx2Config& fixup )
 	{
 		if (IGameDatabase* GameDB = AppHost_GetGameDatabase() )
 		{
-			// TODO
-			/*Game_Data game;
-			if (GameDB->findGame(game, curGameKey))
+			GameDatabaseSchema::GameEntry game = GameDB->findGame(std::string(curGameKey));
+			if (game.isValid)
 			{
-				int compat = game.getInt("Compat");
-				gameName   = game.getString("Name");
-				gameName  += L" (" + game.getString("Region") + L")";
-				gameCompat = L" [Status = "+compatToStringWX(compat)+L"]";
-				gameMemCardFilter = game.getString("MemCardFilter");
-			}*/
+				gameName   = game.name;
+				gameName  += L" (" + game.region + L")";
+				gameCompat = L" [Status = "+compatToStringWX(game.compat)+L"]";
+				gameMemCardFilter = game.memcardFiltersAsString();
+			}
 
-			//if (fixup.EnablePatches)
-			//{
-			//	if (int patches = LoadPatchesFromGamesDB(gameCRC, game))
-			//	{
-			//		gamePatch.Printf(L" [%d Patches]", patches);
-			//		PatchesCon->WriteLn(Color_Green, "(GameDB) Patches Loaded: %d", patches);
-			//	}
-			//	if (int fixes = loadGameSettings(fixup, game))
-			//		gameFixes.Printf(L" [%d Fixes]", fixes);
-			//}
+			if (fixup.EnablePatches)
+			{
+				if (int patches = LoadPatchesFromGamesDB(gameCRC, game))
+				{
+					gamePatch.Printf(L" [%d Patches]", patches);
+					PatchesCon->WriteLn(Color_Green, "(GameDB) Patches Loaded: %d", patches);
+				}
+				if (int fixes = loadGameSettings(fixup, game))
+					gameFixes.Printf(L" [%d Fixes]", fixes);
+			}
 		}
 	}
 
