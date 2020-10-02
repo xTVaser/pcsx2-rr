@@ -1,16 +1,18 @@
 # Builds the ubuntu 20-04 image to speed up PR build times
-# There is still no official way to cache docker images between builds so it seems - https://github.community/t/cache-a-docker-image-built-in-workflow/16260/9
+#
+# There is still no official way to cache docker images between builds so it seems
+# - https://github.community/t/cache-a-docker-image-built-in-workflow/16260/9
 # All of the workaround community-made actions just use dockerhub as the cache
+#
+# Layer caching is probably a waste for the pcsx2 CI use-case, as the dockerbuild is not a fundamental part of the build
+# just a way to start with a more appropriate image
 
-name: Push Ubuntu CI Images
+name: Ubuntu CI Images
 
-# Controls when the action will run. Triggers the workflow only on pushes to the master branch
+# Controls when the action will run.
+# Triggers the workflow only on pushes to the master branch
 on:
   push:
-    branches:
-      - master
-  # TODO - REMOVE THIS ONCE DONE
-  pull_request:
     branches:
       - master
 
