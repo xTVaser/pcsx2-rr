@@ -141,10 +141,11 @@ int LoadPatchesFromGamesDB(const wxString& crc, const GameDatabaseSchema::GameEn
 
 		if (patchCollection.patchLines.size() > 0)
 		{
-			for each(std::string line in patchCollection.patchLines)
-			{
-				inifile_command(line);
-			}
+			for (auto line : patchCollection.patchLines)
+            {
+                inifile_command(line);
+            }
+
 		}
 	}
 
