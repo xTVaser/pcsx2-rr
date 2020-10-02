@@ -44,31 +44,31 @@ bool YamlGameDatabaseImpl::initDatabase(const std::string filePath)
 
 /// TODO - the following helper functions can realistically be put in some sort of general yaml utility library
 // TODO - might be a way to condense this with templates? get it working first
-std::string safeGetString(const YAML::Node& n, std::string key, std::string default = "")
+std::string YamlGameDatabaseImpl::safeGetString(const YAML::Node& n, std::string key, std::string def)
 {
 	if (!n[key])
-		return default;
+		return def;
 	// TODO - test this safety consideration (parse a value that isn't actually a string
 	return n[key].as<std::string>();
 }
 
-int safeGetInt(const YAML::Node& n, std::string key, int default = 0)
+int YamlGameDatabaseImpl::safeGetInt(const YAML::Node& n, std::string key, int def)
 {
 	if (!n[key])
-		return default;
+		return def;
 	// TODO - test this safety consideration (parse a value that isn't actually a string
 	return n[key].as<int>();
 }
 
-std::vector<std::string> safeGetStringList(const YAML::Node& n, std::string key, std::vector<std::string> default = {})
+std::vector<std::string> YamlGameDatabaseImpl::safeGetStringList(const YAML::Node& n, std::string key, std::vector<std::string> def)
 {
 	if (!n[key])
-		return default;
+		return def;
 	// TODO - test this safety consideration (parse a value that isn't actually a string
 	return n[key].as<std::vector<std::string>>();
 }
 
-void operator>>(const YAML::Node& n, GameDatabaseSchema::GameEntry& v)
+void YamlGameDatabaseImpl::operator>>(const YAML::Node& n, GameDatabaseSchema::GameEntry& v)
 {
 	try
 	{
