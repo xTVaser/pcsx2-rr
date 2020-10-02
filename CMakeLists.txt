@@ -1,6 +1,7 @@
 # Project Name
 project(Pcsx2)
 
+#set(TARGET Pcsx2)
 # Debian-based distributions require at least 2.8.5 due to multiarch.
 # Bumping up to 3.0 seems reasonable at this point, and will let us modernize
 # things a bit.
@@ -64,7 +65,6 @@ if(ACTUALLY_ENABLE_TESTS)
 endif()
 
 
-
 #-------------------------------------------------------------------------------
 
 # Install some files to ease package creation
@@ -87,14 +87,7 @@ if(PACKAGE_MODE)
     INSTALL(FILES "${CMAKE_SOURCE_DIR}/bin/docs/PCSX2_FAQ.pdf"      DESTINATION "${DOC_DIR}")
     INSTALL(FILES "${CMAKE_SOURCE_DIR}/bin/docs/Configuration_Guide.pdf"   DESTINATION "${DOC_DIR}")
     INSTALL(FILES "${CMAKE_SOURCE_DIR}/bin/docs/PCSX2.1"            DESTINATION "${MAN_DIR}/man1")
-    if(NOT DISABLE_PCSX2_WRAPPER)
-        INSTALL(FILES "${CMAKE_SOURCE_DIR}/linux_various/PCSX2-linux.sh"          DESTINATION "${BIN_DIR}")
+
     endif()
 
-else()
-    if(NOT DISABLE_PCSX2_WRAPPER)
-        # special case to avoid having linux files in windows
-        INSTALL(FILES "${CMAKE_SOURCE_DIR}/linux_various/PCSX2-linux.sh"          DESTINATION "${CMAKE_SOURCE_DIR}/bin")
-    endif()
-endif()
-
+    target_link_libraries(PCSX2 yaml-cpp)

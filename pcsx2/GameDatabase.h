@@ -119,12 +119,12 @@ public:
 
 	// For reading from YAML, no need to write unless we are saving to the file...which we aren't
 	
-	friend void operator >> (const YAML::Node& node, GameDatabaseSchema::GameEntry& v);
+	//friend void operator >> (const YAML::Node& node, GameDatabaseSchema::GameEntry& v);
 
-	int safeGetInt(const YAML::Node& n, std::string key, int def);
-	std::string safeGetString(const YAML::Node& n, std::string key, std::string def);
+	int safeGetInt(const YAML::Node& n, std::string key, int def = 0);
+	std::string safeGetString(const YAML::Node& n, std::string key, std::string def = "");
 
-	std::vector<std::string> safeGetStringList(const YAML::Node& n, std::string key, std::vector<std::string> def);
+	std::vector<std::string> safeGetStringList(const YAML::Node& n, std::string key, std::vector<std::string> def = {});
 
 	// TODO - i got rid of returning pointer types because...why?
 	// if the consumer wants a pointer, they can handle that but we retain a reference to the parsed db anyway

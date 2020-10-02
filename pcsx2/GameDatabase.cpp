@@ -68,7 +68,7 @@ std::vector<std::string> YamlGameDatabaseImpl::safeGetStringList(const YAML::Nod
 	return n[key].as<std::vector<std::string>>();
 }
 
-void YamlGameDatabaseImpl::operator>>(const YAML::Node& n, GameDatabaseSchema::GameEntry& v)
+/*void YamlGameDatabaseImpl::operator>>(const YAML::Node& n, GameDatabaseSchema::GameEntry& v)
 {
 	try
 	{
@@ -100,20 +100,20 @@ void YamlGameDatabaseImpl::operator>>(const YAML::Node& n, GameDatabaseSchema::G
 	{
 		v.isValid = false;
 	}
-}
+}*/
 
 // TODO - yaml error handling - https://github.com/biojppm/rapidyaml#custom-allocators-and-error-handlers
 
 GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::findGame(const std::string serial)
 {
-	GameDatabaseSchema::GameEntry entry;
+	/*GameDatabaseSchema::GameEntry entry;
 	if (YAML::Node game = gameDb[serial])
 	{
 		game >> entry;
 		return entry;
 	}
 	entry.isValid = false;
-	return entry;
+	return entry;*/
 }
 
 // TODO - why is there a create game option, is writing to the file from the application...actually a thing...it has to be commited to the repo?
