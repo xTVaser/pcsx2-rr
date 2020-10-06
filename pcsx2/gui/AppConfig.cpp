@@ -1033,9 +1033,9 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 
 nlohmann::json* OpenFileConfig( std::string filename )
 {
-	std::unique_ptr<nlohmann::json> loader(folderUtils.Load(filename));
+	nlohmann::json *loader = folderUtils.Load(filename);
 
-	return loader.get();
+	return loader;
 }
 
 void RelocateLogfile()

@@ -255,10 +255,7 @@ void PathUtils::Save(fs::path toSave, nlohmann::json& stream) // A Møøse once 
 {
     out.open(toSave, std::ios::trunc);
 
-    while (out << std::setw(4) << stream) // 
-    {
-        std::cout << "Saving" << std::endl;
-    }
+    out << std::setw(4) << stream; 
 
     out.close();
 }

@@ -91,7 +91,7 @@ bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder, std::st
 		    if (!path.CreateFolder(folder))
 		    {
 			    ErrorFolders.push_back(folder); 
-			    wxFileConfig* OpenFileConfig( const std::string& filename );
+			    //wxFileConfig* OpenFileConfig( const std::string& filename );
 		    }
         }
 	}
@@ -126,7 +126,7 @@ nlohmann::json* Pcsx2App::TestForPortableInstall()
 	InstallationMode = 	InstallMode_Portable;
 
 	fs::path portableJsonFile = GetPortableJsonPath();
-	fs::path portableDocsFolder = portableJsonFile.parent_path();
+	std::string portableDocsFolder = portableJsonFile.parent_path();
 
 	std::cout << "PATH: " << portableJsonFile << std::endl;
 	std::unique_ptr<nlohmann::json> conf_portable( OpenFileConfig( portableJsonFile ) );
@@ -184,7 +184,6 @@ nlohmann::json* Pcsx2App::TestForPortableInstall()
 					dialog2 += dialog2.Heading( _("Try to remove the file called \"portable.json\" from your installation directory manually." ) );
 					dialog2 += 6;
 					pxIssueConfirmation( dialog2, MsgButtons().OK() );
-
 					return nullptr;
 			}
 
@@ -324,6 +323,6 @@ void Pcsx2App::EstablishAppUserMode()
 	json = *conf_install.get();
 
 	// Wizard completed successfully, so let's not torture the user with this crap again!
-	json["RunWizard"] = false;
+	//json["RunWizard"] = false;
 }
 
