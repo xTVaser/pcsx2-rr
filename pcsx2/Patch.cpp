@@ -179,7 +179,7 @@ static int _LoadPatchFiles(const std::string& folderName, std::string& fileSpec,
 	numberFoundPatchFiles = 0;
 
 	if (!folderName.empty()) {
-		Console.WriteLn(Color_Red, L"The %s folder ('%s') is inaccessible. Skipping...", friendlyName, folderName);
+		//Console.WriteLn(Color_Red, L"The %s folder ('%s') is inaccessible. Skipping...", friendlyName.c_str(), folderName.c_str());
 		return 0;
 	}
 	std::string dir(folderName);
@@ -191,14 +191,14 @@ static int _LoadPatchFiles(const std::string& folderName, std::string& fileSpec,
 	for (auto& found : dir)
 	{
 		if (std::toupper(buffer[0]) == std::toupper(fileSpec[0])) {
-			PatchesCon->WriteLn(Color_Green, L"Found %s file: '%s'", friendlyName, buffer);
+			//PatchesCon->WriteLn(Color_Green, L"Found %s file: '%s'", friendlyName.c_str(), buffer.c_str());
 			int before = Patch.size();
 			f.Open(Path::Combine(dir, buffer));
 			inifile_process(f);
 			f.Close();
 			int loaded = Patch.size() - before;
-			PatchesCon->WriteLn((loaded ? Color_Green : Color_Gray), L"Loaded %d %s from '%s' at '%s'",
-				loaded, friendlyName, buffer, folderName);
+			//PatchesCon->WriteLn((loaded ? Color_Green : Color_Gray), L"Loaded %d %s from '%s' at '%s'",
+				//loaded, friendlyName, buffer, folderName);
 			numberFoundPatchFiles++;
 		}
 	}
@@ -253,10 +253,10 @@ int LoadPatchesFromDir(std::string name, const std::string& folderName, const st
 	if (folderName == (PathDefs::GetCheats()) && numberFoundPatchFiles == 0) {
 		std::transform(name.begin(), name.end(),name.begin(), ::toupper);
 		std::string pathName = (folderName + name + ".pnach");
-		PatchesCon->WriteLn(Color_Gray, L"Not found %s file: %s", (wxString)friendlyName, (wxString)pathName);
+		//PatchesCon->WriteLn(Color_Gray, L"Not found %s file: %s", (wxString)friendlyName, (wxString)pathName);
 	}
 
-	PatchesCon->WriteLn((loaded ? Color_Green : Color_Gray), L"Overall %d %s loaded", loaded, (wxString)friendlyName);
+	//PatchesCon->WriteLn((loaded ? Color_Green : Color_Gray), L"Overall %d %s loaded", loaded, (wxString)friendlyName);
 	return loaded;
 }
 

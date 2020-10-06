@@ -21,6 +21,7 @@
 #include "AppConfig.h"
 #include <wx/stdpaths.h>
 
+
 #ifdef __WXMSW__
 #include "wx/msw/regconf.h"
 #endif
@@ -64,8 +65,8 @@ InstallationModeType		InstallationMode;
 
 static fs::path GetPortableJsonPath()
 {
-	fs::path programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
-	fs::path programDir( programFullPath.parent_path());
+	fs::path programFullPath = fs::current_path(); //wxStandardPaths::Get().GetExecutablePath().ToStdString();
+	fs::path programDir = programFullPath;
 	return Path::Combine(programDir, "portable.json");
 }
 
@@ -126,21 +127,20 @@ nlohmann::json* Pcsx2App::TestForPortableInstall()
 
 	fs::path portableJsonFile = GetPortableJsonPath();
 	fs::path portableDocsFolder = portableJsonFile.parent_path();
-	std::string FilenameStr = portableJsonFile.string();
 
-	std::cout << "PATH: " << FilenameStr << std::endl;
+	std::cout << "PATH: " << portableJsonFile << std::endl;
 
 	if (Startup.PortableMode || !portableJsonFile.empty())
 	{
 		if (Startup.PortableMode)
 			Console.WriteLn( L"(UserMode) Portable mode requested via commandline switch!" );
 		else
-			Console.WriteLn( L"(UserMode) Found portable install json @ %s", (wxString)FilenameStr);
+			Console.WriteLn( L"(UserMode) Found portable install json @ %s", (wxString)portableJsonFile.c_str());
 
 		// Just because the portable json file exists doesn't mean we can actually run in portable
 		// mode.  In order to determine our read/write permissions to the PCSX2, we must try to
 		// modify the configured documents folder, and catch any ensuing error.
-		std::unique_ptr<nlohmann::json> conf_portable( OpenFileConfig( FilenameStr ) );
+		std::unique_ptr<nlohmann::json> conf_portable( OpenFileConfig( portableJsonFile ) );
 		
 		while( true ) // ?? why a whole loop here
 		{
@@ -288,13 +288,11 @@ void Pcsx2App::EstablishAppUserMode()
 {
 	wxGetApp().GetGameDatabase();
 
-
-
 	std::unique_ptr<nlohmann::json> conf_install;
 	conf_install = std::unique_ptr<nlohmann::json>(TestForPortableInstall());
 
-	//if (!conf_install)
-		//conf_install = std::unique_ptr<nlohmann::json>(OpenInstallSettingsFile());
+	if (!conf_install)
+		conf_install = std::unique_ptr<nlohmann::json>(OpenInstallSettingsFile());
 
 	//conf_install->SetRecordDefaults(false);
 
@@ -323,6 +321,6 @@ void Pcsx2App::EstablishAppUserMode()
 	AppSaveSettings();
 
 	// Wizard completed successfully, so let's not torture the user with this crap again!
-	json["RunWizard"] = false;
+	//json["RunWizard"] = false;
 }
 

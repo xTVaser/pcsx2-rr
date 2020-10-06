@@ -1227,7 +1227,7 @@ static void LoadUiSettings()
 #else
 	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
 	{
-		//g_Conf->Folders.RunDisc.Clear();
+		g_Conf->Folders.RunDisc.clear();
 	}
 #endif
 

@@ -45,8 +45,9 @@ endif()
 if(common_libs)
     add_subdirectory(common/src/Utilities)
     add_subdirectory(common/src/x86emitter)
-    add_subdirectory(3rdparty/yaml-cpp/yaml-cpp)
-endif()
+    #add_subdirectory(3rdparty/yaml-cpp/yaml-cpp)
+    find_package(yaml-cpp)
+    endif()
 
 # make pcsx2
 if(EXISTS "${CMAKE_SOURCE_DIR}/pcsx2" AND pcsx2_core)

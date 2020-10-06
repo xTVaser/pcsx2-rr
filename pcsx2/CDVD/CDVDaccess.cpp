@@ -294,28 +294,28 @@ static void DetectDiskType()
 	diskTypeCached = FindDiskType(mType);
 }
 
-static wxString m_SourceFilename[3];
+static std::string m_SourceFilename[3];
 static CDVD_SourceType m_CurrentSourceType = CDVD_SourceType::NoDisc;
 
-void CDVDsys_SetFile(CDVD_SourceType srctype, const wxString& newfile)
+/*void CDVDsys_SetFile(CDVD_SourceType srctype, std::string& newfile) // This function is looking for debug symbols
 {
 	m_SourceFilename[enum_cast(srctype)] = newfile;
 
 	// look for symbol file
-	if (symbolMap.IsEmpty())
+	if (symbolMap.empty())
 	{
-		wxString symName;
-		int n = newfile.Last('.');
-		if (n == wxNOT_FOUND)
-			symName = newfile + L".sym";
+		std::string symName;
+		int pos = newfile.Last('.');
+		if (pos == wxNOT_FOUND)
+			symName = newfile + ".sym";
 		else
-			symName = newfile.substr(0, n) + L".sym";
+			symName = newfile + ".sym";
 
-		wxCharBuffer buf = symName.ToUTF8();
+		const char* buf = symName.c_str();
 		symbolMap.LoadNocashSym(buf);
 		symbolMap.UpdateActiveSymbols();
 	}
-}
+}*/
 
 const wxString& CDVDsys_GetFile(CDVD_SourceType srctype)
 {
@@ -368,8 +368,8 @@ bool DoCDVDopen()
 	//TODO_CDVD check if ISO and Disc use UTF8
 
 	auto CurrentSourceType = enum_cast(m_CurrentSourceType);
-	int ret = CDVD->open(!m_SourceFilename[CurrentSourceType].IsEmpty() ?
-							 static_cast<const char*>(m_SourceFilename[CurrentSourceType].ToUTF8()) :
+	int ret = CDVD->open(!fs::is_empty(m_SourceFilename[CurrentSourceType]) ?
+							 m_SourceFilename[CurrentSourceType].c_str() :
 							 (char*)NULL);
 
 	if (ret == -1)
