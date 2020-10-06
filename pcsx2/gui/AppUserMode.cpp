@@ -137,8 +137,7 @@ nlohmann::json* Pcsx2App::TestForPortableInstall()
 			Console.WriteLn( L"(UserMode) Portable mode requested via commandline switch!" );
 		else
 		{
-			wxString temp(portableJsonFile.c_str());
-			Console.WriteLn( L"(UserMode) Found portable install json @ %s", WX_STR(portableJsonFile));
+			Console.WriteLn( L"(UserMode) Found portable install json @ %s", wxString(portableJsonFile.string()));
 		}
 		// Just because the portable json file exists doesn't mean we can actually run in portable
 		// mode.  In order to determine our read/write permissions to the PCSX2, we must try to
