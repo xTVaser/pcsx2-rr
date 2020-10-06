@@ -157,7 +157,7 @@ extern const wxChar* CDVD_SourceLabels[];
 
 extern void CDVDsys_ChangeSource(CDVD_SourceType type);
 extern void CDVDsys_SetFile(CDVD_SourceType srctype, std::string newfile);
-extern const fs::path& CDVDsys_GetFile(CDVD_SourceType srctype);
+extern const std::string& CDVDsys_GetFile(CDVD_SourceType srctype);
 extern CDVD_SourceType CDVDsys_GetSourceType();
 
 extern bool DoCDVDopen();

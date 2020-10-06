@@ -317,7 +317,7 @@ void CDVDsys_SetFile(CDVD_SourceType srctype, std::string newfile) // This funct
 	}*/
 }
 
-const fs::path& CDVDsys_GetFile(CDVD_SourceType srctype)
+const std::string& CDVDsys_GetFile(CDVD_SourceType srctype)
 {
 	return m_SourceFilename[enum_cast(srctype)];
 }
