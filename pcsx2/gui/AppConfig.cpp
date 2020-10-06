@@ -729,7 +729,7 @@ nlohmann::json AppConfig::FilenameOptions::LoadSave()
 
 	for( int i=0; i<PluginId_Count; ++i )
 	{
-		std::string pluginShortName = tbl_PluginInfo[i].GetShortname();
+		std::string pluginShortName = static_cast<std::string>(tbl_PluginInfo[i].GetShortname());
 		if ( needRelativeName ) {
 			std::string plugin_filename = Plugins[i];
 			appC[pluginShortName] = (plugin_filename, pc );

@@ -163,6 +163,11 @@ ATTR_DEP extern void FSTP(int st);
 ATTR_DEP extern void FRNDINT();
 ATTR_DEP extern void FXCH(int st);
 ATTR_DEP extern void F2XM1();
+#ifdef FSCALE
+// MacOS defines this in its sys/param.h which gets imported by filesystem.hpp, we don't use that definition so undef it here
+// TODO: Maybe we should just remove x87 instructions, we should be using SSE anyways
+# undef FSCALE
+#endif
 ATTR_DEP extern void FSCALE();
 
 // fadd ST(0) to fpu reg stack ST(src)

@@ -194,7 +194,7 @@ std::string Path::GetRootDirectory(const wxString &src)
     if (pos == 0)
         return std::string();
     else
-        return fs::path(src.begin(), src.begin() + pos);
+        return fs::path(std::string(src.begin(), src.begin() + pos));
 }
 
 // ------------------------------------------------------------------------
