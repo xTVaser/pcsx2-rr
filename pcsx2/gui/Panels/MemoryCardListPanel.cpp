@@ -525,8 +525,9 @@ void Panels::MemoryCardListPanel_Simple::Apply()
 			g_Conf->Mcd[slot].Filename = "";
 
 		if (g_Conf->Mcd[slot].Enabled) {
+			wxString name((wxString)g_Conf->Mcd[slot].Filename.c_str());
 			used++;
-			Console.WriteLn(L"slot[%d]='%s'", slot, (wxString)g_Conf->Mcd[slot].Filename);
+			Console.WriteLn(L"slot[%d]='%s'", slot, WX_STR(name));
 		}
 	}
 	if (!used)
@@ -548,12 +549,12 @@ void Panels::MemoryCardListPanel_Simple::AppStatusEvent_OnSettingsApplied()
 			wxString errMsg;
 			if (isValidNewFilename(m_Cards[slot].Filename, GetMcdPath(), errMsg, 5)) {
 				if (!Dialogs::CreateMemoryCardDialog::CreateIt(targetFile, 8, false)) {
-					Console.Error(L"Automatic creation of memory card '%s' failed. Hope for the best...", targetFile);
+					Console.Error(L"Automatic creation of memory card '%s' failed. Hope for the best...", WX_STR(targetFile));
 				} else {
-					Console.WriteLn(L"Memory card created: '%s'.", targetFile);
+					Console.WriteLn(L"Memory card created: '%s'.", WX_STR(targetFile));
 				}
 			} else {
-				Console.Error(L"Memory card was enabled, but it had an invalid file name. Aborting automatic creation. Hope for the best... (%s)", errMsg);
+				Console.Error(L"Memory card was enabled, but it had an invalid file name. Aborting automatic creation. Hope for the best... (%s)", WX_STR(errMsg));
 			}
 		}
 
@@ -631,10 +632,13 @@ void Panels::MemoryCardListPanel_Simple::UiCreateNewCard( McdSlotItem& card )
 		card.IsEnabled = true;
 		card.Filename  = dialog.result_createdMcdFilename;
 		card.IsPresent = true;
+
+		wxString file(card.Filename.c_str());
+
 		if (card.Slot >= 0) {
-			Console.WriteLn(L"Setting new memory card to slot %u: '%s'", card.Slot, (wxString)card.Filename);
+			Console.WriteLn(L"Setting new memory card to slot %u: '%s'", card.Slot, WX_STR(file));
 		} else {
-			Console.WriteLn(L"Created a new unassigned memory card file: '%s'", (wxString)card.Filename);
+			Console.WriteLn(L"Created a new unassigned memory card file: '%s'", WX_STR(file));
 		}
 	} else {
 		card.IsEnabled = false;

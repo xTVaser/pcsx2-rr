@@ -506,11 +506,13 @@ void Panels::PluginSelectorPanel::Apply()
 
 		std::string plugname( tbl_PluginInfo[ex.PluginId].GetShortname() );
 
+		wxString name(plugname.c_str());
+
 		throw Exception::CannotApplySettings( this )
 			.SetDiagMsg(ex.FormatDiagnosticMessage())
 			.SetUserMsg(pxsFmt(
 				_("The selected %s plugin failed to load.\n\nReason: %s\n\n"),
-				(wxString)plugname, ex.FormatDisplayMessage()
+				WX_STR(name), WX_STR(ex.FormatDisplayMessage())
 			) + GetApplyFailedMsg());
 	}
 }

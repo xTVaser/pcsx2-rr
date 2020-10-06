@@ -1171,7 +1171,7 @@ protected:
 		symbolMap.Clear();
 		CBreakPoints::SetSkipFirst(0);
 
-		//CDVDsys_SetFile(CDVD_SourceType::Iso, g_Conf->CurrentIso.c_str() );
+		(CDVD_SourceType::Iso, g_Conf->CurrentIso.c_str() );
 		if( m_UseCDVDsrc )
 			CDVDsys_ChangeSource( m_cdvdsrc_type );
 		else if( CDVD == NULL )

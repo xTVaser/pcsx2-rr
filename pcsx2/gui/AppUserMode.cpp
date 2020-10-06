@@ -129,18 +129,20 @@ nlohmann::json* Pcsx2App::TestForPortableInstall()
 	fs::path portableDocsFolder = portableJsonFile.parent_path();
 
 	std::cout << "PATH: " << portableJsonFile << std::endl;
+	std::unique_ptr<nlohmann::json> conf_portable( OpenFileConfig( portableJsonFile ) );
 
 	if (Startup.PortableMode || !portableJsonFile.empty())
 	{
 		if (Startup.PortableMode)
 			Console.WriteLn( L"(UserMode) Portable mode requested via commandline switch!" );
 		else
-			Console.WriteLn( L"(UserMode) Found portable install json @ %s", (wxString)portableJsonFile.c_str());
-
+		{
+			wxString temp(portableJsonFile.c_str());
+			Console.WriteLn( L"(UserMode) Found portable install json @ %s", WX_STR(portableJsonFile));
+		}
 		// Just because the portable json file exists doesn't mean we can actually run in portable
 		// mode.  In order to determine our read/write permissions to the PCSX2, we must try to
 		// modify the configured documents folder, and catch any ensuing error.
-		std::unique_ptr<nlohmann::json> conf_portable( OpenFileConfig( portableJsonFile ) );
 		
 		while( true ) // ?? why a whole loop here
 		{

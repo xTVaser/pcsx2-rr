@@ -297,12 +297,12 @@ static void DetectDiskType()
 static std::string m_SourceFilename[3];
 static CDVD_SourceType m_CurrentSourceType = CDVD_SourceType::NoDisc;
 
-/*void CDVDsys_SetFile(CDVD_SourceType srctype, std::string& newfile) // This function is looking for debug symbols
+void CDVDsys_SetFile(CDVD_SourceType srctype, std::string newfile) // This function is looking for debug symbols
 {
 	m_SourceFilename[enum_cast(srctype)] = newfile;
 
 	// look for symbol file
-	if (symbolMap.empty())
+	/*if (symbolMap.empty())
 	{
 		std::string symName;
 		int pos = newfile.Last('.');
@@ -314,10 +314,10 @@ static CDVD_SourceType m_CurrentSourceType = CDVD_SourceType::NoDisc;
 		const char* buf = symName.c_str();
 		symbolMap.LoadNocashSym(buf);
 		symbolMap.UpdateActiveSymbols();
-	}
-}*/
+	}*/
+}
 
-const wxString& CDVDsys_GetFile(CDVD_SourceType srctype)
+const fs::path& CDVDsys_GetFile(CDVD_SourceType srctype)
 {
 	return m_SourceFilename[enum_cast(srctype)];
 }
@@ -390,12 +390,12 @@ bool DoCDVDopen()
 	//FWIW Disc serial availability doesn't seem reliable enough, sometimes it's there and sometime it's just null
 	//Shouldn't the serial be available all time? Potentially need to look into Elfreloadinfo() reliability
 	//TODO: Add extra fallback case for CRC.
-	if (pathUtils.DoesExist(somepick) && !DiscSerial.IsEmpty())
+	if (somepick.empty() && !DiscSerial.IsEmpty())
 		somepick = "Untitled-" + DiscSerial;
-	else if (pathUtils.Empty(somepick))
+	else if (somepick.empty())
 		somepick = "Untitled";
 
-	if (pathUtils.Empty(g_Conf->CurrentBlockdump))
+	if (g_Conf->CurrentBlockdump.empty())
 		g_Conf->CurrentBlockdump = wxGetCwd();
 
 	wxString temp(Path::Combine(g_Conf->CurrentBlockdump, somepick));

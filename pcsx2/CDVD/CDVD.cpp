@@ -122,7 +122,10 @@ static void cdvdGetMechaVer(u8* ver)
 
 	size_t ret = fp.Read(ver, 4);
 	if (ret != 4)
-		Console.Error(L"Failed to read from %s. Did only %zu/4 bytes", fname, ret);
+	{
+		wxString name(fname.c_str());
+		Console.Error(L"Failed to read from %s. Did only %zu/4 bytes", WX_STR(name), ret);
+	}
 }
 
 NVMLayout* getNvmLayout()
@@ -182,8 +185,11 @@ static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 		ret = fp.Write(buffer, bytes);
 
 	if (ret != bytes)
+	{
+		wxString name(fname.c_str());
 		Console.Error(L"Failed to %s %s. Did only %zu/%zu bytes",
-				read ? L"read from" : L"write to", fname, ret, bytes);
+				read ? L"read from" : L"write to", WX_STR(name), ret, bytes);
+	}
 }
 
 static void cdvdReadNVM(u8* dst, int offset, int bytes)
