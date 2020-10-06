@@ -119,8 +119,6 @@ GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::entryFromYaml(const YAML::No
 	return entry;
 }
 
-// TODO - yaml error handling - https://github.com/biojppm/rapidyaml#custom-allocators-and-error-handlers
-
 GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::findGame(const std::string serial)
 {
 	if (YAML::Node game = gameDb[serial])
