@@ -73,7 +73,7 @@ public:
     bool IsRelative() const { return wxFileName::IsRelative(); }
     bool IsAbsolute() const { return wxFileName::IsAbsolute(); }
 
-    bool SameAs(const wxDirName &filepath) const
+    bool SameAs(wxFileName filepath) const
     {
         return wxFileName::SameAs(filepath);
     }

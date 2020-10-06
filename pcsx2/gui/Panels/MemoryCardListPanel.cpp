@@ -159,7 +159,7 @@ bool McdSlotItem::operator==( const McdSlotItem& right ) const
 {
 	bool fileEqu;
 
-	if( Filename.empty() )
+	if( Filename.GetFullName().IsEmpty() )
 		fileEqu = OpEqu(Slot);
 	else
 		fileEqu = OpEqu(Filename);
@@ -326,7 +326,7 @@ public:
 			//   Note: For the sake of usability, automatically enable dest if a ps2-port.
 			if (src.IsPresent)
 			{
-				std::string	tmpFilename = dest.Filename;
+				std::string	tmpFilename = dest.Filename.GetFullName();
 				bool		tmpPresent  = dest.IsPresent;
 				if (src.Slot<0 && m_listview->GetMcdProvider().isFileAssignedToInternalSlot((wxFileName)src.Filename))
 					m_listview->GetMcdProvider().RemoveCardFromSlot((wxFileName)src.Filename);
@@ -525,9 +525,8 @@ void Panels::MemoryCardListPanel_Simple::Apply()
 			g_Conf->Mcd[slot].Filename = "";
 
 		if (g_Conf->Mcd[slot].Enabled) {
-			wxString name((wxString)g_Conf->Mcd[slot].Filename.c_str());
 			used++;
-			Console.WriteLn(L"slot[%d]='%s'", slot, WX_STR(name));
+			Console.WriteLn(L"slot[%d]='%s'", slot, WX_STR(g_Conf->Mcd[slot].Filename.GetFullName()));
 		}
 	}
 	if (!used)
@@ -547,7 +546,7 @@ void Panels::MemoryCardListPanel_Simple::AppStatusEvent_OnSettingsApplied()
 		wxString targetFile = (GetMcdPath() + m_Cards[slot].Filename).GetFullPath();
 		if (m_Cards[slot].IsEnabled && !(wxFileExists(targetFile) || wxDirExists(targetFile))) {
 			wxString errMsg;
-			if (isValidNewFilename(m_Cards[slot].Filename, GetMcdPath(), errMsg, 5)) {
+			if (isValidNewFilename(m_Cards[slot].Filename.GetFullName(), GetMcdPath(), errMsg, 5)) {
 				if (!Dialogs::CreateMemoryCardDialog::CreateIt(targetFile, 8, false)) {
 					Console.Error(L"Automatic creation of memory card '%s' failed. Hope for the best...", WX_STR(targetFile));
 				} else {
@@ -597,8 +596,8 @@ void Panels::MemoryCardListPanel_Simple::DoRefresh()
 		//if( FileMcd_IsMultitapSlot(slot) && !m_MultitapEnabled[FileMcd_GetMtapPort(slot)] )
 		//	continue;
 
-		//wxFileName fullpath( m_FolderPicker->GetPath() + g_Conf->Mcd[slot].Filename.GetFullName() );
-		std::string fullpath = m_FolderPicker->GetPath() + m_Cards[slot].Filename;
+		wxFileName fullpath( m_FolderPicker->GetPath() + g_Conf->Mcd[slot].Filename.GetFullName() );
+		//std::string fullpath = m_FolderPicker->GetPath() + m_Cards[slot].Filename;
 
 		EnumerateMemoryCard( m_Cards[slot], (wxFileName)fullpath, (wxDirName)m_FolderPicker->GetPath());
 		m_Cards[slot].Slot = slot;
@@ -633,12 +632,10 @@ void Panels::MemoryCardListPanel_Simple::UiCreateNewCard( McdSlotItem& card )
 		card.Filename  = dialog.result_createdMcdFilename;
 		card.IsPresent = true;
 
-		wxString file(card.Filename.c_str());
-
 		if (card.Slot >= 0) {
-			Console.WriteLn(L"Setting new memory card to slot %u: '%s'", card.Slot, WX_STR(file));
+			Console.WriteLn(L"Setting new memory card to slot %u: '%s'", card.Slot, WX_STR(card.Filename.GetFullName()));
 		} else {
-			Console.WriteLn(L"Created a new unassigned memory card file: '%s'", WX_STR(file));
+			Console.WriteLn(L"Created a new unassigned memory card file: '%s'", WX_STR(card.Filename.GetFullName()));
 		}
 	} else {
 		card.IsEnabled = false;
@@ -690,7 +687,7 @@ void Panels::MemoryCardListPanel_Simple::UiDeleteCard( McdSlotItem& card )
 	if( result )
 	{
 
-		wxFileName fullpath( m_FolderPicker->GetPath() + card.Filename);
+		wxFileName fullpath( m_FolderPicker->GetPath() + card.Filename.GetFullName());
 
 		card.IsEnabled=false;
 		Apply();
@@ -951,7 +948,7 @@ void Panels::MemoryCardListPanel_Simple::UiAssignUnassignFile(McdSlotItem &card)
 			McdSlotItem& selCard = GetCardForViewIndex(i);
 			wxString sel = GetPortName( selCard.Slot ) + L"   ( ";
 			if (selCard.IsPresent)
-				sel += selCard.Filename;
+				sel += selCard.Filename.GetFullName();
 			else
 				sel += _("Empty");
 			sel += L" )";
@@ -959,7 +956,7 @@ void Panels::MemoryCardListPanel_Simple::UiAssignUnassignFile(McdSlotItem &card)
 			selections.Add(sel);
 		}
 		wxString title;
-		title.Printf(_("Select a target port for '%s'"), card.Filename);
+		title.Printf(_("Select a target port for '%s'"), WX_STR(card.Filename.GetFullName()));
 		int res=wxGetSingleChoiceIndex(title, _("Insert card"), selections, this);
 		if( res<0 )
 			return;

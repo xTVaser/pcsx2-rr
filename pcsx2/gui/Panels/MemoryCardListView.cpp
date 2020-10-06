@@ -167,13 +167,14 @@ wxString MemoryCardListView_Simple::OnGetItemText(long item, long column) const
 					return _("[-- No cards --]");
 			}
 
-			std::string filepath( it.Filename);//.GetPath() );
-
-			if (filepath == g_Conf->Folders.MemoryCards)
-				return (prefix + it.Filename);//.GetFullName();
+			wxDirName filepath( it.Filename.GetPath() );
+			
+			if (filepath.SameAs((wxFileName)g_Conf->Folders.MemoryCards))
+				return prefix + it.Filename.GetFullName();
 			else
-				return (prefix + it.Filename);//.GetFullPath();
-		}
+				return prefix + it.Filename.GetFullPath();
+		}	
+		
 	}
 
 	pxFail( "Unknown column index in MemoryCardListView -- returning an empty string." );

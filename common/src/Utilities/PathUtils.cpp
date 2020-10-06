@@ -245,3 +245,40 @@ bool PathUtils::Empty(std::string path)
 {
     return fs::is_empty(path);
 }
+
+void PathUtils::Open(fs::path toOpen)
+{
+
+}
+
+void PathUtils::Save(fs::path toSave, nlohmann::json& stream) // A Møøse once bit my sister... 
+{
+    out.open(toSave, std::ios::trunc);
+
+    while (out << std::setw(4) << stream) // 
+    {
+        std::cout << "Saving" << std::endl;
+    }
+
+    out.close();
+}
+
+nlohmann::json *PathUtils::Load(fs::path toLoad) // We apologise for the fault in the comments. Those responsible have been sacked.
+{
+    nlohmann::json* stream = new nlohmann::json();
+
+    in.open(toLoad);
+    
+    try
+    {
+        *stream = nlohmann::json::parse(in);
+    }
+    catch(const nlohmann::json::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    
+    in.close();
+
+    return stream;
+}

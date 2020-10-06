@@ -1,23 +1,30 @@
 #ifndef PATHUTILS_H
 #define PATHUTILS_H
-
+#include <fstream>
+#include <iostream>
+#include <iomanip>
 #include "FixedPointTypes.inl"
-#include "Path.h"
+#include "yaml-cpp/yaml.h"
 #include "filesystem.hpp"
+#include "json.hpp"
+#include "Path.h"
 
 namespace fs = ghc::filesystem;
 
 class PathUtils
 {
     private:
-
+    std::ifstream in;
+    std::ofstream out;
     public:
-
     bool CreateFolder(std::string path);
     bool Empty(std::string); // Is the folder empty
     bool DoesExist(std::string path); // Does the path exist
     bool DoesExist(fs::path path); // Does the path exist
 
+    void Open(fs::path toOpen);
+    void Save(fs::path toSave, nlohmann::json& stream); // TO DO use yaml
+    nlohmann::json *Load(fs::path toLoad); // TO DO use yaml
 };
 
 namespace Path

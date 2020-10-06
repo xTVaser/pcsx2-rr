@@ -290,8 +290,7 @@ void Pcsx2App::EstablishAppUserMode()
 {
 	wxGetApp().GetGameDatabase();
 
-	std::unique_ptr<nlohmann::json> conf_install;
-	conf_install = std::unique_ptr<nlohmann::json>(TestForPortableInstall());
+	std::unique_ptr<nlohmann::json> conf_install(TestForPortableInstall());
 
 	if (!conf_install)
 		conf_install = std::unique_ptr<nlohmann::json>(OpenInstallSettingsFile());
@@ -322,7 +321,9 @@ void Pcsx2App::EstablishAppUserMode()
 	AppConfig_OnChangedSettingsFolder( true );
 	AppSaveSettings();
 
+	json = *conf_install.get();
+
 	// Wizard completed successfully, so let's not torture the user with this crap again!
-	//json["RunWizard"] = false;
+	json["RunWizard"] = false;
 }
 

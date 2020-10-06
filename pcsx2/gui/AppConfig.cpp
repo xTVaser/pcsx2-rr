@@ -430,7 +430,7 @@ std::string AppConfig::FullpathToBios() const
 
 std::string AppConfig::FullpathToMcd( uint slot ) const
 {
-	return Path::Combine( Folders.MemoryCards, Mcd[slot].Filename );
+	return Path::Combine( Folders.MemoryCards, Mcd[slot].Filename.GetFullName().ToStdString() );
 }
 
 bool IsPortable()
@@ -536,7 +536,7 @@ nlohmann::json AppConfig::LoadSaveMemcards()
 		memcards["Slot%u_Enable"] = (slot+1,
 			Mcd[slot].Enabled, Mcd[slot].Enabled );
 		memcards["Slot%u_Filename"] = (slot+1,
-			Mcd[slot].Filename, Mcd[slot].Filename );
+			Mcd[slot].Filename.GetFullName().ToStdString(), Mcd[slot].Filename.GetFullName().ToStdString() );
 	}
 
 	for( uint slot=2; slot<8; ++slot )
@@ -547,7 +547,7 @@ nlohmann::json AppConfig::LoadSaveMemcards()
 		memcards["Multitap%u_Slot%u_Enable"] = (mtport, mtslot,
 			Mcd[slot].Enabled, Mcd[slot].Enabled );
 		memcards["Multitap%u_Slot%u_Filename"] = (mtport, mtslot,
-			Mcd[slot].Filename, Mcd[slot].Filename );
+			Mcd[slot].Filename.GetFullName().ToStdString(), Mcd[slot].Filename.GetFullName().ToStdString() );
 	}
 
 	return memcards;
@@ -1033,15 +1033,9 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 
 nlohmann::json* OpenFileConfig( std::string filename )
 {
-    // TODO - might want a common function to wrap the parse handling, probably want a graceful exit in the case of an invalid config file
-	std::ifstream in(filename);
-	nlohmann::json* json = new nlohmann::json();
-	try {
-		*json = json->parse(in);
-	} catch(nlohmann::json::parse_error) {
-		Console.WriteLn("JSON - AHHHHHHH!");
-	}
-	return json;
+	std::unique_ptr<nlohmann::json> loader(folderUtils.Load(filename));
+
+	return loader.get();
 }
 
 void RelocateLogfile()
@@ -1230,16 +1224,15 @@ static void LoadUiSettings()
 		g_Conf->Folders.RunDisc.clear();
 	}
 #endif
-
-	sApp.DispatchUiSettingsEvent( loader );
+	//sApp.DispatchUiSettingsEvent( loader );
 }
 
 static void LoadVmSettings()
 {
 	// Load virtual machine options and apply some defaults overtop saved items, which
 	// are regulated by the PCSX2 UI.
-	std::unique_ptr<nlohmann::json> vmini( OpenFileConfig( GetVmSettingsFilename() ) );
-	auto vmloader = nlohmann::json::array();
+	std::unique_ptr<nlohmann::json> vmJson( OpenFileConfig( GetVmSettingsFilename() ) );
+	auto vmloader = *vmJson.get();
 	vmloader.push_back(g_Conf->EmuOptions.LoadSave());
 	g_Conf->EmuOptions.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
 
@@ -1285,8 +1278,7 @@ static void SaveUiSettings()
 	saver.push_back(SysTraceLog_LoadSaveSettings());
 
 	//sApp.DispatchUiSettingsEvent( saver );
-	std::ofstream file(GetUiSettingsFilename());
-	file << std::setw(4) << saver << std::endl;
+		folderUtils.Save(GetUiSettingsFilename(), saver);
 }
 
 static void SaveVmSettings()
@@ -1297,17 +1289,15 @@ static void SaveVmSettings()
 		std::string filePath = GetVmSettingsFilename().string();
 
 		nlohmann::json j = { };
+		folderUtils.Save(filePath, j);
 
-		std::ofstream file(filePath);
-		file << std::setw(4) << j << std::endl;
 	}
 
 	std::unique_ptr<nlohmann::json> vmjson( OpenFileConfig( GetVmSettingsFilename()));
 	nlohmann::json vmsaver = *vmjson.get();
 	vmsaver.push_back(g_Conf->EmuOptions.LoadSave());
 
-	std::ofstream file( GetVmSettingsFilename());
-	file << std::setw(4) << vmsaver << std::endl;
+	folderUtils.Save(GetVmSettingsFilename(), vmsaver);
 
 	//sApp.DispatchVmSettingsEvent( vmsaver );
 }

@@ -35,7 +35,7 @@ enum MemoryCardConversionType {
 Dialogs::ConvertMemoryCardDialog::ConvertMemoryCardDialog( wxWindow* parent, const wxDirName& mcdPath, const AppConfig::McdOptions& mcdSourceConfig )
 	: wxDialogWithHelpers( parent, _( "Convert a memory card to a different format" ) )
 	, m_mcdPath( mcdPath )
-	, m_mcdSourceFilename( mcdSourceConfig.Filename )
+	, m_mcdSourceFilename( mcdSourceConfig.Filename.GetFullName() )
 {
 	SetMinWidth( 472 * MSW_GetDPIScale());
 
