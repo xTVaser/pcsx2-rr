@@ -45,8 +45,8 @@ endif()
 if(common_libs)
     add_subdirectory(common/src/Utilities)
     add_subdirectory(common/src/x86emitter)
-    #add_subdirectory(3rdparty/yaml-cpp/yaml-cpp)
-    find_package(yaml-cpp)
+    add_subdirectory(3rdparty/yaml-cpp/yaml-cpp EXCLUDE_FROM_ALL)
+    #find_package(yaml-cpp)
     endif()
 
 # make pcsx2
@@ -88,7 +88,14 @@ if(PACKAGE_MODE)
     INSTALL(FILES "${CMAKE_SOURCE_DIR}/bin/docs/PCSX2_FAQ.pdf"      DESTINATION "${DOC_DIR}")
     INSTALL(FILES "${CMAKE_SOURCE_DIR}/bin/docs/Configuration_Guide.pdf"   DESTINATION "${DOC_DIR}")
     INSTALL(FILES "${CMAKE_SOURCE_DIR}/bin/docs/PCSX2.1"            DESTINATION "${MAN_DIR}/man1")
-
+    if(NOT DISABLE_PCSX2_WRAPPER)
+        INSTALL(FILES "${CMAKE_SOURCE_DIR}/linux_various/PCSX2-linux.sh"          DESTINATION "${BIN_DIR}")
     endif()
 
+else()
+if(NOT DISABLE_PCSX2_WRAPPER)
+    # special case to avoid having linux files in windows
+    INSTALL(FILES "${CMAKE_SOURCE_DIR}/linux_various/PCSX2-linux.sh"          DESTINATION "${CMAKE_SOURCE_DIR}/bin")
+    endif()
+endif()    
     target_link_libraries(PCSX2 yaml-cpp)
