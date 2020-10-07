@@ -54,17 +54,17 @@ void Panels::DirPickerPanel::UseDefaultPath_Click( wxCommandEvent &evt )
 
 void Panels::DirPickerPanel::Explore_Click( wxCommandEvent &evt )
 {
-	wxDirName path( GetPath() );
+	fs::path path( GetPath() );
 
-	if (!pxAssertDev( path.IsOk(), "This DirPickerPanel could not find valid or meaningful path data." ))
-		return;
+	//if (!pxAssertDev( path.IsOk(), "This DirPickerPanel could not find valid or meaningful path data." ))
+		//return;
 
-	if (!path.Exists())
+	if (!fs::exists(path))
 	{
 		wxDialogWithHelpers createPathDlg( NULL, _("Path does not exist") );
 		createPathDlg.SetMinWidth( 600 );
 
-		createPathDlg += createPathDlg.Label( path.ToString() ) | StdCenter();
+		createPathDlg += createPathDlg.Label( path.string() ) | StdCenter();
 
 		createPathDlg += createPathDlg.Heading( pxE( L"The specified path/directory does not exist.  Would you like to create it?" )
 		);
@@ -75,10 +75,10 @@ void Panels::DirPickerPanel::Explore_Click( wxCommandEvent &evt )
 		);
 
 		if( result == wxID_CANCEL ) return;
-		path.Mkdir();
+		folderUtils.CreateFolder(path);
 	}
 
-	pxExplore( path.ToString() );
+	pxExplore( path.string() );
 }
 
 // There are two constructors.  See the details for the 'label' parameter below for details.
@@ -259,33 +259,33 @@ void Panels::DirPickerPanel::AppStatusEvent_OnSettingsApplied()
 
 void Panels::DirPickerPanel::Apply()
 {
-	std::string path( GetPath() );
+	fs::path path( GetPath() );
 
-	if (!path.c_str())
+	if (!folderUtils.DoesExist(path))
 	{
 		wxDialogWithHelpers dialog( NULL, _("Create folder?") );
 		dialog += dialog.Heading(AddAppName(_("A configured folder does not exist.  Should %s try to create it?")));
 		dialog += 12;
-		dialog += dialog.Heading( path );
+		dialog += dialog.Heading( path.string() );
 
 		if( wxID_CANCEL == pxIssueConfirmation( dialog, MsgButtons().Custom(_("Create"), "create").Cancel(), L"CreateNewFolder" ) )
 			throw Exception::CannotApplySettings( this );
 	}
 
-	//path.Mkdir();
-	g_Conf->Folders.Set( m_FolderId, path, m_checkCtrl ? m_checkCtrl->GetValue() : false );
+	folderUtils.CreateFolder(path);
+	g_Conf->Folders.Set( m_FolderId, path.string(), m_checkCtrl ? m_checkCtrl->GetValue() : false );
 }
 
-std::string Panels::DirPickerPanel::GetPath() const
+fs::path Panels::DirPickerPanel::GetPath() const
 {
 	// The (x) ? y : z construct doesn't like y and z to be different types in gcc.
 	if (m_pickerCtrl)
-		return std::string(m_pickerCtrl->GetPath());
+		return m_pickerCtrl->GetPath().ToStdString();
 
 	if (m_textCtrl)
-		return std::string(m_textCtrl->GetValue());
+		return m_textCtrl->GetValue().ToStdString();
 
-	return " ";
+	return std::string();
 }
 
 void Panels::DirPickerPanel::SetPath( const wxString& newPath )

@@ -54,7 +54,7 @@ namespace Panels
 		virtual ~DirPickerPanel() = default;
 
 		void Reset();
-		std::string GetPath() const;
+		fs::path GetPath() const;
 		void SetPath( const wxString& src );
 
 		DirPickerPanel& SetStaticDesc( const wxString& msg );
@@ -527,7 +527,7 @@ namespace Panels
 			ComboBoxPanel( PluginSelectorPanel* parent );
 			wxComboBox& Get( PluginsEnum_t pid ) { return *m_combobox[pid]; }
 			wxButton& GetConfigButton( PluginsEnum_t pid ) { return *m_configbutton[pid]; }
-			std::string GetPluginsPath() const { return m_FolderPicker.GetPath(); }
+			fs::path GetPluginsPath() const { return m_FolderPicker.GetPath(); }
 			DirPickerPanel& GetDirPicker() { return m_FolderPicker; }
 			void Reset();
 

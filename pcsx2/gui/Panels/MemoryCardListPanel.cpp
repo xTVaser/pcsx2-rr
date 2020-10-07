@@ -596,10 +596,10 @@ void Panels::MemoryCardListPanel_Simple::DoRefresh()
 		//if( FileMcd_IsMultitapSlot(slot) && !m_MultitapEnabled[FileMcd_GetMtapPort(slot)] )
 		//	continue;
 
-		wxFileName fullpath( m_FolderPicker->GetPath() + g_Conf->Mcd[slot].Filename.GetFullName() );
+		wxFileName fullpath( m_FolderPicker->GetPath().wstring() + g_Conf->Mcd[slot].Filename.GetFullName() );
 		//std::string fullpath = m_FolderPicker->GetPath() + m_Cards[slot].Filename;
 
-		EnumerateMemoryCard( m_Cards[slot], (wxFileName)fullpath, (wxDirName)m_FolderPicker->GetPath());
+		EnumerateMemoryCard( m_Cards[slot], (wxFileName)fullpath, (wxDirName)m_FolderPicker->GetPath().wstring());
 		m_Cards[slot].Slot = slot;
 	}
 
@@ -624,7 +624,7 @@ void Panels::MemoryCardListPanel_Simple::UiCreateNewCard( McdSlotItem& card )
 		return;
 	}
 
-	Dialogs::CreateMemoryCardDialog dialog(this, (wxDirName)m_FolderPicker->GetPath(), L"my memory card");
+	Dialogs::CreateMemoryCardDialog dialog(this, (wxDirName)m_FolderPicker->GetPath().wstring(), L"my memory card");
 	wxWindowID result = dialog.ShowModal();
 
 	if (result != wxID_CANCEL) {
@@ -656,7 +656,7 @@ void Panels::MemoryCardListPanel_Simple::UiConvertCard( McdSlotItem& card )
 	config.Filename = card.Filename;
 	config.Enabled = card.IsEnabled;
 	config.Type = card.Type;
-	Dialogs::ConvertMemoryCardDialog dialog( this, (wxDirName)m_FolderPicker->GetPath(), config );
+	Dialogs::ConvertMemoryCardDialog dialog( this, (wxDirName)m_FolderPicker->GetPath().wstring(), config );
 	wxWindowID result = dialog.ShowModal();
 
 	if ( result != wxID_CANCEL ) {
@@ -687,7 +687,7 @@ void Panels::MemoryCardListPanel_Simple::UiDeleteCard( McdSlotItem& card )
 	if( result )
 	{
 
-		wxFileName fullpath( m_FolderPicker->GetPath() + card.Filename.GetFullName());
+		wxFileName fullpath( m_FolderPicker->GetPath().wstring() + card.Filename.GetFullName());
 
 		card.IsEnabled=false;
 		Apply();
@@ -1050,7 +1050,7 @@ void Panels::MemoryCardListPanel_Simple::ReadFilesAtMcdFolder(){
 
 
 	wxArrayString memcardList;
-	wxString filename = m_FolderPicker->GetPath();
+	wxString filename = m_FolderPicker->GetPath().string();
 	wxDir memcardDir( filename );
 	if ( memcardDir.IsOpened() ) {
 		// add memory card files
@@ -1073,7 +1073,7 @@ void Panels::MemoryCardListPanel_Simple::ReadFilesAtMcdFolder(){
 
 	for(uint i = 0; i < memcardList.size(); i++) {
 		McdSlotItem currentCardFile;
-		bool isOk=EnumerateMemoryCard( currentCardFile, memcardList[i], (wxDirName)m_FolderPicker->GetPath() );
+		bool isOk=EnumerateMemoryCard( currentCardFile, memcardList[i], (wxDirName)m_FolderPicker->GetPath().wstring() );
 		if( isOk && !isFileAssignedAndVisibleOnList( (wxFileName)currentCardFile.Filename ) )
 		{
 			currentCardFile.Slot		= -1;

@@ -330,5 +330,11 @@ void Pcsx2App::EstablishAppUserMode()
 	
 	// TODO - stawp
 	newJson["RunWizard"] = false;
+
+    if (InstallationMode == InstallationModeType::InstallMode_Portable)
+    {
+        folderUtils.Save(GetPortableJsonPath(), newJson);
+    }
+
 }
 
