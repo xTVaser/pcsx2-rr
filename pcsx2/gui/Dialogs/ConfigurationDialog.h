@@ -75,7 +75,7 @@ namespace Dialogs
 		void OnSetSettingsPage( wxCommandEvent& evt );
 		void OnSomethingChanged( wxCommandEvent& evt );
 
-		virtual wxString& GetConfSettingsTabName() const=0;
+		virtual wxString GetConfSettingsTabName() const=0;
 
 		virtual void Apply() {};
 		virtual void Cancel() {};
@@ -101,7 +101,7 @@ namespace Dialogs
 		}
 
 	protected:
-		virtual wxString& GetConfSettingsTabName() const { return (wxString&)g_Conf->SysSettingsTabName; }
+		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->SysSettingsTabName); }
 
 		pxCheckBox*		m_check_presets;
 		wxSlider*		m_slider_presets;
@@ -125,7 +125,7 @@ namespace Dialogs
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString& GetConfSettingsTabName() const { return (wxString&)g_Conf->AppSettingsTabName; }
+		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->AppSettingsTabName); }
 	};
 
 
@@ -146,7 +146,7 @@ namespace Dialogs
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString& GetConfSettingsTabName() const { return (wxString&)g_Conf->McdSettingsTabName; }
+		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->McdSettingsTabName); }
 		//void OnMultitapClicked( wxCommandEvent& evt );
 	};
 
@@ -164,7 +164,9 @@ namespace Dialogs
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString& GetConfSettingsTabName() const { return (wxString&)g_Conf->ComponentsTabName; }
+		virtual wxString GetConfSettingsTabName() const {
+			return wxString(g_Conf->ComponentsTabName); 
+		}
 	};
 
 	// --------------------------------------------------------------------------------------

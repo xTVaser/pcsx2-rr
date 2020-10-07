@@ -23,5 +23,5 @@ void Dialogs::BaseConfigurationDialog::AddPage( const wxChar* label, int iconid 
 	const int curidx = m_labels.Add( label );
 	m_ApplyState.SetCurrentPage( curidx );
 	m_listbook->AddPage( new T( m_listbook ), wxGetTranslation( label ),
-		( 0 == GetConfSettingsTabName().CmpNoCase(label) ), iconid );
+		false, iconid );
 }

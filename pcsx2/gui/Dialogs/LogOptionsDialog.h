@@ -36,7 +36,7 @@ protected:
 	void OnOk_Click( wxCommandEvent& evt );
 	void OnApply_Click( wxCommandEvent& evt );
 	
-	wxString& GetConfSettingsTabName() const
+	wxString GetConfSettingsTabName() const
 	{
 		static wxString bleh = L"TraceLogs";
 		pxFailDev("No tabs yet!");

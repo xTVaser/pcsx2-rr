@@ -66,7 +66,7 @@ bool Panels::BaseSelectorPanel::Show( bool visible )
 	if( visible )
 		OnShown();
 
-		return visible;
+	return BaseApplicableConfigPanel::Show(visible);
 }
 void Panels::BaseSelectorPanel::RefreshSelections()
 {
