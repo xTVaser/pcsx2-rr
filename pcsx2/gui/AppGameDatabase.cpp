@@ -18,38 +18,27 @@
 #include "App.h"
 #include "AppGameDatabase.h"
 
+// TODO - check that this is being threaded properly, remove from 
 AppGameDatabase& AppGameDatabase::LoadFromFile(const std::string& _file)
 {
-	// TODO - remove wx usage from here, but also get the right path, hard-coding for simplicity on my part
-	fs::path file("C:\\Users\\xtvas\\Repositories\\pcsx2\\bin\\GameIndex.yaml");
-	if (file.is_relative())
+	fs::path gameDbPath = Path::Combine(Path::GetExecutablePath().parent_path(), fs::path(_file));
+
+	if (!folderUtils.DoesExist(gameDbPath))
 	{
-		// InstallFolder is the preferred base directory for the DB file, but the registry can point to previous
-		// installs if uninstall wasn't done properly.
-		// Since the games DB file is considered part of pcsx2.exe itself, look for it at the exe folder
-		//   regardless of any other settings.
-
-		// Note 1: Portable setup didn't suffer from this as install folder pointed already to the exe folder in portable.
-		// Note 2: Other folders are either configurable (plugins, memcards, etc) or create their content automatically (inis)
-		//           So the games DB was really the only one that suffers from residues of prior installs.
-
-		//wxDirName dir = InstallFolder;
-		//wxDirName dir = (wxDirName)wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
-		//file = ( dir + file ).GetFullPath();
-	}
-
-
-	if (! folderUtils.DoesExist(file))
-	{
-		wxString temp = file.c_str();
+		wxString temp = gameDbPath.c_str();
 		Console.Error(L"(GameDB) Database Not Found! [%s]", WX_STR(temp));
 		return *this;
 	}
 
 	u64 qpc_Start = GetCPUTicks();
 	YamlGameDatabaseImpl gameDb = YamlGameDatabaseImpl();
-	gameDb.initDatabase(std::string(file));
-	//GameDatabaseSchema::GameEntry gameEntry = gameDb.findGame("GUST-00009");
+
+	if (!gameDb.initDatabase(std::string(gameDbPath)))
+	{
+		Console.Error(L"(GameDB) Database could not be loaded successfully");
+		return *this;
+	}
+
 	u64 qpc_end = GetCPUTicks();
 
 	Console.WriteLn("(GameDB) TODO games on record (loaded in %ums)",

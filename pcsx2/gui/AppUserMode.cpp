@@ -286,9 +286,6 @@ void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 
 void Pcsx2App::EstablishAppUserMode()
 {
-	// TODO - this should still be here (or early, in init probably) but i don't care about the GameDB yet!
-	// wxGetApp().GetGameDatabase();
-
 	// TODO - stop mutating the json directly, serialize and deserialize!
 
 	std::unique_ptr<nlohmann::json> conf_install(TestForPortableInstall());

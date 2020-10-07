@@ -45,13 +45,11 @@ bool YamlGameDatabaseImpl::initDatabase(const std::string filePath)
 {
 	try
 	{
-		// TODO - make sure this happens in a separate thread (but where would i join the thread...first access?)
-		// TODO - exception handling - invalid yaml?
 		gameDb = YAML::LoadFile(filePath);
 	}
 	catch (const std::exception& e)
 	{
-		std::cout << "TODO!";
+		return false;
 	}
 
 	return true;
