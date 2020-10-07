@@ -678,7 +678,7 @@ void Panels::MemoryCardListPanel_Simple::UiDeleteCard( McdSlotItem& card )
 		wxString content;
 		content.Printf(
 			pxE( L"You are about to delete the formatted memory card '%s'. All data on this card will be lost!  Are you absolutely and quite positively sure?"
-				), card.Filename
+				), card.Filename.GetFullPath().ToStdString()
 		);
 
 		result = Msgbox::YesNo( content, _("Delete memory file?") );
@@ -759,7 +759,7 @@ bool Panels::MemoryCardListPanel_Simple::UiDuplicateCard(McdSlotItem& src, McdSl
 		{
 			wxString heading;
 			heading.Printf( pxE( L"Failed: Destination memory card '%s' is in use." ),
-				dest.Filename, dest.Slot
+				dest.Filename.GetFullPath().ToStdString(), dest.Slot
 			);
 
 			wxString content;
@@ -772,8 +772,8 @@ bool Panels::MemoryCardListPanel_Simple::UiDuplicateCard(McdSlotItem& src, McdSl
 		// Destination memcard isEnabled state is the same now as the source's
 		wxString success;
 		success.Printf(_("Memory card '%s' duplicated to '%s'."),
-			src.Filename,
-			dest.Filename
+			src.Filename.GetFullPath().ToStdString(),
+			dest.Filename.GetFullPath().ToStdString()
 			);
 		Msgbox::Alert(success, _("Success"));
 		dest.IsPresent=true;
@@ -796,7 +796,7 @@ void Panels::MemoryCardListPanel_Simple::UiRenameCard( McdSlotItem& card )
 	while (1){
 		wxString title;
 		title.Printf(_("Select a new name for the memory card '%s'\n( '.ps2' will be added automatically)"),
-						card.Filename
+						card.Filename.GetFullPath().ToStdString()
 						);
 		newFilename = wxGetTextFromUser(title, _("Rename memory card"));
 		if( newFilename==L"" )
