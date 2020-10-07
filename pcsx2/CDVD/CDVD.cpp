@@ -145,20 +145,22 @@ NVMLayout* getNvmLayout()
 static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 {
 	fs::path nvmfile(EmuConfig.BiosFilename);
-	nvmfile.string() + "nvm";
+	nvmfile.parent_path().string() + ".nvm";
 	const fs::path fname = nvmfile;
+	wxString temp = (wxString)(fname.parent_path().string() + ".wb");
 
 	// Likely a bad idea to go further
-	//if (nvmfile)
-		//throw Exception::CannotCreateStream(fname);
+	if (fs::is_directory(nvmfile))
+		throw Exception::CannotCreateStream(fname.wstring());
 
 	if (Path::GetFileSize(fname.string()) < 1024)
 	{
 		Console.Warning("NVM File Not Found, creating substitute...");
 
-		wxFFile fp(fname.wstring(), L"wb");
+
+		wxFFile fp(temp);
 		if (!fp.IsOpened())
-			throw Exception::CannotCreateStream(fname.wstring());
+			throw Exception::CannotCreateStream(temp);
 
 		u8 zero[1024] = {0};
 		fp.Write(zero, sizeof(zero));
@@ -172,9 +174,11 @@ static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 		fp.Write(ILinkID_Data, sizeof(ILinkID_Data));
 	}
 
-	wxFFile fp(fname.wstring(), L"r+b");
+	std::cout << "NVM: " << temp << std::endl;
+
+	wxFFile fp(temp, L"r+b");
 	if (!fp.IsOpened())
-		throw Exception::CannotCreateStream(fname.wstring());
+		throw Exception::CannotCreateStream(temp);
 
 	fp.Seek(offset);
 
@@ -186,7 +190,7 @@ static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 
 	if (ret != bytes)
 	{
-		wxString name(fname.c_str());
+		wxString name(fname.wstring());
 		Console.Error(L"Failed to %s %s. Did only %zu/%zu bytes",
 				read ? L"read from" : L"write to", WX_STR(name), ret, bytes);
 	}
