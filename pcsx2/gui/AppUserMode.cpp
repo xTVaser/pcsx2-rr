@@ -65,8 +65,7 @@ InstallationModeType		InstallationMode;
 
 static fs::path GetPortableJsonPath()
 {
-	fs::path programFullPath = fs::current_path(); //wxStandardPaths::Get().GetExecutablePath().ToStdString();
-	fs::path programDir = programFullPath;
+	fs::path programDir = Path::GetExecutablePath().parent_path();
 	return Path::Combine(programDir, "portable.json");
 }
 
@@ -286,12 +285,17 @@ void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 
 void Pcsx2App::EstablishAppUserMode()
 {
-	wxGetApp().GetGameDatabase();
+	// TODO - this should still be here (or early, in init probably) but i don't care about the GameDB yet!
+	// wxGetApp().GetGameDatabase();
+
+	// TODO - stop mutating the json directly, serialize and deserialize!
 
 	std::unique_ptr<nlohmann::json> conf_install(TestForPortableInstall());
 
 	if (!conf_install)
 		conf_install = std::unique_ptr<nlohmann::json>(OpenInstallSettingsFile());
+
+	nlohmann::json newJson = *conf_install.get();
 
 	//conf_install->SetRecordDefaults(false);
 
@@ -301,12 +305,13 @@ void Pcsx2App::EstablishAppUserMode()
 	// the installation json file, which can be either the portable install (useful for admins)
 	// or the registry/user local documents position.
 
-	bool runWiz = true;
-	//if json["RunWizard"] &runWiz, true );
+	bool runWizard = false;
+	if (newJson["RunWizard"])
+		runWizard = true;
 
 	App_LoadInstallSettings( conf_install.get());
 
-	if( !Startup.ForceWizard && !runWiz )
+	if( !Startup.ForceWizard && !runWizard )
 	{
 		AppConfig_OnChangedSettingsFolder( false );
 		return;
@@ -322,6 +327,8 @@ void Pcsx2App::EstablishAppUserMode()
 	json = *conf_install.get();
 
 	// Wizard completed successfully, so let's not torture the user with this crap again!
-	//json["RunWizard"] = false;
+	
+	// TODO - stawp
+	newJson["RunWizard"] = false;
 }
 

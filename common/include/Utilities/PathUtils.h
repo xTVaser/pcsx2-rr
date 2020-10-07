@@ -45,6 +45,7 @@ extern std::string GetFilename(const std::string &src);
 extern std::string GetDirectory(const std::string &src);
 extern wxString GetFilenameWithoutExt(const wxString &src);
 extern std::string GetRootDirectory(const wxString &src);
+extern fs::path GetExecutablePath();
 }
 
 #endif

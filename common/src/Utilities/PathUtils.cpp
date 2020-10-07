@@ -185,6 +185,20 @@ std::string Path::GetDirectory(const std::string &src)
     return src;
 }
 
+// TODO - blindly copy-pasted from stackoverflow, this is probably not PERFECT!
+fs::path Path::GetExecutablePath()
+{
+#ifdef _WIN32
+    wchar_t path[MAX_PATH] = { 0 };
+    GetModuleFileName(NULL, path, MAX_PATH);
+	return std::wstring(path);
+#else
+    char result[PATH_MAX];
+    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+    return std::string(result, (count > 0) ? count : 0);
+#endif
+}
+
 
 // returns the base/root directory of the given path.
 // Example /this/that/something.txt -> dest == "/"
