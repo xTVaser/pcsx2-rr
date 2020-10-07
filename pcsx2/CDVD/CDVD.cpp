@@ -95,13 +95,13 @@ static int mg_BIToffset(u8* buffer)
 
 static void cdvdGetMechaVer(u8* ver)
 {
-	fs::path mecfile(EmuConfig.BiosFilename.wstring());
-	mecfile.string() + "mec";
+	fs::path mecfile(g_Conf->FullpathToBios()); // TODO - HACK! EmuConfig.BiosFilename should be set properly and used instead!
+	mecfile.replace_extension("mec");
 	const std::string fname( mecfile);
 
 	// Likely a bad idea to go further
-	//if (mecfile.IsDir())
-		//throw Exception::CannotCreateStream(fname);
+	if (fs::is_directory(mecfile))
+		throw Exception::CannotCreateStream(fname);
 
 
 	if (Path::GetFileSize(fname) < 4)
@@ -144,23 +144,21 @@ NVMLayout* getNvmLayout()
 // be created for some reason.
 static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 {
-	fs::path nvmfile(EmuConfig.BiosFilename);
-	nvmfile.parent_path().string() + ".nvm";
-	const fs::path fname = nvmfile;
-	wxString temp = (wxString)(fname.parent_path().string() + ".wb");
+	fs::path nvmfile(g_Conf->FullpathToBios()); // TODO - HACK! EmuConfig.BiosFilename should be set properly and used instead!
+	nvmfile.replace_extension("nvm");
+	const std::string fname(nvmfile);
 
 	// Likely a bad idea to go further
 	if (fs::is_directory(nvmfile))
-		throw Exception::CannotCreateStream(fname.wstring());
+		throw Exception::CannotCreateStream(fname);
 
-	if (Path::GetFileSize(fname.string()) < 1024)
+	if (Path::GetFileSize(fname) < 1024)
 	{
 		Console.Warning("NVM File Not Found, creating substitute...");
 
-
-		wxFFile fp(temp);
+		wxFFile fp(fname);
 		if (!fp.IsOpened())
-			throw Exception::CannotCreateStream(temp);
+			throw Exception::CannotCreateStream(fname);
 
 		u8 zero[1024] = {0};
 		fp.Write(zero, sizeof(zero));
@@ -174,11 +172,11 @@ static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 		fp.Write(ILinkID_Data, sizeof(ILinkID_Data));
 	}
 
-	std::cout << "NVM: " << temp << std::endl;
+	std::cout << "NVM: " << fname << std::endl;
 
-	wxFFile fp(temp, L"r+b");
+	wxFFile fp(fname, L"r+b");
 	if (!fp.IsOpened())
-		throw Exception::CannotCreateStream(temp);
+		throw Exception::CannotCreateStream(fname);
 
 	fp.Seek(offset);
 
@@ -190,7 +188,7 @@ static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 
 	if (ret != bytes)
 	{
-		wxString name(fname.wstring());
+		wxString name(fname);
 		Console.Error(L"Failed to %s %s. Did only %zu/%zu bytes",
 				read ? L"read from" : L"write to", WX_STR(name), ret, bytes);
 	}
