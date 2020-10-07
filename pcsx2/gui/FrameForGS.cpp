@@ -535,6 +535,9 @@ GSFrame::GSFrame( const wxString& title)
 	Bind(wxEVT_ACTIVATE, &GSFrame::OnActivate, this);
 
 	Bind(wxEVT_TIMER, &GSFrame::OnUpdateTitle, this, m_timer_UpdateTitle.GetId());
+
+	SetPosition(wxPoint(0,0)); // TODO - temporary hack since the config stuff isn't perfect _yet_
+
 }
 
 void GSFrame::OnCloseWindow(wxCloseEvent& evt)
