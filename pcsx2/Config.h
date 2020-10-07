@@ -484,7 +484,7 @@ struct Pcsx2Config
 
 	TraceLogFilters		Trace;
 
-	std::string			BiosFilename;
+	fs::path			BiosFilename;
 
 	Pcsx2Config();
 

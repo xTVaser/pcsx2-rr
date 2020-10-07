@@ -425,7 +425,7 @@ fs::path GetUiKeysFilename()
 
 std::string AppConfig::FullpathToBios() const				
 { 
-	return std::string(Path::Combine( Folders.Bios, BaseFilenames.Bios )); 
+	return Path::Combine( Folders.Bios, BaseFilenames.Bios ); 
 }
 
 std::string AppConfig::FullpathToMcd( uint slot ) const

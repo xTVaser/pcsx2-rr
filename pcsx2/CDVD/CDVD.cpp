@@ -95,13 +95,13 @@ static int mg_BIToffset(u8* buffer)
 
 static void cdvdGetMechaVer(u8* ver)
 {
-	wxFileName mecfile(EmuConfig.BiosFilename);
-	mecfile.SetExt( L"mec" );
-	const std::string fname( mecfile.GetFullPath() );
+	fs::path mecfile(EmuConfig.BiosFilename.wstring());
+	mecfile.string() + "mec";
+	const std::string fname( mecfile);
 
 	// Likely a bad idea to go further
-	if (mecfile.IsDir())
-		throw Exception::CannotCreateStream(fname);
+	//if (mecfile.IsDir())
+		//throw Exception::CannotCreateStream(fname);
 
 
 	if (Path::GetFileSize(fname) < 4)
@@ -144,21 +144,21 @@ NVMLayout* getNvmLayout()
 // be created for some reason.
 static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 {
-	wxFileName nvmfile(EmuConfig.BiosFilename);
-	nvmfile.SetExt(L"nvm");
-	const std::string fname(nvmfile.GetFullPath());
+	fs::path nvmfile(EmuConfig.BiosFilename);
+	nvmfile.string() + "nvm";
+	const fs::path fname = nvmfile;
 
 	// Likely a bad idea to go further
-	if (nvmfile.IsDir())
-		throw Exception::CannotCreateStream(fname);
+	//if (nvmfile)
+		//throw Exception::CannotCreateStream(fname);
 
-	if (Path::GetFileSize(fname) < 1024)
+	if (Path::GetFileSize(fname.string()) < 1024)
 	{
 		Console.Warning("NVM File Not Found, creating substitute...");
 
-		wxFFile fp(fname, L"wb");
+		wxFFile fp(fname.wstring(), L"wb");
 		if (!fp.IsOpened())
-			throw Exception::CannotCreateStream(fname);
+			throw Exception::CannotCreateStream(fname.wstring());
 
 		u8 zero[1024] = {0};
 		fp.Write(zero, sizeof(zero));
@@ -172,9 +172,9 @@ static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 		fp.Write(ILinkID_Data, sizeof(ILinkID_Data));
 	}
 
-	wxFFile fp(fname, L"r+b");
+	wxFFile fp(fname.wstring(), L"r+b");
 	if (!fp.IsOpened())
-		throw Exception::CannotCreateStream(fname);
+		throw Exception::CannotCreateStream(fname.wstring());
 
 	fp.Seek(offset);
 

@@ -453,10 +453,10 @@ static void PS2E_CALLBACK FileMcd_EmuOpen( PS2E_THISPTR thisptr, const PS2E_Sess
 		if ( g_Conf->Mcd[slot].Enabled ) {
 			MemoryCardType type = MemoryCardType::MemoryCard_File; // default to file if we can't find anything at the path so it gets auto-generated
 
-			const wxString path = g_Conf->FullpathToMcd( slot );
-			if ( wxFileExists( path ) ) {
+			const fs::path path = g_Conf->FullpathToMcd( slot );
+			if ( wxFileExists( path.wstring() ) ) {
 				type = MemoryCardType::MemoryCard_File;
-			} else if ( wxDirExists( path ) ) {
+			} else if ( wxDirExists( path.wstring() ) ) {
 				type = MemoryCardType::MemoryCard_Folder;
 			}
 
