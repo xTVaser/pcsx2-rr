@@ -481,21 +481,3 @@ bool Pcsx2Config::MultitapEnabled( uint port ) const
 	pxAssert( port < 2 );
 	return (port==0) ? MultitapPort0_Enabled : MultitapPort1_Enabled;
 }
-
-void Pcsx2Config::Load( nlohmann::json loader )
-{
-	//m_IsLoaded = true;
-
-	//wxFileConfig cfg( srcfile );
-	//IniLoader loader( cfg );
-	//LoadSave( loader );
-}
-
-void Pcsx2Config::Save( std::string& dstfile )
-{
-	//if( !m_IsLoaded ) return;
-
-	wxFileConfig cfg( dstfile );
-	nlohmann::json saver;
-	//LoadSave( saver );
-}

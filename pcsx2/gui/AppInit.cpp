@@ -605,7 +605,8 @@ void Pcsx2App::CleanupRestartable()
 	SysExecutorThread.ShutdownQueue();
 	IdleEventDispatcher( L"Cleanup" );
 
-	if( g_Conf ) AppSaveSettings();
+	if( g_Conf ) 
+		AppSaveSettings();
 }
 
 // This cleanup handler can be called from OnExit (it doesn't need a running message pump),

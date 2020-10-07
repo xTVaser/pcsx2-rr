@@ -55,16 +55,16 @@ static bool IsMcdFormatted( wxFFile& fhand )
 }
 
 //sets IsPresent if the file is valid, and derived properties (filename, formatted, size, etc)
-bool EnumerateMemoryCard( McdSlotItem& dest, const wxFileName& filename, wxDirName basePath )
+bool EnumerateMemoryCard( McdSlotItem& dest, const fs::path& filename, wxDirName basePath )
 {
 	dest.IsFormatted	= false;
 	dest.IsPresent		= false;
 	dest.IsPSX			= false;
 	dest.Type			= MemoryCardType::MemoryCard_None;
 
-	const wxString fullpath( filename.GetFullPath() );
-	//DevCon.WriteLn( fullpath );
-	if ( filename.FileExists() ) {
+	const wxString fullpath( filename.wstring() );
+	DevCon.WriteLn( fullpath );
+	if (folderUtils.DoesExist(filename) ) {
 		// might be a memory card file
 		wxFFile mcdFile( fullpath );
 		if ( !mcdFile.IsOpened() ) { return false; }	// wx should log the error for us.
@@ -85,28 +85,28 @@ bool EnumerateMemoryCard( McdSlotItem& dest, const wxFileName& filename, wxDirNa
 
 		dest.Type = MemoryCardType::MemoryCard_File;
 		dest.IsFormatted = IsMcdFormatted( mcdFile );
-		filename.GetTimes( NULL, &dest.DateModified, &dest.DateCreated );
-	} else if ( filename.DirExists() ) {
+		//filename.GetTimes( NULL, &dest.DateModified, &dest.DateCreated );
+	} else if (folderUtils.DoesExist(filename)) {
 		// might be a memory card folder
-		wxFileName superBlockFileName( fullpath, L"_pcsx2_superblock" );
-		if ( !superBlockFileName.FileExists() ) { return false; }
-		wxFFile mcdFile( superBlockFileName.GetFullPath() );
+	    fs::path superBlockFileName( fullpath.ToStdString() + "_pcsx2_superblock" );
+		if ( !folderUtils.DoesExist(superBlockFileName) ) { return false; }
+		wxFFile mcdFile( superBlockFileName.wstring());
 		if ( !mcdFile.IsOpened() ) { return false; }
 
 		dest.SizeInMB = 0;
 
 		dest.Type = MemoryCardType::MemoryCard_Folder;
 		dest.IsFormatted = IsMcdFormatted( mcdFile );
-		superBlockFileName.GetTimes( NULL, &dest.DateModified, &dest.DateCreated );
+		//superBlockFileName.GetTimes( NULL, &dest.DateModified, &dest.DateCreated );
 	} else {
 		// is neither
 		return false;
 	}
 
 	dest.IsPresent		= true;
-	(wxFileName)dest.Filename		= filename;
-	if( filename == (basePath + filename ))
-		(wxFileName)dest.Filename = filename;
+	(wxFileName)dest.Filename		= filename.wstring();
+	if( (wxFileName)filename.wstring() == (basePath + (wxFileName)filename.wstring() ))
+		(wxFileName)dest.Filename = filename.wstring();
 
 	return true;
 }
@@ -596,10 +596,10 @@ void Panels::MemoryCardListPanel_Simple::DoRefresh()
 		//if( FileMcd_IsMultitapSlot(slot) && !m_MultitapEnabled[FileMcd_GetMtapPort(slot)] )
 		//	continue;
 
-		wxFileName fullpath( m_FolderPicker->GetPath().wstring() + g_Conf->Mcd[slot].Filename.GetFullName() );
+		fs::path fullpath( (m_FolderPicker->GetPath() / g_Conf->Mcd[slot].Filename.GetFullName().ToStdString()).make_preferred());
 		//std::string fullpath = m_FolderPicker->GetPath() + m_Cards[slot].Filename;
 
-		EnumerateMemoryCard( m_Cards[slot], (wxFileName)fullpath, (wxDirName)m_FolderPicker->GetPath().wstring());
+		EnumerateMemoryCard( m_Cards[slot], fullpath, (wxDirName)m_FolderPicker->GetPath().wstring());
 		m_Cards[slot].Slot = slot;
 	}
 
@@ -1050,7 +1050,7 @@ void Panels::MemoryCardListPanel_Simple::ReadFilesAtMcdFolder(){
 
 
 	wxArrayString memcardList;
-	wxString filename = m_FolderPicker->GetPath().string();
+	wxString filename = m_FolderPicker->GetPath().wstring();
 	wxDir memcardDir( filename );
 	if ( memcardDir.IsOpened() ) {
 		// add memory card files
@@ -1073,16 +1073,16 @@ void Panels::MemoryCardListPanel_Simple::ReadFilesAtMcdFolder(){
 
 	for(uint i = 0; i < memcardList.size(); i++) {
 		McdSlotItem currentCardFile;
-		bool isOk=EnumerateMemoryCard( currentCardFile, memcardList[i], (wxDirName)m_FolderPicker->GetPath().wstring() );
+		bool isOk=EnumerateMemoryCard( currentCardFile, memcardList[i].ToStdString(), (wxDirName)m_FolderPicker->GetPath().wstring() );
 		if( isOk && !isFileAssignedAndVisibleOnList( (wxFileName)currentCardFile.Filename ) )
 		{
 			currentCardFile.Slot		= -1;
 			currentCardFile.IsEnabled	= false;
 			m_allFilesystemCards.push_back(currentCardFile);
-			//DevCon.WriteLn(L"Enumerated file: '%s'", WX_STR(currentCardFile.Filename.GetFullName()) );
+			DevCon.WriteLn(L"Enumerated file: '%s'", WX_STR(currentCardFile.Filename.GetFullName()) );
 		}
-		/*else
-			DevCon.WriteLn(L"MCD folder card file skipped: '%s'", WX_STR(memcardList[i]) );*/
+		else
+			DevCon.WriteLn(L"MCD folder card file skipped: '%s'", WX_STR(memcardList[i]) );
 	}
 }
 

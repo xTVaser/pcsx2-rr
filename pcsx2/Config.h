@@ -604,11 +604,3 @@ TraceLogFilters&				SetTraceConfig();
 // These do spam a lot though!
 #define PSX_EXTRALOGS 0
 
-
-class Config
-{
-	std::string jsonData;
-	void save(std::string& saveFile);
-	void load(nlohmann::json);
-
-};

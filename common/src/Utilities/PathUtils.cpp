@@ -267,10 +267,10 @@ void PathUtils::Open(fs::path toOpen)
 
 void PathUtils::Save(fs::path toSave, nlohmann::json& stream) // A Møøse once bit my sister... 
 {
+    
     out.open(toSave, std::ios::trunc);
-
+    out.seekp(0);
     out << std::setw(4) << stream; 
-
     out.close();
 }
 
