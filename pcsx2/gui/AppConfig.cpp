@@ -32,7 +32,9 @@
 #include <iomanip>
 
 nlohmann::json json;
-PathUtils folderUtils;
+FolderUtils folderUtils;
+JsonUtils fileUtils;
+
 
 namespace PathDefs
 {
@@ -479,7 +481,7 @@ AppConfig::AppConfig()
 }
 
 // ------------------------------------------------------------------------
-void App_LoadSaveInstallSettings( nlohmann::json& json )
+nlohmann::json App_LoadSaveInstallSettings()
 {
 	// Portable installs of PCSX2 should not save any of the following information to
 	// the INI file.  Only the Run First Time Wizard option is saved, and that's done
@@ -491,6 +493,8 @@ void App_LoadSaveInstallSettings( nlohmann::json& json )
 
 	//if (ini.IsSaving() && (InstallationMode == InstallMode_Portable)) return;
 
+	nlohmann::json stream;
+
 	static const char* DocsFolderModeNames[] =
 	{
 		"User",
@@ -499,31 +503,32 @@ void App_LoadSaveInstallSettings( nlohmann::json& json )
 		NULL
 	};
 
-	json["DocumentsFolderMode"] = (DocsFolderMode, DocsFolderModeNames, (InstallationMode == InstallMode_Registered) ? DocsFolder_User : DocsFolder_Custom);
+	stream["DocumentsFolderMode"] = (DocsFolderMode, DocsFolderModeNames, (InstallationMode == InstallMode_Registered) ? DocsFolder_User : DocsFolder_Custom);
 
-	json["CustomDocumentsFolder"] = (CustomDocumentsFolder,	PathDefs::AppRoot() );
+	stream["CustomDocumentsFolder"] = (CustomDocumentsFolder,	PathDefs::AppRoot() );
 
-	json["UseDefaultSettingsFolder"] = (UseDefaultSettingsFolder, true );
-	json["SettingsFolder"]	= (SettingsFolder, PathDefs::GetSettings() );
+	stream["UseDefaultSettingsFolder"] = (UseDefaultSettingsFolder, true );
+	stream["SettingsFolder"]	= (SettingsFolder, PathDefs::GetSettings() );
 
 	// "Install_Dir" conforms to the NSIS standard install directory key name.
 	// Attempt to load plugins based on the Install Folder.
 
-	json["Install_Dir"] = (	InstallFolder,	((std::string(wxStandardPaths::Get().GetExecutablePath()))));
+	stream["Install_Dir"] = (	InstallFolder,	((std::string(wxStandardPaths::Get().GetExecutablePath()))));
 	//SetFullBaseDir( InstallFolder );
 
-	json["PluginsFolder"] = (PluginsFolder = Path::Combine(InstallFolder, "plugins" ));
+	stream["PluginsFolder"] = (PluginsFolder = Path::Combine(InstallFolder, "plugins" ));
 
+	return stream;
 }
 
-void App_LoadInstallSettings( nlohmann::json *json)
+void App_LoadInstallSettings( nlohmann::json json)
 {
-	App_LoadSaveInstallSettings( *json );
+	json.push_back(App_LoadSaveInstallSettings());
 }
 
-void App_SaveInstallSettings( nlohmann::json *json )
+void App_SaveInstallSettings( nlohmann::json json )
 {
-	App_LoadSaveInstallSettings( *json );
+	json.push_back(App_LoadSaveInstallSettings());
 }
 
 // ------------------------------------------------------------------------
@@ -1031,9 +1036,9 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 	return true;
 }
 
-nlohmann::json* OpenFileConfig( std::string filename )
+bool OpenFileConfig( std::string filename )
 {
-	nlohmann::json *loader = folderUtils.Load(filename);
+	bool loader = fileUtils.Load(filename);
 
 	return loader;
 }
@@ -1231,15 +1236,18 @@ static void LoadVmSettings()
 {
 	// Load virtual machine options and apply some defaults overtop saved items, which
 	// are regulated by the PCSX2 UI.
-	std::unique_ptr<nlohmann::json> vmJson( OpenFileConfig( GetVmSettingsFilename() ) );
-	auto vmloader = *vmJson.get();
-	vmloader.push_back(g_Conf->EmuOptions.LoadSave());
-	g_Conf->EmuOptions.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
+	bool isOpened = OpenFileConfig(GetVmSettingsFilename());
+	if (isOpened)
+	{
+	    auto vmloader = fileUtils.GetStream();
+	    vmloader.push_back(g_Conf->EmuOptions.LoadSave());
+	    g_Conf->EmuOptions.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
 
-	if (g_Conf->EnablePresets){
-		g_Conf->IsOkApplyPreset(g_Conf->PresetIndex, true);
+	    if (g_Conf->EnablePresets)
+		{
+	        g_Conf->IsOkApplyPreset(g_Conf->PresetIndex, true);
+        }
 	}
-
 	//sApp.DispatchVmSettingsEvent( vmloader );
 }
 
@@ -1277,8 +1285,10 @@ static void SaveUiSettings()
 	saver.push_back(ConLog_LoadSaveSettings());
 	saver.push_back(SysTraceLog_LoadSaveSettings());
 
+	std::string toSave = saver.dump();
+
 	//sApp.DispatchUiSettingsEvent( saver );
-		folderUtils.Save(GetUiSettingsFilename(), saver);
+	fileUtils.Save(GetUiSettingsFilename(), toSave);
 }
 
 static void SaveVmSettings()
@@ -1289,17 +1299,19 @@ static void SaveVmSettings()
 		std::string filePath = GetVmSettingsFilename().string();
 
 		nlohmann::json j = { };
-		folderUtils.Save(filePath, j);
-
+		fileUtils.Save(filePath, " ");
 	}
 
-	std::unique_ptr<nlohmann::json> vmjson( OpenFileConfig( GetVmSettingsFilename()));
-	nlohmann::json vmsaver = *vmjson.get();
-	vmsaver.push_back(g_Conf->EmuOptions.LoadSave());
+	bool test = OpenFileConfig( GetVmSettingsFilename());
+	if (test)
+	{
+		nlohmann::json vmsaver = fileUtils.GetStream();
+		vmsaver.push_back(g_Conf->EmuOptions.LoadSave());
 
-	folderUtils.Save(GetVmSettingsFilename(), vmsaver);
+		std::string toSave = vmsaver.dump();
 
-	//sApp.DispatchVmSettingsEvent( vmsaver );
+		fileUtils.Save(GetVmSettingsFilename(), toSave);
+	}
 }
 
 static void SaveRegSettings()

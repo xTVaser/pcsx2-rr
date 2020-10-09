@@ -39,12 +39,8 @@ std::string				SettingsFolder;
 std::string				InstallFolder;
 std::string				PluginsFolder;
 	
-PathUtils path;
-
-//nlohmann::json json;
+nlohmann::json stream;
 	
-std::ifstream in;
-
 const std::string PermissionFolders[] =
 {
 	"json",
@@ -75,9 +71,9 @@ static wxString GetMsg_PortableModeRights()
 	);
 };
 
-bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder, std::string& createFailedStr, std::string& accessFailedStr )
+bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder)
 {
-
+ 
 	std::string createme, accessme;
 
 
@@ -85,9 +81,9 @@ bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder, std::st
 	{
 		fs::path folder = Path::Combine(testFolder, PermissionFolders[i]);
 	
-		if (!path.DoesExist(folder))
+		if (!folderUtils.DoesExist(folder))
         {
-		    if (!path.CreateFolder(folder))
+		    if (!folderUtils.CreateFolder(folder))
 		    {
 			    ErrorFolders.push_back(folder); 
 			    //wxFileConfig* OpenFileConfig( const std::string& filename );
@@ -97,7 +93,7 @@ bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder, std::st
 
 	for (int i = 0; i < ErrorFolders.size(); i++)
 	{
-		createFailedStr = (wxString)_("The following folders are missing and cannot be created:") + L"\n" + ErrorFolders[i];
+		Console.WriteLn((wxString)_("The following folders are missing and cannot be created:") + L"\n" + ErrorFolders[i]);
 	}
 
 	if (ErrorFolders.size() > 0)
@@ -120,7 +116,7 @@ bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder, std::st
 // Portable installation mode is typically enabled via the presence of an json file in the
 // same directory that PCSX2 is installed to.
 //
-nlohmann::json* Pcsx2App::TestForPortableInstall()
+bool Pcsx2App::TestForPortableInstall()
 {
 	InstallationMode = 	InstallMode_Portable;
 
@@ -128,9 +124,9 @@ nlohmann::json* Pcsx2App::TestForPortableInstall()
 	std::string portableDocsFolder = portableJsonFile.parent_path();
 
 	std::cout << "PATH: " << portableJsonFile << std::endl;
-	std::unique_ptr<nlohmann::json> conf_portable( OpenFileConfig( portableJsonFile ) );
+	bool isPortable = OpenFileConfig( portableJsonFile);
 
-	if (Startup.PortableMode || !portableJsonFile.empty())
+	if (Startup.PortableMode || isPortable)
 	{
 		if (Startup.PortableMode)
 			Console.WriteLn( L"(UserMode) Portable mode requested via commandline switch!" );
@@ -143,50 +139,12 @@ nlohmann::json* Pcsx2App::TestForPortableInstall()
 		// mode.  In order to determine our read/write permissions to the PCSX2, we must try to
 		// modify the configured documents folder, and catch any ensuing error.
 		
-		while( true ) // ?? why a whole loop here
+		if (!TestUserPermissionsRights(portableDocsFolder))
 		{
-			std::string accessFailedStr, createFailedStr;
-			if (TestUserPermissionsRights( portableDocsFolder, createFailedStr, accessFailedStr )) break;
-
-			wxDialogWithHelpers dialog( NULL, AddAppName(_("Portable mode error - %s")) );
-
-			wxTextCtrl* scrollText = new wxTextCtrl(
-				&dialog, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize,
-				wxTE_READONLY | wxTE_MULTILINE | wxTE_WORDWRAP
-			);
-
-			if (!path.Empty(createFailedStr))
-				scrollText->AppendText( createFailedStr + L"\n" );
-
-			dialog += dialog.Heading( _("PCSX2 has been installed as a portable application but cannot run due to the following errors:" ) );
-			dialog += scrollText | pxExpand.Border(wxALL, 16);
-			dialog += 6;
-			dialog += dialog.Text( GetMsg_PortableModeRights() );
-
-			// [TODO] : Add url for platform-relevant user permissions tutorials?  (low priority)
-
-			wxWindowID result = pxIssueConfirmation( dialog,
-				MsgButtons().Retry().Cancel().Custom(_("Switch to User Documents Mode"), "switchmode")
-			);
-
-			switch (result)
-			{
-				case wxID_CANCEL:
-					throw Exception::StartupAborted( L"User canceled portable mode due to insufficient user access/permissions." );
-
-				case wxID_RETRY:
-					// do nothing (continues while loop)
-				break;
-
-				case pxID_CUSTOM:
-					wxDialogWithHelpers dialog2( NULL, AddAppName(_("%s is switching to local install mode.")) );
-					dialog2 += dialog2.Heading( _("Try to remove the file called \"portable.json\" from your installation directory manually." ) );
-					dialog2 += 6;
-					pxIssueConfirmation( dialog2, MsgButtons().OK() );
-					return nullptr;
-			}
-
+			Console.WriteLn(L"Install Mode Activated");
+			return false;
 		}
+
 
 		// Success -- all user-based folders have write access.  PCSX2 should be able to run error-free!
 		// Force-set the custom documents mode, and set the
@@ -194,7 +152,7 @@ nlohmann::json* Pcsx2App::TestForPortableInstall()
 		InstallationMode = InstallMode_Portable;
 		DocsFolderMode = DocsFolder_Custom;
 		CustomDocumentsFolder = portableDocsFolder;
-		return conf_portable.release();
+		return isPortable;
 	}
 
 }
@@ -205,15 +163,15 @@ void Pcsx2App::WipeUserModeSettings()
 	{
 		// Remove the portable.json entry "RunWizard" conforming to this instance of PCSX2.
 		std::string portableJsonFile( GetPortableJsonPath() );
-		std::unique_ptr<nlohmann::json> conf_portable( OpenFileConfig( portableJsonFile ) );
-		json = *conf_portable.get();
+		bool test = OpenFileConfig( portableJsonFile );
+		json = fileUtils.GetStream();
 		json["RunWizard"] = 0;
 	}
 	else
 	{
 		// Remove the registry entry "RunWizard" conforming to this instance of PCSX2.
-		std::unique_ptr<nlohmann::json> conf_install( OpenInstallSettingsFile() );		
-		json = *conf_install.get();
+		bool conf_install = OpenInstallSettingsFile();		
+		json = fileUtils.GetStream();
 		json["RunWizard"] = 0;
 	}
 }
@@ -235,7 +193,7 @@ static void DoFirstTimeWizard()
 	}
 }
 
-nlohmann::json* Pcsx2App::OpenInstallSettingsFile()
+bool Pcsx2App::OpenInstallSettingsFile()
 {
 	// Implementation Notes:
 	//
@@ -244,7 +202,7 @@ nlohmann::json* Pcsx2App::OpenInstallSettingsFile()
 	// the old system (CWD-based json file mess) in favor of a system that simply stores
 	// most core application-level settings in the registry.
 
-	std::unique_ptr<nlohmann::json> conf_install;
+	//nlohmann::json conf_install;
 
 #ifdef __WXMSW__
 	//conf_install = std::unique_ptr<nlohmann::json>(new wxRegConfig());
@@ -257,16 +215,14 @@ nlohmann::json* Pcsx2App::OpenInstallSettingsFile()
 	if( !fs::exists(usrlocaldir))
 	{
 		Console.WriteLn( "Creating UserLocalData folder: " + (std::string)usrlocaldir );
-		path.CreateFolder(usrlocaldir);
+		folderUtils.CreateFolder(usrlocaldir);
 	}
 
 	std::string usermodefile = (GetAppName().ToStdString() + "-reg.json" );
 
 	std::cout << "USERMODE: " << usermodefile << std::endl;
 
-	in.open(usermodefile);
-	json = nlohmann::json::parse(in);
-
+	fileUtils.Load(usermodefile);
 #endif
 
 	return &json;
@@ -275,11 +231,11 @@ nlohmann::json* Pcsx2App::OpenInstallSettingsFile()
 
 void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 {
-	std::unique_ptr<nlohmann::json> conf_install;
-	conf_install = std::unique_ptr<nlohmann::json>(TestForPortableInstall());
+	bool conf_install;
+	conf_install = TestForPortableInstall();
 	
 	if (!conf_install)
-		conf_install = std::unique_ptr<nlohmann::json>(OpenInstallSettingsFile());
+		conf_install = OpenInstallSettingsFile();
 
 	json["RunWizard"] = true;
 }
@@ -288,14 +244,12 @@ void Pcsx2App::EstablishAppUserMode()
 {
 	// TODO - stop mutating the json directly, serialize and deserialize!
 
-	std::unique_ptr<nlohmann::json> conf_install(TestForPortableInstall());
+	bool conf_install = TestForPortableInstall();
 
 	if (!conf_install)
-		conf_install = std::unique_ptr<nlohmann::json>(OpenInstallSettingsFile());
+		conf_install = OpenInstallSettingsFile();
 
-	nlohmann::json newJson = *conf_install.get();
-
-	//conf_install->SetRecordDefaults(false);
+	nlohmann::json newJson = fileUtils.GetStream();
 
 	//  Run the First Time Wizard!
 	// ----------------------------
@@ -307,7 +261,7 @@ void Pcsx2App::EstablishAppUserMode()
 	if (newJson["RunWizard"])
 		runWizard = true;
 
-	App_LoadInstallSettings( conf_install.get());
+	App_LoadInstallSettings( newJson);
 
 	if( !Startup.ForceWizard && !runWizard )
 	{
@@ -318,11 +272,11 @@ void Pcsx2App::EstablishAppUserMode()
 	DoFirstTimeWizard();
 
 	// Save user's new settings
-	App_SaveInstallSettings( conf_install.get());
+	App_SaveInstallSettings( newJson);
 	AppConfig_OnChangedSettingsFolder( true );
 	AppSaveSettings();
 
-	json = *conf_install.get();
+	json = newJson;
 
 	// Wizard completed successfully, so let's not torture the user with this crap again!
 	
@@ -331,7 +285,7 @@ void Pcsx2App::EstablishAppUserMode()
 
     if (InstallationMode == InstallationModeType::InstallMode_Portable)
     {
-        folderUtils.Save(GetPortableJsonPath(), newJson);
+        fileUtils.Save(GetPortableJsonPath(), newJson.dump());
     }
 
 }

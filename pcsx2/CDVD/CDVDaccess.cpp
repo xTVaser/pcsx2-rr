@@ -384,7 +384,7 @@ bool DoCDVDopen()
 		return true;
 	}
 
-	PathUtils pathUtils;
+	FolderUtils pathUtils;
 
 	std::string somepick( Path::GetFilenameWithoutExt( m_SourceFilename[CurrentSourceType] )  );
 	//FWIW Disc serial availability doesn't seem reliable enough, sometimes it's there and sometime it's just null

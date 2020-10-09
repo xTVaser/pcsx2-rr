@@ -51,8 +51,8 @@ namespace PathDefs
 	extern fs::path GetDocuments( DocsModeType mode );
 }
 
-extern PathUtils folderUtils;
-
+extern FolderUtils      folderUtils;
+extern JsonUtils        fileUtils;
 extern nlohmann::json	json;
 
 extern DocsModeType		DocsFolderMode;				//
@@ -389,15 +389,15 @@ extern void AppLoadSettings();
 extern void AppSaveSettings();
 extern void AppApplySettings( const AppConfig* oldconf=NULL );
 
-extern void App_LoadSaveInstallSettings( nlohmann::json &json );
-extern void App_SaveInstallSettings( nlohmann::json *json );
-extern void App_LoadInstallSettings( nlohmann::json *json );
+extern nlohmann::json App_LoadSaveInstallSettings( );
+extern void App_SaveInstallSettings( nlohmann::json json );
+extern void App_LoadInstallSettings( nlohmann::json json );
 
 extern nlohmann::json ConLog_LoadSaveSettings();
 extern nlohmann::json SysTraceLog_LoadSaveSettings();
 
 
-extern nlohmann::json* OpenFileConfig( std::string filename );
+extern bool OpenFileConfig( std::string filename );
 extern void RelocateLogfile();
 extern void AppConfig_OnChangedSettingsFolder( bool overwrite =  false );
 extern wxConfigBase* GetAppConfig();

@@ -605,12 +605,12 @@ public:
 	void CleanupRestartable();
 	void CleanupResources();
 	void WipeUserModeSettings();
-	bool TestUserPermissionsRights( const std::string& testFolder, std::string& createFailedStr, std::string& accessFailedStr );
+	bool TestUserPermissionsRights( const std::string& testFolder);
 	void EstablishAppUserMode();
 	void ForceFirstTimeWizardOnNextRun();
 
-	nlohmann::json* OpenInstallSettingsFile();
-	nlohmann::json* TestForPortableInstall();
+	bool OpenInstallSettingsFile();
+	bool TestForPortableInstall();
 
 	bool HasPendingSaves() const;
 	void StartPendingSave();
@@ -817,8 +817,8 @@ extern bool				HasMainFrame();
 extern MainEmuFrame&	GetMainFrame();
 extern MainEmuFrame*	GetMainFramePtr();
 
-extern PathUtils		folderUtils;
-
+extern FolderUtils		folderUtils;
+extern JsonUtils		jsonUtils;
 extern __aligned16 AppCoreThread CoreThread;
 extern __aligned16 SysMtgsThread mtgsThread;
 extern __aligned16 AppCorePlugins CorePlugins;

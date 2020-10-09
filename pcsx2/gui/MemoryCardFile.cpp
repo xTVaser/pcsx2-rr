@@ -206,7 +206,7 @@ void FileMemoryCard::Open()
 		NTFS_CompressFile( str, g_Conf->McdCompressNTFS );
 #endif
 
-		if( !m_file[slot].Open( str.c_str(), L"r+b" ) )
+		if( !m_file[slot].Open( str, L"r+b" ) )
 		{
 			// Translation note: detailed description should mention that the memory card will be disabled
 			// for the duration of this session.

@@ -11,20 +11,40 @@
 
 namespace fs = ghc::filesystem;
 
-class PathUtils
+class FolderUtils
 {
-    private:
-    std::ifstream in;
-    std::ofstream out;
+    protected:
+    fs::path folder;
+
     public:
     bool CreateFolder(std::string path);
     bool Empty(std::string); // Is the folder empty
     bool DoesExist(std::string path); // Does the path exist
     bool DoesExist(fs::path path); // Does the path exist
+};
 
-    void Open(fs::path toOpen);
-    void Save(fs::path toSave, nlohmann::json& stream); // TO DO use yaml
-    nlohmann::json *Load(fs::path toLoad); // TO DO use yaml
+class iFile
+{
+
+protected:
+    std::ifstream in;
+    std::ofstream out;
+    FolderUtils folder;
+
+public:
+    virtual bool Save(fs::path toSave, std::string) = 0;
+    virtual bool Load(fs::path toLoad) = 0;
+};
+
+class JsonUtils : iFile
+{
+
+private:
+nlohmann::json stream;
+public:
+    bool Save(fs::path toSave, std::string) override;
+    bool Load(fs::path toLoad) override;
+    nlohmann::json GetStream();
 };
 
 namespace Path

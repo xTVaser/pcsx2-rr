@@ -55,16 +55,17 @@ static bool IsMcdFormatted( wxFFile& fhand )
 }
 
 //sets IsPresent if the file is valid, and derived properties (filename, formatted, size, etc)
-bool EnumerateMemoryCard( McdSlotItem& dest, const fs::path& filename, wxDirName basePath )
+bool EnumerateMemoryCard( McdSlotItem& dest, const wxFileName& filename, wxDirName basePath )
 {
 	dest.IsFormatted	= false;
 	dest.IsPresent		= false;
 	dest.IsPSX			= false;
 	dest.Type			= MemoryCardType::MemoryCard_None;
 
-	const wxString fullpath( filename.wstring() );
-	DevCon.WriteLn( fullpath );
-	if (folderUtils.DoesExist(filename) ) {
+	const wxString fullpath(filename.GetFullPath());
+	//DevCon.WriteLn( fullpath );
+	if (filename.FileExists())
+	{
 		// might be a memory card file
 		wxFFile mcdFile( fullpath );
 		if ( !mcdFile.IsOpened() ) { return false; }	// wx should log the error for us.
@@ -84,29 +85,41 @@ bool EnumerateMemoryCard( McdSlotItem& dest, const fs::path& filename, wxDirName
 		}
 
 		dest.Type = MemoryCardType::MemoryCard_File;
-		dest.IsFormatted = IsMcdFormatted( mcdFile );
-		//filename.GetTimes( NULL, &dest.DateModified, &dest.DateCreated );
-	} else if (folderUtils.DoesExist(filename)) {
+		dest.IsFormatted = IsMcdFormatted(mcdFile);
+		dest.IsPresent = true;
+		dest.Filename = filename;
+		filename.GetTimes(NULL, &dest.DateModified, &dest.DateCreated);
+		return true;
+	}
+	else if (filename.DirExists())
+	{ 
 		// might be a memory card folder
-	    fs::path superBlockFileName( fullpath.ToStdString() + "_pcsx2_superblock" );
-		if ( !folderUtils.DoesExist(superBlockFileName) ) { return false; }
-		wxFFile mcdFile( superBlockFileName.wstring());
+	    wxFileName superBlockFileName( fullpath, L"_pcsx2_superblock" );
+		
+		if ( !superBlockFileName.FileExists() ) { return false; }
+		wxFFile mcdFile( superBlockFileName.GetFullPath() );
+		
 		if ( !mcdFile.IsOpened() ) { return false; }
 
 		dest.SizeInMB = 0;
 
 		dest.Type = MemoryCardType::MemoryCard_Folder;
 		dest.IsFormatted = IsMcdFormatted( mcdFile );
-		//superBlockFileName.GetTimes( NULL, &dest.DateModified, &dest.DateCreated );
+		dest.IsPresent = true;
+		(wxFileName) dest.Filename = filename;
+		superBlockFileName.GetTimes( NULL, &dest.DateModified, &dest.DateCreated );
+		return true;
 	} else {
 		// is neither
 		return false;
 	}
 
+	wxFileName currentCard(filename);
+
 	dest.IsPresent		= true;
-	(wxFileName)dest.Filename		= filename.wstring();
-	if( (wxFileName)filename.wstring() == (basePath + (wxFileName)filename.wstring() ))
-		(wxFileName)dest.Filename = filename.wstring();
+	(wxFileName)dest.Filename		= filename;
+	if( (wxFileName)filename == (basePath + (wxFileName)filename ))
+		(wxFileName)dest.Filename = filename;
 
 	return true;
 }
@@ -599,7 +612,11 @@ void Panels::MemoryCardListPanel_Simple::DoRefresh()
 		fs::path fullpath( (m_FolderPicker->GetPath() / g_Conf->Mcd[slot].Filename.GetFullName().ToStdString()).make_preferred());
 		//std::string fullpath = m_FolderPicker->GetPath() + m_Cards[slot].Filename;
 
-		EnumerateMemoryCard( m_Cards[slot], fullpath, (wxDirName)m_FolderPicker->GetPath().wstring());
+		wxString path(fullpath.wstring());
+
+		wxDirName temp (m_FolderPicker->GetPath().wstring());
+
+		EnumerateMemoryCard( m_Cards[slot], path, temp);
 		m_Cards[slot].Slot = slot;
 	}
 
@@ -624,7 +641,9 @@ void Panels::MemoryCardListPanel_Simple::UiCreateNewCard( McdSlotItem& card )
 		return;
 	}
 
-	Dialogs::CreateMemoryCardDialog dialog(this, (wxDirName)m_FolderPicker->GetPath().wstring(), L"my memory card");
+	wxDirName temp (m_FolderPicker->GetPath().wstring());
+
+	Dialogs::CreateMemoryCardDialog dialog(this, temp, L"my memory card");
 	wxWindowID result = dialog.ShowModal();
 
 	if (result != wxID_CANCEL) {
@@ -656,7 +675,8 @@ void Panels::MemoryCardListPanel_Simple::UiConvertCard( McdSlotItem& card )
 	config.Filename = card.Filename;
 	config.Enabled = card.IsEnabled;
 	config.Type = card.Type;
-	Dialogs::ConvertMemoryCardDialog dialog( this, (wxDirName)m_FolderPicker->GetPath().wstring(), config );
+	wxDirName temp (m_FolderPicker->GetPath().wstring());
+	Dialogs::ConvertMemoryCardDialog dialog( this, temp, config );
 	wxWindowID result = dialog.ShowModal();
 
 	if ( result != wxID_CANCEL ) {
@@ -678,7 +698,7 @@ void Panels::MemoryCardListPanel_Simple::UiDeleteCard( McdSlotItem& card )
 		wxString content;
 		content.Printf(
 			pxE( L"You are about to delete the formatted memory card '%s'. All data on this card will be lost!  Are you absolutely and quite positively sure?"
-				), card.Filename.GetFullPath().ToStdString()
+				), card.Filename.GetFullPath()
 		);
 
 		result = Msgbox::YesNo( content, _("Delete memory file?") );
@@ -963,7 +983,7 @@ void Panels::MemoryCardListPanel_Simple::UiAssignUnassignFile(McdSlotItem &card)
 
 		McdSlotItem& target = GetCardForViewIndex(res);
 		bool en = target.IsPresent? target.IsEnabled : true;
-		RemoveCardFromSlot( (wxFileName)card.Filename );
+		RemoveCardFromSlot(card.Filename );
 		target.Filename = card.Filename;
 		target.IsPresent  = true;
 		target.IsEnabled  = en;
@@ -1073,7 +1093,8 @@ void Panels::MemoryCardListPanel_Simple::ReadFilesAtMcdFolder(){
 
 	for(uint i = 0; i < memcardList.size(); i++) {
 		McdSlotItem currentCardFile;
-		bool isOk=EnumerateMemoryCard( currentCardFile, memcardList[i].ToStdString(), (wxDirName)m_FolderPicker->GetPath().wstring() );
+		wxDirName temp(m_FolderPicker->GetPath().wstring());
+		bool isOk=EnumerateMemoryCard( currentCardFile, memcardList[i], temp);
 		if( isOk && !isFileAssignedAndVisibleOnList( (wxFileName)currentCardFile.Filename ) )
 		{
 			currentCardFile.Slot		= -1;

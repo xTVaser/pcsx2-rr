@@ -240,56 +240,76 @@ void pxExplore(const char *path)
     pxExplore(fromUTF8(path));
 }
 
-bool PathUtils::CreateFolder(std::string path)
+bool FolderUtils::CreateFolder(std::string path)
 {
    return fs::create_directory(path);
 }
 
-bool PathUtils::DoesExist(std::string path)
+bool FolderUtils::DoesExist(std::string path)
 {
     return fs::exists(path);
 }
 
-bool PathUtils::DoesExist(fs::path path)
+bool FolderUtils::DoesExist(fs::path path)
 {
     return fs::exists(path);
 }
 
-bool PathUtils::Empty(std::string path)
+bool FolderUtils::Empty(std::string path)
 {
     return fs::is_empty(path);
 }
 
-void PathUtils::Open(fs::path toOpen)
+bool JsonUtils::Save(fs::path toSave, std::string stream) // A Møøse once bit my sister... 
 {
+    if (folder.DoesExist(toSave))
+    {
+        fs::resize_file(toSave, 0);
+    }
 
-}
+    out.open(toSave, std::ios::out | std::ios::trunc);
 
-void PathUtils::Save(fs::path toSave, nlohmann::json& stream) // A Møøse once bit my sister... 
-{
-    
-    out.open(toSave, std::ios::trunc);
     out.seekp(0);
     out << std::setw(4) << stream; 
     out.close();
+
+	if (out.bad())
+	{
+		std::cout << "Error Writing File" << std::endl;
+        return false;
+    }
+       
+    return true;
 }
 
-nlohmann::json *PathUtils::Load(fs::path toLoad) // We apologise for the fault in the comments. Those responsible have been sacked.
+bool JsonUtils::Load(fs::path toLoad) // We apologise for the fault in the comments. Those responsible have been sacked.
 {
-    nlohmann::json* stream = new nlohmann::json();
 
     in.open(toLoad);
     
     try
     {
-        *stream = nlohmann::json::parse(in);
+        stream = nlohmann::json::parse(in);
     }
     catch(const nlohmann::json::exception& e)
     {
         std::cerr << e.what() << '\n';
+        return false;
     }
     
     in.close();
 
+    if (in.fail())
+    {
+        return false;
+    }
+    else
+    {
+    return true;
+    }
+}
+
+nlohmann::json JsonUtils::GetStream()
+{
     return stream;
 }

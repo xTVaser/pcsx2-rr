@@ -415,7 +415,7 @@ protected:
 
 int EnumeratePluginsInFolder(std::string searchpath, std::vector<std::string>& dest)
 {
-    PathUtils path;
+    FolderUtils path;
 
     if (!path.DoesExist(searchpath)) return 0;
 
