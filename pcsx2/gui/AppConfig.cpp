@@ -523,12 +523,20 @@ nlohmann::json App_LoadSaveInstallSettings()
 
 void App_LoadInstallSettings( nlohmann::json json)
 {
-	json.push_back(App_LoadSaveInstallSettings());
+	auto jArray = nlohmann::json::array();
+
+	jArray.push_back(App_LoadSaveInstallSettings());
+
+	json = jArray;
 }
 
 void App_SaveInstallSettings( nlohmann::json json )
 {
-	json.push_back(App_LoadSaveInstallSettings());
+	auto jArray = nlohmann::json::array();
+
+	jArray.push_back(App_LoadSaveInstallSettings());
+
+	json = jArray;
 }
 
 // ------------------------------------------------------------------------
