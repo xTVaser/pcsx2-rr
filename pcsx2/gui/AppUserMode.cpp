@@ -204,6 +204,9 @@ bool Pcsx2App::OpenInstallSettingsFile()
 
 	//nlohmann::json conf_install;
 
+	InstallationMode = InstallationModeType::InstallMode_Registered;
+
+
 #ifdef __WXMSW__
 	//conf_install = std::unique_ptr<nlohmann::json>(new wxRegConfig());
 #else
@@ -215,17 +218,23 @@ bool Pcsx2App::OpenInstallSettingsFile()
 	if( !fs::exists(usrlocaldir))
 	{
 		Console.WriteLn( "Creating UserLocalData folder: " + (std::string)usrlocaldir );
-		folderUtils.CreateFolder(usrlocaldir);
+		if (!folderUtils.CreateFolder(usrlocaldir))
+		{
+			return false;
+		}
 	}
 
 	std::string usermodefile = (GetAppName().ToStdString() + "-reg.json" );
 
 	std::cout << "USERMODE: " << usermodefile << std::endl;
 
-	fileUtils.Load(usermodefile);
+	if(!fileUtils.Load(usermodefile))
+	{
+		return false;
+	}
 #endif
 
-	return &json;
+	return true;
 }
 
 
@@ -263,7 +272,7 @@ void Pcsx2App::EstablishAppUserMode()
 
 	App_LoadInstallSettings( newJson);
 
-	if( !Startup.ForceWizard && !runWizard )
+	if( !Startup.ForceWizard)
 	{
 		AppConfig_OnChangedSettingsFolder( false );
 		return;
@@ -281,10 +290,11 @@ void Pcsx2App::EstablishAppUserMode()
 	// Wizard completed successfully, so let's not torture the user with this crap again!
 	
 	// TODO - stawp
-	newJson["RunWizard"] = false;
 
     if (InstallationMode == InstallationModeType::InstallMode_Portable)
     {
+		newJson["RunWizard"] = false;
+
         fileUtils.Save(GetPortableJsonPath(), newJson.dump());
     }
 

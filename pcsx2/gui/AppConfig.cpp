@@ -1046,9 +1046,16 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 
 bool OpenFileConfig( std::string filename )
 {
-	bool loader = fileUtils.Load(filename);
+	if (!folderUtils.DoesExist(filename))
+	{
+		return false;
+	}
 
-	return loader;
+	else
+	{
+		bool loader = fileUtils.Load(filename);
+		return loader;
+	}
 }
 
 void RelocateLogfile()
@@ -1307,7 +1314,7 @@ static void SaveVmSettings()
 		std::string filePath = GetVmSettingsFilename().string();
 
 		nlohmann::json j = { };
-		fileUtils.Save(filePath, " ");
+		fileUtils.Save(filePath, j.dump());
 	}
 
 	bool test = OpenFileConfig( GetVmSettingsFilename());
