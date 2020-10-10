@@ -239,8 +239,7 @@ bool Pcsx2App::OpenInstallSettingsFile()
 
 void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 {
-	bool conf_install;
-	conf_install = TestForPortableInstall();
+	bool conf_install = TestForPortableInstall();
 	
 	if (!conf_install)
 		conf_install = OpenInstallSettingsFile();

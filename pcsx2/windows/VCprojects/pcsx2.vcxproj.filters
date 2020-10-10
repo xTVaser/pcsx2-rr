@@ -898,6 +898,9 @@
     <ClCompile Include="..\..\FW.cpp">
       <Filter>System\Ps2\Iop\FW</Filter>
     </ClCompile>
+    <ClCompile Include="GuiConfig.cpp">
+      <Filter>AppHost</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Patch.h">
@@ -1358,6 +1361,9 @@
     </ClInclude>
     <ClInclude Include="..\..\FW.h">
       <Filter>System\Ps2\Iop\FW</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiConfig.h">
+      <Filter>AppHost</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

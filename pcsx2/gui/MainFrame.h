@@ -17,6 +17,7 @@
 
 #include "App.h"
 #include "AppSaveStates.h"
+#include "GuiConfig.h"
 
 #include <wx/image.h>
 #include <wx/docview.h>
@@ -176,7 +177,7 @@ protected:
 	void ApplySettings();
 	void ApplyCoreStatus();
 
-	void InitLogBoxPosition( AppConfig::ConsoleLogOptions& conf );
+	void InitLogBoxPosition( ConsoleLogOptions& conf );
 
 	void OnCloseWindow( wxCloseEvent& evt );
 	void OnMoveAround( wxMoveEvent& evt );

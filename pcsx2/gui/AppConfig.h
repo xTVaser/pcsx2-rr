@@ -20,7 +20,7 @@
 #include "CDVD/CDVDaccess.h"
 #include <fstream>
 #include <memory>
-
+#include "GuiConfig.h"
 
 enum DocsModeType
 {
@@ -94,22 +94,6 @@ bool IsPortable();
 
 extern InstallationModeType	InstallationMode;
 
-enum AspectRatioType
-{
-	AspectRatio_Stretch,
-	AspectRatio_4_3,
-	AspectRatio_16_9,
-	AspectRatio_MaxCount
-};
-
-enum FMVAspectRatioSwitchType
-{
-	FMV_AspectRatio_Switch_Off,
-	FMV_AspectRatio_Switch_4_3,
-	FMV_AspectRatio_Switch_16_9,
-	FMV_AspectRatio_Switch_MaxCount
-};
-
 enum MemoryCardType
 {
 	MemoryCard_None,
@@ -125,25 +109,6 @@ enum MemoryCardType
 class AppConfig
 {
 public:
-	// ------------------------------------------------------------------------
-	struct ConsoleLogOptions
-	{
-		bool		Visible;
-		// if true, DisplayPos is ignored and the console is automatically docked to the main window.
-		bool		AutoDock;
-		// Display position used if AutoDock is false (ignored otherwise)
-		int		DisplayPosition[2];
-		int		DisplaySize[2];
-
-		// Size of the font in points.
-		int			FontSize;
-
-		// Color theme by name!
-		wxString	Theme;
-
-		ConsoleLogOptions();
-		nlohmann::json LoadSave();
-	};
 
 	// ------------------------------------------------------------------------
 	struct FolderOptions
@@ -202,41 +167,6 @@ public:
 		wxFileName	Filename;	// user-configured location of this memory card
 		bool		Enabled;	// memory card enabled (if false, memcard will not show up in-game)
 		MemoryCardType Type;	// the memory card implementation that should be used
-	};
-
-	// ------------------------------------------------------------------------
-	// The GS window receives much love from the land of Options and Settings.
-	//
-	struct GSWindowOptions
-	{
-		// Closes the GS/Video port on escape (good for fullscreen activity)
-		bool		CloseOnEsc;
-
-		bool		DefaultToFullscreen;
-		bool		AlwaysHideMouse;
-		bool		DisableResizeBorders;
-		bool		DisableScreenSaver;
-
-		AspectRatioType AspectRatio;
-		FMVAspectRatioSwitchType FMVAspectRatioSwitch;
-		Fixed100	Zoom;
-		Fixed100	StretchY;
-		Fixed100	OffsetX;
-		Fixed100	OffsetY;
-
-
-		int			WindowSize[2]; // X, Y
-		int			WindowPos[2]; // X, Y
-		bool		IsMaximized;
-		bool		IsFullscreen;
-		bool		EnableVsyncWindowFlag;
-
-		bool		IsToggleFullscreenOnDoubleClick;
-
-		GSWindowOptions();
-
-		nlohmann::json LoadSave();
-		void SanityCheck();
 	};
 
 	struct FramerateOptions
@@ -342,10 +272,8 @@ public:
 	McdOptions				Mcd[8];
 	std::string				GzipIsoIndexTemplate; // for quick-access index with gzipped ISO
 
-	ConsoleLogOptions		ProgLogBox;
 	FolderOptions			Folders;
 	FilenameOptions			BaseFilenames;
-	GSWindowOptions			GSWindow;
 	FramerateOptions		Framerate;
 	UiTemplateOptions		Templates;
 

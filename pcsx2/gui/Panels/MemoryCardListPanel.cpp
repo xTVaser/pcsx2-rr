@@ -595,7 +595,7 @@ bool Panels::MemoryCardListPanel_Simple::ValidateEnumerationStatus()
 
 void Panels::MemoryCardListPanel_Simple::DoRefresh()
 {
-	for( uint slot=0; slot<8; ++slot )
+	for( int slot = 0; slot < 8; slot++ )
 	{
 		//if( FileMcd_IsMultitapSlot(slot) && !m_MultitapEnabled[FileMcd_GetMtapPort(slot)] )
 		//	continue;

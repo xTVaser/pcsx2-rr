@@ -297,6 +297,7 @@
     <ClCompile Include="..\..\IopIrq.cpp" />
     <ClCompile Include="..\..\IopMem.cpp" />
     <ClCompile Include="..\WinKeyCodes.cpp" />
+    <ClCompile Include="GuiConfig.cpp" />
     <ClCompile Include="IopSif.cpp" />
     <ClCompile Include="..\..\IopSio2.cpp" />
     <ClCompile Include="..\..\R3000A.cpp" />
@@ -534,6 +535,7 @@
     <ClInclude Include="..\..\DebugTools\DisASM.h" />
     <ClInclude Include="..\..\DebugTools\DisVUmicro.h" />
     <ClInclude Include="..\..\DebugTools\DisVUops.h" />
+    <ClInclude Include="GuiConfig.h" />
     <CustomBuildStep Include="..\..\rdebug\deci2.h">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </CustomBuildStep>

@@ -15,6 +15,7 @@
 
 #include "PrecompiledHeader.h"
 #include "ConfigurationPanels.h"
+#include "GuiConfig.h"
 
 using namespace pxSizerFlags;
 
@@ -147,12 +148,12 @@ Panels::GSWindowSettingsPanel::GSWindowSettingsPanel( wxWindow* parent )
 
 void Panels::GSWindowSettingsPanel::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui( *g_Conf );
+	//ApplyConfigToGui( *g_Conf );
 }
 
-void Panels::GSWindowSettingsPanel::ApplyConfigToGui( AppConfig& configToApply, int flags )
+void Panels::GSWindowSettingsPanel::ApplyConfigToGui( GuiConfig& configToApply, int flags )
 {
-	const AppConfig::GSWindowOptions& conf( configToApply.GSWindow );
+	const GSWindowOptions& conf( configToApply.gsWindow );
 
 	if( !(flags & AppConfig::APPLY_FLAG_FROM_PRESET) )
 	{//Presets don't control these values
@@ -167,17 +168,17 @@ void Panels::GSWindowSettingsPanel::ApplyConfigToGui( AppConfig& configToApply, 
 
 		m_check_DclickFullscreen ->SetValue( conf.IsToggleFullscreenOnDoubleClick );
 
-		m_text_WindowWidth	->ChangeValue( wxsFormat( L"%d", conf.WindowSize[0] ) );
-		m_text_WindowHeight	->ChangeValue( wxsFormat( L"%d", conf.WindowSize[1] ) );
+		m_text_WindowWidth->ChangeValue(wxsFormat(L"%d", conf.WindowSize.GetWidth()));
+		m_text_WindowHeight->ChangeValue(wxsFormat(L"%d", conf.WindowSize.GetHeight()));
 	}
 
-	m_combo_vsync->SetSelection(enum_cast(configToApply.EmuOptions.GS.VsyncEnable));
+	//m_combo_vsync->SetSelection(enum_cast(configToApply.EmuOptions.GS.VsyncEnable));
 	m_combo_vsync->Enable(true); // Always allow, regardless of preset
 }
 
 void Panels::GSWindowSettingsPanel::Apply()
 {
-	AppConfig::GSWindowOptions& appconf( g_Conf->GSWindow );
+	GSWindowOptions& appconf(config.gsWindow );
 	Pcsx2Config::GSOptions& gsconf( g_Conf->EmuOptions.GS );
 
 	appconf.CloseOnEsc				= m_check_CloseGS	->GetValue();
@@ -200,6 +201,6 @@ void Panels::GSWindowSettingsPanel::Apply()
 			.SetDiagMsg(L"User submitted non-numeric window size parameters!")
 			.SetUserMsg(_("Invalid window dimensions specified: Size cannot contain non-numeric digits! >_<"));
 
-	appconf.WindowSize[0]	= xr;
-	appconf.WindowSize[1]	= yr;
+	appconf.WindowSize.x = xr;
+	appconf.WindowSize.y = yr;
 }

@@ -35,6 +35,7 @@ nlohmann::json json;
 FolderUtils folderUtils;
 JsonUtils fileUtils;
 
+GuiConfig config;
 
 namespace PathDefs
 {
@@ -614,43 +615,15 @@ nlohmann::json AppConfig::LoadSave()
 	json.push_back(LoadSaveMemcards());
 
 	// Process various sub-components:
-    json.push_back(ProgLogBox.LoadSave());
 
 	json.push_back(Folders.LoadSave());
 	json.push_back(BaseFilenames.LoadSave());
-	json.push_back(GSWindow.LoadSave());
 	json.push_back(Framerate.LoadSave());
 	//json.push_back(Templates.LoadSave());
 	return json;
 }
 
 // ------------------------------------------------------------------------
-AppConfig::ConsoleLogOptions::ConsoleLogOptions()
-	: DisplayPosition{ 100, 100 }
-	, DisplaySize{680, 560}
-	, Theme("Default")
-{
-	Visible		= true;
-	AutoDock	= true;
-	FontSize	= 8;
-}
-
-nlohmann::json AppConfig::ConsoleLogOptions::LoadSave()
-{
-	//ScopedIniGroup path( ini, logger );
-
-	nlohmann::json console;
-
-	console["Visible"] = Visible;
-	console["AutoDock"] = AutoDock;
-	console["DisplayPosition"] = DisplayPosition;
-	console["DisplaySize"] = DisplaySize;
-	console["FontSize"] = FontSize;
-	console["Theme"] = Theme;
-
-	return console;
-}
-
 void AppConfig::FolderOptions::ApplyDefaults()
 {
 	if( UseDefaultBios )		Bios		  = PathDefs::GetBios();
@@ -758,98 +731,6 @@ nlohmann::json AppConfig::FilenameOptions::LoadSave()
 
 
    return appC;
-}
-
-// ------------------------------------------------------------------------
-AppConfig::GSWindowOptions::GSWindowOptions()
-{
-	CloseOnEsc				= true;
-	DefaultToFullscreen		= false;
-	AlwaysHideMouse			= false;
-	DisableResizeBorders	= false;
-	DisableScreenSaver		= true;
-
-	AspectRatio				= AspectRatio_4_3;
-	FMVAspectRatioSwitch	= FMV_AspectRatio_Switch_Off;
-	Zoom					= 100;
-	StretchY				= 100;
-	OffsetX					= 0;
-	OffsetY					= 0;
-
-	WindowSize[0]			= 640;
-	WindowSize[1]           = 480;
-	WindowPos[0]			= 100;
-	WindowPos[1]			= 100;
-	IsMaximized				= false;
-	IsFullscreen			= false;
-	EnableVsyncWindowFlag	= false;
-
-	IsToggleFullscreenOnDoubleClick = true;
-}
-
-void AppConfig::GSWindowOptions::SanityCheck()
-{
-	// Ensure Conformation of various options...
-
-	WindowSize[0] = std::max( WindowSize[0], 8 );
-	WindowSize[0] = std::min( WindowSize[0], wxGetDisplayArea().GetWidth()-16 );
-
-	WindowSize[1] = std::max( WindowSize[1], 8 );
-	WindowSize[1] = std::min( WindowSize[1], wxGetDisplayArea().GetHeight()-48 );
-
-	// Make sure the upper left corner of the window is visible enought o grab and
-	// move into view:
-	//if( !wxGetDisplayArea().Contains( wxRect( (wxSize)((WindowPos[0], WindowPos[1]), 48,48 )) ) )
-		//WindowPos = wxDefaultPosition;
-
-	if( (uint)AspectRatio >= (uint)AspectRatio_MaxCount )
-		AspectRatio = AspectRatio_4_3;
-}
-
-nlohmann::json AppConfig::GSWindowOptions::LoadSave()
-{
-	//ScopedIniGroup path( ini, L"GSWindow" );
-
-	nlohmann::json gs;
-
-	gs["CloseOnEsc"] = CloseOnEsc;
-	gs["DefautlToFullscreen"] = DefaultToFullscreen;
-	gs["AlwaysHideMous"] = AlwaysHideMouse;
-	gs["DisableResizeBorders"] = DisableResizeBorders;
-	gs["DisableScreenSaver"] = DisableScreenSaver;
-
-	gs["WindowSize"] = WindowSize;
-	gs["WindowPos"] =  WindowPos;
-	gs["IsMaximized"] = IsMaximized;
-	gs["IsFullscreen"] = IsFullscreen;
-	gs["EnableVsyncWindowFlag"] = EnableVsyncWindowFlag;
-
-	gs["IsToggleFullscreenOnDoubleClick"] = IsToggleFullscreenOnDoubleClick;
-
-	static const char* AspectRatioNames[] =
-	{
-		"Stretch",
-		"4:3",
-		"16:9",
-		// WARNING: array must be NULL terminated to compute it size
-		NULL
-	};
-
-	gs["AspectRatio"] = (AspectRatio, AspectRatioNames, AspectRatio );
-
-	static const char* FMVAspectRatioSwitchNames[] =
-	{
-		"Off",
-		"4:3",
-		"16:9",
-		// WARNING: array must be NULL terminated to compute it size
-		NULL
-	};
-	gs["FMVAspectRatioSwitch"] = (FMVAspectRatioSwitch, FMVAspectRatioSwitchNames, FMVAspectRatioSwitch);
-
-	//gs["Zoom"] = Zoom;
-
-	return gs;
 }
 
 // ----------------------------------------------------------------------------
@@ -1225,6 +1106,8 @@ static void LoadUiSettings()
 	loader.push_back(ConLog_LoadSaveSettings());
 	loader.push_back(SysTraceLog_LoadSaveSettings());
 
+	config.Load();
+
 	g_Conf = std::make_unique<AppConfig>();
 	loader.push_back(g_Conf->LoadSave());
 
@@ -1299,6 +1182,8 @@ static void SaveUiSettings()
 	saver.push_back(g_Conf->LoadSave());
 	saver.push_back(ConLog_LoadSaveSettings());
 	saver.push_back(SysTraceLog_LoadSaveSettings());
+
+	config.Save();
 
 	std::string toSave = saver.dump();
 

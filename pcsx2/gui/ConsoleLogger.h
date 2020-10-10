@@ -93,7 +93,7 @@ class ConsoleLogFrame : public wxFrame
 	DeclareNoncopyableObject(ConsoleLogFrame);
 
 public:
-	typedef AppConfig::ConsoleLogOptions ConLogConfig;
+	typedef ConsoleLogOptions ConLogConfig;
 
 protected:
 	class ColorArray

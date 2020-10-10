@@ -66,7 +66,7 @@
 
 wxIMPLEMENT_APP(Pcsx2App);
 
-std::unique_ptr<AppConfig> g_Conf;
+std::unique_ptr<GuiConfig> g_Conf;
 
 AspectRatioType iniAR;
 bool switchAR;

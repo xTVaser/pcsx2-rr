@@ -291,12 +291,14 @@ namespace Panels
 		wxTextCtrl*		m_text_WindowWidth;
 		wxTextCtrl*		m_text_WindowHeight;
 
+		GuiConfig       config;
+
 	public:
 		GSWindowSettingsPanel( wxWindow* parent );
 		virtual ~GSWindowSettingsPanel() = default;
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
-		void ApplyConfigToGui( AppConfig& configToApply, int flags=0 );
+		void ApplyConfigToGui( GuiConfig& configToApply, int flags=0 );
 	};
 
 	class VideoPanel : public BaseApplicableConfigPanel_SpecificConfig
