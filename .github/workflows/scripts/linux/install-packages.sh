@@ -97,7 +97,7 @@ if ! [[ -d vendor/apt/archives ]]; then
   # Then move them to our cache directory
   ${SUDO} cp -R /var/cache/apt ./vendor/
   # Making sure our user has ownership, in order to cache
-  ${SUDO} chown -R ubuntu:ubuntu ./vendor/apt
+  ${SUDO} chown -R $(whoami):$(whoami) ./vendor/apt
 fi
 
 sudo dpkg -i vendor/apt/archives/*.deb
