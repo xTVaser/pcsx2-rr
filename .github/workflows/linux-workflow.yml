@@ -94,13 +94,13 @@ jobs:
       - name: Install Packages
         env:
           PLATFORM: ${{ matrix.platform }}
-        run: USE_SUDO=false ./.github/workflows/scripts/linux/install-packages.sh
+        run: USE_SUDO=true ./.github/workflows/scripts/linux/install-packages.sh
 
       - name: Generate CMake
         env:
           PLATFORM: ${{ matrix.platform }}
-        run: USE_SUDO=false ./.github/workflows/scripts/linux/gen-cmake.sh
+        run: USE_SUDO=true ./.github/workflows/scripts/linux/gen-cmake.sh
 
       - name: Build PCSX2
         working-directory: ./build
-        run: USE_SUDO=false ./../.github/workflows/scripts/linux/build.sh
+        run: USE_SUDO=true ./../.github/workflows/scripts/linux/build.sh
