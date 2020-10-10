@@ -40,10 +40,6 @@ jobs:
 
     name: ${{ matrix.os }}-${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
-    # What if dockerhub is down?  Hope they fallback to just using the `runs-on`
-    container:
-      image: xtvaser/pcsx2-ci:${{ matrix.os}}-${{ matrix.platform}}
-      options: --cpus 2
     continue-on-error: ${{ matrix.experimental }}
     # Set some sort of timeout in the event of run-away builds.  We are limited on concurrent jobs so, get rid of them.
     timeout-minutes: 30
@@ -88,6 +84,12 @@ jobs:
           path: .ccache
           key: ${{ matrix.os }}-${{ matrix.platform }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}
           restore-keys: ${{ matrix.os }}-${{ matrix.platform }}-ccache-
+
+      - name: Restore Apt Packages from Cache
+        uses: actions/cache@v2
+        with:
+          path: ./vendor/apt/
+          key: apt-packages-${{ matrix.platform }}-${{ hashFiles('./.github/workflows/scripts/linux/install-packages.sh') }}
 
       - name: Install Packages
         env:
