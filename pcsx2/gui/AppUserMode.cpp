@@ -126,7 +126,7 @@ bool Pcsx2App::TestForPortableInstall()
 	std::cout << "PATH: " << portableJsonFile << std::endl;
 	bool isPortable = OpenFileConfig( portableJsonFile);
 
-	if (Startup.PortableMode || isPortable)
+	if (isPortable)
 	{
 		if (Startup.PortableMode)
 			Console.WriteLn( L"(UserMode) Portable mode requested via commandline switch!" );
@@ -144,7 +144,6 @@ bool Pcsx2App::TestForPortableInstall()
 			Console.WriteLn(L"Install Mode Activated");
 			return false;
 		}
-
 
 		// Success -- all user-based folders have write access.  PCSX2 should be able to run error-free!
 		// Force-set the custom documents mode, and set the

@@ -276,7 +276,7 @@ void Panels::DirPickerPanel::Apply()
 	g_Conf->Folders.Set( m_FolderId, path.string(), m_checkCtrl ? m_checkCtrl->GetValue() : false );
 }
 
-fs::path Panels::DirPickerPanel::GetPath() const
+std::string Panels::DirPickerPanel::GetPath() const
 {
 	// The (x) ? y : z construct doesn't like y and z to be different types in gcc.
 	if (m_pickerCtrl)

@@ -54,7 +54,7 @@ namespace Panels
 		virtual ~DirPickerPanel() = default;
 
 		void Reset();
-		fs::path GetPath() const;
+		std::string GetPath() const;
 		void SetPath( const wxString& src );
 
 		DirPickerPanel& SetStaticDesc( const wxString& msg );

@@ -268,7 +268,6 @@ bool JsonUtils::Save(fs::path toSave, std::string stream) // A Møøse once bit 
     }
 
     out.open(toSave, std::ios::out | std::ios::trunc);
-
     out.seekp(0);
     out << std::setw(4) << stream; 
     out.close();
