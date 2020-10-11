@@ -9,29 +9,26 @@ ConsoleLogOptions::ConsoleLogOptions()
 	Visible = true;
 	AutoDock = true;
 	FontSize = 8;
-
-	conf = new wxConfig("ConsoleLogOptions");
-	conf->Create();
 }
 
-bool ConsoleLogOptions::Save()
+bool ConsoleLogOptions::Save(wxConfig* conf)
 {
-	conf->Write(L"Theme", Theme);
-	conf->Write(L"FontSize", FontSize);
-	conf->Write(L"IsVisible", Visible);
-	conf->Write(L"Autodock", AutoDock);
-	conf->Write(L"DisplaySize", DisplaySize);
-	conf->Write(L"DisplayPosition", DisplayPosition);
+	conf->Write("Theme", Theme);
+	conf->Write("FontSize", FontSize);
+	conf->Write("IsVisible", Visible);
+	conf->Write("Autodock", AutoDock);
+	//conf->Write("DisplaySize", DisplaySize);
+	//conf->Write("DisplayPosition", DisplayPosition);
 }
 
-void ConsoleLogOptions::Load()
+void ConsoleLogOptions::Load(wxConfig* conf)
 {
-	conf->Read(L"Theme", Theme);
-	conf->Read(L"FontSize", FontSize);
-	conf->Read(L"IsVisible", Visible);
-	conf->Read(L"Autodock", AutoDock);
-	conf->ReadObject(L"DisplaySize", DisplaySize);
-	conf->ReadObject(L"DisplayPosition", DisplayPosition);
+	conf->Read("Theme", Theme);
+	conf->Read("FontSize", FontSize);
+	conf->Read("IsVisible", Visible);
+	conf->Read("Autodock", AutoDock);
+	//conf->ReadObject("DisplaySize", DisplaySize);
+	//conf->ReadObject("DisplayPosition", DisplayPosition);
 }
 
 GSWindowOptions::GSWindowOptions()
@@ -56,49 +53,46 @@ GSWindowOptions::GSWindowOptions()
 	EnableVsyncWindowFlag = false;
 
 	IsToggleFullscreenOnDoubleClick = true;
-
-	conf = new wxConfig("GSWindowOptions");
-	conf->Create();
 }
 
-void GSWindowOptions::Save()
+void GSWindowOptions::Save(wxConfig* conf)
 {
 	conf->Write("Zoom", Zoom);
 	conf->Write("OffsetX", OffsetX);
 	conf->Write("OffsetY", OffsetY);
 	conf->Write("StretchY", StretchY);
-	conf->Write("WindowPos", WindowPos);
-	conf->Write("WindowSize", WindowSize);
+	//conf->Write("WindowPos", (wxPoint)WindowPos);
+	//conf->Write("WindowSize", (wxSize)WindowSize);
 	conf->Write("CloseOnEsc", CloseOnEsc);
-	conf->Write("AspectRatio", AspectRatio);
+	//conf->Write("AspectRatio", AspectRatio);
 	conf->Write("IsMaximized", IsMaximized);
 	conf->Write("IsFullscreen", IsFullscreen);
 	conf->Write("AlwaysHideMouse", AlwaysHideMouse);
 	conf->Write("DisableScreenSaver", DisableScreenSaver);
 	conf->Write("DefaultToFullScreen", DefaultToFullscreen);
 	conf->Write("DisableResizeBorders", DisableResizeBorders);
-	conf->Write("FMVAspectRatioSwitch", FMVAspectRatioSwitch);
+	conf->Write("FMVAspectRatioSwitch", (int)FMVAspectRatioSwitch);
 	conf->Write("EnableVsyncWindowFlag", EnableVsyncWindowFlag);
 	conf->Write("IsToggleFullscreenOnDoubleClick", IsToggleFullscreenOnDoubleClick);
 }
 
-void GSWindowOptions::Load()
+void GSWindowOptions::Load(wxConfig* conf)
 {
-	conf->ReadObject("Zoom", Zoom);
-	conf->ReadObject("OffsetX", OffsetX);
-	conf->ReadObject("OffsetY", OffsetY);
-	conf->ReadObject("StretchY", StretchY);
-	conf->ReadObject("WindowPos", WindowPos);
-	conf->ReadObject("WindowSize", WindowSize);
+	conf->Read("Zoom", Zoom);
+	conf->Read("OffsetX", OffsetX);
+	conf->Read("OffsetY", OffsetY);
+	conf->Read("StretchY", StretchY);
+	//conf->ReadObject("WindowPos", WindowPos);
+	//conf->ReadObject("WindowSize", WindowSize);
 	conf->Read("CloseOnEsc", CloseOnEsc);
-	conf->Read("AspectRatio", AspectRatio);
+	//conf->Read("AspectRatio", AspectRatio);
 	conf->Read("IsMaximized", IsMaximized);
 	conf->Read("IsFullscreen", IsFullscreen);
 	conf->Read("AlwaysHideMouse", AlwaysHideMouse);
 	conf->Read("DisableScreenSaver", DisableScreenSaver);
 	conf->Read("DefaultToFullScreen", DefaultToFullscreen);
 	conf->Read("DisableResizeBorders", DisableResizeBorders);
-	conf->Read("FMVAspectRatioSwitch", FMVAspectRatioSwitch);
+	conf->Read("FMVAspectRatioSwitch", (int)FMVAspectRatioSwitch);
 	conf->Read("EnableVsyncWindowFlag", EnableVsyncWindowFlag);
 	conf->Read("IsToggleFullscreenOnDoubleClick", IsToggleFullscreenOnDoubleClick);
 }
@@ -122,15 +116,49 @@ void GSWindowOptions::SanityCheck()
 		AspectRatio = AspectRatio_4_3;
 }
 
-void GuiConfig::Load()
+GuiConfig::GuiConfig()
 {
-	console.Load();
-	gsWindow.Load();
+	conf = new wxConfig("PCSX2");
+}
+
+void GuiConfig::Init()
+{
+	std::string programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
+	std::string programDir(Path::Combine(programFullPath, "json/PCSX2_ui.ini"));
+
+	conf = new wxConfig(wxEmptyString, wxEmptyString, programDir, wxEmptyString, wxCONFIG_USE_RELATIVE_PATH);
+	isInit = true;
+
+	Console.WriteLn(L"Path: " +  conf->GetPath());
+}
+
+void GuiConfig::Load()
+{	
+	if (!isInit)
+	{
+		Init();
+	}
+
+	console.Load(conf);	
+	gsWindow.Load(conf);
 }
 
 
 void GuiConfig::Save()
 {
-	console.Save();
-	console.Load();
+
+	if (!isInit)
+	{
+		Init();
+	}
+
+	console.Save(conf);
+	gsWindow.Save(conf);
+
+	delete conf;
+}
+
+GuiConfig::~GuiConfig()
+{
+	delete conf;
 }

@@ -1,10 +1,12 @@
 #pragma once
 #include "AppForwardDefs.h"
-#include "PathDefs.h"
-#include "App.h"
+#include "wxGuiTools.h"
+#include "PathUtils.h"
 
 #include <wx/config.h>
 #include <wx/stdpaths.h>
+#include <wx/fileconf.h>
+#include <wx/apptrait.h>
 #include <iostream>
 #include <iomanip>
 #include <memory>
@@ -35,9 +37,6 @@ struct ConsoleLogOptions
 	wxPoint DisplayPosition;
 	wxSize DisplaySize;
 
-	// The Configurator
-	wxConfig* conf;
-
 	// Size of the font in points.
 	int FontSize;
 
@@ -45,8 +44,8 @@ struct ConsoleLogOptions
 	wxString Theme;
 
 	ConsoleLogOptions();
-	bool Save();
-	void Load();
+	bool Save(wxConfig* conf);
+	void Load(wxConfig* conf);
 };
 
 	// ------------------------------------------------------------------------
@@ -64,12 +63,10 @@ struct GSWindowOptions
 
 	AspectRatioType AspectRatio;
 	FMVAspectRatioSwitchType FMVAspectRatioSwitch;
-	Fixed100 Zoom;
-	Fixed100 StretchY;
-	Fixed100 OffsetX;
-	Fixed100 OffsetY;
-
-	wxConfig* conf;
+	float Zoom;
+	float StretchY;
+	float OffsetX;
+	float OffsetY;
 
 	wxSize WindowSize;
 	wxPoint WindowPos;
@@ -81,16 +78,26 @@ struct GSWindowOptions
 
 	GSWindowOptions();
 
-	void Save();
-	void Load();
+	void Save(wxConfig* conf);
+	void Load(wxConfig* conf);
 	void SanityCheck();
 };
 
-struct GuiConfig
+class GuiConfig
 {	
+
+private:
+	// The Configurator
+	wxConfig* conf;
+	bool isInit;
+
 public:	
 	ConsoleLogOptions console;
 	GSWindowOptions gsWindow;	
-	void Load();	
+	
+	GuiConfig();
+	void Init();
+	void Load();
 	void Save();
+	~GuiConfig();
 };

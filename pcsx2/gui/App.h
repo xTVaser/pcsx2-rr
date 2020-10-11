@@ -67,6 +67,7 @@ static const wxWindowID pxID_RestartWizard = wxID_LOWEST - 100;
 // along with the GS, since the GS viewport window handle will have changed.
 static const bool CloseViewportWithPlugins = false;
 
+
 // ------------------------------------------------------------------------
 // All Menu Options for the Main Window! :D
 // ------------------------------------------------------------------------

@@ -21,6 +21,7 @@
 #include "Counters.h"
 #include "GS.h"
 #include "MSWstuff.h"
+#include "GuiConfig.h"
 
 #include "ConsoleLogger.h"
 
@@ -157,7 +158,7 @@ GSPanel::GSPanel( wxWindow* parent )
 #endif
 
 	SetBackgroundColour(wxColour((unsigned long)0));
-	if( g_Conf->GSWindow.AlwaysHideMouse )
+	if( conf.gsWindow.AlwaysHideMouse )
 	{
 		SetCursor( wxCursor(wxCURSOR_BLANK) );
 		m_CursorShown = false;
@@ -197,7 +198,7 @@ GSPanel::~GSPanel()
 
 void GSPanel::DoShowMouse()
 {
-	if( g_Conf->GSWindow.AlwaysHideMouse ) return;
+	if( conf.gsWindow.AlwaysHideMouse ) return;
 
 	if( !m_CursorShown )
 	{
@@ -222,23 +223,23 @@ void GSPanel::DoResize()
 	extern bool switchAR;
 	double targetAr = clientAr;
 
-	if (g_Conf->GSWindow.AspectRatio != iniAR) {
+	if (conf.gsWindow.AspectRatio != iniAR) {
 		switchAR = false;
 	}
 
 	if (switchAR) {
-		if (g_Conf->GSWindow.FMVAspectRatioSwitch == FMV_AspectRatio_Switch_4_3) {
+		if (conf.gsWindow.FMVAspectRatioSwitch == FMV_AspectRatio_Switch_4_3) {
 			targetAr = 4.0 / 3.0;
-		} else if (g_Conf->GSWindow.FMVAspectRatioSwitch == FMV_AspectRatio_Switch_16_9) {
+		} else if (conf.gsWindow.FMVAspectRatioSwitch == FMV_AspectRatio_Switch_16_9) {
 			targetAr = 16.0 / 9.0;
 		} else {
 			// Allows for better real time toggling, returns to the non fmv override aspect ratio.
 			switchAR = false;
 		}
 	} else {
-		if (g_Conf->GSWindow.AspectRatio == AspectRatio_4_3) {
+		if (conf.gsWindow.AspectRatio == AspectRatio_4_3) {
 			targetAr = 4.0 / 3.0;
-		} else if (g_Conf->GSWindow.AspectRatio == AspectRatio_16_9) {
+		} else if (conf.gsWindow.AspectRatio == AspectRatio_16_9) {
 			targetAr = 16.0 / 9.0;
 		}
 	}
@@ -250,12 +251,12 @@ void GSPanel::DoResize()
 	else if( arr > 1 )
 		viewport.y = (int)( (double)viewport.y/arr + 0.5);
 
-	float zoom = g_Conf->GSWindow.Zoom.ToFloat()/100.0;
+	float zoom = conf.gsWindow.Zoom/100.0;
 	if( zoom == 0 )//auto zoom in untill black-bars are gone (while keeping the aspect ratio).
 		zoom = std::max( (float)arr, (float)(1.0/arr) );
 
-	viewport.Scale(zoom, zoom*g_Conf->GSWindow.StretchY.ToFloat()/100.0 );
-	if (viewport == client && EmuConfig.Gamefixes.FMVinSoftwareHack && g_Conf->GSWindow.IsFullscreen)
+	viewport.Scale(zoom, zoom * conf.gsWindow.StretchY/100.0 );
+	if (viewport == client && EmuConfig.Gamefixes.FMVinSoftwareHack && conf.gsWindow.IsFullscreen)
 		viewport.x += 1; //avoids crash on some systems switching HW><SW in fullscreen aspect ratio's with FMV Software switch.
 	SetSize( viewport );
 	CenterOnParent();
@@ -263,7 +264,7 @@ void GSPanel::DoResize()
 	int cx, cy;
 	GetPosition(&cx, &cy);
 	float unit = .01*(float)std::min(viewport.x, viewport.y);
-	SetPosition( wxPoint( cx + unit*g_Conf->GSWindow.OffsetX.ToFloat(), cy + unit*g_Conf->GSWindow.OffsetY.ToFloat() ) );
+	SetPosition( wxPoint( cx + unit * conf.gsWindow.OffsetX, cy + unit * conf.gsWindow.OffsetY ) );
 #ifdef GSWindowScaleDebug
 	Console.WriteLn(Color_Yellow, "GSWindowScaleDebug: zoom %f, viewport.x %d, viewport.y %d", zoom, viewport.GetX(), viewport.GetY());
 #endif
@@ -424,7 +425,7 @@ void GSPanel::DirectKeyCommand( wxKeyEvent& evt )
 
 void GSPanel::UpdateScreensaver()
 {
-	bool prevent = g_Conf->GSWindow.DisableScreenSaver
+	bool prevent = conf.gsWindow.DisableScreenSaver
 				   && m_HasFocus && m_coreRunning;
 	ScreensaverAllow(!prevent);
 }
@@ -434,7 +435,7 @@ void GSPanel::OnFocus( wxFocusEvent& evt )
 	evt.Skip();
 	m_HasFocus = true;
 
-	if( g_Conf->GSWindow.AlwaysHideMouse )
+	if( conf.gsWindow.AlwaysHideMouse )
 	{
 		SetCursor( wxCursor(wxCURSOR_BLANK) );
 		m_CursorShown = false;
@@ -494,7 +495,7 @@ void GSPanel::AppStatusEvent_OnSettingsApplied()
 
 void GSPanel::OnLeftDclick(wxMouseEvent& evt)
 {
-	if( !g_Conf->GSWindow.IsToggleFullscreenOnDoubleClick )
+	if( !conf.gsWindow.IsToggleFullscreenOnDoubleClick )
 		return;
 
 	//Console.WriteLn("GSPanel::OnDoubleClick: Invoking Fullscreen-Toggle accelerator.");
@@ -514,9 +515,6 @@ GSFrame::GSFrame( const wxString& title)
 	: wxFrame(NULL, wxID_ANY, title, m_windowPoint)
 	, m_timer_UpdateTitle( this )
 {
-	m_windowPoint.x = g_Conf->GSWindow.WindowPos[0];
-	m_windowPoint.y = g_Conf->GSWindow.WindowPos[1];
-
 	SetIcons( wxGetApp().GetIconBundle() );
 	SetBackgroundColour( *wxBLACK );
 
@@ -551,9 +549,9 @@ bool GSFrame::ShowFullScreen(bool show, bool updateConfig)
 	/*if( show != IsFullScreen() )
 		Console.WriteLn( Color_StrongMagenta, "(gsFrame) Switching to %s mode...", show ? "Fullscreen" : "Windowed" );*/
 
-	if (updateConfig && g_Conf->GSWindow.IsFullscreen != show)
+	if (updateConfig && conf.gsWindow.IsFullscreen != show)
 	{
-		g_Conf->GSWindow.IsFullscreen = show;
+		conf.gsWindow.IsFullscreen = show;
 		wxGetApp().PostIdleMethod( AppSaveSettings );
 	}
 
@@ -594,7 +592,7 @@ void GSFrame::CoreThread_OnResumed()
 
 void GSFrame::CoreThread_OnSuspended()
 {
-	if( !IsBeingDeleted() && g_Conf->GSWindow.CloseOnEsc ) Hide();
+	if( !IsBeingDeleted() && conf.gsWindow.CloseOnEsc ) Hide();
 }
 
 void GSFrame::CoreThread_OnStopped()
@@ -651,13 +649,13 @@ void GSFrame::AppStatusEvent_OnSettingsApplied()
 {
 	if( IsBeingDeleted() ) return;
 
-	SetWindowStyle((g_Conf->GSWindow.DisableResizeBorders ? 0 : wxRESIZE_BORDER) | wxCAPTION | wxCLIP_CHILDREN |
+	SetWindowStyle((conf.gsWindow.DisableResizeBorders ? 0 : wxRESIZE_BORDER) | wxCAPTION | wxCLIP_CHILDREN |
 			wxSYSTEM_MENU | wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxCLOSE_BOX);
 	if (!IsFullScreen() && !IsMaximized())
-		SetClientSize(g_Conf->GSWindow.WindowSize[0], g_Conf->GSWindow.WindowSize[1]);
+		SetClientSize(conf.gsWindow.WindowSize);
 	Refresh();
 
-	if( g_Conf->GSWindow.CloseOnEsc )
+	if( conf.gsWindow.CloseOnEsc )
 	{
 		if( IsShown() && !CorePlugins.IsOpen(PluginId_GS) )
 			Show( false );
@@ -780,14 +778,12 @@ void GSFrame::OnMove( wxMoveEvent& evt )
 
 	evt.Skip();
 
-	g_Conf->GSWindow.IsMaximized = IsMaximized();
+	conf.gsWindow.IsMaximized = IsMaximized();
 
 	// evt.GetPosition() returns the client area position, not the window frame position.
-	if( !g_Conf->GSWindow.IsMaximized && !IsFullScreen() && !IsIconized() && IsVisible() )
-	{
-		g_Conf->GSWindow.WindowPos[0] = GetScreenPosition().x;
-		g_Conf->GSWindow.WindowPos[1] = GetScreenPosition().y;
-	}
+	if( !conf.gsWindow.IsMaximized && !IsFullScreen() && !IsIconized() && IsVisible() )
+		conf.gsWindow.WindowPos = GetScreenPosition();
+
 	// wxGTK note: X sends gratuitous amounts of OnMove messages for various crap actions
 	// like selecting or deselecting a window, which muck up docking logic.  We filter them
 	// out using 'lastpos' here. :)
@@ -810,8 +806,7 @@ void GSFrame::OnResize( wxSizeEvent& evt )
 
 	if( !IsFullScreen() && !IsMaximized() && IsVisible() )
 	{
-		g_Conf->GSWindow.WindowSize[0]	= GetClientSize().GetWidth();
-		g_Conf->GSWindow.WindowSize[1]  = GetClientSize().GetHeight();
+		conf.gsWindow.WindowSize	= GetClientSize();
 	}
 
 	if( GSPanel* gsPanel = GetViewport() )
@@ -819,7 +814,6 @@ void GSFrame::OnResize( wxSizeEvent& evt )
 		gsPanel->DoResize();
 		gsPanel->SetFocus();
 	}
-
 	//wxPoint hudpos = wxPoint(-10,-10) + (GetClientSize() - m_hud->GetSize());
 	//m_hud->SetPosition( hudpos ); //+ GetScreenPosition() + GetClientAreaOrigin() );
 

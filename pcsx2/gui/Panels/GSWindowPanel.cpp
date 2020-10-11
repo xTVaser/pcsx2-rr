@@ -151,9 +151,9 @@ void Panels::GSWindowSettingsPanel::AppStatusEvent_OnSettingsApplied()
 	//ApplyConfigToGui( *g_Conf );
 }
 
-void Panels::GSWindowSettingsPanel::ApplyConfigToGui( GuiConfig& configToApply, int flags )
+void Panels::GSWindowSettingsPanel::ApplyConfigToGui( AppConfig& configToApply, int flags )
 {
-	const GSWindowOptions& conf( configToApply.gsWindow );
+	const GSWindowOptions& conf( config.gsWindow );
 
 	if( !(flags & AppConfig::APPLY_FLAG_FROM_PRESET) )
 	{//Presets don't control these values
@@ -164,7 +164,7 @@ void Panels::GSWindowSettingsPanel::ApplyConfigToGui( GuiConfig& configToApply, 
 
 		m_combo_AspectRatio	->SetSelection( (int)conf.AspectRatio );
 		m_combo_FMVAspectRatioSwitch->SetSelection( enum_cast( conf.FMVAspectRatioSwitch ) );
-		m_text_Zoom			->ChangeValue( conf.Zoom.ToString() );
+		//m_text_Zoom			->ChangeValue(static_cast<wxString>(conf.Zoom));
 
 		m_check_DclickFullscreen ->SetValue( conf.IsToggleFullscreenOnDoubleClick );
 
@@ -188,7 +188,7 @@ void Panels::GSWindowSettingsPanel::Apply()
 
 	appconf.AspectRatio		= (AspectRatioType)m_combo_AspectRatio->GetSelection();
 	appconf.FMVAspectRatioSwitch = (FMVAspectRatioSwitchType)m_combo_FMVAspectRatioSwitch->GetSelection();
-	appconf.Zoom			= Fixed100::FromString( m_text_Zoom->GetValue() );
+	//appconf.Zoom			= ( m_text_Zoom->GetValue().ToStdString() );
 
 	gsconf.VsyncEnable = static_cast<VsyncMode>(m_combo_vsync->GetSelection());
 

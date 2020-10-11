@@ -35,7 +35,7 @@ nlohmann::json json;
 FolderUtils folderUtils;
 JsonUtils fileUtils;
 
-GuiConfig config;
+GuiConfig conf;
 
 namespace PathDefs
 {
@@ -1106,7 +1106,7 @@ static void LoadUiSettings()
 	loader.push_back(ConLog_LoadSaveSettings());
 	loader.push_back(SysTraceLog_LoadSaveSettings());
 
-	config.Load();
+	conf.Load();
 
 	g_Conf = std::make_unique<AppConfig>();
 	loader.push_back(g_Conf->LoadSave());
@@ -1183,7 +1183,7 @@ static void SaveUiSettings()
 	saver.push_back(ConLog_LoadSaveSettings());
 	saver.push_back(SysTraceLog_LoadSaveSettings());
 
-	config.Save();
+	conf.Save();
 
 	std::string toSave = saver.dump();
 

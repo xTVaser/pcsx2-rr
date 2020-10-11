@@ -293,6 +293,7 @@ set(pcsx2GuiSources
 	gui/ExecutorThread.cpp
 	gui/FrameForGS.cpp
 	gui/GlobalCommands.cpp
+	gui/GuiConfig.cpp
 	gui/i18n.cpp
 	gui/IsoDropTarget.cpp
 	gui/MainFrame.cpp
@@ -347,6 +348,7 @@ set(pcsx2GuiHeaders
 	gui/Dialogs/ConfigurationDialog.h
 	gui/Dialogs/LogOptionsDialog.h
 	gui/Dialogs/ModalPopups.h
+	gui/GuiConfig.h
 	gui/DriveList.h
 	gui/GSFrame.h
 	gui/i18n.h

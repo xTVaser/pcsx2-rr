@@ -54,6 +54,7 @@ namespace PathDefs
 extern FolderUtils      folderUtils;
 extern JsonUtils        fileUtils;
 extern nlohmann::json	json;
+extern GuiConfig        conf;
 
 extern DocsModeType		DocsFolderMode;				//
 extern bool				UseDefaultSettingsFolder;	// when TRUE, pcsx2 derives the settings folder from the DocsFolderMode

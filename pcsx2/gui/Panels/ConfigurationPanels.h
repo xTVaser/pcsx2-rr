@@ -298,7 +298,7 @@ namespace Panels
 		virtual ~GSWindowSettingsPanel() = default;
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
-		void ApplyConfigToGui( GuiConfig& configToApply, int flags=0 );
+		void ApplyConfigToGui( AppConfig& configToApply, int flags=0 );
 	};
 
 	class VideoPanel : public BaseApplicableConfigPanel_SpecificConfig

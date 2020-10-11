@@ -177,7 +177,7 @@ void MainEmuFrame::OnMoveAround( wxMoveEvent& evt )
 	if( lastpos == evt.GetPosition() ) return;
 	lastpos = evt.GetPosition();
 
-	if( g_Conf->ProgLogBox.AutoDock )
+	if( conf.console.AutoDock )
 	{
 		if (ConsoleLogFrame* proglog = wxGetApp().GetProgramLog())
 		{
@@ -194,7 +194,7 @@ void MainEmuFrame::OnMoveAround( wxMoveEvent& evt )
 
 void MainEmuFrame::OnLogBoxHidden()
 {
-	g_Conf->ProgLogBox.Visible = false;
+	conf.console.Visible = false;
 	m_MenuItem_Console.Check( false );
 }
 
@@ -281,25 +281,20 @@ void MainEmuFrame::ConnectMenus()
 #endif
 }
 
-void MainEmuFrame::InitLogBoxPosition( AppConfig::ConsoleLogOptions& conf )
+void MainEmuFrame::InitLogBoxPosition(ConsoleLogOptions& conf)
 {
-	//conf.DisplaySize.Set(
-		//std::min( std::max( conf.DisplaySize[0], 160 ), wxGetDisplayArea().GetWidth() ),
-		//std::min( std::max( conf.DisplaySize[1], 160 ), wxGetDisplayArea().GetHeight() )
-	//);
+	conf.DisplaySize.Set(
+		std::min(std::max(conf.DisplaySize.GetWidth(), 160), wxGetDisplayArea().GetWidth()),
+		std::min(std::max(conf.DisplaySize.GetHeight(), 160), wxGetDisplayArea().GetHeight()));
 
-	if( conf.AutoDock )
+	if (conf.AutoDock)
 	{
-		conf.DisplayPosition[0] = GetScreenPosition().x + wxSize( GetSize().x, 0 ).x;
-		conf.DisplayPosition[1] = GetScreenPosition().y + wxSize( GetSize().y, 0 ).y;
-
+		conf.DisplayPosition = GetScreenPosition() + wxSize(GetSize().x, 0);
 	}
-	else if( conf.DisplayPosition[0] != wxDefaultPosition.x )
+	else if (conf.DisplayPosition != wxDefaultPosition)
 	{
-		m_size = {conf.DisplaySize[0], conf.DisplaySize[1]};
-		m_position = {conf.DisplayPosition[0], conf.DisplayPosition[1]};
-		if( !wxGetDisplayArea().Contains( wxRect( m_position, m_size ) ) )
-			m_position = wxDefaultPosition;
+		if (!wxGetDisplayArea().Contains(wxRect(conf.DisplayPosition, conf.DisplaySize)))
+			conf.DisplayPosition = wxDefaultPosition;
 	}
 }
 
@@ -602,7 +597,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	// proper docked positioning, since the main window's size is invalid until after the sizer
 	// has been set/fit.
 
-	InitLogBoxPosition( g_Conf->ProgLogBox );
+	InitLogBoxPosition( conf.console );
 	CreatePcsx2Menu();
 	CreateCdvdMenu();
 	CreateConfigMenu();
@@ -613,7 +608,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 #endif
 	CreateHelpMenu();
 
-	m_MenuItem_Console.Check( g_Conf->ProgLogBox.Visible );
+	m_MenuItem_Console.Check( conf.console.Visible );
 
 	ConnectMenus();
 	Bind(wxEVT_MOVE, &MainEmuFrame::OnMoveAround, this);

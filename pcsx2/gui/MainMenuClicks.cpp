@@ -769,8 +769,8 @@ void MainEmuFrame::Menu_ShowConsole(wxCommandEvent &event)
 {
 	// Use messages to relay open/close commands (thread-safe)
 
-	g_Conf->ProgLogBox.Visible = event.IsChecked();
-	wxCommandEvent evt( wxEVT_MENU, g_Conf->ProgLogBox.Visible ? wxID_OPEN : wxID_CLOSE );
+	conf.console.Visible = event.IsChecked();
+	wxCommandEvent evt( wxEVT_MENU, conf.console.Visible ? wxID_OPEN : wxID_CLOSE );
 	wxGetApp().ProgramLog_PostEvent( evt );
 }
 

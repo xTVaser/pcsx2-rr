@@ -371,7 +371,7 @@ nlohmann::json ConLog_LoadSaveSettings()
 // --------------------------------------------------------------------------------------
 //  ConsoleLogFrame  (implementations)
 // --------------------------------------------------------------------------------------
-ConsoleLogFrame::ConsoleLogFrame( MainEmuFrame *parent, const wxString& title, AppConfig::ConsoleLogOptions& options )
+ConsoleLogFrame::ConsoleLogFrame( MainEmuFrame *parent, const wxString& title, ConsoleLogOptions& options )
 	: wxFrame(parent, wxID_ANY, title)
 	, m_conf( options )
 	, m_TextCtrl( *new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize,
@@ -481,10 +481,7 @@ ConsoleLogFrame::ConsoleLogFrame( MainEmuFrame *parent, const wxString& title, A
 	// status bar for menu prompts
 	CreateStatusBar();
 
-	wxPoint sizePoint = {options.DisplaySize[0], options.DisplaySize[1]};
-	wxPoint posPoint = {options.DisplayPosition[0], options.DisplayPosition[1]};
-
-	SetSize( wxRect( posPoint, sizePoint ) );
+	SetSize( wxRect( options.DisplayPosition, options.DisplaySize ) );	
 	Show( options.Visible );
 
 	// Bind Events:
@@ -730,23 +727,16 @@ void ConsoleLogFrame::OnMoveAround( wxMoveEvent& evt )
 		}
 	}
 	if (!IsMaximized())
-	{
-		m_conf.DisplayPosition[0] = GetPosition().x;
-		m_conf.DisplayPosition[1] = GetPosition().y;
-	}
+		m_conf.DisplayPosition = GetPosition();
 	evt.Skip();
 }
 
 void ConsoleLogFrame::OnResize( wxSizeEvent& evt )
 {
 	if (!IsMaximized())
-	{
-		m_conf.DisplaySize[0] = GetSize().GetWidth();
-		m_conf.DisplaySize[1] = GetSize().GetHeight();
-	}
+		m_conf.DisplaySize = GetSize();
 	evt.Skip();
 }
-
 // ----------------------------------------------------------------------------
 // OnFocus / OnActivate : Special implementation to "connect" the console log window
 // with the main frame window.  When one is clicked, the other is assured to be brought

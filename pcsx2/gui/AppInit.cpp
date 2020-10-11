@@ -110,7 +110,7 @@ void Pcsx2App::OpenProgramLog()
 	wxWindow* m_current_focus = wxGetActiveWindow();
 
 	ScopedLock lock( m_mtx_ProgramLog );
-	m_ptr_ProgramLog	= new ConsoleLogFrame( GetMainFramePtr(), L"PCSX2 Program Log", g_Conf->ProgLogBox );
+	m_ptr_ProgramLog	= new ConsoleLogFrame( GetMainFramePtr(), L"PCSX2 Program Log", conf.console );
 	m_id_ProgramLogBox	= m_ptr_ProgramLog->GetId();
 	EnableAllLogging();
 
@@ -485,7 +485,7 @@ bool Pcsx2App::OnInit()
 		//   Start GUI and/or Direct Emulation
 		// -------------------------------------
 		pxSizerFlags::SetBestPadding();
-		if( Startup.ForceConsole ) g_Conf->ProgLogBox.Visible = true;
+		if( Startup.ForceConsole ) conf.console.Visible = true;
 		OpenProgramLog();
 		AllocateCoreStuffs();
 		if( m_UseGUI ) OpenMainFrame();

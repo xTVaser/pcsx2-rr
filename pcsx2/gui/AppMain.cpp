@@ -66,7 +66,7 @@
 
 wxIMPLEMENT_APP(Pcsx2App);
 
-std::unique_ptr<GuiConfig> g_Conf;
+std::unique_ptr<AppConfig> g_Conf;
 
 AspectRatioType iniAR;
 bool switchAR;
@@ -525,10 +525,10 @@ extern uint renderswitch_delay;
 
 void DoFmvSwitch(bool on)
 {
-	if (g_Conf->GSWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
+	if (conf.gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
 		if (on) {
 			switchAR = true;
-			iniAR = g_Conf->GSWindow.AspectRatio;
+			iniAR = conf.gsWindow.AspectRatio;
 		} else {
 			switchAR = false;
 		}
@@ -554,7 +554,7 @@ void Pcsx2App::LogicalVsync()
 
 	FpsManager.DoFrame();
 
-	if (EmuConfig.Gamefixes.FMVinSoftwareHack || g_Conf->GSWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
+	if (EmuConfig.Gamefixes.FMVinSoftwareHack || conf.gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
 		if (EnableFMV) {
 			DevCon.Warning("FMV on");
 			DoFmvSwitch(true);
@@ -994,15 +994,15 @@ void Pcsx2App::OpenGsPanel()
 		switch( wxGetApp().Overrides.GsWindowMode )
 		{
 			case GsWinMode_Windowed:
-				g_Conf->GSWindow.IsFullscreen = false;
+				conf.gsWindow.IsFullscreen = false;
 			break;
 
 			case GsWinMode_Fullscreen:
-				g_Conf->GSWindow.IsFullscreen = true;
+				conf.gsWindow.IsFullscreen = true;
 			break;
 
 			case GsWinMode_Unspecified:
-				g_Conf->GSWindow.IsFullscreen = g_Conf->GSWindow.DefaultToFullscreen;
+				conf.gsWindow.IsFullscreen = conf.gsWindow.DefaultToFullscreen;
 			break;
 		}
 	}
@@ -1063,7 +1063,7 @@ void Pcsx2App::OpenGsPanel()
 	pDsp[1] = NULL;
 #endif
 
-	gsFrame->ShowFullScreen( g_Conf->GSWindow.IsFullscreen );
+	gsFrame->ShowFullScreen( conf.gsWindow.IsFullscreen );
 }
 
 void Pcsx2App::CloseGsPanel()

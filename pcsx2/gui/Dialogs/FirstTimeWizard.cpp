@@ -175,7 +175,7 @@ void FirstTimeWizard::OnRestartWizard( wxCommandEvent& evt )
 
 static void _OpenConsole()
 {
-	g_Conf->ProgLogBox.Visible = true;
+	conf.console.Visible = true;
 	wxGetApp().OpenProgramLog();
 }
 
