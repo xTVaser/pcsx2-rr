@@ -297,7 +297,6 @@
     <ClCompile Include="..\..\IopIrq.cpp" />
     <ClCompile Include="..\..\IopMem.cpp" />
     <ClCompile Include="..\WinKeyCodes.cpp" />
-    <ClCompile Include="GuiConfig.cpp" />
     <ClCompile Include="IopSif.cpp" />
     <ClCompile Include="..\..\IopSio2.cpp" />
     <ClCompile Include="..\..\R3000A.cpp" />
@@ -356,6 +355,7 @@
     <ClCompile Include="..\..\gui\AppInit.cpp" />
     <ClCompile Include="..\..\gui\AppMain.cpp" />
     <ClCompile Include="..\..\gui\AppRes.cpp" />
+    <ClCompile Include="..\..\gui\GuiConfig.cpp" />
     <ClCompile Include="..\..\gui\ConsoleLogger.cpp" />
     <ClCompile Include="..\..\gui\CpuUsageProvider.cpp" />
     <ClCompile Include="..\..\gui\CpuUsageProviderLnx.cpp">
@@ -535,7 +535,6 @@
     <ClInclude Include="..\..\DebugTools\DisASM.h" />
     <ClInclude Include="..\..\DebugTools\DisVUmicro.h" />
     <ClInclude Include="..\..\DebugTools\DisVUops.h" />
-    <ClInclude Include="GuiConfig.h" />
     <CustomBuildStep Include="..\..\rdebug\deci2.h">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </CustomBuildStep>
@@ -576,6 +575,7 @@
     <ClInclude Include="..\..\gui\App.h" />
     <ClInclude Include="..\..\gui\AppCommon.h" />
     <ClInclude Include="..\..\gui\AppConfig.h" />
+    <ClInclude Include="..\..\gui\GuiConfig.h" />
     <ClInclude Include="..\..\gui\AppCorePlugins.h" />
     <ClInclude Include="..\..\gui\AppCoreThread.h" />
     <ClInclude Include="..\..\gui\AppEventListeners.h" />

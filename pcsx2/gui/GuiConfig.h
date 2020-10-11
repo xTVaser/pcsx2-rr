@@ -1,7 +1,7 @@
 #pragma once
 #include "AppForwardDefs.h"
-#include "wxGuiTools.h"
-#include "PathUtils.h"
+#include "Utilities/wxGuiTools.h"
+#include "Utilities/PathUtils.h"
 
 #include <wx/config.h>
 #include <wx/stdpaths.h>

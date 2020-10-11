@@ -13,12 +13,15 @@ ConsoleLogOptions::ConsoleLogOptions()
 
 bool ConsoleLogOptions::Save(wxConfig* conf)
 {
-	conf->Write("Theme", Theme);
+	conf->Write(L"Theme", Theme);
 	conf->Write("FontSize", FontSize);
 	conf->Write("IsVisible", Visible);
 	conf->Write("Autodock", AutoDock);
-	//conf->Write("DisplaySize", DisplaySize);
-	//conf->Write("DisplayPosition", DisplayPosition);
+	conf->Write("DisplaySizeX", DisplaySize.x);
+	conf->Write("DisplaySizeY", DisplaySize.y);
+	conf->Write("DisplayPositionX", DisplayPosition.x);
+	conf->Write("DisplayPositionY", DisplayPosition.y);
+	return true;
 }
 
 void ConsoleLogOptions::Load(wxConfig* conf)
@@ -61,8 +64,10 @@ void GSWindowOptions::Save(wxConfig* conf)
 	conf->Write("OffsetX", OffsetX);
 	conf->Write("OffsetY", OffsetY);
 	conf->Write("StretchY", StretchY);
-	//conf->Write("WindowPos", (wxPoint)WindowPos);
-	//conf->Write("WindowSize", (wxSize)WindowSize);
+	conf->Write("WindowPosX", WindowPos.x);
+	conf->Write("WindowPosY", WindowPos.y);
+	conf->Write("WindowSizeX", WindowSize.x);
+	conf->Write("WindowSizeY", WindowSize.y);
 	conf->Write("CloseOnEsc", CloseOnEsc);
 	//conf->Write("AspectRatio", AspectRatio);
 	conf->Write("IsMaximized", IsMaximized);
@@ -82,8 +87,10 @@ void GSWindowOptions::Load(wxConfig* conf)
 	conf->Read("OffsetX", OffsetX);
 	conf->Read("OffsetY", OffsetY);
 	conf->Read("StretchY", StretchY);
-	//conf->ReadObject("WindowPos", WindowPos);
-	//conf->ReadObject("WindowSize", WindowSize);
+	conf->ReadObject("WindowPosX", WindowPos.x);
+	conf->ReadObject("WindowPosY", WindowPos.y);
+	conf->ReadObject("WindowSizeX", WindowSize.x);
+	conf->ReadObject("WindowSizeY", WindowSize.y);
 	conf->Read("CloseOnEsc", CloseOnEsc);
 	//conf->Read("AspectRatio", AspectRatio);
 	conf->Read("IsMaximized", IsMaximized);
@@ -126,7 +133,10 @@ void GuiConfig::Init()
 	std::string programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
 	std::string programDir(Path::Combine(programFullPath, "json/PCSX2_ui.ini"));
 
-	conf = new wxConfig(wxEmptyString, wxEmptyString, programDir, wxEmptyString, wxCONFIG_USE_RELATIVE_PATH);
+	conf = new wxConfig("PCSX2");
+	
+	conf->SetPath(programDir);
+	
 	isInit = true;
 
 	Console.WriteLn(L"Path: " +  conf->GetPath());
