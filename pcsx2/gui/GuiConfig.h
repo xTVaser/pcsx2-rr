@@ -88,8 +88,8 @@ class GuiConfig
 
 private:
 	// The Configurator
-	wxConfig* conf;
-	bool isInit;
+    std::unique_ptr<wxConfig> conf;
+	bool isInit = false;
 
 public:	
 	ConsoleLogOptions console;

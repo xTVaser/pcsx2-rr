@@ -13,7 +13,7 @@ ConsoleLogOptions::ConsoleLogOptions()
 
 bool ConsoleLogOptions::Save(wxConfig* conf)
 {
-	conf->Write(L"Theme", Theme);
+	conf->Write("Theme", Theme);
 	conf->Write("FontSize", FontSize);
 	conf->Write("IsVisible", Visible);
 	conf->Write("Autodock", AutoDock);
@@ -125,7 +125,7 @@ void GSWindowOptions::SanityCheck()
 
 GuiConfig::GuiConfig()
 {
-	conf = new wxConfig("PCSX2");
+	conf = std::make_unique<wxConfig>("PCSX2");
 }
 
 void GuiConfig::Init()
@@ -133,7 +133,7 @@ void GuiConfig::Init()
 	std::string programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
 	std::string programDir(Path::Combine(programFullPath, "json/PCSX2_ui.ini"));
 
-	conf = new wxConfig("PCSX2");
+	conf = std::make_unique<wxConfig>("PCSX2");
 	
 	conf->SetPath(programDir);
 	
@@ -149,8 +149,8 @@ void GuiConfig::Load()
 		Init();
 	}
 
-	console.Load(conf);	
-	gsWindow.Load(conf);
+	console.Load(conf.get());	
+	gsWindow.Load(conf.get());
 }
 
 
@@ -162,13 +162,11 @@ void GuiConfig::Save()
 		Init();
 	}
 
-	console.Save(conf);
-	gsWindow.Save(conf);
-
-	delete conf;
+	console.Save(conf.get());
+	gsWindow.Save(conf.get());
 }
 
 GuiConfig::~GuiConfig()
 {
-	delete conf;
+
 }

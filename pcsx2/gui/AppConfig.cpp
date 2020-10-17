@@ -1180,17 +1180,12 @@ static void SaveUiSettings()
 
 	sApp.GetRecentIsoManager().Add( g_Conf->CurrentIso );
 
-	nlohmann::json saver;
-	saver.push_back(g_Conf->LoadSave());
-	saver.push_back(ConLog_LoadSaveSettings());
-	saver.push_back(SysTraceLog_LoadSaveSettings());
-
 	conf.Save();
 
-	std::string toSave = saver.dump();
+	//std::string toSave = saver.dump();
 
 	//sApp.DispatchUiSettingsEvent( saver );
-	fileUtils.Save(GetUiSettingsFilename(), toSave);
+	//fileUtils.Save(GetUiSettingsFilename(), toSave);
 }
 
 static void SaveVmSettings()
