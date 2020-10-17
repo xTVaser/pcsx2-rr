@@ -43,7 +43,7 @@ endif()
 
 # 3rdpary Libraries
 if(EXISTS "${CMAKE_SOURCE_DIR}/3rdparty/fmt/fmt")
-    add_subdirectory(3rdparty/fmt/fmt)
+    add_subdirectory(3rdparty/fmt/fmt EXCLUDE_FROM_ALL)
 endif()
 
 # make common
