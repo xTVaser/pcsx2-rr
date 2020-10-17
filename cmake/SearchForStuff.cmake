@@ -233,3 +233,12 @@ if((GCC_VERSION VERSION_EQUAL "9.0" OR GCC_VERSION VERSION_GREATER "9.0") AND GC
     Even with that patch, compiling with LTO may still segfault. Use at your own risk!
     This text being in a compile log in an open issue may cause it to be closed.")
 endif()
+
+find_package(fmt "7.0.3")
+if(NOT fmt_FOUND)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/3rdparty/fmt/fmt")
+        add_subdirectory(3rdparty/fmt/fmt)
+    endif()
+else()
+    message(STATUS "Found fmt: ${fmt_VERSION}")
+endif()
