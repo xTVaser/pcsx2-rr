@@ -949,12 +949,14 @@ void RelocateLogfile()
 		    return;
 		}
     }
-	std::string newlogname = ( g_Conf->Folders.Logs + "emuLog.txt");
+	std::string newLogName = ( g_Conf->Folders.Logs + "emuLog.txt");
 
-	if( (emuLog != nullptr) && (emuLogName != newlogname) )
+	if( (emuLog != nullptr) && (emuLogName != newLogName) )
 	{
-		//Console.WriteLn( L"\nRelocating Logfile...\n\tFrom: %s\n\tTo  : %s\n", WX_STR(emuLogName), WX_STR(newlogname) );
-		//wxGetApp().DisableDiskLogging();
+		wxString logName(newLogName);
+
+		Console.WriteLn( L"\nRelocating Logfile...\n\tFrom: %s\n\tTo  : %s\n", WX_STR(emuLogName), WX_STR(logName) );
+		wxGetApp().DisableDiskLogging();
 
 		fclose( emuLog );
 		emuLog = nullptr;
@@ -962,11 +964,11 @@ void RelocateLogfile()
 
 	if( emuLog == nullptr )
 	{
-		emuLogName = newlogname;
+		emuLogName = newLogName;
 		emuLog = wxFopen( emuLogName, "wb" );
 	}
 
-	//wxGetApp().EnableAllLogging();
+	wxGetApp().EnableAllLogging();
 }
 
 // Parameters:
