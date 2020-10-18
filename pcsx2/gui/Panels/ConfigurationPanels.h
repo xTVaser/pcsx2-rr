@@ -291,8 +291,6 @@ namespace Panels
 		wxTextCtrl*		m_text_WindowWidth;
 		wxTextCtrl*		m_text_WindowHeight;
 
-		GuiConfig       config;
-
 	public:
 		GSWindowSettingsPanel( wxWindow* parent );
 		virtual ~GSWindowSettingsPanel() = default;

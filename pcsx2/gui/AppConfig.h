@@ -207,24 +207,6 @@ public:
 	};
 
 public:
-	wxPoint		MainGuiPosition;
-
-	// Because remembering the last used tab on the settings panel is cool (tab is remembered
-	// by it's UTF/ASCII name).
-	std::string	SysSettingsTabName;
-	std::string	McdSettingsTabName;
-	std::string	ComponentsTabName;
-	std::string	AppSettingsTabName;
-	std::string	GameDatabaseTabName;
-
-	// Currently selected language ID -- wxWidgets version-specific identifier.  This is one side of
-	// a two-part configuration that also includes LanguageCode.
-	wxLanguage	LanguageId;
-
-	// Current language in use (correlates to the universal language codes, such as "en_US", "de_DE", etc).
-	// This code is not always unique, which is why we use the language ID also.
-	std::string	LanguageCode;
-
 	int			RecentIsoCount;		// number of files displayed in the Recent Isos list.
 
 	// Specifies the size of icons used in Listbooks; specifically the PCSX2 Properties dialog box.
@@ -332,3 +314,4 @@ extern void AppConfig_OnChangedSettingsFolder( bool overwrite =  false );
 extern wxConfigBase* GetAppConfig();
 
 extern std::unique_ptr<AppConfig> g_Conf;
+extern GuiConfig config;

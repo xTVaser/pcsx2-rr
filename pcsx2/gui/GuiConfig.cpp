@@ -124,8 +124,16 @@ void GSWindowOptions::SanityCheck()
 }
 
 GuiConfig::GuiConfig()
+	: MainGuiPosition( wxDefaultPosition )
+	, SysSettingsTabName( "Cpu" )
+	, McdSettingsTabName( "none" )
+	, ComponentsTabName( "Plugins" )
+	, AppSettingsTabName( "none" )
+	, GameDatabaseTabName( "none" )
 {
-	conf = std::make_unique<wxConfig>("PCSX2");
+    LanguageId			= wxLANGUAGE_DEFAULT;
+    LanguageCode		= "default";
+    conf = std::make_unique<wxConfig>("PCSX2");
 }
 
 void GuiConfig::Init()
@@ -166,6 +174,18 @@ void GuiConfig::Save()
 
 	console.Save(conf.get());
 	gsWindow.Save(conf.get());
+
+    conf->Write("MainGuiPositionX", MainGuiPosition.x);
+    conf->Write("MainGuiPositionY", MainGuiPosition.y);
+    conf->Write("SysSettingsTabName", SysSettingsTabName);
+	conf->Write("McdSettingsTabName", McdSettingsTabName);
+	conf->Write("ComponentsTabName", ComponentsTabName);
+	conf->Write("AppSettingsTabName", AppSettingsTabName);
+	conf->Write("GameDatabaseTabName", GameDatabaseTabName);
+    conf->Write("LanguageId", (int)LanguageId);
+    conf->Write("LanguageCode", LanguageCode);
+	conf->Flush();
+	conf.release();
 }
 
 GuiConfig::~GuiConfig()

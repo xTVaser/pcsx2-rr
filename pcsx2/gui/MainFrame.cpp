@@ -30,6 +30,8 @@
 #include "svnrev.h"
 #include "Saveslots.h"
 
+GuiConfig config;
+
 // ------------------------------------------------------------------------
 wxMenu* MainEmuFrame::MakeStatesSubMenu( int baseid, int loadBackupId ) const
 {
@@ -167,7 +169,7 @@ void MainEmuFrame::OnMoveAround( wxMoveEvent& evt )
 
 	// evt.GetPosition() returns the client area position, not the window frame position.
 	// So read the window's screen-relative position directly.
-	g_Conf->MainGuiPosition = GetScreenPosition();
+	conf.MainGuiPosition = GetScreenPosition();
 
 	// wxGTK note: X sends gratuitous amounts of OnMove messages for various crap actions
 	// like selecting or deselecting a window, which muck up docking logic.  We filter them
@@ -588,10 +590,10 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	GetSizer()->SetSizeHints(this);
 
 	// Use default window position if the configured windowpos is invalid (partially offscreen)
-	if( g_Conf->MainGuiPosition == wxDefaultPosition || !pxIsValidWindowPosition( *this, g_Conf->MainGuiPosition) )
-		g_Conf->MainGuiPosition = GetScreenPosition();
+	if( conf.MainGuiPosition == wxDefaultPosition || !pxIsValidWindowPosition( *this, conf.MainGuiPosition) )
+		conf.MainGuiPosition = GetScreenPosition();
 	else
-		SetPosition( g_Conf->MainGuiPosition );
+		SetPosition( conf.MainGuiPosition );
 
 	// Updating console log positions after the main window has been fitted to its sizer ensures
 	// proper docked positioning, since the main window's size is invalid until after the sizer

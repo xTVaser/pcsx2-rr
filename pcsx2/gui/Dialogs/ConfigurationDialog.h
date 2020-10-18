@@ -20,6 +20,7 @@
 
 #include "AppCommon.h"
 #include "ApplyState.h"
+#include "GuiConfig.h"
 #include "App.h"
 
 namespace Panels
@@ -101,7 +102,7 @@ namespace Dialogs
 		}
 
 	protected:
-		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->SysSettingsTabName); }
+		virtual wxString GetConfSettingsTabName() const { return wxString(conf.SysSettingsTabName); }
 
 		pxCheckBox*		m_check_presets;
 		wxSlider*		m_slider_presets;
@@ -125,7 +126,7 @@ namespace Dialogs
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->AppSettingsTabName); }
+		virtual wxString GetConfSettingsTabName() const { return wxString(conf.AppSettingsTabName); }
 	};
 
 
@@ -146,7 +147,7 @@ namespace Dialogs
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->McdSettingsTabName); }
+		virtual wxString GetConfSettingsTabName() const { return wxString(conf.McdSettingsTabName); }
 		//void OnMultitapClicked( wxCommandEvent& evt );
 	};
 
@@ -165,7 +166,7 @@ namespace Dialogs
 
 	protected:
 		virtual wxString GetConfSettingsTabName() const {
-			return wxString(g_Conf->ComponentsTabName); 
+			return wxString(conf.ComponentsTabName); 
 		}
 	};
 

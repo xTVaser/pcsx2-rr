@@ -442,15 +442,7 @@ bool IsPortable()
 }
 
 AppConfig::AppConfig()
-	: MainGuiPosition( wxDefaultPosition )
-	, SysSettingsTabName( "Cpu" )
-	, McdSettingsTabName( "none" )
-	, ComponentsTabName( "Plugins" )
-	, AppSettingsTabName( "none" )
-	, GameDatabaseTabName( "none" )
 {
-	LanguageId			= wxLANGUAGE_DEFAULT;
-	LanguageCode		= "default";
 	RecentIsoCount		= 20;
 	Listbook_ImageSize	= 32;
 	Toolbar_ImageSize	= 24;
@@ -571,13 +563,6 @@ nlohmann::json AppConfig::LoadSaveRootItems()
 {
 	nlohmann::json json;
 
-	json["SysSettingsTabName"] = SysSettingsTabName;
-	json["McdSettingsTabName"] = McdSettingsTabName;
-	json["ComponentsTabName"] = ComponentsTabName;
-	json["AppSettingsTabName"] = AppSettingsTabName;
-	json["GameDatabaseTabName"] = GameDatabaseTabName;
-	json["LanguageId"] = (LanguageId, NULL, LanguageId );
-	json["LanguageCode"] = LanguageCode;
 	json["RecentIsoCount"] = RecentIsoCount;
 	json["Listbook_ImageSize"] = Listbook_ImageSize;
 	json["Toolbar_ImageSize"] = Toolbar_ImageSize;

@@ -149,8 +149,8 @@ void Panels::LanguageSelectionPanel::Apply()
 
 	wxString sel( m_picker->GetString( m_picker->GetSelection() ) );
 
-	g_Conf->LanguageCode = "default";	// use this if no matches found
-	g_Conf->LanguageId = wxLANGUAGE_DEFAULT;
+	conf.LanguageCode = "default";	// use this if no matches found
+	conf.LanguageId = wxLANGUAGE_DEFAULT;
 	int size = m_langs.size();
 	for( int i=0; i<size; ++i )
 	{
@@ -158,8 +158,8 @@ void Panels::LanguageSelectionPanel::Apply()
 		{
 			if( i18n_SetLanguage( m_langs[i].wxLangId, m_langs[i].canonicalName ) )
 			{
-				g_Conf->LanguageCode = m_langs[i].canonicalName;
-				g_Conf->LanguageId = m_langs[i].wxLangId;
+				conf.LanguageCode = m_langs[i].canonicalName;
+				conf.LanguageId = m_langs[i].wxLangId;
 			}
 			break;
 		}
@@ -173,12 +173,12 @@ void Panels::LanguageSelectionPanel::AppStatusEvent_OnSettingsApplied()
 	{
 		m_picker->SetSelection( 0 );		// always default to System Default
 
-		if (g_Conf->LanguageCode.empty())
-			g_Conf->LanguageCode = "default";
+		if (conf.LanguageCode.empty())
+			conf.LanguageCode = "default";
 
 		for (uint i=0; i<m_langs.size(); ++i)
 		{
-			if (0==m_langs[i].canonicalName.CmpNoCase(g_Conf->LanguageCode))
+			if (0==m_langs[i].canonicalName.CmpNoCase(conf.LanguageCode))
 			{
 				m_picker->SetSelection( i );
 			}

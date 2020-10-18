@@ -15,7 +15,6 @@
 
 #include "PrecompiledHeader.h"
 #include "ConfigurationPanels.h"
-#include "GuiConfig.h"
 
 using namespace pxSizerFlags;
 

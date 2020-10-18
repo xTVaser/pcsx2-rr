@@ -87,7 +87,7 @@ static bool HandlePluginError( BaseException& ex )
 		Msgbox::Alert(ex.FormatDisplayMessage());
 	}
 
-	g_Conf->ComponentsTabName = "Plugins";
+	conf.ComponentsTabName = "Plugins";
 
 	// TODO: Send a message to the panel to select the failed plugin.
 
@@ -191,7 +191,7 @@ static bool HandleBIOSError(BaseException& ex)
 		Msgbox::Alert(ex.FormatDisplayMessage() + L"\n\n" + BIOS_GetMsg_Required(), _("PS2 BIOS Error"));
 	}
 
-	g_Conf->ComponentsTabName = "BIOS";
+	conf.ComponentsTabName = "BIOS";
 
 	return AppOpenModalDialog<Dialogs::ComponentsConfigDialog>(L"BIOS") != wxID_CANCEL;
 }

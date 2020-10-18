@@ -94,6 +94,25 @@ private:
 public:	
 	ConsoleLogOptions console;
 	GSWindowOptions gsWindow;	
+	wxPoint		MainGuiPosition;
+
+	// Because remembering the last used tab on the settings panel is cool (tab is remembered
+	// by it's UTF/ASCII name).
+	wxString	SysSettingsTabName;
+	wxString	McdSettingsTabName;
+	wxString	ComponentsTabName;
+	wxString	AppSettingsTabName;
+	wxString	GameDatabaseTabName;
+
+	// Currently selected language ID -- wxWidgets version-specific identifier.  This is one side of
+	// a two-part configuration that also includes LanguageCode.
+	wxLanguage	LanguageId;
+
+	// Current language in use (correlates to the universal language codes, such as "en_US", "de_DE", etc).
+	// This code is not always unique, which is why we use the language ID also.
+	wxString	LanguageCode;
+
+
 	
 	GuiConfig();
 	void Init();
