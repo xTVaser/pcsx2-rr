@@ -112,8 +112,6 @@ public:
 	// This code is not always unique, which is why we use the language ID also.
 	wxString	LanguageCode;
 
-
-	
 	GuiConfig();
 	void Init();
 	void Load();

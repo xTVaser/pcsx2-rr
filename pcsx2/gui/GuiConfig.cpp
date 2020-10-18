@@ -30,8 +30,10 @@ void ConsoleLogOptions::Load(wxConfig* conf)
 	conf->Read("FontSize", FontSize);
 	conf->Read("IsVisible", Visible);
 	conf->Read("Autodock", AutoDock);
-	//conf->ReadObject("DisplaySize", DisplaySize);
-	//conf->ReadObject("DisplayPosition", DisplayPosition);
+	conf->ReadObject("DisplaySizeX", DisplaySize.x);
+	conf->ReadObject("DisplaySizeY", DisplaySize.y);
+	conf->ReadObject("DisplayPositionX", DisplayPosition.x);
+	conf->ReadObject("DisplayPositionY", DisplayPosition.y);
 }
 
 GSWindowOptions::GSWindowOptions()
@@ -69,7 +71,7 @@ void GSWindowOptions::Save(wxConfig* conf)
 	conf->Write("WindowSizeX", WindowSize.x);
 	conf->Write("WindowSizeY", WindowSize.y);
 	conf->Write("CloseOnEsc", CloseOnEsc);
-	//conf->Write("AspectRatio", AspectRatio);
+	conf->Write("AspectRatio", (int)AspectRatio);
 	conf->Write("IsMaximized", IsMaximized);
 	conf->Write("IsFullscreen", IsFullscreen);
 	conf->Write("AlwaysHideMouse", AlwaysHideMouse);
@@ -92,7 +94,7 @@ void GSWindowOptions::Load(wxConfig* conf)
 	conf->ReadObject("WindowSizeX", WindowSize.x);
 	conf->ReadObject("WindowSizeY", WindowSize.y);
 	conf->Read("CloseOnEsc", CloseOnEsc);
-	//conf->Read("AspectRatio", AspectRatio);
+	conf->Read("AspectRatio", (int)AspectRatio);
 	conf->Read("IsMaximized", IsMaximized);
 	conf->Read("IsFullscreen", IsFullscreen);
 	conf->Read("AlwaysHideMouse", AlwaysHideMouse);
@@ -185,10 +187,9 @@ void GuiConfig::Save()
     conf->Write("LanguageId", (int)LanguageId);
     conf->Write("LanguageCode", LanguageCode);
 	conf->Flush();
-	conf.release();
 }
 
 GuiConfig::~GuiConfig()
 {
-
+	conf.release();
 }
