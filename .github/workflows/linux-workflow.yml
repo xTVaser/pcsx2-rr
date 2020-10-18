@@ -64,6 +64,7 @@ jobs:
           path: |
             ./3rdparty/xz
             ./3rdparty/gtest
+            ./3rdparty/yaml-cpp
             ./.git/modules/
 
       - name: Checkout Submodules
