@@ -130,13 +130,15 @@ GuiConfig::GuiConfig()
 
 void GuiConfig::Init()
 {
-	std::string programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
-	std::string programDir(Path::Combine(programFullPath, "json/PCSX2_ui.ini"));
 
 	conf = std::make_unique<wxConfig>("PCSX2");
 	
-	conf->SetPath(programDir);
-	
+	#ifdef __linux__
+	    std::string programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
+	    std::string programDir(Path::Combine(programFullPath, "json/PCSX2_ui.ini"));	
+		conf->SetPath(programDir);
+	#endif
+
 	isInit = true;
 
 	Console.WriteLn(L"Path: " +  conf->GetPath());
