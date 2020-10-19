@@ -21,7 +21,7 @@
 // TODO - check that this is being threaded properly, remove from 
 AppGameDatabase& AppGameDatabase::LoadFromFile(const std::string& _file)
 {
-	fs::path gameDbPath = Path::Combine(Path::GetExecutablePath().parent_path(), fs::path(_file));
+	fs::path gameDbPath = Path::Combine(Path::GetExecutableDirectory(), fs::path(_file));
 
 	if (!folderUtils.DoesExist(gameDbPath))
 	{

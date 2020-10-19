@@ -157,6 +157,9 @@
     <Filter Include="System\Ps2\Iop\FW">
       <UniqueIdentifier>{157740ae-b338-4d7f-81cb-cffa9d39a756}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Configuration">
+      <UniqueIdentifier>{aca6525f-a7ae-443a-bb5f-35edc4a1cba7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Utilities\folderdesc.txt">
@@ -898,8 +901,9 @@
     <ClCompile Include="..\..\FW.cpp">
       <Filter>System\Ps2\Iop\FW</Filter>
     </ClCompile>
-    <ClCompile Include="GuiConfig.cpp">
-      <Filter>AppHost</Filter>
+    <ClCompile Include="..\..\gui\GuiConfig.cpp" />
+    <ClCompile Include="..\..\config\Configuration.cpp">
+      <Filter>Configuration</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1362,8 +1366,9 @@
     <ClInclude Include="..\..\FW.h">
       <Filter>System\Ps2\Iop\FW</Filter>
     </ClInclude>
-    <ClInclude Include="GuiConfig.h">
-      <Filter>AppHost</Filter>
+    <ClInclude Include="..\..\gui\GuiConfig.h" />
+    <ClInclude Include="..\..\config\Configuration.h">
+      <Filter>Configuration</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -24,6 +24,7 @@
 #ifdef __WXMSW__
 #include "wx/msw/regconf.h"
 #endif
+#include <Config\Configuration.h>
 
 DocsModeType			DocsFolderMode = DocsFolder_User;
 bool					UseDefaultSettingsFolder = true;
@@ -61,7 +62,7 @@ InstallationModeType		InstallationMode;
 
 static fs::path GetPortableJsonPath()
 {
-	fs::path programDir = Path::GetExecutablePath().parent_path();
+	fs::path programDir = Path::GetExecutableDirectory();
 	return Path::Combine(programDir, "portable.yaml");
 }
 
@@ -168,6 +169,10 @@ void App_SaveInstallSettings( YAML::Node yaml )
 //
 bool Pcsx2App::TestForPortableInstall()
 {
+	Configuration cfg;
+	cfg.save();
+
+
 	InstallationMode = 	InstallMode_Portable;
 
 	fs::path portableJsonFile = GetPortableJsonPath();
