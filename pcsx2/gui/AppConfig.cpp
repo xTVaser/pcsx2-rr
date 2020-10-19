@@ -34,7 +34,6 @@
 nlohmann::json json;
 FolderUtils folderUtils;
 JsonUtils fileUtils;
-
 GuiConfig conf;
 
 namespace PathDefs
@@ -474,65 +473,6 @@ AppConfig::AppConfig()
 }
 
 // ------------------------------------------------------------------------
-nlohmann::json App_LoadSaveInstallSettings()
-{
-	// Portable installs of PCSX2 should not save any of the following information to
-	// the INI file.  Only the Run First Time Wizard option is saved, and that's done
-	// from EstablishAppUserMode code.  All other options have assumed (fixed) defaults in
-	// portable mode which cannot be changed/saved.
-
-	// Note: Settins are still *loaded* from portable.ini, in case the user wants to do
-	// low-level overrides of the default behavior of portable mode installs.
-
-	//if (ini.IsSaving() && (InstallationMode == InstallMode_Portable)) return;
-
-	nlohmann::json stream;
-
-	static const char* DocsFolderModeNames[] =
-	{
-		"User",
-		"Custom",
-		// WARNING: array must be NULL terminated to compute it size
-		NULL
-	};
-
-	stream["DocumentsFolderMode"] = (DocsFolderMode, DocsFolderModeNames, (InstallationMode == InstallMode_Registered) ? DocsFolder_User : DocsFolder_Custom);
-
-	stream["CustomDocumentsFolder"] = (CustomDocumentsFolder,	PathDefs::AppRoot() );
-
-	stream["UseDefaultSettingsFolder"] = (UseDefaultSettingsFolder, true );
-	stream["SettingsFolder"]	= (SettingsFolder, PathDefs::GetSettings() );
-
-	// "Install_Dir" conforms to the NSIS standard install directory key name.
-	// Attempt to load plugins based on the Install Folder.
-
-	stream["Install_Dir"] = (	InstallFolder,	((std::string(wxStandardPaths::Get().GetExecutablePath()))));
-	//SetFullBaseDir( InstallFolder );
-
-	stream["PluginsFolder"] = (PluginsFolder = Path::Combine(InstallFolder, "plugins" ));
-
-	return stream;
-}
-
-void App_LoadInstallSettings( nlohmann::json json)
-{
-	auto jArray = nlohmann::json::array();
-
-	jArray.push_back(App_LoadSaveInstallSettings());
-
-	json = jArray;
-}
-
-void App_SaveInstallSettings( nlohmann::json json )
-{
-	auto jArray = nlohmann::json::array();
-
-	jArray.push_back(App_LoadSaveInstallSettings());
-
-	json = jArray;
-}
-
-// ------------------------------------------------------------------------
 nlohmann::json AppConfig::LoadSaveMemcards()
 {
 	nlohmann::json memcards;
@@ -919,7 +859,7 @@ bool OpenFileConfig( std::string filename )
 
 	else
 	{
-		bool loader = fileUtils.Load(filename);
+		bool loader = yamlUtils.Load(filename);
 		return loader;
 	}
 }

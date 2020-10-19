@@ -312,3 +312,44 @@ nlohmann::json JsonUtils::GetStream()
 {
     return stream;
 }
+
+
+bool YamlUtils::Save(fs::path toSave, std::string stream)
+{
+    if (folder.DoesExist(toSave))
+    {
+        fs::resize_file(toSave, 0);
+    }
+
+    out.open(toSave, std::ios::out | std::ios::trunc);
+    out.seekp(0);
+    out << std::setw(4) << stream; 
+    out.close();
+
+	if (out.bad())
+	{
+		std::cout << "Error Writing File" << std::endl;
+        return false;
+    }
+       
+    return true;
+}
+
+bool YamlUtils::Load(fs::path toLoad)
+{
+    try
+    {
+        stream = YAML::LoadFile(toLoad);
+    }
+	catch (const std::exception& e)
+	{
+		return false;
+	}
+
+    return true;
+}
+
+    YAML::Node YamlUtils::GetStream()
+    {
+        return stream;
+    }

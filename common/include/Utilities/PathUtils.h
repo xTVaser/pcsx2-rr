@@ -36,11 +36,22 @@ public:
     virtual bool Load(fs::path toLoad) = 0;
 };
 
+class YamlUtils : iFile
+{
+private:
+    YAML::Node stream;
+public:
+    bool Save(fs::path toSave, std::string) override;
+    bool Load(fs::path toLoad) override;
+    YAML::Node GetStream();
+};
+
+
 class JsonUtils : iFile
 {
 
 private:
-nlohmann::json stream;
+    nlohmann::json stream;
 public:
     bool Save(fs::path toSave, std::string) override;
     bool Load(fs::path toLoad) override;

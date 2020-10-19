@@ -15,7 +15,6 @@
 
 #include "PrecompiledHeader.h"
 #include "MainFrame.h"
-#include "Utilities/json.hpp"
 #include "Utilities/PathUtils.h"
 #include "Dialogs/ModalPopups.h"
 #include "AppConfig.h"
@@ -39,7 +38,8 @@ std::string				SettingsFolder;
 std::string				InstallFolder;
 std::string				PluginsFolder;
 	
-nlohmann::json stream;
+YamlUtils               yamlUtils;
+YAML::Node stream;
 	
 const std::string PermissionFolders[] =
 {
@@ -62,7 +62,7 @@ InstallationModeType		InstallationMode;
 static fs::path GetPortableJsonPath()
 {
 	fs::path programDir = Path::GetExecutablePath().parent_path();
-	return Path::Combine(programDir, "portable.json");
+	return Path::Combine(programDir, "portable.yaml");
 }
 
 static wxString GetMsg_PortableModeRights()
@@ -109,6 +109,56 @@ bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder)
 
 }
 
+// ------------------------------------------------------------------------
+YAML::Node App_LoadSaveInstallSettings()
+{
+	// Portable installs of PCSX2 should not save any of the following information to
+	// the INI file.  Only the Run First Time Wizard option is saved, and that's done
+	// from EstablishAppUserMode code.  All other options have assumed (fixed) defaults in
+	// portable mode which cannot be changed/saved.
+
+	// Note: Settins are still *loaded* from portable.ini, in case the user wants to do
+	// low-level overrides of the default behavior of portable mode installs.
+
+	//if (ini.IsSaving() && (InstallationMode == InstallMode_Portable)) return;
+
+	static const char* DocsFolderModeNames[] =
+	{
+		"User",
+		"Custom",
+		// WARNING: array must be NULL terminated to compute it size
+		NULL
+	};
+
+    yamlUtils.GetStream()["DocumentsFolderMode"] = ((int)DocsFolderMode, DocsFolderModeNames, (InstallationMode == InstallMode_Registered) ? (int)DocsFolder_User : (int)DocsFolder_Custom);
+
+	yamlUtils.GetStream()["CustomDocumentsFolder"] = (CustomDocumentsFolder,	PathDefs::AppRoot().string() );
+
+	yamlUtils.GetStream()["UseDefaultSettingsFolder"] = (UseDefaultSettingsFolder, true );
+	yamlUtils.GetStream()["SettingsFolder"]	= (SettingsFolder, PathDefs::GetSettings().string() );
+
+	// "Install_Dir" conforms to the NSIS standard install directory key name.
+	// Attempt to load plugins based on the Install Folder.
+
+	yamlUtils.GetStream()["Install_Dir"] = (	InstallFolder,wxStandardPaths::Get().GetExecutablePath().ToStdString());
+	//SetFullBaseDir( InstallFolder );
+
+	yamlUtils.GetStream()["PluginsFolder"] = (PluginsFolder = Path::Combine(InstallFolder, "plugins" ));
+
+	return yamlUtils.GetStream();
+}
+
+void App_LoadInstallSettings(YAML::Node yaml)
+{
+	yaml.push_back(App_LoadSaveInstallSettings());
+}
+
+void App_SaveInstallSettings( YAML::Node yaml )
+{
+	yaml.push_back(App_LoadSaveInstallSettings());
+}
+
+
 // Portable installations are assumed to be run in either administrator rights mode, or run
 // from "insecure media" such as a removable flash drive.  In these cases, the default path for
 // PCSX2 user documents becomes ".", which is the current working directory.
@@ -124,7 +174,7 @@ bool Pcsx2App::TestForPortableInstall()
 	std::string portableDocsFolder = portableJsonFile.parent_path();
 
 	std::cout << "PATH: " << portableJsonFile << std::endl;
-	bool isPortable = OpenFileConfig( portableJsonFile);
+	bool isPortable = OpenFileConfig( portableJsonFile.string() );
 
 	if (isPortable)
 	{
@@ -163,15 +213,15 @@ void Pcsx2App::WipeUserModeSettings()
 		// Remove the portable.json entry "RunWizard" conforming to this instance of PCSX2.
 		std::string portableJsonFile( GetPortableJsonPath() );
 		bool test = OpenFileConfig( portableJsonFile );
-		json = fileUtils.GetStream();
-		json["RunWizard"] = 0;
+		stream = yamlUtils.GetStream();
+		stream["RunWizard"] = 0;
 	}
 	else
 	{
 		// Remove the registry entry "RunWizard" conforming to this instance of PCSX2.
 		bool conf_install = OpenInstallSettingsFile();		
-		json = fileUtils.GetStream();
-		json["RunWizard"] = 0;
+		stream = yamlUtils.GetStream();
+		stream["RunWizard"] = 0;
 	}
 }
 
@@ -244,7 +294,7 @@ void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 	if (!conf_install)
 		conf_install = OpenInstallSettingsFile();
 
-	json["RunWizard"] = true;
+	stream["RunWizard"] = true;
 }
 
 void Pcsx2App::EstablishAppUserMode()
@@ -256,7 +306,7 @@ void Pcsx2App::EstablishAppUserMode()
 	if (!conf_install)
 		conf_install = OpenInstallSettingsFile();
 
-	nlohmann::json newJson = fileUtils.GetStream();
+	YAML::Node newYaml = yamlUtils.GetStream();
 
 	//  Run the First Time Wizard!
 	// ----------------------------
@@ -265,10 +315,10 @@ void Pcsx2App::EstablishAppUserMode()
 	// or the registry/user local documents position.
 
 	bool runWizard = false;
-	if (newJson["RunWizard"])
+	if (newYaml["RunWizard"])
 		runWizard = true;
 
-	App_LoadInstallSettings( newJson);
+	App_LoadInstallSettings( newYaml );
 
 	if( !Startup.ForceWizard)
 	{
@@ -279,11 +329,11 @@ void Pcsx2App::EstablishAppUserMode()
 	DoFirstTimeWizard();
 
 	// Save user's new settings
-	App_SaveInstallSettings( newJson);
+	App_SaveInstallSettings( newYaml );
 	AppConfig_OnChangedSettingsFolder( true );
 	AppSaveSettings();
 
-	json = newJson;
+	stream = newYaml;
 
 	// Wizard completed successfully, so let's not torture the user with this crap again!
 	
@@ -291,9 +341,9 @@ void Pcsx2App::EstablishAppUserMode()
 
     if (InstallationMode == InstallationModeType::InstallMode_Portable)
     {
-		newJson["RunWizard"] = false;
+		newYaml["RunWizard"] = false;
 
-        fileUtils.Save(GetPortableJsonPath(), newJson.dump());
+        fileUtils.Save(GetPortableJsonPath(), newYaml.as<std::string>() );
     }
 
 }

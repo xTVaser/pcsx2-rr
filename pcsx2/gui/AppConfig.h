@@ -53,6 +53,7 @@ namespace PathDefs
 
 extern FolderUtils      folderUtils;
 extern JsonUtils        fileUtils;
+extern YamlUtils        yamlUtils;
 extern nlohmann::json	json;
 extern GuiConfig        conf;
 
@@ -300,9 +301,9 @@ extern void AppLoadSettings();
 extern void AppSaveSettings();
 extern void AppApplySettings( const AppConfig* oldconf=NULL );
 
-extern nlohmann::json App_LoadSaveInstallSettings( );
-extern void App_SaveInstallSettings( nlohmann::json json );
-extern void App_LoadInstallSettings( nlohmann::json json );
+extern YAML::Node App_LoadSaveInstallSettings( );
+extern void App_SaveInstallSettings( YAML::Node yaml );
+extern void App_LoadInstallSettings( YAML::Node yaml );
 
 extern nlohmann::json ConLog_LoadSaveSettings();
 extern nlohmann::json SysTraceLog_LoadSaveSettings();
