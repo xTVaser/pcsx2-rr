@@ -668,12 +668,8 @@ void AppConfig::InputRecordingOptions::loadSave(YAML::Node& yaml)
 {
 	//ScopedIniGroup path(ini, L"InputRecording");
 
-<<<<<<< HEAD
 	yaml["VirtualPadPositionX"].push_back(VirtualPadPosition.x);
 	yaml["VirtualPadPositionY"].push_back(VirtualPadPosition.y);
-=======
-	yaml["VirtualPadPosition"].push_back(VirtualPadPosition);
->>>>>>> 1bca5ff440ca15483d4123c76bbe70ea199f56f5
 }
 #endif
 
