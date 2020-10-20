@@ -240,14 +240,14 @@ public:
 		return (l / 1000) * (SampleRate / 1000);
 	}
 
-	const wchar_t* GetIdent() const
+	const std::string GetIdent() const
 	{
-		return L"Alsa";
+		return "Alsa";
 	}
 
-	const wchar_t* GetLongName() const
+	const std::string GetLongName() const
 	{
-		return L"Alsa";
+		return "Alsa";
 	}
 
 	void ReadSettings()
@@ -258,8 +258,9 @@ public:
 	{
 	}
 
-	void WriteSettings() const
-	{
+	YAML::Node WriteSettings() const
+	{	
+		return YAML::Node();
 	}
 } static Alsa;
 

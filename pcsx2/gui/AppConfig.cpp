@@ -541,24 +541,11 @@ nlohmann::json AppConfig::LoadSave()
 
 	// Process various sub-components:
 
-<<<<<<< HEAD
 	json.push_back(Folders.LoadSave());
 	json.push_back(BaseFilenames.LoadSave());
 	json.push_back(Framerate.LoadSave());
 	//json.push_back(Templates.LoadSave());
 	return json;
-=======
-	Folders			.LoadSave( ini );
-	BaseFilenames	.LoadSave( ini );
-	GSWindow		.LoadSave( ini );
-	Framerate		.LoadSave( ini );
-#ifndef DISABLE_RECORDING
-	inputRecording.loadSave(ini);
-#endif
-	Templates		.LoadSave( ini );
-
-	ini.Flush();
->>>>>>> master/master
 }
 
 // ------------------------------------------------------------------------
@@ -677,11 +664,12 @@ AppConfig::InputRecordingOptions::InputRecordingOptions()
 {
 }
 
-void AppConfig::InputRecordingOptions::loadSave(IniInterface& ini)
+void AppConfig::InputRecordingOptions::loadSave(YAML::Node& yaml)
 {
-	ScopedIniGroup path(ini, L"InputRecording");
+	//ScopedIniGroup path(ini, L"InputRecording");
 
-	IniEntry(VirtualPadPosition);
+	yaml["VirtualPadPositionX"].push_back(VirtualPadPosition.x);
+	yaml["VirtualPadPositionY"].push_back(VirtualPadPosition.y);
 }
 #endif
 

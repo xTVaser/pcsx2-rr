@@ -133,8 +133,8 @@ struct SDLAudioMod : public SndOutModule
 		return 0;
 	}
 
-	const wchar_t* GetIdent() const { return L"SDLAudio"; }
-	const wchar_t* GetLongName() const { return L"SDL Audio"; }
+	const std::string GetIdent() const { return "SDLAudio"; }
+	const std::string GetLongName() const { return "SDL Audio"; }
 
 	void Close()
 	{
@@ -152,13 +152,15 @@ struct SDLAudioMod : public SndOutModule
 	void ReadSettings()
 	{
 		wxString api(L"EMPTYEMPTYEMPTY");
-		CfgReadStr(L"SDL", L"HostApi", api, L"pulseaudio");
+		//CfgReadStr(L"SDL", L"HostApi", api, L"pulseaudio");
 		SetApiSettings(api);
 	}
 
-	void WriteSettings() const
+	YAML::Node WriteSettings() const
 	{
-		CfgWriteStr(L"SDL", L"HostApi", wxString(m_api.c_str(), wxConvUTF8));
+		YAML::Node sdl;
+		sdl["HostApi"] = m_api;
+		return sdl;	
 	};
 
 	void SetApiSettings(wxString api)

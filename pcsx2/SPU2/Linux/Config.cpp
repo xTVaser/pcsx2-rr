@@ -26,6 +26,8 @@
 
 int AutoDMAPlayRate[2] = {0, 0};
 
+YamlUtils spuConfig;
+
 // Default settings.
 
 // MIXING
@@ -85,7 +87,7 @@ void ReadSettings()
 	if (!pathSet)
 		initIni();
 
-	Interpolation = CfgReadInt(L"MIXING", L"Interpolation", 4);
+	/*Interpolation = CfgReadInt(L"MIXING", L"Interpolation", 4);
 	EffectsDisabled = CfgReadBool(L"MIXING", L"Disable_Effects", false);
 	postprocess_filter_dealias = CfgReadBool(L"MIXING", L"DealiasFilter", false);
 	FinalVolume = ((float)CfgReadInt(L"MIXING", L"FinalVolume", 100)) / 100;
@@ -109,21 +111,20 @@ void ReadSettings()
 	VolumeAdjustSL = powf(10, VolumeAdjustSLdb / 10);
 	VolumeAdjustSR = powf(10, VolumeAdjustSRdb / 10);
 	VolumeAdjustLFE = powf(10, VolumeAdjustLFEdb / 10);
-	delayCycles = CfgReadInt(L"DEBUG", L"DelayCycles", 4);
-
+	delayCycles = CfgReadInt(L"DEBUG", L"DelayCycles", 4);*/
 	wxString temp;
 
 #if SDL_MAJOR_VERSION >= 2 || !defined(SPU2X_PORTAUDIO)
-	CfgReadStr(L"OUTPUT", L"Output_Module", temp, SDLOut->GetIdent());
+	//CfgReadStr(L"OUTPUT", L"Output_Module", temp, SDLOut->GetIdent());
 #else
-	CfgReadStr(L"OUTPUT", L"Output_Module", temp, PortaudioOut->GetIdent());
+	//CfgReadStr(L"OUTPUT", L"Output_Module", temp, PortaudioOut->GetIdent());
 #endif
-	OutputModule = FindOutputModuleById(temp.c_str()); // find the driver index of this module
+	OutputModule = FindOutputModuleById(temp.ToStdString()); // find the driver index of this module
 
 // find current API
 #ifdef SPU2X_PORTAUDIO
 #ifdef __linux__
-	CfgReadStr(L"PORTAUDIO", L"HostApi", temp, L"ALSA");
+	//CfgReadStr(L"PORTAUDIO", L"HostApi", temp, L"ALSA");
 	if (temp == L"OSS")
 		OutputAPI = 1;
 	else if (temp == L"JACK")
@@ -137,7 +138,7 @@ void ReadSettings()
 #endif
 
 #if defined(__unix__) || defined(__APPLE__)
-	CfgReadStr(L"SDL", L"HostApi", temp, L"pulseaudio");
+	//CfgReadStr(L"SDL", L"HostApi", temp, L"pulseaudio");
 	SdlOutputAPI = 0;
 #if SDL_MAJOR_VERSION >= 2
 	// YES It sucks ...
@@ -149,9 +150,9 @@ void ReadSettings()
 #endif
 #endif
 
-	SndOutLatencyMS = CfgReadInt(L"OUTPUT", L"Latency", 300);
-	SynchMode = CfgReadInt(L"OUTPUT", L"Synch_Mode", 0);
-	numSpeakers = CfgReadInt(L"OUTPUT", L"SpeakerConfiguration", 0);
+	//SndOutLatencyMS = CfgReadInt(L"OUTPUT", L"Latency", 300);
+	//SynchMode = CfgReadInt(L"OUTPUT", L"Synch_Mode", 0);
+	//numSpeakers = CfgReadInt(L"OUTPUT", L"SpeakerConfiguration", 0);
 
 #ifdef SPU2X_PORTAUDIO
 	PortaudioOut->ReadSettings();
@@ -170,12 +171,12 @@ void ReadSettings()
 	if (mods[OutputModule] == nullptr)
 	{
 		fwprintf(stderr, L"* SPU2: Unknown output module '%s' specified in configuration file.\n", temp.wc_str());
-		fprintf(stderr, "* SPU2: Defaulting to SDL (%S).\n", SDLOut->GetIdent());
+		//fprintf(stderr, "* SPU2: Defaulting to SDL.\n", SDLOut->GetIdent());
 		OutputModule = FindOutputModuleById(SDLOut->GetIdent());
 	}
 
 	WriteSettings();
-	spuConfig->Flush();
+	//spuConfig->Flush();
 }
 
 /*****************************************************************************/
@@ -188,35 +189,42 @@ void WriteSettings()
 		return;
 	}
 
-	CfgWriteInt(L"MIXING", L"Interpolation", Interpolation);
-	CfgWriteBool(L"MIXING", L"Disable_Effects", EffectsDisabled);
-	CfgWriteBool(L"MIXING", L"DealiasFilter", postprocess_filter_dealias);
-	CfgWriteInt(L"MIXING", L"FinalVolume", (int)(FinalVolume * 100 + 0.5f));
+	YAML::Node Mixing;
 
-	CfgWriteBool(L"MIXING", L"AdvancedVolumeControl", AdvancedVolumeControl);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustC(dB)", VolumeAdjustCdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustFL(dB)", VolumeAdjustFLdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustFR(dB)", VolumeAdjustFRdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustBL(dB)", VolumeAdjustBLdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustBR(dB)", VolumeAdjustBRdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustSL(dB)", VolumeAdjustSLdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustSR(dB)", VolumeAdjustSRdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustLFE(dB)", VolumeAdjustLFEdb);
+	Mixing["Interpolation"] = Interpolation;
+	Mixing["Disable_Effects"] = EffectsDisabled;
+	Mixing["DealiasFilter"] = postprocess_filter_dealias;
+	Mixing["FinalVolume"] = (int)(FinalVolume * 100 + 0.5f);
 
-	CfgWriteStr(L"OUTPUT", L"Output_Module", mods[OutputModule]->GetIdent());
-	CfgWriteInt(L"OUTPUT", L"Latency", SndOutLatencyMS);
-	CfgWriteInt(L"OUTPUT", L"Synch_Mode", SynchMode);
-	CfgWriteInt(L"OUTPUT", L"SpeakerConfiguration", numSpeakers);
-	CfgWriteInt(L"DEBUG", L"DelayCycles", delayCycles);
+	Mixing["AdvancedVolumeControl"] = AdvancedVolumeControl;
+	Mixing["VolumeAdjustC(dB)"] = VolumeAdjustCdb;
+	Mixing["VolumeAdjustFL(dB)"] = VolumeAdjustFLdb;
+	Mixing["VolumeAdjustFR(dB)"] = VolumeAdjustFRdb;
+	Mixing["VolumeAdjustBL(dB)"] = VolumeAdjustBLdb;
+	Mixing["VolumeAdjustBR(dB)"] = VolumeAdjustBRdb;
+	Mixing["VolumeAdjustSL(dB)"] = VolumeAdjustSLdb;
+	Mixing["VolumeAdjustSR(dB)"] = VolumeAdjustSRdb;
+	Mixing["VolumeAdjustLFE(dB)"] = VolumeAdjustLFEdb;
+
+	YAML::Node Output;
+
+	Output["Output_Module"] = mods[OutputModule]->GetIdent();
+	Output["Latency"] = SndOutLatencyMS;
+	Output["Synch_Mode"] = SynchMode;
+	Output["SpeakerConfiguration"] = numSpeakers;
+	Output["DelayCycles"] = delayCycles;
 
 #ifdef SPU2X_PORTAUDIO
-	PortaudioOut->WriteSettings();
+spuConfig.GetStream()["PortAudio"].push_back(PortaudioOut->WriteSettings());
 #endif
 #if defined(__unix__) || defined(__APPLE__)
-	SDLOut->WriteSettings();
+	spuConfig.GetStream()["SDL"].push_back(SDLOut->WriteSettings());
 #endif
-	SoundtouchCfg::WriteSettings();
-	DebugConfig::WriteSettings();
+    spuConfig.GetStream()["SoundTouch"].push_back(SoundtouchCfg::WriteSettings());
+    DebugConfig::WriteSettings();
+
+	spuConfig.GetStream()["MIXING"].push_back(Mixing);
+	spuConfig.GetStream()["OUTPUT"].push_back(Output);
 }
 
 void configure()
@@ -227,7 +235,5 @@ void configure()
 	ReadSettings();
 	dialog->Display();
 	WriteSettings();
-	delete spuConfig;
-	spuConfig = nullptr;
 	wxDELETE(dialog);
 }

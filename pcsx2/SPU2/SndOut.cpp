@@ -15,7 +15,7 @@
 
 #include "PrecompiledHeader.h"
 #include "Global.h"
-
+#include <string>
 
 StereoOut32 StereoOut32::Empty(0, 0);
 
@@ -55,14 +55,14 @@ public:
 	void Configure(uptr parent) {}
 	int GetEmptySampleCount() { return 0; }
 
-	const wchar_t* GetIdent() const
+	const std::string GetIdent() const
 	{
-		return L"nullout";
+		return "nullout";
 	}
 
-	const wchar_t* GetLongName() const
+	const std::string GetLongName() const
 	{
-		return L"No Sound (Emulate SPU2 only)";
+		return "No Sound (Emulate SPU2 only)";
 	}
 
 	void ReadSettings()
@@ -73,8 +73,9 @@ public:
 	{
 	}
 
-	void WriteSettings() const
+	YAML::Node WriteSettings() const
 	{
+		return YAML::Node();	
 	}
 
 } NullOut;
@@ -96,12 +97,14 @@ SndOutModule* mods[] =
 		nullptr // signals the end of our list
 };
 
-int FindOutputModuleById(const wchar_t* omodid)
+int FindOutputModuleById(const std::string omodid)
 {
 	int modcnt = 0;
+	const wchar_t * did = std::wstring(omodid.begin(), omodid.end()).c_str();
+	const wchar_t * mod = std::wstring(mods[modcnt]->GetIdent().begin(), mods[modcnt]->GetIdent().end()).c_str();
 	while (mods[modcnt] != nullptr)
 	{
-		if (wcscmp(mods[modcnt]->GetIdent(), omodid) == 0)
+		if (wcscmp(mod, did) == 0)
 			break;
 		++modcnt;
 	}

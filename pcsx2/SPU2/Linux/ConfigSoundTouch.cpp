@@ -51,19 +51,21 @@ namespace SoundtouchCfg
 
 	void ReadSettings()
 	{
-		SequenceLenMS = CfgReadInt(L"SOUNDTOUCH", L"SequenceLengthMS", 30);
-		SeekWindowMS = CfgReadInt(L"SOUNDTOUCH", L"SeekWindowMS", 20);
-		OverlapMS = CfgReadInt(L"SOUNDTOUCH", L"OverlapMS", 10);
+		//SequenceLenMS = CfgReadInt(L"SOUNDTOUCH", L"SequenceLengthMS", 30);
+		//SeekWindowMS = CfgReadInt(L"SOUNDTOUCH", L"SeekWindowMS", 20);
+		//OverlapMS = CfgReadInt(L"SOUNDTOUCH", L"OverlapMS", 10);
 
 		ClampValues();
 		WriteSettings();
 	}
 
-	void WriteSettings()
+	YAML::Node WriteSettings()
 	{
-		CfgWriteInt(L"SOUNDTOUCH", L"SequenceLengthMS", SequenceLenMS);
-		CfgWriteInt(L"SOUNDTOUCH", L"SeekWindowMS", SeekWindowMS);
-		CfgWriteInt(L"SOUNDTOUCH", L"OverlapMS", OverlapMS);
+		YAML::Node soundtouch;
+		soundtouch["SequenceLengthMS"] = SequenceLenMS;
+		soundtouch["SeekWindowMS"] = SeekWindowMS;
+		soundtouch["OverlapMS"] = OverlapMS;
+		return soundtouch;
 	}
 
 } // namespace SoundtouchCfg

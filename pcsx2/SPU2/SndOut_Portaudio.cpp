@@ -51,7 +51,7 @@ private:
 	// Configuration Vars (unused still)
 
 	int m_ApiId;
-	wxString m_Device;
+	std::string m_Device;
 
 	bool m_UseHardware;
 
@@ -590,36 +590,36 @@ public:
 		return playedSinceLastTime;
 	}
 
-	const wchar_t* GetIdent() const
+	const std::string GetIdent() const
 	{
-		return L"portaudio";
+		return "portaudio";
 	}
 
-	const wchar_t* GetLongName() const
+	const std::string GetLongName() const
 	{
-		return L"PortAudio (Cross-platform)";
+		return "PortAudio (Cross-platform)";
 	}
 
 	void ReadSettings()
 	{
 		wxString api(L"EMPTYEMPTYEMPTY");
-		m_Device = L"EMPTYEMPTYEMPTY";
+		m_Device = "EMPTYEMPTYEMPTY";
 #ifdef __linux__
 		// By default on linux use the ALSA API (+99% users) -- Gregory
-		CfgReadStr(L"PORTAUDIO", L"HostApi", api, L"ALSA");
+		//CfgReadStr(L"PORTAUDIO", L"HostApi", api, L"ALSA");
 #elif defined(__APPLE__)
 		// Suppose OSX only has CoreAudio...
-		CfgReadStr(L"PORTAUDIO", L"HostApi", api, L"CoreAudio");
+		//CfgReadStr(L"PORTAUDIO", L"HostApi", api, L"CoreAudio");
 #else
-		CfgReadStr(L"PORTAUDIO", L"HostApi", api, L"WASAPI");
+		//CfgReadStr(L"PORTAUDIO", L"HostApi", api, L"WASAPI");
 #endif
-		CfgReadStr(L"PORTAUDIO", L"Device", m_Device, L"default");
+		//CfgReadStr(L"PORTAUDIO", L"Device", wxString(m_Device), L"default");
 
 		SetApiSettings(api);
 
-		m_WasapiExclusiveMode = CfgReadBool(L"PORTAUDIO", L"Wasapi_Exclusive_Mode", false);
-		m_SuggestedLatencyMinimal = CfgReadBool(L"PORTAUDIO", L"Minimal_Suggested_Latency", true);
-		m_SuggestedLatencyMS = CfgReadInt(L"PORTAUDIO", L"Manual_Suggested_Latency_MS", 20);
+		//m_WasapiExclusiveMode = CfgReadBool(L"PORTAUDIO", L"Wasapi_Exclusive_Mode", false);
+		//m_SuggestedLatencyMinimal = CfgReadBool(L"PORTAUDIO", L"Minimal_Suggested_Latency", true);
+		//m_SuggestedLatencyMS = CfgReadInt(L"PORTAUDIO", L"Manual_Suggested_Latency_MS", 20);
 
 		if (m_SuggestedLatencyMS < 10)
 			m_SuggestedLatencyMS = 10;
@@ -660,63 +660,66 @@ public:
 			m_ApiId = paAudioScienceHPI;
 	}
 
-	void WriteSettings() const
+	YAML::Node WriteSettings() const
 	{
-		wxString api;
+		std::string api;
+		YAML::Node portaudio;
 		switch (m_ApiId)
 		{
 			case paInDevelopment:
-				api = L"InDevelopment";
+				api = "InDevelopment";
 				break; /* use while developing support for a new host API */
 			case paDirectSound:
-				api = L"DirectSound";
+				api = "DirectSound";
 				break;
 			case paMME:
-				api = L"MME";
+				api = "MME";
 				break;
 			case paASIO:
-				api = L"ASIO";
+				api = "ASIO";
 				break;
 			case paSoundManager:
-				api = L"SoundManager";
+				api = "SoundManager";
 				break;
 			case paCoreAudio:
-				api = L"CoreAudio";
+				api = "CoreAudio";
 				break;
 			case paOSS:
-				api = L"OSS";
+				api = "OSS";
 				break;
 			case paALSA:
-				api = L"ALSA";
+				api = "ALSA";
 				break;
 			case paAL:
-				api = L"AL";
+				api = "AL";
 				break;
 			case paBeOS:
-				api = L"BeOS";
+				api = "BeOS";
 				break;
 			case paWDMKS:
-				api = L"WDMKS";
+				api = "WDMKS";
 				break;
 			case paJACK:
-				api = L"JACK";
+				api = "JACK";
 				break;
 			case paWASAPI:
-				api = L"WASAPI";
+				api = "WASAPI";
 				break;
 			case paAudioScienceHPI:
-				api = L"AudioScienceHPI";
+				api = "AudioScienceHPI";
 				break;
 			default:
-				api = L"Unknown";
+				api = "Unknown";
 		}
 
-		CfgWriteStr(L"PORTAUDIO", L"HostApi", api);
-		CfgWriteStr(L"PORTAUDIO", L"Device", m_Device);
+		portaudio["HostApi"] = api;
+	    portaudio["Device"] = m_Device;
 
-		CfgWriteBool(L"PORTAUDIO", L"Wasapi_Exclusive_Mode", m_WasapiExclusiveMode);
-		CfgWriteBool(L"PORTAUDIO", L"Minimal_Suggested_Latency", m_SuggestedLatencyMinimal);
-		CfgWriteInt(L"PORTAUDIO", L"Manual_Suggested_Latency_MS", m_SuggestedLatencyMS);
+		portaudio["Wasapi_Exclusive_Mode"] = m_WasapiExclusiveMode;
+		portaudio["Minimal_Suggested_Latency"] = m_SuggestedLatencyMinimal;
+		portaudio["Manual_Suggested_Latency_MS"] = m_SuggestedLatencyMS;
+
+		return portaudio;
 	}
 
 } static PA;

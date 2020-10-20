@@ -275,7 +275,7 @@ void GSPanel::DoResize()
 	if( zoom == 0 )//auto zoom in untill black-bars are gone (while keeping the aspect ratio).
 		zoom = std::max( (float)arr, (float)(1.0/arr) );
 
-	viewport.Scale(zoom, zoom*g_Conf->GSWindow.StretchY.ToFloat()/100.0 );
+	viewport.Scale(zoom, zoom*conf.gsWindow.StretchY/100.0 );
 	SetSize( viewport );
 	CenterOnParent();
 

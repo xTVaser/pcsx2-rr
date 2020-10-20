@@ -16,37 +16,32 @@
 #include "PrecompiledHeader.h"
 #include "AppConfig.h"
 #include "Dialogs.h"
-#include <wx/fileconf.h>
 
-wxFileConfig* spuConfig = nullptr;
-wxString path(L"SPU2.ini");
+std::string path("SPU2.yaml");
 bool pathSet = false;
 
 void initIni()
 {
 	if (!pathSet)
 	{
-		path = GetSettingsFolder().Combine(path).GetFullPath();
+		path = Path::Combine(GetSettingsFolder().string(), path);
 		pathSet = true;
 	}
-	if (spuConfig == nullptr)
-		spuConfig = new wxFileConfig(L"", L"", path, L"", wxCONFIG_USE_LOCAL_FILE);
 }
 
 void setIni(const wchar_t* Section)
 {
 	initIni();
-	spuConfig->SetPath(wxsFormat(L"/%s", Section));
 }
 
 void CfgSetSettingsDir(const char* dir)
 {
 	FileLog("CfgSetSettingsDir(%s)\n", dir);
-	path = Path::Combine((dir == nullptr) ? wxString(L"inis") : wxString::FromUTF8(dir), L"SPU2.ini");
+	path = Path::Combine((dir == nullptr) ? std::string("settings") : std::string(dir), std::string("SPU2.yaml"));
 	pathSet = true;
 }
 
-void CfgWriteBool(const wchar_t* Section, const wchar_t* Name, bool Value)
+/*void CfgWriteBool(const wchar_t* Section, const wchar_t* Name, bool Value)
 {
 	setIni(Section);
 	spuConfig->Write(Name, Value);
@@ -110,4 +105,4 @@ void CfgReadStr(const wchar_t* Section, const wchar_t* Name, wxString& Data, con
 {
 	setIni(Section);
 	Data = spuConfig->Read(Name, Default);
-}
+}*/

@@ -40,8 +40,8 @@ bool _RegDump = false;
 // the configured crap in the ini file.
 static bool LogLocationSetByPcsx2 = false;
 
-static wxDirName LogsFolder;
-static wxDirName DumpsFolder;
+static fs::path LogsFolder;
+static fs::path DumpsFolder;
 
 wxString AccessLogFileName;
 wxString WaveLogFileName;
@@ -54,24 +54,24 @@ wxString RegDumpFileName;
 
 void CfgSetLogDir(const char* dir)
 {
-	LogsFolder = (dir == nullptr) ? wxString(L"logs") : fromUTF8(dir);
-	DumpsFolder = (dir == nullptr) ? wxString(L"logs") : fromUTF8(dir);
+	LogsFolder = (dir == nullptr) ? "logs" : dir;
+	DumpsFolder = (dir == nullptr) ? "logs" : dir;
 	LogLocationSetByPcsx2 = (dir != nullptr);
 }
 
-FILE* OpenBinaryLog(const wxString& logfile)
+FILE* OpenBinaryLog(std::string logfile)
 {
-	return wxFopen(Path::Combine(LogsFolder, logfile), L"wb");
+	return wxFopen(Path::Combine(LogsFolder.string(), logfile), L"wb");
 }
 
-FILE* OpenLog(const wxString& logfile)
+FILE* OpenLog(std::string logfile)
 {
-	return wxFopen(Path::Combine(LogsFolder, logfile), L"w");
+	return wxFopen(Path::Combine(LogsFolder.string(), logfile), L"w");
 }
 
-FILE* OpenDump(const wxString& logfile)
+FILE* OpenDump(std::string logfile)
 {
-	return wxFopen(Path::Combine(DumpsFolder, logfile), L"w");
+	return wxFopen(Path::Combine(DumpsFolder.string(), logfile), L"w");
 }
 
 namespace DebugConfig
@@ -92,7 +92,7 @@ namespace DebugConfig
 
 	void ReadSettings()
 	{
-		DebugEnabled = CfgReadBool(Section, L"Global_Enable", 0);
+		/*DebugEnabled = CfgReadBool(Section, L"Global_Enable", 0);
 		_MsgToConsole = CfgReadBool(Section, L"Show_Messages", 0);
 		_MsgKeyOnOff = CfgReadBool(Section, L"Show_Messages_Key_On_Off", 0);
 		_MsgVoiceOff = CfgReadBool(Section, L"Show_Messages_Voice_Off", 0);
@@ -118,13 +118,13 @@ namespace DebugConfig
 
 		CfgReadStr(Section, L"Info_Dump_Filename", CoresDumpFileName, L"logs/SPU2Cores.txt");
 		CfgReadStr(Section, L"Mem_Dump_Filename", MemDumpFileName, L"logs/SPU2mem.dat");
-		CfgReadStr(Section, L"Reg_Dump_Filename", RegDumpFileName, L"logs/SPU2regs.dat");
+		CfgReadStr(Section, L"Reg_Dump_Filename", RegDumpFileName, L"logs/SPU2regs.dat");*/
 	}
 
 
 	void WriteSettings()
 	{
-		CfgWriteBool(Section, L"Global_Enable", DebugEnabled);
+		/*CfgWriteBool(Section, L"Global_Enable", DebugEnabled);
 
 		CfgWriteBool(Section, L"Show_Messages", _MsgToConsole);
 		CfgWriteBool(Section, L"Show_Messages_Key_On_Off", _MsgKeyOnOff);
@@ -150,7 +150,7 @@ namespace DebugConfig
 
 		CfgWriteStr(Section, L"Info_Dump_Filename", CoresDumpFileName);
 		CfgWriteStr(Section, L"Mem_Dump_Filename", MemDumpFileName);
-		CfgWriteStr(Section, L"Reg_Dump_Filename", RegDumpFileName);
+		CfgWriteStr(Section, L"Reg_Dump_Filename", RegDumpFileName);*/
 	}
 
 } // namespace DebugConfig

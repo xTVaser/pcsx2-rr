@@ -17,7 +17,7 @@
 #define CONFIG_H_INCLUDED
 
 #include <string>
-#include <wx/fileconf.h>
+#include <PathUtils.h>
 
 extern bool DebugEnabled;
 
@@ -111,7 +111,7 @@ namespace SoundtouchCfg
 	extern int OverlapMS;
 
 	void ReadSettings();
-	void WriteSettings();
+	YAML::Node WriteSettings();
 }; // namespace SoundtouchCfg
 
 void ReadSettings();
@@ -119,7 +119,7 @@ void WriteSettings();
 void DisplayDialog();
 
 void configure();
-extern wxFileConfig* spuConfig;
+extern YamlUtils spuConfig;
 extern bool pathSet;
 extern void initIni();
 #endif // CONFIG_H_INCLUDED
