@@ -192,7 +192,7 @@ public:
 		wxPoint		VirtualPadPosition;
 
 		InputRecordingOptions();
-		void loadSave( IniInterface& conf );
+		void loadSave( YAML::Node& conf );
 	};
 #endif
 

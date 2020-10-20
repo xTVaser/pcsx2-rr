@@ -112,7 +112,6 @@ protected:
 	wxPoint 		m_size;
 	wxPoint 		m_position;
 	wxMenuBar&		m_menubar;
-	wxMenuBar& m_menubar;
 
 	wxMenu& m_menuCDVD;
 	wxMenu& m_menuSys;
