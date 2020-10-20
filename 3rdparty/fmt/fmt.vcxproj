@@ -28,7 +28,7 @@
   </ItemGroup>
   <Import Project="$(SolutionDir)common\vsprops\WinSDK.props" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{449AD25E-424A-4714-BABC-68706CDCC33B}</ProjectGuid>
+    <ProjectGuid>{4250CE80-CD5D-42DC-96A9-B49072EFB0E8}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

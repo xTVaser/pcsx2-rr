@@ -913,8 +913,6 @@
     <ClCompile Include="..\..\FW.cpp">
       <Filter>System\Ps2\Iop\FW</Filter>
     </ClCompile>
-    <ClCompile Include="GuiConfig.cpp">
-      <Filter>AppHost</Filter>
     <ClCompile Include="..\..\SPU2\Dma.cpp">
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
@@ -1469,8 +1467,6 @@
     <ClInclude Include="..\..\FW.h">
       <Filter>System\Ps2\Iop\FW</Filter>
     </ClInclude>
-    <ClInclude Include="GuiConfig.h">
-      <Filter>AppHost</Filter>
     <ClInclude Include="..\..\SPU2\Windows\Dialogs.h">
       <Filter>System\Ps2\SPU2</Filter>
     </ClInclude>
