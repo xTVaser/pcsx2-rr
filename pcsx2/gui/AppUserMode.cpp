@@ -150,12 +150,12 @@ YAML::Node App_LoadSaveInstallSettings()
 
 void App_LoadInstallSettings(YAML::Node yaml)
 {
-	yaml.push_back(App_LoadSaveInstallSettings());
+	//yaml.push_back(App_LoadSaveInstallSettings());
 }
 
 void App_SaveInstallSettings( YAML::Node yaml )
 {
-	yaml.push_back(App_LoadSaveInstallSettings());
+	//yaml.push_back(App_LoadSaveInstallSettings());
 }
 
 
@@ -257,7 +257,7 @@ bool Pcsx2App::OpenInstallSettingsFile()
 
 
 #ifdef __WXMSW__
-	//conf_install = std::unique_ptr<nlohmann::json>(new wxRegConfig());
+	conf_install = std::unique_ptr<wxConfigBase>(new wxRegConfig());
 #else
 	// FIXME!!  Linux / Mac
 	// Where the heck should this information be stored?
@@ -318,7 +318,7 @@ void Pcsx2App::EstablishAppUserMode()
 	if (newYaml["RunWizard"])
 		runWizard = true;
 
-	App_LoadInstallSettings( newYaml );
+	//App_LoadInstallSettings( newYaml );
 
 	if( !Startup.ForceWizard)
 	{
@@ -329,7 +329,7 @@ void Pcsx2App::EstablishAppUserMode()
 	DoFirstTimeWizard();
 
 	// Save user's new settings
-	App_SaveInstallSettings( newYaml );
+	//App_SaveInstallSettings( newYaml );
 	AppConfig_OnChangedSettingsFolder( true );
 	AppSaveSettings();
 
