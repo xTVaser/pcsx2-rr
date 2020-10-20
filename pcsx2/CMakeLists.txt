@@ -41,6 +41,10 @@ endif()
 
 set(pcsx2FinalFlags ${pcsx2FinalFlags} ${CommonFlags})
 
+if(PORTAUDIO_FOUND)
+    set(pcsx2FinalFlags ${pcsx2FinalFlags} -DSPU2X_PORTAUDIO)
+endif()
+
 if(XDG_STD)
     set(pcsx2FinalFlags ${pcsx2FinalFlags} -DXDG_STD)
 endif()
@@ -222,6 +226,61 @@ set(pcsx2CDVDHeaders
 	CDVD/zlib_indexed.h
 	)
 
+# SPU2 sources
+set(pcsx2SPU2Sources
+	SPU2/ADSR.cpp
+	SPU2/Debug.cpp
+	SPU2/DplIIdecoder.cpp
+	SPU2/Dma.cpp
+	SPU2/Lowpass.cpp
+	SPU2/Mixer.cpp
+	SPU2/spu2.cpp
+	SPU2/ReadInput.cpp
+	SPU2/RegLog.cpp
+	SPU2/RegTable.cpp
+	SPU2/Reverb.cpp
+	SPU2/SndOut.cpp
+	SPU2/SndOut_SDL.cpp
+	SPU2/spu2freeze.cpp
+	SPU2/spu2replay.cpp
+	SPU2/spu2sys.cpp
+	SPU2/Timestretcher.cpp
+	SPU2/Wavedump_wav.cpp
+	SPU2/WavFile.cpp
+	SPU2/Linux/Alsa.cpp
+	SPU2/Linux/CfgHelpers.cpp
+	SPU2/Linux/Config.cpp
+	SPU2/Linux/ConfigDebug.cpp
+	SPU2/Linux/ConfigSoundTouch.cpp
+	SPU2/Linux/Dialogs.cpp
+	SPU2/wx/wxConfig.cpp
+    )
+
+if(PORTAUDIO_FOUND)
+    set(pcsx2SPU2Sources ${pcsx2SPU2Sources} SPU2/SndOut_Portaudio.cpp)
+endif()
+
+# SPU2 headers
+set(pcsx2SPU2Headers
+	SPU2/Config.h
+	SPU2/Debug.h
+	SPU2/defs.h
+	SPU2/Dma.h
+	SPU2/Global.h
+	SPU2/Lowpass.h
+	SPU2/Mixer.h
+	SPU2/spu2.h
+	SPU2/regs.h
+	SPU2/SndOut.h
+	SPU2/spdif.h
+	SPU2/spu2replay.h
+	SPU2/WavFile.h
+	SPU2/Linux/Alsa.h
+	SPU2/Linux/Config.h
+	SPU2/Linux/Dialogs.h
+	SPU2/wx/wxConfig.h
+)
+
 # DebugTools sources
 set(pcsx2DebugToolsSources
 	DebugTools/DebugInterface.cpp
@@ -366,7 +425,7 @@ set(pcsx2GuiHeaders
 	)
 
 # Warning: the declaration of the .h are mandatory in case of resources files. It will ensure the creation
-# from the bin2cpp tools at the good moment (ie .h must be created before the pcsx2 compilation)
+# from the bin2cpp tools at right good moment (ie .h must be created before the pcsx2 compilation)
 # Gui resources headers
 set(res_bin "${CMAKE_BINARY_DIR}/pcsx2/gui/Resources")
 set(res_src "${CMAKE_SOURCE_DIR}/pcsx2/gui/Resources")
@@ -478,25 +537,56 @@ set(pcsx2RDebugHeaders
 	RDebug/deci2_ttyp.h)
 
 # Recording sources
+set(rec_src "Recording")
+set(rec_vp_src "${rec_src}/VirtualPad")
 set(pcsx2RecordingSources
-	Recording/InputRecording.cpp
-	Recording/InputRecordingControls.cpp
-	Recording/InputRecordingFile.cpp
-	Recording/NewRecordingFrame.cpp
-	Recording/PadData.cpp
-	Recording/RecordingInputManager.cpp
-	Recording/VirtualPad.cpp
+	${rec_src}/InputRecording.cpp
+	${rec_src}/InputRecordingControls.cpp
+	${rec_src}/InputRecordingFile.cpp
+	${rec_src}/NewRecordingFrame.cpp
+	${rec_src}/PadData.cpp
+	${rec_vp_src}/VirtualPad.cpp
+	${rec_vp_src}/VirtualPadData.cpp
+	${rec_vp_src}/VirtualPadResources.cpp
 )
 
 # Recording headers
 set(pcsx2RecordingHeaders
-	Recording/InputRecording.h
-	Recording/InputRecordingControls.h
-	Recording/InputRecordingFile.h
-	Recording/NewRecordingFrame.h
-	Recording/PadData.h
-	Recording/RecordingInputManager.h
-	Recording/VirtualPad.h
+	${rec_src}/InputRecording.h
+	${rec_src}/InputRecordingControls.h
+	${rec_src}/InputRecordingFile.h
+	${rec_src}/NewRecordingFrame.h
+	${rec_src}/PadData.h
+	${rec_src}/Utilities/InputRecordingLogger.h
+	${rec_vp_src}/VirtualPad.h
+	${rec_vp_src}/VirtualPadData.h
+	${rec_vp_src}/VirtualPadResources.h
+)
+
+# Warning: the declaration of the .h are mandatory in case of resources files. It will ensure the creation
+# from the bin2cpp tools at the right moment (ie .h must be created before the pcsx2 compilation)
+# Recording - VirtualPad resources headers
+set(res_rec_vp_src "${CMAKE_SOURCE_DIR}/pcsx2/Recording/VirtualPad/img")
+set(pcsx2RecordingVirtualPadResources
+	${res_rec_vp_src}/circlePressed.h
+	${res_rec_vp_src}/controllerFull.h
+	${res_rec_vp_src}/controllerHalf.h
+	${res_rec_vp_src}/controllerThreeQuarters.h
+	${res_rec_vp_src}/crossPressed.h
+	${res_rec_vp_src}/downPressed.h
+	${res_rec_vp_src}/l1Pressed.h
+	${res_rec_vp_src}/l2Pressed.h
+	${res_rec_vp_src}/l3Pressed.h
+	${res_rec_vp_src}/leftPressed.h
+	${res_rec_vp_src}/r1Pressed.h
+	${res_rec_vp_src}/r2Pressed.h
+	${res_rec_vp_src}/r3Pressed.h
+	${res_rec_vp_src}/rightPressed.h
+	${res_rec_vp_src}/selectPressed.h
+	${res_rec_vp_src}/squarePressed.h
+	${res_rec_vp_src}/startPressed.h
+	${res_rec_vp_src}/trianglePressed.h
+	${res_rec_vp_src}/upPressed.h
 )
 
 # System sources
@@ -623,6 +713,8 @@ set(Common
 	${pcsx2Headers}
 	${pcsx2CDVDSources}
 	${pcsx2CDVDHeaders}
+	${pcsx2SPU2Sources}
+	${pcsx2SPU2Headers}
 	${pcsx2DebugToolsSources}
 	${pcsx2GuiSources}
 	${pcsx2GuiResources}
@@ -632,6 +724,7 @@ set(Common
 	${pcsx2ps2Sources}
 	${pcsx2ps2Headers}
 	${pcsx2RecordingSources}
+	${pcsx2RecordingVirtualPadResources}
 	${pcsx2RecordingHeaders}
 	${pcsx2SystemSources}
 	${pcsx2SystemHeaders}
@@ -683,22 +776,27 @@ set(pcsx2FinalSources
 set(pcsx2FinalLibs
     Utilities
     x86emitter
+    fmt::fmt
     ${wxWidgets_LIBRARIES}
     ${GTK2_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${AIO_LIBRARIES}
     ${GCOV_LIBRARIES}
+    ${ALSA_LIBRARIES}
+    ${SOUNDTOUCH_LIBRARIES}
+    ${SDL2_LIBRARIES}
     ${Platform_Libs}
 )
+
+if(PORTAUDIO_FOUND)
+    set(pcsx2FinalLibs ${pcsx2FinalLibs} ${PORTAUDIO_LIBRARIES})
+endif()
 
 if(BUILTIN_GS)
     set(pcsx2FinalLibs "${pcsx2FinalLibs} GSdx")
 endif()
 if(BUILTIN_PAD)
     set(pcsx2FinalLibs "${pcsx2FinalLibs} onepad-1.2.0")
-endif()
-if(BUILTIN_SPU2)
-    set(pcsx2FinalLibs "${pcsx2FinalLibs} spu2x-2.0.0")
 endif()
 if(BUILTIN_USB)
     set(pcsx2FinalLibs "${pcsx2FinalLibs} USBnull-0.7.0")
@@ -728,6 +826,14 @@ foreach(res_file IN ITEMS
         ConfigIcon_Cpu ConfigIcon_Gamefixes ConfigIcon_MemoryCard
         ConfigIcon_Paths ConfigIcon_Plugins ConfigIcon_Speedhacks ConfigIcon_Video Breakpoint_Active Breakpoint_Inactive)
     add_custom_command(OUTPUT  "${res_bin}/${res_file}.h" COMMAND perl ${CMAKE_SOURCE_DIR}/linux_various/hex2h.pl "${res_src}/${res_file}.png" "${res_bin}/${res_file}" )
+endforeach()
+
+### Generate Recording resource files
+### Drop them into the folder alongside the png files
+foreach(res_file IN ITEMS
+				circlePressed controllerFull controllerHalf controllerThreeQuarters crossPressed downPressed l1Pressed l2Pressed l3Pressed leftPressed
+				r1Pressed r2Pressed r3Pressed rightPressed selectPressed squarePressed startPressed trianglePressed upPressed)
+    add_custom_command(OUTPUT  "${res_rec_vp_src}/${res_file}.h" COMMAND perl ${CMAKE_SOURCE_DIR}/linux_various/hex2h.pl "${res_rec_vp_src}/${res_file}.png" "${res_rec_vp_src}/${res_file}" )
 endforeach()
 
 if(USE_VTUNE)

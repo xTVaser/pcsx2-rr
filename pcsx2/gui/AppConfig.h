@@ -186,6 +186,16 @@ public:
 		void SanityCheck();
 	};
 
+#ifndef DISABLE_RECORDING
+	struct InputRecordingOptions
+	{
+		wxPoint		VirtualPadPosition;
+
+		InputRecordingOptions();
+		void loadSave( IniInterface& conf );
+	};
+#endif
+
 	struct UiTemplateOptions {
 		UiTemplateOptions();
 		
@@ -259,6 +269,9 @@ public:
 	FolderOptions			Folders;
 	FilenameOptions			BaseFilenames;
 	FramerateOptions		Framerate;
+#ifndef DISABLE_RECORDING
+	InputRecordingOptions   inputRecording;
+#endif
 	UiTemplateOptions		Templates;
 
 	// PCSX2-core emulation options, which are passed to the emu core prior to initiating

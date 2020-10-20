@@ -410,7 +410,7 @@ static __ri void ipuBDEC(tIPU_CMD_BDEC bdec)
 
 static __fi bool ipuVDEC(u32 val)
 {
-	if (EmuConfig.Gamefixes.FMVinSoftwareHack || conf.gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
+	if (conf.gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
 		static int count = 0;
 		if (count++ > 5) {
 			if (!FMVstarted) {

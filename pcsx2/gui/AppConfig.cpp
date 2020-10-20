@@ -541,11 +541,24 @@ nlohmann::json AppConfig::LoadSave()
 
 	// Process various sub-components:
 
+<<<<<<< HEAD
 	json.push_back(Folders.LoadSave());
 	json.push_back(BaseFilenames.LoadSave());
 	json.push_back(Framerate.LoadSave());
 	//json.push_back(Templates.LoadSave());
 	return json;
+=======
+	Folders			.LoadSave( ini );
+	BaseFilenames	.LoadSave( ini );
+	GSWindow		.LoadSave( ini );
+	Framerate		.LoadSave( ini );
+#ifndef DISABLE_RECORDING
+	inputRecording.loadSave(ini);
+#endif
+	Templates		.LoadSave( ini );
+
+	ini.Flush();
+>>>>>>> master/master
 }
 
 // ------------------------------------------------------------------------
@@ -657,6 +670,20 @@ nlohmann::json AppConfig::FilenameOptions::LoadSave()
 
    return appC;
 }
+
+#ifndef DISABLE_RECORDING
+AppConfig::InputRecordingOptions::InputRecordingOptions()
+	: VirtualPadPosition(wxDefaultPosition)
+{
+}
+
+void AppConfig::InputRecordingOptions::loadSave(IniInterface& ini)
+{
+	ScopedIniGroup path(ini, L"InputRecording");
+
+	IniEntry(VirtualPadPosition);
+}
+#endif
 
 // ----------------------------------------------------------------------------
 AppConfig::FramerateOptions::FramerateOptions()

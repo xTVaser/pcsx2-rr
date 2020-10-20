@@ -536,12 +536,6 @@ void DoFmvSwitch(bool on)
 			if (GSPanel* viewport = gsFrame->GetViewport())
 				viewport->DoResize();
 	}
-
-	if (EmuConfig.Gamefixes.FMVinSoftwareHack) {
-		ScopedCoreThreadPause paused_core(new SysExecEvent_SaveSinglePlugin(PluginId_GS));
-		renderswitch = !renderswitch;
-		paused_core.AllowResume();
-	}
 }
 
 void Pcsx2App::LogicalVsync()
@@ -554,7 +548,7 @@ void Pcsx2App::LogicalVsync()
 
 	FpsManager.DoFrame();
 
-	if (EmuConfig.Gamefixes.FMVinSoftwareHack || conf.gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
+	if (conf.gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
 		if (EnableFMV) {
 			DevCon.Warning("FMV on");
 			DoFmvSwitch(true);
@@ -1064,6 +1058,13 @@ void Pcsx2App::OpenGsPanel()
 #endif
 
 	gsFrame->ShowFullScreen( conf.gsWindow.IsFullscreen );
+
+#ifndef DISABLE_RECORDING
+	// Disable recording controls that only make sense if the game is running
+	sMainFrame.enableRecordingMenuItem(MenuId_Recording_FrameAdvance, true);
+	sMainFrame.enableRecordingMenuItem(MenuId_Recording_TogglePause, true);
+	sMainFrame.enableRecordingMenuItem(MenuId_Recording_ToggleRecordingMode, g_InputRecording.IsActive());
+#endif
 }
 
 void Pcsx2App::CloseGsPanel()
@@ -1076,6 +1077,12 @@ void Pcsx2App::CloseGsPanel()
 		if (GSPanel* woot = gsFrame->GetViewport())
 			woot->Destroy();
 	}
+#ifndef DISABLE_RECORDING
+	// Disable recording controls that only make sense if the game is running
+	sMainFrame.enableRecordingMenuItem(MenuId_Recording_FrameAdvance, false);
+	sMainFrame.enableRecordingMenuItem(MenuId_Recording_TogglePause, false);
+	sMainFrame.enableRecordingMenuItem(MenuId_Recording_ToggleRecordingMode, false);
+#endif
 }
 
 void Pcsx2App::OnGsFrameClosed( wxWindowID id )

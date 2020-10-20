@@ -1,0 +1,1179 @@
+Doing a clean build.
+Building pcsx2 with -DCMAKE_BUILD_PO=FALSE -GNinja
+-- The C compiler identification is Clang 10.0.1
+-- The CXX compiler identification is Clang 10.0.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/clang - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/clang++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Build openSUSE specific
+-- Disabling the inclusion of the binary compile date.
+-- Building with Clang/LLVM.
+-- BuildType set to Devel by default
+-- Cross compilation is disabled.
+-- Compiling a x86_64 build on a x86_64 host.
+-- Found ALSA: /usr/lib64/libasound.so (found version "1.2.3.2") 
+-- Could NOT find PCAP (missing: PCAP_LIBRARY PCAP_INCLUDE_DIR) 
+-- Performing Test PCAP_LINKS_SOLO
+-- Performing Test PCAP_LINKS_SOLO - Success
+-- Looking for pcap_get_pfring_id
+-- Looking for pcap_get_pfring_id - not found
+-- Found LibXml2: /usr/lib64/libxml2.so (found version "2.9.10") 
+-- Found Freetype: /usr/lib64/libfreetype.so (found version "2.10.2") 
+-- Found Gettext: /usr/bin/msgmerge (found version "0.21") 
+-- Found Git: /usr/bin/git (found version "2.28.0") 
+-- Looking for lzma_auto_decoder in /usr/lib64/liblzma.so
+-- Looking for lzma_auto_decoder in /usr/lib64/liblzma.so - found
+-- Looking for lzma_easy_encoder in /usr/lib64/liblzma.so
+-- Looking for lzma_easy_encoder in /usr/lib64/liblzma.so - found
+-- Looking for lzma_lzma_preset in /usr/lib64/liblzma.so
+-- Looking for lzma_lzma_preset in /usr/lib64/liblzma.so - found
+-- Found LibLZMA: /usr/lib64/liblzma.so (found version "5.2.5") 
+-- Found OpenGL: /usr/lib64/libOpenGL.so   
+-- Found ZLIB: /usr/lib64/libz.so (found version "1.2.11") 
+-- Found PNG: /usr/lib64/libpng.so (found version "1.6.37") 
+-- Could NOT find Vtune (missing: VTUNE_LIBRARIES VTUNE_INCLUDE_DIRS) 
+-- Found wxWidgets: -L/usr/lib64;-pthread;;;-lwx_baseu-3.0;-lwx_gtk2u_core-3.0;-lwx_gtk2u_adv-3.0 (found version "3.0.4") 
+-- Found Libc: /usr/lib64/librt.so;/usr/lib64/libdl.so;/usr/lib64/libm.so  
+-- Found PkgConfig: /usr/bin/pkg-config (found version "1.7.3") 
+-- EGL found pkg
+-- X11_XCB found pkg
+-- AIO found
+-- LIBUDEV found pkg
+-- PORTAUDIO found
+-- SOUNDTOUCH found pkg
+-- SDL2 found pkg
+-- Found X11: /usr/include   
+-- Looking for XOpenDisplay in /usr/lib64/libX11.so;/usr/lib64/libXext.so
+-- Looking for XOpenDisplay in /usr/lib64/libX11.so;/usr/lib64/libXext.so - found
+-- Looking for gethostbyname
+-- Looking for gethostbyname - found
+-- Looking for connect
+-- Looking for connect - found
+-- Looking for remove
+-- Looking for remove - found
+-- Looking for shmat
+-- Looking for shmat - found
+-- Looking for IceConnectionNumber in ICE
+-- Looking for IceConnectionNumber in ICE - found
+-- Found GTK2_GTK: /usr/lib64/libgtk-x11-2.0.so  
+-- Found the following HarfBuzz libraries:
+--  HarfBuzz (required): /usr/lib64/libharfbuzz.so
+-- Found HarfBuzz: /usr/include/harfbuzz (found version "2.7.2") 
+-- Skip build of dev9ghzdrk: missing dependencies:check these libraries -> gtk2, pcap, libxml2
+Using precompiled headers.
+-- Found PythonInterp: /usr/bin/python3.8 (found version "3.8.5") 
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/musungo/coding/json/build
+[0/2] Re-checking globbed directories...
+[1/584] Generating ../ca_ES__pcsx2_Main.gmo
+[2/584] Generating ../de_DE__pcsx2_Main.gmo
+[3/584] Generating ../es_ES__pcsx2_Main.gmo
+[4/584] Generating ../fr_FR__pcsx2_Main.gmo
+[5/584] Generating ../ja_JP__pcsx2_Main.gmo
+[6/584] Generating ../ar_SA__pcsx2_Main.gmo
+[7/584] Generating ../da_DK__pcsx2_Main.gmo
+[8/584] Generating ../fi_FI__pcsx2_Main.gmo
+[9/584] Generating ../hr_HR__pcsx2_Main.gmo
+[10/584] Generating ../id_ID__pcsx2_Main.gmo
+[11/584] Generating ../lt_LT__pcsx2_Main.gmo
+[12/584] Generating ../cs_CZ__pcsx2_Main.gmo
+[13/584] Generating ../hu_HU__pcsx2_Main.gmo
+[14/584] Generating ../it_IT__pcsx2_Main.gmo
+[15/584] Generating ../ko_KR__pcsx2_Main.gmo
+[16/584] Generating ../ms_MY__pcsx2_Main.gmo
+[17/584] Generating ../nl_NL__pcsx2_Main.gmo
+[18/584] Generating ../ar_SA__pcsx2_Iconized.gmo
+[19/584] Generating ../ca_ES__pcsx2_Iconized.gmo
+[20/584] Generating ../pl_PL__pcsx2_Main.gmo
+[21/584] Generating ../pt_BR__pcsx2_Main.gmo
+[22/584] Generating ../sv_SE__pcsx2_Main.gmo
+[23/584] Generating ../cs_CZ__pcsx2_Iconized.gmo
+[24/584] Generating ../de_DE__pcsx2_Iconized.gmo
+[25/584] Generating ../nb_NO__pcsx2_Main.gmo
+[26/584] Generating ../ru_RU__pcsx2_Main.gmo
+[27/584] Generating ../th_TH__pcsx2_Main.gmo
+[28/584] Generating ../tr_TR__pcsx2_Main.gmo
+[29/584] Generating ../zh_CN__pcsx2_Main.gmo
+[30/584] Generating ../zh_TW__pcsx2_Main.gmo
+[31/584] Generating ../da_DK__pcsx2_Iconized.gmo
+[32/584] Generating ../fi_FI__pcsx2_Iconized.gmo
+[33/584] Generating ../fr_FR__pcsx2_Iconized.gmo
+[34/584] Generating ../hr_HR__pcsx2_Iconized.gmo
+[35/584] Generating ../es_ES__pcsx2_Iconized.gmo
+[36/584] Generating ../hu_HU__pcsx2_Iconized.gmo
+[37/584] Generating ../id_ID__pcsx2_Iconized.gmo
+[38/584] Generating ../it_IT__pcsx2_Iconized.gmo
+[39/584] Generating ../ja_JP__pcsx2_Iconized.gmo
+[40/584] Generating ../nl_NL__pcsx2_Iconized.gmo
+[41/584] Generating ../ko_KR__pcsx2_Iconized.gmo
+[42/584] Generating ../lt_LT__pcsx2_Iconized.gmo
+[43/584] Generating ../ms_MY__pcsx2_Iconized.gmo
+[44/584] Generating ../nb_NO__pcsx2_Iconized.gmo
+[45/584] Generating ../pl_PL__pcsx2_Iconized.gmo
+[46/584] Generating ../pt_BR__pcsx2_Iconized.gmo
+[47/584] Generating ../ru_RU__pcsx2_Iconized.gmo
+[48/584] Generating ../sv_SE__pcsx2_Iconized.gmo
+[49/584] Generating ../th_TH__pcsx2_Iconized.gmo
+[50/584] Generating ../tr_TR__pcsx2_Iconized.gmo
+[51/584] Generating ../zh_CN__pcsx2_Iconized.gmo
+[52/584] Generating ../zh_TW__pcsx2_Iconized.gmo
+[53/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/binary.cpp.o
+[54/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/node.cpp.o
+[55/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/directives.cpp.o
+[56/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/contrib/graphbuilder.cpp.o
+[57/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/contrib/graphbuilderadapter.cpp.o
+[58/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/exceptions.cpp.o
+[59/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/depthguard.cpp.o
+[60/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/null.cpp.o
+[61/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/emit.cpp.o
+[62/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/memory.cpp.o
+[63/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/exp.cpp.o
+[64/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/ostream_wrapper.cpp.o
+[65/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/emitfromevents.cpp.o
+[66/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/emitter.cpp.o
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitter.cpp:3:
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.h:12:
+../3rdparty/yaml-cpp/yaml-cpp/src/emitterstate.h:28:24: warning: declaration shadows a variable in namespace 'YAML' [-Wshadow]
+  enum value { NoType, Flow, Block };
+                       ^
+../3rdparty/yaml-cpp/yaml-cpp/include/yaml-cpp/emittermanip.h:58:3: note: previous declaration is here
+  Flow,
+  ^
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitter.cpp:3:
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.h:12:
+../3rdparty/yaml-cpp/yaml-cpp/src/emitterstate.h:28:30: warning: declaration shadows a variable in namespace 'YAML' [-Wshadow]
+  enum value { NoType, Flow, Block };
+                             ^
+../3rdparty/yaml-cpp/yaml-cpp/include/yaml-cpp/emittermanip.h:59:3: note: previous declaration is here
+  Block,
+  ^
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitter.cpp:3:
+../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.h:24:23: warning: declaration shadows a variable in namespace 'YAML' [-Wshadow]
+  enum value { Plain, SingleQuoted, DoubleQuoted, Literal };
+                      ^
+../3rdparty/yaml-cpp/yaml-cpp/include/yaml-cpp/emittermanip.h:26:3: note: previous declaration is here
+  SingleQuoted,
+  ^
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitter.cpp:3:
+../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.h:24:37: warning: declaration shadows a variable in namespace 'YAML' [-Wshadow]
+  enum value { Plain, SingleQuoted, DoubleQuoted, Literal };
+                                    ^
+../3rdparty/yaml-cpp/yaml-cpp/include/yaml-cpp/emittermanip.h:27:3: note: previous declaration is here
+  DoubleQuoted,
+  ^
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitter.cpp:3:
+../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.h:24:51: warning: declaration shadows a variable in namespace 'YAML' [-Wshadow]
+  enum value { Plain, SingleQuoted, DoubleQuoted, Literal };
+                                                  ^
+../3rdparty/yaml-cpp/yaml-cpp/include/yaml-cpp/emittermanip.h:28:3: note: previous declaration is here
+  Literal,
+  ^
+5 warnings generated.
+[67/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/convert.cpp.o
+[68/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/emitterstate.cpp.o
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitterstate.cpp:3:
+../3rdparty/yaml-cpp/yaml-cpp/src/emitterstate.h:28:24: warning: declaration shadows a variable in namespace 'YAML' [-Wshadow]
+  enum value { NoType, Flow, Block };
+                       ^
+../3rdparty/yaml-cpp/yaml-cpp/include/yaml-cpp/emittermanip.h:58:3: note: previous declaration is here
+  Flow,
+  ^
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitterstate.cpp:3:
+../3rdparty/yaml-cpp/yaml-cpp/src/emitterstate.h:28:30: warning: declaration shadows a variable in namespace 'YAML' [-Wshadow]
+  enum value { NoType, Flow, Block };
+                             ^
+../3rdparty/yaml-cpp/yaml-cpp/include/yaml-cpp/emittermanip.h:59:3: note: previous declaration is here
+  Block,
+  ^
+2 warnings generated.
+[69/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/regex_yaml.cpp.o
+[70/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/nodebuilder.cpp.o
+[71/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/nodeevents.cpp.o
+[72/584] Generating GSdxResources.h
+[73/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/emitterutils.cpp.o
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.cpp:5:
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.h:12:
+../3rdparty/yaml-cpp/yaml-cpp/src/emitterstate.h:28:24: warning: declaration shadows a variable in namespace 'YAML' [-Wshadow]
+  enum value { NoType, Flow, Block };
+                       ^
+../3rdparty/yaml-cpp/yaml-cpp/include/yaml-cpp/emittermanip.h:58:3: note: previous declaration is here
+  Flow,
+  ^
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.cpp:5:
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.h:12:
+../3rdparty/yaml-cpp/yaml-cpp/src/emitterstate.h:28:30: warning: declaration shadows a variable in namespace 'YAML' [-Wshadow]
+  enum value { NoType, Flow, Block };
+                             ^
+../3rdparty/yaml-cpp/yaml-cpp/include/yaml-cpp/emittermanip.h:59:3: note: previous declaration is here
+  Block,
+  ^
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.cpp:5:
+../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.h:24:23: warning: declaration shadows a variable in namespace 'YAML' [-Wshadow]
+  enum value { Plain, SingleQuoted, DoubleQuoted, Literal };
+                      ^
+../3rdparty/yaml-cpp/yaml-cpp/include/yaml-cpp/emittermanip.h:26:3: note: previous declaration is here
+  SingleQuoted,
+  ^
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.cpp:5:
+../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.h:24:37: warning: declaration shadows a variable in namespace 'YAML' [-Wshadow]
+  enum value { Plain, SingleQuoted, DoubleQuoted, Literal };
+                                    ^
+../3rdparty/yaml-cpp/yaml-cpp/include/yaml-cpp/emittermanip.h:27:3: note: previous declaration is here
+  DoubleQuoted,
+  ^
+In file included from ../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.cpp:5:
+../3rdparty/yaml-cpp/yaml-cpp/src/emitterutils.h:24:51: warning: declaration shadows a variable in namespace 'YAML' [-Wshadow]
+  enum value { Plain, SingleQuoted, DoubleQuoted, Literal };
+                                                  ^
+../3rdparty/yaml-cpp/yaml-cpp/include/yaml-cpp/emittermanip.h:28:3: note: previous declaration is here
+  Literal,
+  ^
+5 warnings generated.
+[74/584] Generating GSdxResources.cpp
+[75/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/node_data.cpp.o
+[76/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/parse.cpp.o
+[77/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/parser.cpp.o
+[78/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/tag.cpp.o
+[79/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/scanscalar.cpp.o
+[80/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/simplekey.cpp.o
+[81/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/scantag.cpp.o
+[82/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/stream.cpp.o
+[83/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/scanner.cpp.o
+[84/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/cmake_pch.hxx.pch
+[85/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/cmake_pch.hxx.pch
+[86/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/cmake_pch.hxx.pch
+[87/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/singledocparser.cpp.o
+[88/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/AlignedMalloc.cpp.o
+[89/584] Building CXX object 3rdparty/yaml-cpp/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/scantoken.cpp.o
+[90/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSAlignedClass.cpp.o
+[91/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/VirtualMemory.cpp.o
+../common/src/Utilities/VirtualMemory.cpp:93:9: warning: implicit conversion of NULL constant to 'uptr' (aka 'unsigned long') [-Wnull-conversion]
+        SafeSysMunmap(m_baseptr, reserved_bytes);
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/musungo/coding/json/build/../common/include/Utilities/General.h:260:57: note: expanded from macro 'SafeSysMunmap'
+    ((void)(HostSys::Munmap((uptr)(ptr), size), (ptr) = NULL))
+                                                      ~ ^
+../common/src/Utilities/VirtualMemory.cpp:108:9: warning: implicit conversion of NULL constant to 'uptr' (aka 'unsigned long') [-Wnull-conversion]
+        SafeSysMunmap(m_baseptr, reserved_bytes);
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/musungo/coding/json/build/../common/include/Utilities/General.h:260:57: note: expanded from macro 'SafeSysMunmap'
+    ((void)(HostSys::Munmap((uptr)(ptr), size), (ptr) = NULL))
+                                                      ~ ^
+2 warnings generated.
+[92/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSCodeBuffer.cpp.o
+[93/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSDrawingContext.cpp.o
+[94/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/Console.cpp.o
+[95/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSBlock.cpp.o
+[96/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSClut.cpp.o
+[97/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSCrc.cpp.o
+[98/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/EventSource.cpp.o
+[99/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/PrecompiledHeader.cpp.o
+[100/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/Linux/LnxHostSys.cpp.o
+[101/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/Perf.cpp.o
+[102/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSDump.cpp.o
+[103/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/FastFormatString.cpp.o
+[104/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/CheckedStaticBox.cpp.o
+[105/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/RwMutex.cpp.o
+[106/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/pxTranslate.cpp.o
+[107/584] Building CXX object plugins/dev9null/CMakeFiles/dev9null-0.5.0.dir/DEV9.cpp.o
+[108/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSCapture.cpp.o
+[109/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/Exceptions.cpp.o
+[110/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/pxStreams.cpp.o
+[111/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/StringHelpers.cpp.o
+[112/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GS.cpp.o
+[113/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/Linux/LnxThreads.cpp.o
+[114/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/Mutex.cpp.o
+[115/584] Building CXX object plugins/LilyPad/CMakeFiles/LilyPad-0.11.0.dir/DeviceEnumerator.cpp.o
+[116/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/pxWindowTextWriter.cpp.o
+[117/584] Building CXX object plugins/LilyPad/CMakeFiles/LilyPad-0.11.0.dir/InputManager.cpp.o
+[118/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/pxCheckBox.cpp.o
+[119/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/Linux/LnxMisc.cpp.o
+[120/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/AlignedMalloc.cpp.o
+[121/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/pxStaticText.cpp.o
+[122/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/Console.cpp.o
+[123/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/VirtualMemory.cpp.o
+../common/src/Utilities/VirtualMemory.cpp:93:9: warning: implicit conversion of NULL constant to 'uptr' (aka 'unsigned long') [-Wnull-conversion]
+        SafeSysMunmap(m_baseptr, reserved_bytes);
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/musungo/coding/json/build/../common/include/Utilities/General.h:260:57: note: expanded from macro 'SafeSysMunmap'
+    ((void)(HostSys::Munmap((uptr)(ptr), size), (ptr) = NULL))
+                                                      ~ ^
+../common/src/Utilities/VirtualMemory.cpp:108:9: warning: implicit conversion of NULL constant to 'uptr' (aka 'unsigned long') [-Wnull-conversion]
+        SafeSysMunmap(m_baseptr, reserved_bytes);
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/home/musungo/coding/json/build/../common/include/Utilities/General.h:260:57: note: expanded from macro 'SafeSysMunmap'
+    ((void)(HostSys::Munmap((uptr)(ptr), size), (ptr) = NULL))
+                                                      ~ ^
+2 warnings generated.
+[124/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/ThreadingDialogs.cpp.o
+[125/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/Linux/LnxHostSys.cpp.o
+[126/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/pxRadioPanel.cpp.o
+[127/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/EventSource.cpp.o
+[128/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/ThreadTools.cpp.o
+[129/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/FastFormatString.cpp.o
+[130/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/Perf.cpp.o
+[131/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/wxGuiTools.cpp.o
+[132/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/PrecompiledHeader.cpp.o
+[133/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/pxTranslate.cpp.o
+[134/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/Semaphore.cpp.o
+[135/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/wxAppWithHelpers.cpp.o
+[136/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/RwMutex.cpp.o
+[137/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/pxStreams.cpp.o
+[138/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/wxHelpers.cpp.o
+../common/src/Utilities/wxHelpers.cpp:207:16: warning: unused variable 'screenRect' [-Wunused-variable]
+        wxRect screenRect(GetScreenRect());
+               ^
+../common/src/Utilities/wxHelpers.cpp:283:24: warning: unused variable 'size' [-Wunused-variable]
+                wxSize size(screenRect.GetSize());
+                       ^
+../common/src/Utilities/wxHelpers.cpp:278:21: warning: unused variable 'pos' [-Wunused-variable]
+            wxPoint pos(screenRect.GetPosition());
+                    ^
+3 warnings generated.
+[139/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/CheckedStaticBox.cpp.o
+[140/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/Exceptions.cpp.o
+[141/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/Mutex.cpp.o
+[142/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/Linux/LnxThreads.cpp.o
+[143/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/Linux/LnxMisc.cpp.o
+[144/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/StringHelpers.cpp.o
+[145/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/bmi.cpp.o
+[146/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/pxCheckBox.cpp.o
+[147/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/fpu.cpp.o
+[148/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/cpudetect.cpp.o
+[149/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/pxWindowTextWriter.cpp.o
+[150/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/pxStaticText.cpp.o
+[151/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/pxRadioPanel.cpp.o
+[152/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/ThreadTools.cpp.o
+[153/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/ThreadingDialogs.cpp.o
+[154/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/groups.cpp.o
+[155/584] Linking CXX static library 3rdparty/yaml-cpp/yaml-cpp/libyaml-cpp.a
+[156/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/legacy.cpp.o
+[157/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/jmp.cpp.o
+[158/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/PrecompiledHeader.cpp.o
+[159/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/legacy_sse.cpp.o
+[160/584] Linking CXX shared module plugins/dev9null/libdev9null-0.5.0.so
+[161/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities_NO_TLS.dir/PathUtils.cpp.o
+[162/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/movs.cpp.o
+[163/584] Linking CXX static library common/src/Utilities/libUtilities_NO_TLS.a
+[164/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/LnxCpuDetect.cpp.o
+[165/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/Semaphore.cpp.o
+[166/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/wxGuiTools.cpp.o
+[167/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/simd.cpp.o
+[168/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/wxHelpers.cpp.o
+../common/src/Utilities/wxHelpers.cpp:207:16: warning: unused variable 'screenRect' [-Wunused-variable]
+        wxRect screenRect(GetScreenRect());
+               ^
+../common/src/Utilities/wxHelpers.cpp:283:24: warning: unused variable 'size' [-Wunused-variable]
+                wxSize size(screenRect.GetSize());
+                       ^
+../common/src/Utilities/wxHelpers.cpp:278:21: warning: unused variable 'pos' [-Wunused-variable]
+            wxPoint pos(screenRect.GetPosition());
+                    ^
+3 warnings generated.
+[169/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSdxResources.cpp.o
+[170/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/wxAppWithHelpers.cpp.o
+[171/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSLocalMemory.cpp.o
+[172/584] Building CXX object common/src/x86emitter/CMakeFiles/x86emitter.dir/x86emitter.cpp.o
+[173/584] Linking CXX static library common/src/x86emitter/libx86emitter.a
+[174/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSPerfMon.cpp.o
+[175/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSLzma.cpp.o
+[176/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSTables.cpp.o
+[177/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/stdafx.cpp.o
+[178/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSVector.cpp.o
+[179/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSPng.cpp.o
+[180/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/Common/GSTexture.cpp.o
+[181/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/Common/GSDevice.cpp.o
+[182/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/Common/GSFunctionMap.cpp.o
+[183/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/Null/GSDeviceNull.cpp.o
+[184/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/Common/GSDirtyRect.cpp.o
+[185/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSUtil.cpp.o
+[186/584] Building CXX object common/src/Utilities/CMakeFiles/Utilities.dir/PathUtils.cpp.o
+[187/584] Linking CXX static library common/src/Utilities/libUtilities.a
+[188/584] Generating gui/Resources/AppIcon16.h
+[189/584] Generating gui/Resources/AppIcon32.h
+[190/584] Generating gui/Resources/AppIcon64.h
+[191/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/Null/GSTextureNull.cpp.o
+[192/584] Generating gui/Resources/ButtonIcon_Camera.h
+[193/584] Generating gui/Resources/ConfigIcon_Cpu.h
+[194/584] Generating gui/Resources/BackgroundLogo.h
+[195/584] Generating gui/Resources/ConfigIcon_Gamefixes.h
+[196/584] Generating gui/Resources/Breakpoint_Inactive.h
+[197/584] Generating gui/Resources/ConfigIcon_MemoryCard.h
+[198/584] Generating gui/Resources/ConfigIcon_Paths.h
+[199/584] Generating gui/Resources/ConfigIcon_Plugins.h
+[200/584] Generating gui/Resources/ConfigIcon_Speedhacks.h
+[201/584] Generating gui/Resources/ConfigIcon_Video.h
+[202/584] Generating gui/Resources/Logo.h
+[203/584] Generating gui/Resources/Breakpoint_Active.h
+[204/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/Common/GSOsdManager.cpp.o
+[205/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/Null/GSRendererNull.cpp.o
+[206/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSdx.cpp.o
+[207/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/Common/GSRenderer.cpp.o
+[208/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/HW/GSHwHack.cpp.o
+[209/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSDrawScanlineCodeGenerator.x64.avx2.cpp.o
+[210/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSDrawScanlineCodeGenerator.x64.cpp.o
+../plugins/GSdx/Renderers/SW/GSDrawScanlineCodeGenerator.x64.cpp:110:18: warning: unused variable 's_offsets' [-Wunused-const-variable]
+static const int s_offsets[4] = {0, 2, 8, 10};
+                 ^
+1 warning generated.
+[211/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSDrawScanlineCodeGenerator.x86.cpp.o
+[212/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSDrawScanlineCodeGenerator.x86.avx.cpp.o
+[213/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSDrawScanline.cpp.o
+[214/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSDrawScanlineCodeGenerator.cpp.o
+[215/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/HW/GSRendererHW.cpp.o
+[216/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSDrawScanlineCodeGenerator.x86.avx2.cpp.o
+[217/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/HW/GSTextureCache.cpp.o
+[218/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/GSState.cpp.o
+[219/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSRasterizer.cpp.o
+[220/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSSetupPrimCodeGenerator.x86.cpp.o
+[221/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/Common/GSVertexTrace.cpp.o
+[222/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSSetupPrimCodeGenerator.x64.avx2.cpp.o
+[223/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSSetupPrimCodeGenerator.x64.cpp.o
+[224/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSSetupPrimCodeGenerator.cpp.o
+[225/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSSetupPrimCodeGenerator.x86.avx2.cpp.o
+[226/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSTextureSW.cpp.o
+[227/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSDrawScanlineCodeGenerator.x64.avx.cpp.o
+../plugins/GSdx/Renderers/SW/GSDrawScanlineCodeGenerator.x64.avx.cpp:140:16: warning: use of logical '&&' with constant operand [-Wconstant-logical-operand]
+        if(m_sel.mmin && 0)
+                      ^  ~
+../plugins/GSdx/Renderers/SW/GSDrawScanlineCodeGenerator.x64.avx.cpp:140:16: note: use '&' for a bitwise operation
+        if(m_sel.mmin && 0)
+                      ^~
+                      &
+../plugins/GSdx/Renderers/SW/GSDrawScanlineCodeGenerator.x64.avx.cpp:140:16: note: remove constant to silence this warning
+        if(m_sel.mmin && 0)
+                     ~^~~~
+../plugins/GSdx/Renderers/SW/GSDrawScanlineCodeGenerator.x64.avx.cpp:58:18: warning: unused variable '_rz_r14' [-Wunused-const-variable]
+static const int _rz_r14 = -8 * 4;
+                 ^
+../plugins/GSdx/Renderers/SW/GSDrawScanlineCodeGenerator.x64.avx.cpp:59:18: warning: unused variable '_rz_r15' [-Wunused-const-variable]
+static const int _rz_r15 = -8 * 5;
+                 ^
+3 warnings generated.
+[228/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/OpenGL/GLState.cpp.o
+[229/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSSetupPrimCodeGenerator.x64.avx.cpp.o
+[230/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSSetupPrimCodeGenerator.x86.avx.cpp.o
+[231/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/OpenGL/GLLoader.cpp.o
+[232/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/cmake_pch.hxx.pch
+[233/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSRendererSW.cpp.o
+[234/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Window/GSSetting.cpp.o
+[235/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/OpenGL/GSTextureOGL.cpp.o
+[236/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/SW/GSTextureCacheSW.cpp.o
+[237/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/OpenGL/GSTextureCacheOGL.cpp.o
+[238/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/OpenGL/GSShaderOGL.cpp.o
+[239/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Window/GSWndEGL.cpp.o
+[240/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Window/GSWnd.cpp.o
+[241/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/OpenGL/GSRendererOGL.cpp.o
+[242/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/OutputIsoFile.cpp.o
+[243/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Window/GSLinuxDialog.cpp.o
+In file included from ../plugins/GSdx/Window/GSLinuxDialog.cpp:23:
+In file included from /usr/include/gtk-2.0/gtk/gtk.h:33:
+In file included from /usr/include/gtk-2.0/gtk/gtkaboutdialog.h:32:
+In file included from /usr/include/gtk-2.0/gtk/gtkdialog.h:35:
+In file included from /usr/include/gtk-2.0/gtk/gtkwindow.h:36:
+In file included from /usr/include/gtk-2.0/gtk/gtkbin.h:35:
+In file included from /usr/include/gtk-2.0/gtk/gtkcontainer.h:35:
+In file included from /usr/include/gtk-2.0/gtk/gtkwidget.h:36:
+In file included from /usr/include/gtk-2.0/gtk/gtkobject.h:37:
+/usr/include/gtk-2.0/gtk/gtktypeutils.h:236:34: warning: 'GTypeDebugFlags' is deprecated [-Wdeprecated-declarations]
+void            gtk_type_init   (GTypeDebugFlags    debug_flags);
+                                 ^
+/usr/include/glib-2.0/gobject/gtype.h:685:19: note: 'GTypeDebugFlags' has been explicitly marked deprecated here
+} GTypeDebugFlags GLIB_DEPRECATED_TYPE_IN_2_36;
+                  ^
+/usr/include/glib-2.0/glib/gversionmacros.h:500:49: note: expanded from macro 'GLIB_DEPRECATED_TYPE_IN_2_36'
+# define GLIB_DEPRECATED_TYPE_IN_2_36           GLIB_DEPRECATED_TYPE
+                                                ^
+/usr/include/glib-2.0/glib/gmacros.h:1013:30: note: expanded from macro 'GLIB_DEPRECATED_TYPE'
+#define GLIB_DEPRECATED_TYPE G_DEPRECATED
+                             ^
+/usr/include/glib-2.0/glib/gmacros.h:942:37: note: expanded from macro 'G_DEPRECATED'
+#define G_DEPRECATED __attribute__((__deprecated__))
+                                    ^
+In file included from ../plugins/GSdx/Window/GSLinuxDialog.cpp:23:
+In file included from /usr/include/gtk-2.0/gtk/gtk.h:126:
+In file included from /usr/include/gtk-2.0/gtk/gtkmenutoolbutton.h:30:
+In file included from /usr/include/gtk-2.0/gtk/gtktoolbutton.h:30:
+In file included from /usr/include/gtk-2.0/gtk/gtktoolitem.h:31:
+/usr/include/gtk-2.0/gtk/gtktooltips.h:73:3: warning: 'GTimeVal' is deprecated: Use 'GDateTime' instead [-Wdeprecated-declarations]
+  GTimeVal last_popdown;
+  ^
+/usr/include/glib-2.0/glib/gtypes.h:545:35: note: 'GTimeVal' has been explicitly marked deprecated here
+typedef struct _GTimeVal GTimeVal GLIB_DEPRECATED_TYPE_IN_2_62_FOR(GDateTime);
+                                  ^
+/usr/include/glib-2.0/glib/gversionmacros.h:909:49: note: expanded from macro 'GLIB_DEPRECATED_TYPE_IN_2_62_FOR'
+# define GLIB_DEPRECATED_TYPE_IN_2_62_FOR(f)    GLIB_DEPRECATED_TYPE_FOR(f)
+                                                ^
+/usr/include/glib-2.0/glib/gmacros.h:1014:37: note: expanded from macro 'GLIB_DEPRECATED_TYPE_FOR'
+#define GLIB_DEPRECATED_TYPE_FOR(f) G_DEPRECATED_FOR(f)
+                                    ^
+/usr/include/glib-2.0/glib/gmacros.h:950:44: note: expanded from macro 'G_DEPRECATED_FOR'
+#define G_DEPRECATED_FOR(f) __attribute__((__deprecated__("Use '" #f "' instead")))
+                                           ^
+2 warnings generated.
+[244/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ix86-32/iR5900Arit.cpp.o
+[245/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/COP2.cpp.o
+[246/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/COP0.cpp.o
+[247/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Cache.cpp.o
+[248/584] Building CXX object plugins/GSdx/CMakeFiles/GSdx.dir/Renderers/OpenGL/GSDeviceOGL.cpp.o
+[249/584] Building CXX object plugins/LilyPad/CMakeFiles/LilyPad-0.11.0.dir/Linux/Config.cpp.o
+In file included from ../plugins/LilyPad/Linux/Config.cpp:18:
+../plugins/LilyPad/./Global.h:53:32: warning: 'sizeof (buf)' will return the size of the pointer, not the array itself [-Wsizeof-pointer-div]
+    vswprintf(buf, sizeof(buf) / sizeof(buf[0]), format, a);
+                   ~~~~~~~~~~~ ^
+../plugins/LilyPad/Linux/Config.cpp:502:13: note: in instantiation of function template specialization 'wsprintfW<wchar_t *>' requested here
+            wsprintfW(newName, L"[Detached] %s", dev->displayName);
+            ^
+../plugins/LilyPad/./Global.h:48:23: note: pointer 'buf' declared here
+void wsprintfW(Array &buf, const wchar_t *format, ...)
+                      ^
+1 warning generated.
+[250/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/FW.cpp.o
+[251/584] Building CXX object plugins/LilyPad/CMakeFiles/LilyPad-0.11.0.dir/LilyPad.cpp.o
+[252/584] Building CXX object plugins/LilyPad/CMakeFiles/LilyPad-0.11.0.dir/Linux/ConfigHelper.cpp.o
+[253/584] Building CXX object plugins/LilyPad/CMakeFiles/LilyPad-0.11.0.dir/Linux/KeyboardMouse.cpp.o
+[254/584] Building CXX object plugins/LilyPad/CMakeFiles/LilyPad-0.11.0.dir/KeyboardQueue.cpp.o
+[255/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Elfheader.cpp.o
+[256/584] Building CXX object plugins/LilyPad/CMakeFiles/LilyPad-0.11.0.dir/Linux/JoyEvdev.cpp.o
+[257/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Counters.cpp.o
+[258/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/FiFo.cpp.o
+[259/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Dump.cpp.o
+[260/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/FPU.cpp.o
+[261/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Gif_Unit.cpp.o
+[262/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/GameDatabase.cpp.o
+../pcsx2/GameDatabase.cpp:28:20: warning: comparison of integers of different signs: 'int' and 'std::vector::size_type' (aka 'unsigned long') [-Wsign-compare]
+        for (int i = 0; i < memcardFilters.size(); i++)
+                        ~ ^ ~~~~~~~~~~~~~~~~~~~~~
+../pcsx2/GameDatabase.cpp:32:9: warning: comparison of integers of different signs: 'int' and 'unsigned long' [-Wsign-compare]
+                if (i != memcardFilters.size() - 1)
+                    ~ ^  ~~~~~~~~~~~~~~~~~~~~~~~~~
+2 warnings generated.
+[263/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Gif_Logger.cpp.o
+[264/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Gif.cpp.o
+[265/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/GS.cpp.o
+[266/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/GSState.cpp.o
+[267/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Interpreter.cpp.o
+[268/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Hw.cpp.o
+[269/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IopDma.cpp.o
+[270/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IopBios.cpp.o
+[271/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IopIrq.cpp.o
+[272/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IopMem.cpp.o
+[273/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IopCounters.cpp.o
+[274/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IopHw.cpp.o
+[275/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IopSio2.cpp.o
+[276/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IPC.cpp.o
+[277/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/HwRead.cpp.o
+[278/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IopGte.cpp.o
+[279/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/HwWrite.cpp.o
+[280/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Mdec.cpp.o
+[281/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/MMI.cpp.o
+[282/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Memory.cpp.o
+[283/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/MTGS.cpp.o
+[284/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/MultipartFileReader.cpp.o
+[285/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/MTVU.cpp.o
+[286/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/PrecompiledHeader.cpp.o
+[287/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Patch_Memory.cpp.o
+[288/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/R3000A.cpp.o
+[289/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/R3000AOpcodeTables.cpp.o
+[290/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Patch.cpp.o
+../pcsx2/Patch.cpp:199:8: warning: unused variable 'loaded' [-Wunused-variable]
+                        int loaded = Patch.size() - before;
+                            ^
+../pcsx2/Patch.cpp:191:13: warning: unused variable 'found' [-Wunused-variable]
+        for (auto& found : dir)
+                   ^
+2 warnings generated.
+[291/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/R3000AInterpreter.cpp.o
+[292/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/R5900OpcodeTables.cpp.o
+[293/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Sif.cpp.o
+[294/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/ShiftJisToUnicode.cpp.o
+[295/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Pcsx2Config.cpp.o
+[296/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/R5900OpcodeImpl.cpp.o
+[297/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/SaveState.cpp.o
+[298/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Sif0.cpp.o
+[299/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/R5900.cpp.o
+[300/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Sif1.cpp.o
+[301/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/sif2.cpp.o
+[302/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/SourceLog.cpp.o
+[303/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/PluginManager.cpp.o
+In file included from ../pcsx2/PluginManager.cpp:17:
+In file included from ../pcsx2/./IopCommon.h:19:
+In file included from ../pcsx2/./Common.h:25:
+In file included from ../pcsx2/./System.h:22:
+../pcsx2/./Plugins.h:270:16: warning: private field 'pid' is not used [-Wunused-private-field]
+        PluginsEnum_t pid;
+                      ^
+1 warning generated.
+[304/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/SPR.cpp.o
+[305/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Sio.cpp.o
+[306/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Vif0_Dma.cpp.o
+[307/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Vif1_Dma.cpp.o
+[308/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Vif_Transfer.cpp.o
+[309/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Vif1_MFIFO.cpp.o
+[310/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Vif.cpp.o
+[311/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/VUmicro.cpp.o
+[312/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/System.cpp.o
+[313/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/VU0micro.cpp.o
+[314/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Vif_Codes.cpp.o
+[315/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/VU1micro.cpp.o
+[316/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/vtlb.cpp.o
+[317/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/VUflags.cpp.o
+[318/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/VU1microInterp.cpp.o
+[319/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/VU0microInterp.cpp.o
+[320/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/VU0.cpp.o
+[321/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/VUmicroMem.cpp.o
+[322/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/BlockdumpFileReader.cpp.o
+[323/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/CdRom.cpp.o
+[324/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Vif_Unpack.cpp.o
+[325/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/CDVDisoReader.cpp.o
+[326/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/ChunksCache.cpp.o
+[327/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/OutputIsoFile.cpp.o
+[328/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/CDVDdiscThread.cpp.o
+[329/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/CompressedFileReader.cpp.o
+[330/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/InputIsoFile.cpp.o
+[331/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/CDVDdiscReader.cpp.o
+[332/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/CDVDaccess.cpp.o
+[333/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/CsoFileReader.cpp.o
+[334/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/IsoFS/IsoFile.cpp.o
+[335/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/IsoFS/IsoFSCDVD.cpp.o
+[336/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/IsoFS/IsoFS.cpp.o
+[337/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/CDVD.cpp.o
+[338/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/GzippedFileReader.cpp.o
+../pcsx2/CDVD/GzippedFileReader.cpp:70:15: warning: comparison of integers of different signs: 's64' (aka 'long') and 'unsigned long' [-Wsign-compare]
+        if (datasize != (s64)index->have * sizeof(Point))
+            ~~~~~~~~ ^  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1 warning generated.
+[339/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/DebugInterface.cpp.o
+[340/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/MipsAssembler.cpp.o
+[341/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/MipsAssemblerTables.cpp.o
+[342/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/MIPSAnalyst.cpp.o
+[343/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/MipsStackWalk.cpp.o
+[344/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/ExpressionParser.cpp.o
+[345/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/DisassemblyManager.cpp.o
+In file included from ../pcsx2/DebugTools/DisassemblyManager.cpp:22:
+../pcsx2/DebugTools/DisassemblyManager.h:184:18: warning: private field 'cpu' is not used [-Wunused-private-field]
+        DebugInterface* cpu;
+                        ^
+1 warning generated.
+[346/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/DisR3000A.cpp.o
+[347/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/BiosDebugData.cpp.o
+[348/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/DisR5900asm.cpp.o
+[349/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/DisVU0Micro.cpp.o
+[350/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/Breakpoints.cpp.o
+[351/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/AppAssert.cpp.o
+[352/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/VUops.cpp.o
+[353/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/DisVU1Micro.cpp.o
+[354/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/DebugTools/SymbolMap.cpp.o
+[355/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/AppEventSources.cpp.o
+[356/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/CpuUsageProvider.cpp.o
+[357/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/AppCorePlugins.cpp.o
+[358/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/AppCoreThread.cpp.o
+[359/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/AppGameDatabase.cpp.o
+[360/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Dialogs/AboutBoxDialog.cpp.o
+[361/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/AppRes.cpp.o
+[362/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Dialogs/AssertionDialog.cpp.o
+[363/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/AppInit.cpp.o
+[364/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Dialogs/ConfirmationDialogs.cpp.o
+[365/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Dialogs/BaseConfigurationDialog.cpp.o
+[366/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/AppMain.cpp.o
+In file included from ../pcsx2/gui/AppMain.cpp:50:
+In file included from /usr/include/gtk-2.0/gtk/gtk.h:33:
+In file included from /usr/include/gtk-2.0/gtk/gtkaboutdialog.h:32:
+In file included from /usr/include/gtk-2.0/gtk/gtkdialog.h:35:
+In file included from /usr/include/gtk-2.0/gtk/gtkwindow.h:36:
+In file included from /usr/include/gtk-2.0/gtk/gtkbin.h:35:
+In file included from /usr/include/gtk-2.0/gtk/gtkcontainer.h:35:
+In file included from /usr/include/gtk-2.0/gtk/gtkwidget.h:36:
+In file included from /usr/include/gtk-2.0/gtk/gtkobject.h:37:
+/usr/include/gtk-2.0/gtk/gtktypeutils.h:236:34: warning: 'GTypeDebugFlags' is deprecated [-Wdeprecated-declarations]
+void            gtk_type_init   (GTypeDebugFlags    debug_flags);
+                                 ^
+/usr/include/glib-2.0/gobject/gtype.h:685:19: note: 'GTypeDebugFlags' has been explicitly marked deprecated here
+} GTypeDebugFlags GLIB_DEPRECATED_TYPE_IN_2_36;
+                  ^
+/usr/include/glib-2.0/glib/gversionmacros.h:500:49: note: expanded from macro 'GLIB_DEPRECATED_TYPE_IN_2_36'
+# define GLIB_DEPRECATED_TYPE_IN_2_36           GLIB_DEPRECATED_TYPE
+                                                ^
+/usr/include/glib-2.0/glib/gmacros.h:1013:30: note: expanded from macro 'GLIB_DEPRECATED_TYPE'
+#define GLIB_DEPRECATED_TYPE G_DEPRECATED
+                             ^
+/usr/include/glib-2.0/glib/gmacros.h:942:37: note: expanded from macro 'G_DEPRECATED'
+#define G_DEPRECATED __attribute__((__deprecated__))
+                                    ^
+In file included from ../pcsx2/gui/AppMain.cpp:50:
+In file included from /usr/include/gtk-2.0/gtk/gtk.h:126:
+In file included from /usr/include/gtk-2.0/gtk/gtkmenutoolbutton.h:30:
+In file included from /usr/include/gtk-2.0/gtk/gtktoolbutton.h:30:
+In file included from /usr/include/gtk-2.0/gtk/gtktoolitem.h:31:
+/usr/include/gtk-2.0/gtk/gtktooltips.h:73:3: warning: 'GTimeVal' is deprecated: Use 'GDateTime' instead [-Wdeprecated-declarations]
+  GTimeVal last_popdown;
+  ^
+/usr/include/glib-2.0/glib/gtypes.h:545:35: note: 'GTimeVal' has been explicitly marked deprecated here
+typedef struct _GTimeVal GTimeVal GLIB_DEPRECATED_TYPE_IN_2_62_FOR(GDateTime);
+                                  ^
+/usr/include/glib-2.0/glib/gversionmacros.h:909:49: note: expanded from macro 'GLIB_DEPRECATED_TYPE_IN_2_62_FOR'
+# define GLIB_DEPRECATED_TYPE_IN_2_62_FOR(f)    GLIB_DEPRECATED_TYPE_FOR(f)
+                                                ^
+/usr/include/glib-2.0/glib/gmacros.h:1014:37: note: expanded from macro 'GLIB_DEPRECATED_TYPE_FOR'
+#define GLIB_DEPRECATED_TYPE_FOR(f) G_DEPRECATED_FOR(f)
+                                    ^
+/usr/include/glib-2.0/glib/gmacros.h:950:44: note: expanded from macro 'G_DEPRECATED_FOR'
+#define G_DEPRECATED_FOR(f) __attribute__((__deprecated__("Use '" #f "' instead")))
+                                           ^
+2 warnings generated.
+[367/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/ConsoleLogger.cpp.o
+[368/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/AppConfig.cpp.o
+../pcsx2/gui/AppConfig.cpp:1141:7: warning: unused variable 'conf_install' [-Wunused-variable]
+        bool conf_install;
+             ^
+1 warning generated.
+[369/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/AppUserMode.cpp.o
+../pcsx2/gui/AppUserMode.cpp:94:20: warning: comparison of integers of different signs: 'int' and 'std::vector::size_type' (aka 'unsigned long') [-Wsign-compare]
+        for (int i = 0; i < ErrorFolders.size(); i++)
+                        ~ ^ ~~~~~~~~~~~~~~~~~~~
+../pcsx2/gui/AppUserMode.cpp:207:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+}
+^
+../pcsx2/gui/AppUserMode.cpp:215:8: warning: unused variable 'test' [-Wunused-variable]
+                bool test = OpenFileConfig( portableJsonFile );
+                     ^
+../pcsx2/gui/AppUserMode.cpp:222:8: warning: unused variable 'conf_install' [-Wunused-variable]
+                bool conf_install = OpenInstallSettingsFile();          
+                     ^
+4 warnings generated.
+[370/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Dialogs/CreateMemoryCardDialog.cpp.o
+[371/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Dialogs/ConvertMemoryCardDialog.cpp.o
+[372/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Dialogs/PickUserModeDialog.cpp.o
+[373/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Dialogs/FirstTimeWizard.cpp.o
+[374/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Dialogs/LogOptionsDialog.cpp.o
+[375/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Dialogs/ImportSettingsDialog.cpp.o
+[376/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Debugger/BreakpointWindow.cpp.o
+[377/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Dialogs/McdConfigDialog.cpp.o
+[378/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Debugger/DebugEvents.cpp.o
+[379/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Dialogs/SysConfigDialog.cpp.o
+[380/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Debugger/DebuggerLists.cpp.o
+[381/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/GuiConfig.cpp.o
+[382/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Debugger/CtrlRegisterList.cpp.o
+[383/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Debugger/CtrlMemView.cpp.o
+[384/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/i18n.cpp.o
+[385/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/DriveList.cpp.o
+[386/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/ExecutorThread.cpp.o
+[387/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/GlobalCommands.cpp.o
+[388/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/MSWstuff.cpp.o
+[389/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Debugger/DisassemblyDialog.cpp.o
+../pcsx2/gui/Debugger/DisassemblyDialog.cpp:154:31: warning: cast to 'void *' from smaller integer type 'u32' (aka 'unsigned int') [-Wint-to-void-pointer-cast]
+                        functionList->Append(name, (void*)funcs[i].address);
+                                                   ^
+1 warning generated.
+[390/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/IsoDropTarget.cpp.o
+[391/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/FrameForGS.cpp.o
+[392/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Debugger/CtrlDisassemblyView.cpp.o
+[393/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/MessageBoxes.cpp.o
+[394/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/MainFrame.cpp.o
+[395/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/MainMenuClicks.cpp.o
+[396/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/BaseApplicableConfigPanel.cpp.o
+[397/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/MemoryCardFile.cpp.o
+[398/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/BiosSelectorPanel.cpp.o
+[399/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/MemoryCardFolder.cpp.o
+[400/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/GSWindowPanel.cpp.o
+[401/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/CpuPanel.cpp.o
+[402/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/DirPickerPanel.cpp.o
+[403/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/GameFixesPanel.cpp.o
+[404/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/MemoryCardListView.cpp.o
+../pcsx2/gui/Panels/MemoryCardListView.cpp:53:7: warning: unused variable 'width' [-Wunused-variable]
+                int width = GetColumnWidth(col);
+                    ^
+1 warning generated.
+[405/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/PathsPanel.cpp.o
+[406/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/SpeedhacksPanel.cpp.o
+[407/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/LogOptionsPanels.cpp.o
+[408/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/MiscPanelStuff.cpp.o
+[409/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IPU/IPU_Fifo.cpp.o
+[410/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IPU/IPUdither.cpp.o
+[411/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Saveslots.cpp.o
+[412/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IPU/IPUdma.cpp.o
+[413/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/UpdateUI.cpp.o
+[414/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/VideoPanel.cpp.o
+[415/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IPU/yuv2rgb.cpp.o
+[416/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/PluginSelectorPanel.cpp.o
+[417/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/RecentIsoList.cpp.o
+[418/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IPU/mpeg2lib/Idct.cpp.o
+[419/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/Panels/MemoryCardListPanel.cpp.o
+[420/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IPU/IPU.cpp.o
+[421/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/ps2/pgif.cpp.o
+[422/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/SysState.cpp.o
+[423/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/ps2/Iop/IopHwRead.cpp.o
+[424/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/ps2/LegacyDmac.cpp.o
+[425/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/ps2/BiosTools.cpp.o
+[426/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/ps2/Iop/PsxBios.cpp.o
+[427/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/IPU/mpeg2lib/Mpeg.cpp.o
+[428/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Recording/RecordingInputManager.cpp.o
+[429/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Recording/InputRecordingControls.cpp.o
+[430/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/ps2/Iop/IopHwWrite.cpp.o
+[431/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/System/SysThreadBase.cpp.o
+[432/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Recording/NewRecordingFrame.cpp.o
+[433/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Recording/PadData.cpp.o
+[434/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Utilities/FileUtils.cpp.o
+[435/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Recording/InputRecordingFile.cpp.o
+[436/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/BaseblockEx.cpp.o
+[437/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Recording/VirtualPad.cpp.o
+[438/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/System/SysCoreThread.cpp.o
+[439/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/iCOP0.cpp.o
+[440/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/iCore.cpp.o
+[441/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/iFPUd.cpp.o
+[442/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Recording/InputRecording.cpp.o
+[443/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/iMisc.cpp.o
+[444/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ir5900tables.cpp.o
+[445/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/iR5900Misc.cpp.o
+[446/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/iFPU.cpp.o
+[447/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ix86-32/iR5900AritImm.cpp.o
+[448/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ix86-32/iCore-32.cpp.o
+[449/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ix86-32/iR5900Jump.cpp.o
+[450/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ix86-32/iR5900LoadStore.cpp.o
+[451/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/iMMI.cpp.o
+[452/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ix86-32/iR5900Move.cpp.o
+[453/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/iR3000Atables.cpp.o
+[454/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/iR3000A.cpp.o
+[455/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ix86-32/iR5900MultDiv.cpp.o
+[456/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ix86-32/iR5900Branch.cpp.o
+[457/584] Linking CXX shared module plugins/GSdx/libGSdx.so
+[458/584] Generating resources.cpp
+[459/584] Generating resources.h
+[460/584] Generating ImgHeader/analog.h
+[461/584] Generating ImgHeader/circle.h
+[462/584] Generating ImgHeader/cross.h
+[463/584] Generating ImgHeader/dp_bottom.h
+[464/584] Generating ImgHeader/dp_left.h
+[465/584] Generating ImgHeader/dp_right.h
+[466/584] Generating ImgHeader/dp_up.h
+[467/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ix86-32/iR5900-32.cpp.o
+[468/584] Generating ImgHeader/joystick_cursor.h
+[469/584] Generating ImgHeader/l1.h
+[470/584] Generating ImgHeader/r1.h
+[471/584] Generating ImgHeader/l2.h
+[472/584] Generating ImgHeader/r2.h
+[473/584] Generating ImgHeader/l3.h
+[474/584] Generating ImgHeader/r3.h
+[475/584] Generating ImgHeader/select.h
+[476/584] Generating ImgHeader/square.h
+[477/584] Generating ImgHeader/start.h
+[478/584] Generating ImgHeader/triangle.h
+[479/584] Generating ImgHeader/arrow_up.h
+[480/584] Generating ImgHeader/arrow_bottom.h
+[481/584] Generating ImgHeader/arrow_left.h
+[482/584] Generating ImgHeader/arrow_right.h
+[483/584] Generating ImgHeader/dualshock2.h
+[484/584] Generating ImgHeader/analog.h
+[485/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ix86-32/iR5900Templates.cpp.o
+[486/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ix86-32/iR5900Shift.cpp.o
+[487/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/newVif_Unpack.cpp.o
+[488/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/ix86-32/recVTLB.cpp.o
+[489/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/newVif_Dynarec.cpp.o
+[490/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/ZipTools/thread_lzma.cpp.o
+[491/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/newVif_UnpackSSE.cpp.o
+[492/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/Linux/IOCtlSrc.cpp.o
+[493/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/CDVD/Linux/DriveUtility.cpp.o
+[494/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/resources.cpp.o
+[495/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/controller.cpp.o
+[496/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Linux/LnxFlatFileReader.cpp.o
+[497/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/ZipTools/thread_gzip.cpp.o
+[498/584] Generating ImgHeader/circle.h
+[499/584] Generating ImgHeader/cross.h
+[500/584] Generating ImgHeader/dp_bottom.h
+[501/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/GamePad.cpp.o
+[502/584] Generating ImgHeader/dp_left.h
+[503/584] Generating ImgHeader/dp_right.h
+[504/584] Generating ImgHeader/dp_up.h
+[505/584] Generating ImgHeader/joystick_cursor.h
+[506/584] Generating ImgHeader/l1.h
+[507/584] Generating ImgHeader/r1.h
+[508/584] Generating ImgHeader/l2.h
+[509/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/gui/CpuUsageProviderLnx.cpp.o
+[510/584] Generating ImgHeader/r2.h
+[511/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/KeyStatus.cpp.o
+[512/584] Generating ImgHeader/r3.h
+[513/584] Generating ImgHeader/l3.h
+[514/584] Generating ImgHeader/select.h
+[515/584] Generating ImgHeader/square.h
+[516/584] Generating ImgHeader/start.h
+[517/584] Generating ImgHeader/arrow_up.h
+[518/584] Generating ImgHeader/triangle.h
+[519/584] Generating ImgHeader/arrow_bottom.h
+[520/584] Generating ImgHeader/arrow_left.h
+[521/584] Generating ImgHeader/arrow_right.h
+[522/584] Generating ImgHeader/dualshock2.h
+[523/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Linux/LnxConsolePipe.cpp.o
+[524/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/Linux/LnxKeyCodes.cpp.o
+[525/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/keyboard.cpp.o
+In file included from ../plugins/onepad/keyboard.cpp:28:
+In file included from /usr/include/gtk-2.0/gtk/gtk.h:33:
+In file included from /usr/include/gtk-2.0/gtk/gtkaboutdialog.h:32:
+In file included from /usr/include/gtk-2.0/gtk/gtkdialog.h:35:
+In file included from /usr/include/gtk-2.0/gtk/gtkwindow.h:36:
+In file included from /usr/include/gtk-2.0/gtk/gtkbin.h:35:
+In file included from /usr/include/gtk-2.0/gtk/gtkcontainer.h:35:
+In file included from /usr/include/gtk-2.0/gtk/gtkwidget.h:36:
+In file included from /usr/include/gtk-2.0/gtk/gtkobject.h:37:
+/usr/include/gtk-2.0/gtk/gtktypeutils.h:236:34: warning: 'GTypeDebugFlags' is deprecated [-Wdeprecated-declarations]
+void            gtk_type_init   (GTypeDebugFlags    debug_flags);
+                                 ^
+/usr/include/glib-2.0/gobject/gtype.h:685:19: note: 'GTypeDebugFlags' has been explicitly marked deprecated here
+} GTypeDebugFlags GLIB_DEPRECATED_TYPE_IN_2_36;
+                  ^
+/usr/include/glib-2.0/glib/gversionmacros.h:500:49: note: expanded from macro 'GLIB_DEPRECATED_TYPE_IN_2_36'
+# define GLIB_DEPRECATED_TYPE_IN_2_36           GLIB_DEPRECATED_TYPE
+                                                ^
+/usr/include/glib-2.0/glib/gmacros.h:1013:30: note: expanded from macro 'GLIB_DEPRECATED_TYPE'
+#define GLIB_DEPRECATED_TYPE G_DEPRECATED
+                             ^
+/usr/include/glib-2.0/glib/gmacros.h:942:37: note: expanded from macro 'G_DEPRECATED'
+#define G_DEPRECATED __attribute__((__deprecated__))
+                                    ^
+In file included from ../plugins/onepad/keyboard.cpp:28:
+In file included from /usr/include/gtk-2.0/gtk/gtk.h:126:
+In file included from /usr/include/gtk-2.0/gtk/gtkmenutoolbutton.h:30:
+In file included from /usr/include/gtk-2.0/gtk/gtktoolbutton.h:30:
+In file included from /usr/include/gtk-2.0/gtk/gtktoolitem.h:31:
+/usr/include/gtk-2.0/gtk/gtktooltips.h:73:3: warning: 'GTimeVal' is deprecated: Use 'GDateTime' instead [-Wdeprecated-declarations]
+  GTimeVal last_popdown;
+  ^
+/usr/include/glib-2.0/glib/gtypes.h:545:35: note: 'GTimeVal' has been explicitly marked deprecated here
+typedef struct _GTimeVal GTimeVal GLIB_DEPRECATED_TYPE_IN_2_62_FOR(GDateTime);
+                                  ^
+/usr/include/glib-2.0/glib/gversionmacros.h:909:49: note: expanded from macro 'GLIB_DEPRECATED_TYPE_IN_2_62_FOR'
+# define GLIB_DEPRECATED_TYPE_IN_2_62_FOR(f)    GLIB_DEPRECATED_TYPE_FOR(f)
+                                                ^
+/usr/include/glib-2.0/glib/gmacros.h:1014:37: note: expanded from macro 'GLIB_DEPRECATED_TYPE_FOR'
+#define GLIB_DEPRECATED_TYPE_FOR(f) G_DEPRECATED_FOR(f)
+                                    ^
+/usr/include/glib-2.0/glib/gmacros.h:950:44: note: expanded from macro 'G_DEPRECATED_FOR'
+#define G_DEPRECATED_FOR(f) __attribute__((__deprecated__("Use '" #f "' instead")))
+                                           ^
+2 warnings generated.
+[526/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/SDL/joystick.cpp.o
+[527/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/state_management.cpp.o
+[528/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/Linux/ini.cpp.o
+[529/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/onepad.cpp.o
+[530/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/controller.cpp.o
+[531/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/GamePad.cpp.o
+[532/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/KeyStatus.cpp.o
+[533/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/SDL/joystick.cpp.o
+[534/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/onepad.cpp.o
+[535/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/state_management.cpp.o
+[536/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/keyboard.cpp.o
+In file included from ../plugins/onepad_legacy/keyboard.cpp:30:
+In file included from /usr/include/gtk-2.0/gtk/gtk.h:33:
+In file included from /usr/include/gtk-2.0/gtk/gtkaboutdialog.h:32:
+In file included from /usr/include/gtk-2.0/gtk/gtkdialog.h:35:
+In file included from /usr/include/gtk-2.0/gtk/gtkwindow.h:36:
+In file included from /usr/include/gtk-2.0/gtk/gtkbin.h:35:
+In file included from /usr/include/gtk-2.0/gtk/gtkcontainer.h:35:
+In file included from /usr/include/gtk-2.0/gtk/gtkwidget.h:36:
+In file included from /usr/include/gtk-2.0/gtk/gtkobject.h:37:
+/usr/include/gtk-2.0/gtk/gtktypeutils.h:236:34: warning: 'GTypeDebugFlags' is deprecated [-Wdeprecated-declarations]
+void            gtk_type_init   (GTypeDebugFlags    debug_flags);
+                                 ^
+/usr/include/glib-2.0/gobject/gtype.h:685:19: note: 'GTypeDebugFlags' has been explicitly marked deprecated here
+} GTypeDebugFlags GLIB_DEPRECATED_TYPE_IN_2_36;
+                  ^
+/usr/include/glib-2.0/glib/gversionmacros.h:500:49: note: expanded from macro 'GLIB_DEPRECATED_TYPE_IN_2_36'
+# define GLIB_DEPRECATED_TYPE_IN_2_36           GLIB_DEPRECATED_TYPE
+                                                ^
+/usr/include/glib-2.0/glib/gmacros.h:1013:30: note: expanded from macro 'GLIB_DEPRECATED_TYPE'
+#define GLIB_DEPRECATED_TYPE G_DEPRECATED
+                             ^
+/usr/include/glib-2.0/glib/gmacros.h:942:37: note: expanded from macro 'G_DEPRECATED'
+#define G_DEPRECATED __attribute__((__deprecated__))
+                                    ^
+In file included from ../plugins/onepad_legacy/keyboard.cpp:30:
+In file included from /usr/include/gtk-2.0/gtk/gtk.h:126:
+In file included from /usr/include/gtk-2.0/gtk/gtkmenutoolbutton.h:30:
+In file included from /usr/include/gtk-2.0/gtk/gtktoolbutton.h:30:
+In file included from /usr/include/gtk-2.0/gtk/gtktoolitem.h:31:
+/usr/include/gtk-2.0/gtk/gtktooltips.h:73:3: warning: 'GTimeVal' is deprecated: Use 'GDateTime' instead [-Wdeprecated-declarations]
+  GTimeVal last_popdown;
+  ^
+/usr/include/glib-2.0/glib/gtypes.h:545:35: note: 'GTimeVal' has been explicitly marked deprecated here
+typedef struct _GTimeVal GTimeVal GLIB_DEPRECATED_TYPE_IN_2_62_FOR(GDateTime);
+                                  ^
+/usr/include/glib-2.0/glib/gversionmacros.h:909:49: note: expanded from macro 'GLIB_DEPRECATED_TYPE_IN_2_62_FOR'
+# define GLIB_DEPRECATED_TYPE_IN_2_62_FOR(f)    GLIB_DEPRECATED_TYPE_FOR(f)
+                                                ^
+/usr/include/glib-2.0/glib/gmacros.h:1014:37: note: expanded from macro 'GLIB_DEPRECATED_TYPE_FOR'
+#define GLIB_DEPRECATED_TYPE_FOR(f) G_DEPRECATED_FOR(f)
+                                    ^
+/usr/include/glib-2.0/glib/gmacros.h:950:44: note: expanded from macro 'G_DEPRECATED_FOR'
+#define G_DEPRECATED_FOR(f) __attribute__((__deprecated__("Use '" #f "' instead")))
+                                           ^
+2 warnings generated.
+[537/584] Building CXX object plugins/LilyPad/CMakeFiles/LilyPad-0.11.0.dir/Linux/KeyboardQueue.cpp.o
+[538/584] Linking CXX shared module plugins/LilyPad/libLilyPad-0.11.0.so
+[539/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/ADSR.cpp.o
+[540/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/DplIIdecoder.cpp.o
+[541/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Debug.cpp.o
+[542/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/Linux/ini.cpp.o
+[543/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/wx_dialog/JoystickConfiguration.cpp.o
+In file included from ../plugins/onepad/wx_dialog/JoystickConfiguration.cpp:20:
+../plugins/onepad/wx_dialog/JoystickConfiguration.h:44:15: warning: private field 'm_bt_ok' is not used [-Wunused-private-field]
+    wxButton *m_bt_ok, *m_bt_cancel;
+              ^
+../plugins/onepad/wx_dialog/JoystickConfiguration.h:44:25: warning: private field 'm_bt_cancel' is not used [-Wunused-private-field]
+    wxButton *m_bt_ok, *m_bt_cancel;
+                        ^
+2 warnings generated.
+[544/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/wx_dialog/opPanel.cpp.o
+[545/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/Linux/linux.cpp.o
+[546/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/wx_dialog/GamepadConfiguration.cpp.o
+[547/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Dma.cpp.o
+[548/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Lowpass.cpp.o
+[549/584] Building CXX object plugins/onepad/CMakeFiles/onepad.dir/wx_dialog/dialog.cpp.o
+[550/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/wx_dialog/GamepadConfiguration.cpp.o
+[551/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/wx_dialog/opPanel.cpp.o
+[552/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/wx_dialog/dialog.cpp.o
+[553/584] Linking CXX shared module plugins/onepad/libonepad.so
+[554/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/ReadInput.cpp.o
+[555/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/PrecompiledHeader.cpp.o
+[556/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/RegLog.cpp.o
+[557/584] Building CXX object pcsx2/CMakeFiles/PCSX2.dir/x86/microVU.cpp.o
+In file included from ../pcsx2/x86/microVU.cpp:19:
+In file included from ../pcsx2/x86/microVU.h:280:
+../pcsx2/x86/microVU_Flags.inl:235:29: warning: use of logical '||' with constant operand [-Wconstant-logical-operand]
+        mVUregs.flagInfo |= ((__Mac||1) ? 0 : (xM << 4));
+                                   ^ ~
+../pcsx2/x86/microVU_Flags.inl:235:29: note: use '|' for a bitwise operation
+        mVUregs.flagInfo |= ((__Mac||1) ? 0 : (xM << 4));
+                                   ^~~
+                                   |
+../pcsx2/x86/microVU_Flags.inl:390:12: warning: use of logical '&&' with constant operand [-Wconstant-logical-operand]
+        if (ffOpt && doFullFlagOpt) {
+                  ^  ~~~~~~~~~~~~~
+../pcsx2/x86/microVU_Flags.inl:390:12: note: use '&' for a bitwise operation
+        if (ffOpt && doFullFlagOpt) {
+                  ^~
+                  &
+../pcsx2/x86/microVU_Flags.inl:390:12: note: remove constant to silence this warning
+        if (ffOpt && doFullFlagOpt) {
+                 ~^~~~~~~~~~~~~~~~
+2 warnings generated.
+[558/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/wx_dialog/JoystickConfiguration.cpp.o
+[559/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/PS2E-spu2.cpp.o
+[560/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/WavFile.cpp.o
+[561/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Mixer.cpp.o
+[562/584] Building CXX object plugins/onepad_legacy/CMakeFiles/onepad-legacy.dir/Linux/linux.cpp.o
+[563/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/RegTable.cpp.o
+[564/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Reverb.cpp.o
+[565/584] Linking CXX shared module plugins/onepad_legacy/libonepad-legacy.so
+[566/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/spu2freeze.cpp.o
+[567/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Spu2replay.cpp.o
+../plugins/spu2-x/src/Spu2replay.cpp:106:11: warning: unused variable 'IOP_CLK' [-Wunused-const-variable]
+const u32 IOP_CLK = 768 * 48000;
+          ^
+../plugins/spu2-x/src/Spu2replay.cpp:107:11: warning: unused variable 'IOPCiclesPerMS' [-Wunused-const-variable]
+const u32 IOPCiclesPerMS = 768 * 48;
+          ^
+2 warnings generated.
+[568/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/SndOut_SDL.cpp.o
+[569/584] Linking CXX executable pcsx2/PCSX2
+[570/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/SndOut.cpp.o
+[571/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Wavedump_wav.cpp.o
+[572/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Timestretcher.cpp.o
+[573/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Linux/CfgHelpers.cpp.o
+[574/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Linux/Alsa.cpp.o
+[575/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/SndOut_Portaudio.cpp.o
+[576/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Linux/ConfigSoundTouch.cpp.o
+[577/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Linux/Config.cpp.o
+[578/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Linux/Dialogs.cpp.o
+[579/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/spu2sys.cpp.o
+[580/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/Linux/ConfigDebug.cpp.o
+[581/584] Building CXX object plugins/USBnull/CMakeFiles/USBnull-0.7.0.dir/USB.cpp.o
+[582/584] Linking CXX shared module plugins/USBnull/libUSBnull-0.7.0.so
+[583/584] Building CXX object plugins/spu2-x/src/CMakeFiles/spu2x-2.0.0.dir/wx/wxConfig.cpp.o
+In file included from ../plugins/spu2-x/src/wx/wxConfig.cpp:19:
+../plugins/spu2-x/src/wx/wxConfig.h:90:26: warning: private field 'm_left_box' is not used [-Wunused-private-field]
+        wxBoxSizer *m_top_box, *m_left_box, *m_right_box;
+                                ^
+../plugins/spu2-x/src/wx/wxConfig.h:90:39: warning: private field 'm_right_box' is not used [-Wunused-private-field]
+        wxBoxSizer *m_top_box, *m_left_box, *m_right_box;
+                                             ^
+../plugins/spu2-x/src/wx/wxConfig.h:92:20: warning: private field 'm_output_box' is not used [-Wunused-private-field]
+        wxStaticBoxSizer* m_output_box;
+                          ^
+3 warnings generated.
+[584/584] Linking CXX shared module plugins/spu2-x/src/libspu2x-2.0.0.so
+[0/2] Re-checking globbed directories...
+[0/1] Install the project...
+-- Install configuration: "Devel"
+-- Installing: /home/musungo/coding/json/bin/Langs/ar_SA/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/ca_ES/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/cs_CZ/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/da_DK/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/de_DE/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/es_ES/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/fi_FI/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/fr_FR/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/hr_HR/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/hu_HU/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/id_ID/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/it_IT/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/ja_JP/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/ko_KR/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/lt_LT/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/ms_MY/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/nb_NO/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/nl_NL/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/pl_PL/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/pt_BR/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/ru_RU/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/sv_SE/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/th_TH/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/tr_TR/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/zh_CN/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/zh_TW/pcsx2_Iconized.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/ar_SA/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/ca_ES/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/cs_CZ/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/da_DK/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/de_DE/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/es_ES/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/fi_FI/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/fr_FR/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/hr_HR/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/hu_HU/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/id_ID/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/it_IT/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/ja_JP/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/ko_KR/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/lt_LT/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/ms_MY/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/nb_NO/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/nl_NL/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/pl_PL/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/pt_BR/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/ru_RU/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/sv_SE/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/th_TH/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/tr_TR/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/zh_CN/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/Langs/zh_TW/pcsx2_Main.mo
+-- Installing: /home/musungo/coding/json/bin/PCSX2
+-- Installing: /home/musungo/coding/json/bin/plugins/libdev9null-0.5.0.so
+-- Installing: /home/musungo/coding/json/bin/plugins/libGSdx.so
+-- Installing: /home/musungo/coding/json/bin/plugins/libLilyPad-0.11.0.so
+-- Installing: /home/musungo/coding/json/bin/plugins/libonepad.so
+-- Installing: /home/musungo/coding/json/bin/plugins/libonepad-legacy.so
+-- Installing: /home/musungo/coding/json/bin/plugins/libspu2x-2.0.0.so
+-- Installing: /home/musungo/coding/json/bin/plugins/libUSBnull-0.7.0.so
+-- Up-to-date: /home/musungo/coding/json/bin/PCSX2-linux.sh

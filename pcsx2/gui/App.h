@@ -31,7 +31,7 @@
 #include "Utilities/PathUtils.h"
 
 #ifndef DISABLE_RECORDING
-#	include "Recording/VirtualPad.h"
+#	include "Recording/VirtualPad/VirtualPad.h"
 #	include "Recording/NewRecordingFrame.h"
 #endif
 
@@ -199,16 +199,19 @@ enum MenuIdentifiers
 	MenuId_Capture_Video_Record,
 	MenuId_Capture_Video_Stop,
 	MenuId_Capture_Screenshot,
+	MenuId_Capture_Screenshot_Screenshot,
+	MenuId_Capture_Screenshot_Screenshot_As,
 
 #ifndef DISABLE_RECORDING
 	// Input Recording Subsection
 	MenuId_Recording_New,
 	MenuId_Recording_Play,
 	MenuId_Recording_Stop,
-	MenuId_Recording_Editor,
+	MenuId_Recording_TogglePause,
+	MenuId_Recording_FrameAdvance,
+	MenuId_Recording_ToggleRecordingMode,
 	MenuId_Recording_VirtualPad_Port0,
 	MenuId_Recording_VirtualPad_Port1,
-	MenuId_Recording_Conversions,
 #endif
 
 };
