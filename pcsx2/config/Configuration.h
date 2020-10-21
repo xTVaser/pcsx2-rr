@@ -18,7 +18,6 @@ private:
 	// when and how the underlying YAML is constructed/destructed
 	std::string data;
 	YamlConfigFile(std::string data);
-
 public:
 	YamlConfigFile() {}
 
@@ -29,6 +28,9 @@ public:
 
 	std::unique_ptr<YamlConfigFile> getSection(std::string key);
 	std::string getString(std::string key, std::string fallback = "");
+
+	void setSection(std::string key, YamlConfigFile* section);
+	void setString(std::string key, std::string str);
 };
 
 // TODO - Saveable interface?
@@ -46,7 +48,9 @@ public:
 		bool useDefault;
 	};
 
-	FolderConfiguration(YamlConfigFile* parentConfig);
+	FolderConfiguration(std::unique_ptr<YamlConfigFile>);
+
+	YamlConfigFile* deserialize();
 
 	Folder plugins;
 	Folder settings;
@@ -70,6 +74,8 @@ class MainConfiguration
 private:
 	std::unique_ptr<YamlConfigFile> config;
 	std::unique_ptr<FolderConfiguration> folderConfig;
+	YamlUtils yamlUtils;
+
 
 public:
 	MainConfiguration();
