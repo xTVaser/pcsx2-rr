@@ -31,9 +31,12 @@
 #include <memory>
 #include <iomanip>
 
-nlohmann::json json;
+#include "config/Configuration.h"
+#include "fmt/core.h"
+
+YamlUtils configFile;
+YAML::Node yaml;
 FolderUtils folderUtils;
-JsonUtils fileUtils;
 GuiConfig conf;
 
 namespace PathDefs
@@ -164,7 +167,7 @@ namespace PathDefs
 	fs::path GetSettings()
 	{
 		fs::path docPath = GetDocuments();
-		fs::path path = GetDocuments() / "json";
+		fs::path path = GetDocuments() / "yaml";
 		// make_preferred() is causing issues?
 		return path;
 	}
@@ -319,22 +322,22 @@ namespace FilenameDefs
 {
 	std::string GetUiConfig()
 	{
-		return pxGetAppName().ToStdString() + "_ui.json";
+		return pxGetAppName().ToStdString() + "_ui.yaml";
 	}
 
 	std::string GetUiKeysConfig()
 	{
-		return pxGetAppName().ToStdString() + "_keys.json";
+		return pxGetAppName().ToStdString() + "_keys.yaml";
 	}
 
 	std::string GetVmConfig()
 	{
-		return pxGetAppName().ToStdString() + "_vm.json";
+		return pxGetAppName().ToStdString() + "_vm.yaml";
 	}
 
 	std::string GetUsermodeConfig()
 	{
-		return ( "usermode.json" );
+		return ( "usermode.yaml" );
 	}
 
 	const std::string& Memcard( uint port, uint slot )
@@ -473,16 +476,14 @@ AppConfig::AppConfig()
 }
 
 // ------------------------------------------------------------------------
-nlohmann::json AppConfig::LoadSaveMemcards()
+YAML::Node AppConfig::LoadSaveMemcards()
 {
-	nlohmann::json memcards;
+	YAML::Node memcards;
 	
 	for( uint slot=0; slot<2; ++slot )
 	{
-		memcards["Slot%u_Enable"] = (slot+1,
-			Mcd[slot].Enabled, Mcd[slot].Enabled );
-		memcards["Slot%u_Filename"] = (slot+1,
-			Mcd[slot].Filename.GetFullName().ToStdString(), Mcd[slot].Filename.GetFullName().ToStdString() );
+		memcards[fmt::format("Slot{}u_Enable", slot)] = Mcd[slot].Enabled;
+		memcards[fmt::format("Slot{}u_Filename", slot)] = Mcd[slot].Filename.GetFullName().ToStdString();
 	}
 
 	for( uint slot=2; slot<8; ++slot )
@@ -490,62 +491,62 @@ nlohmann::json AppConfig::LoadSaveMemcards()
 		int mtport = FileMcd_GetMtapPort(slot)+1;
 		int mtslot = FileMcd_GetMtapSlot(slot)+1;
 
-		memcards["Multitap%u_Slot%u_Enable"] = (mtport, mtslot,
-			Mcd[slot].Enabled, Mcd[slot].Enabled );
-		memcards["Multitap%u_Slot%u_Filename"] = (mtport, mtslot,
-			Mcd[slot].Filename.GetFullName().ToStdString(), Mcd[slot].Filename.GetFullName().ToStdString() );
+		memcards[fmt::format("Multitap%u_Slot%u_Enable", mtport, mtslot)] = Mcd[slot].Enabled;
+		memcards[fmt::format("Multitap%u_Slot%u_Filename", mtport, mtslot)] = Mcd[slot].Filename.GetFullName().ToStdString();
 	}
 
 	return memcards;
 }
 
-nlohmann::json AppConfig::LoadSaveRootItems()
+YAML::Node AppConfig::LoadSaveRootItems()
 {
-	nlohmann::json json;
+	YAML::Node yaml;
 
-	json["RecentIsoCount"] = RecentIsoCount;
-	json["Listbook_ImageSize"] = Listbook_ImageSize;
-	json["Toolbar_ImageSize"] = Toolbar_ImageSize;
-	json["Toolbar_ShowLabels"] = Toolbar_ShowLabels;
+	yaml["RecentIsoCount"] = RecentIsoCount;
+	yaml["Listbook_ImageSize"] = Listbook_ImageSize;
+	yaml["Toolbar_ImageSize"] = Toolbar_ImageSize;
+	yaml["Toolbar_ShowLabels"] = Toolbar_ShowLabels;
 
 	std::string res = CurrentIso;
-	json["CurrentIso"] = (res, res, IsPortable() );
+	yaml["CurrentIso"] = res; // TODO - missing the allow relative flag
 	CurrentIso = res;
 
-	json["CurrentBlockdump"] = CurrentBlockdump;
-	json["CurrentELF"] = CurrentELF;
-	json["CurrentIRX"] = CurrentIRX;
+	yaml["CurrentBlockdump"] = CurrentBlockdump;
+	yaml["CurrentELF"] = CurrentELF;
+	yaml["CurrentIRX"] = CurrentIRX;
 
-	json["EnableSpeedHacks"] = EnableSpeedHacks;
-	json["EnableGameFixes"] = EnableGameFixes;
-	json["EnableFastBoot"] = EnableFastBoot;
+	yaml["EnableSpeedHacks"] = EnableSpeedHacks;
+	yaml["EnableGameFixes"] = EnableGameFixes;
+	yaml["EnableFastBoot"] = EnableFastBoot;
 
-	json["EnablePresets"] = EnablePresets;
-	json["PresetIndex"] = PresetIndex;
-	json["AskOnBoot"] =  AskOnBoot;
+	yaml["EnablePresets"] = EnablePresets;
+	yaml["PresetIndex"] = PresetIndex;
+	yaml["AskOnBoot"] =  AskOnBoot;
 
 	#ifdef __WXMSW__
 	//IniEntry( McdCompressNTFS );
 	#endif
 
-	json["CdvdSource"] = (CdvdSource, CDVD_SourceLabels, CdvdSource );
+	// TODO - these are not basic types at all
+	//yaml["CdvdSource"] = (CdvdSource, CDVD_SourceLabels, CdvdSource );
 
-	return json;
+	return yaml;
 }
 
 // ------------------------------------------------------------------------
-nlohmann::json AppConfig::LoadSave()
+YAML::Node AppConfig::LoadSave()
 {
-	json.push_back(LoadSaveRootItems());
-	json.push_back(LoadSaveMemcards());
+	YAML::Node n;
+	n["RootItems"] = LoadSaveRootItems();
+	n["Memcards"] = LoadSaveMemcards();
 
 	// Process various sub-components:
 
-	json.push_back(Folders.LoadSave());
-	json.push_back(BaseFilenames.LoadSave());
-	json.push_back(Framerate.LoadSave());
+	n["Folders"] = Folders.LoadSave();
+	n["BaseFilenames"] = BaseFilenames.LoadSave();
+	n["Framerate"] = Framerate.LoadSave();
 	//json.push_back(Templates.LoadSave());
-	return json;
+	return n;
 }
 
 // ------------------------------------------------------------------------
@@ -580,10 +581,10 @@ AppConfig::FolderOptions::FolderOptions()
 	//bitset = 0xffffffff;
 }
 
-nlohmann::json AppConfig::FolderOptions::LoadSave()
+YAML::Node AppConfig::FolderOptions::LoadSave()
 {
 
-	nlohmann::json folder;
+	YAML::Node folder;
 
 	folder["UseDefaultBios"] = UseDefaultBios;
 	folder["UseDefaultSavestates"] = UseDefaultSavestates;
@@ -606,7 +607,7 @@ nlohmann::json AppConfig::FolderOptions::LoadSave()
 	folder[Langs] = rel;
 	folder[Cheats] = rel;
 	folder[CheatsWS] = rel;
-	folder[PluginsFolder] = (PluginsFolder, Path::Combine(InstallFolder, "plugins"), rel );
+	folder[PluginsFolder] = Path::Combine(InstallFolder, "plugins");
 
 	folder[RunIso] = rel;
 	folder[RunELF] = rel;
@@ -626,10 +627,10 @@ const std::string& AppConfig::FilenameOptions::operator[]( PluginsEnum_t plugini
 	return Plugins[pluginidx];
 }
 
-nlohmann::json AppConfig::FilenameOptions::LoadSave()
+YAML::Node AppConfig::FilenameOptions::LoadSave()
 {
 
-	nlohmann::json appC;
+	YAML::Node appC;
 
 	static const std::string pc( "Please Configure" );
 
@@ -643,14 +644,14 @@ nlohmann::json AppConfig::FilenameOptions::LoadSave()
 		std::string pluginShortName = static_cast<std::string>(tbl_PluginInfo[i].GetShortname());
 		if ( needRelativeName ) {
 			std::string plugin_filename = Plugins[i];
-			appC[pluginShortName] = (plugin_filename, pc );
+			appC[pluginShortName] = plugin_filename;
 		} //else
-		appC[pluginShortName] = (Plugins[i], pc );
+		appC[pluginShortName] = Plugins[i];
 	}
 
 	if( needRelativeName ) {
 		std::string bios_filename = Bios;
-		appC["BIOS"] = (bios_filename, pc );
+		appC["BIOS"] = bios_filename;
 	} else
 		appC ["BIOS"] = pc;
 
@@ -666,10 +667,8 @@ AppConfig::InputRecordingOptions::InputRecordingOptions()
 
 void AppConfig::InputRecordingOptions::loadSave(YAML::Node& yaml)
 {
-	//ScopedIniGroup path(ini, L"InputRecording");
-
-	yaml["VirtualPadPositionX"].push_back(VirtualPadPosition.x);
-	yaml["VirtualPadPositionY"].push_back(VirtualPadPosition.y);
+	yaml["VirtualPadPositionX"] = VirtualPadPosition.x;
+	yaml["VirtualPadPositionY"] = VirtualPadPosition.y;
 }
 #endif
 
@@ -685,12 +684,12 @@ AppConfig::FramerateOptions::FramerateOptions()
 }
 
 
-nlohmann::json AppConfig::FramerateOptions::LoadSave()
+YAML::Node AppConfig::FramerateOptions::LoadSave()
 {
 	//ScopedIniVurboScalar );
 	//json["SlomoScalar"] = SlomoScalar; // Fixed int 100 
 
-	return NULL;
+	return YAML::Node();
 }
 
 void AppConfig::FramerateOptions::SanityCheck()
@@ -1044,14 +1043,14 @@ AppIniLoader::AppIniLoader()
 
 static void LoadUiSettings()
 {
-	auto loader = nlohmann::json::array();
-	loader.push_back(ConLog_LoadSaveSettings());
-	loader.push_back(SysTraceLog_LoadSaveSettings());
+	YAML::Node cfg;
+	cfg["ConsoleLog"] = ConLog_LoadSaveSettings();
+	cfg["SysTraceLog"] = SysTraceLog_LoadSaveSettings();
 
 	conf.Load();
 
 	g_Conf = std::make_unique<AppConfig>();
-	loader.push_back(g_Conf->LoadSave());
+	cfg["GlobalConfig"] = g_Conf->LoadSave();
 
 	if( !folderUtils.DoesExist( g_Conf->CurrentIso ) )
 	{

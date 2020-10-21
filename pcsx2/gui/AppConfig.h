@@ -54,7 +54,7 @@ namespace PathDefs
 extern FolderUtils      folderUtils;
 extern JsonUtils        fileUtils;
 extern YamlUtils        yamlUtils;
-extern nlohmann::json	json;
+extern YAML::Node		yaml;
 extern GuiConfig        conf;
 
 extern DocsModeType		DocsFolderMode;				//
@@ -140,7 +140,7 @@ public:
 		fs::path RunDisc;		// last used location for Disc loading.
 
 		FolderOptions();
-		nlohmann::json LoadSave();
+		YAML::Node LoadSave();
 		void ApplyDefaults();
 
 		void Set( FoldersEnum_t folderidx, const std::string& src, bool useDefault );
@@ -156,7 +156,7 @@ public:
 		std::string Bios;
 		std::string Plugins[PluginId_Count];
 
-		nlohmann::json LoadSave();
+		YAML::Node LoadSave();
 
 		const std::string& operator[]( PluginsEnum_t pluginidx ) const;
 	};
@@ -182,7 +182,7 @@ public:
 
 		FramerateOptions();
 
-		nlohmann::json LoadSave();
+		YAML::Node LoadSave();
 		void SanityCheck();
 	};
 
@@ -200,7 +200,7 @@ public:
 		UiTemplateOptions();
 		
 		
-		nlohmann::json LoadSave();
+		YAML::Node LoadSave();
 
 		std::string LimiterUnlimited;
 		std::string LimiterTurbo;
@@ -289,9 +289,9 @@ public:
 
 	bool FullpathMatchTest( PluginsEnum_t pluginId, const wxString& cmpto );
 
-	nlohmann::json LoadSave();
-	nlohmann::json LoadSaveRootItems();
-	nlohmann::json LoadSaveMemcards();
+	YAML::Node LoadSave();
+	YAML::Node LoadSaveRootItems();
+	YAML::Node LoadSaveMemcards();
 
 	static int  GetMaxPresetIndex();
     static bool isOkGetPresetTextAndColor(int n, std::string& label, wxColor& c);
@@ -318,8 +318,8 @@ extern YAML::Node App_LoadSaveInstallSettings( );
 extern void App_SaveInstallSettings( YAML::Node yaml );
 extern void App_LoadInstallSettings( YAML::Node yaml );
 
-extern nlohmann::json ConLog_LoadSaveSettings();
-extern nlohmann::json SysTraceLog_LoadSaveSettings();
+extern YAML::Node ConLog_LoadSaveSettings();
+extern YAML::Node SysTraceLog_LoadSaveSettings();
 
 
 extern bool OpenFileConfig( std::string filename );

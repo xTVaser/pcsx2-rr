@@ -168,9 +168,9 @@ static SysTraceLog * const traceLogList[] =
 
 static const uint traceLogCount = ArraySize(traceLogList);
 
-nlohmann::json SysTraceLog_LoadSaveSettings()
+YAML::Node SysTraceLog_LoadSaveSettings()
 {
-	nlohmann::json trace;
+	YAML::Node trace;
 
 	for (uint i=0; i<traceLogCount; ++i)
 	{
@@ -178,7 +178,7 @@ nlohmann::json SysTraceLog_LoadSaveSettings()
 		{
 			pxAssertMsg(log->GetName(), "Trace log without a name!" );
 			std::string category = static_cast<std::string>(log->GetCategory());
-			trace[category] = ("." + log->GetShortName(), log->Enabled, false );
+			trace[category] = log->GetShortName();
 		}
 	}
 

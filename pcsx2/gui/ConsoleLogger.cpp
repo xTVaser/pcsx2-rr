@@ -344,10 +344,9 @@ static const bool ConLogDefaults[] =
 // are saved as disabled. ConLogInitialized is used to detect and avoid this issue.
 static bool ConLogInitialized = false;
 
-nlohmann::json ConLog_LoadSaveSettings()
+YAML::Node ConLog_LoadSaveSettings()
 {
-
-	nlohmann::json console;
+	YAML::Node console;
 
 	console["DevConWriterEnabled"] = false;
 
