@@ -204,37 +204,52 @@ void WriteSettings()
 		return;
 	}
 
-	spuConfig.GetStream()["MIXING"]["Interpolation"] = Interpolation;
-	spuConfig.GetStream()["MIXING"]["Disable_Effects"] = EffectsDisabled;
-	spuConfig.GetStream()["MIXING"]["DealiasFilter"] = postprocess_filter_dealias;
-	spuConfig.GetStream()["MIXING"]["FinalVolume"] = (int)(FinalVolume * 100 + 0.5f);
+	std::string data;
 
-	spuConfig.GetStream()["MIXING"]["AdvancedVolumeControl"] = AdvancedVolumeControl;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustC(dB)"] = VolumeAdjustCdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustFL(dB)"] = VolumeAdjustFLdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustFR(dB)"] = VolumeAdjustFRdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustBL(dB)"] = VolumeAdjustBLdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustBR(dB)"] = VolumeAdjustBRdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustSL(dB)"] = VolumeAdjustSLdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustSR(dB)"] = VolumeAdjustSRdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustLFE(dB)"] = VolumeAdjustLFEdb;
 
-	spuConfig.GetStream()["OUTPUT"]["Output_Module"] = mods[OutputModule]->GetIdent();
-	spuConfig.GetStream()["OUTPUT"]["Latency"] = SndOutLatencyMS;
-	spuConfig.GetStream()["OUTPUT"]["Synch_Mode"] = SynchMode;
-	spuConfig.GetStream()["OUTPUT"]["SpeakerConfiguration"] = numSpeakers;
-	spuConfig.GetStream()["OUTPUT"]["DelayCycles"] = delayCycles;
+	YAML::Node Mixing;
+
+	Mixing["Interpolation"] = Interpolation;
+	Mixing["Disable_Effects"] = EffectsDisabled;
+	Mixing["DealiasFilter"] = postprocess_filter_dealias;
+	Mixing["FinalVolume"] = (int)(FinalVolume * 100 + 0.5f);
+
+	Mixing["AdvancedVolumeControl"] = AdvancedVolumeControl;
+	Mixing["VolumeAdjustC(dB)"] = VolumeAdjustCdb;
+	Mixing["VolumeAdjustFL(dB)"] = VolumeAdjustFLdb;
+	Mixing["VolumeAdjustFR(dB)"] = VolumeAdjustFRdb;
+	Mixing["VolumeAdjustBL(dB)"] = VolumeAdjustBLdb;
+	Mixing["VolumeAdjustBR(dB)"] = VolumeAdjustBRdb;
+	Mixing["VolumeAdjustSL(dB)"] = VolumeAdjustSLdb;
+	Mixing["VolumeAdjustSR(dB)"] = VolumeAdjustSRdb;
+	Mixing["VolumeAdjustLFE(dB)"] = VolumeAdjustLFEdb;
+
+	YAML::Node Output;
+
+	Output["Output_Module"] = mods[OutputModule]->GetIdent();
+	Output["Latency"] = SndOutLatencyMS;
+	Output["Synch_Mode"] = SynchMode;
+	Output["SpeakerConfiguration"] = numSpeakers;
+	Output["DelayCycles"] = delayCycles;
 
 #ifdef SPU2X_PORTAUDIO
-spuConfig.GetStream()["PortAudio"].push_back(PortaudioOut->WriteSettings());
+spuConfig.GetStream()["PortAudio"] = PortaudioOut->WriteSettings();
 #endif
 #if defined(__unix__) || defined(__APPLE__)
-	spuConfig.GetStream()["SDL"].push_back(SDLOut->WriteSettings());
+	spuConfig.GetStream()["SDL"] = SDLOut->WriteSettings();
 #endif
-    spuConfig.GetStream()["SoundTouch"].push_back(SoundtouchCfg::WriteSettings());
+    spuConfig.GetStream()["SoundTouch"] = SoundtouchCfg::WriteSettings();
     DebugConfig::WriteSettings();
 
-	spuConfig.Save(path, spuConfig.GetStream().as<std::string>());
+
+	spuConfig.GetStream()["MIXING"] = Mixing;
+	spuConfig.GetStream()["OUTPUT"] = Output;
+
+	std::ostringstream os;
+	os << spuConfig.GetStream();
+	data = os.str();
+
+	spuConfig.Save(path, data);
 }
 
 void configure()
@@ -242,7 +257,7 @@ void configure()
 	auto* dialog = new Dialog;
 
 	init();
-	ReadSettings();
+	//ReadSettings();
 	dialog->Display();
 	WriteSettings();
 	wxDELETE(dialog);
