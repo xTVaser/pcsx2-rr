@@ -50,7 +50,7 @@ public:
 
 	FolderConfiguration(std::unique_ptr<YamlConfigFile>);
 
-	std::unique_ptr<YamlConfigFile> deserialize();
+	YamlConfigFile* deserialize();
 
 	Folder plugins;
 	Folder settings;
