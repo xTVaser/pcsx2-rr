@@ -281,7 +281,7 @@ void WriteSettings()
 	Output["DelayCycles"] = delayCycles;
 
 	if (Config_WaveOut.Device.empty())
-		Config_WaveOut.Device = L"default";
+		Config_WaveOut.Device = "default";
 	spuConfig.GetStream()["WAVEOUT"]["Device"] = Config_WaveOut.Device;
 	spuConfig.GetStream()["WAVEOUT"]["Buffer_Count"] = Config_WaveOut.NumBuffers;
 
