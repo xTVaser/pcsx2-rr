@@ -12,6 +12,7 @@ bool YamlConfigFile::saveToFile(fs::path path)
 	YAML::Node node = YAML::Load(data);
 	std::ofstream fout(path);
 	fout << node;
+	return true;
 }
 
 // TODO: instead of returning an entirely new node, it should contain a reference to the original
@@ -39,8 +40,10 @@ void YamlConfigFile::setSection(std::string key, YamlConfigFile* section)
 
 	YAML::Node currentNode = YAML::Load(data);
 	currentNode[key] = sectionNode;
+
+	// re-init yaml, this is duplicate code
 	std::ostringstream os;
-	os << currentNode[key];
+	os << currentNode;
 	data = os.str();
 }
 
@@ -48,8 +51,10 @@ void YamlConfigFile::setString(std::string key, std::string str)
 {
 	YAML::Node node = YAML::Load(data);
 	node[key] = str;
+
+	// re-init yaml, this is duplicate code
 	std::ostringstream os;
-	os << node[key];
+	os << node;
 	data = os.str();
 }
 
@@ -90,7 +95,7 @@ void MainConfiguration::save()
 	
 	// First we have to deserialize our relevant structs
 	YamlConfigFile* cfg = config.get();
-	cfg->setSection("folders", folderConfig.get()->deserialize().get());
+	cfg->setSection("folders", folderConfig.get()->deserialize());
 
 	// Save the file
 	config.get()->saveToFile(Path::Combine(Path::GetExecutableDirectory(), fs::path("mainConfig").replace_extension(config.get()->fileExtension)));
@@ -103,9 +108,10 @@ FolderConfiguration::FolderConfiguration(std::unique_ptr<YamlConfigFile> _config
 	bios = Folder({config->getString("test", "testPath"), "test", false});
 }
 
-std::unique_ptr<YamlConfigFile> FolderConfiguration::deserialize()
+YamlConfigFile* FolderConfiguration::deserialize()
 {
+	// shared_ptr?
 	YamlConfigFile* cfg = config.get();
-	cfg->setString("test", bios.defaultPath); // TODO quick and dirty
-	return std::make_unique<YamlConfigFile>(cfg); // TODO - probably not using smart pointers correctly
+	config.get()->setString("test", bios.defaultPath); // TODO quick and dirty
+	return cfg;
 }
