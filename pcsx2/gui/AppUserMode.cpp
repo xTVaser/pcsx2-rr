@@ -169,10 +169,6 @@ void App_SaveInstallSettings( YAML::Node yaml )
 //
 bool Pcsx2App::TestForPortableInstall()
 {
-	Configuration cfg;
-	cfg.save();
-
-
 	InstallationMode = 	InstallMode_Portable;
 
 	fs::path portableJsonFile = GetPortableJsonPath();
@@ -304,6 +300,9 @@ void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 
 void Pcsx2App::EstablishAppUserMode()
 {
+	Configuration cfg;
+	cfg.save();
+
 	// TODO - stop mutating the json directly, serialize and deserialize!
 
 	bool conf_install = TestForPortableInstall();

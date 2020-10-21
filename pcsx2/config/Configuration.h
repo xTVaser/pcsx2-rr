@@ -28,6 +28,9 @@ public:
 
 	std::unique_ptr<YamlConfigFile> getSection(std::string key);
 	std::string getString(std::string key, std::string fallback = "");
+
+	void setSection(std::string key, YamlConfigFile* section);
+	void setString(std::string key, std::string str);
 };
 
 // TODO - Saveable interface?
@@ -45,7 +48,9 @@ public:
 		bool useDefault;
 	};
 
-	FolderConfiguration(YamlConfigFile* parentConfig);
+	FolderConfiguration(std::unique_ptr<YamlConfigFile>);
+
+	std::unique_ptr<YamlConfigFile> deserialize();
 
 	Folder plugins;
 	Folder settings;

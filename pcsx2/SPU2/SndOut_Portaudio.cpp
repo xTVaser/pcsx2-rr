@@ -452,7 +452,7 @@ private:
 						if (info)
 							m_Device = wxString::FromUTF8(info->name);
 						else
-							m_Device = L"default";
+							m_Device = std::string("default");
 
 						m_SuggestedLatencyMS = (int)SendMessage(GetDlgItem(hWnd, IDC_LATENCY), TBM_GETPOS, 0, 0);
 
