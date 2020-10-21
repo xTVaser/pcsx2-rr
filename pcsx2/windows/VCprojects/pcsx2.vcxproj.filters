@@ -169,6 +169,9 @@
     <Filter Include="Recording\VirtualPad\Images">
       <UniqueIdentifier>{ad528458-08eb-49a2-aefa-3c2b86ab8896}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Configuration">
+      <UniqueIdentifier>{aca6525f-a7ae-443a-bb5f-35edc4a1cba7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Utilities\folderdesc.txt">
@@ -916,6 +919,9 @@
     <ClCompile Include="..\..\SPU2\Dma.cpp">
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\config\Configuration.cpp">
+      <Filter>Configuration</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\SPU2\spu2.cpp">
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
@@ -1469,6 +1475,9 @@
     </ClInclude>
     <ClInclude Include="..\..\SPU2\Windows\Dialogs.h">
       <Filter>System\Ps2\SPU2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\config\Configuration.h">
+      <Filter>Configuration</Filter>
     </ClInclude>
     <ClInclude Include="..\..\SPU2\spu2.h">
       <Filter>System\Ps2\SPU2</Filter>

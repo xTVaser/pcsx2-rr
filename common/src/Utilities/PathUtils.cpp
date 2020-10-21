@@ -186,17 +186,19 @@ std::string Path::GetDirectory(const std::string &src)
 }
 
 // TODO - blindly copy-pasted from stackoverflow, this is probably not PERFECT!
-fs::path Path::GetExecutablePath()
+fs::path Path::GetExecutableDirectory()
 {
+	fs::path exePath;
 #ifdef _WIN32
     wchar_t path[MAX_PATH] = { 0 };
     GetModuleFileName(NULL, path, MAX_PATH);
-	return std::wstring(path);
+	exePath = std::wstring(path);
 #else
     char result[PATH_MAX];
     ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-    return std::string(result, (count > 0) ? count : 0);
+    exePath = std::string(result, (count > 0) ? count : 0);
 #endif
+	return exePath.parent_path();
 }
 
 
