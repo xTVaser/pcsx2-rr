@@ -87,7 +87,7 @@ extern int SndOutLatencyMS;
 extern int SynchMode;
 
 #ifndef __POSIX__
-extern wchar_t dspPlugin[];
+extern std::string dspPlugin;
 extern int dspPluginModule;
 
 extern bool dspPluginEnabled;

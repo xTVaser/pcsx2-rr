@@ -55,7 +55,7 @@ void DspUpdate()
 {
 }
 
-s32 DspLoadLibrary(wchar_t* fileName, int modnum)
+s32 DspLoadLibrary(std::string fileName, int modnum)
 {
 	return 0;
 }

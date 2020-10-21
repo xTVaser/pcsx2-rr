@@ -89,7 +89,7 @@ CONFIG_XAUDIO2 Config_XAudio2;
 // DSP
 bool dspPluginEnabled = false;
 int dspPluginModule = 0;
-wchar_t dspPlugin[256];
+std::string dspPlugin;
 
 int numSpeakers = 0;
 

@@ -75,7 +75,7 @@ extern int AutoDMAPlayRate[2];
 extern u32 OutputModule;
 extern int SndOutLatencyMS;
 
-extern wchar_t dspPlugin[];
+extern std::string dspPlugin;
 extern int dspPluginModule;
 
 extern bool dspPluginEnabled;

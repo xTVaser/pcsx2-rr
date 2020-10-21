@@ -45,7 +45,7 @@ bool running;
 
 DWORD WINAPI DspUpdateThread(PVOID param);
 #endif
-s32 DspLoadLibrary(wchar_t* fileName, int modNum)
+s32 DspLoadLibrary(std::string fileName, int modNum)
 #ifdef USE_A_THREAD
 {
 	if (!dspPluginEnabled)
@@ -56,13 +56,13 @@ s32 DspLoadLibrary(wchar_t* fileName, int modNum)
 	return (hUpdateThread == INVALID_HANDLE_VALUE);
 }
 
-s32 DspLoadLibrary2(wchar_t* fileName, int modNum)
+s32 DspLoadLibrary2(std::string fileName, int modNum)
 #endif
 {
 	if (!dspPluginEnabled)
 		return -1;
 
-	hLib = LoadLibraryW(fileName);
+	hLib = LoadLibraryW(wxString(fileName));
 	if (!hLib)
 	{
 		return 1;

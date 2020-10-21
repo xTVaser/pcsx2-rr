@@ -49,18 +49,18 @@ static void ClampValues()
 
 void SoundtouchCfg::ReadSettings()
 {
-	SequenceLenMS = CfgReadInt(L"SOUNDTOUCH", L"SequenceLengthMS", 30);
-	SeekWindowMS = CfgReadInt(L"SOUNDTOUCH", L"SeekWindowMS", 20);
-	OverlapMS = CfgReadInt(L"SOUNDTOUCH", L"OverlapMS", 10);
+	//SequenceLenMS = CfgReadInt(L"SOUNDTOUCH", L"SequenceLengthMS", 30);
+	//SeekWindowMS = CfgReadInt(L"SOUNDTOUCH", L"SeekWindowMS", 20);
+	//OverlapMS = CfgReadInt(L"SOUNDTOUCH", L"OverlapMS", 10);
 
 	ClampValues();
 }
 
 void SoundtouchCfg::WriteSettings()
 {
-	CfgWriteInt(L"SOUNDTOUCH", L"SequenceLengthMS", SequenceLenMS);
-	CfgWriteInt(L"SOUNDTOUCH", L"SeekWindowMS", SeekWindowMS);
-	CfgWriteInt(L"SOUNDTOUCH", L"OverlapMS", OverlapMS);
+	//CfgWriteInt(L"SOUNDTOUCH", L"SequenceLengthMS", SequenceLenMS);
+	//CfgWriteInt(L"SOUNDTOUCH", L"SeekWindowMS", SeekWindowMS);
+	//CfgWriteInt(L"SOUNDTOUCH", L"OverlapMS", OverlapMS);
 }
 
 BOOL CALLBACK SoundtouchCfg::DialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
