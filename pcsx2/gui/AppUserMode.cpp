@@ -258,7 +258,7 @@ bool Pcsx2App::OpenInstallSettingsFile()
 
 
 #ifdef __WXMSW__
-	conf_install = std::unique_ptr<wxConfigBase>(new wxRegConfig());
+	//conf_install = std::unique_ptr<wxConfigBase>(new wxRegConfig());
 #else
 	// FIXME!!  Linux / Mac
 	// Where the heck should this information be stored?

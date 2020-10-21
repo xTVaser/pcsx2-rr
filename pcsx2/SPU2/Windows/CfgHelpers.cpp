@@ -51,21 +51,9 @@ void SysMessage(const wchar_t* fmt, ...)
 
 #include "Utilities/Path.h"
 
-wxString CfgFile(L"SPU2.ini");
-bool pathSet = false;
-
-void initIni()
-{
-	if (!pathSet)
-	{
-		CfgFile = GetSettingsFolder().Combine(CfgFile).GetFullPath();
-		pathSet = true;
-	}
-}
-
 void CfgSetSettingsDir(const char* dir)
 {
-	initIni();
+	//initIni();
 }
 
 
@@ -84,16 +72,16 @@ void CfgSetSettingsDir(const char* dir)
 \*_____________________________________________*/
 
 
-void CfgWriteBool(const TCHAR* Section, const TCHAR* Name, bool Value)
+/*void CfgWriteBool(const TCHAR* Section, const TCHAR* Name, bool Value)
 {
-	initIni();
+	//initIni();
 	const TCHAR* Data = Value ? L"TRUE" : L"FALSE";
 	WritePrivateProfileString(Section, Name, Data, CfgFile);
 }
 
 void CfgWriteInt(const TCHAR* Section, const TCHAR* Name, int Value)
 {
-	initIni();
+	//initIni();
 	TCHAR Data[32];
 	_itow(Value, Data, 10);
 	WritePrivateProfileString(Section, Name, Data, CfgFile);
@@ -101,24 +89,22 @@ void CfgWriteInt(const TCHAR* Section, const TCHAR* Name, int Value)
 
 void CfgWriteFloat(const TCHAR* Section, const TCHAR* Name, float Value)
 {
-	initIni();
+	//initIni();
 	TCHAR Data[32];
 	_swprintf(Data, L"%f", Value);
 	WritePrivateProfileString(Section, Name, Data, CfgFile);
 }
 
-/*void CfgWriteStr(const TCHAR* Section, const TCHAR* Name, const TCHAR *Data)
+void CfgWriteStr(const TCHAR* Section, const TCHAR* Name, const TCHAR *Data)
 {
 WritePrivateProfileString( Section, Name, Data, CfgFile );
-}*/
+}
 
 void CfgWriteStr(const TCHAR* Section, const TCHAR* Name, const wxString& Data)
 {
-	initIni();
+	//initIni();
 	WritePrivateProfileString(Section, Name, Data, CfgFile);
 }
-
-/*****************************************************************************/
 
 bool CfgReadBool(const TCHAR* Section, const TCHAR* Name, bool Default)
 {
@@ -219,4 +205,4 @@ bool CfgFindName(const TCHAR* Section, const TCHAR* Name)
 	if (wcslen(Data) == 0)
 		return false;
 	return true;
-}
+}*/

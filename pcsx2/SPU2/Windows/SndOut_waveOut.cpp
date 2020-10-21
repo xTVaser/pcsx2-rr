@@ -307,14 +307,14 @@ public:
 		return result;
 	}
 
-	const wchar_t* GetIdent() const
+	const std::string GetIdent() const
 	{
-		return L"waveout";
+		return "waveout";
 	}
 
-	const wchar_t* GetLongName() const
+	const std::string GetLongName() const
 	{
-		return L"WaveOut (Laggy)";
+		return "WaveOut (Laggy)";
 	}
 
 	void ReadSettings()
@@ -325,8 +325,9 @@ public:
 	{
 	}
 
-	void WriteSettings() const
+	YAML::Node WriteSettings() const
 	{
+		return YAML::Node();
 	}
 
 } static WO;

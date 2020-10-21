@@ -15,8 +15,21 @@
 
 #include "PrecompiledHeader.h"
 #include "../Global.h"
+#include "AppConfig.h"
 #include "Dialogs.h"
 #include <math.h>
+
+std::string path("SPU2.yaml");
+bool pathSet = false;
+
+void init()
+{
+	if (!pathSet)
+	{
+		path = Path::Combine(GetSettingsFolder().string(), path);
+		pathSet = true;
+	}
+}
 
 #ifdef PCSX2_DEVBUILD
 static const int LATENCY_MAX = 3000;
@@ -68,6 +81,8 @@ int SynchMode = 0; // Time Stretch, Async or Disabled
 
 u32 OutputModule = 0;
 
+YamlUtils spuConfig;
+
 CONFIG_WAVEOUT Config_WaveOut;
 CONFIG_XAUDIO2 Config_XAudio2;
 
@@ -80,28 +95,23 @@ int numSpeakers = 0;
 
 int dplLevel = 0;
 
-/*****************************************************************************/
-
-void ReadSettings()
+void setDefaults()
 {
-	Interpolation = CfgReadInt(L"MIXING", L"Interpolation", 4);
+	Interpolation = 4;
+	EffectsDisabled = false;
+	postprocess_filter_dealias = false;
+	FinalVolume = 50;
 
-	EffectsDisabled = CfgReadBool(L"MIXING", L"Disable_Effects", false);
-	postprocess_filter_dealias = CfgReadBool(L"MIXING", L"DealiasFilter", false);
-	FinalVolume = ((float)CfgReadInt(L"MIXING", L"FinalVolume", 100)) / 100;
-	if (FinalVolume > 1.0f)
-		FinalVolume = 1.0f;
-
-	AdvancedVolumeControl = CfgReadBool(L"MIXING", L"AdvancedVolumeControl", false);
-	VolumeAdjustCdb = CfgReadFloat(L"MIXING", L"VolumeAdjustC(dB)", 0);
-	VolumeAdjustFLdb = CfgReadFloat(L"MIXING", L"VolumeAdjustFL(dB)", 0);
-	VolumeAdjustFRdb = CfgReadFloat(L"MIXING", L"VolumeAdjustFR(dB)", 0);
-	VolumeAdjustBLdb = CfgReadFloat(L"MIXING", L"VolumeAdjustBL(dB)", 0);
-	VolumeAdjustBRdb = CfgReadFloat(L"MIXING", L"VolumeAdjustBR(dB)", 0);
-	VolumeAdjustSLdb = CfgReadFloat(L"MIXING", L"VolumeAdjustSL(dB)", 0);
-	VolumeAdjustSRdb = CfgReadFloat(L"MIXING", L"VolumeAdjustSR(dB)", 0);
-	VolumeAdjustLFEdb = CfgReadFloat(L"MIXING", L"VolumeAdjustLFE(dB)", 0);
-	delayCycles = CfgReadInt(L"DEBUG", L"DelayCycles", 4);
+	AdvancedVolumeControl = false;
+	VolumeAdjustCdb = 0;
+	VolumeAdjustFLdb = 0;
+	VolumeAdjustFRdb = 0;
+	VolumeAdjustBLdb = 0;
+	VolumeAdjustBRdb = 0;
+	VolumeAdjustSLdb = 0;
+	VolumeAdjustSRdb = 0;
+	VolumeAdjustLFEdb = 0;
+	delayCycles = 4;
 	VolumeAdjustC = powf(10, VolumeAdjustCdb / 10);
 	VolumeAdjustFL = powf(10, VolumeAdjustFLdb / 10);
 	VolumeAdjustFR = powf(10, VolumeAdjustFRdb / 10);
@@ -110,92 +120,186 @@ void ReadSettings()
 	VolumeAdjustSL = powf(10, VolumeAdjustSLdb / 10);
 	VolumeAdjustSR = powf(10, VolumeAdjustSRdb / 10);
 	VolumeAdjustLFE = powf(10, VolumeAdjustLFEdb / 10);
-
-	SynchMode = CfgReadInt(L"OUTPUT", L"Synch_Mode", 0);
-	numSpeakers = CfgReadInt(L"OUTPUT", L"SpeakerConfiguration", 0);
-	dplLevel = CfgReadInt(L"OUTPUT", L"DplDecodingLevel", 0);
-	SndOutLatencyMS = CfgReadInt(L"OUTPUT", L"Latency", 100);
+	SynchMode = 0;
+	numSpeakers = 0;
+	dplLevel = 0;
+	SndOutLatencyMS = 100;
 
 	if ((SynchMode == 0) && (SndOutLatencyMS < LATENCY_MIN_TS)) // can't use low-latency with timestretcher atm
 		SndOutLatencyMS = LATENCY_MIN_TS;
 	else if (SndOutLatencyMS < LATENCY_MIN)
 		SndOutLatencyMS = LATENCY_MIN;
 
-	wchar_t omodid[128];
-
-	// portaudio occasionally has issues selecting the proper default audio device.
-	// let's use xaudio2 until this is sorted (rama)
-
-	//	CfgReadStr(L"OUTPUT", L"Output_Module", omodid, 127, PortaudioOut->GetIdent());
-	CfgReadStr(L"OUTPUT", L"Output_Module", omodid, 127, XAudio2Out->GetIdent());
+	char omodid[128];
 
 	// find the driver index of this module:
 	OutputModule = FindOutputModuleById(omodid);
+	
+	dspPluginModule = 0;
+	dspPluginEnabled = false;
+	Config_WaveOut.NumBuffers = 4;
 
-	CfgReadStr(L"DSP PLUGIN", L"Filename", dspPlugin, 255, L"");
-	dspPluginModule = CfgReadInt(L"DSP PLUGIN", L"ModuleNum", 0);
-	dspPluginEnabled = CfgReadBool(L"DSP PLUGIN", L"Enabled", false);
+	spuConfig.GetStream()["MIXING"]["Interpolation"] = Interpolation;
+	spuConfig.GetStream()["MIXING"]["Disable_Effects"] = EffectsDisabled;
+	spuConfig.GetStream()["MIXING"]["DealiasFilter"] = postprocess_filter_dealias;
+	spuConfig.GetStream()["MIXING"]["FinalVolume"] = FinalVolume;
+	spuConfig.GetStream()["MIXING"]["AdvancedVolumeControl"] = AdvancedVolumeControl;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustC(dB)"] = VolumeAdjustCdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustFL(dB)"] = VolumeAdjustFLdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustFR(dB)"] = VolumeAdjustFRdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustBL(dB)"] = VolumeAdjustBLdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustBR(dB)"] = VolumeAdjustBRdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustSL(dB)"] = VolumeAdjustSLdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustSR(dB)"] = VolumeAdjustSRdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustLFE(dB)"] = VolumeAdjustLFEdb;
+	spuConfig.GetStream()["DEBUG"]["DelayCycles"] = delayCycles;
 
-	// Read WAVEOUT configs:
-	CfgReadStr(L"WAVEOUT", L"Device", Config_WaveOut.Device, L"default");
-	Config_WaveOut.NumBuffers = CfgReadInt(L"WAVEOUT", L"Buffer_Count", 4);
+	spuConfig.GetStream()["OUTPUT"]["Synch_Mode"] = SynchMode;
+	spuConfig.GetStream()["OUTPUT"]["SpeakerConfiguration"] = numSpeakers;
+	spuConfig.GetStream()["OUTPUT"]["DplDecodingLevel"] = dplLevel;
+	spuConfig.GetStream()["OUTPUT"]["Latency"] = SndOutLatencyMS;
 
-	PortaudioOut->ReadSettings();
+	std::string data;
+	std::ostringstream os;
+	os << spuConfig.GetStream();
+	data = os.str();
 
-	SoundtouchCfg::ReadSettings();
-	DebugConfig::ReadSettings();
+	spuConfig.Save(path, data);
+}
 
-	// Sanity Checks
-	// -------------
+/*****************************************************************************/
 
-	Clampify(SndOutLatencyMS, LATENCY_MIN, LATENCY_MAX);
-
-	if (mods[OutputModule] == nullptr)
+void ReadSettings()
+{
+	if (spuConfig.Load(path))
 	{
-		// Unsupported or legacy module.
-		fwprintf(stderr, L"* SPU2: Unknown output module '%s' specified in configuration file.\n", omodid);
+		Interpolation = spuConfig.GetStream()["MIXING"]["Interpolation"].as<int>();
+		EffectsDisabled = spuConfig.GetStream()["MIXING"]["Disable_Effects"].as<bool>();
+		postprocess_filter_dealias = spuConfig.GetStream()["MIXING"]["DealiasFilter"].as<bool>();
+		FinalVolume = ((float)spuConfig.GetStream()["MIXING"]["FinalVolume"].as<int>(), 100) / 100;
+		if (FinalVolume > 1.0f)
+			FinalVolume = 1.0f;
+
+		AdvancedVolumeControl = spuConfig.GetStream()["MIXING"]["AdvancedVolumeControl"].as<bool>();
+		VolumeAdjustCdb  = spuConfig.GetStream()["MIXING"]["VolumeAdjustC(dB)"].as<float>();
+		VolumeAdjustFLdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustFL(dB)"].as<float>();
+		VolumeAdjustFRdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustFR(dB)"].as<float>();
+		VolumeAdjustBLdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustBL(dB)"].as<float>();
+		VolumeAdjustBRdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustBR(dB)"].as<float>();
+		VolumeAdjustSLdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustSL(dB)"].as<float>();
+		VolumeAdjustSRdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustSR(dB)"].as<float>();
+		VolumeAdjustLFEdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustLFE(dB)"].as<float>();
+		VolumeAdjustC  = powf(10, VolumeAdjustCdb / 10);
+		VolumeAdjustFL = powf(10, VolumeAdjustFLdb / 10);
+		VolumeAdjustFR = powf(10, VolumeAdjustFRdb / 10);
+		VolumeAdjustBL = powf(10, VolumeAdjustBLdb / 10);
+		VolumeAdjustBR = powf(10, VolumeAdjustBRdb / 10);
+		VolumeAdjustSL = powf(10, VolumeAdjustSLdb / 10);
+		VolumeAdjustSR = powf(10, VolumeAdjustSRdb / 10);
+		VolumeAdjustLFE = powf(10, VolumeAdjustLFEdb / 10);
+		delayCycles = spuConfig.GetStream()["DEBUG"]["DelayCycles"].as<int>();
+
+		SynchMode = spuConfig.GetStream()["OUTPUT"]["Synch_Mode"].as<int>();
+		numSpeakers = spuConfig.GetStream()["OUTPUT"] ["SpeakerConfiguration"].as<int>();
+		dplLevel = spuConfig.GetStream()["OUTPUT"]["DplDecodingLevel"].as<int>();
+		SndOutLatencyMS = spuConfig.GetStream()["OUTPUT"]["Latency"].as<int>();
+
+		if ((SynchMode == 0) && (SndOutLatencyMS < LATENCY_MIN_TS)) // can't use low-latency with timestretcher atm
+			SndOutLatencyMS = LATENCY_MIN_TS;
+		else if (SndOutLatencyMS < LATENCY_MIN)
+			SndOutLatencyMS = LATENCY_MIN;
+
+		std::string omodid;
+
+		// portaudio occasionally has issues selecting the proper default audio device.
+		// let's use xaudio2 until this is sorted (rama)
+
+		spuConfig.GetStream()["OUTPUT"]["Output_Module"] = (omodid, 127, PortaudioOut->GetIdent());
+		spuConfig.GetStream()["OUTPUT"]["Output_Module"] = (omodid, 127, XAudio2Out->GetIdent());
+
+		// find the driver index of this module:
+		OutputModule = FindOutputModuleById(omodid);
+
+		//spuConfig.GetStream()["DSP PLUGIN"]["Filename"] = (dspPlugin, 255, "");
+		dspPluginModule = spuConfig.GetStream()["DSP PLUGIN"]["ModuleNum"].as<int>();
+		dspPluginEnabled = spuConfig.GetStream()["DSP PLUGIN"]["Enabled"].as<bool>();
+
+		// Read WAVEOUT configs:
+		spuConfig.GetStream()["WAVEOUT"]["Device"] = Config_WaveOut.Device;
+		Config_WaveOut.NumBuffers = spuConfig.GetStream()["WAVEOUT"]["Buffer_Count"].as<int>();
+		PortaudioOut->ReadSettings();
+
+		SoundtouchCfg::ReadSettings();
+		DebugConfig::ReadSettings();
+
+		// Sanity Checks
+		// -------------
+
+		Clampify(SndOutLatencyMS, LATENCY_MIN, LATENCY_MAX);
+
+		if (mods[OutputModule] == nullptr)
+		{
+			// Unsupported or legacy module.
+			//fwprintf(stderr, L"* SPU2: Unknown output module '%s' specified in configuration file.\n", omodid);
+		}
 	}
+
+	else
+	{
+		setDefaults();
+	}
+
 }
 
 /*****************************************************************************/
 
 void WriteSettings()
 {
-	CfgWriteInt(L"MIXING", L"Interpolation", Interpolation);
+	YAML::Node Mixing;
+	Mixing["Interpolation"] = Interpolation;
+	Mixing["Disable_Effects"] = EffectsDisabled;
+	Mixing["DealiasFilter"] = postprocess_filter_dealias;
+	Mixing["FinalVolume"] = (int)(FinalVolume * 100 + 0.5f);
 
-	CfgWriteBool(L"MIXING", L"Disable_Effects", EffectsDisabled);
-	CfgWriteBool(L"MIXING", L"DealiasFilter", postprocess_filter_dealias);
-	CfgWriteInt(L"MIXING", L"FinalVolume", (int)(FinalVolume * 100 + 0.5f));
+	Mixing["AdvancedVolumeControl"] = AdvancedVolumeControl;
+	Mixing["VolumeAdjustC(dB)"] = VolumeAdjustCdb;
+	Mixing["VolumeAdjustFL(dB)"] = VolumeAdjustFLdb;
+	Mixing["VolumeAdjustFR(dB)"] = VolumeAdjustFRdb;
+	Mixing["VolumeAdjustBL(dB)"] = VolumeAdjustBLdb;
+	Mixing["VolumeAdjustBR(dB)"] = VolumeAdjustBRdb;
+	Mixing["VolumeAdjustSL(dB)"] = VolumeAdjustSLdb;
+	Mixing["VolumeAdjustSR(dB)"] = VolumeAdjustSRdb;
+	Mixing["VolumeAdjustLFE(dB)"] = VolumeAdjustLFEdb;
 
-	CfgWriteBool(L"MIXING", L"AdvancedVolumeControl", AdvancedVolumeControl);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustC(dB)", VolumeAdjustCdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustFL(dB)", VolumeAdjustFLdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustFR(dB)", VolumeAdjustFRdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustBL(dB)", VolumeAdjustBLdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustBR(dB)", VolumeAdjustBRdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustSL(dB)", VolumeAdjustSLdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustSR(dB)", VolumeAdjustSRdb);
-	CfgWriteFloat(L"MIXING", L"VolumeAdjustLFE(dB)", VolumeAdjustLFEdb);
+	YAML::Node Output;
 
-	CfgWriteStr(L"OUTPUT", L"Output_Module", mods[OutputModule]->GetIdent());
-	CfgWriteInt(L"OUTPUT", L"Latency", SndOutLatencyMS);
-	CfgWriteInt(L"OUTPUT", L"Synch_Mode", SynchMode);
-	CfgWriteInt(L"OUTPUT", L"SpeakerConfiguration", numSpeakers);
-	CfgWriteInt(L"OUTPUT", L"DplDecodingLevel", dplLevel);
-	CfgWriteInt(L"DEBUG", L"DelayCycles", delayCycles);
+	Output["Output_Module"] = mods[OutputModule]->GetIdent();
+	Output["Latency"] = SndOutLatencyMS;
+	Output["Synch_Mode"] = SynchMode;
+	Output["SpeakerConfiguration"] = numSpeakers;
+	Output["DplDecodingLevel"] = dplLevel;
+	Output["DelayCycles"] = delayCycles;
 
 	if (Config_WaveOut.Device.empty())
 		Config_WaveOut.Device = L"default";
-	CfgWriteStr(L"WAVEOUT", L"Device", Config_WaveOut.Device);
-	CfgWriteInt(L"WAVEOUT", L"Buffer_Count", Config_WaveOut.NumBuffers);
+	spuConfig.GetStream()["WAVEOUT"]["Device"] = Config_WaveOut.Device;
+	spuConfig.GetStream()["WAVEOUT"]["Buffer_Count"] = Config_WaveOut.NumBuffers;
 
-	CfgWriteStr(L"DSP PLUGIN", L"Filename", dspPlugin);
-	CfgWriteInt(L"DSP PLUGIN", L"ModuleNum", dspPluginModule);
-	CfgWriteBool(L"DSP PLUGIN", L"Enabled", dspPluginEnabled);
+	spuConfig.GetStream()["DSP PLUGIN"]["Filename"] = dspPlugin;
+	spuConfig.GetStream()["DSP PLUGIN"]["ModuleNum"] = dspPluginModule;
+	spuConfig.GetStream()["DSP PLUGIN"]["Enabled"] = dspPluginEnabled;
 
-	PortaudioOut->WriteSettings();
+    spuConfig.GetStream()["PortAudio"] = PortaudioOut->WriteSettings();
+	//spuConfig.GetStream()["SoundTouch"] = 
 	SoundtouchCfg::WriteSettings();
 	DebugConfig::WriteSettings();
+
+	std::string data;
+	std::ostringstream os;
+	os << spuConfig.GetStream();
+	data = os.str();
+
+	spuConfig.Save(path, data);
 }
 
 void CheckOutputModule(HWND window)
@@ -252,7 +356,7 @@ BOOL CALLBACK ConfigProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			int modidx = 0;
 			while (mods[modidx] != nullptr)
 			{
-				swprintf_s(temp, 72, L"%d - %s", modidx, mods[modidx]->GetLongName());
+				//wprintf_s(temp, 72, L"%d - %s", modidx, mods[modidx]->GetLongName());
 				SendDialogMsg(hWnd, IDC_OUTPUT, CB_ADDSTRING, 0, (LPARAM)temp);
 				++modidx;
 			}

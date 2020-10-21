@@ -45,8 +45,8 @@ static bool LogLocationSetByPcsx2 = false;
 static wxString CfgLogsFolder;
 static wxString CfgDumpsFolder;
 
-static wxDirName LogsFolder;
-static wxDirName DumpsFolder;
+static fs::path LogsFolder;
+static fs::path DumpsFolder;
 
 wxString AccessLogFileName;
 wxString DMA4LogFileName;
@@ -58,24 +58,24 @@ wxString RegDumpFileName;
 
 void CfgSetLogDir(const char* dir)
 {
-	LogsFolder = (dir == nullptr) ? wxString(L"logs") : wxString(dir, wxConvFile);
-	DumpsFolder = (dir == nullptr) ? wxString(L"logs") : wxString(dir, wxConvFile);
+	LogsFolder = std::string((dir == nullptr) ? "logs" : dir);
+	DumpsFolder = std::string((dir == nullptr) ? "logs" : dir);
 	LogLocationSetByPcsx2 = (dir != nullptr);
 }
 
-FILE* OpenBinaryLog(const wxString& logfile)
+FILE* OpenBinaryLog(const std::string& logfile)
 {
-	return wxFopen(Path::Combine(LogsFolder, logfile), L"wb");
+	return wxFopen(Path::Combine(LogsFolder.string(), logfile), L"wb");
 }
 
-FILE* OpenLog(const wxString& logfile)
+FILE* OpenLog(const std::string& logfile)
 {
-	return wxFopen(Path::Combine(LogsFolder, logfile), L"w");
+	return wxFopen(Path::Combine(LogsFolder.string(), logfile), L"w");
 }
 
-FILE* OpenDump(const wxString& logfile)
+FILE* OpenDump(const std::string& logfile)
 {
-	return wxFopen(Path::Combine(DumpsFolder, logfile), L"w");
+	return wxFopen(Path::Combine(DumpsFolder.string(), logfile), L"w");
 }
 
 namespace DebugConfig
@@ -117,8 +117,8 @@ namespace DebugConfig
 
 		if (!LogLocationSetByPcsx2)
 		{
-			LogsFolder = CfgLogsFolder;
-			DumpsFolder = CfgLogsFolder;
+			LogsFolder = CfgLogsFolder.ToStdString();
+			DumpsFolder = CfgLogsFolder.ToStdString();
 		}
 	}
 
