@@ -7,38 +7,6 @@ YamlConfigFile::YamlConfigFile(std::string data)
 	this->data = data;
 }
 
-bool YamlConfigFile::loadFromFile(fs::path path)
-{
-	try
-	{
-		YAML::Node node = YAML::LoadFile(path);
-		std::ostringstream os;
-		os << node;
-		data = os.str();
-	}
-	catch (std::exception ex)
-	{
-		return false;
-	}
-	return true;
-}
-
-bool YamlConfigFile::saveToFile(fs::path path)
-{
-	try
-	{
-		std::ofstream fout(path);
-		YAML::Node node = YAML::Load(data);
-		fout << node;
-		fout.close();
-	}
-	catch (std::exception ex)
-	{
-		return false;
-	}
-	return true;
-}
-
 // TODO: instead of returning an entirely new node, it should contain a reference to the original 
 // but have a growing list of keys to access a nested element transparently.
 // that way, everything modifying the same underlying source of truth / reduces duplication / keeps the interface simplified
@@ -76,7 +44,7 @@ MainConfiguration::MainConfiguration()
 {
 	// Load Main Configuration
 	config = std::make_unique<YamlConfigFile>();
-	config.get()->loadFromFile(Path::Combine(Path::GetExecutableDirectory(), fs::path("mainConfig").replace_extension(config.get()->fileExtension)));
+	yamlUtils.Load(Path::Combine(Path::GetExecutableDirectory(), fs::path("mainConfig").replace_extension(config.get()->fileExtension)));
 
 	// Load Folder Configuration (and soon others)
 	folderConfig = std::make_unique<FolderConfiguration>(config.get());
@@ -85,7 +53,7 @@ MainConfiguration::MainConfiguration()
 void MainConfiguration::save()
 {
 	// TODO - store filename as member var (maybe on the YamlConfigFile as well...should map to a file
-	config.get()->saveToFile(Path::Combine(Path::GetExecutableDirectory(), fs::path("mainConfig").replace_extension(config.get()->fileExtension)));
+	//yamlUtils.Save(Path::Combine(Path::GetExecutableDirectory(), fs::path("mainConfig").replace_extension(config.get()->fileExtension)));
 }
 
 FolderConfiguration::FolderConfiguration(YamlConfigFile* parentConfig)

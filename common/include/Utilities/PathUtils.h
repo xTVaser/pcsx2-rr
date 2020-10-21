@@ -30,6 +30,8 @@ protected:
     std::ifstream in;
     std::ofstream out;
     FolderUtils folder;
+    std::string data;
+
 
 public:
     virtual bool Save(fs::path toSave, std::string) = 0;

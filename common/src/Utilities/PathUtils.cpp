@@ -325,7 +325,7 @@ bool YamlUtils::Save(fs::path toSave, std::string stream)
 
     out.open(toSave, std::ios::out | std::ios::trunc);
     out.seekp(0);
-    out << std::setw(4) << stream; 
+    out << stream; 
     out.close();
 
 	if (out.bad())
@@ -342,6 +342,9 @@ bool YamlUtils::Load(fs::path toLoad)
     try
     {
         stream = YAML::LoadFile(toLoad);
+        std::ostringstream os;
+		os << stream;
+		data = os.str();
     }
 	catch (const std::exception& e)
 	{

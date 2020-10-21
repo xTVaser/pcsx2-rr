@@ -18,7 +18,6 @@ private:
 	// when and how the underlying YAML is constructed/destructed
 	std::string data;
 	YamlConfigFile(std::string data);
-
 public:
 	YamlConfigFile() {}
 
@@ -70,6 +69,8 @@ class MainConfiguration
 private:
 	std::unique_ptr<YamlConfigFile> config;
 	std::unique_ptr<FolderConfiguration> folderConfig;
+	YamlUtils yamlUtils;
+
 
 public:
 	MainConfiguration();

@@ -308,7 +308,7 @@ bool InputRecording::Create(wxString FileName, bool fromSaveState, wxString auth
 	SetToRecordMode();
 	g_InputRecordingControls.DisableFrameAdvance();
 	inputRec::log("Started new input recording");
-	inputRec::consoleLog(fmt::format("Filename {}", std::string(FileName)));
+	inputRec::consoleLog(fmt::format("Filename {}", FileName.ToStdString()));
 	return true;
 }
 

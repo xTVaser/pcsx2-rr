@@ -24,7 +24,7 @@
 #ifdef __WXMSW__
 #include "wx/msw/regconf.h"
 #endif
-#include <Config\Configuration.h>
+#include "config/Configuration.h"
 
 DocsModeType			DocsFolderMode = DocsFolder_User;
 bool					UseDefaultSettingsFolder = true;

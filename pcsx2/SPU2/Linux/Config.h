@@ -121,5 +121,5 @@ void DisplayDialog();
 void configure();
 extern YamlUtils spuConfig;
 extern bool pathSet;
-extern void initIni();
+extern void init();
 #endif // CONFIG_H_INCLUDED

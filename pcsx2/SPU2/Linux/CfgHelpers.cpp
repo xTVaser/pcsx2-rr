@@ -17,28 +17,16 @@
 #include "AppConfig.h"
 #include "Dialogs.h"
 
-std::string path("SPU2.yaml");
-bool pathSet = false;
-
-void initIni()
-{
-	if (!pathSet)
-	{
-		path = Path::Combine(GetSettingsFolder().string(), path);
-		pathSet = true;
-	}
-}
-
 void setIni(const wchar_t* Section)
 {
-	initIni();
+//	initIni();
 }
 
 void CfgSetSettingsDir(const char* dir)
 {
 	FileLog("CfgSetSettingsDir(%s)\n", dir);
-	path = Path::Combine((dir == nullptr) ? std::string("settings") : std::string(dir), std::string("SPU2.yaml"));
-	pathSet = true;
+	//path = Path::Combine((dir == nullptr) ? std::string("settings") : std::string(dir), std::string("SPU2.yaml"));
+	//pathSet = true;
 }
 
 /*void CfgWriteBool(const wchar_t* Section, const wchar_t* Name, bool Value)

@@ -70,6 +70,8 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "format": "cpp",
+        "variant": "cpp"
     }
 }

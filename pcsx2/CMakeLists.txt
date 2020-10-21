@@ -56,6 +56,7 @@ set(pcsx2Sources
 	Cache.cpp
 	COP0.cpp
 	COP2.cpp
+	config/Configuration.cpp
 	Counters.cpp
 	GameDatabase.cpp
 	Dump.cpp
@@ -134,6 +135,7 @@ set(pcsx2Headers
 	cheatscpp.h
 	Common.h
 	Config.h
+	config/Configuration.h
 	COP0.h
 	Counters.h
 	Dmac.h
