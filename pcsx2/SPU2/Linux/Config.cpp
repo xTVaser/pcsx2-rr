@@ -124,7 +124,7 @@ void setDefaults()
 	char omodid[128];
 
 	// find the driver index of this module:
-	OutputModule = FindOutputModuleById(omodid);
+	//OutputModule = FindOutputModuleById(omodid);
 
 	spuConfig.GetStream()["MIXING"]["Interpolation"] = Interpolation;
 	spuConfig.GetStream()["MIXING"]["Disable_Effects"] = EffectsDisabled;
@@ -316,6 +316,12 @@ spuConfig.GetStream()["PortAudio"] = PortaudioOut->WriteSettings();
 	spuConfig.GetStream()["MIXING"] = Mixing;
 	spuConfig.GetStream()["OUTPUT"] = Output;
 
+	std::ostringstream os;
+	os << spuConfig.GetStream();
+	data = os.str();
+
+	std::cout << "Data: " << data << std::endl;
+	
 	std::ofstream fileStream(path);
 	fileStream << spuConfig.GetStream();
 	fileStream.close();

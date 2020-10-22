@@ -959,7 +959,6 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 	AppApplySettings();
 	AppSaveSettings();//Make sure both Yaml files are created if needed.
 }
-json
 // --------------------------------------------------------------------------------------
 //  pxDudConfig
 // --------------------------------------------------------------------------------------
@@ -1181,7 +1180,7 @@ void AppSaveSettings()
 		return;
 	}
 
-	Console.WriteLn("Saving json files...");
+	//Console.WriteLn("Saving yaml files...");
 
 	SaveUiSettings();
 	SaveVmSettings();

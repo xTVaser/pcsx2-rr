@@ -197,7 +197,7 @@ struct Pcsx2Config
 		// Default is Disabled, with all recs enabled underneath.
 		//ProfilerOptions() : bitset( 0xfffffffe ) {}
 		YAML::Node LoadSave();
-        void Load(YAML::Node&);
+        void Load(YAML::Node);
 
 		bool operator ==( const ProfilerOptions& right ) const
 		{
@@ -249,7 +249,7 @@ struct Pcsx2Config
 		void ApplySanityCheck();
 
 		YAML::Node LoadSave();
-		void Load(YAML::Node&);
+		void Load(YAML::Node);
 		bool operator ==( const RecompilerOptions& right ) const
 		{
 			return false;
@@ -278,7 +278,7 @@ struct Pcsx2Config
 
 		CpuOptions();
 		YAML::Node LoadSave();
-		void Load(YAML::Node&);
+		void Load(YAML::Node);
 		void ApplySanityCheck();
 
 		bool operator ==( const CpuOptions& right ) const
@@ -315,7 +315,7 @@ struct Pcsx2Config
 		GSOptions();
 		
 		YAML::Node LoadSave();
-		void Load(YAML::Node&);
+		void Load(YAML::Node);
 
 		int GetVsync() const;
 
@@ -372,7 +372,7 @@ struct Pcsx2Config
             VU0KickstartHack;       // Speed up VU0 at start of program to avoid some VU1 sync issues
 		GamefixOptions();
 	    YAML::Node LoadSave();
-		void Load(YAML::Node&);
+		void Load(YAML::Node);
 		GamefixOptions& DisableAll();
 
 		void Set( const std::string& list, bool enabled=true );
@@ -410,7 +410,7 @@ struct Pcsx2Config
 
 		SpeedhackOptions();
 		YAML::Node LoadSave();
-		void Load(YAML::Node&);
+		void Load(YAML::Node);
 		SpeedhackOptions& DisableAll();
 
 		bool operator ==( const SpeedhackOptions& right ) const
@@ -440,7 +440,7 @@ struct Pcsx2Config
 
 		DebugOptions();
 		YAML::Node LoadSave();
-		void Load(YAML::Node&);
+		void Load(YAML::Node);
 
 		bool operator ==( const DebugOptions& right ) const
 		{

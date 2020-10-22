@@ -69,10 +69,10 @@ YAML::Node Pcsx2Config::SpeedhackOptions::LoadSave()
 	return speedHacks;
 }
 
-void Pcsx2Config::SpeedhackOptions::Load(YAML::Node& speedHacks)
+void Pcsx2Config::SpeedhackOptions::Load(YAML::Node speedHacks)
 {
-    EECycleRate = speedHacks["EECycleRate"].as<int>();
-	EECycleSkip = speedHacks["EECycleSkip"].as<int>();
+    //EECycleRate = speedHacks["EECycleRate"].as<uint8_t>();
+	//EECycleSkip = speedHacks["EECycleSkip"].as<uint8_t>();
 	fastCDVD = speedHacks["fastCDVD"].as<bool>();
 	IntcStat = speedHacks["IntcStat"].as<bool>();
 	WaitLoop = speedHacks["WaitLoop"].as<bool>();
@@ -92,7 +92,7 @@ YAML::Node Pcsx2Config::ProfilerOptions::LoadSave()
     return profiler;
 }
 
-void Pcsx2Config::ProfilerOptions::Load(YAML::Node& profiler)
+void Pcsx2Config::ProfilerOptions::Load(YAML::Node profiler)
 {
 	Enabled = profiler["Enabled"].as<bool>();
 	RecBlocks_EE = profiler["RecBlocks_EE"].as<bool>();
@@ -190,7 +190,7 @@ YAML::Node Pcsx2Config::RecompilerOptions::LoadSave()
 	return recomp;
 }
 
-void Pcsx2Config::RecompilerOptions::Load(YAML::Node& recomp)
+void Pcsx2Config::RecompilerOptions::Load(YAML::Node recomp)
 {
 	EnableEE = recomp["EnableEE"].as<bool>();
 	EnableIOP = recomp["EnableIOP"].as<bool>();
@@ -237,7 +237,7 @@ YAML::Node Pcsx2Config::CpuOptions::LoadSave()
 	return cpu;
 }
 
-void Pcsx2Config::CpuOptions::Load(YAML::Node& cpu)
+void Pcsx2Config::CpuOptions::Load(YAML::Node cpu)
 {
 	sseMXCSR.DenormalsAreZero = cpu["FPU.DenormalsAreZero"].as<uint32_t>(); 
 	sseMXCSR.FlushToZero = cpu["FPU.FlushToZero"].as<uint32_t>();
@@ -283,10 +283,10 @@ YAML::Node Pcsx2Config::GSOptions::LoadSave()
 	return gs;
 }
 
-void Pcsx2Config::GSOptions::Load(YAML::Node& gs)
+void Pcsx2Config::GSOptions::Load(YAML::Node gs)
 {
 	SynchronousMTGS = gs["SynchronousMTGS"].as<bool>();
-	VsyncQueueSize = gs["VsyncQueueSize"].as<bool>();
+	VsyncQueueSize = gs["VsyncQueueSize"].as<int>();
 	FrameLimitEnable = gs["FrameLimitEnable"].as<bool>();
 	FrameSkipEnable = gs["FrameSkipEnable"].as<bool>();
 	//ini.EnumEntry( L"VsyncEnable", VsyncEnable, NULL, VsyncEnable );
@@ -453,7 +453,7 @@ YAML::Node Pcsx2Config::GamefixOptions::LoadSave()
     return gameFix;
 }
 
-void Pcsx2Config::GamefixOptions::Load(YAML::Node& gameFix)
+void Pcsx2Config::GamefixOptions::Load(YAML::Node gameFix)
 {
 	VuAddSubHack = gameFix["VuAddSubHack"].as<bool>();
 	FpuCompareHack = gameFix["FpuCompareHack"].as<bool>();
@@ -500,15 +500,15 @@ YAML::Node Pcsx2Config::DebugOptions::LoadSave()
 	return debugger;
 }
 
-void Pcsx2Config::DebugOptions::Load(YAML::Node& debugger)
+void Pcsx2Config::DebugOptions::Load(YAML::Node debugger)
 {
 	ShowDebuggerOnStart = debugger["ShowDebuggerOnStart"].as<bool>();
 	AlignMemoryWindowStart = debugger["AlignMemoryWindowStart"].as<bool>();
-	FontWidth = debugger["FontWidth"].as<int>();
-	FontHeight = debugger["FontHeight"].as<int>();
-	WindowWidth = debugger["WindowWidth"].as<int>();
-	WindowHeight = debugger["WindowHeight"].as<int>();
-	MemoryViewBytesPerRow = debugger["MemoryViewBytesPerRow"].as<int>();
+	//FontWidth = debugger["FontWidth"].as<uint8_t>();
+	//FontHeight = debugger["FontHeight"].as<uint8_t>();
+	WindowWidth = debugger["WindowWidth"].as<uint32_t>();
+	WindowHeight = debugger["WindowHeight"].as<uint32_t>();
+	MemoryViewBytesPerRow = debugger["MemoryViewBytesPerRow"].as<uint32_t>();
 }
 
 Pcsx2Config::Pcsx2Config()
@@ -591,13 +591,13 @@ void Pcsx2Config::Load(YAML::Node& loader)
 	MultitapPort0_Enabled = loader["Core"]["MultitapPort0_Enabled"].as<bool>();
 	MultitapPort1_Enabled = loader["Core"]["MultitapPort1_Enabled"].as<bool>();
 	
-	Recompiler.Load(loader);
-	Speedhacks.Load(loader);
-	Gamefixes.Load(loader);
-	Profiler.Load(loader);
-	Debugger.Load(loader);
-	Cpu.Load(loader);
-	GS.Load(loader);
+	Recompiler.Load(loader["Recompiler"]);
+	Speedhacks.Load(loader["SpeedHacks"]);
+	Gamefixes.Load(loader["GameFixes"]);
+	Profiler.Load(loader["Profiler"]);
+	Debugger.Load(loader["Debugger"]);
+	//Cpu.Load(loader["Cpu"]);
+	GS.Load(loader["GS"]);
 }
 
 bool Pcsx2Config::MultitapEnabled( uint port ) const
