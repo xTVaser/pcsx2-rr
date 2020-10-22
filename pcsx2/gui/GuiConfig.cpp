@@ -145,27 +145,29 @@ void FilenameOptions::Save(wxConfigBase* conf)
 
 	for (int i = 0; i < PluginId_Count; ++i)
 	{
-		std::string pluginShortName = static_cast<std::string>(tbl_PluginInfo[i].GetShortname());
+		wxString pluginShortName = static_cast<std::string>(tbl_PluginInfo[i].GetShortname());
 		if (needRelativeName)
 		{
 			wxFileName plugin_filename = wxFileName(Plugins[i]);
-			//conf->Write(pluginShortName, plugin_filename);
-		} //else
-		//conf->Write(pluginShortName,Plugins[i]);
+			conf->Write(pluginShortName, plugin_filename.GetFullPath());
+		} else
+		conf->Write(pluginShortName, wxString(Plugins[i]));
 	}
 
 	if (needRelativeName)
 	{
-		std::string bios_filename = Bios;
-		//conf->Write(L"BIOS", bios_filename);
+		wxString bios_filename = Bios;
+		conf->Write(L"BIOS", bios_filename);
 	}
-	//else
-		//conf->Write(L"BIOS", pc);
+	else
+		conf->Write(L"BIOS", wxString(pc));
 
 }
 
-
-
+void FilenameOptions::Load(wxConfigBase* conf)
+{
+	conf->Read("BIOS", Bios);
+}
 
 GuiConfig::GuiConfig()
 	: MainGuiPosition( wxDefaultPosition )
@@ -177,7 +179,6 @@ GuiConfig::GuiConfig()
 {
     LanguageId			= wxLANGUAGE_DEFAULT;
     LanguageCode		= "default";
-    conf = new wxFileConfig("PCSX2");
 }
 
 void GuiConfig::Init()
@@ -186,7 +187,7 @@ void GuiConfig::Init()
 	conf = new wxFileConfig();
 	
 	 std::string programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
-	 std::string programDir(Path::Combine(programFullPath, "json/PCSX2_ui.ini"));	
+	 std::string programDir(Path::Combine(programFullPath, "settings/PCSX2_ui.ini"));	
      conf->SetPath(programDir);
 	
 
@@ -204,6 +205,7 @@ void GuiConfig::Load()
 
 	console.Load(conf);	
 	gsWindow.Load(conf);
+	Filenames.Load(conf);
 }
 
 
@@ -217,7 +219,7 @@ void GuiConfig::Save()
 
 	console.Save(conf);
 	gsWindow.Save(conf);
-
+	Filenames.Save(conf);
     conf->Write("MainGuiPositionX", MainGuiPosition.x);
     conf->Write("MainGuiPositionY", MainGuiPosition.y);
     conf->Write("SysSettingsTabName", SysSettingsTabName);
