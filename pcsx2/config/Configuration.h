@@ -5,69 +5,10 @@
 #include <string>
 #include "Utilities/PathUtils.h"
 
-class YamlConfigFile
-{
-private:
-	// NOTE - yaml-cpp has a memory leak problem due to YAML's more advanced capabilities (making references to blocks of config)
-	// to avoid this, we avoid storing / mutating it's internal data-structure and instead deserialize/serialize everytime.
-	//
-	// As a result - this config API should be avoided for massive files (think GameDB size) as it will result in excessive string creation, etc.
-	// the nholmann::json library does not have this same issue from what I understand.
-	//
-	// If you need/want to use YAML for something (ie. the GameDB). It would be better to roll your own implementation where you can control
-	// when and how the underlying YAML is constructed/destructed
-	std::string data;
-	YamlConfigFile(std::string data);
-public:
-	YamlConfigFile() {}
+#include "ConfigFile.h"
+#include "FolderConfiguration.h"
 
-	std::string fileExtension = "yaml";
-
-	bool loadFromFile(fs::path path);
-	bool saveToFile(fs::path path);
-
-	std::unique_ptr<YamlConfigFile> getSection(std::string key);
-	std::string getString(std::string key, std::string fallback = "");
-
-	void setSection(std::string key, YamlConfigFile* section);
-	void setString(std::string key, std::string str);
-};
-
-// TODO - Saveable interface?
-
-class FolderConfiguration
-{
-private:
-	std::unique_ptr<YamlConfigFile> config;
-
-public:
-	struct Folder
-	{
-		std::string userPath;
-		std::string defaultPath;
-		bool useDefault;
-	};
-
-	FolderConfiguration(std::unique_ptr<YamlConfigFile>);
-
-	YamlConfigFile* deserialize();
-
-	Folder plugins;
-	Folder settings;
-	Folder documents;
-	Folder bios;
-	Folder snapshots;
-	Folder savestates;
-	Folder memoryCards;
-	Folder languages;
-	Folder logs;
-	Folder cheats;
-	Folder widescreenCheats;
-
-	fs::path lastIsoPath;
-	fs::path lastELFPath;
-	fs::path lastDiscPath;
-};
+// TODO - deserialize/save interface
 
 class MainConfiguration
 {
@@ -86,11 +27,35 @@ public:
 // Global Configuration Object
 class Configuration
 {
+private:
+	enum class InstallationMode
+	{
+		// Use the user defined folder selections.  These can be anywhere on a user's hard drive,
+		// though by default the binaries (plugins) are located in Install_Dir (registered
+		// by the installer), and the user files (screenshots, inis) are in the user's documents
+		// folder.  All folders are changable within the GUI.
+		Registered,
+
+		// In this mode, both Install_Dir and UserDocuments folders default the directory containing
+		// PCSX2.exe, or the current working directory (if the PCSX2 directory could not be determined).
+		// Folders cannot be changed from within the gui, however the fixed defaults can be manually
+		// specified in the portable.ini by power users/devs.
+		//
+		// This mode is typically enabled by the presence of a 'portable.ini' in the folder.
+		Portable,
+	};
+	InstallationMode installationMode = InstallationMode::Portable; // defaulting to portable makes....sense to me?
+
 public:
 	Configuration();
 
 	// Hide behind a getter, so the consumer cannot modify the underlying configuration
 	MainConfiguration* mainConfig();
+
+	bool isPortableInstall();
+	bool isRegisteredInstall();
+	void setPortableInstall();
+	void setRegisteredInstall();
 
 	void save();
 

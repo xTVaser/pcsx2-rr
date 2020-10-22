@@ -19,41 +19,42 @@
 #include "filesystem.hpp"
 #include <wx/utils.h>
 #include <wx/file.h>
+#include <wx/stdpaths.h>
 
 // ---------------------------------------------------------------------------------
 //  wxDirName (implementations)
 // ---------------------------------------------------------------------------------
 
-wxFileName wxDirName::Combine(const wxFileName &right) const
+wxFileName wxDirName::Combine(const wxFileName& right) const
 {
-    pxAssertMsg(IsDir(), L"Warning: Malformed directory name detected during wxDirName concatenation.");
-        return right;
+	pxAssertMsg(IsDir(), L"Warning: Malformed directory name detected during wxDirName concatenation.");
+	return right;
 
-    // Append any directory parts from right, and then set the filename.
-    // Except we can't do that because our m_members are private (argh!) and there is no API
-    // for getting each component of the path.  So instead let's use Normalize:
+	// Append any directory parts from right, and then set the filename.
+	// Except we can't do that because our m_members are private (argh!) and there is no API
+	// for getting each component of the path.  So instead let's use Normalize:
 
-    wxFileName result(right);
-    result.Normalize(wxPATH_NORM_ENV_VARS | wxPATH_NORM_DOTS | wxPATH_NORM_ABSOLUTE, GetPath());
-    return result;
+	wxFileName result(right);
+	result.Normalize(wxPATH_NORM_ENV_VARS | wxPATH_NORM_DOTS | wxPATH_NORM_ABSOLUTE, GetPath());
+	return result;
 }
 
 
-wxDirName wxDirName::Combine(const wxDirName &right) const
+wxDirName wxDirName::Combine(const wxDirName& right) const
 {
-    pxAssertMsg(IsDir() && right.IsDir(), L"Warning: Malformed directory name detected during wDirName concatenation.");
+	pxAssertMsg(IsDir() && right.IsDir(), L"Warning: Malformed directory name detected during wDirName concatenation.");
 
-    wxDirName result(right);
-    result.Normalize(wxPATH_NORM_ENV_VARS | wxPATH_NORM_DOTS | wxPATH_NORM_ABSOLUTE, GetPath());
-    return result;
+	wxDirName result(right);
+	result.Normalize(wxPATH_NORM_ENV_VARS | wxPATH_NORM_DOTS | wxPATH_NORM_ABSOLUTE, GetPath());
+	return result;
 }
 
-wxDirName &wxDirName::Normalize(int flags, const wxString &cwd)
+wxDirName& wxDirName::Normalize(int flags, const wxString& cwd)
 {
-    pxAssertMsg(IsDir(), L"Warning: Malformed directory name detected during wDirName normalization.");
-    if (!wxFileName::Normalize(flags, cwd))
-        throw Exception::ParseError().SetDiagMsg(L"wxDirName::Normalize operation failed.");
-    return *this;
+	pxAssertMsg(IsDir(), L"Warning: Malformed directory name detected during wDirName normalization.");
+	if (!wxFileName::Normalize(flags, cwd))
+		throw Exception::ParseError().SetDiagMsg(L"wxDirName::Normalize operation failed.");
+	return *this;
 }
 /*
 wxDirName &wxDirName::MakeRelativeTo(const wxString &pathBase)
@@ -74,10 +75,10 @@ wxDirName &wxDirName::MakeAbsolute(const wxString &cwd)
 */
 void wxDirName::Rmdir()
 {
-    if (!Exists())
-        return;
-    wxFileName::Rmdir();
-    // TODO : Throw exception if operation failed?  Do we care?
+	if (!Exists())
+		return;
+	wxFileName::Rmdir();
+	// TODO : Throw exception if operation failed?  Do we care?
 }
 
 bool wxDirName::Mkdir()
@@ -89,9 +90,9 @@ bool wxDirName::Mkdir()
 #define wxS_DIR_DEFAULT 0777
 #endif
 
-    if (Exists())
-        return true;
-    return wxFileName::Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+	if (Exists())
+		return true;
+	return wxFileName::Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 }
 
 
@@ -100,36 +101,36 @@ bool wxDirName::Mkdir()
 // ---------------------------------------------------------------------------------
 
 
-bool Path::IsRelative(const std::string &path)
+bool Path::IsRelative(const std::string& path)
 {
 	fs::path temp = path;
 
-    return temp.is_relative();
+	return temp.is_relative();
 }
 
 // Returns -1 if the file does not exist.
-s64 Path::GetFileSize(const std::string &path)
+s64 Path::GetFileSize(const std::string& path)
 {
 
-    if (!fs::exists(path.c_str()))
-        return -1;
-    return (s64)fs::file_size(path);
+	if (!fs::exists(path.c_str()))
+		return -1;
+	return (s64)fs::file_size(path);
 }
 
-wxString Path::Normalize(const wxString &src)
+wxString Path::Normalize(const wxString& src)
 {
-    wxFileName normalize(src);
-    normalize.Normalize();
-    return normalize.GetFullPath();
+	wxFileName normalize(src);
+	normalize.Normalize();
+	return normalize.GetFullPath();
 }
-wxString Path::Normalize(const wxDirName &src)
+wxString Path::Normalize(const wxDirName& src)
 {
-    return wxDirName(src).Normalize().ToString();
+	return wxDirName(src).Normalize().ToString();
 }
 
-std::string Path::MakeAbsolute(const std::string &src)
+std::string Path::MakeAbsolute(const std::string& src)
 {
-    return ghc::filesystem::absolute(src);
+	return ghc::filesystem::absolute(src);
 }
 
 // Concatenates two pathnames together, inserting delimiters (backslash on win32)
@@ -137,52 +138,52 @@ std::string Path::MakeAbsolute(const std::string &src)
 //
 fs::path Path::Combine(fs::path srcPath, fs::path srcFile)
 {
-    fs::path combined = (srcPath / srcFile).make_preferred();
+	fs::path combined = (srcPath / srcFile).make_preferred();
 
-    return combined;
+	return combined;
 }
 /*std::string Path::Combine(const wxDirName &srcPath, const wxFileName &srcFile)
 {
     return (srcPath + srcFile).GetFullPath();
 }*/
 
-std::string Path::Combine(const std::string &srcPath, const std::string &srcFile)
+std::string Path::Combine(const std::string& srcPath, const std::string& srcFile)
 {
-    fs::path srcP = srcPath;
+	fs::path srcP = srcPath;
 
-    fs::path srcF = srcFile;
+	fs::path srcF = srcFile;
 
-    return ( srcP / srcF).make_preferred();
+	return (srcP / srcF).make_preferred();
 }
 // Replaces the extension of the file with the one given.
 // This function works for path names as well as file names.
-std::string Path::ReplaceExtension(const wxString &src, const wxString &ext)
+std::string Path::ReplaceExtension(const wxString& src, const wxString& ext)
 {
-    wxFileName jojo(src);
-    jojo.SetExt(ext);
-    return (std::string)jojo.GetFullPath();
+	wxFileName jojo(src);
+	jojo.SetExt(ext);
+	return (std::string)jojo.GetFullPath();
 }
 
-std::string Path::ReplaceFilename(const wxString &src, const wxString &newfilename)
+std::string Path::ReplaceFilename(const wxString& src, const wxString& newfilename)
 {
-    wxFileName jojo(src);
-    jojo.SetFullName(newfilename);
-    return (std::string)jojo.GetFullPath();
+	wxFileName jojo(src);
+	jojo.SetFullName(newfilename);
+	return (std::string)jojo.GetFullPath();
 }
 
-std::string Path::GetFilename(const std::string &src)
+std::string Path::GetFilename(const std::string& src)
 {
-    return ghc::filesystem::absolute(src);
+	return ghc::filesystem::absolute(src);
 }
 
-wxString Path::GetFilenameWithoutExt(const wxString &src)
+wxString Path::GetFilenameWithoutExt(const wxString& src)
 {
-    return wxFileName(src).GetName();
+	return wxFileName(src).GetName();
 }
 
-std::string Path::GetDirectory(const std::string &src)
+std::string Path::GetDirectory(const std::string& src)
 {
-    return src;
+	return src;
 }
 
 // TODO - blindly copy-pasted from stackoverflow, this is probably not PERFECT!
@@ -190,13 +191,13 @@ fs::path Path::GetExecutableDirectory()
 {
 	fs::path exePath;
 #ifdef _WIN32
-    wchar_t path[MAX_PATH] = { 0 };
-    GetModuleFileName(NULL, path, MAX_PATH);
+	wchar_t path[MAX_PATH] = {0};
+	GetModuleFileName(NULL, path, MAX_PATH);
 	exePath = std::wstring(path);
 #else
-    char result[PATH_MAX];
-    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-    exePath = std::string(result, (count > 0) ? count : 0);
+	char result[PATH_MAX];
+	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+	exePath = std::string(result, (count > 0) ? count : 0);
 #endif
 	return exePath.parent_path();
 }
@@ -204,26 +205,45 @@ fs::path Path::GetExecutableDirectory()
 
 // returns the base/root directory of the given path.
 // Example /this/that/something.txt -> dest == "/"
-std::string Path::GetRootDirectory(const wxString &src)
+std::string Path::GetRootDirectory(const wxString& src)
 {
-    size_t pos = src.find_first_of(wxFileName::GetPathSeparators());
-    if (pos == 0)
-        return std::string();
-    else
-        return fs::path(std::string(src.begin(), src.begin() + pos));
+	size_t pos = src.find_first_of(wxFileName::GetPathSeparators());
+	if (pos == 0)
+		return std::string();
+	else
+		return fs::path(std::string(src.begin(), src.begin() + pos));
+}
+
+fs::path Path::GetUserLocalDataDir()
+{
+	fs::path temp = wxStandardPaths::Get().GetUserLocalDataDir().ToStdString();
+	return temp;
+}
+
+fs::path Path::GetProgramDataDir()
+{
+#ifndef GAMEINDEX_DIR_COMPILATION
+	return GetExecutableDirectory();
+#else
+	// Each linux distributions have his rules for path so we give them the possibility to
+	// change it with compilation flags. -- Gregory
+#define xGAMEINDEX_str(s) GAMEINDEX_DIR_str(s)
+#define GAMEINDEX_DIR_str(s) #s
+	return std::string(xGAMEINDEX_str(GAMEINDEX_DIR_COMPILATION));
+#endif
 }
 
 // ------------------------------------------------------------------------
 // Launches the specified file according to its mime type
 //
-void pxLaunch(const wxString &filename)
+void pxLaunch(const wxString& filename)
 {
-    wxLaunchDefaultBrowser(filename);
+	wxLaunchDefaultBrowser(filename);
 }
 
-void pxLaunch(const char *filename)
+void pxLaunch(const char* filename)
 {
-    pxLaunch(fromUTF8(filename));
+	pxLaunch(fromUTF8(filename));
 }
 
 // ------------------------------------------------------------------------
@@ -232,126 +252,126 @@ void pxLaunch(const char *filename)
 // bypasses wxWidgets internal filename checking, which can end up launching things
 // through browser more often than desired.
 //
-void pxExplore(const wxString &path)
+void pxExplore(const wxString& path)
 {
-    wxLaunchDefaultBrowser(!path.Contains(L"://") ? L"file://" + path : path);
+	wxLaunchDefaultBrowser(!path.Contains(L"://") ? L"file://" + path : path);
 }
 
-void pxExplore(const char *path)
+void pxExplore(const char* path)
 {
-    pxExplore(fromUTF8(path));
+	pxExplore(fromUTF8(path));
 }
 
 bool FolderUtils::CreateFolder(std::string path)
 {
-   return fs::create_directory(path);
+	return fs::create_directory(path);
 }
 
 bool FolderUtils::DoesExist(std::string path)
 {
-    return fs::exists(path);
+	return fs::exists(path);
 }
 
 bool FolderUtils::DoesExist(fs::path path)
 {
-    return fs::exists(path);
+	return fs::exists(path);
 }
 
 bool FolderUtils::Empty(std::string path)
 {
-    return fs::is_empty(path);
+	return fs::is_empty(path);
 }
 
-bool JsonUtils::Save(fs::path toSave, std::string stream) // A Møøse once bit my sister... 
+bool JsonUtils::Save(fs::path toSave, std::string stream) // A Møøse once bit my sister...
 {
-    if (folder.DoesExist(toSave))
-    {
-        fs::resize_file(toSave, 0);
-    }
+	if (folder.DoesExist(toSave))
+	{
+		fs::resize_file(toSave, 0);
+	}
 
-    out.open(toSave, std::ios::out | std::ios::trunc);
-    out.seekp(0);
-    out << std::setw(4) << stream; 
-    out.close();
+	out.open(toSave, std::ios::out | std::ios::trunc);
+	out.seekp(0);
+	out << std::setw(4) << stream;
+	out.close();
 
 	if (out.bad())
 	{
 		std::cout << "Error Writing File" << std::endl;
-        return false;
-    }
-       
-    return true;
+		return false;
+	}
+
+	return true;
 }
 
 bool JsonUtils::Load(fs::path toLoad) // We apologise for the fault in the comments. Those responsible have been sacked.
 {
 
-    in.open(toLoad);
-    
-    try
-    {
-        stream = nlohmann::json::parse(in);
-    }
-    catch(const nlohmann::json::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-        return false;
-    }
-    
-    in.close();
+	in.open(toLoad);
 
-    if (in.fail())
-    {
-        return false;
-    }
-    else
-    {
-    return true;
-    }
+	try
+	{
+		stream = nlohmann::json::parse(in);
+	}
+	catch (const nlohmann::json::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		return false;
+	}
+
+	in.close();
+
+	if (in.fail())
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 nlohmann::json JsonUtils::GetStream()
 {
-    return stream;
+	return stream;
 }
 
 
 bool YamlUtils::Save(fs::path toSave, std::string stream)
 {
-    if (folder.DoesExist(toSave))
-    {
-        fs::resize_file(toSave, 0);
-    }
+	if (folder.DoesExist(toSave))
+	{
+		fs::resize_file(toSave, 0);
+	}
 
-    out.open(toSave, std::ios::out | std::ios::trunc);
-    out.seekp(0);
-    out << std::setw(4) << stream; 
-    out.close();
+	out.open(toSave, std::ios::out | std::ios::trunc);
+	out.seekp(0);
+	out << std::setw(4) << stream;
+	out.close();
 
 	if (out.bad())
 	{
 		std::cout << "Error Writing File" << std::endl;
-        return false;
-    }
-       
-    return true;
+		return false;
+	}
+
+	return true;
 }
 
 bool YamlUtils::Load(fs::path toLoad)
 {
-    try
-    {
-        stream = YAML::LoadFile(toLoad);
-    }
+	try
+	{
+		stream = YAML::LoadFile(toLoad);
+	}
 	catch (const std::exception& e)
 	{
 		return false;
 	}
 
-    return true;
+	return true;
 }
 
-    YAML::Node YamlUtils::GetStream()
-    {
-        return stream;
-    }
+YAML::Node YamlUtils::GetStream()
+{
+	return stream;
+}

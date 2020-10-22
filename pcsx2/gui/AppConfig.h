@@ -22,22 +22,6 @@
 #include <memory>
 #include "GuiConfig.h"
 
-enum DocsModeType
-{
-	// uses /home/user or /cwd for the program data.  This is the default mode and is the most
-	// friendly to modern computing security requirements; as it isolates all file modification
-	// to a zone of the hard drive that has granted write permissions to the user.
-	DocsFolder_User,
-
-	// uses a custom location for program data. Typically the custom folder is either the
-	// absolute or relative location of the program -- absolute is preferred because it is
-	// considered more secure by MSW standards, due to DLL search rules.
-	//
-	// To enable PCSX2's "portable" mode, use this setting and specify "." for the custom
-	// documents folder.
-	DocsFolder_Custom,
-};
-
 namespace PathDefs
 {
 	// complete pathnames are returned by these functions.

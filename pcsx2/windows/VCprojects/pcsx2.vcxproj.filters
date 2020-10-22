@@ -905,6 +905,12 @@
     <ClCompile Include="..\..\config\Configuration.cpp">
       <Filter>Configuration</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\config\FolderConfiguration.cpp">
+      <Filter>Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\config\ConfigFile.cpp">
+      <Filter>Configuration</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Patch.h">
@@ -1368,6 +1374,12 @@
     </ClInclude>
     <ClInclude Include="..\..\gui\GuiConfig.h" />
     <ClInclude Include="..\..\config\Configuration.h">
+      <Filter>Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\config\FolderConfiguration.h">
+      <Filter>Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\config\ConfigFile.h">
       <Filter>Configuration</Filter>
     </ClInclude>
   </ItemGroup>
