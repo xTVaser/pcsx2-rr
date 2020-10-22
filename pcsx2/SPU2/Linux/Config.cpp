@@ -220,9 +220,9 @@ void ReadSettings()
 		    OutputAPI = 2;
 	    else // L"ALSA"
 		    OutputAPI = 0;
-        #else
-	        CfgReadStr("PORTAUDIO", "HostApi", temp, "OSS");
-	        OutputAPI = 0; // L"OSS"
+	#else
+		//CfgReadStr("PORTAUDIO", "HostApi", temp, "OSS");
+		OutputAPI = 0; // L"OSS"
     #endif
     #endif
 

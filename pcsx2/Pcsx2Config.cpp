@@ -71,8 +71,10 @@ YAML::Node Pcsx2Config::SpeedhackOptions::LoadSave()
 
 void Pcsx2Config::SpeedhackOptions::Load(YAML::Node speedHacks)
 {
-    //EECycleRate = speedHacks["EECycleRate"].as<uint8_t>();
-	//EECycleSkip = speedHacks["EECycleSkip"].as<uint8_t>();
+	char EECycleR = speedHacks["EECycleRate"].as<char>();
+	char EECycleS = speedHacks["EECycleSkip"].as<char>();
+	EECycleRate = EECycleR; 
+	EECycleSkip = EECycleS;
 	fastCDVD = speedHacks["fastCDVD"].as<bool>();
 	IntcStat = speedHacks["IntcStat"].as<bool>();
 	WaitLoop = speedHacks["WaitLoop"].as<bool>();
@@ -230,9 +232,9 @@ YAML::Node Pcsx2Config::CpuOptions::LoadSave()
 {
 	YAML::Node cpu;
 
-	cpu["VU.DenormalsAreZero"] =  sseVUMXCSR.DenormalsAreZero;
-	cpu["VU.FlushToZero"] =  sseVUMXCSR.FlushToZero;
-	cpu["VU.Roundmode"] =  sseVUMXCSR.RoundingControl;
+	cpu["VU.DenormalsAreZero"] =  (uint32_t)sseVUMXCSR.DenormalsAreZero;
+	cpu["VU.FlushToZero"] =  (uint32_t)sseVUMXCSR.FlushToZero;
+	cpu["VU.Roundmode"] =  (uint32_t)sseVUMXCSR.RoundingControl;
 
 	return cpu;
 }
@@ -504,8 +506,10 @@ void Pcsx2Config::DebugOptions::Load(YAML::Node debugger)
 {
 	ShowDebuggerOnStart = debugger["ShowDebuggerOnStart"].as<bool>();
 	AlignMemoryWindowStart = debugger["AlignMemoryWindowStart"].as<bool>();
-	//FontWidth = debugger["FontWidth"].as<uint8_t>();
-	//FontHeight = debugger["FontHeight"].as<uint8_t>();
+	char FontW = debugger["FontWidth"].as<char>();
+	char FontH = debugger["FontHeight"].as<char>();
+	FontWidth = FontW;
+	FontHeight = FontH;
 	WindowWidth = debugger["WindowWidth"].as<uint32_t>();
 	WindowHeight = debugger["WindowHeight"].as<uint32_t>();
 	MemoryViewBytesPerRow = debugger["MemoryViewBytesPerRow"].as<uint32_t>();

@@ -2,6 +2,7 @@
 #include "AppForwardDefs.h"
 #include "Utilities/wxGuiTools.h"
 #include "Utilities/PathUtils.h"
+#include "Plugins.h"
 
 #include <wx/config.h>
 #include <wx/stdpaths.h>
@@ -44,8 +45,8 @@ struct ConsoleLogOptions
 	wxString Theme;
 
 	ConsoleLogOptions();
-	bool Save(wxConfig* conf);
-	void Load(wxConfig* conf);
+	bool Save(wxConfigBase* conf);
+	void Load(wxConfigBase* conf);
 };
 
 	// ------------------------------------------------------------------------
@@ -78,22 +79,37 @@ struct GSWindowOptions
 
 	GSWindowOptions();
 
-	void Save(wxConfig* conf);
-	void Load(wxConfig* conf);
+	void Save(wxConfigBase* conf);
+	void Load(wxConfigBase* conf);
 	void SanityCheck();
 };
+
+	// ------------------------------------------------------------------------
+struct FilenameOptions
+{
+	std::string Bios;
+	std::string Plugins[PluginId_Count];
+
+	void Save(wxConfigBase* conf);
+	void Load(wxConfigBase* conf);
+
+	const std::string& operator[](PluginsEnum_t pluginidx) const;
+};
+
+
 
 class GuiConfig
 {	
 
 private:
 	// The Configurator
-    std::unique_ptr<wxConfig> conf;
+	wxConfigBase* conf;
 	bool isInit = false;
 
 public:	
 	ConsoleLogOptions console;
-	GSWindowOptions gsWindow;	
+	GSWindowOptions gsWindow;
+	FilenameOptions Filenames;
 	wxPoint		MainGuiPosition;
 
 	// Because remembering the last used tab on the settings panel is cool (tab is remembered

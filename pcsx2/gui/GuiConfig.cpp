@@ -11,7 +11,7 @@ ConsoleLogOptions::ConsoleLogOptions()
 	FontSize = 8;
 }
 
-bool ConsoleLogOptions::Save(wxConfig* conf)
+bool ConsoleLogOptions::Save(wxConfigBase* conf)
 {
 	conf->Write("Theme", Theme);
 	conf->Write("FontSize", FontSize);
@@ -24,7 +24,7 @@ bool ConsoleLogOptions::Save(wxConfig* conf)
 	return true;
 }
 
-void ConsoleLogOptions::Load(wxConfig* conf)
+void ConsoleLogOptions::Load(wxConfigBase* conf)
 {
 	conf->Read("Theme", Theme);
 	conf->Read("FontSize", FontSize);
@@ -60,7 +60,7 @@ GSWindowOptions::GSWindowOptions()
 	IsToggleFullscreenOnDoubleClick = true;
 }
 
-void GSWindowOptions::Save(wxConfig* conf)
+void GSWindowOptions::Save(wxConfigBase* conf)
 {
 	conf->Write("Zoom", Zoom);
 	conf->Write("OffsetX", OffsetX);
@@ -83,7 +83,7 @@ void GSWindowOptions::Save(wxConfig* conf)
 	conf->Write("IsToggleFullscreenOnDoubleClick", IsToggleFullscreenOnDoubleClick);
 }
 
-void GSWindowOptions::Load(wxConfig* conf)
+void GSWindowOptions::Load(wxConfigBase* conf)
 {
 	conf->Read("Zoom", Zoom);
 	conf->Read("OffsetX", OffsetX);
@@ -125,6 +125,48 @@ void GSWindowOptions::SanityCheck()
 		AspectRatio = AspectRatio_4_3;
 }
 
+
+// ------------------------------------------------------------------------
+const std::string& FilenameOptions::operator[](PluginsEnum_t pluginidx) const
+{
+	IndexBoundsAssumeDev("Filename[Plugin]", pluginidx, PluginId_Count);
+	return Plugins[pluginidx];
+}
+
+void FilenameOptions::Save(wxConfigBase* conf)
+{
+
+	static const std::string pc("Please Configure");
+
+	//when saving in portable mode, we just save the non-full-path filename
+	//  --> on load they'll be initialized with default (relative) paths (works both for plugins and bios)
+	//note: this will break if converting from install to portable, and custom folders are used. We can live with that.
+	bool needRelativeName = false; //ini.IsSaving() && IsPortable();
+
+	for (int i = 0; i < PluginId_Count; ++i)
+	{
+		std::string pluginShortName = static_cast<std::string>(tbl_PluginInfo[i].GetShortname());
+		if (needRelativeName)
+		{
+			wxFileName plugin_filename = wxFileName(Plugins[i]);
+			//conf->Write(pluginShortName, plugin_filename);
+		} //else
+		//conf->Write(pluginShortName,Plugins[i]);
+	}
+
+	if (needRelativeName)
+	{
+		std::string bios_filename = Bios;
+		//conf->Write(L"BIOS", bios_filename);
+	}
+	//else
+		//conf->Write(L"BIOS", pc);
+
+}
+
+
+
+
 GuiConfig::GuiConfig()
 	: MainGuiPosition( wxDefaultPosition )
 	, SysSettingsTabName( "Cpu" )
@@ -135,19 +177,18 @@ GuiConfig::GuiConfig()
 {
     LanguageId			= wxLANGUAGE_DEFAULT;
     LanguageCode		= "default";
-    conf = std::make_unique<wxConfig>("PCSX2");
+    conf = new wxFileConfig("PCSX2");
 }
 
 void GuiConfig::Init()
 {
 
-	conf = std::make_unique<wxConfig>("PCSX2");
+	conf = new wxFileConfig();
 	
-	#ifdef __linux__
-	    std::string programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
-	    std::string programDir(Path::Combine(programFullPath, "json/PCSX2_ui.ini"));	
-		conf->SetPath(programDir);
-	#endif
+	 std::string programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
+	 std::string programDir(Path::Combine(programFullPath, "json/PCSX2_ui.ini"));	
+     conf->SetPath(programDir);
+	
 
 	isInit = true;
 
@@ -161,8 +202,8 @@ void GuiConfig::Load()
 		Init();
 	}
 
-	console.Load(conf.get());	
-	gsWindow.Load(conf.get());
+	console.Load(conf);	
+	gsWindow.Load(conf);
 }
 
 
@@ -174,8 +215,8 @@ void GuiConfig::Save()
 		Init();
 	}
 
-	console.Save(conf.get());
-	gsWindow.Save(conf.get());
+	console.Save(conf);
+	gsWindow.Save(conf);
 
     conf->Write("MainGuiPositionX", MainGuiPosition.x);
     conf->Write("MainGuiPositionY", MainGuiPosition.y);
@@ -191,5 +232,5 @@ void GuiConfig::Save()
 
 GuiConfig::~GuiConfig()
 {
-	conf.release();
+   delete conf;
 }

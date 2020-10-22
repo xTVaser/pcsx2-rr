@@ -97,6 +97,8 @@ int dplLevel = 0;
 
 void setDefaults()
 {
+	YAML::Node def;
+
 	Interpolation = 4;
 	EffectsDisabled = false;
 	postprocess_filter_dealias = false;
@@ -139,32 +141,36 @@ void setDefaults()
 	dspPluginEnabled = false;
 	Config_WaveOut.NumBuffers = 4;
 
-	spuConfig.GetStream()["MIXING"]["Interpolation"] = Interpolation;
-	spuConfig.GetStream()["MIXING"]["Disable_Effects"] = EffectsDisabled;
-	spuConfig.GetStream()["MIXING"]["DealiasFilter"] = postprocess_filter_dealias;
-	spuConfig.GetStream()["MIXING"]["FinalVolume"] = FinalVolume;
-	spuConfig.GetStream()["MIXING"]["AdvancedVolumeControl"] = AdvancedVolumeControl;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustC(dB)"] = VolumeAdjustCdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustFL(dB)"] = VolumeAdjustFLdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustFR(dB)"] = VolumeAdjustFRdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustBL(dB)"] = VolumeAdjustBLdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustBR(dB)"] = VolumeAdjustBRdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustSL(dB)"] = VolumeAdjustSLdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustSR(dB)"] = VolumeAdjustSRdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustLFE(dB)"] = VolumeAdjustLFEdb;
-	spuConfig.GetStream()["DEBUG"]["DelayCycles"] = delayCycles;
+	def["MIXING"]["Interpolation"] = Interpolation;
+	def["MIXING"]["Disable_Effects"] = EffectsDisabled;
+	def["MIXING"]["DealiasFilter"] = postprocess_filter_dealias;
+	def["MIXING"]["FinalVolume"] = FinalVolume;
+	def["MIXING"]["AdvancedVolumeControl"] = AdvancedVolumeControl;
+	def["MIXING"]["VolumeAdjustC(dB)"] = VolumeAdjustCdb;
+	def["MIXING"]["VolumeAdjustFL(dB)"] = VolumeAdjustFLdb;
+	def["MIXING"]["VolumeAdjustFR(dB)"] = VolumeAdjustFRdb;
+	def["MIXING"]["VolumeAdjustBL(dB)"] = VolumeAdjustBLdb;
+	def["MIXING"]["VolumeAdjustBR(dB)"] = VolumeAdjustBRdb;
+	def["MIXING"]["VolumeAdjustSL(dB)"] = VolumeAdjustSLdb;
+	def["MIXING"]["VolumeAdjustSR(dB)"] = VolumeAdjustSRdb;
+	def["MIXING"]["VolumeAdjustLFE(dB)"] = VolumeAdjustLFEdb;
+	def["DEBUG"]["DelayCycles"] = delayCycles;
 
-	spuConfig.GetStream()["OUTPUT"]["Synch_Mode"] = SynchMode;
-	spuConfig.GetStream()["OUTPUT"]["SpeakerConfiguration"] = numSpeakers;
-	spuConfig.GetStream()["OUTPUT"]["DplDecodingLevel"] = dplLevel;
-	spuConfig.GetStream()["OUTPUT"]["Latency"] = SndOutLatencyMS;
+	def["OUTPUT"]["Synch_Mode"] = SynchMode;
+	def["OUTPUT"]["SpeakerConfiguration"] = numSpeakers;
+	def["OUTPUT"]["DplDecodingLevel"] = dplLevel;
+	def["OUTPUT"]["Latency"] = SndOutLatencyMS;
+
+	std::ofstream fileStream(path);
+	fileStream << def;
 
 	std::string data;
+
 	std::ostringstream os;
-	os << spuConfig.GetStream();
+	os << def;
 	data = os.str();
 
-	spuConfig.Save(path, data);
+	std::cout << "Defaults: " << data << std::endl;
 }
 
 /*****************************************************************************/
@@ -255,6 +261,8 @@ void ReadSettings()
 
 void WriteSettings()
 {
+	spuConfig.Load(path);
+
 	YAML::Node Mixing;
 	Mixing["Interpolation"] = Interpolation;
 	Mixing["Disable_Effects"] = EffectsDisabled;
@@ -299,7 +307,8 @@ void WriteSettings()
 	os << spuConfig.GetStream();
 	data = os.str();
 
-	spuConfig.Save(path, data);
+	std::ofstream fileStream(path);
+	fileStream << spuConfig.GetStream();
 }
 
 void CheckOutputModule(HWND window)

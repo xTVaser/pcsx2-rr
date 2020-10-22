@@ -543,7 +543,6 @@ YAML::Node AppConfig::LoadSave()
 	// Process various sub-components:
 
 	n["Folders"] = Folders.LoadSave();
-	n["BaseFilenames"] = BaseFilenames.LoadSave();
 	n["Framerate"] = Framerate.LoadSave();
 	//json.push_back(Templates.LoadSave());
 	return n;
@@ -618,45 +617,6 @@ YAML::Node AppConfig::FolderOptions::LoadSave()
 			operator[]( (FoldersEnum_t)i );
 
 	return folder;
-}
-
-// ------------------------------------------------------------------------
-const std::string& AppConfig::FilenameOptions::operator[]( PluginsEnum_t pluginidx ) const
-{
-	IndexBoundsAssumeDev( "Filename[Plugin]", pluginidx, PluginId_Count );
-	return Plugins[pluginidx];
-}
-
-YAML::Node AppConfig::FilenameOptions::LoadSave()
-{
-
-	YAML::Node appC;
-
-	static const std::string pc( "Please Configure" );
-
-	//when saving in portable mode, we just save the non-full-path filename
- 	//  --> on load they'll be initialized with default (relative) paths (works both for plugins and bios)
-	//note: this will break if converting from install to portable, and custom folders are used. We can live with that.
-	bool needRelativeName = false; //ini.IsSaving() && IsPortable();
-
-	for( int i=0; i<PluginId_Count; ++i )
-	{
-		std::string pluginShortName = static_cast<std::string>(tbl_PluginInfo[i].GetShortname());
-		if ( needRelativeName ) {
-			std::string plugin_filename = Plugins[i];
-			appC[pluginShortName] = plugin_filename;
-		} //else
-		appC[pluginShortName] = Plugins[i];
-	}
-
-	if( needRelativeName ) {
-		std::string bios_filename = Bios;
-		appC["BIOS"] = bios_filename;
-	} else
-		appC ["BIOS"] = pc;
-
-
-   return appC;
 }
 
 #ifndef DISABLE_RECORDING

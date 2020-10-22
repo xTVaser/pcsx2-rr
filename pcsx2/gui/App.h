@@ -375,7 +375,7 @@ enum GsWindowMode_t
 class CommandlineOverrides
 {
 public:
-	AppConfig::FilenameOptions	Filenames;
+	FilenameOptions	Filenames;
 	std::string		SettingsFolder;
 	std::string		VmSettingsFile;
 
@@ -418,7 +418,7 @@ public:
 	bool HasPluginsOverride() const
 	{
 		for( int i=0; i<PluginId_Count; ++i )
-			if( Filenames.Plugins[i].c_str() != nullptr ) return true;
+			if( config.Filenames.Plugins[i].c_str() != nullptr ) return true;
 
 		return false;
 	}

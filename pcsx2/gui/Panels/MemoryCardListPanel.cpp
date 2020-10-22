@@ -330,7 +330,7 @@ public:
 			//   Note: For the sake of usability, automatically enable dest if a ps2-port.
 			if (src.IsPresent)
 			{
-				std::string	tmpFilename = dest.Filename.GetFullName();
+				std::string	tmpFilename = static_cast<std::string>(dest.Filename.GetFullName());
 				bool		tmpPresent  = dest.IsPresent;
 				if (src.Slot<0 && m_listview->GetMcdProvider().isFileAssignedToInternalSlot((wxFileName)src.Filename))
 					m_listview->GetMcdProvider().RemoveCardFromSlot((wxFileName)src.Filename);

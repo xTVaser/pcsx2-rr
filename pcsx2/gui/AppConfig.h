@@ -151,17 +151,6 @@ public:
 	};
 
 	// ------------------------------------------------------------------------
-	struct FilenameOptions
-	{
-		std::string Bios;
-		std::string Plugins[PluginId_Count];
-
-		YAML::Node LoadSave();
-
-		const std::string& operator[]( PluginsEnum_t pluginidx ) const;
-	};
-
-	// ------------------------------------------------------------------------
 	// Options struct for each memory card.
 	//
 	struct McdOptions
