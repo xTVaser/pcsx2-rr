@@ -93,6 +93,9 @@ void init()
 
 void setDefaults()
 {
+
+	YAML::Node def;
+
 	Interpolation = 4;
 	EffectsDisabled = false;
 	postprocess_filter_dealias = false;
@@ -126,29 +129,37 @@ void setDefaults()
 	// find the driver index of this module:
 	//OutputModule = FindOutputModuleById(omodid);
 
-	spuConfig.GetStream()["MIXING"]["Interpolation"] = Interpolation;
-	spuConfig.GetStream()["MIXING"]["Disable_Effects"] = EffectsDisabled;
-	spuConfig.GetStream()["MIXING"]["DealiasFilter"] = postprocess_filter_dealias;
-	spuConfig.GetStream()["MIXING"]["FinalVolume"] = FinalVolume;
-	spuConfig.GetStream()["MIXING"]["AdvancedVolumeControl"] = AdvancedVolumeControl;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustC(dB)"] = VolumeAdjustCdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustFL(dB)"] = VolumeAdjustFLdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustFR(dB)"] = VolumeAdjustFRdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustBL(dB)"] = VolumeAdjustBLdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustBR(dB)"] = VolumeAdjustBRdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustSL(dB)"] = VolumeAdjustSLdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustSR(dB)"] = VolumeAdjustSRdb;
-	spuConfig.GetStream()["MIXING"]["VolumeAdjustLFE(dB)"] = VolumeAdjustLFEdb;
-	spuConfig.GetStream()["DEBUG"]["DelayCycles"] = delayCycles;
+	def["MIXING"]["Interpolation"] = Interpolation;
+	def["MIXING"]["Disable_Effects"] = EffectsDisabled;
+	def["MIXING"]["DealiasFilter"] = postprocess_filter_dealias;
+	def["MIXING"]["FinalVolume"] = FinalVolume;
+	def["MIXING"]["AdvancedVolumeControl"] = AdvancedVolumeControl;
+	def["MIXING"]["VolumeAdjustC(dB)"] = VolumeAdjustCdb;
+	def["MIXING"]["VolumeAdjustFL(dB)"] = VolumeAdjustFLdb;
+	def["MIXING"]["VolumeAdjustFR(dB)"] = VolumeAdjustFRdb;
+	def["MIXING"]["VolumeAdjustBL(dB)"] = VolumeAdjustBLdb;
+	def["MIXING"]["VolumeAdjustBR(dB)"] = VolumeAdjustBRdb;
+	def["MIXING"]["VolumeAdjustSL(dB)"] = VolumeAdjustSLdb;
+	def["MIXING"]["VolumeAdjustSR(dB)"] = VolumeAdjustSRdb;
+	def["MIXING"]["VolumeAdjustLFE(dB)"] = VolumeAdjustLFEdb;
+	def["DEBUG"]["DelayCycles"] = delayCycles;
 
-	spuConfig.GetStream()["OUTPUT"]["Synch_Mode"] = SynchMode;
-	spuConfig.GetStream()["OUTPUT"]["SpeakerConfiguration"] = numSpeakers;
-	spuConfig.GetStream()["OUTPUT"]["DplDecodingLevel"] = dplLevel;
-	spuConfig.GetStream()["OUTPUT"]["Latency"] = SndOutLatencyMS;
+	def["OUTPUT"]["Synch_Mode"] = SynchMode;
+	def["OUTPUT"]["SpeakerConfiguration"] = numSpeakers;
+	def["OUTPUT"]["DplDecodingLevel"] = dplLevel;
+	def["OUTPUT"]["Latency"] = SndOutLatencyMS;
 
 	std::ofstream fileStream(path);
-	fileStream << spuConfig.GetStream();
-	fileStream.close();
+	fileStream << def;
+
+	std::string data;
+
+	std::ostringstream os;
+	os << def;
+	data = os.str();
+
+	std::cout << "Defaults: " << data << std::endl;
+
 
 }
 
@@ -190,27 +201,27 @@ void ReadSettings()
 	    VolumeAdjustSR = powf(10, VolumeAdjustSRdb / 10);
 	    VolumeAdjustLFE = powf(10, VolumeAdjustLFEdb / 10);
 	    delayCycles = spuConfig.GetStream()["DEBUG"]["DelayCycles"].as<int>();
-	    wxString temp;
+	    std::string temp;
 
     #if SDL_MAJOR_VERSION >= 2 || !defined(SPU2X_PORTAUDIO)
 	    //CfgReadStr(L"OUTPUT", L"Output_Module", temp, SDLOut->GetIdent());
     #else
 	    //CfgReadStr(L"OUTPUT", L"Output_Module", temp, PortaudioOut->GetIdent());
     #endif
-	    OutputModule = FindOutputModuleById(temp.ToStdString()); // find the driver index of this module
+	    OutputModule = FindOutputModuleById(temp); // find the driver index of this module
 
     // find current API
     #ifdef SPU2X_PORTAUDIO
     #ifdef __linux__
 	    //CfgReadStr(L"PORTAUDIO", L"HostApi", temp, L"ALSA");
-	    if (temp == L"OSS")
+	    if (temp == "OSS")
 		    OutputAPI = 1;
-	    else if (temp == L"JACK")
+	    else if (temp == "JACK")
 		    OutputAPI = 2;
 	    else // L"ALSA"
 		    OutputAPI = 0;
         #else
-	        CfgReadStr(L"PORTAUDIO", L"HostApi", temp, L"OSS");
+	        CfgReadStr("PORTAUDIO", "HostApi", temp, "OSS");
 	        OutputAPI = 0; // L"OSS"
     #endif
     #endif
@@ -222,7 +233,7 @@ void ReadSettings()
 	    // YES It sucks ...
 	    for (int i = 0; i < SDL_GetNumAudioDrivers(); ++i)
 	    {
-		    if (!temp.Cmp(wxString(SDL_GetAudioDriver(i), wxConvUTF8)))
+		    if (!temp.compare(SDL_GetAudioDriver(i)) == 0)
 			    SdlOutputAPI = i;
 	    }
     #endif
@@ -248,11 +259,12 @@ void ReadSettings()
 
 	    if (mods[OutputModule] == nullptr)
 	    {
-		    fwprintf(stderr, L"* SPU2: Unknown output module '%s' specified in configuration file.\n", temp.wc_str());
-		    //fprintf(stderr, "* SPU2: Defaulting to SDL.\n", SDLOut->GetIdent());
+		    printf("* SPU2: Unknown output module specified in configuration file.\n");
+		    //printf(stderr, "* SPU2: Defaulting to SDL.\n", SDLOut->GetIdent());
 		    OutputModule = FindOutputModuleById(SDLOut->GetIdent());
 	    }
 
+		WriteSettings();
 	}
 
 	else
@@ -261,7 +273,6 @@ void ReadSettings()
 	}
 	
 
-	WriteSettings();
 	//spuConfig->Flush();
 }
 
@@ -274,6 +285,8 @@ void WriteSettings()
 		FileLog("Write called without the path set.\n");
 		return;
 	}
+
+	spuConfig.Load(path);
 
 	std::string data;
 
@@ -320,7 +333,7 @@ spuConfig.GetStream()["PortAudio"] = PortaudioOut->WriteSettings();
 	os << spuConfig.GetStream();
 	data = os.str();
 
-	std::cout << "Data: " << data << std::endl;
+	//std::cout << "Data: " << data << std::endl;
 	
 	std::ofstream fileStream(path);
 	fileStream << spuConfig.GetStream();

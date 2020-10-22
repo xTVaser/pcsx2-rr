@@ -100,11 +100,9 @@ SndOutModule* mods[] =
 int FindOutputModuleById(const std::string omodid)
 {
 	int modcnt = 0;
-	const wchar_t * did = std::wstring(omodid.begin(), omodid.end()).c_str();
-	const wchar_t * mod = std::wstring(mods[modcnt]->GetIdent().begin(), mods[modcnt]->GetIdent().end()).c_str();
 	while (mods[modcnt] != nullptr)
 	{
-		if (wcscmp(mod, did) == 0)
+		if (strcmp(mods[modcnt]->GetIdent().c_str(), omodid.c_str()) == 0)
 			break;
 		++modcnt;
 	}
