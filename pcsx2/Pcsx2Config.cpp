@@ -21,7 +21,7 @@
 #include "GS.h"
 #include "gui/GSFrame.h"
 
-nlohmann::json TraceLogFilters::LoadSave()
+YAML::Node TraceLogFilters::LoadSave()
 {
 	//ScopedIniGroup path( json, L"TraceLog" );
 
@@ -33,7 +33,7 @@ nlohmann::json TraceLogFilters::LoadSave()
 	//json.push_back(EE);
 	//json.push_back(IOP);
 
-	return NULL;
+	return YAML::Node();
 }
 
 Pcsx2Config::SpeedhackOptions::SpeedhackOptions()
@@ -54,9 +54,9 @@ Pcsx2Config::SpeedhackOptions& Pcsx2Config::SpeedhackOptions::DisableAll()
 	return *this;
 }
 
-nlohmann::json Pcsx2Config::SpeedhackOptions::LoadSave()
+YAML::Node Pcsx2Config::SpeedhackOptions::LoadSave()
 {
-	nlohmann::json speedHacks;
+	YAML::Node speedHacks;
 
 	speedHacks["EECycleRate"] = EECycleRate;
 	speedHacks["EECycleSkip"] = EECycleSkip;
@@ -69,9 +69,20 @@ nlohmann::json Pcsx2Config::SpeedhackOptions::LoadSave()
 	return speedHacks;
 }
 
-nlohmann::json Pcsx2Config::ProfilerOptions::LoadSave()
+void Pcsx2Config::SpeedhackOptions::Load(YAML::Node& speedHacks)
 {
-	nlohmann::json profiler;
+    EECycleRate = speedHacks["EECycleRate"].as<int>();
+	EECycleSkip = speedHacks["EECycleSkip"].as<int>();
+	fastCDVD = speedHacks["fastCDVD"].as<bool>();
+	IntcStat = speedHacks["IntcStat"].as<bool>();
+	WaitLoop = speedHacks["WaitLoop"].as<bool>();
+	vuFlagHack = speedHacks["vuFlagHack"].as<bool>();
+	vuThread = speedHacks["vuThread"].as<bool>();
+}
+
+YAML::Node Pcsx2Config::ProfilerOptions::LoadSave()
+{
+	YAML::Node profiler;
 	profiler["Enabled"] = Enabled;
 	profiler["RecBlocks_EE"] = RecBlocks_EE;
 	profiler["RecBlocks_IOP"] = RecBlocks_IOP;
@@ -80,6 +91,16 @@ nlohmann::json Pcsx2Config::ProfilerOptions::LoadSave()
 
     return profiler;
 }
+
+void Pcsx2Config::ProfilerOptions::Load(YAML::Node& profiler)
+{
+	Enabled = profiler["Enabled"].as<bool>();
+	RecBlocks_EE = profiler["RecBlocks_EE"].as<bool>();
+	RecBlocks_IOP = profiler["RecBlocks_IOP"].as<bool>();
+	RecBlocks_VU0 = profiler["RecBlocks_VU0"].as<bool>();
+	RecBlocks_VU1 = profiler["RecBlocks_VU1"].as<bool>();
+}
+
 
 Pcsx2Config::RecompilerOptions::RecompilerOptions()
 {
@@ -143,18 +164,15 @@ void Pcsx2Config::RecompilerOptions::ApplySanityCheck()
 	}
 }
 
-nlohmann::json Pcsx2Config::RecompilerOptions::LoadSave()
+YAML::Node Pcsx2Config::RecompilerOptions::LoadSave()
 {
-	nlohmann::json recomp;
+	YAML::Node recomp;
 
 	recomp["EnableEE"] = EnableEE;
 	recomp["EnableIOP"] = EnableIOP;
 	recomp["EnableEECache"] = EnableEECache;
 	recomp["EnableVU0"] = EnableVU0;
 	recomp["EnableVU1"] = EnableVU1;
-
-	//recomp["UseMicroVU0"] = UseMicroVU0;
-	//recomp["UseMicroVU1"] = UseMicroVU1;
 
 	recomp["vuOverflow"] = vuOverflow;
 	recomp["vuExtraOverflow"] = vuExtraOverflow;
@@ -172,6 +190,28 @@ nlohmann::json Pcsx2Config::RecompilerOptions::LoadSave()
 	return recomp;
 }
 
+void Pcsx2Config::RecompilerOptions::Load(YAML::Node& recomp)
+{
+	EnableEE = recomp["EnableEE"].as<bool>();
+	EnableIOP = recomp["EnableIOP"].as<bool>();
+	EnableEECache = recomp["EnableEECache"].as<bool>();
+	EnableVU0 = recomp["EnableVU0"].as<bool>();
+	EnableVU1 = recomp["EnableVU1"].as<bool>();
+
+	vuOverflow = recomp["vuOverflow"].as<bool>();
+	vuExtraOverflow = recomp["vuExtraOverflow"].as<bool>();
+	vuSignOverflow = recomp["vuSignOverflow"].as<bool>();
+	vuUnderflow = recomp["vuUnderflow"].as<bool>();
+
+	fpuOverflow = recomp["fpuOverflow"].as<bool>();
+	fpuExtraOverflow = recomp["fpuExtraOverflow"].as<bool>();
+	fpuFullMode = recomp["fpuFullMode"].as<bool>();
+
+	StackFrameChecks = recomp["StackFrameChecks"].as<bool>();
+    PreBlockCheckEE = recomp["PreBlockCheckEE"].as<bool>();
+	PreBlockCheckIOP = recomp["PreBlockCheckIOP"].as<bool>();
+}
+
 Pcsx2Config::CpuOptions::CpuOptions()
 {
 	sseMXCSR.bitmask	= DEFAULT_sseMXCSR;
@@ -186,21 +226,22 @@ void Pcsx2Config::CpuOptions::ApplySanityCheck()
 	Recompiler.ApplySanityCheck();
 }
 
-nlohmann::json Pcsx2Config::CpuOptions::LoadSave()
+YAML::Node Pcsx2Config::CpuOptions::LoadSave()
 {
-	//ScopedIniGroup path( ini, L"CPU" );
+	YAML::Node cpu;
 
-	//IniBitBoolEx( sseMXCSR.DenormalsAreZero,	"FPU.DenormalsAreZero" );
-	//IniBitBoolEx( sseMXCSR.FlushToZero,			"FPU.FlushToZero" );
-	//IniBitfieldEx( sseMXCSR.RoundingControl,	"FPU.Roundmode" );
+	cpu["VU.DenormalsAreZero"] =  sseVUMXCSR.DenormalsAreZero;
+	cpu["VU.FlushToZero"] =  sseVUMXCSR.FlushToZero;
+	cpu["VU.Roundmode"] =  sseVUMXCSR.RoundingControl;
 
-	//IniBitBoolEx( sseVUMXCSR.DenormalsAreZero,	"VU.DenormalsAreZero" );
-	//IniBitBoolEx( sseVUMXCSR.FlushToZero,		"VU.FlushToZero" );
-	//IniBitfieldEx( sseVUMXCSR.RoundingControl,	"VU.Roundmode" );
+	return cpu;
+}
 
-	//Recompiler.LoadSave();
-
-	return NULL;
+void Pcsx2Config::CpuOptions::Load(YAML::Node& cpu)
+{
+	sseMXCSR.DenormalsAreZero = cpu["FPU.DenormalsAreZero"].as<uint32_t>(); 
+	sseMXCSR.FlushToZero = cpu["FPU.FlushToZero"].as<uint32_t>();
+	sseMXCSR.RoundingControl = cpu["FPU.Roundmode"].as<uint32_t>();
 }
 
 // Default GSOptions
@@ -221,9 +262,9 @@ Pcsx2Config::GSOptions::GSOptions()
 	FrameratePAL			= 50.0;
 }
 
-nlohmann::json Pcsx2Config::GSOptions::LoadSave()
+YAML::Node Pcsx2Config::GSOptions::LoadSave()
 {
-	nlohmann::json gs;
+	YAML::Node gs;
 
 	gs["SynchronousMTGS"] = SynchronousMTGS;
 	gs["VsyncQueueSize"] = VsyncQueueSize;
@@ -232,15 +273,30 @@ nlohmann::json Pcsx2Config::GSOptions::LoadSave()
 	gs["FrameSkipEnable"] = FrameSkipEnable;
 	//ini.EnumEntry( L"VsyncEnable", VsyncEnable, NULL, VsyncEnable );
 
-	//json["LimitScalar"] = LimitScalar;
-	//json["FramerateNTSC"] = FramerateNTSC;
-	//json["FrameratePAL"] = FrameratePAL;
+	gs["LimitScalar"] = LimitScalar.ToFloat();
+	gs["FramerateNTSC"] = FramerateNTSC.ToFloat();
+	gs["FrameratePAL"] = FrameratePAL.ToFloat();
 
 	gs["FramesToDraw"] = FramesToDraw;
 	gs["FramesToSkip"] = FramesToSkip;
 
-
 	return gs;
+}
+
+void Pcsx2Config::GSOptions::Load(YAML::Node& gs)
+{
+	SynchronousMTGS = gs["SynchronousMTGS"].as<bool>();
+	VsyncQueueSize = gs["VsyncQueueSize"].as<bool>();
+	FrameLimitEnable = gs["FrameLimitEnable"].as<bool>();
+	FrameSkipEnable = gs["FrameSkipEnable"].as<bool>();
+	//ini.EnumEntry( L"VsyncEnable", VsyncEnable, NULL, VsyncEnable );
+
+	//gs["LimitScalar"] = LimitScalar.ToFloat();
+	//gs["FramerateNTSC"] = FramerateNTSC.ToFloat();
+	//gs["FrameratePAL"] = FrameratePAL.ToFloat();
+
+	FramesToDraw = gs["FramesToDraw"].as<int>();
+	FramesToSkip = gs["FramesToSkip"].as<int>();
 }
 
 int Pcsx2Config::GSOptions::GetVsync() const
@@ -371,10 +427,10 @@ bool Pcsx2Config::GamefixOptions::Get( GamefixId id ) const
 	return false;		// unreachable, but we still need to suppress warnings >_<
 }
 
-nlohmann::json Pcsx2Config::GamefixOptions::LoadSave()
+YAML::Node Pcsx2Config::GamefixOptions::LoadSave()
 {
 
-	nlohmann::json gameFix;
+	YAML::Node gameFix;
 
 	gameFix["VuAddSubHack"] = VuAddSubHack;
 	gameFix["FpuCompareHack"] = FpuCompareHack;
@@ -397,6 +453,26 @@ nlohmann::json Pcsx2Config::GamefixOptions::LoadSave()
     return gameFix;
 }
 
+void Pcsx2Config::GamefixOptions::Load(YAML::Node& gameFix)
+{
+	VuAddSubHack = gameFix["VuAddSubHack"].as<bool>();
+	FpuCompareHack = gameFix["FpuCompareHack"].as<bool>();
+	FpuMulHack = gameFix["FpuMulHack"].as<bool>();
+	FpuNegDivHack = gameFix["FpuNegDivHack"].as<bool>();
+	XgKickHack = gameFix["XgKickHack"].as<bool>();
+	IPUWaitHack = gameFix["IPUWaitHack"].as<bool>();
+	EETimingHack = gameFix["EETimingHack"].as<bool>();
+	SkipMPEGHack = gameFix["SkipMPEGHack"].as<bool>();
+	OPHFlagHack = gameFix["OPHFlagHack"].as<bool>();
+	DMABusyHack = gameFix["DMABusyHack"].as<bool>();
+	VIFFIFOHack = gameFix["VIFFIFOHack"].as<bool>();
+	VIF1StallHack = gameFix["VIF1StallHack"].as<bool>();
+	GIFFIFOHack = gameFix["GIFFIFOHack"].as<bool>();
+	FMVinSoftwareHack = gameFix["FMVinSoftwareHack"].as<bool>();
+	GoemonTlbHack = gameFix["GoemonTlbHack"].as<bool>();
+	ScarfaceIbit = gameFix["ScarfaceIbit"].as<bool>();
+    CrashTagTeamRacingIbit = gameFix["CrashTagTeamRacingIbit"].as<bool>();
+}
 
 Pcsx2Config::DebugOptions::DebugOptions()
 {
@@ -409,9 +485,10 @@ Pcsx2Config::DebugOptions::DebugOptions()
 	MemoryViewBytesPerRow = 16;
 }
 
-nlohmann::json Pcsx2Config::DebugOptions::LoadSave()
+
+YAML::Node Pcsx2Config::DebugOptions::LoadSave()
 {
-	nlohmann::json debugger;
+	YAML::Node debugger;
 
 	debugger["ShowDebuggerOnStart"] = ShowDebuggerOnStart;
 	debugger["AlignMemoryWindowStart"] = AlignMemoryWindowStart;
@@ -423,6 +500,17 @@ nlohmann::json Pcsx2Config::DebugOptions::LoadSave()
 	return debugger;
 }
 
+void Pcsx2Config::DebugOptions::Load(YAML::Node& debugger)
+{
+	ShowDebuggerOnStart = debugger["ShowDebuggerOnStart"].as<bool>();
+	AlignMemoryWindowStart = debugger["AlignMemoryWindowStart"].as<bool>();
+	FontWidth = debugger["FontWidth"].as<int>();
+	FontHeight = debugger["FontHeight"].as<int>();
+	WindowWidth = debugger["WindowWidth"].as<int>();
+	WindowHeight = debugger["WindowHeight"].as<int>();
+	MemoryViewBytesPerRow = debugger["MemoryViewBytesPerRow"].as<int>();
+}
+
 Pcsx2Config::Pcsx2Config()
 {
 	// Set defaults for fresh installs / reset settings
@@ -432,9 +520,9 @@ Pcsx2Config::Pcsx2Config()
 	BackupSavestate = true;
 }
 
-nlohmann::json Pcsx2Config::LoadSave()
+YAML::Node Pcsx2Config::LoadSave()
 {
-	nlohmann::json core;
+	YAML::Node core;
 
 	core["CdvdVerboseReads"] = CdvdVerboseReads;
 	core["CdvdDumpBlocks"] = CdvdDumpBlocks;
@@ -456,21 +544,60 @@ nlohmann::json Pcsx2Config::LoadSave()
 
 	// Process various sub-components:
 
-	auto array = nlohmann::json::array();
+	YAML::Node toSave;
 
-	array.push_back(core);
+	toSave["Core"] = core;
 
-	array.push_back(Recompiler.LoadSave());
-	array.push_back(Speedhacks.LoadSave());
-	array.push_back(Cpu.LoadSave());
-	array.push_back(GS.LoadSave());
-	array.push_back(Gamefixes.LoadSave());
-	array.push_back(Profiler.LoadSave());
+	toSave["Recompiler"] = Recompiler.LoadSave();
+	toSave["SpeedHacks"] = Speedhacks.LoadSave();
+	toSave["Cpu"] = Cpu.LoadSave();
+	toSave["GS"] = GS.LoadSave();
+	toSave["GameFixes"] = Gamefixes.LoadSave();
+	toSave["Profiler"] = Profiler.LoadSave();
 
-	array.push_back(Debugger.LoadSave());
-	array.push_back(Trace.LoadSave());
+	toSave["Debugger"] = Debugger.LoadSave();
+	toSave["Trace"] = Trace.LoadSave();
 
-	return array;
+	return toSave;
+}
+
+
+void Pcsx2Config::Load(YAML::Node& loader)
+{
+
+	std::string data;
+
+	std::ostringstream os;
+	os << loader;
+	data = os.str();
+
+	std::cout << "LOADER: " << data << std::endl;
+
+	CdvdVerboseReads = loader["Core"]["CdvdVerboseReads"].as<bool>();
+    CdvdDumpBlocks = loader["Core"]["CdvdDumpBlocks"].as<bool>();
+	CdvdShareWrite = loader["Core"]["CdvdShareWrite"].as<bool>();
+	EnablePatches = loader["Core"]["EnablePatches"].as<bool>();
+	EnableCheats = loader["Core"]["EnableCheats"].as<bool>();
+	EnableWideScreenPatches = loader["Core"]["EnableWideScreenPatches"].as<bool>();
+#ifndef DISABLE_RECORDING
+	EnableRecordingTools = loader["Core"]["EnableRecordingTools"].as<bool>();
+#endif
+	ConsoleToStdio = loader["Core"]["ConsoleToStdio"].as<bool>();
+	HostFs = loader["Core"]["HostFs"].as<bool>();
+
+	BackupSavestate = loader["Core"]["BackupSavestate"].as<bool>();
+	McdEnableEjection = loader["Core"]["McdEnableEjection"].as<bool>();
+	McdFolderAutoManage = loader["Core"]["McdFolderAutoManage"].as<bool>();
+	MultitapPort0_Enabled = loader["Core"]["MultitapPort0_Enabled"].as<bool>();
+	MultitapPort1_Enabled = loader["Core"]["MultitapPort1_Enabled"].as<bool>();
+	
+	Recompiler.Load(loader);
+	Speedhacks.Load(loader);
+	Gamefixes.Load(loader);
+	Profiler.Load(loader);
+	Debugger.Load(loader);
+	Cpu.Load(loader);
+	GS.Load(loader);
 }
 
 bool Pcsx2Config::MultitapEnabled( uint port ) const

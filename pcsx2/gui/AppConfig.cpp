@@ -167,7 +167,7 @@ namespace PathDefs
 	fs::path GetSettings()
 	{
 		fs::path docPath = GetDocuments();
-		fs::path path = GetDocuments() / "yaml";
+		fs::path path = GetDocuments() / "settings";
 		// make_preferred() is causing issues?
 		return path;
 	}
@@ -609,8 +609,8 @@ YAML::Node AppConfig::FolderOptions::LoadSave()
 	folder[CheatsWS] = rel;
 	folder[PluginsFolder] = Path::Combine(InstallFolder, "plugins");
 
-	folder[RunIso] = rel;
-	folder[RunELF] = rel;
+	folder[RunIso.string()] = rel;
+	folder[RunELF.string()] = rel;
 
 //		ApplyDefaults();
 
@@ -957,9 +957,9 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 		AppLoadSettings();
 
 	AppApplySettings();
-	AppSaveSettings();//Make sure both ini files are created if needed.
+	AppSaveSettings();//Make sure both Yaml files are created if needed.
 }
-
+json
 // --------------------------------------------------------------------------------------
 //  pxDudConfig
 // --------------------------------------------------------------------------------------
@@ -1078,14 +1078,17 @@ static void LoadVmSettings()
 	bool isOpened = OpenFileConfig(GetVmSettingsFilename());
 	if (isOpened)
 	{
-	    auto vmloader = fileUtils.GetStream();
-	    vmloader.push_back(g_Conf->EmuOptions.LoadSave());
+	    auto vmloader = yamlUtils.GetStream();
+	    //vmloader.push_back(g_Conf->EmuOptions.LoadSave());
 	    g_Conf->EmuOptions.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
 
 	    if (g_Conf->EnablePresets)
 		{
 	        g_Conf->IsOkApplyPreset(g_Conf->PresetIndex, true);
         }
+
+	   g_Conf->EmuOptions.Load(vmloader);
+	
 	}
 	//sApp.DispatchVmSettingsEvent( vmloader );
 }
@@ -1133,20 +1136,20 @@ static void SaveVmSettings()
 	if (!folderUtils.DoesExist(GetVmSettingsFilename()))
 	{
 		std::string filePath = GetVmSettingsFilename().string();
-
-		nlohmann::json j = { };
-		fileUtils.Save(filePath, j.dump());
+		configFile.Save(filePath, std::string());
 	}
 
 	bool test = OpenFileConfig( GetVmSettingsFilename());
 	if (test)
 	{
-		nlohmann::json vmsaver = fileUtils.GetStream();
-		vmsaver.push_back(g_Conf->EmuOptions.LoadSave());
+		YAML::Node vmsaver = configFile.GetStream();
+		vmsaver = g_Conf->EmuOptions.LoadSave();
 
-		std::string toSave = vmsaver.dump();
 
-		fileUtils.Save(GetVmSettingsFilename(), toSave);
+		std::ofstream fileStream;
+		fileStream.open(GetVmSettingsFilename());
+		fileStream << vmsaver;
+		fileStream.close();
 	}
 }
 

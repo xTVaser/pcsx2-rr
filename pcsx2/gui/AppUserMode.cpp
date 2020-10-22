@@ -44,7 +44,7 @@ YAML::Node stream;
 	
 const std::string PermissionFolders[] =
 {
-	"json",
+	"settings",
 	"memcards",
 	"sstates",
 	"snapshots",
@@ -60,7 +60,7 @@ const std::string PermissionFolders[] =
 // UserLocalData folder is the current working directory.
 InstallationModeType		InstallationMode;
 
-static fs::path GetPortableJsonPath()
+static fs::path GetPortableYamlPath()
 {
 	fs::path programDir = Path::GetExecutableDirectory();
 	return Path::Combine(programDir, "portable.yaml");
@@ -171,11 +171,11 @@ bool Pcsx2App::TestForPortableInstall()
 {
 	InstallationMode = 	InstallMode_Portable;
 
-	fs::path portableJsonFile = GetPortableJsonPath();
-	std::string portableDocsFolder = portableJsonFile.parent_path();
+	fs::path portableYamlFile = GetPortableYamlPath();
+	std::string portableDocsFolder = portableYamlFile.parent_path();
 
-	std::cout << "PATH: " << portableJsonFile << std::endl;
-	bool isPortable = OpenFileConfig( portableJsonFile.string() );
+	std::cout << "PATH: " << portableYamlFile << std::endl;
+	bool isPortable = OpenFileConfig( portableYamlFile.string() );
 
 	if (isPortable)
 	{
@@ -183,10 +183,10 @@ bool Pcsx2App::TestForPortableInstall()
 			Console.WriteLn( L"(UserMode) Portable mode requested via commandline switch!" );
 		else
 		{
-			wxString temp = portableJsonFile.string();
-            Console.WriteLn( L"(UserMode) Found portable install json @ %s", WX_STR(temp));
+			wxString temp = portableYamlFile.string();
+            Console.WriteLn( L"(UserMode) Found portable install yaml @ %s", WX_STR(temp));
 		}
-		// Just because the portable json file exists doesn't mean we can actually run in portable
+		// Just because the portable yaml file exists doesn't mean we can actually run in portable
 		// mode.  In order to determine our read/write permissions to the PCSX2, we must try to
 		// modify the configured documents folder, and catch any ensuing error.
 		
@@ -212,8 +212,8 @@ void Pcsx2App::WipeUserModeSettings()
 	if (InstallationMode == InstallMode_Portable)
 	{
 		// Remove the portable.json entry "RunWizard" conforming to this instance of PCSX2.
-		std::string portableJsonFile( GetPortableJsonPath() );
-		bool test = OpenFileConfig( portableJsonFile );
+		std::string portableYamlFile( GetPortableYamlPath() );
+		bool test = OpenFileConfig( portableYamlFile );
 		stream = yamlUtils.GetStream();
 		stream["RunWizard"] = 0;
 	}
@@ -274,11 +274,11 @@ bool Pcsx2App::OpenInstallSettingsFile()
 		}
 	}
 
-	std::string usermodefile = (GetAppName().ToStdString() + "-reg.json" );
+	std::string usermodefile = (GetAppName().ToStdString() + "-reg.yaml" );
 
 	std::cout << "USERMODE: " << usermodefile << std::endl;
 
-	if(!fileUtils.Load(usermodefile))
+	if(!yamlUtils.Load(usermodefile))
 	{
 		return false;
 	}
@@ -347,7 +347,13 @@ void Pcsx2App::EstablishAppUserMode()
     {
 		newYaml["RunWizard"] = false;
 
-        fileUtils.Save(GetPortableJsonPath(), newYaml.as<std::string>() );
+		std::string toSave;
+		std::ostringstream os;
+		os << newYaml;
+		toSave = os.str();
+
+
+        yamlUtils.Save(GetPortableYamlPath(), toSave);
     }
 
 }

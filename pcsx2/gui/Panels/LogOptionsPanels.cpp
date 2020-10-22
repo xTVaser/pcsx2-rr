@@ -178,7 +178,7 @@ YAML::Node SysTraceLog_LoadSaveSettings()
 		{
 			pxAssertMsg(log->GetName(), "Trace log without a name!" );
 			std::string category = static_cast<std::string>(log->GetCategory());
-			trace[category] = log->GetShortName();
+			trace[category] = log->GetShortName().ToStdString();
 		}
 	}
 

@@ -91,6 +91,67 @@ void init()
 	}
 }
 
+void setDefaults()
+{
+	Interpolation = 4;
+	EffectsDisabled = false;
+	postprocess_filter_dealias = false;
+	FinalVolume = 50;
+
+	AdvancedVolumeControl = false;
+	VolumeAdjustCdb = 0;
+	VolumeAdjustFLdb = 0;
+	VolumeAdjustFRdb = 0;
+	VolumeAdjustBLdb = 0;
+	VolumeAdjustBRdb = 0;
+	VolumeAdjustSLdb = 0;
+	VolumeAdjustSRdb = 0;
+	VolumeAdjustLFEdb = 0;
+	delayCycles = 4;
+	VolumeAdjustC = powf(10, VolumeAdjustCdb / 10);
+	VolumeAdjustFL = powf(10, VolumeAdjustFLdb / 10);
+	VolumeAdjustFR = powf(10, VolumeAdjustFRdb / 10);
+	VolumeAdjustBL = powf(10, VolumeAdjustBLdb / 10);
+	VolumeAdjustBR = powf(10, VolumeAdjustBRdb / 10);
+	VolumeAdjustSL = powf(10, VolumeAdjustSLdb / 10);
+	VolumeAdjustSR = powf(10, VolumeAdjustSRdb / 10);
+	VolumeAdjustLFE = powf(10, VolumeAdjustLFEdb / 10);
+	SynchMode = 0;
+	numSpeakers = 0;
+	dplLevel = 0;
+	SndOutLatencyMS = 100;
+
+	char omodid[128];
+
+	// find the driver index of this module:
+	OutputModule = FindOutputModuleById(omodid);
+
+	spuConfig.GetStream()["MIXING"]["Interpolation"] = Interpolation;
+	spuConfig.GetStream()["MIXING"]["Disable_Effects"] = EffectsDisabled;
+	spuConfig.GetStream()["MIXING"]["DealiasFilter"] = postprocess_filter_dealias;
+	spuConfig.GetStream()["MIXING"]["FinalVolume"] = FinalVolume;
+	spuConfig.GetStream()["MIXING"]["AdvancedVolumeControl"] = AdvancedVolumeControl;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustC(dB)"] = VolumeAdjustCdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustFL(dB)"] = VolumeAdjustFLdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustFR(dB)"] = VolumeAdjustFRdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustBL(dB)"] = VolumeAdjustBLdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustBR(dB)"] = VolumeAdjustBRdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustSL(dB)"] = VolumeAdjustSLdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustSR(dB)"] = VolumeAdjustSRdb;
+	spuConfig.GetStream()["MIXING"]["VolumeAdjustLFE(dB)"] = VolumeAdjustLFEdb;
+	spuConfig.GetStream()["DEBUG"]["DelayCycles"] = delayCycles;
+
+	spuConfig.GetStream()["OUTPUT"]["Synch_Mode"] = SynchMode;
+	spuConfig.GetStream()["OUTPUT"]["SpeakerConfiguration"] = numSpeakers;
+	spuConfig.GetStream()["OUTPUT"]["DplDecodingLevel"] = dplLevel;
+	spuConfig.GetStream()["OUTPUT"]["Latency"] = SndOutLatencyMS;
+
+	std::ofstream fileStream(path);
+	fileStream << spuConfig.GetStream();
+	fileStream.close();
+
+}
+
 /*****************************************************************************/
 
 void ReadSettings()
@@ -102,93 +163,103 @@ void ReadSettings()
 	    init();
 	}
 
-	Interpolation = spuConfig.GetStream()["MIXING"]["Interpolation"].as<int>();
-	EffectsDisabled = spuConfig.GetStream()["MIXING"]["Disable_Effects"].as<bool>();
-	postprocess_filter_dealias = spuConfig.GetStream()["MIXING"]["DealiasFilter"].as<bool>();
-	FinalVolume = ((float)spuConfig.GetStream()["MIXING"]["FinalVolume"].as<int>(), 100) / 100;
-	if (FinalVolume > 1.0f)
-		FinalVolume = 1.0f;
+	if (spuConfig.Load(path))
+    {
+	    Interpolation = spuConfig.GetStream()["MIXING"]["Interpolation"].as<int>();
+	    EffectsDisabled = spuConfig.GetStream()["MIXING"]["Disable_Effects"].as<bool>();
+	    postprocess_filter_dealias = spuConfig.GetStream()["MIXING"]["DealiasFilter"].as<bool>();
+	    FinalVolume = ((float)spuConfig.GetStream()["MIXING"]["FinalVolume"].as<int>(), 100) / 100;
+	    if (FinalVolume > 1.0f)
+		    FinalVolume = 1.0f;
 
-	AdvancedVolumeControl = spuConfig.GetStream()["MIXING"]["AdvancedVolumeControl"].as<bool>();
-	VolumeAdjustCdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustC(dB)"].as<float>();
-	VolumeAdjustFLdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustFL(dB)"].as<float>();
-	VolumeAdjustFRdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustFR(dB)"].as<float>();
-	VolumeAdjustBLdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustBL(dB)"].as<float>();
-	VolumeAdjustBRdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustBR(dB)"].as<float>();
-	VolumeAdjustSLdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustSL(dB)"].as<float>();
-	VolumeAdjustSRdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustSR(dB)"].as<float>();
-	VolumeAdjustLFEdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustLFE(dB)"].as<float>();
-	VolumeAdjustC = powf(10, VolumeAdjustCdb / 10);
-	VolumeAdjustFL = powf(10, VolumeAdjustFLdb / 10);
-	VolumeAdjustFR = powf(10, VolumeAdjustFRdb / 10);
-	VolumeAdjustBL = powf(10, VolumeAdjustBLdb / 10);
-	VolumeAdjustBR = powf(10, VolumeAdjustBRdb / 10);
-	VolumeAdjustSL = powf(10, VolumeAdjustSLdb / 10);
-	VolumeAdjustSR = powf(10, VolumeAdjustSRdb / 10);
-	VolumeAdjustLFE = powf(10, VolumeAdjustLFEdb / 10);
-	delayCycles = spuConfig.GetStream()["DEBUG"]["DelayCycles"].as<int>();
-	wxString temp;
+	    AdvancedVolumeControl = spuConfig.GetStream()["MIXING"]["AdvancedVolumeControl"].as<bool>();
+	    VolumeAdjustCdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustC(dB)"].as<float>();
+	    VolumeAdjustFLdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustFL(dB)"].as<float>();
+	    VolumeAdjustFRdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustFR(dB)"].as<float>();
+	    VolumeAdjustBLdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustBL(dB)"].as<float>();
+        VolumeAdjustBRdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustBR(dB)"].as<float>();
+	    VolumeAdjustSLdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustSL(dB)"].as<float>();
+	    VolumeAdjustSRdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustSR(dB)"].as<float>();
+	    VolumeAdjustLFEdb = spuConfig.GetStream()["MIXING"]["VolumeAdjustLFE(dB)"].as<float>();
+	    VolumeAdjustC = powf(10, VolumeAdjustCdb / 10);
+	    VolumeAdjustFL = powf(10, VolumeAdjustFLdb / 10);
+	    VolumeAdjustFR = powf(10, VolumeAdjustFRdb / 10);
+	    VolumeAdjustBL = powf(10, VolumeAdjustBLdb / 10);
+	    VolumeAdjustBR = powf(10, VolumeAdjustBRdb / 10);
+	    VolumeAdjustSL = powf(10, VolumeAdjustSLdb / 10);
+	    VolumeAdjustSR = powf(10, VolumeAdjustSRdb / 10);
+	    VolumeAdjustLFE = powf(10, VolumeAdjustLFEdb / 10);
+	    delayCycles = spuConfig.GetStream()["DEBUG"]["DelayCycles"].as<int>();
+	    wxString temp;
 
-#if SDL_MAJOR_VERSION >= 2 || !defined(SPU2X_PORTAUDIO)
-	//CfgReadStr(L"OUTPUT", L"Output_Module", temp, SDLOut->GetIdent());
-#else
-	//CfgReadStr(L"OUTPUT", L"Output_Module", temp, PortaudioOut->GetIdent());
-#endif
-	OutputModule = FindOutputModuleById(temp.ToStdString()); // find the driver index of this module
+    #if SDL_MAJOR_VERSION >= 2 || !defined(SPU2X_PORTAUDIO)
+	    //CfgReadStr(L"OUTPUT", L"Output_Module", temp, SDLOut->GetIdent());
+    #else
+	    //CfgReadStr(L"OUTPUT", L"Output_Module", temp, PortaudioOut->GetIdent());
+    #endif
+	    OutputModule = FindOutputModuleById(temp.ToStdString()); // find the driver index of this module
 
-// find current API
-#ifdef SPU2X_PORTAUDIO
-#ifdef __linux__
-	//CfgReadStr(L"PORTAUDIO", L"HostApi", temp, L"ALSA");
-	if (temp == L"OSS")
-		OutputAPI = 1;
-	else if (temp == L"JACK")
-		OutputAPI = 2;
-	else // L"ALSA"
-		OutputAPI = 0;
-#else
-	CfgReadStr(L"PORTAUDIO", L"HostApi", temp, L"OSS");
-	OutputAPI = 0; // L"OSS"
-#endif
-#endif
+    // find current API
+    #ifdef SPU2X_PORTAUDIO
+    #ifdef __linux__
+	    //CfgReadStr(L"PORTAUDIO", L"HostApi", temp, L"ALSA");
+	    if (temp == L"OSS")
+		    OutputAPI = 1;
+	    else if (temp == L"JACK")
+		    OutputAPI = 2;
+	    else // L"ALSA"
+		    OutputAPI = 0;
+        #else
+	        CfgReadStr(L"PORTAUDIO", L"HostApi", temp, L"OSS");
+	        OutputAPI = 0; // L"OSS"
+    #endif
+    #endif
 
-#if defined(__unix__) || defined(__APPLE__)
-	//CfgReadStr(L"SDL", L"HostApi", temp, L"pulseaudio");
-	SdlOutputAPI = 0;
-#if SDL_MAJOR_VERSION >= 2
-	// YES It sucks ...
-	for (int i = 0; i < SDL_GetNumAudioDrivers(); ++i)
-	{
-		if (!temp.Cmp(wxString(SDL_GetAudioDriver(i), wxConvUTF8)))
-			SdlOutputAPI = i;
+    #if defined(__unix__) || defined(__APPLE__)
+	    //CfgReadStr(L"SDL", L"HostApi", temp, L"pulseaudio");
+	    SdlOutputAPI = 0;
+    #if SDL_MAJOR_VERSION >= 2
+	    // YES It sucks ...
+	    for (int i = 0; i < SDL_GetNumAudioDrivers(); ++i)
+	    {
+		    if (!temp.Cmp(wxString(SDL_GetAudioDriver(i), wxConvUTF8)))
+			    SdlOutputAPI = i;
+	    }
+    #endif
+    #endif
+
+	    SndOutLatencyMS = spuConfig.GetStream()["OUTPUT"]["Latency"].as<int>();
+	    SynchMode = spuConfig.GetStream()["OUTPUT"]["Synch_Mode"].as<int>();
+	    numSpeakers = spuConfig.GetStream()["OUTPUT"]["SpeakerConfiguration"].as<int>();
+
+    #ifdef SPU2X_PORTAUDIO
+	    PortaudioOut->ReadSettings();
+    #endif
+    #if defined(__unix__) || defined(__APPLE__)
+	    SDLOut->ReadSettings();
+    #endif
+	    SoundtouchCfg::ReadSettings();
+	    DebugConfig::ReadSettings();
+
+	    // Sanity Checks
+	    // -------------
+
+	    Clampify(SndOutLatencyMS, LATENCY_MIN, LATENCY_MAX);
+
+	    if (mods[OutputModule] == nullptr)
+	    {
+		    fwprintf(stderr, L"* SPU2: Unknown output module '%s' specified in configuration file.\n", temp.wc_str());
+		    //fprintf(stderr, "* SPU2: Defaulting to SDL.\n", SDLOut->GetIdent());
+		    OutputModule = FindOutputModuleById(SDLOut->GetIdent());
+	    }
+
 	}
-#endif
-#endif
 
-	SndOutLatencyMS = spuConfig.GetStream()["OUTPUT"]["Latency"].as<int>();
-	SynchMode = spuConfig.GetStream()["OUTPUT"]["Synch_Mode"].as<int>();
-	numSpeakers = spuConfig.GetStream()["OUTPUT"]["SpeakerConfiguration"].as<int>();
-
-#ifdef SPU2X_PORTAUDIO
-	PortaudioOut->ReadSettings();
-#endif
-#if defined(__unix__) || defined(__APPLE__)
-	SDLOut->ReadSettings();
-#endif
-	SoundtouchCfg::ReadSettings();
-	DebugConfig::ReadSettings();
-
-	// Sanity Checks
-	// -------------
-
-	Clampify(SndOutLatencyMS, LATENCY_MIN, LATENCY_MAX);
-
-	if (mods[OutputModule] == nullptr)
+	else
 	{
-		fwprintf(stderr, L"* SPU2: Unknown output module '%s' specified in configuration file.\n", temp.wc_str());
-		//fprintf(stderr, "* SPU2: Defaulting to SDL.\n", SDLOut->GetIdent());
-		OutputModule = FindOutputModuleById(SDLOut->GetIdent());
+		setDefaults();
 	}
+	
 
 	WriteSettings();
 	//spuConfig->Flush();
@@ -245,11 +316,9 @@ spuConfig.GetStream()["PortAudio"] = PortaudioOut->WriteSettings();
 	spuConfig.GetStream()["MIXING"] = Mixing;
 	spuConfig.GetStream()["OUTPUT"] = Output;
 
-	std::ostringstream os;
-	os << spuConfig.GetStream();
-	data = os.str();
-
-	spuConfig.Save(path, data);
+	std::ofstream fileStream(path);
+	fileStream << spuConfig.GetStream();
+	fileStream.close();
 }
 
 void configure()
@@ -257,7 +326,7 @@ void configure()
 	auto* dialog = new Dialog;
 
 	init();
-	//ReadSettings();
+	ReadSettings();
 	dialog->Display();
 	WriteSettings();
 	wxDELETE(dialog);

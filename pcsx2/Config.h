@@ -156,7 +156,8 @@ struct TraceLogFilters
 		Enabled	= false;
 	}
 
-	nlohmann::json LoadSave();
+	YAML::Node LoadSave();
+    //void Load(YAML::Node&);
 
 	bool operator ==( const TraceLogFilters& right ) const
 	{
@@ -195,7 +196,8 @@ struct Pcsx2Config
 
 		// Default is Disabled, with all recs enabled underneath.
 		//ProfilerOptions() : bitset( 0xfffffffe ) {}
-		nlohmann::json LoadSave();
+		YAML::Node LoadSave();
+        void Load(YAML::Node&);
 
 		bool operator ==( const ProfilerOptions& right ) const
 		{
@@ -246,8 +248,8 @@ struct Pcsx2Config
 		RecompilerOptions();
 		void ApplySanityCheck();
 
-		nlohmann::json LoadSave();
-
+		YAML::Node LoadSave();
+		void Load(YAML::Node&);
 		bool operator ==( const RecompilerOptions& right ) const
 		{
 			return false;
@@ -275,7 +277,8 @@ struct Pcsx2Config
 		SSE_MXCSR sseVUMXCSR;
 
 		CpuOptions();
-		nlohmann::json LoadSave();
+		YAML::Node LoadSave();
+		void Load(YAML::Node&);
 		void ApplySanityCheck();
 
 		bool operator ==( const CpuOptions& right ) const
@@ -310,7 +313,9 @@ struct Pcsx2Config
 		Fixed100	FrameratePAL;
 
 		GSOptions();
-		nlohmann::json LoadSave();
+		
+		YAML::Node LoadSave();
+		void Load(YAML::Node&);
 
 		int GetVsync() const;
 
@@ -366,7 +371,8 @@ struct Pcsx2Config
             CrashTagTeamRacingIbit, // Crash Tag Team Racing I bit hack. Needed to stop constant VU recompilation
             VU0KickstartHack;       // Speed up VU0 at start of program to avoid some VU1 sync issues
 		GamefixOptions();
-	    nlohmann::json LoadSave();
+	    YAML::Node LoadSave();
+		void Load(YAML::Node&);
 		GamefixOptions& DisableAll();
 
 		void Set( const std::string& list, bool enabled=true );
@@ -403,7 +409,8 @@ struct Pcsx2Config
 		u8	EECycleSkip;		// EE Cycle skip factor (0, 1, 2, or 3)
 
 		SpeedhackOptions();
-		nlohmann::json LoadSave();
+		YAML::Node LoadSave();
+		void Load(YAML::Node&);
 		SpeedhackOptions& DisableAll();
 
 		bool operator ==( const SpeedhackOptions& right ) const
@@ -432,7 +439,8 @@ struct Pcsx2Config
 		u32 MemoryViewBytesPerRow;
 
 		DebugOptions();
-		nlohmann::json LoadSave();
+		YAML::Node LoadSave();
+		void Load(YAML::Node&);
 
 		bool operator ==( const DebugOptions& right ) const
 		{
@@ -493,9 +501,9 @@ struct Pcsx2Config
 	//EnableRecordingTools, UseBOOT2Injection, BackupSavestate, McdEnableEjection, McdFolderAutoManage, MultitapPort0_Enabled, MultitapPort1_Enabled,
 	//ConsoleToStdio, HostFs);
 
-	nlohmann::json LoadSave();
+	YAML::Node LoadSave();
 
-	void Load( nlohmann::json loader );
+	void Load(YAML::Node& loader);
 	//void Load( const wxInputStream& srcstream );
 	void Save( std::string& dstfile );
 	//void Save( const wxOutputStream& deststream );

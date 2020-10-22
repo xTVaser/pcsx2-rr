@@ -114,6 +114,7 @@ namespace SoundtouchCfg
 	YAML::Node WriteSettings();
 }; // namespace SoundtouchCfg
 
+void SetDefaults();
 void ReadSettings();
 void WriteSettings();
 void DisplayDialog();

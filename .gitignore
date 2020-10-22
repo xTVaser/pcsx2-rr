@@ -80,7 +80,7 @@ oprofile_data/
 /bin/bios
 /bin/dumps
 /bin/help
-/bin/json
+/bin/settings
 /bin/logs
 /bin/memcards
 /bin/plugins
