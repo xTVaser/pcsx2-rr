@@ -38,7 +38,7 @@
 class VirtualPad : public wxFrame
 {
 public:
-	VirtualPad(wxWindow* parent, int controllerPort, AppConfig::InputRecordingOptions& options);
+	VirtualPad(wxWindow* parent, int controllerPort, InputRecordingOptions& options);
 	// Updates the VirtualPad's data if necessary, as well as updates the provided PadData if the VirtualPad overrides it
 	// - PadData will not be updated if ReadOnly mode is set
 	// - returns a bool to indicate if the PadData has been updated
@@ -58,7 +58,7 @@ private:
 	static const int ANALOG_NEUTRAL = 127;
 	static const int ANALOG_MAX = 255;
 
-	AppConfig::InputRecordingOptions& options;
+	InputRecordingOptions& options;
 
 	bool clearScreenRequired = false;
 	bool ignoreRealController = false;

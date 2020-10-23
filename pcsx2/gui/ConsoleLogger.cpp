@@ -344,11 +344,11 @@ static const bool ConLogDefaults[] =
 // are saved as disabled. ConLogInitialized is used to detect and avoid this issue.
 static bool ConLogInitialized = false;
 
-YAML::Node ConLog_LoadSaveSettings()
+bool ConLog_SaveSettings(wxConfigBase* conf)
 {
 	YAML::Node console;
 
-	console["DevConWriterEnabled"] = false;
+	conf->Write("DevConWriterEnabled", false);
 
 	uint srcnt = ArraySize(ConLogSources);
 	for (uint i=0; i<srcnt; ++i)
@@ -363,8 +363,6 @@ YAML::Node ConLog_LoadSaveSettings()
 	}
 
 	ConLogInitialized = true;
-
-	return console;
 }
 
 // --------------------------------------------------------------------------------------

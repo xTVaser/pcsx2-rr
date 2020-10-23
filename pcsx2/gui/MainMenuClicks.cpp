@@ -97,7 +97,7 @@ static void WipeSettings()
 	//wxRmdir( GetSettingsFolder().ToString() );
 
 	wxGetApp().GetRecentIsoManager().Clear();
-	g_Conf = std::unique_ptr<AppConfig>(new AppConfig());
+	g_Conf = std::unique_ptr<GuiConfig>(new GuiConfig());
 	sMainFrame.RemoveCdvdMenu();
 
 	sApp.WipeUserModeSettings();
@@ -787,8 +787,8 @@ void MainEmuFrame::Menu_ShowConsole(wxCommandEvent& event)
 {
 	// Use messages to relay open/close commands (thread-safe)
 
-	conf.console.Visible = event.IsChecked();
-	wxCommandEvent evt( wxEVT_MENU, conf.console.Visible ? wxID_OPEN : wxID_CLOSE );
+	g_Conf->console.Visible = event.IsChecked();
+	wxCommandEvent evt( wxEVT_MENU, g_Conf->console.Visible ? wxID_OPEN : wxID_CLOSE );
 	wxGetApp().ProgramLog_PostEvent( evt );
 }
 

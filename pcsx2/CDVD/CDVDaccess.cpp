@@ -34,7 +34,7 @@
 #include "CDVDisoReader.h"
 
 #include "DebugTools/SymbolMap.h"
-#include "AppConfig.h"
+#include "GuiConfig.h"
 #include "Utilities/PathUtils.h"
 
 CDVD_API* CDVD = NULL;

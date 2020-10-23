@@ -259,7 +259,7 @@ Panels::SpeedHacksPanel::SpeedHacksPanel( wxWindow* parent )
 }
 
 // Doesn't modify values - only locks(gray out)/unlocks as necessary.
-void Panels::SpeedHacksPanel::EnableStuff( AppConfig* configToUse )
+void Panels::SpeedHacksPanel::EnableStuff( GuiConfig* configToUse )
 {
 	if (!configToUse) configToUse = g_Conf.get();
 
@@ -297,7 +297,7 @@ void Panels::SpeedHacksPanel::AppStatusEvent_OnSettingsApplied()
 	ApplyConfigToGui( *g_Conf );
 }
 
-void Panels::SpeedHacksPanel::ApplyConfigToGui( AppConfig& configToApply, int flags )
+void Panels::SpeedHacksPanel::ApplyConfigToGui( GuiConfig& configToApply, int flags )
 {
 	Pcsx2Config::SpeedhackOptions& opts=configToApply.EmuOptions.Speedhacks;
 
@@ -347,7 +347,7 @@ void Panels::SpeedHacksPanel::Apply()
 
 void Panels::SpeedHacksPanel::OnEnable_Toggled( wxCommandEvent& evt )
 {
-	AppConfig tmp=*g_Conf;
+	GuiConfig tmp=*g_Conf;
 	tmp.EnablePresets=false; //if clicked, button was enabled, so not using a preset --> let EnableStuff work
 	tmp.EnableSpeedHacks = m_check_Enable->GetValue();
 
@@ -358,7 +358,7 @@ void Panels::SpeedHacksPanel::OnEnable_Toggled( wxCommandEvent& evt )
 void Panels::SpeedHacksPanel::Defaults_Click( wxCommandEvent& evt )
 {
 	//Can only get here presets are disabled at the GUI (= the 'Defaults' button is enabled).
-	AppConfig currentConfigWithHacksReset = *g_Conf;
+	GuiConfig currentConfigWithHacksReset = *g_Conf;
 	currentConfigWithHacksReset.EmuOptions.Speedhacks = Pcsx2Config::SpeedhackOptions();
 	currentConfigWithHacksReset.EnablePresets=false;//speed hacks gui depends on preset, apply it as if presets are disabled
 	ApplyConfigToGui( currentConfigWithHacksReset );

@@ -37,7 +37,7 @@ _mVUt void __mVULog(const char* fmt, ...) {
 
 #define commaIf() { if (bitX[6]) { mVUlog(","); bitX[6] = false; } }
 
-#include "AppConfig.h"
+#include "GuiConfig.h"
 
 void __mVUdumpProgram(microVU& mVU, microProgram& prog) {
 	bool bitX[7];

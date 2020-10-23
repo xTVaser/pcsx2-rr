@@ -28,7 +28,6 @@
 #include "RecentIsoList.h"
 #include "Utilities/PathUtils.h"
 #include "DriveList.h"
-#include "Utilities/PathUtils.h"
 
 #ifndef DISABLE_RECORDING
 #	include "Recording/VirtualPad/VirtualPad.h"
@@ -418,7 +417,7 @@ public:
 	bool HasPluginsOverride() const
 	{
 		for( int i=0; i<PluginId_Count; ++i )
-			if( config.Filenames.Plugins[i].c_str() != nullptr ) return true;
+			if( g_Conf->Filenames.Plugins[i].ToStdString().c_str() != nullptr ) return true;
 
 		return false;
 	}

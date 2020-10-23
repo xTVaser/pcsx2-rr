@@ -65,7 +65,7 @@ bool ApplyStateStruct::ApplyPage( int pageid )
 	std::string		oldSettingsFolder	= SettingsFolder;
 	bool			oldUseDefSet		= UseDefaultSettingsFolder;
 
-	AppConfig confcopy( *g_Conf );
+	GuiConfig confcopy( *g_Conf );
 
 	try
 	{

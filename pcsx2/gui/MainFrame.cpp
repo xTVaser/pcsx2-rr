@@ -177,7 +177,7 @@ void MainEmuFrame::OnMoveAround(wxMoveEvent& evt)
 
 	// evt.GetPosition() returns the client area position, not the window frame position.
 	// So read the window's screen-relative position directly.
-	conf.MainGuiPosition = GetScreenPosition();
+	g_Conf->MainGuiPosition = GetScreenPosition();
 
 	// wxGTK note: X sends gratuitous amounts of OnMove messages for various crap actions
 	// like selecting or deselecting a window, which muck up docking logic.  We filter them
@@ -188,7 +188,7 @@ void MainEmuFrame::OnMoveAround(wxMoveEvent& evt)
 		return;
 	lastpos = evt.GetPosition();
 
-	if( conf.console.AutoDock )
+	if( g_Conf->console.AutoDock )
 	{
 		if (ConsoleLogFrame* proglog = wxGetApp().GetProgramLog())
 		{
@@ -205,7 +205,7 @@ void MainEmuFrame::OnMoveAround(wxMoveEvent& evt)
 
 void MainEmuFrame::OnLogBoxHidden()
 {
-	conf.console.Visible = false;
+	g_Conf->console.Visible = false;
 	m_MenuItem_Console.Check(false);
 }
 
@@ -617,16 +617,16 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	GetSizer()->SetSizeHints(this);
 
 	// Use default window position if the configured windowpos is invalid (partially offscreen)
-	if( conf.MainGuiPosition == wxDefaultPosition || !pxIsValidWindowPosition(*this, conf.MainGuiPosition))
-		conf.MainGuiPosition = GetScreenPosition();
+	if( g_Conf->MainGuiPosition == wxDefaultPosition || !pxIsValidWindowPosition(*this, g_Conf->MainGuiPosition))
+		g_Conf->MainGuiPosition = GetScreenPosition();
 	else
-		SetPosition(conf.MainGuiPosition);
+		SetPosition(g_Conf->MainGuiPosition);
 
 	// Updating console log positions after the main window has been fitted to its sizer ensures
 	// proper docked positioning, since the main window's size is invalid until after the sizer
 	// has been set/fit.
 
-	InitLogBoxPosition(conf.console);
+	InitLogBoxPosition(g_Conf->console);
 	CreatePcsx2Menu();
 	CreateCdvdMenu();
 	CreateConfigMenu();
@@ -637,7 +637,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 #endif
 	CreateHelpMenu();
 
-	m_MenuItem_Console.Check(conf.console.Visible);
+	m_MenuItem_Console.Check(g_Conf->console.Visible);
 
 	ConnectMenus();
 	Bind(wxEVT_MOVE, &MainEmuFrame::OnMoveAround, this);
@@ -765,14 +765,14 @@ void MainEmuFrame::ApplySettings()
 
 //MainEmuFrame needs to be aware which items are affected by presets if AppConfig::APPLY_FLAG_FROM_PRESET is on.
 //currently only EnablePatches is affected when the settings come from a preset.
-void MainEmuFrame::ApplyConfigToGui(AppConfig& configToApply, int flags)
+void MainEmuFrame::ApplyConfigToGui(GuiConfig& configToApply, int flags)
 {
 	wxMenuBar& menubar(*GetMenuBar());
 
 	menubar.Check(MenuId_EnablePatches, configToApply.EmuOptions.EnablePatches);
 	menubar.Enable(MenuId_EnablePatches, !configToApply.EnablePresets);
 
-	if (!(flags & AppConfig::APPLY_FLAG_FROM_PRESET))
+	if (!(flags & GuiConfig::APPLY_FLAG_FROM_PRESET))
 	{ //these should not be affected by presets
 		menubar.Check(MenuId_EnableBackupStates, configToApply.EmuOptions.BackupSavestate);
 		menubar.Check(MenuId_EnableCheats, configToApply.EmuOptions.EnableCheats);

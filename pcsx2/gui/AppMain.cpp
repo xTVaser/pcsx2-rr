@@ -64,9 +64,8 @@
 #include <wx/osx/private.h>		// needed to implement the app!
 #endif
 
-wxIMPLEMENT_APP(Pcsx2App);
 
-std::unique_ptr<AppConfig> g_Conf;
+std::unique_ptr<GuiConfig> g_Conf;
 
 AspectRatioType iniAR;
 bool switchAR;
@@ -87,7 +86,7 @@ static bool HandlePluginError( BaseException& ex )
 		Msgbox::Alert(ex.FormatDisplayMessage());
 	}
 
-	conf.ComponentsTabName = "Plugins";
+	g_Conf->ComponentsTabName = "Plugins";
 
 	// TODO: Send a message to the panel to select the failed plugin.
 
@@ -191,7 +190,7 @@ static bool HandleBIOSError(BaseException& ex)
 		Msgbox::Alert(ex.FormatDisplayMessage() + L"\n\n" + BIOS_GetMsg_Required(), _("PS2 BIOS Error"));
 	}
 
-	conf.ComponentsTabName = "BIOS";
+	g_Conf->ComponentsTabName = "BIOS";
 
 	return AppOpenModalDialog<Dialogs::ComponentsConfigDialog>(L"BIOS") != wxID_CANCEL;
 }
@@ -525,10 +524,10 @@ extern uint renderswitch_delay;
 
 void DoFmvSwitch(bool on)
 {
-	if (conf.gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
+	if (g_Conf->gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
 		if (on) {
 			switchAR = true;
-			iniAR = conf.gsWindow.AspectRatio;
+			iniAR = g_Conf->gsWindow.AspectRatio;
 		} else {
 			switchAR = false;
 		}
@@ -548,7 +547,7 @@ void Pcsx2App::LogicalVsync()
 
 	FpsManager.DoFrame();
 
-	if (conf.gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
+	if (g_Conf->gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
 		if (EnableFMV) {
 			DevCon.Warning("FMV on");
 			DoFmvSwitch(true);
@@ -831,7 +830,7 @@ void Pcsx2App::resetDebugger()
 
 // NOTE: Plugins are *not* applied by this function.  Changes to plugins need to handled
 // manually.  The PluginSelectorPanel does this, for example.
-void AppApplySettings( const AppConfig* oldconf )
+void AppApplySettings( const GuiConfig* oldconf )
 {
 	AffinityAssert_AllowFrom_MainUI();
 
@@ -988,15 +987,15 @@ void Pcsx2App::OpenGsPanel()
 		switch( wxGetApp().Overrides.GsWindowMode )
 		{
 			case GsWinMode_Windowed:
-				conf.gsWindow.IsFullscreen = false;
+				g_Conf->gsWindow.IsFullscreen = false;
 			break;
 
 			case GsWinMode_Fullscreen:
-				conf.gsWindow.IsFullscreen = true;
+				g_Conf->gsWindow.IsFullscreen = true;
 			break;
 
 			case GsWinMode_Unspecified:
-				conf.gsWindow.IsFullscreen = conf.gsWindow.DefaultToFullscreen;
+				g_Conf->gsWindow.IsFullscreen = g_Conf->gsWindow.DefaultToFullscreen;
 			break;
 		}
 	}
@@ -1057,7 +1056,7 @@ void Pcsx2App::OpenGsPanel()
 	pDsp[1] = NULL;
 #endif
 
-	gsFrame->ShowFullScreen( conf.gsWindow.IsFullscreen );
+	gsFrame->ShowFullScreen( g_Conf->gsWindow.IsFullscreen );
 
 #ifndef DISABLE_RECORDING
 	// Disable recording controls that only make sense if the game is running

@@ -33,7 +33,7 @@
 #include "IopCommon.h"
 #include "iCore.h"
 
-#include "AppConfig.h"
+#include "GuiConfig.h"
 
 #include "Utilities/Perf.h"
 

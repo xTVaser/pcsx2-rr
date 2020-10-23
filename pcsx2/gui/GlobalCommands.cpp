@@ -186,7 +186,7 @@ namespace Implementations
 
 	void GSwindow_CycleAspectRatio()
 	{
-		AspectRatioType& art = conf.gsWindow.AspectRatio;
+		AspectRatioType& art = g_Conf->gsWindow.AspectRatio;
 		const char *arts = "Not modified";
 		if (art == AspectRatio_Stretch && switchAR) //avoids a double 4:3 when coming from FMV aspect ratio switch
 			art = AspectRatio_4_3;
@@ -214,27 +214,27 @@ namespace Implementations
 
 	void SetOffset(float x, float y)
 	{
-		conf.gsWindow.OffsetX = x;
-		conf.gsWindow.OffsetY = y;
+		g_Conf->gsWindow.OffsetX = x;
+		g_Conf->gsWindow.OffsetY = y;
 		OSDlog( Color_StrongBlue, true, "(GSwindow) Offset: x=%f, y=%f", x,y);
 
 		UpdateImagePosition();
 	}
 
 	void GSwindow_OffsetYplus(){
-		SetOffset(conf.gsWindow.OffsetX, conf.gsWindow.OffsetY+1);
+		SetOffset(g_Conf->gsWindow.OffsetX, g_Conf->gsWindow.OffsetY+1);
 	}
 
 	void GSwindow_OffsetYminus(){
-		SetOffset(conf.gsWindow.OffsetX, conf.gsWindow.OffsetY-1);
+		SetOffset(g_Conf->gsWindow.OffsetX, g_Conf->gsWindow.OffsetY-1);
 	}
 
 	void GSwindow_OffsetXplus(){
-		SetOffset(conf.gsWindow.OffsetX+1, conf.gsWindow.OffsetY);
+		SetOffset(g_Conf->gsWindow.OffsetX+1, g_Conf->gsWindow.OffsetY);
 	}
 
 	void GSwindow_OffsetXminus(){
-		SetOffset(conf.gsWindow.OffsetX-1, conf.gsWindow.OffsetY);
+		SetOffset(g_Conf->gsWindow.OffsetX-1, g_Conf->gsWindow.OffsetY);
 	}
 
 	void GSwindow_OffsetReset()
@@ -246,7 +246,7 @@ namespace Implementations
 	{
 		if (zoom <= 0)
 			return;
-		conf.gsWindow.StretchY = zoom;
+		g_Conf->gsWindow.StretchY = zoom;
 		OSDlog(Color_StrongBlue, true, "(GSwindow) Vertical stretch: %f", zoom);
 
 		UpdateImagePosition();
@@ -254,11 +254,11 @@ namespace Implementations
 
 	void GSwindow_ZoomInY()
 	{
-		SetZoomY( conf.gsWindow.StretchY+1 );
+		SetZoomY( g_Conf->gsWindow.StretchY+1 );
 	}
 	void GSwindow_ZoomOutY()
 	{
-		SetZoomY( conf.gsWindow.StretchY-1 );
+		SetZoomY( g_Conf->gsWindow.StretchY-1 );
 	}
 	void GSwindow_ZoomResetY()
 	{
@@ -269,7 +269,7 @@ namespace Implementations
 	{
 		if (zoom < 0)
 			return;
-		conf.gsWindow.Zoom = zoom;
+		g_Conf->gsWindow.Zoom = zoom;
 
 		if ( zoom == 0 )
 			OSDlog( Color_StrongBlue, true, "(GSwindow) Zoom: 0 (auto, no black bars)");
@@ -282,21 +282,21 @@ namespace Implementations
 
 	void GSwindow_ZoomIn()
 	{
-		float z = conf.gsWindow.Zoom;
+		float z = g_Conf->gsWindow.Zoom;
 		if( z==0 ) z = 100;
 		z++;
 		SetZoom(z);
 	}
 	void GSwindow_ZoomOut()
 	{
-		float z = conf.gsWindow.Zoom;
+		float z = g_Conf->gsWindow.Zoom;
 		if( z==0 ) z = 100;
 		z--;
 		SetZoom(z);
 	}
 	void GSwindow_ZoomToggle()
 	{
-		float z = conf.gsWindow.Zoom;
+		float z = g_Conf->gsWindow.Zoom;
 		if( z==100 )	z = 0;
 		else			z = 100;
 
@@ -321,7 +321,7 @@ namespace Implementations
 		CoreThread.Suspend();
 
 		gsframe = wxGetApp().GetGsFramePtr(); // just in case suspend removes this window
-		if (gsframe && !wxGetApp().HasGUI() && conf.gsWindow.CloseOnEsc) {
+		if (gsframe && !wxGetApp().HasGUI() && g_Conf->gsWindow.CloseOnEsc) {
 			// When we run with --nogui, PCSX2 only knows to exit when the gs window closes.
 			// However, by default suspend just hides the gs window, so PCSX2 will not exit
 			// and there will also be no way to exit it even if no windows are left.
@@ -353,7 +353,7 @@ namespace Implementations
 			}
 		}
 
-		if (conf.gsWindow.CloseOnEsc)
+		if (g_Conf->gsWindow.CloseOnEsc)
 			sMainFrame.SetFocus();
 	}
 

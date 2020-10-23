@@ -575,8 +575,6 @@ void Pcsx2Config::Load(YAML::Node& loader)
 	os << loader;
 	data = os.str();
 
-	std::cout << "LOADER: " << data << std::endl;
-
 	CdvdVerboseReads = loader["Core"]["CdvdVerboseReads"].as<bool>();
     CdvdDumpBlocks = loader["Core"]["CdvdDumpBlocks"].as<bool>();
 	CdvdShareWrite = loader["Core"]["CdvdShareWrite"].as<bool>();

@@ -26,7 +26,7 @@
 #include "Utilities/CheckedStaticBox.h"
 
 #include "AppForwardDefs.h"
-#include "AppConfig.h"
+#include "GuiConfig.h"
 #include "AppEventListeners.h"
 
 extern wxString AddAppName( const wxChar* fmt );

@@ -102,7 +102,7 @@ namespace Dialogs
 		}
 
 	protected:
-		virtual wxString GetConfSettingsTabName() const { return wxString(conf.SysSettingsTabName); }
+		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->SysSettingsTabName); }
 
 		pxCheckBox*		m_check_presets;
 		wxSlider*		m_slider_presets;
@@ -126,7 +126,7 @@ namespace Dialogs
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString GetConfSettingsTabName() const { return wxString(conf.AppSettingsTabName); }
+		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->AppSettingsTabName); }
 	};
 
 
@@ -147,7 +147,7 @@ namespace Dialogs
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString GetConfSettingsTabName() const { return wxString(conf.McdSettingsTabName); }
+		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->McdSettingsTabName); }
 		//void OnMultitapClicked( wxCommandEvent& evt );
 	};
 
@@ -166,7 +166,7 @@ namespace Dialogs
 
 	protected:
 		virtual wxString GetConfSettingsTabName() const {
-			return wxString(conf.ComponentsTabName); 
+			return wxString(g_Conf->ComponentsTabName); 
 		}
 	};
 
@@ -216,7 +216,7 @@ namespace Dialogs
 
 	public:
 		virtual ~ConvertMemoryCardDialog()  = default;
-		ConvertMemoryCardDialog( wxWindow* parent, const wxDirName& mcdPath, const AppConfig::McdOptions& mcdSourceConfig );
+		ConvertMemoryCardDialog( wxWindow* parent, const wxDirName& mcdPath, const McdOptions& mcdSourceConfig );
 
 	protected:
 		void CreateControls( const MemoryCardType sourceType );

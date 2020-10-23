@@ -1,11 +1,9 @@
     #pragma once
 
     #include <iostream>
-    #include <wx/config.h>
-    #include "Utilities/PathUtils.h"
     
     
-    // ------------------------------------------------------------------------
+    /*// ------------------------------------------------------------------------
 	struct FolderOptions
 	{
 			bool
@@ -59,10 +57,10 @@
 
 		AspectRatioType AspectRatio;
 		FMVAspectRatioSwitchType FMVAspectRatioSwitch;
-		Fixed100	Zoom;
-		Fixed100	StretchY;
-		Fixed100	OffsetX;
-		Fixed100	OffsetY;
+		float	Zoom;
+		float	StretchY;
+		float	OffsetX;
+		float	OffsetY;
 
 
 		int			WindowSize[2]; // X, Y
@@ -99,18 +97,5 @@
 #ifndef DISABLE_RECORDING
 		std::string RecordingTemplate;
 #endif
-	};
+	};*/ // LEGACY CODE 
 
-    class Gui
-    {
-        private:        
-        wxConfig *config;
-
-        FolderOptions folders;
-
-
-        public:
-        bool Initalize();
-        void Load();
-        void Save();
-    };

@@ -111,7 +111,7 @@ bool Pcsx2App::TestUserPermissionsRights( const std::string& testFolder)
 }
 
 // ------------------------------------------------------------------------
-YAML::Node App_LoadSaveInstallSettings()
+wxFileConfig App_LoadSaveInstallSettings()
 {
 	// Portable installs of PCSX2 should not save any of the following information to
 	// the INI file.  Only the Run First Time Wizard option is saved, and that's done
@@ -145,8 +145,7 @@ YAML::Node App_LoadSaveInstallSettings()
 	//SetFullBaseDir( InstallFolder );
 
 	yamlUtils.GetStream()["PluginsFolder"] = (PluginsFolder = Path::Combine(InstallFolder, "plugins" ));
-
-	return yamlUtils.GetStream();
+	return wxFileConfig();
 }
 
 void App_LoadInstallSettings(YAML::Node yaml)

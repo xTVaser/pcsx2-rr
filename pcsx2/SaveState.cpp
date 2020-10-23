@@ -23,7 +23,7 @@
 #include "VUmicro.h"
 #include "MTVU.h"
 #include "Cache.h"
-#include "AppConfig.h"
+#include "GuiConfig.h"
 
 #include "Elfheader.h"
 #include "Counters.h"

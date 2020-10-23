@@ -662,7 +662,7 @@ void Panels::MemoryCardListPanel_Simple::UiConvertCard( McdSlotItem& card )
 		return;
 	}
 
-	AppConfig::McdOptions config;
+	McdOptions config;
 	config.Filename = card.Filename;
 	config.Enabled = card.IsEnabled;
 	config.Type = card.Type;

@@ -32,7 +32,7 @@ enum MemoryCardConversionType {
 	MemoryCardConversion_MaxCount
 };
 
-Dialogs::ConvertMemoryCardDialog::ConvertMemoryCardDialog( wxWindow* parent, const wxDirName& mcdPath, const AppConfig::McdOptions& mcdSourceConfig )
+Dialogs::ConvertMemoryCardDialog::ConvertMemoryCardDialog( wxWindow* parent, const wxDirName& mcdPath, const McdOptions& mcdSourceConfig )
 	: wxDialogWithHelpers( parent, _( "Convert a memory card to a different format" ) )
 	, m_mcdPath( mcdPath )
 	, m_mcdSourceFilename( mcdSourceConfig.Filename.GetFullName() )
@@ -175,7 +175,7 @@ bool Dialogs::ConvertMemoryCardDialog::ConvertToFile( const wxFileName& sourcePa
 	}
 
 	FolderMemoryCard sourceFolderMemoryCard;
-	AppConfig::McdOptions config;
+	McdOptions config;
 	config.Enabled = true;
 	config.Type = MemoryCardType::MemoryCard_Folder;
 	sourceFolderMemoryCard.Open( sourcePath.GetFullPath(), config, ( sizeInMB * 1024 * 1024 ) / FolderMemoryCard::ClusterSize, false, L"" );
@@ -204,7 +204,7 @@ bool Dialogs::ConvertMemoryCardDialog::ConvertToFolder( const wxFileName& source
 
 	u8 buffer[FolderMemoryCard::PageSizeRaw];
 	FolderMemoryCard targetFolderMemoryCard;
-	AppConfig::McdOptions config;
+	McdOptions config;
 	config.Enabled = true;
 	config.Type = MemoryCardType::MemoryCard_Folder;
 	u32 adr = 0;

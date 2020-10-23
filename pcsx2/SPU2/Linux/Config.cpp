@@ -17,7 +17,7 @@
 #include "../Global.h"
 #include "Dialogs.h"
 #include "Config.h"
-#include "AppConfig.h"
+#include "GuiConfig.h"
 
 #if defined(__unix__) || defined(__APPLE__)
 #include <SDL.h>

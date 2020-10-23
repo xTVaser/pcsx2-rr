@@ -150,11 +150,11 @@ void Panels::GSWindowSettingsPanel::AppStatusEvent_OnSettingsApplied()
 	//ApplyConfigToGui( *g_Conf );
 }
 
-void Panels::GSWindowSettingsPanel::ApplyConfigToGui( AppConfig& configToApply, int flags )
+void Panels::GSWindowSettingsPanel::ApplyConfigToGui( GuiConfig& configToApply, int flags )
 {
-	const GSWindowOptions& conf( config.gsWindow );
+	const GSWindowOptions& conf( g_Conf->gsWindow );
 
-	if( !(flags & AppConfig::APPLY_FLAG_FROM_PRESET) )
+	if( !(flags & GuiConfig::APPLY_FLAG_FROM_PRESET) )
 	{//Presets don't control these values
 		m_check_CloseGS		->SetValue( conf.CloseOnEsc );
 		m_check_Fullscreen	->SetValue( conf.DefaultToFullscreen );
@@ -177,7 +177,7 @@ void Panels::GSWindowSettingsPanel::ApplyConfigToGui( AppConfig& configToApply, 
 
 void Panels::GSWindowSettingsPanel::Apply()
 {
-	GSWindowOptions& appconf(config.gsWindow );
+	GSWindowOptions& appconf(g_Conf->gsWindow );
 	Pcsx2Config::GSOptions& gsconf( g_Conf->EmuOptions.GS );
 
 	appconf.CloseOnEsc				= m_check_CloseGS	->GetValue();

@@ -99,17 +99,17 @@ void Panels::FramelimiterPanel::AppStatusEvent_OnSettingsApplied()
 	ApplyConfigToGui( *g_Conf );
 }
 
-void Panels::FramelimiterPanel::ApplyConfigToGui( AppConfig& configToApply, int flags )
+void Panels::FramelimiterPanel::ApplyConfigToGui( GuiConfig& configToApply, int flags )
 {
-	const AppConfig::FramerateOptions& appfps( configToApply.Framerate );
+	const FramerateOptions& appfps( configToApply.Framerate );
 	const Pcsx2Config::GSOptions& gsconf( configToApply.EmuOptions.GS );
 
-	if( ! (flags & AppConfig::APPLY_FLAG_FROM_PRESET) ){	//Presets don't control these: only change if config doesn't come from preset.
+	if( ! (flags & GuiConfig::APPLY_FLAG_FROM_PRESET) ){	//Presets don't control these: only change if config doesn't come from preset.
 	
 		m_check_LimiterDisable->SetValue( !gsconf.FrameLimitEnable );
 
-		m_spin_TurboPct		->SetValue( appfps.TurboScalar.Raw );
-		m_spin_SlomoPct		->SetValue( appfps.SlomoScalar.Raw );
+		m_spin_TurboPct		->SetValue( appfps.TurboScalar );
+		m_spin_SlomoPct		->SetValue( appfps.SlomoScalar );
 
 		m_spin_TurboPct		->Enable( 1 );
 		m_spin_SlomoPct		->Enable( 1 );
@@ -118,7 +118,7 @@ void Panels::FramelimiterPanel::ApplyConfigToGui( AppConfig& configToApply, int 
 	m_text_BaseNtsc		->ChangeValue( gsconf.FramerateNTSC.ToString() );
 	m_text_BasePal		->ChangeValue( gsconf.FrameratePAL.ToString() );
 
-	m_spin_NominalPct	->SetValue( appfps.NominalScalar.Raw );
+	m_spin_NominalPct	->SetValue( appfps.NominalScalar );
 	m_spin_NominalPct	->Enable(!configToApply.EnablePresets);
 
 	// Vsync timing controls only on devel builds / via manual ini editing
@@ -133,14 +133,14 @@ void Panels::FramelimiterPanel::ApplyConfigToGui( AppConfig& configToApply, int 
 
 void Panels::FramelimiterPanel::Apply()
 {
-	AppConfig::FramerateOptions& appfps( g_Conf->Framerate );
+	FramerateOptions& appfps( g_Conf->Framerate );
 	Pcsx2Config::GSOptions& gsconf( g_Conf->EmuOptions.GS );
 
 	gsconf.FrameLimitEnable	= !m_check_LimiterDisable->GetValue();
 
-	appfps.NominalScalar.Raw	= m_spin_NominalPct	->GetValue();
-	appfps.TurboScalar.Raw		= m_spin_TurboPct	->GetValue();
-	appfps.SlomoScalar.Raw		= m_spin_SlomoPct	->GetValue();
+	appfps.NominalScalar	= m_spin_NominalPct	->GetValue();
+	appfps.TurboScalar		= m_spin_TurboPct	->GetValue();
+	appfps.SlomoScalar		= m_spin_SlomoPct	->GetValue();
 
 	try {
 		gsconf.FramerateNTSC	= Fixed100::FromString( m_text_BaseNtsc->GetValue() );
@@ -229,9 +229,9 @@ void Panels::FrameSkipPanel::AppStatusEvent_OnSettingsApplied()
 	ApplyConfigToGui( *g_Conf );
 }
 
-void Panels::FrameSkipPanel::ApplyConfigToGui( AppConfig& configToApply, int flags )
+void Panels::FrameSkipPanel::ApplyConfigToGui( GuiConfig& configToApply, int flags )
 {
-	const AppConfig::FramerateOptions& appfps( configToApply.Framerate );
+	const FramerateOptions& appfps( configToApply.Framerate );
 	const Pcsx2Config::GSOptions& gsconf( configToApply.EmuOptions.GS );
 
 	m_radio_SkipMode->SetSelection( appfps.SkipOnLimit ? 2 : (appfps.SkipOnTurbo ? 1 : 0) );
@@ -247,7 +247,7 @@ void Panels::FrameSkipPanel::ApplyConfigToGui( AppConfig& configToApply, int fla
 
 void Panels::FrameSkipPanel::Apply()
 {
-	AppConfig::FramerateOptions& appfps( g_Conf->Framerate );
+	FramerateOptions& appfps( g_Conf->Framerate );
 	Pcsx2Config::GSOptions& gsconf( g_Conf->EmuOptions.GS );
 
 	gsconf.FramesToDraw = m_spin_FramesToDraw->GetValue();
@@ -328,9 +328,9 @@ Panels::VideoPanel::VideoPanel( wxWindow* parent ) :
 
 void Panels::VideoPanel::Defaults_Click(wxCommandEvent& evt)
 {
-	AppConfig config = *g_Conf;
+	GuiConfig config = *g_Conf;
 	config.EmuOptions.GS = Pcsx2Config::GSOptions();
-	config.Framerate = AppConfig::FramerateOptions();
+	config.Framerate = FramerateOptions();
 	VideoPanel::ApplyConfigToGui(config);
 	m_fpan->ApplyConfigToGui(config);
 	m_span->ApplyConfigToGui(config);
@@ -354,13 +354,13 @@ void Panels::VideoPanel::AppStatusEvent_OnSettingsApplied()
 	ApplyConfigToGui(*g_Conf);
 }
 
-void Panels::VideoPanel::ApplyConfigToGui( AppConfig& configToApply, int flags ){
+void Panels::VideoPanel::ApplyConfigToGui( GuiConfig& configToApply, int flags ){
 	
 	m_check_SynchronousGS->SetValue( configToApply.EmuOptions.GS.SynchronousMTGS );
 
 	m_check_SynchronousGS->Enable(!configToApply.EnablePresets);
 
-	if( flags & AppConfig::APPLY_FLAG_MANUALLY_PROPAGATE )
+	if( flags & GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE )
 	{
 		m_span->ApplyConfigToGui( configToApply, true );
 		m_fpan->ApplyConfigToGui( configToApply, true );

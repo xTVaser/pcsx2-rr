@@ -50,7 +50,7 @@
 #include "Recording/VirtualPad/img/upPressed.h"
 
 
-VirtualPad::VirtualPad(wxWindow* parent, int controllerPort, AppConfig::InputRecordingOptions& options)
+VirtualPad::VirtualPad(wxWindow* parent, int controllerPort, InputRecordingOptions& options)
 	: wxFrame(parent, wxID_ANY, wxEmptyString)
 	, options(options)
 {
@@ -178,8 +178,8 @@ void VirtualPad::OnEraseBackground(wxEraseEvent& event)
 void VirtualPad::OnPaint(wxPaintEvent& event)
 {
 	// DevCon.WriteLn("Paint Event Called");
-	wxBufferedPaintDC dc(this, wxBUFFER_VIRTUAL_AREA);
-	Render(dc);
+	//wxBufferedPaintDC dc(this, wxBUFFER_VIRTUAL_AREA);
+	//Render(dc);
 }
 
 void VirtualPad::Redraw()

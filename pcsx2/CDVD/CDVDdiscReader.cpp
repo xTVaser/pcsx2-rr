@@ -16,7 +16,7 @@
 #include "PrecompiledHeader.h"
 #include "CDVDdiscReader.h"
 
-#include "AppConfig.h"
+#include "GuiConfig.h"
 
 #include <condition_variable>
 

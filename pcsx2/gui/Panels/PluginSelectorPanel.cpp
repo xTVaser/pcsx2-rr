@@ -458,7 +458,7 @@ void Panels::PluginSelectorPanel::Apply()
 	// user never entered plugins panel?  Skip application since combo boxes are invalid/uninitialized.
 	if( !m_FileList ) return;
 
-	AppConfig curconf( *g_Conf );
+	GuiConfig curconf( *g_Conf.get() );
 
 	ForPlugins([&] (const PluginInfo * pi) {
 		const PluginsEnum_t pid = pi->id;

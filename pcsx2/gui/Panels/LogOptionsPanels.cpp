@@ -168,9 +168,8 @@ static SysTraceLog * const traceLogList[] =
 
 static const uint traceLogCount = ArraySize(traceLogList);
 
-YAML::Node SysTraceLog_LoadSaveSettings()
+bool SysTraceLog_SaveSettings(wxConfigBase* conf)
 {
-	YAML::Node trace;
 
 	for (uint i=0; i<traceLogCount; ++i)
 	{
@@ -178,11 +177,10 @@ YAML::Node SysTraceLog_LoadSaveSettings()
 		{
 			pxAssertMsg(log->GetName(), "Trace log without a name!" );
 			std::string category = static_cast<std::string>(log->GetCategory());
-			trace[category] = log->GetShortName().ToStdString();
+			conf->Write(wxString(category), log->GetShortName());
 		}
 	}
 
-	return trace;
 }
 
 static bool traceLogEnabled( const wxString& ident )

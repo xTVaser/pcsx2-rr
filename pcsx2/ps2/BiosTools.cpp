@@ -22,7 +22,7 @@
 
 
 // FIXME: Temporary hack until we remove dependence on Pcsx2App.
-#include "AppConfig.h"
+#include "GuiConfig.h"
 #include "wx/mstream.h"
 #include "wx/wfstream.h"
 
@@ -265,7 +265,7 @@ void LoadBIOS()
 	try
 	{
 		fs::path Bios( g_Conf->FullpathToBios() );
-		if( fs::is_directory(g_Conf->BaseFilenames.Bios))
+		if( fs::is_directory(g_Conf->BaseFilenames.Bios.ToStdString()))
 			throw Exception::FileNotFound( Bios.wstring() )
 				.SetDiagMsg(L"BIOS has not been configured, or the configuration has been corrupted.")
 				.SetUserMsg(_("The PS2 BIOS could not be loaded.  The BIOS has not been configured, or the configuration has been corrupted.  Please re-configure."));

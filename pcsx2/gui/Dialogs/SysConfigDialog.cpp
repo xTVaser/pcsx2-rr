@@ -74,7 +74,7 @@ void Dialogs::SysConfigDialog::UpdateGuiForPreset ( int presetIndex, bool preset
 
 	//Console.WriteLn("Applying config to Gui: preset #%d, presets enabled: %s", presetIndex, presetsEnabled?"true":"false");
 
-	AppConfig preset = *g_Conf;
+	GuiConfig preset = *g_Conf;
 	preset.IsOkApplyPreset( presetIndex, false );	//apply a preset to a copy of g_Conf.
 	preset.EnablePresets = presetsEnabled;	//override IsOkApplyPreset (which always applies/enabled) to actual required state
 
@@ -90,7 +90,7 @@ void Dialogs::SysConfigDialog::UpdateGuiForPreset ( int presetIndex, bool preset
 		if ( ((BaseApplicableConfigPanel*)(m_listbook->GetPage(i)))->IsSpecificConfig() )
 		{
 			((BaseApplicableConfigPanel_SpecificConfig*)(m_listbook->GetPage(i)))
-				->ApplyConfigToGui( preset, AppConfig::APPLY_FLAG_FROM_PRESET | AppConfig::APPLY_FLAG_MANUALLY_PROPAGATE );
+				->ApplyConfigToGui( preset, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );
 		}
 	}
 
@@ -112,7 +112,7 @@ void Dialogs::SysConfigDialog::UpdateGuiForPreset ( int presetIndex, bool preset
 	bool origEnable=preset.EnablePresets;
 	preset.EnablePresets=true;	// will cause preset-related items to be grayed out at the menus regardless of their value.
 	if ( GetMainFramePtr() )
-		GetMainFramePtr()->ApplyConfigToGui( preset, AppConfig::APPLY_FLAG_FROM_PRESET | AppConfig::APPLY_FLAG_MANUALLY_PROPAGATE );
+		GetMainFramePtr()->ApplyConfigToGui( preset, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );
 
 	// Not really needed as 'preset' is local and dumped anyway. For the sake of future modifications of more GUI elements.
 	preset.EnablePresets=origEnable;
@@ -121,7 +121,7 @@ void Dialogs::SysConfigDialog::UpdateGuiForPreset ( int presetIndex, bool preset
 
 void Dialogs::SysConfigDialog::AddPresetsControl()
 {
-	m_slider_presets = new wxSlider( this, wxID_ANY, g_Conf->PresetIndex, 0, AppConfig::GetMaxPresetIndex(),
+	m_slider_presets = new wxSlider( this, wxID_ANY, g_Conf->PresetIndex, 0, GuiConfig::GetMaxPresetIndex(),
 		wxDefaultPosition, wxDefaultSize, wxHORIZONTAL /*| wxSL_AUTOTICKS | wxSL_LABELS */);
 	m_slider_presets->SetMinSize(wxSize(100,25));
 
@@ -140,7 +140,7 @@ void Dialogs::SysConfigDialog::AddPresetsControl()
 	//Console.WriteLn("--> SysConfigDialog::AddPresetsControl: EnablePresets: %s", g_Conf->EnablePresets?"true":"false");
 
 	std::string l; wxColor c(wxColour( L"Red" ));
-	AppConfig::isOkGetPresetTextAndColor(g_Conf->PresetIndex, l, c);
+	GuiConfig::isOkGetPresetTextAndColor(g_Conf->PresetIndex, l, c);
 	m_msg_preset = new pxStaticText(this, l, wxALIGN_LEFT);
 	m_msg_preset->Enable(g_Conf->EnablePresets);
 	m_msg_preset->SetForegroundColour( c );
@@ -178,7 +178,7 @@ void Dialogs::SysConfigDialog::Preset_Scroll(wxScrollEvent &event)
 {
 	std::string pl;
 	wxColor c;
-	AppConfig::isOkGetPresetTextAndColor(m_slider_presets->GetValue(), pl, c);
+	GuiConfig::isOkGetPresetTextAndColor(m_slider_presets->GetValue(), pl, c);
 	m_msg_preset->SetLabel(pl);
 	m_msg_preset->SetForegroundColour( c );
 
@@ -205,7 +205,7 @@ void Dialogs::SysConfigDialog::Apply()
 void Dialogs::SysConfigDialog::Cancel()
 {
 	if (GetMainFramePtr())
-		GetMainFramePtr()->ApplyConfigToGui( *g_Conf, AppConfig::APPLY_FLAG_FROM_PRESET | AppConfig::APPLY_FLAG_MANUALLY_PROPAGATE );
+		GetMainFramePtr()->ApplyConfigToGui( *g_Conf, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );
 }
 
 Dialogs::SysConfigDialog::SysConfigDialog(wxWindow* parent)

@@ -170,7 +170,7 @@ public:
 
 	bool Destroy();
 
-	void ApplyConfigToGui(AppConfig& configToApply, int flags = 0);
+	void ApplyConfigToGui(GuiConfig& configToApply, int flags = 0);
 	void CommitPreset_noTrigger();
 	void AppendKeycodeNamesToMenuOptions();
 	void UpdateStatusBar();

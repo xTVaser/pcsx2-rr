@@ -74,7 +74,7 @@ void Panels::BaseAdvancedCpuOptions::OnRestoreDefaults(wxCommandEvent& evt)
 
 void Panels::BaseAdvancedCpuOptions::RestoreDefaults()
 {
-	AppConfig def;               // created with default values
+	GuiConfig def;               // created with default values
 	def.EnablePresets = false;   // disable presets otherwise it'll disable some widgets
 	ApplyConfigToGui(def);
 }
@@ -237,7 +237,7 @@ void Panels::CpuPanelEE::AppStatusEvent_OnSettingsApplied()
 	ApplyConfigToGui( *g_Conf );
 }
 
-void Panels::CpuPanelEE::ApplyConfigToGui( AppConfig& configToApply, int flags )
+void Panels::CpuPanelEE::ApplyConfigToGui( GuiConfig& configToApply, int flags )
 {
 	const Pcsx2Config::RecompilerOptions& recOps( configToApply.EmuOptions.Cpu.Recompiler );
 	m_panel_RecEE->SetSelection( (int)recOps.EnableEE );
@@ -251,7 +251,7 @@ void Panels::CpuPanelEE::ApplyConfigToGui( AppConfig& configToApply, int flags )
 	m_check_EECacheEnable->Enable(!configToApply.EnablePresets && m_panel_RecEE->GetSelection() == 0);
 	m_button_RestoreDefaults->Enable(!configToApply.EnablePresets);
 
-	if( flags & AppConfig::APPLY_FLAG_MANUALLY_PROPAGATE )
+	if( flags & GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE )
 	{
 		m_advancedOptsFpu->ApplyConfigToGui( configToApply, true );
 	}
@@ -259,7 +259,7 @@ void Panels::CpuPanelEE::ApplyConfigToGui( AppConfig& configToApply, int flags )
 
 void Panels::CpuPanelEE::OnRestoreDefaults(wxCommandEvent &evt)
 {
-	AppConfig def;               // created with default values
+	GuiConfig def;               // created with default values
 	def.EnablePresets = false;   // disable presets otherwise it'll disable some widgets
 	ApplyConfigToGui(def);
 
@@ -282,7 +282,7 @@ void Panels::CpuPanelVU::AppStatusEvent_OnSettingsApplied()
 	ApplyConfigToGui( *g_Conf );
 }
 
-void Panels::CpuPanelVU::ApplyConfigToGui( AppConfig& configToApply, int flags )
+void Panels::CpuPanelVU::ApplyConfigToGui( GuiConfig& configToApply, int flags )
 {
 	Pcsx2Config::RecompilerOptions& recOps( configToApply.EmuOptions.Cpu.Recompiler );
 	m_panel_VU0->SetSelection( recOps.EnableVU0 ? 1 : 0 );
@@ -291,7 +291,7 @@ void Panels::CpuPanelVU::ApplyConfigToGui( AppConfig& configToApply, int flags )
 	m_panel_VU1->Enable(!configToApply.EnablePresets);
 	m_button_RestoreDefaults->Enable(!configToApply.EnablePresets);
 
-	if ( flags & AppConfig::APPLY_FLAG_MANUALLY_PROPAGATE )
+	if ( flags & GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE )
 	{
 		m_advancedOptsVu->ApplyConfigToGui( configToApply, true );
 	}
@@ -300,7 +300,7 @@ void Panels::CpuPanelVU::ApplyConfigToGui( AppConfig& configToApply, int flags )
 
 void Panels::CpuPanelVU::OnRestoreDefaults(wxCommandEvent &evt)
 {
-	AppConfig def;               // created with default values
+	GuiConfig def;               // created with default values
 	def.EnablePresets = false;   // disable presets otherwise it'll disable some widgets
 	ApplyConfigToGui(def);
 
@@ -339,7 +339,7 @@ void Panels::AdvancedOptionsFPU::AppStatusEvent_OnSettingsApplied()
 	ApplyConfigToGui( *g_Conf );
 }
 
-void Panels::AdvancedOptionsFPU::ApplyConfigToGui( AppConfig& configToApply, int flags )
+void Panels::AdvancedOptionsFPU::ApplyConfigToGui( GuiConfig& configToApply, int flags )
 {
 	const Pcsx2Config::CpuOptions& cpuOps( configToApply.EmuOptions.Cpu );
 	const Pcsx2Config::RecompilerOptions& recOps( cpuOps.Recompiler );
@@ -376,7 +376,7 @@ void Panels::AdvancedOptionsVU::AppStatusEvent_OnSettingsApplied()
 	ApplyConfigToGui( *g_Conf );
 }
 
-void Panels::AdvancedOptionsVU::ApplyConfigToGui( AppConfig& configToApply, int flags )
+void Panels::AdvancedOptionsVU::ApplyConfigToGui( GuiConfig& configToApply, int flags )
 {
 	const Pcsx2Config::CpuOptions& cpuOps( configToApply.EmuOptions.Cpu );
 	const Pcsx2Config::RecompilerOptions& recOps( cpuOps.Recompiler );
