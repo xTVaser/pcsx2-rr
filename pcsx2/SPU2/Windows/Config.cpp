@@ -15,7 +15,7 @@
 
 #include "PrecompiledHeader.h"
 #include "../Global.h"
-#include "AppConfig.h"
+#include "GuiConfig.h"
 #include "Dialogs.h"
 #include <math.h>
 

@@ -2,9 +2,6 @@
 #include "GuiConfig.h"
 #include "App.h"
 
-wxIMPLEMENT_APP(Pcsx2App);
-
-
 FolderUtils folderUtils;
 
 namespace PathDefs
@@ -290,7 +287,7 @@ namespace FilenameDefs
 {
 	std::string GetUiConfig()
 	{
-		return pxGetAppName().ToStdString() + "_ui.ini";
+		return pxGetAppName().ToStdString() + "_ui.yaml";
 	}
 
 	std::string GetUiKeysConfig()
@@ -298,35 +295,40 @@ namespace FilenameDefs
 		return pxGetAppName().ToStdString() + "_keys.yaml";
 	}
 
-	std::string GetUsermodeConfig()
+	std::string GetVmConfig()
 	{
-		return ( "usermode.yaml" );
+		return pxGetAppName().ToStdString() + "_vm.yaml";
 	}
 
-	const std::string& Memcard( uint port, uint slot )
+	std::string GetUsermodeConfig()
+	{
+		return ("usermode.yaml");
+	}
+
+	const std::string& Memcard(uint port, uint slot)
 	{
 		static const std::string retval[2][4] =
-		{
 			{
-				std::string( "Mcd001.ps2" ),
-				std::string( "Mcd003.ps2" ),
-				std::string( "Mcd005.ps2" ),
-				std::string( "Mcd007.ps2" ),
-			},
-			{
-				std::string( "Mcd002.ps2" ),
-				std::string( "Mcd004.ps2" ),
-				std::string( "Mcd006.ps2" ),
-				std::string( "Mcd008.ps2" ),
-			}
-		};
+				{
+					std::string("Mcd001.ps2"),
+					std::string("Mcd003.ps2"),
+					std::string("Mcd005.ps2"),
+					std::string("Mcd007.ps2"),
+				},
+				{
+					std::string("Mcd002.ps2"),
+					std::string("Mcd004.ps2"),
+					std::string("Mcd006.ps2"),
+					std::string("Mcd008.ps2"),
+				}};
 
-		IndexBoundsAssumeDev( L"FilenameDefs::Memcard", port, 2 );
-		IndexBoundsAssumeDev( L"FilenameDefs::Memcard", slot, 4 );
+		IndexBoundsAssumeDev(L"FilenameDefs::Memcard", port, 2);
+		IndexBoundsAssumeDev(L"FilenameDefs::Memcard", slot, 4);
 
 		return retval[port][slot];
 	}
-};
+}; // namespace FilenameDefs
+
 
 std::string GuiConfig::FullpathTo( PluginsEnum_t pluginidx ) const
 {
@@ -366,17 +368,17 @@ fs::path GetCheatsWsFolder()
 
 fs::path GetSettingsFolder()
 {
-	//if( !wxGetApp().Overrides.SettingsFolder.empty() )
-		//return wxGetApp().Overrides.SettingsFolder;
+	if( !wxGetApp().Overrides.SettingsFolder.empty() )
+		return wxGetApp().Overrides.SettingsFolder;
 
 	return UseDefaultSettingsFolder ? PathDefs::GetSettings().string() : SettingsFolder;
 }
 
 fs::path GetVmSettingsFilename()
 {
-    //fs::path fname( !wxGetApp().Overrides.VmSettingsFile.empty() ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
-	//std::cout << "Path: " << Path::Combine(GetSettingsFolder(), fname) << std::endl;
-    //return Path::Combine(GetSettingsFolder(), fname);
+    fs::path fname( !wxGetApp().Overrides.VmSettingsFile.empty() ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
+	std::cout << "Path: " << Path::Combine(GetSettingsFolder(), fname) << std::endl;
+    return Path::Combine(GetSettingsFolder(), fname);
 }
 
 fs::path GetUiSettingsFilename()
@@ -393,7 +395,7 @@ fs::path GetUiKeysFilename()
 
 std::string GuiConfig::FullpathToBios() const				
 { 
-	return Path::Combine( Folders.Bios, BaseFilenames.Bios ); 
+	return Path::Combine(Folders.Bios, BaseFilenames.Bios.ToStdString());
 }
 
 std::string GuiConfig::FullpathToMcd( uint slot ) const
@@ -550,8 +552,17 @@ InputRecordingOptions::InputRecordingOptions()
 
 bool InputRecordingOptions::Save(wxConfigBase* conf)
 {
-	//yaml["VirtualPadPositionX"] = VirtualPadPosition.x;
-	//yaml["VirtualPadPositionY"] = VirtualPadPosition.y;
+	if(conf->Write("VirtualPadPositionX",VirtualPadPosition.x) &&
+		conf->Write("VirtualPadPositionY", VirtualPadPosition.y))
+	{
+		return true;
+	}
+
+	else
+	{
+		return false;
+	}
+
 }
 #endif
 
@@ -570,7 +581,14 @@ FramerateOptions::FramerateOptions()
 bool FramerateOptions::Save(wxConfigBase* conf)
 {
 	//ScopedIniVurboScalar );
-	//json["SlomoScalar"] = SlomoScalar;
+	if (conf->Write("SlomoScalar", SlomoScalar))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void FramerateOptions::SanityCheck()
@@ -784,7 +802,7 @@ void GSWindowOptions::SanityCheck()
 const std::string& FilenameOptions::operator[](PluginsEnum_t pluginidx) const
 {
 	IndexBoundsAssumeDev("Filename[Plugin]", pluginidx, PluginId_Count);
-	return Plugins[pluginidx];
+	return Plugins[pluginidx].ToStdString();
 }
 
 void FilenameOptions::Save(wxConfigBase* conf)
@@ -1068,33 +1086,6 @@ protected:
 };
 
 static pxDudConfig _dud_config;
-
-// --------------------------------------------------------------------------------------
-//  AppIniSaver / AppIniLoader
-// --------------------------------------------------------------------------------------
-/*class AppIniSaver : public IniSaver
-{
-public:
-	AppIniSaver();
-	virtual ~AppIniSaver() = default;
-};
-
-class AppIniLoader : public IniLoader
-{
-public:
-	AppIniLoader();
-	virtual ~AppIniLoader() = default;
-};
-
-AppIniSaver::AppIniSaver()
-	: IniSaver( (GetAppConfig() != NULL) ? *GetAppConfig() : _dud_config )
-{
-}
-
-AppIniLoader::AppIniLoader()
-	: IniLoader( (GetAppConfig() != NULL) ? *GetAppConfig() : _dud_config )
-{
-}*/
 
 static void LoadUiSettings(wxConfigBase* conf)
 {

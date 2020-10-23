@@ -469,7 +469,6 @@
     <ClCompile Include="..\..\CDVD\IsoFS\IsoFS.cpp" />
     <ClCompile Include="..\..\CDVD\IsoFS\IsoFSCDVD.cpp" />
     <ClCompile Include="..\..\gui\AppAssert.cpp" />
-    <ClCompile Include="..\..\gui\AppConfig.cpp" />
     <ClCompile Include="..\..\gui\AppCorePlugins.cpp" />
     <ClCompile Include="..\..\gui\AppCoreThread.cpp" />
     <ClCompile Include="..\..\gui\AppEventSources.cpp" />
@@ -716,7 +715,6 @@
     <ClInclude Include="..\..\gui\Panels\LogOptionsPanels.h" />
     <ClInclude Include="..\..\gui\App.h" />
     <ClInclude Include="..\..\gui\AppCommon.h" />
-    <ClInclude Include="..\..\gui\AppConfig.h" />
     <ClInclude Include="..\..\gui\GuiConfig.h" />
     <ClInclude Include="..\..\gui\AppCorePlugins.h" />
     <ClInclude Include="..\..\gui\AppCoreThread.h" />

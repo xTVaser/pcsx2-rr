@@ -581,9 +581,6 @@
     <ClCompile Include="..\..\gui\AppAssert.cpp">
       <Filter>AppHost</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\gui\AppConfig.cpp">
-      <Filter>AppHost</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\gui\AppCoreThread.cpp">
       <Filter>AppHost</Filter>
     </ClCompile>
@@ -1009,6 +1006,7 @@
     <ClCompile Include="..\..\SPU2\SndOut_Portaudio.cpp">
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\gui\GuiConfig.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Patch.h">
@@ -1299,9 +1297,6 @@
     <ClInclude Include="..\..\gui\AppCommon.h">
       <Filter>AppHost\Include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\gui\AppConfig.h">
-      <Filter>AppHost\Include</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\gui\AppEventListeners.h">
       <Filter>AppHost\Include</Filter>
     </ClInclude>
@@ -1533,6 +1528,7 @@
     <ClInclude Include="..\..\Recording\Utilities\InputRecordingLogger.h">
       <Filter>Recording\Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\gui\GuiConfig.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\wxResources.rc">

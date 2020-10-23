@@ -622,6 +622,6 @@ wxFont pxGetFixedFont(int ptsize, wxFontWeight weight, bool underline)
 
 wxString pxGetAppName()
 {
-    pxAssert(wxTheApp);
+    //pxAssert(wxTheApp);
     return wxTheApp->GetAppName();
 }

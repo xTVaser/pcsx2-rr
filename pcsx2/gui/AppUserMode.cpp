@@ -26,6 +26,9 @@
 #endif
 #include "config/Configuration.h"
 
+wxIMPLEMENT_APP(Pcsx2App);
+
+
 DocsModeType			DocsFolderMode = DocsFolder_User;
 bool					UseDefaultSettingsFolder = true;
 bool					UseDefaultPluginsFolder = true;

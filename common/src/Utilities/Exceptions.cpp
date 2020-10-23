@@ -88,7 +88,7 @@ void pxTrap()
 
 bool pxAssertImpl_LogIt(const DiagnosticOrigin &origin, const wxChar *msg)
 {
-    //wxLogError( L"%s", origin.ToString( msg ).c_str() );
+    wxLogError( L"%s", origin.ToString( msg ).c_str() );
     wxMessageOutputDebug().Printf(L"%s", origin.ToString(msg).c_str());
     pxTrap();
     return false;
