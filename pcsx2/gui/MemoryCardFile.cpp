@@ -32,7 +32,7 @@ struct Component_FileMcd;
 #include "MemoryCardFolder.h"
 
 #include "System.h"
-#include "AppConfig.h"
+#include "GuiConfig.h"
 
 #include "svnrev.h"
 

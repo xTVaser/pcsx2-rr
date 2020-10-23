@@ -53,7 +53,7 @@ namespace PathDefs
 			// Move all user data file into central configuration directory (XDG_CONFIG_DIR)
 			case DocsFolder_User:	return GetUserLocalDataDir();
 #else
-			case DocsFolder_User:	return Path::Combine(wxStandardPaths::Get().GetDocumentsDir().ToStdString(), pxGetAppName().ToStdString());
+			case DocsFolder_User:	return std::string((wxStandardPaths::Get().GetDocumentsDir(), pxGetAppName()));
 #endif
 			case DocsFolder_Custom: return CustomDocumentsFolder;
 

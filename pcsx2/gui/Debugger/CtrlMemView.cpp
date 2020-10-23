@@ -16,7 +16,7 @@
 #include "PrecompiledHeader.h"
 #include "CtrlMemView.h"
 #include "DebugTools/Debug.h"
-#include "AppConfig.h"
+#include "GuiConfig.h"
 
 #include "BreakpointWindow.h"
 #include "DebugEvents.h"

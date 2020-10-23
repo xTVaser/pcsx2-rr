@@ -14,7 +14,6 @@
  */
 
 #include "PrecompiledHeader.h"
-#include "AppConfig.h"
 #include "Dialogs.h"
 
 void setIni(const wchar_t* Section)

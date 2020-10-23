@@ -25,7 +25,6 @@
 #include "Gif.h"
 #include "Vif_Dma.h"
 #include <limits.h>
-#include "AppConfig.h"
 #include "GuiConfig.h"
 
 #include "Utilities/MemsetFast.inl"

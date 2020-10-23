@@ -23,7 +23,7 @@
 
 #include "Plugins.h"
 #include "GS.h"
-#include "AppConfig.h"
+#include "GuiConfig.h"
 
 
 

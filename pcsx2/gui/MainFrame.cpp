@@ -30,8 +30,6 @@
 #include "svnrev.h"
 #include "Saveslots.h"
 
-GuiConfig config;
-
 // ------------------------------------------------------------------------
 wxMenu* MainEmuFrame::MakeStatesSubMenu(int baseid, int loadBackupId) const
 {

@@ -21,7 +21,7 @@
 
 #include "DebugEvents.h"
 #include "BreakpointWindow.h"
-#include "AppConfig.h"
+#include "GuiConfig.h"
 #include "System.h"
 #include "DisassemblyDialog.h"
 

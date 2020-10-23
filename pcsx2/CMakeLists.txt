@@ -320,7 +320,6 @@ set(pcsx2DebugToolsHeaders
 # gui sources
 set(pcsx2GuiSources
 	gui/AppAssert.cpp
-	gui/AppConfig.cpp
 	gui/AppCorePlugins.cpp
 	gui/AppCoreThread.cpp
 	gui/AppEventSources.cpp
@@ -387,7 +386,6 @@ set(pcsx2GuiSources
 set(pcsx2GuiHeaders
 	gui/AppAccelerators.h
 	gui/AppCommon.h
-	gui/AppConfig.h
 	gui/AppCorePlugins.h
 	gui/AppCoreThread.h
 	gui/AppEventListeners.h

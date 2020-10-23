@@ -17,7 +17,7 @@
 #include "MainFrame.h"
 #include "Utilities/PathUtils.h"
 #include "Dialogs/ModalPopups.h"
-#include "AppConfig.h"
+#include "GuiConfig.h"
 #include <wx/stdpaths.h>
 
 
