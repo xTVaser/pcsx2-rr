@@ -12,22 +12,78 @@
 #include "GS.h"
 #include "gui/GSFrame.h"
 
-// TODO - reimplement this!
+// TODO - config - massive file, split it up
 
-//YAML::Node TraceLogFilters::LoadSave()
-//{
-//	//ScopedIniGroup path( json, L"TraceLog" );
-//
-//	//IniEntry( Enabled );
-//
-//	// Retaining backwards compat of the trace log enablers isn't really important, and
-//	// doing each one by hand would be murder.  So let's cheat and just save it as an int:
-//
-//	//json.push_back(EE);
-//	//json.push_back(IOP);
-//
-//	return YAML::Node();
-//}
+void Pcsx2Config::TraceLogFilters::load(std::shared_ptr<YamlFile> configSection)
+{
+	YamlFile* cfg = configSection.get();
+
+	EnableTraceLogFilters = cfg->getBool("EnableTraceLogFilters", false);
+
+	EE.load(cfg->getSection("EE"));
+	IOP.load(cfg->getSection("IOP"));
+}
+
+std::shared_ptr<YamlFile> Pcsx2Config::TraceLogFilters::save()
+{
+	std::shared_ptr<YamlFile> config = std::make_shared<YamlFile>();
+	YamlFile* cfg = config.get();
+
+	cfg->setBool("EnableTraceLogFilters", EnableTraceLogFilters);
+
+	cfg->setSection("EE", EE.save());
+	cfg->setSection("IOP", IOP.save());
+
+	return config;
+}
+
+bool Pcsx2Config::TraceLogFilters::operator==(const TraceLogFilters& right) const
+{
+	return EnableTraceLogFilters == right.EnableTraceLogFilters &&
+		   EE == right.EE &&
+		   IOP == right.IOP;
+}
+
+bool Pcsx2Config::TraceLogFilters::operator!=(const TraceLogFilters& right) const
+{
+	return (*this) != right;
+}
+
+void Pcsx2Config::TraceLogFilters::TraceFilters::load(std::shared_ptr<YamlFile> configSection)
+{
+	YamlFile* cfg = configSection.get();
+
+	m_EnableAll = cfg->getBool("EnableAll", false);
+	m_EnableDisasm = cfg->getBool("EnableDisasm", false);
+	m_EnableRegisters = cfg->getBool("EnableRegisters", false);
+	m_EnableEvents = cfg->getBool("EnableEvents", false);
+}
+
+std::shared_ptr<YamlFile> Pcsx2Config::TraceLogFilters::TraceFilters::save()
+{
+	std::shared_ptr<YamlFile> config = std::make_shared<YamlFile>();
+	YamlFile* cfg = config.get();
+
+	cfg->setBool("EnableAll", m_EnableAll);
+	cfg->setBool("EnableDisasm", m_EnableDisasm);
+	cfg->setBool("EnableRegisters", m_EnableRegisters);
+	cfg->setBool("EnableEvents", m_EnableEvents);
+
+	return config;
+}
+
+bool Pcsx2Config::TraceLogFilters::TraceFilters::operator==(const TraceFilters& right) const
+{
+	return m_EnableAll == right.m_EnableDisasm &&
+		   m_EnableDisasm == right.m_EnableDisasm &&
+		   m_EnableRegisters == right.m_EnableRegisters &&
+		   m_EnableEvents == right.m_EnableEvents;
+}
+
+bool Pcsx2Config::TraceLogFilters::TraceFilters::operator!=(const TraceFilters& right) const
+{
+	return (*this) != right;
+}
 
 Pcsx2Config::SpeedhackOptions::SpeedhackOptions()
 {
@@ -80,6 +136,22 @@ std::shared_ptr<YamlFile> Pcsx2Config::SpeedhackOptions::save()
 	return config;
 }
 
+bool Pcsx2Config::SpeedhackOptions::operator==(const SpeedhackOptions& right) const
+{
+	return EECycleRate == right.EECycleRate &&
+		   EECycleSkip == right.EECycleSkip &&
+		   fastCDVD == right.fastCDVD &&
+		   IntcStat == right.IntcStat &&
+		   WaitLoop == right.WaitLoop &&
+		   vuFlagHack == right.vuFlagHack &&
+		   vuThread == right.vuThread;
+}
+
+bool Pcsx2Config::SpeedhackOptions::operator!=(const SpeedhackOptions& right) const
+{
+	return (*this) != right;
+}
+
 void Pcsx2Config::ProfilerOptions::load(std::shared_ptr<YamlFile> configSection)
 {
 	YamlFile* cfg = configSection.get();
@@ -105,11 +177,32 @@ std::shared_ptr<YamlFile> Pcsx2Config::ProfilerOptions::save()
 	return config;
 }
 
+bool Pcsx2Config::ProfilerOptions::operator==(const ProfilerOptions& right) const
+{
+	return EnableProfiler == right.EnableProfiler &&
+		   RecBlocks_EE == right.RecBlocks_EE &&
+		   RecBlocks_IOP == right.RecBlocks_IOP &&
+		   RecBlocks_VU0 == right.RecBlocks_VU0 &&
+		   RecBlocks_VU1 == right.RecBlocks_VU1;
+}
+
+bool Pcsx2Config::ProfilerOptions::operator!=(const ProfilerOptions& right) const
+{
+	return (*this) != right;
+}
 
 Pcsx2Config::CpuOptions::CpuOptions()
 {
 	sseMXCSR.bitmask = DEFAULT_sseMXCSR;
 	sseVUMXCSR.bitmask = DEFAULT_sseVUMXCSR;
+}
+
+void Pcsx2Config::CpuOptions::ApplySanityCheck()
+{
+	sseMXCSR.ClearExceptionFlags().DisableExceptions();
+	sseVUMXCSR.ClearExceptionFlags().DisableExceptions();
+
+	Recompiler.ApplySanityCheck();
 }
 
 void Pcsx2Config::CpuOptions::load(std::shared_ptr<YamlFile> configSection)
@@ -141,12 +234,15 @@ std::shared_ptr<YamlFile> Pcsx2Config::CpuOptions::save()
 	return config;
 }
 
-void Pcsx2Config::CpuOptions::ApplySanityCheck()
+bool Pcsx2Config::CpuOptions::operator==(const CpuOptions& right) const
 {
-	sseMXCSR.ClearExceptionFlags().DisableExceptions();
-	sseVUMXCSR.ClearExceptionFlags().DisableExceptions();
+	return sseMXCSR.bitmask == right.sseMXCSR.bitmask &&
+		   sseVUMXCSR.bitmask == right.sseVUMXCSR.bitmask;
+}
 
-	Recompiler.ApplySanityCheck();
+bool Pcsx2Config::CpuOptions::operator!=(const CpuOptions& right) const
+{
+	return (*this) != right;
 }
 
 // Default GSOptions
@@ -165,6 +261,26 @@ Pcsx2Config::GSOptions::GSOptions()
 	LimitScalar = 1.0;
 	FramerateNTSC = 59.94;
 	FrameratePAL = 50.0;
+}
+
+int Pcsx2Config::GSOptions::GetVsync() const
+{
+	if (g_LimiterMode == Limit_Turbo || !FrameLimitEnable)
+		return 0;
+
+	// D3D only support a boolean state. OpenGL waits a number of vsync
+	// interrupt (negative value for late vsync).
+	switch (VsyncEnable)
+	{
+		case VsyncMode::Adaptive:
+			return -1;
+		case VsyncMode::Off:
+			return 0;
+		case VsyncMode::On:
+			return 1;
+		default:
+			return 0;
+	}
 }
 
 void Pcsx2Config::GSOptions::load(std::shared_ptr<YamlFile> configSection)
@@ -208,25 +324,24 @@ std::shared_ptr<YamlFile> Pcsx2Config::GSOptions::save()
 	return std::shared_ptr<YamlFile>();
 }
 
-int Pcsx2Config::GSOptions::GetVsync() const
+bool Pcsx2Config::GSOptions::operator==(const GSOptions& right) const
 {
-	if (g_LimiterMode == Limit_Turbo || !FrameLimitEnable)
-		return 0;
+	// TODO - config - we need an appropriate epsilon float comparison func
+	return FrameLimitEnable == right.FrameLimitEnable &&
+		   FrameSkipEnable == right.FrameSkipEnable &&
+		   VsyncEnable == right.VsyncEnable &&
+		   SynchronousMTGS == right.SynchronousMTGS &&
+		   VsyncQueueSize == right.VsyncQueueSize &&
+		   FramesToDraw == right.FramesToDraw &&
+		   FramesToSkip == right.FramesToSkip &&
+		   LimitScalar == right.LimitScalar &&
+		   FramerateNTSC == right.FramerateNTSC &&
+		   FrameratePAL == right.FrameratePAL;
+}
 
-	// D3D only support a boolean state. OpenGL waits a number of vsync
-	// interrupt (negative value for late vsync).
-	switch (VsyncEnable)
-	{
-		case VsyncMode::Adaptive:
-			return -1;
-		case VsyncMode::Off:
-			return 0;
-		case VsyncMode::On:
-			return 1;
-
-		default:
-			return 0;
-	}
+bool Pcsx2Config::GSOptions::operator!=(const GSOptions& right) const
+{
+	return (*this) != right;
 }
 
 const wxChar* const tbl_GamefixNames[] =
@@ -258,6 +373,12 @@ const __fi wxChar* EnumToString(GamefixId id)
 Pcsx2Config::GamefixOptions::GamefixOptions()
 {
 	DisableAll();
+}
+
+Pcsx2Config::GamefixOptions& Pcsx2Config::GamefixOptions::DisableAll()
+{
+	// TODO - config - this does nothing
+	return *this;
 }
 
 void Pcsx2Config::GamefixOptions::load(std::shared_ptr<YamlFile> configSection)
@@ -309,16 +430,12 @@ std::shared_ptr<YamlFile> Pcsx2Config::GamefixOptions::save()
 	return config;
 }
 
-Pcsx2Config::GamefixOptions& Pcsx2Config::GamefixOptions::DisableAll()
-{
-	return *this;
-}
-
 // Enables a full list of gamefixes.  The list can be either comma or pipe-delimited.
 //   Example:  "XGKick,IpuWait"  or  "EEtiming,FpuCompare"
 // If an unrecognized tag is encountered, a warning is printed to the console, but no error
 // is generated.  This allows the system to function in the event that future versions of
 // PCSX2 remove old hacks once they become obsolete.
+// TODO - config - pretty sure this has to be used somewhere
 void Pcsx2Config::GamefixOptions::Set(const std::string& list, bool enabled)
 {
 	//wxStringTokenizer izer( list, L",|", wxTOKEN_STRTOK );
@@ -440,6 +557,33 @@ bool Pcsx2Config::GamefixOptions::Get(GamefixId id) const
 	return false; // unreachable, but we still need to suppress warnings >_<
 }
 
+bool Pcsx2Config::GamefixOptions::operator==(const GamefixOptions& right) const
+{
+	// TODO - config - we need an appropriate epsilon float comparison func
+	return VuAddSubHack == right.VuAddSubHack &&
+		   FpuCompareHack == right.FpuCompareHack &&
+		   FpuMulHack == right.FpuMulHack &&
+		   FpuNegDivHack == right.FpuNegDivHack &&
+		   XgKickHack == right.XgKickHack &&
+		   IPUWaitHack == right.IPUWaitHack &&
+		   EETimingHack == right.EETimingHack &&
+		   SkipMPEGHack == right.SkipMPEGHack &&
+		   OPHFlagHack == right.OPHFlagHack &&
+		   DMABusyHack == right.DMABusyHack &&
+		   VIFFIFOHack == right.VIFFIFOHack &&
+		   VIF1StallHack == right.VIF1StallHack &&
+		   GIFFIFOHack == right.GIFFIFOHack &&
+		   FMVinSoftwareHack == right.FMVinSoftwareHack &&
+		   GoemonTlbHack == right.GoemonTlbHack &&
+		   ScarfaceIbit == right.ScarfaceIbit &&
+		   CrashTagTeamRacingIbit == right.CrashTagTeamRacingIbit;
+}
+
+bool Pcsx2Config::GamefixOptions::operator!=(const GamefixOptions& right) const
+{
+	return (*this) != right;
+}
+
 Pcsx2Config::DebugOptions::DebugOptions()
 {
 }
@@ -472,6 +616,24 @@ std::shared_ptr<YamlFile> Pcsx2Config::DebugOptions::save()
 
 	return config;
 }
+
+bool Pcsx2Config::DebugOptions::operator==(const DebugOptions& right) const
+{
+	// TODO - config - we need an appropriate epsilon float comparison func
+	return ShowDebuggerOnStart == right.ShowDebuggerOnStart &&
+		   AlignMemoryWindowStart == right.AlignMemoryWindowStart &&
+		   FontWidth == right.FontWidth &&
+		   FontHeight == right.FontHeight &&
+		   WindowWidth == right.WindowWidth &&
+		   WindowHeight == right.WindowHeight &&
+		   MemoryViewBytesPerRow == right.MemoryViewBytesPerRow;
+}
+
+bool Pcsx2Config::DebugOptions::operator!=(const DebugOptions& right) const
+{
+	return (*this) != right;
+}
+
 
 Pcsx2Config::RecompilerOptions::RecompilerOptions() {}
 
@@ -561,9 +723,40 @@ std::shared_ptr<YamlFile> Pcsx2Config::RecompilerOptions::save()
 	return config;
 }
 
+bool Pcsx2Config::RecompilerOptions::operator==(const RecompilerOptions& right) const
+{
+	// TODO - config - we need an appropriate epsilon float comparison func
+	return EnableEE == right.EnableEE &&
+		   EnableIOP == right.EnableIOP &&
+		   EnableEECache == right.EnableEECache &&
+		   EnableVU0 == right.EnableVU0 &&
+		   EnableVU1 == right.EnableVU1 &&
+		   vuOverflow == right.vuOverflow &&
+		   vuExtraOverflow == right.vuExtraOverflow &&
+		   vuSignOverflow == right.vuSignOverflow &&
+		   vuUnderflow == right.vuUnderflow &&
+		   fpuOverflow == right.fpuOverflow &&
+		   fpuExtraOverflow == right.fpuExtraOverflow &&
+		   fpuFullMode == right.fpuFullMode &&
+		   StackFrameChecks == right.StackFrameChecks &&
+		   PreBlockCheckEE == right.PreBlockCheckEE &&
+		   PreBlockCheckIOP == right.PreBlockCheckIOP;
+}
+
+bool Pcsx2Config::RecompilerOptions::operator!=(const RecompilerOptions& right) const
+{
+	return (*this) != right;
+}
+
 Pcsx2Config::Pcsx2Config()
 {
 	config = std::make_unique<YamlFile>();
+}
+
+bool Pcsx2Config::MultitapEnabled(uint port) const
+{
+	pxAssert(port < 2);
+	return (port == 0) ? MultitapPort0_Enabled : MultitapPort1_Enabled;
 }
 
 // TODO - bool for success?
@@ -597,6 +790,7 @@ void Pcsx2Config::loadFromFile(fs::path srcfile)
 	Profiler.load(cfg->getSection("Profiler"));
 	Debugger.load(cfg->getSection("Debugger"));
 	Cpu.load(cfg->getSection("Cpu"));
+	Trace.load(cfg->getSection("Trace"));
 	GS.load(cfg->getSection("GS"));
 }
 
@@ -628,14 +822,44 @@ void Pcsx2Config::saveToFile(fs::path dstFile)
 	cfg->setSection("Profiler", Profiler.save());
 	cfg->setSection("Debugger", Debugger.save());
 	cfg->setSection("Cpu", Cpu.save());
+	cfg->setSection("Trace", Trace.save());
 	cfg->setSection("GS", GS.save());
 
 	// Save to file
 	config.get()->saveToFile(dstFile);
 }
 
-bool Pcsx2Config::MultitapEnabled(uint port) const
+bool Pcsx2Config::operator==(const Pcsx2Config& right) const
 {
-	pxAssert(port < 2);
-	return (port == 0) ? MultitapPort0_Enabled : MultitapPort1_Enabled;
+	// TODO - config - we need an appropriate epsilon float comparison func
+	return CdvdVerboseReads == right.CdvdVerboseReads &&
+		   CdvdDumpBlocks == right.CdvdDumpBlocks &&
+		   CdvdShareWrite == right.CdvdShareWrite &&
+		   EnablePatches == right.EnablePatches &&
+		   EnableCheats == right.EnableCheats &&
+		   EnableWideScreenPatches == right.EnableWideScreenPatches &&
+#ifndef DISABLE_RECORDING
+		   EnableRecordingTools == right.EnableRecordingTools &&
+#endif
+		   ConsoleToStdio == right.ConsoleToStdio &&
+		   HostFs == right.HostFs &&
+		   BackupSavestate == right.BackupSavestate &&
+		   McdEnableEjection == right.McdEnableEjection &&
+		   McdFolderAutoManage == right.McdFolderAutoManage &&
+		   McdFolderAutoManage == right.McdFolderAutoManage &&
+		   MultitapPort0_Enabled == right.MultitapPort0_Enabled &&
+		   MultitapPort1_Enabled == right.MultitapPort1_Enabled &&
+		   Recompiler == right.Recompiler &&
+		   Speedhacks == right.Speedhacks &&
+		   Gamefixes == right.Gamefixes &&
+		   Profiler == right.Profiler &&
+		   Debugger == right.Debugger &&
+		   Cpu == right.Cpu &&
+		   Trace == right.Trace &&
+		   GS == right.GS;
+}
+
+bool Pcsx2Config::operator!=(const Pcsx2Config& right) const
+{
+	return (*this) != right;
 }

@@ -419,5 +419,3 @@ extern wxFileConfig SysTraceLog_LoadSaveSettings();
 extern void RelocateLogfile();
 extern void AppConfig_OnChangedSettingsFolder( bool overwrite =  false );
 extern wxConfigBase* GetAppConfig();
-
-extern std::unique_ptr<GuiConfig> g_Conf;

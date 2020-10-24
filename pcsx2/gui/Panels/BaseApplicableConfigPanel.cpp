@@ -30,20 +30,20 @@ using namespace Dialogs;
 //
 void ApplyStateStruct::DoCleanup() noexcept
 {
-	pxAssertMsg( !PanelList.empty(), L"PanelList list hasn't been cleaned up." );
+	pxAssertMsg(!PanelList.empty(), L"PanelList list hasn't been cleaned up.");
 	PanelList.clear();
 	ParentBook = NULL;
 }
 
-void ApplyStateStruct::StartBook( wxBookCtrlBase* book )
+void ApplyStateStruct::StartBook(wxBookCtrlBase* book)
 {
-	pxAssertDev( ParentBook == NULL, "An ApplicableConfig session is already in progress." );
+	pxAssertDev(ParentBook == NULL, "An ApplicableConfig session is already in progress.");
 	ParentBook = book;
 }
 
 void ApplyStateStruct::StartWizard()
 {
-	pxAssertDev( ParentBook == NULL, "An ApplicableConfig session is already in progress." );
+	pxAssertDev(ParentBook == NULL, "An ApplicableConfig session is already in progress.");
 }
 
 // -----------------------------------------------------------------------
@@ -55,15 +55,15 @@ void ApplyStateStruct::StartWizard()
 // Returns false if one of the panels fails input validation (in which case dialogs
 // should not be closed, etc).
 //
-bool ApplyStateStruct::ApplyPage( int pageid )
+bool ApplyStateStruct::ApplyPage(int pageid)
 {
 	bool retval = true;
 
 	// Save these settings so we can restore them if the Apply fails.
 
-	DocsModeType	oldDocsMode			= DocsFolderMode;
-	std::string		oldSettingsFolder	= SettingsFolder;
-	bool			oldUseDefSet		= UseDefaultSettingsFolder;
+	DocsModeType oldDocsMode = DocsFolderMode;
+	std::string oldSettingsFolder = SettingsFolder;
+	bool oldUseDefSet = UseDefaultSettingsFolder;
 
 	// TODO - ?????????????
 	// what is going on?
@@ -72,10 +72,10 @@ bool ApplyStateStruct::ApplyPage( int pageid )
 	try
 	{
 		PanelApplyList_t::iterator yay = PanelList.begin();
-		while( yay != PanelList.end() )
+		while (yay != PanelList.end())
 		{
 			//DbgCon.Status( L"Writing settings for: " + (*yay)->GetLabel() );
-			if( (pageid < 0) || (*yay)->IsOnPage( pageid ) )
+			if ((pageid < 0) || (*yay)->IsOnPage(pageid))
 				(*yay)->Apply();
 			yay++;
 		}
@@ -85,33 +85,33 @@ bool ApplyStateStruct::ApplyPage( int pageid )
 
 		// Note: apply first, then save -- in case the apply fails.
 
-		if( !PathDefs::GetSettings().c_str() )
+		if (!PathDefs::GetSettings().c_str())
 			//PathDefs::GetSettings().Mkdir();//create the inis folder such that the plugins can be configured at the first time wizard.
 
-		if( !PathDefs::GetBios().c_str() )
-			//PathDefs::GetBios().Mkdir();//create the bios folder such that it can be opened at the first time wizard without an error message.
+			if (!PathDefs::GetBios().c_str())
+				//PathDefs::GetBios().Mkdir();//create the bios folder such that it can be opened at the first time wizard without an error message.
 
-		//AppApplySettings( &confcopy );
-			printf("wtf lol");
+				AppApplySettings(&confcopy);
+		printf("wtf lol");
 	}
-	catch( Exception::CannotApplySettings& ex )
+	catch (Exception::CannotApplySettings& ex)
 	{
 		DocsFolderMode = oldDocsMode;
 		SettingsFolder = oldSettingsFolder;
 		UseDefaultSettingsFolder = oldUseDefSet;
 		//*g_Conf = confcopy;
 
-		if( ex.IsVerbose )
+		if (ex.IsVerbose)
 		{
-			Msgbox::Alert( ex.FormatDisplayMessage(), _("Cannot apply settings...") );
+			Msgbox::Alert(ex.FormatDisplayMessage(), _("Cannot apply settings..."));
 
-			if( ex.GetPanel() != NULL )
+			if (ex.GetPanel() != NULL)
 				ex.GetPanel()->SetFocusToMe();
 		}
 
 		retval = false;
 	}
-	catch( ... )
+	catch (...)
 	{
 		DocsFolderMode = oldDocsMode;
 		SettingsFolder = oldSettingsFolder;
@@ -128,7 +128,7 @@ bool ApplyStateStruct::ApplyPage( int pageid )
 // should not be closed, etc).
 bool ApplyStateStruct::ApplyAll()
 {
-	return ApplyPage( -1 );
+	return ApplyPage(-1);
 }
 
 // --------------------------------------------------------------------------------------
@@ -137,12 +137,12 @@ bool ApplyStateStruct::ApplyAll()
 IApplyState* BaseApplicableConfigPanel::FindApplyStateManager() const
 {
 	wxWindow* millrun = this->GetParent();
-	while( millrun != NULL )
+	while (millrun != NULL)
 	{
-		if( BaseApplicableDialog* dialog = wxDynamicCast( millrun, BaseApplicableDialog ) )
+		if (BaseApplicableDialog* dialog = wxDynamicCast(millrun, BaseApplicableDialog))
 			return (IApplyState*)dialog;
 
-		if( ApplicableWizardPage* wizpage = wxDynamicCast( millrun, ApplicableWizardPage ) )
+		if (ApplicableWizardPage* wizpage = wxDynamicCast(millrun, ApplicableWizardPage))
 			return (IApplyState*)wizpage;
 
 		millrun = millrun->GetParent();
@@ -152,28 +152,29 @@ IApplyState* BaseApplicableConfigPanel::FindApplyStateManager() const
 
 BaseApplicableConfigPanel::~BaseApplicableConfigPanel()
 {
-	if( IApplyState* iapp = FindApplyStateManager() )
-		iapp->GetApplyState().PanelList.remove( this );
+	if (IApplyState* iapp = FindApplyStateManager())
+		iapp->GetApplyState().PanelList.remove(this);
 }
 
-BaseApplicableConfigPanel::BaseApplicableConfigPanel( wxWindow* parent, wxOrientation orient )
-	: wxPanelWithHelpers( parent, orient )
-	, m_AppStatusHelper( this )
+BaseApplicableConfigPanel::BaseApplicableConfigPanel(wxWindow* parent, wxOrientation orient)
+	: wxPanelWithHelpers(parent, orient)
+	, m_AppStatusHelper(this)
 {
 	Init();
 }
 
-BaseApplicableConfigPanel::BaseApplicableConfigPanel( wxWindow* parent, wxOrientation orient, const wxString& staticLabel )
-	: wxPanelWithHelpers( parent, orient, staticLabel )
-	, m_AppStatusHelper( this )
+BaseApplicableConfigPanel::BaseApplicableConfigPanel(wxWindow* parent, wxOrientation orient, const wxString& staticLabel)
+	: wxPanelWithHelpers(parent, orient, staticLabel)
+	, m_AppStatusHelper(this)
 {
 	Init();
 }
 
 void BaseApplicableConfigPanel::SetFocusToMe()
 {
-	if( (m_OwnerBook == NULL) || (m_OwnerPage == wxID_NONE) ) return;
-	m_OwnerBook->SetSelection( m_OwnerPage );
+	if ((m_OwnerBook == NULL) || (m_OwnerPage == wxID_NONE))
+		return;
+	m_OwnerBook->SetSelection(m_OwnerPage);
 }
 
 void BaseApplicableConfigPanel::Init()
@@ -186,23 +187,24 @@ void BaseApplicableConfigPanel::Init()
 	//Bind( wxEVT_CREATE, &BaseApplicableConfigPanel::OnCreateWindow, this);
 	Bind(pxEvt_ApplySettings, &BaseApplicableConfigPanel::OnSettingsApplied, this);
 
-	if( IApplyState* iapp = FindApplyStateManager() )
+	if (IApplyState* iapp = FindApplyStateManager())
 	{
-		ApplyStateStruct& applyState( iapp->GetApplyState() );
+		ApplyStateStruct& applyState(iapp->GetApplyState());
 		m_OwnerPage = applyState.CurOwnerPage;
 		m_OwnerBook = applyState.ParentBook;
-		applyState.PanelList.push_back( this );
+		applyState.PanelList.push_back(this);
 	}
 
-	wxCommandEvent applyEvent( pxEvt_ApplySettings );
-	applyEvent.SetId( GetId() );
-	AddPendingEvent( applyEvent );
+	wxCommandEvent applyEvent(pxEvt_ApplySettings);
+	applyEvent.SetId(GetId());
+	AddPendingEvent(applyEvent);
 }
 
-void BaseApplicableConfigPanel::OnSettingsApplied( wxCommandEvent& evt )
+void BaseApplicableConfigPanel::OnSettingsApplied(wxCommandEvent& evt)
 {
 	evt.Skip();
-	if( evt.GetId() == GetId() ) AppStatusEvent_OnSettingsApplied();
+	if (evt.GetId() == GetId())
+		AppStatusEvent_OnSettingsApplied();
 }
 
 void BaseApplicableConfigPanel::AppStatusEvent_OnSettingsApplied() {}
@@ -215,13 +217,11 @@ void BaseApplicableConfigPanel::SomethingChanged()
 
 
 BaseApplicableConfigPanel_SpecificConfig::BaseApplicableConfigPanel_SpecificConfig(wxWindow* parent, wxOrientation orient)
-	: BaseApplicableConfigPanel( parent, orient )
+	: BaseApplicableConfigPanel(parent, orient)
 {
 }
 
-BaseApplicableConfigPanel_SpecificConfig::BaseApplicableConfigPanel_SpecificConfig(wxWindow* parent, wxOrientation orient, const wxString& staticLabel )
-	: BaseApplicableConfigPanel( parent, orient, staticLabel )
+BaseApplicableConfigPanel_SpecificConfig::BaseApplicableConfigPanel_SpecificConfig(wxWindow* parent, wxOrientation orient, const wxString& staticLabel)
+	: BaseApplicableConfigPanel(parent, orient, staticLabel)
 {
 }
-
-

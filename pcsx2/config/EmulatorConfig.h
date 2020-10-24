@@ -66,91 +66,6 @@ ImplementEnumOperators(GamefixId);
 #define DEFAULT_sseVUMXCSR 0xffc0 //VU  rounding > DaZ, FtZ, "chop"
 
 // --------------------------------------------------------------------------------------
-//  TraceFiltersEE
-// --------------------------------------------------------------------------------------
-struct TraceFiltersEE
-{
-	bool m_EnableAll, // Master Enable switch (if false, no logs at all)
-		m_EnableDisasm,
-		m_EnableRegisters,
-		m_EnableEvents; // Enables logging of event-driven activity -- counters, DMAs, etc.
-
-	TraceFiltersEE()
-	{
-		//bitset = 0;
-	}
-
-	bool operator==(const TraceFiltersEE& right) const
-	{
-		//return OpEqu( bitset );
-	}
-
-	bool operator!=(const TraceFiltersEE& right) const
-	{
-		return !this->operator==(right);
-	}
-};
-
-// --------------------------------------------------------------------------------------
-//  TraceFiltersIOP
-// --------------------------------------------------------------------------------------
-struct TraceFiltersIOP
-{
-	bool
-		m_EnableAll, // Master Enable switch (if false, no logs at all)
-		m_EnableDisasm,
-		m_EnableRegisters,
-		m_EnableEvents; // Enables logging of event-driven activity -- counters, DMAs, etc.
-
-	TraceFiltersIOP()
-	{
-		//bitset = 0;
-	}
-
-	bool operator==(const TraceFiltersIOP& right) const
-	{
-		///return OpEqu( bitset );
-	}
-
-	bool operator!=(const TraceFiltersIOP& right) const
-	{
-		return !this->operator==(right);
-	}
-};
-
-// --------------------------------------------------------------------------------------
-//  TraceLogFilters
-// --------------------------------------------------------------------------------------
-struct TraceLogFilters
-{
-	// Enabled - global toggle for high volume logging.  This is effectively the equivalent to
-	// (EE.Enabled() || IOP.Enabled() || SIF) -- it's cached so that we can use the macros
-	// below to inline the conditional check.  This is desirable because these logs are
-	// *very* high volume, and debug builds get noticably slower if they have to invoke
-	// methods/accessors to test the log enable bits.  Debug builds are slow enough already,
-	// so I prefer this to help keep them usable.
-	bool Enabled;
-
-	TraceFiltersEE EE;
-	TraceFiltersIOP IOP;
-
-	TraceLogFilters()
-	{
-		Enabled = false;
-	}
-
-	bool operator==(const TraceLogFilters& right) const
-	{
-		return OpEqu(Enabled) && OpEqu(EE) && OpEqu(IOP);
-	}
-
-	bool operator!=(const TraceLogFilters& right) const
-	{
-		return !this->operator==(right);
-	}
-};
-
-// --------------------------------------------------------------------------------------
 //  Pcsx2Config class
 // --------------------------------------------------------------------------------------
 // This is intended to be a public class library between the core emulator and GUI only.
@@ -162,34 +77,58 @@ struct TraceLogFilters
 // class require special emu-side resets or state save/recovery to be applied.  Please
 // use the provided functions to lock the emulation into a safe state and then apply
 // chances on the necessary scope (see Core_Pause, Core_ApplySettings, and Core_Resume).
+
+// TODO - config - split this up into multiple files, its not fun to work with
 struct Pcsx2Config
 {
-	struct ProfilerOptions
+	struct TraceLogFilters
 	{
-		bool
-			EnableProfiler,       // universal toggle for the profiler.
-			RecBlocks_EE,  // Enables per-block profiling for the EE recompiler [unimplemented]
-			RecBlocks_IOP, // Enables per-block profiling for the IOP recompiler [unimplemented]
-			RecBlocks_VU0, // Enables per-block profiling for the VU0 recompiler [unimplemented]
-			RecBlocks_VU1; // Enables per-block profiling for the VU1 recompiler [unimplemented]
+		struct TraceFilters
+		{
+			bool m_EnableAll, // Master Enable switch (if false, no logs at all)
+				m_EnableDisasm,
+				m_EnableRegisters,
+				m_EnableEvents; // Enables logging of event-driven activity -- counters, DMAs, etc.
 
-		// Default is Disabled, with all recs enabled underneath.
-		//ProfilerOptions() : bitset( 0xfffffffe ) {}
+			void load(std::shared_ptr<YamlFile> configSection);
+			std::shared_ptr<YamlFile> save();
+
+			bool operator==(const TraceFilters& right) const;
+			bool operator!=(const TraceFilters& right) const;
+		};
+
+		// Enabled - global toggle for high volume logging.  This is effectively the equivalent to
+		// (EE.Enabled() || IOP.Enabled() || SIF) -- it's cached so that we can use the macros
+		// below to inline the conditional check.  This is desirable because these logs are
+		// *very* high volume, and debug builds get noticably slower if they have to invoke
+		// methods/accessors to test the log enable bits.  Debug builds are slow enough already,
+		// so I prefer this to help keep them usable.
+		bool EnableTraceLogFilters;
+
+		TraceFilters EE;
+		TraceFilters IOP;
 
 		void load(std::shared_ptr<YamlFile> configSection);
 		std::shared_ptr<YamlFile> save();
 
-		bool operator==(const ProfilerOptions& right) const
-		{
-			return false;
-			//return OpEqu( bitset );
-		}
+		bool operator==(const TraceLogFilters& right) const;
+		bool operator!=(const TraceLogFilters& right) const;
+	};
 
-		bool operator!=(const ProfilerOptions& right) const
-		{
-			return false;
-			//return !OpEqu( bitset );
-		}
+	struct ProfilerOptions
+	{
+		bool
+			EnableProfiler, // universal toggle for the profiler.
+			RecBlocks_EE,   // Enables per-block profiling for the EE recompiler [unimplemented]
+			RecBlocks_IOP,  // Enables per-block profiling for the IOP recompiler [unimplemented]
+			RecBlocks_VU0,  // Enables per-block profiling for the VU0 recompiler [unimplemented]
+			RecBlocks_VU1;  // Enables per-block profiling for the VU1 recompiler [unimplemented]
+
+		void load(std::shared_ptr<YamlFile> configSection);
+		std::shared_ptr<YamlFile> save();
+
+		bool operator==(const ProfilerOptions& right) const;
+		bool operator!=(const ProfilerOptions& right) const;
 	};
 
 	// ------------------------------------------------------------------------
@@ -231,17 +170,8 @@ struct Pcsx2Config
 		void load(std::shared_ptr<YamlFile> configSection);
 		std::shared_ptr<YamlFile> save();
 
-		bool operator==(const RecompilerOptions& right) const
-		{
-			return false;
-			//return OpEqu( bitset );
-		}
-
-		bool operator!=(const RecompilerOptions& right) const
-		{
-			return false;
-			//return !OpEqu( bitset );
-		}
+		bool operator==(const RecompilerOptions& right) const;
+		bool operator!=(const RecompilerOptions& right) const;
 	};
 
 	// ------------------------------------------------------------------------
@@ -253,21 +183,14 @@ struct Pcsx2Config
 		SSE_MXCSR sseVUMXCSR;
 
 		CpuOptions();
-		
+
 		void load(std::shared_ptr<YamlFile> configSection);
 		std::shared_ptr<YamlFile> save();
 
 		void ApplySanityCheck();
 
-		bool operator==(const CpuOptions& right) const
-		{
-			return OpEqu(sseMXCSR) && OpEqu(sseVUMXCSR) && OpEqu(Recompiler);
-		}
-
-		bool operator!=(const CpuOptions& right) const
-		{
-			return !this->operator==(right);
-		}
+		bool operator==(const CpuOptions& right) const;
+		bool operator!=(const CpuOptions& right) const;
 	};
 
 	// ------------------------------------------------------------------------
@@ -297,28 +220,8 @@ struct Pcsx2Config
 
 		int GetVsync() const;
 
-		bool operator==(const GSOptions& right) const
-		{
-			return true;
-			//OpEqu( SynchronousMTGS )		&&
-			//OpEqu( VsyncQueueSize )		&&
-
-			//OpEqu( FrameSkipEnable )		&&
-			//OpEqu( FrameLimitEnable )		&&
-			//OpEqu( VsyncEnable )			&&
-
-			//OpEqu( LimitScalar )			&&
-			//OpEqu( FramerateNTSC )		&&
-			//OpEqu( FrameratePAL )			&&
-
-			//OpEqu( FramesToDraw )			&&
-			//OpEqu( FramesToSkip );
-		}
-
-		bool operator!=(const GSOptions& right) const
-		{
-			return !this->operator==(right);
-		}
+		bool operator==(const GSOptions& right) const;
+		bool operator!=(const GSOptions& right) const;
 	};
 
 	// ------------------------------------------------------------------------
@@ -358,17 +261,8 @@ struct Pcsx2Config
 		void Set(GamefixId id, bool enabled = true);
 		void Clear(GamefixId id) { Set(id, false); }
 
-		bool operator==(const GamefixOptions& right) const
-		{
-			//return OpEqu( bitset );
-			return true;
-		}
-
-		bool operator!=(const GamefixOptions& right) const
-		{
-			//return !OpEqu( bitset );
-			return false;
-		}
+		bool operator==(const GamefixOptions& right) const;
+		bool operator!=(const GamefixOptions& right) const;
 	};
 
 	// ------------------------------------------------------------------------
@@ -391,16 +285,8 @@ struct Pcsx2Config
 
 		SpeedhackOptions& DisableAll();
 
-		bool operator==(const SpeedhackOptions& right) const
-		{
-			return false;
-			//return OpEqu( bitset ) && OpEqu( EECycleRate ) && OpEqu( EECycleSkip );
-		}
-
-		bool operator!=(const SpeedhackOptions& right) const
-		{
-			return !this->operator==(right);
-		}
+		bool operator==(const SpeedhackOptions& right) const;
+		bool operator!=(const SpeedhackOptions& right) const;
 	};
 
 	struct DebugOptions
@@ -419,16 +305,8 @@ struct Pcsx2Config
 		void load(std::shared_ptr<YamlFile> configSection);
 		std::shared_ptr<YamlFile> save();
 
-		bool operator==(const DebugOptions& right) const
-		{
-			//return OpEqu( bitset ) && OpEqu( FontWidth ) && OpEqu( FontHeight )
-			//&& OpEqu( WindowWidth ) && OpEqu( WindowHeight ) && OpEqu( MemoryViewBytesPerRow );
-		}
-
-		bool operator!=(const DebugOptions& right) const
-		{
-			return !this->operator==(right);
-		}
+		bool operator==(const DebugOptions& right) const;
+		bool operator!=(const DebugOptions& right) const;
 	};
 
 private:
@@ -480,31 +358,16 @@ public:
 
 	bool MultitapEnabled(uint port) const;
 
-	bool operator==(const Pcsx2Config& right) const
-	{
-		return false;
-		//OpEqu( bitset )		&&
-		//OpEqu( Cpu )			&&
-		//OpEqu( GS )			&&
-		//OpEqu( Speedhacks )	&&
-		//OpEqu( Gamefixes )	&&
-		//OpEqu( Profiler )		&&
-		//OpEqu( Trace )		&&
-		//OpEqu( BiosFilename );
-	}
-
-	bool operator!=(const Pcsx2Config& right) const
-	{
-		return !this->operator==(right);
-	}
+	bool operator==(const Pcsx2Config& right) const;
+	bool operator!=(const Pcsx2Config& right) const;
 };
 
 extern const Pcsx2Config EmuConfig;
 
 Pcsx2Config::GSOptions& SetGSConfig();
 Pcsx2Config::RecompilerOptions& SetRecompilerConfig();
-Pcsx2Config::GamefixOptions&	SetGameFixConfig();
-TraceLogFilters& SetTraceConfig();
+Pcsx2Config::GamefixOptions& SetGameFixConfig();
+Pcsx2Config::TraceLogFilters& SetTraceConfig();
 
 
 /////////////////////////////////////////////////////////////////////////////////////////

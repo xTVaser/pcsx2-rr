@@ -164,8 +164,8 @@ void SysCoreThread::ApplySettings(const Pcsx2Config& src)
 	m_resetProfilers = (src.Profiler != EmuConfig.Profiler);
 	m_resetVsyncTimers = (src.GS != EmuConfig.GS);
 
-	// TODO - why?
-	//const_cast<Pcsx2Config&>(EmuConfig) = src;
+	// TODO - config - how is this possible?
+	const_cast<Pcsx2Config&>(EmuConfig) = src;
 }
 
 void SysCoreThread::UploadStateCopy(const VmStateBuffer& copy)

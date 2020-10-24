@@ -1004,6 +1004,9 @@
     <ClCompile Include="..\..\config\EmulatorConfig.cpp">
       <Filter>Configuration</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\config\PortableConfig.cpp">
+      <Filter>Configuration</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Patch.h">
@@ -1524,6 +1527,9 @@
     </ClInclude>
     <ClInclude Include="..\..\gui\GuiConfig.h" />
     <ClInclude Include="..\..\config\EmulatorConfig.h">
+      <Filter>Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\config\PortableConfig.h">
       <Filter>Configuration</Filter>
     </ClInclude>
   </ItemGroup>
