@@ -4,9 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include "FixedPointTypes.inl"
-#include "yaml-cpp/yaml.h"
 #include "filesystem.hpp"
-#include "json.hpp"
 #include "Path.h"
 
 namespace fs = ghc::filesystem;
@@ -21,43 +19,6 @@ class FolderUtils
     bool Empty(std::string); // Is the folder empty
     bool DoesExist(std::string path); // Does the path exist
     bool DoesExist(fs::path path); // Does the path exist
-};
-
-class iFile
-{
-
-protected:
-    std::ifstream in;
-    std::ofstream out;
-    FolderUtils folder;
-    std::string data;
-
-
-public:
-    virtual bool Save(fs::path toSave, std::string) = 0;
-    virtual bool Load(fs::path toLoad) = 0;
-};
-
-class YamlUtils : iFile
-{
-private:
-    YAML::Node stream;
-public:
-    bool Save(fs::path toSave, std::string) override;
-    bool Load(fs::path toLoad) override;
-    YAML::Node GetStream();
-};
-
-
-class JsonUtils : iFile
-{
-
-private:
-    nlohmann::json stream;
-public:
-    bool Save(fs::path toSave, std::string) override;
-    bool Load(fs::path toLoad) override;
-    nlohmann::json GetStream();
 };
 
 namespace Path

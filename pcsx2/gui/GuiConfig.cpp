@@ -428,35 +428,37 @@ bool GuiConfig::SaveMemcards(wxConfigBase* conf)
 
 bool GuiConfig::SaveRootItems(wxConfigBase* base)
 {
-	YAML::Node yaml;
+	// TODO - YAML
 
-	yaml["RecentIsoCount"] = RecentIsoCount;
-	yaml["Listbook_ImageSize"] = Listbook_ImageSize;
-	yaml["Toolbar_ImageSize"] = Toolbar_ImageSize;
-	yaml["Toolbar_ShowLabels"] = Toolbar_ShowLabels;
+	//YAML::Node yaml;
 
-	std::string res = CurrentIso;
-	yaml["CurrentIso"] = res; // TODO - missing the allow relative flag
-	CurrentIso = res;
+	//yaml["RecentIsoCount"] = RecentIsoCount;
+	//yaml["Listbook_ImageSize"] = Listbook_ImageSize;
+	//yaml["Toolbar_ImageSize"] = Toolbar_ImageSize;
+	//yaml["Toolbar_ShowLabels"] = Toolbar_ShowLabels;
 
-	yaml["CurrentBlockdump"] = CurrentBlockdump;
-	yaml["CurrentELF"] = CurrentELF;
-	yaml["CurrentIRX"] = CurrentIRX;
+	//std::string res = CurrentIso;
+	//yaml["CurrentIso"] = res; // TODO - missing the allow relative flag
+	//CurrentIso = res;
 
-	yaml["EnableSpeedHacks"] = EnableSpeedHacks;
-	yaml["EnableGameFixes"] = EnableGameFixes;
-	yaml["EnableFastBoot"] = EnableFastBoot;
+	//yaml["CurrentBlockdump"] = CurrentBlockdump;
+	//yaml["CurrentELF"] = CurrentELF;
+	//yaml["CurrentIRX"] = CurrentIRX;
 
-	yaml["EnablePresets"] = EnablePresets;
-	yaml["PresetIndex"] = PresetIndex;
-	yaml["AskOnBoot"] =  AskOnBoot;
+	//yaml["EnableSpeedHacks"] = EnableSpeedHacks;
+	//yaml["EnableGameFixes"] = EnableGameFixes;
+	//yaml["EnableFastBoot"] = EnableFastBoot;
 
-	#ifdef __WXMSW__
-	//IniEntry( McdCompressNTFS );
-	#endif
+	//yaml["EnablePresets"] = EnablePresets;
+	//yaml["PresetIndex"] = PresetIndex;
+	//yaml["AskOnBoot"] =  AskOnBoot;
 
-	// TODO - these are not basic types at all
-	//yaml["CdvdSource"] = (CdvdSource, CDVD_SourceLabels, CdvdSource );
+	//#ifdef __WXMSW__
+	////IniEntry( McdCompressNTFS );
+	//#endif
+
+	//// TODO - these are not basic types at all
+	////yaml["CdvdSource"] = (CdvdSource, CDVD_SourceLabels, CdvdSource );
 	return true;
 }
 
@@ -937,20 +939,6 @@ bool GuiConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 	PresetIndex=n;
 
 	return true;
-}
-
-bool OpenFileConfig( std::string filename )
-{
-	if (!folderUtils.DoesExist(filename))
-	{
-		return false;
-	}
-
-	else
-	{
-		bool loader = yamlUtils.Load(filename);
-		return loader;
-	}
 }
 
 void RelocateLogfile()

@@ -21,6 +21,9 @@
     <Filter Include="Header Files\Threading">
       <UniqueIdentifier>{a3d21581-efe9-4749-a801-0ae50cbed855}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Configuration">
+      <UniqueIdentifier>{11769714-eccd-48de-bf08-a1b617afa18f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\Utilities\CheckedStaticBox.cpp">
@@ -33,9 +36,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Utilities\x86\MemcpyFast.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\Utilities\PathUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Utilities\Perf.cpp">
@@ -115,6 +115,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\Utilities\AlignedMalloc.cpp">
       <Filter>Source Files\Linux</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Utilities\PathUtils.cpp">
+      <Filter>Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Utilities\YamlFile.cpp">
+      <Filter>Configuration</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -216,11 +222,17 @@
     <ClInclude Include="..\..\include\Utilities\filesystem.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\Utilities\ConfigFile.h">
+      <Filter>Configuration</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\include\Utilities\json.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Configuration</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\Utilities\PathUtils.h">
-      <Filter>Header Files</Filter>
+      <Filter>Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\Utilities\YamlFile.h">
+      <Filter>Configuration</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

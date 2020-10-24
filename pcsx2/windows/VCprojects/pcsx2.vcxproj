@@ -248,7 +248,6 @@
     </ClCompile>
     <ClCompile Include="..\..\CDVD\Windows\DriveUtility.cpp" />
     <ClCompile Include="..\..\CDVD\Windows\IOCtlSrc.cpp" />
-    <ClCompile Include="..\..\config\ConfigFile.cpp" />
     <ClCompile Include="..\..\config\EmulatorConfig.cpp" />
     <ClCompile Include="..\..\DebugTools\Breakpoints.cpp" />
     <ClCompile Include="..\..\DebugTools\DebugInterface.cpp" />
@@ -539,7 +538,6 @@
     <ClInclude Include="..\..\CDVD\CsoFileReader.h" />
     <ClInclude Include="..\..\CDVD\GzippedFileReader.h" />
     <ClInclude Include="..\..\CDVD\zlib_indexed.h" />
-    <ClInclude Include="..\..\config\ConfigFile.h" />
     <ClInclude Include="..\..\config\EmulatorConfig.h" />
     <ClInclude Include="..\..\DebugTools\Breakpoints.h" />
     <ClInclude Include="..\..\DebugTools\DebugInterface.h" />

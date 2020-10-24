@@ -504,8 +504,11 @@ public:
 	void DispatchEvent( PluginEventType evt );
 	void DispatchEvent( AppEventType evt );
 	void DispatchEvent( CoreThreadStatus evt );
-	void DispatchUiSettingsEvent( nlohmann::json& json );
-	void DispatchVmSettingsEvent( nlohmann::json& json );
+
+	// TODO - json!
+
+	/*void DispatchUiSettingsEvent( nlohmann::json& json );
+	void DispatchVmSettingsEvent( nlohmann::json& json );*/
 
 	bool HasGUI() { return m_UseGUI; };
 	bool ExitPromptWithNoGUI() { return m_NoGuiExitPrompt; };
@@ -821,7 +824,6 @@ extern MainEmuFrame&	GetMainFrame();
 extern MainEmuFrame*	GetMainFramePtr();
 
 extern FolderUtils		folderUtils;
-extern JsonUtils		jsonUtils;
 extern __aligned16 AppCoreThread CoreThread;
 extern __aligned16 SysMtgsThread mtgsThread;
 extern __aligned16 AppCorePlugins CorePlugins;

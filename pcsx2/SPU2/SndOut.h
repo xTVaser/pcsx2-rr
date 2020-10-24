@@ -15,6 +15,9 @@
 
 #pragma once
 
+// TODO - stop using yaml-cpp directly
+#include "yaml-cpp/yaml.h"
+
 // Number of stereo samples per SndOut block.
 // All drivers must work in units of this size when communicating with
 // SndOut.

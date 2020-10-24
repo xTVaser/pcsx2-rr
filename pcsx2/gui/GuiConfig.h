@@ -74,9 +74,6 @@ namespace PathDefs
 }
 
 extern FolderUtils      folderUtils;
-extern JsonUtils        fileUtils;
-extern YamlUtils        yamlUtils;
-extern YAML::Node		yaml;
 
 extern DocsModeType		DocsFolderMode;				//
 extern bool				UseDefaultSettingsFolder;	// when TRUE, pcsx2 derives the settings folder from the DocsFolderMode
@@ -264,7 +261,7 @@ struct UiTemplateOptions
 {
 	UiTemplateOptions();
 			
-	YAML::Node LoadSave();
+	// YAML::Node LoadSave();
 
 	std::string LimiterUnlimited;
 	std::string LimiterTurbo;
@@ -420,14 +417,17 @@ extern void AppSaveSettings();
 extern void AppApplySettings( const GuiConfig* oldconf=NULL );
 
 extern wxFileConfig App_LoadSaveInstallSettings( );
-extern void App_SaveInstallSettings( YAML::Node yaml );
-extern void App_LoadInstallSettings( YAML::Node yaml );
+
+// TODO
+//extern void App_SaveInstallSettings( YAML::Node yaml );
+//extern void App_LoadInstallSettings( YAML::Node yaml );
 
 extern wxFileConfig ConLog_LoadSaveSettings(wxConfigBase* conf);
 extern wxFileConfig SysTraceLog_LoadSaveSettings();
 
 
-extern bool OpenFileConfig( std::string filename );
+// TODO - 
+// extern bool OpenFileConfig( std::string filename );
 extern void RelocateLogfile();
 extern void AppConfig_OnChangedSettingsFolder( bool overwrite =  false );
 extern wxConfigBase* GetAppConfig();

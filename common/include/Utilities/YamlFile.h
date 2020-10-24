@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Utilities/PathUtils.h"
+#include "Utilities/ConfigFile.h"
 #include <string>
 
-class YamlConfigFile
+class YamlFile : public iFile
 {
 private:
 	// NOTE - yaml-cpp has a memory leak problem due to YAML's more advanced capabilities (making references to blocks of config)
@@ -15,17 +15,16 @@ private:
 	// If you need/want to use YAML for something (ie. the GameDB). It would be better to roll your own implementation where you can control
 	// when and how the underlying YAML is constructed/destructed
 	std::string data;
-	YamlConfigFile(std::string data);
+	YamlFile(std::string data);
 
 public:
-	YamlConfigFile() {}
+	YamlFile() {}
 
-	std::string fileExtension = "yaml";
+	std::string fileExtension() override { return "yaml"; }
+	bool loadFromFile(fs::path path) override;
+	bool saveToFile(fs::path path) override;
 
-	bool loadFromFile(fs::path path);
-	bool saveToFile(fs::path path);
-
-	std::shared_ptr<YamlConfigFile> getSection(std::string key);
+	std::shared_ptr<YamlFile> getSection(std::string key);
 	std::string getString(std::string key, std::string fallback = "");
 	bool getBool(std::string key, bool fallback = false);
 	char getChar(std::string key, char fallback = 0);
@@ -33,7 +32,7 @@ public:
 	uint32_t getU32(std::string key, uint32_t fallback = 0);
 	float getFloat(std::string key, float fallback = 0.0);
 
-	void setSection(std::string key, std::shared_ptr<YamlConfigFile> section);
+	void setSection(std::string key, std::shared_ptr<YamlFile> section);
 	void setString(std::string key, std::string str);
 	void setBool(std::string key, bool val);
 	void setChar(std::string key, char val);

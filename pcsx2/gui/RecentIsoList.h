@@ -63,7 +63,7 @@ public:
 protected:
 	void InsertIntoMenu( int id );
 	void OnChangedSelection( wxCommandEvent& evt );
-	void LoadListFrom( nlohmann::json& json );
+	// TODO - json! void LoadListFrom( nlohmann::json& json );
 
 	void AppStatusEvent_OnUiSettingsLoadSave( const AppSettingsEventInfo& ini );
 	void AppStatusEvent_OnSettingsApplied();

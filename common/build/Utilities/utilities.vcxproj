@@ -105,17 +105,20 @@
     <ClCompile Include="..\..\src\Utilities\RwMutex.cpp" />
     <ClCompile Include="..\..\src\Utilities\Semaphore.cpp" />
     <ClCompile Include="..\..\src\Utilities\ThreadTools.cpp" />
+    <ClCompile Include="..\..\src\Utilities\YamlFile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\include\Utilities\EventSource.inl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\Utilities\ConfigFile.h" />
     <ClInclude Include="..\..\include\Utilities\EmbeddedImage.h" />
     <ClInclude Include="..\..\include\Utilities\boost_spsc_queue.hpp" />
     <ClInclude Include="..\..\include\Utilities\filesystem.hpp" />
     <ClInclude Include="..\..\include\Utilities\json.hpp" />
     <ClInclude Include="..\..\include\Utilities\PathUtils.h" />
     <ClInclude Include="..\..\include\Utilities\ScopedAlloc.h" />
+    <ClInclude Include="..\..\include\Utilities\YamlFile.h" />
     <ClInclude Include="..\..\src\Utilities\ThreadingInternal.h" />
     <ClInclude Include="..\..\include\Utilities\Assertions.h" />
     <ClInclude Include="..\..\include\Utilities\CheckedStaticBox.h" />

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ConfigFile.h"
+#include "Utilities/YamlFile.h"
 #include "Utilities/PathUtils.h"
 #include "x86emitter/tools.h"
 
@@ -139,9 +139,6 @@ struct TraceLogFilters
 		Enabled = false;
 	}
 
-	YAML::Node LoadSave();
-	//void Load(YAML::Node&);
-
 	bool operator==(const TraceLogFilters& right) const
 	{
 		return OpEqu(Enabled) && OpEqu(EE) && OpEqu(IOP);
@@ -179,8 +176,8 @@ struct Pcsx2Config
 		// Default is Disabled, with all recs enabled underneath.
 		//ProfilerOptions() : bitset( 0xfffffffe ) {}
 
-		void load(std::shared_ptr<YamlConfigFile> configSection);
-		std::shared_ptr<YamlConfigFile> save();
+		void load(std::shared_ptr<YamlFile> configSection);
+		std::shared_ptr<YamlFile> save();
 
 		bool operator==(const ProfilerOptions& right) const
 		{
@@ -231,8 +228,8 @@ struct Pcsx2Config
 
 		// TODO - saveable interface!
 
-		void load(std::shared_ptr<YamlConfigFile> configSection);
-		std::shared_ptr<YamlConfigFile> save();
+		void load(std::shared_ptr<YamlFile> configSection);
+		std::shared_ptr<YamlFile> save();
 
 		bool operator==(const RecompilerOptions& right) const
 		{
@@ -257,8 +254,8 @@ struct Pcsx2Config
 
 		CpuOptions();
 		
-		void load(std::shared_ptr<YamlConfigFile> configSection);
-		std::shared_ptr<YamlConfigFile> save();
+		void load(std::shared_ptr<YamlFile> configSection);
+		std::shared_ptr<YamlFile> save();
 
 		void ApplySanityCheck();
 
@@ -295,8 +292,8 @@ struct Pcsx2Config
 
 		GSOptions();
 
-		void load(std::shared_ptr<YamlConfigFile> configSection);
-		std::shared_ptr<YamlConfigFile> save();
+		void load(std::shared_ptr<YamlFile> configSection);
+		std::shared_ptr<YamlFile> save();
 
 		int GetVsync() const;
 
@@ -349,8 +346,8 @@ struct Pcsx2Config
 			VU0KickstartHack;       // Speed up VU0 at start of program to avoid some VU1 sync issues
 		GamefixOptions();
 
-		void load(std::shared_ptr<YamlConfigFile> configSection);
-		std::shared_ptr<YamlConfigFile> save();
+		void load(std::shared_ptr<YamlFile> configSection);
+		std::shared_ptr<YamlFile> save();
 
 		GamefixOptions& DisableAll();
 
@@ -389,8 +386,8 @@ struct Pcsx2Config
 
 		SpeedhackOptions();
 
-		void load(std::shared_ptr<YamlConfigFile> configSection);
-		std::shared_ptr<YamlConfigFile> save();
+		void load(std::shared_ptr<YamlFile> configSection);
+		std::shared_ptr<YamlFile> save();
 
 		SpeedhackOptions& DisableAll();
 
@@ -419,8 +416,8 @@ struct Pcsx2Config
 
 		DebugOptions();
 
-		void load(std::shared_ptr<YamlConfigFile> configSection);
-		std::shared_ptr<YamlConfigFile> save();
+		void load(std::shared_ptr<YamlFile> configSection);
+		std::shared_ptr<YamlFile> save();
 
 		bool operator==(const DebugOptions& right) const
 		{
@@ -435,7 +432,7 @@ struct Pcsx2Config
 	};
 
 private:
-	std::unique_ptr<YamlConfigFile> config;
+	std::unique_ptr<YamlFile> config;
 
 public:
 	bool

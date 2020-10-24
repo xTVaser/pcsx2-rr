@@ -1,3 +1,4 @@
+
 /*  PCSX2 - PS2 Emulator for PCs
  *  Copyright (C) 2002-2010  PCSX2 Dev Team
  *
@@ -40,9 +41,6 @@ std::string				SettingsFolder;
 
 std::string				InstallFolder;
 std::string				PluginsFolder;
-	
-YamlUtils               yamlUtils;
-YAML::Node stream;
 	
 const std::string PermissionFolders[] =
 {
@@ -133,20 +131,23 @@ wxFileConfig App_LoadSaveInstallSettings()
 		NULL
 	};
 
-    yamlUtils.GetStream()["DocumentsFolderMode"] = ((int)DocsFolderMode, DocsFolderModeNames, (InstallationMode == InstallMode_Registered) ? (int)DocsFolder_User : (int)DocsFolder_Custom);
+	// TODO - YAML utilities is gone! switch to YamlFile interface
+	// aren't these settings not even needed to be saved to anywhere but the registry anyway?
 
-	yamlUtils.GetStream()["CustomDocumentsFolder"] = (CustomDocumentsFolder,	PathDefs::AppRoot().string() );
+ //   yamlUtils.GetStream()["DocumentsFolderMode"] = ((int)DocsFolderMode, DocsFolderModeNames, (InstallationMode == InstallMode_Registered) ? (int)DocsFolder_User : (int)DocsFolder_Custom);
 
-	yamlUtils.GetStream()["UseDefaultSettingsFolder"] = (UseDefaultSettingsFolder, true );
-	yamlUtils.GetStream()["SettingsFolder"]	= (SettingsFolder, PathDefs::GetSettings().string() );
+	//yamlUtils.GetStream()["CustomDocumentsFolder"] = (CustomDocumentsFolder,	PathDefs::AppRoot().string() );
 
-	// "Install_Dir" conforms to the NSIS standard install directory key name.
-	// Attempt to load plugins based on the Install Folder.
+	//yamlUtils.GetStream()["UseDefaultSettingsFolder"] = (UseDefaultSettingsFolder, true );
+	//yamlUtils.GetStream()["SettingsFolder"]	= (SettingsFolder, PathDefs::GetSettings().string() );
 
-	yamlUtils.GetStream()["Install_Dir"] = (	InstallFolder,wxStandardPaths::Get().GetExecutablePath().ToStdString());
-	//SetFullBaseDir( InstallFolder );
+	//// "Install_Dir" conforms to the NSIS standard install directory key name.
+	//// Attempt to load plugins based on the Install Folder.
 
-	yamlUtils.GetStream()["PluginsFolder"] = (PluginsFolder = Path::Combine(InstallFolder, "plugins" ));
+	//yamlUtils.GetStream()["Install_Dir"] = (	InstallFolder,wxStandardPaths::Get().GetExecutablePath().ToStdString());
+	////SetFullBaseDir( InstallFolder );
+
+	//yamlUtils.GetStream()["PluginsFolder"] = (PluginsFolder = Path::Combine(InstallFolder, "plugins" ));
 	return wxFileConfig();
 }
 
@@ -176,7 +177,8 @@ bool Pcsx2App::TestForPortableInstall()
 	std::string portableDocsFolder = portableYamlFile.parent_path();
 
 	std::cout << "PATH: " << portableYamlFile << std::endl;
-	bool isPortable = OpenFileConfig( portableYamlFile.string() );
+	// TODO - simplify (portable yaml file class)
+	bool isPortable = true;
 
 	if (isPortable)
 	{
@@ -214,16 +216,19 @@ void Pcsx2App::WipeUserModeSettings()
 	{
 		// Remove the portable.json entry "RunWizard" conforming to this instance of PCSX2.
 		std::string portableYamlFile( GetPortableYamlPath() );
-		bool test = OpenFileConfig( portableYamlFile );
-		stream = yamlUtils.GetStream();
-		stream["RunWizard"] = 0;
+		// bool test = OpenFileConfig( portableYamlFile );
+		// TODO - confused, is this just updating the portable mode file?
+		// in both cases its setting it to 0 despite the functions docstring?
+
+		//stream = yamlUtils.GetStream();
+		//stream["RunWizard"] = 0;
 	}
 	else
 	{
 		// Remove the registry entry "RunWizard" conforming to this instance of PCSX2.
 		bool conf_install = OpenInstallSettingsFile();		
-		stream = yamlUtils.GetStream();
-		stream["RunWizard"] = 0;
+		//stream = yamlUtils.GetStream();
+		//stream["RunWizard"] = 0;
 	}
 }
 
@@ -296,7 +301,10 @@ void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 	if (!conf_install)
 		conf_install = OpenInstallSettingsFile();
 
-	stream["RunWizard"] = true;
+	// TODO - portable file should have its own class, with a simple function to wipe it, etc.
+	// scope config editing to the config classes
+
+	//stream["RunWizard"] = true;
 }
 
 void Pcsx2App::EstablishAppUserMode()
@@ -310,7 +318,8 @@ void Pcsx2App::EstablishAppUserMode()
 	if (!conf_install)
 		conf_install = OpenInstallSettingsFile();
 
-	YAML::Node newYaml = yamlUtils.GetStream();
+	// TODO - yaml
+	//YAML::Node newYaml = yamlUtils.GetStream();
 
 	//  Run the First Time Wizard!
 	// ----------------------------
@@ -319,8 +328,8 @@ void Pcsx2App::EstablishAppUserMode()
 	// or the registry/user local documents position.
 
 	bool runWizard = false;
-	if (newYaml["RunWizard"])
-		runWizard = true;
+	/*if (newYaml["RunWizard"])
+		runWizard = true;*/
 
 	//App_LoadInstallSettings( newYaml );
 
@@ -337,7 +346,8 @@ void Pcsx2App::EstablishAppUserMode()
 	AppConfig_OnChangedSettingsFolder( true );
 	AppSaveSettings();
 
-	stream = newYaml;
+	// TODO - yaml
+	// stream = newYaml;
 
 	// Wizard completed successfully, so let's not torture the user with this crap again!
 	
@@ -345,15 +355,15 @@ void Pcsx2App::EstablishAppUserMode()
 
     if (InstallationMode == InstallationModeType::InstallMode_Portable)
     {
-		newYaml["RunWizard"] = false;
+		// newYaml["RunWizard"] = false;
 
-		std::string toSave;
+		/*std::string toSave;
 		std::ostringstream os;
 		os << newYaml;
-		toSave = os.str();
+		toSave = os.str();*/
 
-
-        yamlUtils.Save(GetPortableYamlPath(), toSave);
+		// TODO - yaml
+        // yamlUtils.Save(GetPortableYamlPath(), toSave);
     }
 
 	g_Conf.get()->EmuOptions.loadFromFile(GetVmSettingsFilename());

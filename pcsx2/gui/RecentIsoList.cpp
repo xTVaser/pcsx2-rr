@@ -209,26 +209,27 @@ void RecentIsoManager::EnableItems(bool display)
 	}
 }
 
-void RecentIsoManager::LoadListFrom( nlohmann::json& json )
-{
-	/*if (!ini.IsOk()) return;
-
-	ini.GetConfig().SetRecordDefaults( false );
-
-	RemoveAllFromMenu();
-
-	m_MaxLength = g_Conf->RecentIsoCount;
-	ScopedIniGroup groupie( ini, L"RecentIso" );
-	for( uint i=0; i<m_MaxLength; ++i )
-	{
-		wxFileName loadtmp(L"");
-		ini.Entry( pxsFmt( L"Filename%02d", i ), loadtmp, loadtmp, true );
-		if( loadtmp.GetFullName()!=L"" ) Add( loadtmp.GetFullPath() );
-	}
-	Add( g_Conf->CurrentIso );
-
-	ini.GetConfig().SetRecordDefaults( true );*/
-}
+// TODO - we need this eventually
+//void RecentIsoManager::LoadListFrom( nlohmann::json& json )
+//{
+//	/*if (!ini.IsOk()) return;
+//
+//	ini.GetConfig().SetRecordDefaults( false );
+//
+//	RemoveAllFromMenu();
+//
+//	m_MaxLength = g_Conf->RecentIsoCount;
+//	ScopedIniGroup groupie( ini, L"RecentIso" );
+//	for( uint i=0; i<m_MaxLength; ++i )
+//	{
+//		wxFileName loadtmp(L"");
+//		ini.Entry( pxsFmt( L"Filename%02d", i ), loadtmp, loadtmp, true );
+//		if( loadtmp.GetFullName()!=L"" ) Add( loadtmp.GetFullPath() );
+//	}
+//	Add( g_Conf->CurrentIso );
+//
+//	ini.GetConfig().SetRecordDefaults( true );*/
+//}
 
 void RecentIsoManager::AppStatusEvent_OnSettingsApplied()
 {
@@ -237,8 +238,6 @@ void RecentIsoManager::AppStatusEvent_OnSettingsApplied()
 
 void RecentIsoManager::AppStatusEvent_OnUiSettingsLoadSave( const AppSettingsEventInfo& evt )
 {
-	nlohmann::json json;
-
 	//if( ini.IsSaving() )
 	//{
 		// Wipe existing recent iso list if we're saving, because our size might have changed

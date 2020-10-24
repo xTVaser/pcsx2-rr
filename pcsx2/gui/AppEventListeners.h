@@ -68,7 +68,9 @@ struct AppEventInfo
 
 struct AppSettingsEventInfo : AppEventInfo
 {
-	nlohmann::json&	json;
+	// TODO - found a remaining json usage!
+
+	/*nlohmann::json&	json;
 
 	AppSettingsEventInfo();
 
@@ -77,7 +79,7 @@ struct AppSettingsEventInfo : AppEventInfo
 	nlohmann::json& GetJson() const
 	{
 		return const_cast<nlohmann::json&>(json);
-	}
+	}*/
 };
 
 // --------------------------------------------------------------------------------------

@@ -1001,9 +1001,6 @@
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
     <ClCompile Include="..\..\gui\GuiConfig.cpp" />
-    <ClCompile Include="..\..\config\ConfigFile.cpp">
-      <Filter>Configuration</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\config\EmulatorConfig.cpp">
       <Filter>Configuration</Filter>
     </ClCompile>
@@ -1526,9 +1523,6 @@
       <Filter>Recording\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="..\..\gui\GuiConfig.h" />
-    <ClInclude Include="..\..\config\ConfigFile.h">
-      <Filter>Configuration</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\config\EmulatorConfig.h">
       <Filter>Configuration</Filter>
     </ClInclude>

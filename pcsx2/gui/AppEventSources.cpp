@@ -162,23 +162,25 @@ void Pcsx2App::DispatchEvent( CoreThreadStatus evt )
 	CoreThread.RethrowException();
 }
 
-void Pcsx2App::DispatchUiSettingsEvent( nlohmann::json& json )
-{
-	if( !AffinityAssert_AllowFrom_MainUI() ) return;
-	//m_evtsrc_AppStatus.Dispatch( AppSettingsEventInfo( json, ini.IsSaving() ? AppStatus_UiSettingsSaved : AppStatus_UiSettingsLoaded ) );
-		//std::ofstream file(filePath);
-		//file << std::setw(4) << json << std::endl;
+// TODO - ya...
 
-}
+//void Pcsx2App::DispatchUiSettingsEvent( nlohmann::json& json )
+//{
+//	if( !AffinityAssert_AllowFrom_MainUI() ) return;
+//	//m_evtsrc_AppStatus.Dispatch( AppSettingsEventInfo( json, ini.IsSaving() ? AppStatus_UiSettingsSaved : AppStatus_UiSettingsLoaded ) );
+//		//std::ofstream file(filePath);
+//		//file << std::setw(4) << json << std::endl;
+//
+//}
 
-void Pcsx2App::DispatchVmSettingsEvent( nlohmann::json& ini )
-{
-	if( !AffinityAssert_AllowFrom_MainUI() ) return;
-	// /m_evtsrc_AppStatus.Dispatch( AppSettingsEventInfo( ini, ini.IsSaving() ? AppStatus_VmSettingsSaved : AppStatus_VmSettingsLoaded ) );
-		//std::ofstream file(filePath);
-		//file << std::setw(4) << ini << std::endl;
-
-}
+//void Pcsx2App::DispatchVmSettingsEvent( nlohmann::json& ini )
+//{
+//	if( !AffinityAssert_AllowFrom_MainUI() ) return;
+//	// /m_evtsrc_AppStatus.Dispatch( AppSettingsEventInfo( ini, ini.IsSaving() ? AppStatus_VmSettingsSaved : AppStatus_VmSettingsLoaded ) );
+//		//std::ofstream file(filePath);
+//		//file << std::setw(4) << ini << std::endl;
+//
+//}
 
 
 // --------------------------------------------------------------------------------------
