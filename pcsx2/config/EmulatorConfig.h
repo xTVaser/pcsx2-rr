@@ -374,39 +374,39 @@ Pcsx2Config::TraceLogFilters& SetTraceConfig();
 
 // ------------ CPU / Recompiler Options ---------------
 
-#define THREAD_VU1 (EmuConfig.Cpu.Recompiler.UseMicroVU1 && EmuConfig.Speedhacks.vuThread)
-#define CHECK_MICROVU0 (EmuConfig.Cpu.Recompiler.UseMicroVU0)
-#define CHECK_MICROVU1 (EmuConfig.Cpu.Recompiler.UseMicroVU1)
-#define CHECK_EEREC (EmuConfig.Cpu.Recompiler.EnableEE && GetCpuProviders().IsRecAvailable_EE())
-#define CHECK_CACHE (EmuConfig.Cpu.Recompiler.EnableEECache)
-#define CHECK_IOPREC (EmuConfig.Cpu.Recompiler.EnableIOP && GetCpuProviders().IsRecAvailable_IOP())
+#define THREAD_VU1 (g_Conf->emulator->Cpu.Recompiler.UseMicroVU1 && g_Conf->emulator->Speedhacks.vuThread)
+#define CHECK_MICROVU0 (g_Conf->emulator->Cpu.Recompiler.UseMicroVU0)
+#define CHECK_MICROVU1 (g_Conf->emulator->Cpu.Recompiler.UseMicroVU1)
+#define CHECK_EEREC (g_Conf->emulator->Cpu.Recompiler.EnableEE && GetCpuProviders().IsRecAvailable_EE())
+#define CHECK_CACHE (g_Conf->emulator->Cpu.Recompiler.EnableEECache)
+#define CHECK_IOPREC (g_Conf->emulator->Cpu.Recompiler.EnableIOP && GetCpuProviders().IsRecAvailable_IOP())
 
 //------------ SPECIAL GAME FIXES!!! ---------------
-#define CHECK_VUADDSUBHACK (EmuConfig.Gamefixes.VuAddSubHack) // Special Fix for Tri-ace games, they use an encryption algorithm that requires VU addi opcode to be bit-accurate.
-#define CHECK_FPUCOMPAREHACK (EmuConfig.Gamefixes.FpuCompareHack) // Special Fix for Digimon Rumble Arena 2, fixes spinning/hanging on intro-menu.
-#define CHECK_FPUMULHACK (EmuConfig.Gamefixes.FpuMulHack) // Special Fix for Tales of Destiny hangs.
-#define CHECK_FPUNEGDIVHACK (EmuConfig.Gamefixes.FpuNegDivHack) // Special Fix for Gundam games messed up camera-view.
-#define CHECK_XGKICKHACK (EmuConfig.Gamefixes.XgKickHack) // Special Fix for Erementar Gerad, adds more delay to VU XGkick instructions. Corrects the color of some graphics.
-#define CHECK_IPUWAITHACK (EmuConfig.Gamefixes.IPUWaitHack) // Special Fix For FFX
-#define CHECK_EETIMINGHACK (EmuConfig.Gamefixes.EETimingHack) // Fix all scheduled events to happen in 1 cycle.
-#define CHECK_SKIPMPEGHACK (EmuConfig.Gamefixes.SkipMPEGHack) // Finds sceMpegIsEnd pattern to tell the game the mpeg is finished (Katamari and a lot of games need this)
-#define CHECK_OPHFLAGHACK (EmuConfig.Gamefixes.OPHFlagHack) // Bleach Blade Battlers
-#define CHECK_DMABUSYHACK (EmuConfig.Gamefixes.DMABusyHack) // Denies writes to the DMAC when it's busy. This is correct behaviour but bad timing can cause problems.
-#define CHECK_VIFFIFOHACK (EmuConfig.Gamefixes.VIFFIFOHack) // Pretends to fill the non-existant VIF FIFO Buffer.
-#define CHECK_VIF1STALLHACK (EmuConfig.Gamefixes.VIF1StallHack) // Like above, processes FIFO data before the stall is allowed (to make sure data goes over).
-#define CHECK_GIFFIFOHACK (EmuConfig.Gamefixes.GIFFIFOHack) // Enabled the GIF FIFO (more correct but slower)
+#define CHECK_VUADDSUBHACK (g_Conf->emulator->Gamefixes.VuAddSubHack) // Special Fix for Tri-ace games, they use an encryption algorithm that requires VU addi opcode to be bit-accurate.
+#define CHECK_FPUCOMPAREHACK (g_Conf->emulator->Gamefixes.FpuCompareHack) // Special Fix for Digimon Rumble Arena 2, fixes spinning/hanging on intro-menu.
+#define CHECK_FPUMULHACK (g_Conf->emulator->Gamefixes.FpuMulHack) // Special Fix for Tales of Destiny hangs.
+#define CHECK_FPUNEGDIVHACK (g_Conf->emulator->Gamefixes.FpuNegDivHack) // Special Fix for Gundam games messed up camera-view.
+#define CHECK_XGKICKHACK (g_Conf->emulator->Gamefixes.XgKickHack) // Special Fix for Erementar Gerad, adds more delay to VU XGkick instructions. Corrects the color of some graphics.
+#define CHECK_IPUWAITHACK (g_Conf->emulator->Gamefixes.IPUWaitHack) // Special Fix For FFX
+#define CHECK_EETIMINGHACK (g_Conf->emulator->Gamefixes.EETimingHack) // Fix all scheduled events to happen in 1 cycle.
+#define CHECK_SKIPMPEGHACK (g_Conf->emulator->Gamefixes.SkipMPEGHack) // Finds sceMpegIsEnd pattern to tell the game the mpeg is finished (Katamari and a lot of games need this)
+#define CHECK_OPHFLAGHACK (g_Conf->emulator->Gamefixes.OPHFlagHack) // Bleach Blade Battlers
+#define CHECK_DMABUSYHACK (g_Conf->emulator->Gamefixes.DMABusyHack) // Denies writes to the DMAC when it's busy. This is correct behaviour but bad timing can cause problems.
+#define CHECK_VIFFIFOHACK (g_Conf->emulator->Gamefixes.VIFFIFOHack) // Pretends to fill the non-existant VIF FIFO Buffer.
+#define CHECK_VIF1STALLHACK (g_Conf->emulator->Gamefixes.VIF1StallHack) // Like above, processes FIFO data before the stall is allowed (to make sure data goes over).
+#define CHECK_GIFFIFOHACK (g_Conf->emulator->Gamefixes.GIFFIFOHack) // Enabled the GIF FIFO (more correct but slower)
 
 //------------ Advanced Options!!! ---------------
-#define CHECK_VU_OVERFLOW (EmuConfig.Cpu.Recompiler.vuOverflow)
-#define CHECK_VU_EXTRA_OVERFLOW (EmuConfig.Cpu.Recompiler.vuExtraOverflow) // If enabled, Operands are clamped before being used in the VU recs
-#define CHECK_VU_SIGN_OVERFLOW (EmuConfig.Cpu.Recompiler.vuSignOverflow)
-#define CHECK_VU_UNDERFLOW (EmuConfig.Cpu.Recompiler.vuUnderflow)
+#define CHECK_VU_OVERFLOW (g_Conf->emulator->Cpu.Recompiler.vuOverflow)
+#define CHECK_VU_EXTRA_OVERFLOW (g_Conf->emulator->Cpu.Recompiler.vuExtraOverflow) // If enabled, Operands are clamped before being used in the VU recs
+#define CHECK_VU_SIGN_OVERFLOW (g_Conf->emulator->Cpu.Recompiler.vuSignOverflow)
+#define CHECK_VU_UNDERFLOW (g_Conf->emulator->Cpu.Recompiler.vuUnderflow)
 #define CHECK_VU_EXTRA_FLAGS 0 // Always disabled now // Sets correct flags in the sVU recs
 
-#define CHECK_FPU_OVERFLOW (EmuConfig.Cpu.Recompiler.fpuOverflow)
-#define CHECK_FPU_EXTRA_OVERFLOW (EmuConfig.Cpu.Recompiler.fpuExtraOverflow) // If enabled, Operands are checked for infinities before being used in the FPU recs
+#define CHECK_FPU_OVERFLOW (g_Conf->emulator->Cpu.Recompiler.fpuOverflow)
+#define CHECK_FPU_EXTRA_OVERFLOW (g_Conf->emulator->Cpu.Recompiler.fpuExtraOverflow) // If enabled, Operands are checked for infinities before being used in the FPU recs
 #define CHECK_FPU_EXTRA_FLAGS 1 // Always enabled now // Sets D/I flags on FPU instructions
-#define CHECK_FPU_FULL (EmuConfig.Cpu.Recompiler.fpuFullMode)
+#define CHECK_FPU_FULL (g_Conf->emulator->Cpu.Recompiler.fpuFullMode)
 
 //------------ EE Recompiler defines - Comment to disable a recompiler ---------------
 

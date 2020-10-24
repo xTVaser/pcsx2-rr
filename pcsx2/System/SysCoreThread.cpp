@@ -154,18 +154,19 @@ void SysCoreThread::Reset()
 // real differences are applied.
 void SysCoreThread::ApplySettings(const Pcsx2Config& src)
 {
-	if (src == EmuConfig)
+	if (src == *g_Conf->emulator)
 		return;
 
 	if (!pxAssertDev(IsPaused(), "CoreThread is not paused; settings cannot be applied."))
 		return;
 
-	m_resetRecompilers = (src.Cpu != EmuConfig.Cpu) || (src.Gamefixes != EmuConfig.Gamefixes) || (src.Speedhacks != EmuConfig.Speedhacks);
-	m_resetProfilers = (src.Profiler != EmuConfig.Profiler);
-	m_resetVsyncTimers = (src.GS != EmuConfig.GS);
+	m_resetRecompilers = (src.Cpu != g_Conf->emulator->Cpu) || (src.Gamefixes != g_Conf->emulator->Gamefixes) || (src.Speedhacks != g_Conf->emulator->Speedhacks);
+	m_resetProfilers = (src.Profiler != g_Conf->emulator->Profiler);
+	m_resetVsyncTimers = (src.GS != g_Conf->emulator->GS);
 
-	// TODO - config - how is this possible?
-	const_cast<Pcsx2Config&>(EmuConfig) = src;
+	// TODO - config - allow for bulk setting the configuration like this
+	// this seems to be a little challenging with unique_ptr usage?
+	// const_cast<Pcsx2Config&>(*g_Conf->emulator) = src;
 }
 
 void SysCoreThread::UploadStateCopy(const VmStateBuffer& copy)

@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include "config/GlobalConfig.h"
 #include "Utilities/TraceLog.h"
 #include "../Memory.h"
 
@@ -74,7 +75,7 @@ public:
 	void DoWrite( const char *fmt ) const override;
 	bool IsActive() const override
 	{
-		return EmuConfig.Trace.Enabled && Enabled;
+		return g_Conf->emulator->Trace.EnableTraceLogFilters && Enabled;
 	}
 };
 
@@ -88,7 +89,7 @@ public:
 	void ApplyPrefix( FastFormatAscii& ascii ) const override;
 	bool IsActive() const override
 	{
-		return SysTraceLog::IsActive() && EmuConfig.Trace.EE.m_EnableAll;
+		return SysTraceLog::IsActive() && g_Conf->emulator->Trace.EE.m_EnableAll;
 	}
 	
 	wxString GetCategory() const override { return L"EE"; }
@@ -113,7 +114,7 @@ public:
 
 	bool IsActive() const override
 	{
-		return _parent::IsActive() && EmuConfig.Trace.EE.m_EnableDisasm;
+		return _parent::IsActive() && g_Conf->emulator->Trace.EE.m_EnableDisasm;
 	}
 
 	wxString GetCategory() const override { return _parent::GetCategory() + L".Disasm"; }
@@ -128,7 +129,7 @@ public:
 
 	bool IsActive() const override
 	{
-		return _parent::IsActive() && EmuConfig.Trace.EE.m_EnableRegisters;
+		return _parent::IsActive() && g_Conf->emulator->Trace.EE.m_EnableRegisters;
 	}
 
 	wxString GetCategory() const override { return _parent::GetCategory() + L".Registers"; }
@@ -143,7 +144,7 @@ public:
 
 	bool IsActive() const override
 	{
-		return _parent::IsActive() && EmuConfig.Trace.EE.m_EnableEvents;
+		return _parent::IsActive() && g_Conf->emulator->Trace.EE.m_EnableEvents;
 	}
 
 	wxString GetCategory() const override { return _parent::GetCategory() + L".Events"; }
@@ -160,7 +161,7 @@ public:
 	void ApplyPrefix( FastFormatAscii& ascii ) const override;
 	bool IsActive() const override
 	{
-		return SysTraceLog::IsActive() && EmuConfig.Trace.IOP.m_EnableAll;
+		return SysTraceLog::IsActive() && g_Conf->emulator->Trace.IOP.m_EnableAll;
 	}
 
 	wxString GetCategory() const override { return L"IOP"; }
@@ -174,7 +175,7 @@ public:
 	SysTraceLog_IOP_Disasm( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
 	bool IsActive() const override
 	{
-		return _parent::IsActive() && EmuConfig.Trace.IOP.m_EnableDisasm;
+		return _parent::IsActive() && g_Conf->emulator->Trace.IOP.m_EnableDisasm;
 	}
 
 	wxString GetCategory() const override { return _parent::GetCategory() + L".Disasm"; }
@@ -188,7 +189,7 @@ public:
 	SysTraceLog_IOP_Registers( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
 	bool IsActive() const override
 	{
-		return _parent::IsActive() && EmuConfig.Trace.IOP.m_EnableRegisters;
+		return _parent::IsActive() && g_Conf->emulator->Trace.IOP.m_EnableRegisters;
 	}
 
 	wxString GetCategory() const override { return _parent::GetCategory() + L".Registers"; }
@@ -202,7 +203,7 @@ public:
 	SysTraceLog_IOP_Events( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
 	bool IsActive() const override
 	{
-		return _parent::IsActive() && EmuConfig.Trace.IOP.m_EnableEvents;
+		return _parent::IsActive() && g_Conf->emulator->Trace.IOP.m_EnableEvents;
 	}
 
 	wxString GetCategory() const override { return _parent::GetCategory() + L".Events"; }
