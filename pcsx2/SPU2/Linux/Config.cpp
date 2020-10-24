@@ -27,7 +27,7 @@
 
 int AutoDMAPlayRate[2] = {0, 0};
 
-YamlUtils spuConfig;
+YamlFile spuConfig;
 
 // Default settings.
 

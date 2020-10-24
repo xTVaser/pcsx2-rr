@@ -329,7 +329,7 @@ bool Pcsx2Config::GSOptions::operator==(const GSOptions& right) const
 	// TODO - config - we need an appropriate epsilon float comparison func
 	return FrameLimitEnable == right.FrameLimitEnable &&
 		   FrameSkipEnable == right.FrameSkipEnable &&
-		   VsyncEnable == right.VsyncEnable &&
+		   enum_cast(VsyncEnable) == enum_cast(right.VsyncEnable) &&
 		   SynchronousMTGS == right.SynchronousMTGS &&
 		   VsyncQueueSize == right.VsyncQueueSize &&
 		   FramesToDraw == right.FramesToDraw &&
