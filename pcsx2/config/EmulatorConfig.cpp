@@ -16,23 +16,20 @@
 
 void Pcsx2Config::TraceLogFilters::load(std::shared_ptr<YamlFile> configSection)
 {
-	YamlFile* cfg = configSection.get();
+	EnableTraceLogFilters = configSection->getBool("EnableTraceLogFilters", false);
 
-	EnableTraceLogFilters = cfg->getBool("EnableTraceLogFilters", false);
-
-	EE.load(cfg->getSection("EE"));
-	IOP.load(cfg->getSection("IOP"));
+	EE.load(configSection->getSection("EE"));
+	IOP.load(configSection->getSection("IOP"));
 }
 
 std::shared_ptr<YamlFile> Pcsx2Config::TraceLogFilters::save()
 {
 	std::shared_ptr<YamlFile> config = std::make_shared<YamlFile>();
-	YamlFile* cfg = config.get();
 
-	cfg->setBool("EnableTraceLogFilters", EnableTraceLogFilters);
+	config->setBool("EnableTraceLogFilters", EnableTraceLogFilters);
 
-	cfg->setSection("EE", EE.save());
-	cfg->setSection("IOP", IOP.save());
+	config->setSection("EE", EE.save());
+	config->setSection("IOP", IOP.save());
 
 	return config;
 }
@@ -51,23 +48,20 @@ bool Pcsx2Config::TraceLogFilters::operator!=(const TraceLogFilters& right) cons
 
 void Pcsx2Config::TraceLogFilters::TraceFilters::load(std::shared_ptr<YamlFile> configSection)
 {
-	YamlFile* cfg = configSection.get();
-
-	m_EnableAll = cfg->getBool("EnableAll", false);
-	m_EnableDisasm = cfg->getBool("EnableDisasm", false);
-	m_EnableRegisters = cfg->getBool("EnableRegisters", false);
-	m_EnableEvents = cfg->getBool("EnableEvents", false);
+	m_EnableAll = configSection->getBool("EnableAll", false);
+	m_EnableDisasm = configSection->getBool("EnableDisasm", false);
+	m_EnableRegisters = configSection->getBool("EnableRegisters", false);
+	m_EnableEvents = configSection->getBool("EnableEvents", false);
 }
 
 std::shared_ptr<YamlFile> Pcsx2Config::TraceLogFilters::TraceFilters::save()
 {
 	std::shared_ptr<YamlFile> config = std::make_shared<YamlFile>();
-	YamlFile* cfg = config.get();
 
-	cfg->setBool("EnableAll", m_EnableAll);
-	cfg->setBool("EnableDisasm", m_EnableDisasm);
-	cfg->setBool("EnableRegisters", m_EnableRegisters);
-	cfg->setBool("EnableEvents", m_EnableEvents);
+	config->setBool("EnableAll", m_EnableAll);
+	config->setBool("EnableDisasm", m_EnableDisasm);
+	config->setBool("EnableRegisters", m_EnableRegisters);
+	config->setBool("EnableEvents", m_EnableEvents);
 
 	return config;
 }
@@ -103,35 +97,32 @@ Pcsx2Config::SpeedhackOptions& Pcsx2Config::SpeedhackOptions::DisableAll()
 
 void Pcsx2Config::SpeedhackOptions::load(std::shared_ptr<YamlFile> configSection)
 {
-	YamlFile* cfg = configSection.get();
+	EECycleRate = configSection->getChar("EECycleRate");
+	EECycleSkip = configSection->getChar("EECycleSkip");
 
-	EECycleRate = cfg->getChar("EECycleRate");
-	EECycleSkip = cfg->getChar("EECycleSkip");
-
-	fastCDVD = cfg->getBool("fastCDVD");
-	IntcStat = cfg->getBool("IntcStat");
+	fastCDVD = configSection->getBool("fastCDVD");
+	IntcStat = configSection->getBool("IntcStat");
 
 	// Set recommended speedhacks to enabled by default. They'll still be off globally on resets.
-	WaitLoop = cfg->getBool("WaitLoop", true);
-	vuFlagHack = cfg->getBool("vuFlagHack", true);
-	vuThread = cfg->getBool("vuThread", true);
+	WaitLoop = configSection->getBool("WaitLoop", true);
+	vuFlagHack = configSection->getBool("vuFlagHack", true);
+	vuThread = configSection->getBool("vuThread", true);
 }
 
 std::shared_ptr<YamlFile> Pcsx2Config::SpeedhackOptions::save()
 {
 	std::shared_ptr<YamlFile> config = std::make_shared<YamlFile>();
-	YamlFile* cfg = config.get();
 
-	cfg->setChar("EECycleRate", EECycleRate);
-	cfg->setChar("EECycleSkip", EECycleSkip);
+	config->setChar("EECycleRate", EECycleRate);
+	config->setChar("EECycleSkip", EECycleSkip);
 
-	cfg->setBool("fastCDVD", fastCDVD);
-	cfg->setBool("IntcStat", IntcStat);
+	config->setBool("fastCDVD", fastCDVD);
+	config->setBool("IntcStat", IntcStat);
 
 	// Set recommended speedhacks to enabled by default. They'll still be off globally on resets.
-	cfg->setBool("WaitLoop", WaitLoop);
-	cfg->setBool("vuFlagHack", vuFlagHack);
-	cfg->setBool("vuThread", vuThread);
+	config->setBool("WaitLoop", WaitLoop);
+	config->setBool("vuFlagHack", vuFlagHack);
+	config->setBool("vuThread", vuThread);
 
 	return config;
 }
@@ -154,25 +145,22 @@ bool Pcsx2Config::SpeedhackOptions::operator!=(const SpeedhackOptions& right) co
 
 void Pcsx2Config::ProfilerOptions::load(std::shared_ptr<YamlFile> configSection)
 {
-	YamlFile* cfg = configSection.get();
-
-	EnableProfiler = cfg->getBool("EnableProfiler");
-	RecBlocks_EE = cfg->getBool("RecBlocks_EE");
-	RecBlocks_IOP = cfg->getBool("RecBlocks_IOP");
-	RecBlocks_VU0 = cfg->getBool("RecBlocks_VU0");
-	RecBlocks_VU1 = cfg->getBool("RecBlocks_VU1");
+	EnableProfiler = configSection->getBool("EnableProfiler");
+	RecBlocks_EE = configSection->getBool("RecBlocks_EE");
+	RecBlocks_IOP = configSection->getBool("RecBlocks_IOP");
+	RecBlocks_VU0 = configSection->getBool("RecBlocks_VU0");
+	RecBlocks_VU1 = configSection->getBool("RecBlocks_VU1");
 }
 
 std::shared_ptr<YamlFile> Pcsx2Config::ProfilerOptions::save()
 {
 	std::shared_ptr<YamlFile> config = std::make_shared<YamlFile>();
-	YamlFile* cfg = config.get();
 
-	cfg->setBool("EnableProfiler", EnableProfiler);
-	cfg->setBool("RecBlocks_EE", RecBlocks_EE);
-	cfg->setBool("RecBlocks_IOP", RecBlocks_IOP);
-	cfg->setBool("RecBlocks_VU0", RecBlocks_VU0);
-	cfg->setBool("RecBlocks_VU1", RecBlocks_VU1);
+	config->setBool("EnableProfiler", EnableProfiler);
+	config->setBool("RecBlocks_EE", RecBlocks_EE);
+	config->setBool("RecBlocks_IOP", RecBlocks_IOP);
+	config->setBool("RecBlocks_VU0", RecBlocks_VU0);
+	config->setBool("RecBlocks_VU1", RecBlocks_VU1);
 
 	return config;
 }
@@ -207,29 +195,26 @@ void Pcsx2Config::CpuOptions::ApplySanityCheck()
 
 void Pcsx2Config::CpuOptions::load(std::shared_ptr<YamlFile> configSection)
 {
-	YamlFile* cfg = configSection.get();
+	sseVUMXCSR.DenormalsAreZero = configSection->getU32("VU.DenormalsAreZero");
+	sseVUMXCSR.FlushToZero = configSection->getU32("VU.FlushToZero");
+	sseVUMXCSR.RoundingControl = configSection->getU32("VU.RoundingControl");
 
-	sseVUMXCSR.DenormalsAreZero = cfg->getU32("VU.DenormalsAreZero");
-	sseVUMXCSR.FlushToZero = cfg->getU32("VU.FlushToZero");
-	sseVUMXCSR.RoundingControl = cfg->getU32("VU.RoundingControl");
-
-	sseMXCSR.DenormalsAreZero = cfg->getU32("FPU.DenormalsAreZero");
-	sseMXCSR.FlushToZero = cfg->getU32("FPU.FlushToZero");
-	sseMXCSR.RoundingControl = cfg->getU32("FPU.RoundingControl");
+	sseMXCSR.DenormalsAreZero = configSection->getU32("FPU.DenormalsAreZero");
+	sseMXCSR.FlushToZero = configSection->getU32("FPU.FlushToZero");
+	sseMXCSR.RoundingControl = configSection->getU32("FPU.RoundingControl");
 }
 
 std::shared_ptr<YamlFile> Pcsx2Config::CpuOptions::save()
 {
 	std::shared_ptr<YamlFile> config = std::make_shared<YamlFile>();
-	YamlFile* cfg = config.get();
 
-	cfg->setU32("VU.DenormalsAreZero", sseVUMXCSR.DenormalsAreZero);
-	cfg->setU32("VU.FlushToZero", sseVUMXCSR.FlushToZero);
-	cfg->setU32("VU.RoundingControl", sseVUMXCSR.RoundingControl);
+	config->setU32("VU.DenormalsAreZero", sseVUMXCSR.DenormalsAreZero);
+	config->setU32("VU.FlushToZero", sseVUMXCSR.FlushToZero);
+	config->setU32("VU.RoundingControl", sseVUMXCSR.RoundingControl);
 
-	cfg->setU32("FPU.DenormalsAreZero", sseMXCSR.DenormalsAreZero);
-	cfg->setU32("FPU.FlushToZero", sseMXCSR.FlushToZero);
-	cfg->setU32("FPU.RoundingControl", sseMXCSR.RoundingControl);
+	config->setU32("FPU.DenormalsAreZero", sseMXCSR.DenormalsAreZero);
+	config->setU32("FPU.FlushToZero", sseMXCSR.FlushToZero);
+	config->setU32("FPU.RoundingControl", sseMXCSR.RoundingControl);
 
 	return config;
 }
@@ -285,41 +270,38 @@ int Pcsx2Config::GSOptions::GetVsync() const
 
 void Pcsx2Config::GSOptions::load(std::shared_ptr<YamlFile> configSection)
 {
-	YamlFile* cfg = configSection.get();
+	FrameLimitEnable = configSection->getBool("SynchronousMTGS", true);
+	FrameSkipEnable = configSection->getBool("SynchronousMTGS", false);
+	VsyncEnable = static_cast<VsyncMode>(configSection->getInt("VsyncEnable", enum_cast(VsyncMode::Off)));
 
-	FrameLimitEnable = cfg->getBool("SynchronousMTGS", true);
-	FrameSkipEnable = cfg->getBool("SynchronousMTGS", false);
-	VsyncEnable = static_cast<VsyncMode>(cfg->getInt("VsyncEnable", enum_cast(VsyncMode::Off)));
+	SynchronousMTGS = configSection->getBool("SynchronousMTGS", false);
+	VsyncQueueSize = configSection->getU32("VsyncQueueSize", 2);
 
-	SynchronousMTGS = cfg->getBool("SynchronousMTGS", false);
-	VsyncQueueSize = cfg->getU32("VsyncQueueSize", 2);
+	FramesToDraw = configSection->getInt("FramesToDraw", 2);
+	FramesToSkip = configSection->getInt("FramesToSkip", 2);
 
-	FramesToDraw = cfg->getInt("FramesToDraw", 2);
-	FramesToSkip = cfg->getInt("FramesToSkip", 2);
-
-	LimitScalar = cfg->getFloat("LimitScalar", 1.0);
-	FramerateNTSC = cfg->getFloat("LimitScalar", 59.94);
-	FrameratePAL = cfg->getFloat("LimitScalar", 50.0);
+	LimitScalar = configSection->getFloat("LimitScalar", 1.0);
+	FramerateNTSC = configSection->getFloat("LimitScalar", 59.94);
+	FrameratePAL = configSection->getFloat("LimitScalar", 50.0);
 }
 
 std::shared_ptr<YamlFile> Pcsx2Config::GSOptions::save()
 {
 	std::shared_ptr<YamlFile> config = std::make_shared<YamlFile>();
-	YamlFile* cfg = config.get();
 
-	cfg->setBool("SynchronousMTGS", FrameLimitEnable);
-	cfg->setBool("SynchronousMTGS", FrameSkipEnable);
-	cfg->setInt("VsyncEnable", enum_cast(VsyncEnable));
+	config->setBool("SynchronousMTGS", FrameLimitEnable);
+	config->setBool("SynchronousMTGS", FrameSkipEnable);
+	config->setInt("VsyncEnable", enum_cast(VsyncEnable));
 
-	cfg->setBool("SynchronousMTGS", SynchronousMTGS);
-	cfg->setU32("VsyncQueueSize", VsyncQueueSize);
+	config->setBool("SynchronousMTGS", SynchronousMTGS);
+	config->setU32("VsyncQueueSize", VsyncQueueSize);
 
-	cfg->setInt("FramesToDraw", FramesToDraw);
-	cfg->setInt("FramesToSkip", FramesToSkip);
+	config->setInt("FramesToDraw", FramesToDraw);
+	config->setInt("FramesToSkip", FramesToSkip);
 
-	cfg->setFloat("LimitScalar", LimitScalar);
-	cfg->setFloat("LimitScalar", FramerateNTSC);
-	cfg->setFloat("LimitScalar", FrameratePAL);
+	config->setFloat("LimitScalar", LimitScalar);
+	config->setFloat("LimitScalar", FramerateNTSC);
+	config->setFloat("LimitScalar", FrameratePAL);
 
 	return std::shared_ptr<YamlFile>();
 }
@@ -383,49 +365,46 @@ Pcsx2Config::GamefixOptions& Pcsx2Config::GamefixOptions::DisableAll()
 
 void Pcsx2Config::GamefixOptions::load(std::shared_ptr<YamlFile> configSection)
 {
-	YamlFile* cfg = configSection.get();
-
-	VuAddSubHack = cfg->getBool("VuAddSubHack");
-	FpuCompareHack = cfg->getBool("FpuCompareHack");
-	FpuMulHack = cfg->getBool("FpuMulHack");
-	FpuNegDivHack = cfg->getBool("FpuNegDivHack");
-	XgKickHack = cfg->getBool("XgKickHack");
-	IPUWaitHack = cfg->getBool("IPUWaitHack");
-	EETimingHack = cfg->getBool("EETimingHack");
-	SkipMPEGHack = cfg->getBool("SkipMPEGHack");
-	OPHFlagHack = cfg->getBool("OPHFlagHack");
-	DMABusyHack = cfg->getBool("DMABusyHack");
-	VIFFIFOHack = cfg->getBool("VIFFIFOHack");
-	VIF1StallHack = cfg->getBool("VIF1StallHack");
-	GIFFIFOHack = cfg->getBool("GIFFIFOHack");
-	FMVinSoftwareHack = cfg->getBool("FMVinSoftwareHack");
-	GoemonTlbHack = cfg->getBool("GoemonTlbHack");
-	ScarfaceIbit = cfg->getBool("ScarfaceIbit");
-	CrashTagTeamRacingIbit = cfg->getBool("CrashTagTeamRacingIbit");
+	VuAddSubHack = configSection->getBool("VuAddSubHack");
+	FpuCompareHack = configSection->getBool("FpuCompareHack");
+	FpuMulHack = configSection->getBool("FpuMulHack");
+	FpuNegDivHack = configSection->getBool("FpuNegDivHack");
+	XgKickHack = configSection->getBool("XgKickHack");
+	IPUWaitHack = configSection->getBool("IPUWaitHack");
+	EETimingHack = configSection->getBool("EETimingHack");
+	SkipMPEGHack = configSection->getBool("SkipMPEGHack");
+	OPHFlagHack = configSection->getBool("OPHFlagHack");
+	DMABusyHack = configSection->getBool("DMABusyHack");
+	VIFFIFOHack = configSection->getBool("VIFFIFOHack");
+	VIF1StallHack = configSection->getBool("VIF1StallHack");
+	GIFFIFOHack = configSection->getBool("GIFFIFOHack");
+	FMVinSoftwareHack = configSection->getBool("FMVinSoftwareHack");
+	GoemonTlbHack = configSection->getBool("GoemonTlbHack");
+	ScarfaceIbit = configSection->getBool("ScarfaceIbit");
+	CrashTagTeamRacingIbit = configSection->getBool("CrashTagTeamRacingIbit");
 }
 
 std::shared_ptr<YamlFile> Pcsx2Config::GamefixOptions::save()
 {
 	std::shared_ptr<YamlFile> config = std::make_shared<YamlFile>();
-	YamlFile* cfg = config.get();
 
-	cfg->setBool("VuAddSubHack", VuAddSubHack);
-	cfg->setBool("FpuCompareHack", FpuCompareHack);
-	cfg->setBool("FpuMulHack", FpuMulHack);
-	cfg->setBool("FpuNegDivHack", FpuNegDivHack);
-	cfg->setBool("XgKickHack", XgKickHack);
-	cfg->setBool("IPUWaitHack", IPUWaitHack);
-	cfg->setBool("EETimingHack", EETimingHack);
-	cfg->setBool("SkipMPEGHack", SkipMPEGHack);
-	cfg->setBool("OPHFlagHack", OPHFlagHack);
-	cfg->setBool("DMABusyHack", DMABusyHack);
-	cfg->setBool("VIFFIFOHack", VIFFIFOHack);
-	cfg->setBool("VIF1StallHack", VIF1StallHack);
-	cfg->setBool("GIFFIFOHack", GIFFIFOHack);
-	cfg->setBool("FMVinSoftwareHack", FMVinSoftwareHack);
-	cfg->setBool("GoemonTlbHack", GoemonTlbHack);
-	cfg->setBool("ScarfaceIbit", ScarfaceIbit);
-	cfg->setBool("CrashTagTeamRacingIbit", CrashTagTeamRacingIbit);
+	config->setBool("VuAddSubHack", VuAddSubHack);
+	config->setBool("FpuCompareHack", FpuCompareHack);
+	config->setBool("FpuMulHack", FpuMulHack);
+	config->setBool("FpuNegDivHack", FpuNegDivHack);
+	config->setBool("XgKickHack", XgKickHack);
+	config->setBool("IPUWaitHack", IPUWaitHack);
+	config->setBool("EETimingHack", EETimingHack);
+	config->setBool("SkipMPEGHack", SkipMPEGHack);
+	config->setBool("OPHFlagHack", OPHFlagHack);
+	config->setBool("DMABusyHack", DMABusyHack);
+	config->setBool("VIFFIFOHack", VIFFIFOHack);
+	config->setBool("VIF1StallHack", VIF1StallHack);
+	config->setBool("GIFFIFOHack", GIFFIFOHack);
+	config->setBool("FMVinSoftwareHack", FMVinSoftwareHack);
+	config->setBool("GoemonTlbHack", GoemonTlbHack);
+	config->setBool("ScarfaceIbit", ScarfaceIbit);
+	config->setBool("CrashTagTeamRacingIbit", CrashTagTeamRacingIbit);
 
 	return config;
 }
@@ -590,29 +569,26 @@ Pcsx2Config::DebugOptions::DebugOptions()
 
 void Pcsx2Config::DebugOptions::load(std::shared_ptr<YamlFile> configSection)
 {
-	YamlFile* cfg = configSection.get();
-
-	ShowDebuggerOnStart = cfg->getBool("ShowDebuggerOnStart", false);
-	AlignMemoryWindowStart = cfg->getBool("AlignMemoryWindowStart", true);
-	FontWidth = cfg->getChar("FontWidth", 8);
-	FontHeight = cfg->getChar("FontHeight", 12);
-	WindowWidth = cfg->getU32("WindowWidth", 0);
-	WindowHeight = cfg->getU32("WindowHeight", 0);
-	MemoryViewBytesPerRow = cfg->getU32("MemoryViewBytesPerRow", 16);
+	ShowDebuggerOnStart = configSection->getBool("ShowDebuggerOnStart", false);
+	AlignMemoryWindowStart = configSection->getBool("AlignMemoryWindowStart", true);
+	FontWidth = configSection->getChar("FontWidth", 8);
+	FontHeight = configSection->getChar("FontHeight", 12);
+	WindowWidth = configSection->getU32("WindowWidth", 0);
+	WindowHeight = configSection->getU32("WindowHeight", 0);
+	MemoryViewBytesPerRow = configSection->getU32("MemoryViewBytesPerRow", 16);
 }
 
 std::shared_ptr<YamlFile> Pcsx2Config::DebugOptions::save()
 {
 	std::shared_ptr<YamlFile> config = std::make_shared<YamlFile>();
-	YamlFile* cfg = config.get();
 
-	cfg->setBool("ShowDebuggerOnStart", ShowDebuggerOnStart);
-	cfg->setBool("AlignMemoryWindowStart", AlignMemoryWindowStart);
-	cfg->setChar("FontWidth", FontWidth);
-	cfg->setChar("FontHeight", FontHeight);
-	cfg->setU32("WindowWidth", WindowWidth);
-	cfg->setU32("WindowHeight", WindowHeight);
-	cfg->setU32("MemoryViewBytesPerRow", MemoryViewBytesPerRow);
+	config->setBool("ShowDebuggerOnStart", ShowDebuggerOnStart);
+	config->setBool("AlignMemoryWindowStart", AlignMemoryWindowStart);
+	config->setChar("FontWidth", FontWidth);
+	config->setChar("FontHeight", FontHeight);
+	config->setU32("WindowWidth", WindowWidth);
+	config->setU32("WindowHeight", WindowHeight);
+	config->setU32("MemoryViewBytesPerRow", MemoryViewBytesPerRow);
 
 	return config;
 }
@@ -674,51 +650,48 @@ void Pcsx2Config::RecompilerOptions::ApplySanityCheck()
 
 void Pcsx2Config::RecompilerOptions::load(std::shared_ptr<YamlFile> configSection)
 {
-	YamlFile* cfg = configSection.get();
+	EnableEE = configSection->getBool("EnableEE", true);
+	EnableIOP = configSection->getBool("EnableIOP", true);
+	EnableEECache = configSection->getBool("EnableEECache", false);
+	EnableVU0 = configSection->getBool("EnableVU0", true);
+	EnableVU1 = configSection->getBool("EnableVU1", true);
 
-	EnableEE = cfg->getBool("EnableEE", true);
-	EnableIOP = cfg->getBool("EnableIOP", true);
-	EnableEECache = cfg->getBool("EnableEECache", false);
-	EnableVU0 = cfg->getBool("EnableVU0", true);
-	EnableVU1 = cfg->getBool("EnableVU1", true);
+	vuOverflow = configSection->getBool("vuOverflow", true);
+	vuExtraOverflow = configSection->getBool("vuExtraOverflow", false);
+	vuSignOverflow = configSection->getBool("vuSignOverflow", false);
+	vuUnderflow = configSection->getBool("vuUnderflow", false);
 
-	vuOverflow = cfg->getBool("vuOverflow", true);
-	vuExtraOverflow = cfg->getBool("vuExtraOverflow", false);
-	vuSignOverflow = cfg->getBool("vuSignOverflow", false);
-	vuUnderflow = cfg->getBool("vuUnderflow", false);
+	fpuOverflow = configSection->getBool("fpuOverflow", true);
+	fpuExtraOverflow = configSection->getBool("fpuExtraOverflow", false);
+	fpuFullMode = configSection->getBool("fpuFullMode", false);
 
-	fpuOverflow = cfg->getBool("fpuOverflow", true);
-	fpuExtraOverflow = cfg->getBool("fpuExtraOverflow", false);
-	fpuFullMode = cfg->getBool("fpuFullMode", false);
-
-	StackFrameChecks = cfg->getBool("StackFrameChecks", false);
-	PreBlockCheckEE = cfg->getBool("PreBlockCheckEE", false);
-	PreBlockCheckIOP = cfg->getBool("PreBlockCheckIOP");
+	StackFrameChecks = configSection->getBool("StackFrameChecks", false);
+	PreBlockCheckEE = configSection->getBool("PreBlockCheckEE", false);
+	PreBlockCheckIOP = configSection->getBool("PreBlockCheckIOP");
 }
 
 std::shared_ptr<YamlFile> Pcsx2Config::RecompilerOptions::save()
 {
 	std::shared_ptr<YamlFile> config = std::make_shared<YamlFile>();
-	YamlFile* cfg = config.get();
 
-	cfg->setBool("EnableEE", EnableEE);
-	cfg->getBool("EnableIOP", EnableIOP);
-	cfg->getBool("EnableEECache", EnableEECache);
-	cfg->getBool("EnableVU0", EnableVU0);
-	cfg->getBool("EnableVU1", EnableVU1);
+	config->setBool("EnableEE", EnableEE);
+	config->getBool("EnableIOP", EnableIOP);
+	config->getBool("EnableEECache", EnableEECache);
+	config->getBool("EnableVU0", EnableVU0);
+	config->getBool("EnableVU1", EnableVU1);
 
-	cfg->getBool("vuOverflow", vuOverflow);
-	cfg->getBool("vuExtraOverflow", vuExtraOverflow);
-	cfg->getBool("vuSignOverflow", vuSignOverflow);
-	cfg->getBool("vuUnderflow", vuUnderflow);
+	config->getBool("vuOverflow", vuOverflow);
+	config->getBool("vuExtraOverflow", vuExtraOverflow);
+	config->getBool("vuSignOverflow", vuSignOverflow);
+	config->getBool("vuUnderflow", vuUnderflow);
 
-	cfg->getBool("fpuOverflow", fpuOverflow);
-	cfg->getBool("fpuExtraOverflow", fpuExtraOverflow);
-	cfg->getBool("fpuFullMode", fpuFullMode);
+	config->getBool("fpuOverflow", fpuOverflow);
+	config->getBool("fpuExtraOverflow", fpuExtraOverflow);
+	config->getBool("fpuFullMode", fpuFullMode);
 
-	cfg->getBool("StackFrameChecks", StackFrameChecks);
-	cfg->getBool("PreBlockCheckEE", PreBlockCheckEE);
-	cfg->getBool("PreBlockCheckIOP", PreBlockCheckIOP);
+	config->getBool("StackFrameChecks", StackFrameChecks);
+	config->getBool("PreBlockCheckEE", PreBlockCheckEE);
+	config->getBool("PreBlockCheckIOP", PreBlockCheckIOP);
 
 	return config;
 }
@@ -763,10 +736,9 @@ bool Pcsx2Config::MultitapEnabled(uint port) const
 void Pcsx2Config::loadFromFile(fs::path srcfile)
 {
 	// TODO - construct the right path
-	YamlFile* cfg = config.get();
-	cfg->loadFromFile(srcfile);
+	config->loadFromFile(srcfile);
 
-	YamlFile* coreCfg = std::move(cfg->getSection("Core")).get();
+	std::shared_ptr<YamlFile> coreCfg = config->getSection("Core");
 	CdvdVerboseReads = coreCfg->getBool("CdvdVerboseReads");
 	CdvdDumpBlocks = coreCfg->getBool("CdvdDumpBlocks");
 	CdvdShareWrite = coreCfg->getBool("CdvdShareWrite");
@@ -784,20 +756,19 @@ void Pcsx2Config::loadFromFile(fs::path srcfile)
 	MultitapPort0_Enabled = coreCfg->getBool("MultitapPort0_Enabled");
 	MultitapPort1_Enabled = coreCfg->getBool("MultitapPort1_Enabled");
 
-	Recompiler.load(cfg->getSection("Recompiler"));
-	Speedhacks.load(cfg->getSection("SpeedHacks"));
-	Gamefixes.load(cfg->getSection("GameFixes"));
-	Profiler.load(cfg->getSection("Profiler"));
-	Debugger.load(cfg->getSection("Debugger"));
-	Cpu.load(cfg->getSection("Cpu"));
-	Trace.load(cfg->getSection("Trace"));
-	GS.load(cfg->getSection("GS"));
+	Recompiler.load(config->getSection("Recompiler"));
+	Speedhacks.load(config->getSection("SpeedHacks"));
+	Gamefixes.load(config->getSection("GameFixes"));
+	Profiler.load(config->getSection("Profiler"));
+	Debugger.load(config->getSection("Debugger"));
+	Cpu.load(config->getSection("Cpu"));
+	Trace.load(config->getSection("Trace"));
+	GS.load(config->getSection("GS"));
 }
 
 void Pcsx2Config::saveToFile(fs::path dstFile)
 {
-	YamlFile* cfg = config.get();
-	YamlFile* coreCfg = std::move(cfg->getSection("Core")).get();
+	std::shared_ptr<YamlFile> coreCfg = config->getSection("Core");
 
 	coreCfg->setBool("CdvdVerboseReads", CdvdVerboseReads);
 	coreCfg->setBool("CdvdDumpBlocks", CdvdDumpBlocks);
@@ -816,17 +787,17 @@ void Pcsx2Config::saveToFile(fs::path dstFile)
 	coreCfg->setBool("MultitapPort0_Enabled", MultitapPort0_Enabled);
 	coreCfg->setBool("MultitapPort1_Enabled", MultitapPort1_Enabled);
 
-	cfg->setSection("Recompiler", Recompiler.save());
-	cfg->setSection("SpeedHacks", Speedhacks.save());
-	cfg->setSection("GameFixes", Gamefixes.save());
-	cfg->setSection("Profiler", Profiler.save());
-	cfg->setSection("Debugger", Debugger.save());
-	cfg->setSection("Cpu", Cpu.save());
-	cfg->setSection("Trace", Trace.save());
-	cfg->setSection("GS", GS.save());
+	config->setSection("Recompiler", Recompiler.save());
+	config->setSection("SpeedHacks", Speedhacks.save());
+	config->setSection("GameFixes", Gamefixes.save());
+	config->setSection("Profiler", Profiler.save());
+	config->setSection("Debugger", Debugger.save());
+	config->setSection("Cpu", Cpu.save());
+	config->setSection("Trace", Trace.save());
+	config->setSection("GS", GS.save());
 
 	// Save to file
-	config.get()->saveToFile(dstFile);
+	config->saveToFile(dstFile);
 }
 
 bool Pcsx2Config::operator==(const Pcsx2Config& right) const
