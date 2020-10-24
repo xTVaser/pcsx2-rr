@@ -445,7 +445,7 @@ bool Pcsx2App::OnInit()
 	pxDoOutOfMemory = SysOutOfMemory_EmergencyResponse;
 
 	g_Conf = std::make_unique<GlobalConfig>();
-	g_Conf->emulator->loadFromFile(GetVmSettingsFilename());
+	g_Conf->emulator->load();
 
 	wxInitAllImageHandlers();
 
