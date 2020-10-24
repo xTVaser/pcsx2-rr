@@ -11,6 +11,7 @@
 #include "EmulatorConfig.h"
 #include "GS.h"
 #include "gui/GSFrame.h"
+#include "fmt/core.h"
 
 // TODO - config - massive file, split it up
 
@@ -732,11 +733,11 @@ bool Pcsx2Config::MultitapEnabled(uint port) const
 	return (port == 0) ? MultitapPort0_Enabled : MultitapPort1_Enabled;
 }
 
-// TODO - bool for success?
-void Pcsx2Config::loadFromFile(fs::path srcfile)
+// TODO - config - bool for success?
+void Pcsx2Config::load()
 {
 	// TODO - construct the right path
-	config->loadFromFile(srcfile);
+	config->loadFromFile(fmt::format("%s.%s", GetVmSettingsFilename(), config->fileExtension()));
 
 	std::shared_ptr<YamlFile> coreCfg = config->getSection("Core");
 	CdvdVerboseReads = coreCfg->getBool("CdvdVerboseReads");
@@ -766,7 +767,8 @@ void Pcsx2Config::loadFromFile(fs::path srcfile)
 	GS.load(config->getSection("GS"));
 }
 
-void Pcsx2Config::saveToFile(fs::path dstFile)
+// TODO - config - this isn't called anywhere! where did it used to get callled!
+void Pcsx2Config::save()
 {
 	std::shared_ptr<YamlFile> coreCfg = config->getSection("Core");
 
@@ -797,7 +799,7 @@ void Pcsx2Config::saveToFile(fs::path dstFile)
 	config->setSection("GS", GS.save());
 
 	// Save to file
-	config->saveToFile(dstFile);
+	config->saveToFile(fmt::format("%s.%s", GetVmSettingsFilename(), config->fileExtension()));
 }
 
 bool Pcsx2Config::operator==(const Pcsx2Config& right) const

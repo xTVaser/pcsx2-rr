@@ -353,8 +353,8 @@ public:
 
 	bool EnableIPC;
 
-	void loadFromFile(fs::path srcFile);
-	void saveToFile(fs::path dstFile);
+	void load();
+	void save();
 
 	bool MultitapEnabled(uint port) const;
 
