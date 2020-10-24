@@ -409,8 +409,8 @@ bool GuiConfig::SaveMemcards(wxConfigBase* conf)
 	
 	for( uint slot=0; slot<2; ++slot )
 	{
-		//memcards[fmt::format("Slot{}u_Enable", slot)] = Mcd[slot].Enabled;
-		//memcards[fmt::format("Slot{}u_Filename", slot)] = Mcd[slot].Filename.GetFullName().ToStdString();
+		//conf->Write(wxString(fmt::format("Slot{}u_Enable", slot)), Mcd[slot].Enabled);
+	    //conf->Write(wxString(fmt::format("Slot{}u_Filename", slot)), Mcd[slot].Filename.GetFullName());
 	}
 
 	for( uint slot=2; slot<8; ++slot )
@@ -427,36 +427,42 @@ bool GuiConfig::SaveMemcards(wxConfigBase* conf)
 }
 
 bool GuiConfig::SaveRootItems(wxConfigBase* base)
-{
-	YAML::Node yaml;
-
-	yaml["RecentIsoCount"] = RecentIsoCount;
-	yaml["Listbook_ImageSize"] = Listbook_ImageSize;
-	yaml["Toolbar_ImageSize"] = Toolbar_ImageSize;
-	yaml["Toolbar_ShowLabels"] = Toolbar_ShowLabels;
-
+{	
 	std::string res = CurrentIso;
-	yaml["CurrentIso"] = res; // TODO - missing the allow relative flag
-	CurrentIso = res;
 
-	yaml["CurrentBlockdump"] = CurrentBlockdump;
-	yaml["CurrentELF"] = CurrentELF;
-	yaml["CurrentIRX"] = CurrentIRX;
+	if(base->Write("RecentIsoCount", RecentIsoCount) &&
+	base->Write("Listbook_ImageSize", Listbook_ImageSize) &&
+	base->Write("Toolbar_ImageSize", Toolbar_ImageSize) &&
+	base->Write("Toolbar_ShowLabels", Toolbar_ShowLabels)&&
 
-	yaml["EnableSpeedHacks"] = EnableSpeedHacks;
-	yaml["EnableGameFixes"] = EnableGameFixes;
-	yaml["EnableFastBoot"] = EnableFastBoot;
+	base->Write("CurrentIso", res) && // TODO - missing the allow relative flag
+	base->Write("CurrentBlockdump", CurrentBlockdump) &&
+	base->Write("CurrentELF", CurrentELF) &&
+	base->Write("CurrentIRX", CurrentIRX) &&
 
-	yaml["EnablePresets"] = EnablePresets;
-	yaml["PresetIndex"] = PresetIndex;
-	yaml["AskOnBoot"] =  AskOnBoot;
+	base->Write("EnableSpeedHacks", EnableSpeedHacks) &&
+	base->Write("EnableGameFixes", EnableGameFixes) &&
+	base->Write("EnableFastBoot", EnableFastBoot) &&
+
+	base->Write("EnablePresets", EnablePresets) &&
+	base->Write("PresetIndex", PresetIndex) &&
+	base->Write("AskOnBoot",  AskOnBoot))
+	{
+		return true;
+	}
 
 	#ifdef __WXMSW__
 	//IniEntry( McdCompressNTFS );
 	#endif
 
+	else
+	{
+		return false;
+	}
+	
+
 	// TODO - these are not basic types at all
-	//yaml["CdvdSource"] = (CdvdSource, CDVD_SourceLabels, CdvdSource );
+	//base->Write("CdvdSource", CdvdSource, CDVD_SourceLabels, CdvdSource );
 }
 
 // ------------------------------------------------------------------------
@@ -511,8 +517,7 @@ bool FolderOptions::Save(wxConfigBase* conf) // conf write = write to config fil
 	//when saving in portable mode, we save relative paths if possible
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
 	bool rel = true;
-
-
+ 
 	if (conf->Write("UseDefaultBios", UseDefaultBios) &&
 	conf->Write("UseDefaultSavestates", UseDefaultSavestates) &&
 	conf->Write("UseDefaultMemoryCards", UseDefaultMemoryCards) &&
@@ -534,14 +539,18 @@ bool FolderOptions::Save(wxConfigBase* conf) // conf write = write to config fil
 
 	conf->Write(RunIso.wstring(), rel) &&
 	conf->Write(RunELF.wstring(), rel))
+    {
+	    return true;
+    }
+    
+	// ApplyDefaults();
 
-{
-	return true;
-}
-//		ApplyDefaults();
-
-		for( int i=0; i<FolderId_COUNT; ++i )
+	for( int i=0; i<FolderId_COUNT; ++i )
+	{
 			operator[]( (FoldersEnum_t)i );
+	}	
+
+    return false;
 }
 
 #ifndef DISABLE_RECORDING
@@ -697,15 +706,22 @@ ConsoleLogOptions::ConsoleLogOptions()
 
 bool ConsoleLogOptions::Save(wxConfigBase* conf)
 {
-	conf->Write("Theme", Theme);
-	conf->Write("FontSize", FontSize);
-	conf->Write("IsVisible", Visible);
-	conf->Write("Autodock", AutoDock);
-	conf->Write("DisplaySizeX", DisplaySize.x);
-	conf->Write("DisplaySizeY", DisplaySize.y);
-	conf->Write("DisplayPositionX", DisplayPosition.x);
-	conf->Write("DisplayPositionY", DisplayPosition.y);
-	return true;
+	if (conf->Write("Theme", Theme) &&
+	conf->Write("FontSize", FontSize) &&
+	conf->Write("IsVisible", Visible) &&
+	conf->Write("Autodock", AutoDock) &&
+	conf->Write("DisplaySizeX", DisplaySize.x) &&
+	conf->Write("DisplaySizeY", DisplaySize.y) &&
+	conf->Write("DisplayPositionX", DisplayPosition.x) &&
+	conf->Write("DisplayPositionY", DisplayPosition.y))
+	{
+	    return true;
+	}
+	else
+	{
+		return false;
+	}
+	
 }
 
 void ConsoleLogOptions::Load(wxConfigBase* conf)
@@ -744,27 +760,35 @@ GSWindowOptions::GSWindowOptions()
 	IsToggleFullscreenOnDoubleClick = true;
 }
 
-void GSWindowOptions::Save(wxConfigBase* conf)
+bool GSWindowOptions::Save(wxConfigBase* conf)
 {
-	conf->Write("Zoom", Zoom);
-	conf->Write("OffsetX", OffsetX);
-	conf->Write("OffsetY", OffsetY);
-	conf->Write("StretchY", StretchY);
-	conf->Write("WindowPosX", WindowPos.x);
-	conf->Write("WindowPosY", WindowPos.y);
-	conf->Write("WindowSizeX", WindowSize.x);
-	conf->Write("WindowSizeY", WindowSize.y);
-	conf->Write("CloseOnEsc", CloseOnEsc);
-	conf->Write("AspectRatio", (int)AspectRatio);
-	conf->Write("IsMaximized", IsMaximized);
-	conf->Write("IsFullscreen", IsFullscreen);
-	conf->Write("AlwaysHideMouse", AlwaysHideMouse);
-	conf->Write("DisableScreenSaver", DisableScreenSaver);
-	conf->Write("DefaultToFullScreen", DefaultToFullscreen);
-	conf->Write("DisableResizeBorders", DisableResizeBorders);
-	conf->Write("FMVAspectRatioSwitch", (int)FMVAspectRatioSwitch);
-	conf->Write("EnableVsyncWindowFlag", EnableVsyncWindowFlag);
-	conf->Write("IsToggleFullscreenOnDoubleClick", IsToggleFullscreenOnDoubleClick);
+	if (conf->Write("Zoom", Zoom) &&
+	conf->Write("OffsetX", OffsetX) &&
+	conf->Write("OffsetY", OffsetY) &&
+	conf->Write("StretchY", StretchY) &&
+	conf->Write("WindowPosX", WindowPos.x) &&
+	conf->Write("WindowPosY", WindowPos.y) &&
+	conf->Write("WindowSizeX", WindowSize.x) &&
+	conf->Write("WindowSizeY", WindowSize.y) &&
+	conf->Write("CloseOnEsc", CloseOnEsc) &&
+	conf->Write("AspectRatio", (int)AspectRatio) &&
+	conf->Write("IsMaximized", IsMaximized) &&
+	conf->Write("IsFullscreen", IsFullscreen) &&
+	conf->Write("AlwaysHideMouse", AlwaysHideMouse) &&
+	conf->Write("DisableScreenSaver", DisableScreenSaver) &&
+	conf->Write("DefaultToFullScreen", DefaultToFullscreen) &&
+	conf->Write("DisableResizeBorders", DisableResizeBorders) &&
+	conf->Write("FMVAspectRatioSwitch", (int)FMVAspectRatioSwitch) &&
+	conf->Write("EnableVsyncWindowFlag", EnableVsyncWindowFlag) &&
+	conf->Write("IsToggleFullscreenOnDoubleClick", IsToggleFullscreenOnDoubleClick))
+	{
+		return true;
+	}
+    else
+	{
+		return false;
+	}
+	
 }
 
 void GSWindowOptions::Load(wxConfigBase* conf)
@@ -817,7 +841,7 @@ const std::string& FilenameOptions::operator[](PluginsEnum_t pluginidx) const
 	return Plugins[pluginidx].ToStdString();
 }
 
-void FilenameOptions::Save(wxConfigBase* conf)
+bool FilenameOptions::Save(wxConfigBase* conf)
 {
 
 	static const std::string pc("Please Configure");
@@ -846,6 +870,7 @@ void FilenameOptions::Save(wxConfigBase* conf)
 	else
 		conf->Write(L"BIOS", wxString(pc));
 
+		return true;
 }
 
 void FilenameOptions::Load(wxConfigBase* conf)
@@ -1199,24 +1224,32 @@ void GuiConfig::Save()
 	{
 		Init();
 	}
-	Input.Save(conf);
-	Folders.Save(conf);
-	console.Save(conf);
-	gsWindow.Save(conf);
-	Templates.Save(conf);
-	Framerate.Save(conf);
-	BaseFilenames.Save(conf);
 
-    conf->Write("MainGuiPositionX", MainGuiPosition.x);
-    conf->Write("MainGuiPositionY", MainGuiPosition.y);
-    conf->Write("SysSettingsTabName", SysSettingsTabName);
-	conf->Write("McdSettingsTabName", McdSettingsTabName);
-	conf->Write("ComponentsTabName", ComponentsTabName);
-	conf->Write("AppSettingsTabName", AppSettingsTabName);
-	conf->Write("GameDatabaseTabName", GameDatabaseTabName);
-    conf->Write("LanguageId", (int)LanguageId);
-    conf->Write("LanguageCode", LanguageCode);
-	conf->Flush();
+	if (Input.Save(conf) &&
+	Folders.Save(conf) &&
+	console.Save(conf) &&
+	gsWindow.Save(conf) &&
+	Templates.Save(conf) &&
+	Framerate.Save(conf) &&
+	BaseFilenames.Save(conf) &&
+
+    conf->Write("MainGuiPositionX", MainGuiPosition.x) &&
+    conf->Write("MainGuiPositionY", MainGuiPosition.y) &&
+    conf->Write("SysSettingsTabName", SysSettingsTabName) &&
+	conf->Write("McdSettingsTabName", McdSettingsTabName) &&
+	conf->Write("ComponentsTabName", ComponentsTabName) &&
+	conf->Write("AppSettingsTabName", AppSettingsTabName) &&
+	conf->Write("GameDatabaseTabName", GameDatabaseTabName) &&
+    conf->Write("LanguageId", (int)LanguageId) &&
+    conf->Write("LanguageCode", LanguageCode))
+	{
+	    conf->Flush();
+	}
+	else
+	{
+		return;
+	}
+	
 }
 
 GuiConfig::~GuiConfig()

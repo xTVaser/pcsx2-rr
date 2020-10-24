@@ -216,7 +216,7 @@ struct GSWindowOptions
 
 	GSWindowOptions();
 
-	void Save(wxConfigBase* conf);
+	bool Save(wxConfigBase* conf);
 	void Load(wxConfigBase* conf);
 	void SanityCheck();
 };
@@ -227,7 +227,7 @@ struct FilenameOptions
 	wxString Bios;
 	wxString Plugins[PluginId_Count];
 
-	void Save(wxConfigBase* conf);
+	bool Save(wxConfigBase* conf);
 	void Load(wxConfigBase* conf);
 
 	const std::string& operator[](PluginsEnum_t pluginidx) const;
