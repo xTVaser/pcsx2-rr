@@ -14,7 +14,6 @@
  */
 
 #include "PrecompiledHeader.h"
-#include "AppConfig.h"
 #include "../Global.h"
 #include "Dialogs.h"
 

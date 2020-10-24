@@ -180,7 +180,7 @@ bool SysTraceLog_SaveSettings(wxConfigBase* conf)
 			conf->Write(wxString(category), log->GetShortName());
 		}
 	}
-
+	return true;
 }
 
 static bool traceLogEnabled( const wxString& ident )

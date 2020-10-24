@@ -457,6 +457,7 @@ bool GuiConfig::SaveRootItems(wxConfigBase* base)
 
 	// TODO - these are not basic types at all
 	//yaml["CdvdSource"] = (CdvdSource, CDVD_SourceLabels, CdvdSource );
+	return true;
 }
 
 // ------------------------------------------------------------------------

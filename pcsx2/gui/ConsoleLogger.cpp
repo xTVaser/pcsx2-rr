@@ -363,6 +363,8 @@ bool ConLog_SaveSettings(wxConfigBase* conf)
 	}
 
 	ConLogInitialized = true;
+
+	return true;
 }
 
 // --------------------------------------------------------------------------------------
