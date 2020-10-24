@@ -2,6 +2,8 @@
 
 #include "GlobalConfig.h"
 
+std::unique_ptr<GlobalConfig> g_Conf;
+
 GlobalConfig::GlobalConfig()
 {
 	gui = std::make_unique<GuiConfig>();

@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "config/GlobalConfig.h"
+#include "../config/GlobalConfig.h"
 #include "Utilities/TraceLog.h"
 #include "../Memory.h"
 
@@ -75,7 +75,7 @@ public:
 	void DoWrite( const char *fmt ) const override;
 	bool IsActive() const override
 	{
-		return g_Conf->emulator->Trace.EnableTraceLogFilters && Enabled;
+		return  g_Conf->emulator->Trace.EnableTraceLogFilters && Enabled;
 	}
 };
 
@@ -84,7 +84,7 @@ class SysTraceLog_EE : public SysTraceLog
 	typedef SysTraceLog _parent;
 
 public:
-	SysTraceLog_EE( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
+SysTraceLog_EE( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
 
 	void ApplyPrefix( FastFormatAscii& ascii ) const override;
 	bool IsActive() const override
@@ -94,7 +94,6 @@ public:
 	
 	wxString GetCategory() const override { return L"EE"; }
 };
-
 class SysTraceLog_VIFcode : public SysTraceLog_EE
 {
 	typedef SysTraceLog_EE _parent;

@@ -63,10 +63,6 @@
 #include <wx/osx/private.h> // needed to implement the app!
 #endif
 
-
-std::unique_ptr<GlobalConfig> g_Conf;
-
-
 AspectRatioType iniAR;
 bool switchAR;
 

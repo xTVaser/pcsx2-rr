@@ -56,7 +56,6 @@ set(pcsx2Sources
 	Cache.cpp
 	COP0.cpp
 	COP2.cpp
-	config/Configuration.cpp
 	Counters.cpp
 	GameDatabase.cpp
 	Dump.cpp
@@ -133,8 +132,6 @@ set(pcsx2Headers
 	Cache.h
 	cheatscpp.h
 	Common.h
-	Config.h
-	config/Configuration.h
 	COP0.h
 	Counters.h
 	Dmac.h
@@ -379,6 +376,9 @@ set(pcsx2GuiSources
 	gui/Saveslots.cpp
 	gui/SysState.cpp
 	gui/UpdateUI.cpp
+	config/EmulatorConfig.cpp
+	config/GlobalConfig.cpp
+	config/PortableConfig.cpp
 	)
 
 # gui headers
@@ -421,6 +421,9 @@ set(pcsx2GuiHeaders
 	gui/pxEventThread.h
 	gui/RecentIsoList.h
 	gui/Saveslots.h
+	config/EmulatorConfig.h
+	config/GlobalConfig.h
+	config/PortableConfig.h
 	)
 
 # Warning: the declaration of the .h are mandatory in case of resources files. It will ensure the creation
