@@ -85,7 +85,7 @@ static bool HandlePluginError(BaseException& ex)
 		Msgbox::Alert(ex.FormatDisplayMessage());
 	}
 
-	g_Conf->gui->gui->ComponentsTabName = "Plugins";
+	g_Conf->gui->ComponentsTabName = "Plugins";
 
 	// TODO: Send a message to the panel to select the failed plugin.
 
@@ -205,7 +205,7 @@ static bool HandleBIOSError(BaseException& ex)
 		Msgbox::Alert(ex.FormatDisplayMessage() + L"\n\n" + BIOS_GetMsg_Required(), _("PS2 BIOS Error"));
 	}
 
-	g_Conf->gui->gui->ComponentsTabName = "BIOS";
+	g_Conf->gui->ComponentsTabName = "BIOS";
 
 	return AppOpenModalDialog<Dialogs::ComponentsConfigDialog>(L"BIOS") != wxID_CANCEL;
 }
@@ -551,12 +551,12 @@ extern uint renderswitch_delay;
 
 void DoFmvSwitch(bool on)
 {
-	if (g_Conf->gui->gui->gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off)
+	if (g_Conf->gui->gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off)
 	{
 		if (on)
 		{
 			switchAR = true;
-			iniAR = g_Conf->gui->gui->gsWindow.AspectRatio;
+			iniAR = g_Conf->gui->gsWindow.AspectRatio;
 		}
 		else
 		{
@@ -580,7 +580,7 @@ void Pcsx2App::LogicalVsync()
 
 	FpsManager.DoFrame();
 
-	if (g_Conf->gui->gui->gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off)
+	if (g_Conf->gui->gsWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off)
 	{
 		if (EnableFMV)
 		{
@@ -651,7 +651,7 @@ void Pcsx2App::HandleEvent(wxEvtHandler* handler, wxEventFunction func, wxEvent&
 	try
 	{
 #ifndef DISABLE_RECORDING
-		if (g_Conf->gui->emulator->EnableRecordingTools)
+		if (g_Conf->emulator->EnableRecordingTools)
 		{
 			if (g_InputRecordingControls.IsPaused())
 			{
@@ -879,28 +879,28 @@ void AppApplySettings(const GuiConfig* oldconf)
 
 	ScopedCoreThreadPause paused_core;
 
-	g_Conf->gui->gui->Folders.ApplyDefaults();
+	g_Conf->gui->Folders.ApplyDefaults();
 
 	// Ensure existence of necessary documents folders.  Plugins and other parts
 	// of PCSX2 rely on them.
 
-	if (!folderUtils.DoesExist(g_Conf->gui->gui->Folders.MemoryCards) &&
-		folderUtils.DoesExist(g_Conf->gui->gui->Folders.Savestates) &&
-		folderUtils.DoesExist(g_Conf->gui->gui->Folders.Snapshots) &&
-		folderUtils.DoesExist(g_Conf->gui->gui->Folders.Cheats) &&
-		folderUtils.DoesExist(g_Conf->gui->gui->Folders.CheatsWS) &&
-		folderUtils.DoesExist(g_Conf->gui->gui->Folders.Logs))
+	if (!folderUtils.DoesExist(g_Conf->gui->Folders.MemoryCards) &&
+		folderUtils.DoesExist(g_Conf->gui->Folders.Savestates) &&
+		folderUtils.DoesExist(g_Conf->gui->Folders.Snapshots) &&
+		folderUtils.DoesExist(g_Conf->gui->Folders.Cheats) &&
+		folderUtils.DoesExist(g_Conf->gui->Folders.CheatsWS) &&
+		folderUtils.DoesExist(g_Conf->gui->Folders.Logs))
 	{
 
-		if (folderUtils.CreateFolder(g_Conf->gui->gui->Folders.MemoryCards) &&
-			folderUtils.CreateFolder(g_Conf->gui->gui->Folders.Savestates) &&
-			folderUtils.CreateFolder(g_Conf->gui->gui->Folders.Snapshots) &&
-			folderUtils.CreateFolder(g_Conf->gui->gui->Folders.Cheats) &&
-			folderUtils.CreateFolder(g_Conf->gui->gui->Folders.CheatsWS) &&
-			folderUtils.CreateFolder(g_Conf->gui->gui->Folders.Logs))
+		if (folderUtils.CreateFolder(g_Conf->gui->Folders.MemoryCards) &&
+			folderUtils.CreateFolder(g_Conf->gui->Folders.Savestates) &&
+			folderUtils.CreateFolder(g_Conf->gui->Folders.Snapshots) &&
+			folderUtils.CreateFolder(g_Conf->gui->Folders.Cheats) &&
+			folderUtils.CreateFolder(g_Conf->gui->Folders.CheatsWS) &&
+			folderUtils.CreateFolder(g_Conf->gui->Folders.Logs))
 		{
 
-			g_Conf->gui->emulator->BiosFilename = g_Conf->gui->gui->FullpathToBios();
+			g_Conf->emulator->BiosFilename = g_Conf->gui->FullpathToBios();
 
 			RelocateLogfile();
 
@@ -916,7 +916,7 @@ void AppApplySettings(const GuiConfig* oldconf)
 			// Memcards generally compress very well via NTFS compression.
 
 #ifdef __WXMSW__
-			NTFS_CompressFile(g_Conf->gui->gui->Folders.MemoryCards, g_Conf->gui->gui->McdCompressNTFS);
+			NTFS_CompressFile(g_Conf->gui->Folders.MemoryCards, g_Conf->gui->McdCompressNTFS);
 #endif
 			sApp.DispatchEvent(AppStatus_SettingsApplied);
 
@@ -931,7 +931,7 @@ void AppApplySettings(const GuiConfig* oldconf)
 
 	else
 	{
-		g_Conf->gui->emulator->BiosFilename = g_Conf->gui->gui->FullpathToBios();
+		g_Conf->emulator->BiosFilename = g_Conf->gui->FullpathToBios();
 
 		RelocateLogfile();
 
@@ -947,7 +947,7 @@ void AppApplySettings(const GuiConfig* oldconf)
 		// Memcards generally compress very well via NTFS compression.
 
 #ifdef __WXMSW__
-		NTFS_CompressFile(g_Conf->gui->gui->Folders.MemoryCards, g_Conf->gui->gui->McdCompressNTFS);
+		NTFS_CompressFile(g_Conf->gui->Folders.MemoryCards, g_Conf->gui->McdCompressNTFS);
 #endif
 		sApp.DispatchEvent(AppStatus_SettingsApplied);
 
@@ -1033,15 +1033,15 @@ void Pcsx2App::OpenGsPanel()
 		switch (wxGetApp().Overrides.GsWindowMode)
 		{
 			case GsWinMode_Windowed:
-				g_Conf->gui->gui->gsWindow.IsFullscreen = false;
+				g_Conf->gui->gsWindow.IsFullscreen = false;
 				break;
 
 			case GsWinMode_Fullscreen:
-				g_Conf->gui->gui->gsWindow.IsFullscreen = true;
+				g_Conf->gui->gsWindow.IsFullscreen = true;
 				break;
 
 			case GsWinMode_Unspecified:
-				g_Conf->gui->gui->gsWindow.IsFullscreen = g_Conf->gui->gui->gsWindow.DefaultToFullscreen;
+				g_Conf->gui->gsWindow.IsFullscreen = g_Conf->gui->gsWindow.DefaultToFullscreen;
 				break;
 		}
 	}
@@ -1102,7 +1102,7 @@ void Pcsx2App::OpenGsPanel()
 	pDsp[1] = NULL;
 #endif
 
-	gsFrame->ShowFullScreen(g_Conf->gui->gui->gsWindow.IsFullscreen);
+	gsFrame->ShowFullScreen(g_Conf->gui->gsWindow.IsFullscreen);
 
 #ifndef DISABLE_RECORDING
 	// Disable recording controls that only make sense if the game is running
@@ -1228,7 +1228,7 @@ protected:
 		symbolMap.Clear();
 		CBreakPoints::SetSkipFirst(0);
 
-		(CDVD_SourceType::Iso, g_Conf->gui->gui->CurrentIso.c_str());
+		(CDVD_SourceType::Iso, g_Conf->gui->CurrentIso.c_str());
 		if (m_UseCDVDsrc)
 			CDVDsys_ChangeSource(m_cdvdsrc_type);
 		else if (CDVD == NULL)
@@ -1281,7 +1281,7 @@ void SysStatus(const wxString& text)
 // Applies a new active iso source file
 void SysUpdateIsoSrcFile(const wxString& newIsoFile)
 {
-	g_Conf->gui->gui->CurrentIso = newIsoFile.ToStdString();
+	g_Conf->gui->CurrentIso = newIsoFile.ToStdString();
 	sMainFrame.UpdateStatusBar();
 	sMainFrame.UpdateCdvdSrcSelection();
 }
@@ -1289,9 +1289,9 @@ void SysUpdateIsoSrcFile(const wxString& newIsoFile)
 void SysUpdateDiscSrcDrive(const wxString& newDiscDrive)
 {
 #if defined(_WIN32)
-	g_Conf->gui->gui->Folders.RunDisc = newDiscDrive.ToStdString();
+	g_Conf->gui->Folders.RunDisc = newDiscDrive.ToStdString();
 #else
-	g_Conf->gui->gui->Folders.RunDisc = newDiscDrive.ToStdString();
+	g_Conf->gui->Folders.RunDisc = newDiscDrive.ToStdString();
 #endif
 	AppSaveSettings();
 	sMainFrame.UpdateCdvdSrcSelection();
