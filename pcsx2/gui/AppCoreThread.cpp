@@ -182,7 +182,7 @@ void AppCoreThread::ChangeCdvdSource()
 		return;
 	}
 
-	CDVD_SourceType cdvdsrc(g_Conf->CdvdSource);
+	CDVD_SourceType cdvdsrc(g_Conf->gui->CdvdSource);
 	if (cdvdsrc == CDVDsys_GetSourceType())
 		return;
 
@@ -199,15 +199,15 @@ void Pcsx2App::SysApplySettings()
 {
 	if (AppRpc_TryInvoke(&Pcsx2App::SysApplySettings))
 		return;
-	CoreThread.ApplySettings(g_Conf->EmuOptions);
+	CoreThread.ApplySettings(g_Conf->emulator->;
 
-	CDVD_SourceType cdvdsrc(g_Conf->CdvdSource);
-	if (cdvdsrc != CDVDsys_GetSourceType() || (cdvdsrc == CDVD_SourceType::Iso && (CDVDsys_GetFile(cdvdsrc) != g_Conf->CurrentIso)))
+	CDVD_SourceType cdvdsrc(g_Conf->gui->CdvdSource);
+	if (cdvdsrc != CDVDsys_GetSourceType() || (cdvdsrc == CDVD_SourceType::Iso && (CDVDsys_GetFile(cdvdsrc) != g_Conf->gui->CurrentIso)))
 	{
 		CoreThread.ResetCdvd();
 	}
 
-	CDVDsys_SetFile(CDVD_SourceType::Iso, g_Conf->CurrentIso);
+	CDVDsys_SetFile(CDVD_SourceType::Iso, g_Conf->gui->CurrentIso);
 }
 
 void AppCoreThread::OnResumeReady()
@@ -243,7 +243,8 @@ void AppCoreThread::OnPauseDebug()
 // (game fixes, round modes, clamp modes, etc...)
 // Returns number of gamefixes set
 // TODO
-static int loadGameSettings(Pcsx2Config& dest, const GameDatabaseSchema::GameEntry& game) {
+static int loadGameSettings(Pcsx2Config& dest, const GameDatabaseSchema::GameEntry& game)
+{
 	//if( !game.IsOk() ) return 0;
 
 	//int  gf  = 0;
@@ -369,10 +370,10 @@ static void _ApplySettings(const Pcsx2Config& src, Pcsx2Config& fixup)
 
 	// TODO - ugh wtf is going on here lol, why is the entire config reference being assigned?
 
-	//fixup = src; 
+	//fixup = src;
 
 	const CommandlineOverrides& overrides(wxGetApp().Overrides);
-	if (overrides.DisableSpeedhacks || !g_Conf->EnableSpeedHacks)
+	if (overrides.DisableSpeedhacks || !g_Conf->gui->EnableSpeedHacks)
 		fixup.Speedhacks.DisableAll();
 
 	if (overrides.ApplyCustomGamefixes)
@@ -380,7 +381,7 @@ static void _ApplySettings(const Pcsx2Config& src, Pcsx2Config& fixup)
 		for (GamefixId id = GamefixId_FIRST; id < pxEnumEnd; ++id)
 			fixup.Gamefixes.Set(id, overrides.Gamefixes.Get(id));
 	}
-	else if (!g_Conf->EnableGameFixes)
+	else if (!g_Conf->gui->EnableGameFixes)
 		fixup.Gamefixes.DisableAll();
 
 	if (overrides.ProfilingMode)
@@ -426,9 +427,9 @@ static void _ApplySettings(const Pcsx2Config& src, Pcsx2Config& fixup)
 			GameDatabaseSchema::GameEntry game = GameDB->findGame(std::string(curGameKey));
 			if (game.isValid)
 			{
-				gameName   = game.name;
-				gameName  += L" (" + game.region + L")";
-				gameCompat = L" [Status = "+compatToStringWX(game.compat)+L"]";
+				gameName = game.name;
+				gameName += L" (" + game.region + L")";
+				gameCompat = L" [Status = " + compatToStringWX(game.compat) + L"]";
 				gameMemCardFilter = game.memcardFiltersAsString();
 			}
 
@@ -567,7 +568,7 @@ void AppCoreThread::OnResumeInThread(bool isSuspended)
 {
 	if (m_resetCdvd)
 	{
-		CDVDsys_ChangeSource(g_Conf->CdvdSource);
+		CDVDsys_ChangeSource(g_Conf->gui->CdvdSource);
 		cdvdCtrlTrayOpen();
 		m_resetCdvd = false;
 	}

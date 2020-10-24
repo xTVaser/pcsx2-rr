@@ -1007,6 +1007,9 @@
     <ClCompile Include="..\..\config\PortableConfig.cpp">
       <Filter>Configuration</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\config\GlobalConfig.cpp">
+      <Filter>Configuration</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Patch.h">
@@ -1530,6 +1533,9 @@
       <Filter>Configuration</Filter>
     </ClInclude>
     <ClInclude Include="..\..\config\PortableConfig.h">
+      <Filter>Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\config\GlobalConfig.h">
       <Filter>Configuration</Filter>
     </ClInclude>
   </ItemGroup>

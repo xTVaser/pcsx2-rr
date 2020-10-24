@@ -39,7 +39,7 @@ void SaveStateBase::InputRecordingFreeze()
 	Freeze(g_FrameCount);
 
 #ifndef DISABLE_RECORDING
-	if (g_Conf->EmuOptions.EnableRecordingTools)
+	if (g_Conf->emulator->EnableRecordingTools)
 	{
 		// Loading a save-state is an asynchronous task. If we are playing a recording
 		// that starts from a savestate (not power-on) and the starting (pcsx2 internal) frame
@@ -292,7 +292,7 @@ bool InputRecording::Create(wxString FileName, bool fromSaveState, wxString auth
 		StateCopy_SaveToFile(FileName + "_SaveState.p2s");
 	}
 	else
-		sApp.SysExecute(g_Conf->CdvdSource);
+		sApp.SysExecute(g_Conf->gui->CdvdSource);
 
 	// Set emulator version
 	inputRecordingData.GetHeader().SetEmulatorVersion();
@@ -342,11 +342,11 @@ bool InputRecording::Play(wxString fileName)
 	else
 	{
 		initialLoad = true;
-		sApp.SysExecute(g_Conf->CdvdSource);
+		sApp.SysExecute(g_Conf->gui->CdvdSource);
 	}
 
 	// Check if the current game matches with the one used to make the original recording
-	if (!fs::is_empty(g_Conf->CurrentIso))
+	if (!fs::is_empty(g_Conf->gui->CurrentIso))
 		if (resolveGameName() != inputRecordingData.GetHeader().gameName)
 			inputRec::consoleLog("Input recording was possibly constructed for a different game.");
 
@@ -381,7 +381,7 @@ wxString InputRecording::resolveGameName()
 			}
 		}
 	}
-	return !gameName.IsEmpty() ? gameName : (wxString)Path::GetFilename(g_Conf->CurrentIso);
+	return !gameName.IsEmpty() ? gameName : (wxString)Path::GetFilename(g_Conf->gui->CurrentIso);
 }
 
 #endif

@@ -23,49 +23,57 @@
 #ifdef PCSX2_DEVBUILD
 
 // GS Playback
-int g_SaveGSStream = 0; // save GS stream; 1 - prepare, 2 - save
+int g_SaveGSStream = 0;  // save GS stream; 1 - prepare, 2 - save
 int g_nLeftGSFrames = 0; // when saving, number of frames left
 static std::unique_ptr<memSavingState> g_fGSSave;
 
 // fixme - need to take this concept and make it MTGS friendly.
 #ifdef _STGS_GSSTATE_CODE
-void GSGIFTRANSFER1(u32 *pMem, u32 addr) {
-	if( g_SaveGSStream == 2) {
+void GSGIFTRANSFER1(u32* pMem, u32 addr)
+{
+	if (g_SaveGSStream == 2)
+	{
 		u32 type = GSRUN_TRANS1;
-		u32 size = (0x4000-(addr))/16;
-		g_fGSSave->Freeze( type );
-		g_fGSSave->Freeze( size );
-		g_fGSSave->FreezeMem( ((u8*)pMem)+(addr), size*16 );
+		u32 size = (0x4000 - (addr)) / 16;
+		g_fGSSave->Freeze(type);
+		g_fGSSave->Freeze(size);
+		g_fGSSave->FreezeMem(((u8*)pMem) + (addr), size * 16);
 	}
 	GSgifTransfer1(pMem, addr);
 }
 
-void GSGIFTRANSFER2(u32 *pMem, u32 size) {
-	if( g_SaveGSStream == 2) {
+void GSGIFTRANSFER2(u32* pMem, u32 size)
+{
+	if (g_SaveGSStream == 2)
+	{
 		u32 type = GSRUN_TRANS2;
 		u32 _size = size;
-		g_fGSSave->Freeze( type );
-		g_fGSSave->Freeze( size );
-		g_fGSSave->FreezeMem( pMem, _size*16 );
+		g_fGSSave->Freeze(type);
+		g_fGSSave->Freeze(size);
+		g_fGSSave->FreezeMem(pMem, _size * 16);
 	}
 	GSgifTransfer2(pMem, size);
 }
 
-void GSGIFTRANSFER3(u32 *pMem, u32 size) {
-	if( g_SaveGSStream == 2 ) {
+void GSGIFTRANSFER3(u32* pMem, u32 size)
+{
+	if (g_SaveGSStream == 2)
+	{
 		u32 type = GSRUN_TRANS3;
 		u32 _size = size;
-		g_fGSSave->Freeze( type );
-		g_fGSSave->Freeze( size );
-		g_fGSSave->FreezeMem( pMem, _size*16 );
+		g_fGSSave->Freeze(type);
+		g_fGSSave->Freeze(size);
+		g_fGSSave->FreezeMem(pMem, _size * 16);
 	}
 	GSgifTransfer3(pMem, size);
 }
 
-__fi void GSVSYNC(void) {
-	if( g_SaveGSStream == 2 ) {
+__fi void GSVSYNC(void)
+{
+	if (g_SaveGSStream == 2)
+	{
 		u32 type = GSRUN_VSYNC;
-		g_fGSSave->Freeze( type );
+		g_fGSSave->Freeze(type);
 	}
 }
 #endif
@@ -95,7 +103,7 @@ void LoadGSState(const wxString& file)
 	wxString src( file );
 
 	//if( !wxFileName::FileExists( src ) )
-	//	src = Path::Combine( g_Conf->Folders.Savestates, src );
+	//	src = Path::Combine( g_Conf->gui->Folders.Savestates, src );
 
 	if( !wxFileName::FileExists( src ) )
 		return;
@@ -196,28 +204,35 @@ void RunGSState( memLoadingState& f )
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
-void vSyncDebugStuff( uint frame )
+void vSyncDebugStuff(uint frame)
 {
 #ifdef OLD_TESTBUILD_STUFF
-	if( g_TestRun.enabled && g_TestRun.frame > 0 ) {
-		if( frame > g_TestRun.frame ) {
+	if (g_TestRun.enabled && g_TestRun.frame > 0)
+	{
+		if (frame > g_TestRun.frame)
+		{
 			// take a snapshot
-			if( g_TestRun.pimagename != NULL && GSmakeSnapshot2 != NULL ) {
-				if( g_TestRun.snapdone ) {
+			if (g_TestRun.pimagename != NULL && GSmakeSnapshot2 != NULL)
+			{
+				if (g_TestRun.snapdone)
+				{
 					g_TestRun.curimage++;
 					g_TestRun.snapdone = 0;
 					g_TestRun.frame += 20;
-					if( g_TestRun.curimage >= g_TestRun.numimages ) {
+					if (g_TestRun.curimage >= g_TestRun.numimages)
+					{
 						// exit
 						g_EmuThread->Cancel();
 					}
 				}
-				else {
+				else
+				{
 					// query for the image
 					GSmakeSnapshot2(g_TestRun.pimagename, &g_TestRun.snapdone, g_TestRun.jpgcapture);
 				}
 			}
-			else {
+			else
+			{
 				// exit
 				g_EmuThread->Cancel();
 			}
@@ -226,41 +241,51 @@ void vSyncDebugStuff( uint frame )
 
 	GSVSYNC();
 
-	if( g_SaveGSStream == 1 ) {
+	if (g_SaveGSStream == 1)
+	{
 		freezeData fP;
 
 		g_SaveGSStream = 2;
 		g_fGSSave->gsFreeze();
 
-		if (GSfreeze(FREEZE_SIZE, &fP) == -1) {
-			safe_delete( g_fGSSave );
+		if (GSfreeze(FREEZE_SIZE, &fP) == -1)
+		{
+			safe_delete(g_fGSSave);
 			g_SaveGSStream = 0;
 		}
-		else {
+		else
+		{
 			fP.data = (s8*)malloc(fP.size);
-			if (fP.data == NULL) {
-				safe_delete( g_fGSSave );
+			if (fP.data == NULL)
+			{
+				safe_delete(g_fGSSave);
 				g_SaveGSStream = 0;
 			}
-			else {
-				if (GSfreeze(FREEZE_SAVE, &fP) == -1) {
-					safe_delete( g_fGSSave );
+			else
+			{
+				if (GSfreeze(FREEZE_SAVE, &fP) == -1)
+				{
+					safe_delete(g_fGSSave);
 					g_SaveGSStream = 0;
 				}
-				else {
-					g_fGSSave->Freeze( fP.size );
-					if (fP.size) {
-						g_fGSSave->FreezeMem( fP.data, fP.size );
+				else
+				{
+					g_fGSSave->Freeze(fP.size);
+					if (fP.size)
+					{
+						g_fGSSave->FreezeMem(fP.data, fP.size);
 						free(fP.data);
 					}
 				}
 			}
 		}
 	}
-	else if( g_SaveGSStream == 2 ) {
+	else if (g_SaveGSStream == 2)
+	{
 
-		if( --g_nLeftGSFrames <= 0 ) {
-			safe_delete( g_fGSSave );
+		if (--g_nLeftGSFrames <= 0)
+		{
+			safe_delete(g_fGSSave);
 			g_SaveGSStream = 0;
 			Console.WriteLn("Done saving GS stream");
 		}

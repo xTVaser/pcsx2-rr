@@ -386,7 +386,7 @@ bool DoCDVDopen()
 
 	FolderUtils pathUtils;
 
-	std::string somepick( Path::GetFilenameWithoutExt( m_SourceFilename[CurrentSourceType] )  );
+	std::string somepick(Path::GetFilenameWithoutExt(m_SourceFilename[CurrentSourceType]));
 	//FWIW Disc serial availability doesn't seem reliable enough, sometimes it's there and sometime it's just null
 	//Shouldn't the serial be available all time? Potentially need to look into Elfreloadinfo() reliability
 	//TODO: Add extra fallback case for CRC.
@@ -395,10 +395,10 @@ bool DoCDVDopen()
 	else if (somepick.empty())
 		somepick = "Untitled";
 
-	if (g_Conf->CurrentBlockdump.empty())
-		g_Conf->CurrentBlockdump = wxGetCwd();
+	if (g_Conf->gui->CurrentBlockdump.empty())
+		g_Conf->gui->CurrentBlockdump = wxGetCwd();
 
-	wxString temp(Path::Combine(g_Conf->CurrentBlockdump, somepick));
+	wxString temp(Path::Combine(g_Conf->gui->CurrentBlockdump, somepick));
 
 #ifdef ENABLE_TIMESTAMPS
 	wxDateTime curtime(wxDateTime::GetTimeNow());

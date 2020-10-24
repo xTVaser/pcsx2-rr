@@ -48,18 +48,21 @@ protected:
 	wxWindow* m_cancel;
 
 public:
-	ScopedOkButtonDisabler( Dialogs::BaseConfigurationDialog* parent )
+	ScopedOkButtonDisabler(Dialogs::BaseConfigurationDialog* parent)
 	{
 		m_parent = parent;
-		m_parent->AllowApplyActivation( false );
+		m_parent->AllowApplyActivation(false);
 
-		m_apply		= m_parent->FindWindow( wxID_APPLY );
-		m_ok		= m_parent->FindWindow( wxID_OK );
-		m_cancel	= m_parent->FindWindow( wxID_CANCEL );
+		m_apply = m_parent->FindWindow(wxID_APPLY);
+		m_ok = m_parent->FindWindow(wxID_OK);
+		m_cancel = m_parent->FindWindow(wxID_CANCEL);
 
-		if (m_apply)	m_apply	->Disable();
-		if (m_ok)		m_ok	->Disable();
-		if (m_cancel)	m_cancel->Disable();
+		if (m_apply)
+			m_apply->Disable();
+		if (m_ok)
+			m_ok->Disable();
+		if (m_cancel)
+			m_cancel->Disable();
 	}
 
 	// Use this to prevent the Apply button from being re-enabled.
@@ -75,11 +78,14 @@ public:
 
 	virtual ~ScopedOkButtonDisabler()
 	{
-		if (m_apply)	m_apply	->Enable();
-		if (m_ok)		m_ok	->Enable();
-		if (m_cancel)	m_cancel->Enable();
+		if (m_apply)
+			m_apply->Enable();
+		if (m_ok)
+			m_ok->Enable();
+		if (m_cancel)
+			m_cancel->Enable();
 
-		m_parent->AllowApplyActivation( true );
+		m_parent->AllowApplyActivation(true);
 	}
 };
 
@@ -88,8 +94,8 @@ public:
 // --------------------------------------------------------------------------------------
 wxIMPLEMENT_DYNAMIC_CLASS(BaseApplicableDialog, wxDialogWithHelpers);
 
-BaseApplicableDialog::BaseApplicableDialog( wxWindow* parent, const wxString& title, const pxDialogCreationFlags& cflags )
-	: wxDialogWithHelpers( parent, title, cflags.MinWidth(425).Minimize() )
+BaseApplicableDialog::BaseApplicableDialog(wxWindow* parent, const wxString& title, const pxDialogCreationFlags& cflags)
+	: wxDialogWithHelpers(parent, title, cflags.MinWidth(425).Minimize())
 {
 	Init();
 }
@@ -101,7 +107,7 @@ BaseApplicableDialog::~BaseApplicableDialog()
 
 wxString BaseApplicableDialog::GetDialogName() const
 {
-	pxFailDev( "This class must implement GetDialogName!" );
+	pxFailDev("This class must implement GetDialogName!");
 	return L"Unnamed";
 }
 
@@ -110,15 +116,15 @@ void BaseApplicableDialog::Init()
 {
 	Bind(pxEvt_ApplySettings, &BaseApplicableDialog::OnSettingsApplied, this);
 
-	wxCommandEvent applyEvent( pxEvt_ApplySettings );
-	applyEvent.SetId( GetId() );
-	AddPendingEvent( applyEvent );
+	wxCommandEvent applyEvent(pxEvt_ApplySettings);
+	applyEvent.SetId(GetId());
+	AddPendingEvent(applyEvent);
 }
 
-void BaseApplicableDialog::OnSettingsApplied( wxCommandEvent& evt )
+void BaseApplicableDialog::OnSettingsApplied(wxCommandEvent& evt)
 {
 	evt.Skip();
-	if( evt.GetId() == GetId() )
+	if (evt.GetId() == GetId())
 		AppStatusEvent_OnSettingsApplied();
 }
 
@@ -126,12 +132,12 @@ void BaseApplicableDialog::OnSettingsApplied( wxCommandEvent& evt )
 // --------------------------------------------------------------------------------------
 //  BaseConfigurationDialog  Implementations
 // --------------------------------------------------------------------------------------
-Dialogs::BaseConfigurationDialog::BaseConfigurationDialog( wxWindow* parent, const wxString& title, int idealWidth )
-	: _parent( parent, title )
+Dialogs::BaseConfigurationDialog::BaseConfigurationDialog(wxWindow* parent, const wxString& title, int idealWidth)
+	: _parent(parent, title)
 {
 	float scale = MSW_GetDPIScale();
 
-	SetMinWidth( scale * idealWidth );
+	SetMinWidth(scale * idealWidth);
 	m_listbook = NULL;
 	m_allowApplyActivation = true;
 
@@ -162,42 +168,45 @@ Dialogs::BaseConfigurationDialog::BaseConfigurationDialog( wxWindow* parent, con
 	Bind(pxEvt_SomethingChanged, &BaseConfigurationDialog::OnSomethingChanged, this);
 }
 
-void Dialogs::BaseConfigurationDialog::AddListbook( wxSizer* sizer )
+void Dialogs::BaseConfigurationDialog::AddListbook(wxSizer* sizer)
 {
-	if( !sizer ) sizer = GetSizer();
-	*sizer += m_listbook	| pxExpand.Border( wxLEFT | wxRIGHT, 2 );
+	if (!sizer)
+		sizer = GetSizer();
+	*sizer += m_listbook | pxExpand.Border(wxLEFT | wxRIGHT, 2);
 }
 
-void Dialogs::BaseConfigurationDialog::CreateListbook( wxImageList& bookicons )
+void Dialogs::BaseConfigurationDialog::CreateListbook(wxImageList& bookicons)
 {
-	m_listbook = new wxListbook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, s_orient );
-	m_listbook->SetImageList( &bookicons );
-	m_ApplyState.StartBook( m_listbook );
+	m_listbook = new wxListbook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, s_orient);
+	m_listbook->SetImageList(&bookicons);
+	m_ApplyState.StartBook(m_listbook);
 }
 
-void Dialogs::BaseConfigurationDialog::AddOkCancel( wxSizer* sizer )
+void Dialogs::BaseConfigurationDialog::AddOkCancel(wxSizer* sizer)
 {
-	_parent::AddOkCancel( sizer, true );
-	if( wxWindow* apply = FindWindow( wxID_APPLY ) ) apply->Disable();
+	_parent::AddOkCancel(sizer, true);
+	if (wxWindow* apply = FindWindow(wxID_APPLY))
+		apply->Disable();
 	SomethingChanged_StateModified_IsChanged();
 
 	wxBitmapButton& screenshotButton(*new wxBitmapButton(this, wxID_SAVE, wxGetApp().GetScreenshotBitmap()));
-	screenshotButton.SetToolTip( _("Saves a snapshot of this settings panel to a PNG file.") );
+	screenshotButton.SetToolTip(_("Saves a snapshot of this settings panel to a PNG file."));
 
-	*m_extraButtonSizer += screenshotButton|pxMiddle;
+	*m_extraButtonSizer += screenshotButton | pxMiddle;
 }
 
-void Dialogs::BaseConfigurationDialog::OnSetSettingsPage( wxCommandEvent& evt )
+void Dialogs::BaseConfigurationDialog::OnSetSettingsPage(wxCommandEvent& evt)
 {
-	if( !m_listbook ) return;
+	if (!m_listbook)
+		return;
 
 	size_t pages = m_labels.GetCount();
 
-	for( size_t i=0; i<pages; ++i )
+	for (size_t i = 0; i < pages; ++i)
 	{
-		if( evt.GetString() == m_labels[i] )
+		if (evt.GetString() == m_labels[i])
 		{
-			m_listbook->SetSelection( i );
+			m_listbook->SetSelection(i);
 			break;
 		}
 	}
@@ -205,42 +214,46 @@ void Dialogs::BaseConfigurationDialog::OnSetSettingsPage( wxCommandEvent& evt )
 
 void Dialogs::BaseConfigurationDialog::SomethingChanged()
 {
-	if( wxWindow* apply = FindWindow( wxID_APPLY ) ) apply->Enable();
+	if (wxWindow* apply = FindWindow(wxID_APPLY))
+		apply->Enable();
 	SomethingChanged_StateModified_IsChanged();
 }
 
-void Dialogs::BaseConfigurationDialog::OnSomethingChanged( wxCommandEvent& evt )
+void Dialogs::BaseConfigurationDialog::OnSomethingChanged(wxCommandEvent& evt)
 {
 	evt.Skip();
-	if (!m_allowApplyActivation) return;
+	if (!m_allowApplyActivation)
+		return;
 	if ((evt.GetId() != wxID_OK) && (evt.GetId() != wxID_CANCEL) && (evt.GetId() != wxID_APPLY))
 		SomethingChanged();
 }
 
-void Dialogs::BaseConfigurationDialog::AllowApplyActivation( bool allow )
+void Dialogs::BaseConfigurationDialog::AllowApplyActivation(bool allow)
 {
 	m_allowApplyActivation = allow;
 }
 
-void Dialogs::BaseConfigurationDialog::OnOk_Click( wxCommandEvent& evt )
+void Dialogs::BaseConfigurationDialog::OnOk_Click(wxCommandEvent& evt)
 {
 	ScopedOkButtonDisabler disabler(this);
 
 	//same as for OnApply_Click
 	Apply();
 
-	if( m_ApplyState.ApplyAll() )
+	if (m_ApplyState.ApplyAll())
 	{
-		if( wxWindow* apply = FindWindow( wxID_APPLY ) ) apply->Disable();
+		if (wxWindow* apply = FindWindow(wxID_APPLY))
+			apply->Disable();
 		SomethingChanged_StateModified_IsChanged();
-		if( m_listbook ) GetConfSettingsTabName() = m_labels[m_listbook->GetSelection()];
+		if (m_listbook)
+			GetConfSettingsTabName() = m_labels[m_listbook->GetSelection()];
 		AppSaveSettings();
 		disabler.DetachAll();
 		evt.Skip();
 	}
 }
 
-void Dialogs::BaseConfigurationDialog::OnApply_Click( wxCommandEvent& evt )
+void Dialogs::BaseConfigurationDialog::OnApply_Click(wxCommandEvent& evt)
 {
 	ScopedOkButtonDisabler disabler(this);
 
@@ -250,55 +263,57 @@ void Dialogs::BaseConfigurationDialog::OnApply_Click( wxCommandEvent& evt )
 	//  so the preset needs to be applied first.
 	Apply();
 
-	if( m_ApplyState.ApplyAll() )
+	if (m_ApplyState.ApplyAll())
 		disabler.DetachApply();
 
-	if( m_listbook ) GetConfSettingsTabName() = m_labels[m_listbook->GetSelection()];
+	if (m_listbook)
+		GetConfSettingsTabName() = m_labels[m_listbook->GetSelection()];
 	AppSaveSettings();
 
 	SomethingChanged_StateModified_IsChanged();
 }
 
-void Dialogs::BaseConfigurationDialog::OnCancel_Click( wxCommandEvent& evt )
+void Dialogs::BaseConfigurationDialog::OnCancel_Click(wxCommandEvent& evt)
 {
 	//same as for Ok/Apply: let SysConfigDialog clean-up the presets and derivatives (menu system) if needed.
 	Cancel();
 
 	evt.Skip();
-	if( m_listbook ) GetConfSettingsTabName() = m_labels[m_listbook->GetSelection()];
+	if (m_listbook)
+		GetConfSettingsTabName() = m_labels[m_listbook->GetSelection()];
 }
 
-void Dialogs::BaseConfigurationDialog::OnScreenshot_Click( wxCommandEvent& evt )
+void Dialogs::BaseConfigurationDialog::OnScreenshot_Click(wxCommandEvent& evt)
 {
 	wxBitmap memBmp;
 
 	{
-	wxWindowDC dc( this );
-	wxSize dcsize( dc.GetSize() );
-	wxMemoryDC memDC( memBmp = wxBitmap( dcsize.x, dcsize.y ) );
-	memDC.Blit( wxPoint(), dcsize, &dc, wxPoint() );
+		wxWindowDC dc(this);
+		wxSize dcsize(dc.GetSize());
+		wxMemoryDC memDC(memBmp = wxBitmap(dcsize.x, dcsize.y));
+		memDC.Blit(wxPoint(), dcsize, &dc, wxPoint());
 	}
 
-	wxString pagename( m_listbook ? (L"_" + m_listbook->GetPageText( m_listbook->GetSelection() )) : wxString() );
+	wxString pagename(m_listbook ? (L"_" + m_listbook->GetPageText(m_listbook->GetSelection())) : wxString());
 	wxString filenameDefault;
-	filenameDefault.Printf( L"%s_%s%s.png", pxGetAppName().Lower().c_str(), GetDialogName().c_str(), pagename.c_str() );
-	filenameDefault.Replace( L"/", L"-" );
+	filenameDefault.Printf(L"%s_%s%s.png", pxGetAppName().Lower().c_str(), GetDialogName().c_str(), pagename.c_str());
+	filenameDefault.Replace(L"/", L"-");
 
-	wxString filename( wxFileSelector( _("Save dialog screenshots to..."), g_Conf->Folders.Snapshots,
-		filenameDefault, L"png", wxEmptyString, wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this ) );
+	wxString filename(wxFileSelector(_("Save dialog screenshots to..."), g_Conf->gui->Folders.Snapshots,
+									 filenameDefault, L"png", wxEmptyString, wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this));
 
-	if( !filename.IsEmpty() )
+	if (!filename.IsEmpty())
 	{
-		ScopedBusyCursor busy( Cursor_ReallyBusy );
+		ScopedBusyCursor busy(Cursor_ReallyBusy);
 #ifdef __WXMSW__
 		// HACK: This works around an actual wx3.0 bug at the cost of icon
 		// quality. See http://trac.wxwidgets.org/ticket/14403 .
 		wxImage image = memBmp.ConvertToImage();
 		if (image.HasAlpha())
 			image.ClearAlpha();
-		image.SaveFile( filename, wxBITMAP_TYPE_PNG );
+		image.SaveFile(filename, wxBITMAP_TYPE_PNG);
 #else
-		memBmp.SaveFile( filename, wxBITMAP_TYPE_PNG );
+		memBmp.SaveFile(filename, wxBITMAP_TYPE_PNG);
 #endif
 	}
 }

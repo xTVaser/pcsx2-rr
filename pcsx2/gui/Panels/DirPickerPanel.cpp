@@ -24,61 +24,61 @@
 
 using namespace pxSizerFlags;
 
-static wxString GetNormalizedConfigFolder( FoldersEnum_t folderId )
+static wxString GetNormalizedConfigFolder(FoldersEnum_t folderId)
 {
-	return Path::Normalize( g_Conf->Folders.IsDefault( folderId ) ? PathDefs::Get(folderId) : g_Conf->Folders[folderId] );
+	return Path::Normalize(g_Conf->gui->Folders.IsDefault(folderId) ? PathDefs::Get(folderId) : g_Conf->gui->Folders[folderId]);
 }
 
 // Pass me TRUE if the default path is to be used, and the DirPickerCtrl disabled from use.
-void Panels::DirPickerPanel::UpdateCheckStatus( bool someNoteworthyBoolean )
+void Panels::DirPickerPanel::UpdateCheckStatus(bool someNoteworthyBoolean)
 {
-	if (!m_pickerCtrl) return;
+	if (!m_pickerCtrl)
+		return;
 
-	m_pickerCtrl->Enable( !someNoteworthyBoolean );
+	m_pickerCtrl->Enable(!someNoteworthyBoolean);
 	if (someNoteworthyBoolean)
 	{
-		wxString normalized( Path::Normalize( PathDefs::Get( m_FolderId ) ) );
-		m_pickerCtrl->SetPath( normalized );
+		wxString normalized(Path::Normalize(PathDefs::Get(m_FolderId)));
+		m_pickerCtrl->SetPath(normalized);
 
-		wxFileDirPickerEvent event( m_pickerCtrl->GetEventType(), m_pickerCtrl, m_pickerCtrl->GetId(), normalized );
+		wxFileDirPickerEvent event(m_pickerCtrl->GetEventType(), m_pickerCtrl, m_pickerCtrl->GetId(), normalized);
 		m_pickerCtrl->GetEventHandler()->ProcessEvent(event);
 	}
 }
 
-void Panels::DirPickerPanel::UseDefaultPath_Click( wxCommandEvent &evt )
+void Panels::DirPickerPanel::UseDefaultPath_Click(wxCommandEvent& evt)
 {
 	evt.Skip();
-	pxAssert( (m_pickerCtrl != NULL) && (m_checkCtrl != NULL) );
-	UpdateCheckStatus( m_checkCtrl ? m_checkCtrl->IsChecked() : false );
+	pxAssert((m_pickerCtrl != NULL) && (m_checkCtrl != NULL));
+	UpdateCheckStatus(m_checkCtrl ? m_checkCtrl->IsChecked() : false);
 }
 
-void Panels::DirPickerPanel::Explore_Click( wxCommandEvent &evt )
+void Panels::DirPickerPanel::Explore_Click(wxCommandEvent& evt)
 {
-	fs::path path( GetPath() );
+	fs::path path(GetPath());
 
 	//if (!pxAssertDev( path.IsOk(), "This DirPickerPanel could not find valid or meaningful path data." ))
-		//return;
+	//return;
 
 	if (!fs::exists(path))
 	{
-		wxDialogWithHelpers createPathDlg( NULL, _("Path does not exist") );
-		createPathDlg.SetMinWidth( 600 );
+		wxDialogWithHelpers createPathDlg(NULL, _("Path does not exist"));
+		createPathDlg.SetMinWidth(600);
 
-		createPathDlg += createPathDlg.Label( path.string() ) | StdCenter();
+		createPathDlg += createPathDlg.Label(path.string()) | StdCenter();
 
-		createPathDlg += createPathDlg.Heading( pxE( L"The specified path/directory does not exist.  Would you like to create it?" )
-		);
+		createPathDlg += createPathDlg.Heading(pxE(L"The specified path/directory does not exist.  Would you like to create it?"));
 
-		wxWindowID result = pxIssueConfirmation( createPathDlg,
-			MsgButtons().Custom(_("Create"), "create").Cancel(),
-			L"DirPicker:CreateOnExplore"
-		);
+		wxWindowID result = pxIssueConfirmation(createPathDlg,
+												MsgButtons().Custom(_("Create"), "create").Cancel(),
+												L"DirPicker:CreateOnExplore");
 
-		if( result == wxID_CANCEL ) return;
+		if (result == wxID_CANCEL)
+			return;
 		folderUtils.CreateFolder(path);
 	}
 
-	pxExplore( path.string() );
+	pxExplore(path.string());
 }
 
 // There are two constructors.  See the details for the 'label' parameter below for details.
@@ -89,73 +89,72 @@ void Panels::DirPickerPanel::Explore_Click( wxCommandEvent &evt )
 //  lacks a static box and compresses itself onto a single line.  Compact mode may be useful
 //  for situations where the expanded format is just too invasive.
 //
-Panels::DirPickerPanel::DirPickerPanel( wxWindow* parent, FoldersEnum_t folderid, const wxString& label, const wxString& dialogLabel )
-	: BaseApplicableConfigPanel( parent, wxVERTICAL, label )
+Panels::DirPickerPanel::DirPickerPanel(wxWindow* parent, FoldersEnum_t folderid, const wxString& label, const wxString& dialogLabel)
+	: BaseApplicableConfigPanel(parent, wxVERTICAL, label)
 {
-	Init( folderid, dialogLabel, false );
+	Init(folderid, dialogLabel, false);
 }
 
-Panels::DirPickerPanel::DirPickerPanel( wxWindow* parent, FoldersEnum_t folderid, const wxString& dialogLabel )
-	: BaseApplicableConfigPanel( parent, wxVERTICAL )
+Panels::DirPickerPanel::DirPickerPanel(wxWindow* parent, FoldersEnum_t folderid, const wxString& dialogLabel)
+	: BaseApplicableConfigPanel(parent, wxVERTICAL)
 {
-	Init( folderid, dialogLabel, true );
+	Init(folderid, dialogLabel, true);
 }
 
-void Panels::DirPickerPanel::Init( FoldersEnum_t folderid, const wxString& dialogLabel, bool isCompact )
+void Panels::DirPickerPanel::Init(FoldersEnum_t folderid, const wxString& dialogLabel, bool isCompact)
 {
-	m_FolderId		= folderid;
-	m_pickerCtrl	= NULL;
-	m_checkCtrl		= NULL;
-	m_textCtrl		= NULL;
-	b_explore		= NULL;
+	m_FolderId = folderid;
+	m_pickerCtrl = NULL;
+	m_checkCtrl = NULL;
+	m_textCtrl = NULL;
+	b_explore = NULL;
 
-	wxString normalized (GetNormalizedConfigFolder( m_FolderId ));
+	wxString normalized(GetNormalizedConfigFolder(m_FolderId));
 
-	if (wxFile::Exists( normalized ))
+	if (wxFile::Exists(normalized))
 	{
 		// The default path is invalid... What should we do here? hmm..
 	}
 
-//	if (InstallationMode == InstallMode_Portable)
-//		InitForPortableMode(normalized);
-//	else
-		InitForRegisteredMode(normalized, dialogLabel, isCompact);
+	//	if (InstallationMode == InstallMode_Portable)
+	//		InitForPortableMode(normalized);
+	//	else
+	InitForRegisteredMode(normalized, dialogLabel, isCompact);
 
 	// wx warns when paths don't exist, but this is typically normal when the wizard
 	// creates its child controls.  So let's ignore them.
 	wxDoNotLogInThisScope please;
-	AppStatusEvent_OnSettingsApplied();	// forces default settings based on g_Conf
+	AppStatusEvent_OnSettingsApplied(); // forces default settings based on g_Conf
 }
 
 
 // InitForPortableMode is currently unused because portable now allows fully custom folders.
-void Panels::DirPickerPanel::InitForPortableMode( const wxString& normalized )
+void Panels::DirPickerPanel::InitForPortableMode(const wxString& normalized)
 {
 	// In portable mode the path is unchangeable, and only a "open in explorer" button is provided (which
 	// itself is windows-only at this time).
 
-	m_textCtrl = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY );
+	m_textCtrl = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
 
-	wxFlexGridSizer& s_lower( *new wxFlexGridSizer( 2, 0, StdPadding ) );
-	s_lower.AddGrowableCol( 0, 1 );
+	wxFlexGridSizer& s_lower(*new wxFlexGridSizer(2, 0, StdPadding));
+	s_lower.AddGrowableCol(0, 1);
 
-	s_lower	+= m_textCtrl	| pxExpand;
+	s_lower += m_textCtrl | pxExpand;
 	if (b_explore)
 		s_lower += b_explore;
 
-	*this += s_lower		| pxExpand.Border(wxLEFT | wxRIGHT, StdPadding);
+	*this += s_lower | pxExpand.Border(wxLEFT | wxRIGHT, StdPadding);
 
 	m_textCtrl->Disable();
 }
 
-void Panels::DirPickerPanel::InitForRegisteredMode( const wxString& normalized, const wxString& dialogLabel, bool isCompact )
+void Panels::DirPickerPanel::InitForRegisteredMode(const wxString& normalized, const wxString& dialogLabel, bool isCompact)
 {
 	if (!isCompact)
 	{
-		m_checkCtrl = new pxCheckBox( this, _("Use default setting") );
+		m_checkCtrl = new pxCheckBox(this, _("Use default setting"));
 
-		pxSetToolTip( m_checkCtrl, pxEt( L"When checked this folder will automatically reflect the default associated with PCSX2's current usermode setting. " )
-		);
+		pxSetToolTip(m_checkCtrl, pxEt(L"When checked this folder will automatically reflect the default associated with PCSX2's current usermode setting. "));
 
 		Bind(wxEVT_CHECKBOX, &DirPickerPanel::UseDefaultPath_Click, this, m_checkCtrl->GetId());
 	}
@@ -163,54 +162,53 @@ void Panels::DirPickerPanel::InitForRegisteredMode( const wxString& normalized, 
 	// Force the Dir Picker to use a text control.  This isn't standard on Linux/GTK but it's much
 	// more usable, so to hell with standards.
 
-	m_pickerCtrl = new wxDirPickerCtrl( this, wxID_ANY, wxEmptyString, dialogLabel,
-		wxDefaultPosition, wxDefaultSize, wxDIRP_USE_TEXTCTRL | wxDIRP_DIR_MUST_EXIST
-	);
+	m_pickerCtrl = new wxDirPickerCtrl(this, wxID_ANY, wxEmptyString, dialogLabel,
+									   wxDefaultPosition, wxDefaultSize, wxDIRP_USE_TEXTCTRL | wxDIRP_DIR_MUST_EXIST);
 
 #ifndef __WXGTK__
 	// GTK+ : The wx implementation of Explore isn't reliable, so let's not even put the
 	// button on the dialogs for now.
 
-	wxButton* b_explore( new wxButton( this, wxID_ANY, _("Open in Explorer") ) );
-	pxSetToolTip( b_explore, _("Open an explorer window to this folder.") );
+	wxButton* b_explore(new wxButton(this, wxID_ANY, _("Open in Explorer")));
+	pxSetToolTip(b_explore, _("Open an explorer window to this folder."));
 	Bind(wxEVT_BUTTON, &DirPickerPanel::Explore_Click, this, b_explore->GetId());
 #endif
 
 	if (isCompact)
 	{
-		wxFlexGridSizer& s_compact( *new wxFlexGridSizer( 2, 0, 4 ) );
-		s_compact.AddGrowableCol( 0 );
+		wxFlexGridSizer& s_compact(*new wxFlexGridSizer(2, 0, 4));
+		s_compact.AddGrowableCol(0);
 		s_compact += m_pickerCtrl | pxExpand;
 #ifndef __WXGTK__
 		s_compact += b_explore;
 #endif
-		*this += s_compact	| pxExpand;
+		*this += s_compact | pxExpand;
 	}
 	else
 	{
-		wxBoxSizer& s_lower( *new wxBoxSizer( wxHORIZONTAL ) );
+		wxBoxSizer& s_lower(*new wxBoxSizer(wxHORIZONTAL));
 
-		s_lower += m_checkCtrl	| pxMiddle;
+		s_lower += m_checkCtrl | pxMiddle;
 		if (b_explore)
 		{
 			s_lower += pxStretchSpacer(1);
 			s_lower += b_explore;
 		}
 
-		*this += m_pickerCtrl	| pxExpand.Border(wxLEFT | wxRIGHT | wxTOP, StdPadding);
-		*this += s_lower		| pxExpand.Border(wxLEFT | wxRIGHT, StdPadding);
+		*this += m_pickerCtrl | pxExpand.Border(wxLEFT | wxRIGHT | wxTOP, StdPadding);
+		*this += s_lower | pxExpand.Border(wxLEFT | wxRIGHT, StdPadding);
 	}
 }
 
-Panels::DirPickerPanel& Panels::DirPickerPanel::SetStaticDesc( const wxString& msg )
+Panels::DirPickerPanel& Panels::DirPickerPanel::SetStaticDesc(const wxString& msg)
 {
-	GetSizer()->Insert( 0, &Heading( msg ), pxExpand );
+	GetSizer()->Insert(0, &Heading(msg), pxExpand);
 	return *this;
 }
 
-Panels::DirPickerPanel& Panels::DirPickerPanel::SetToolTip( const wxString& tip )
+Panels::DirPickerPanel& Panels::DirPickerPanel::SetToolTip(const wxString& tip)
 {
-	pxSetToolTip( this, tip );
+	pxSetToolTip(this, tip);
 	return *this;
 }
 
@@ -221,10 +219,10 @@ wxWindowID Panels::DirPickerPanel::GetId() const
 
 void Panels::DirPickerPanel::Reset()
 {
-	const bool isDefault = g_Conf->Folders.IsDefault( m_FolderId );
+	const bool isDefault = g_Conf->gui->Folders.IsDefault(m_FolderId);
 
 	if (m_checkCtrl)
-		m_checkCtrl->SetValue( isDefault );
+		m_checkCtrl->SetValue(isDefault);
 
 	if (m_pickerCtrl)
 	{
@@ -232,23 +230,23 @@ void Panels::DirPickerPanel::Reset()
 		// needs to check the enable status of this panel before setting the child
 		// panel's enable status.
 
-		m_pickerCtrl->Enable( IsEnabled() ? ( m_checkCtrl ? !isDefault : true ) : false );
-		m_pickerCtrl->SetPath( GetNormalizedConfigFolder( m_FolderId ) );
+		m_pickerCtrl->Enable(IsEnabled() ? (m_checkCtrl ? !isDefault : true) : false);
+		m_pickerCtrl->SetPath(GetNormalizedConfigFolder(m_FolderId));
 	}
 
 	if (m_textCtrl)
 	{
 		m_textCtrl->Disable();
-		m_textCtrl->SetValue( GetNormalizedConfigFolder( m_FolderId ) );
+		m_textCtrl->SetValue(GetNormalizedConfigFolder(m_FolderId));
 	}
 }
 
-bool Panels::DirPickerPanel::Enable( bool enable )
+bool Panels::DirPickerPanel::Enable(bool enable)
 {
 	if (m_pickerCtrl)
-		m_pickerCtrl->Enable( enable ? (!m_checkCtrl || m_checkCtrl->GetValue()) : false );
+		m_pickerCtrl->Enable(enable ? (!m_checkCtrl || m_checkCtrl->GetValue()) : false);
 
-	return _parent::Enable( enable );
+	return _parent::Enable(enable);
 }
 
 
@@ -259,21 +257,21 @@ void Panels::DirPickerPanel::AppStatusEvent_OnSettingsApplied()
 
 void Panels::DirPickerPanel::Apply()
 {
-	fs::path path( GetPath() );
+	fs::path path(GetPath());
 
 	if (!folderUtils.DoesExist(path))
 	{
-		wxDialogWithHelpers dialog( NULL, _("Create folder?") );
+		wxDialogWithHelpers dialog(NULL, _("Create folder?"));
 		dialog += dialog.Heading(AddAppName(_("A configured folder does not exist.  Should %s try to create it?")));
 		dialog += 12;
-		dialog += dialog.Heading( path.string() );
+		dialog += dialog.Heading(path.string());
 
-		if( wxID_CANCEL == pxIssueConfirmation( dialog, MsgButtons().Custom(_("Create"), "create").Cancel(), L"CreateNewFolder" ) )
-			throw Exception::CannotApplySettings( this );
+		if (wxID_CANCEL == pxIssueConfirmation(dialog, MsgButtons().Custom(_("Create"), "create").Cancel(), L"CreateNewFolder"))
+			throw Exception::CannotApplySettings(this);
 	}
 
 	folderUtils.CreateFolder(path);
-	g_Conf->Folders.Set( m_FolderId, path.string(), m_checkCtrl ? m_checkCtrl->GetValue() : false );
+	g_Conf->gui->Folders.Set(m_FolderId, path.string(), m_checkCtrl ? m_checkCtrl->GetValue() : false);
 }
 
 std::string Panels::DirPickerPanel::GetPath() const
@@ -288,11 +286,11 @@ std::string Panels::DirPickerPanel::GetPath() const
 	return std::string();
 }
 
-void Panels::DirPickerPanel::SetPath( const wxString& newPath )
+void Panels::DirPickerPanel::SetPath(const wxString& newPath)
 {
 	if (m_pickerCtrl)
-		m_pickerCtrl->SetPath( newPath );
+		m_pickerCtrl->SetPath(newPath);
 
 	if (m_textCtrl)
-		m_textCtrl->SetValue( newPath );
+		m_textCtrl->SetValue(newPath);
 }

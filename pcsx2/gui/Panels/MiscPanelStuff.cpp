@@ -30,99 +30,98 @@ using namespace pxSizerFlags;
 // --------------------------------------------------------------------------------------
 //  DocsFolderPickerPanel
 // --------------------------------------------------------------------------------------
-Panels::DocsFolderPickerPanel::DocsFolderPickerPanel( wxWindow* parent, bool isFirstTime )
-	: BaseApplicableConfigPanel( parent, wxVERTICAL, _("Usermode Selection") )
+Panels::DocsFolderPickerPanel::DocsFolderPickerPanel(wxWindow* parent, bool isFirstTime)
+	: BaseApplicableConfigPanel(parent, wxVERTICAL, _("Usermode Selection"))
 {
-	const wxString usermodeExplained( pxE( L"Please select your preferred default location for PCSX2 user-level documents below (includes memory cards, screenshots, settings, and savestates).  These folder locations can be overridden at any time using the Plugin/BIOS Selector panel."
-	) );
+	const wxString usermodeExplained(pxE(L"Please select your preferred default location for PCSX2 user-level documents below (includes memory cards, screenshots, settings, and savestates).  These folder locations can be overridden at any time using the Plugin/BIOS Selector panel."));
 
-	const wxString usermodeWarning( pxE( L"You can change the preferred default location for PCSX2 user-level documents here (includes memory cards, screenshots, settings, and savestates).  This option only affects Standard Paths which are set to use the installation default value."
-	) );
+	const wxString usermodeWarning(pxE(L"You can change the preferred default location for PCSX2 user-level documents here (includes memory cards, screenshots, settings, and savestates).  This option only affects Standard Paths which are set to use the installation default value."));
 
 	const RadioPanelItem UsermodeOptions[] =
-	{
-		RadioPanelItem(
-			_("User Documents (recommended)"),
-			(std::string)(((fs::path)("Location: ") / PathDefs::GetDocuments(DocsFolder_User)).make_preferred())
-		),
+		{
+			RadioPanelItem(
+				_("User Documents (recommended)"),
+				(std::string)(((fs::path)("Location: ") / PathDefs::GetDocuments(DocsFolder_User)).make_preferred())),
 
-		RadioPanelItem(
-			_("Custom folder:"),
-			wxEmptyString,
-			_("This setting may require administration privileges from your operating system, depending on how your system is configured.")
-		)
-	};
+			RadioPanelItem(
+				_("Custom folder:"),
+				wxEmptyString,
+				_("This setting may require administration privileges from your operating system, depending on how your system is configured."))};
 
-	m_radio_UserMode = new pxRadioPanel( this, UsermodeOptions );
-	m_radio_UserMode->SetPaddingHoriz( m_radio_UserMode->GetPaddingVert() + 4 );
+	m_radio_UserMode = new pxRadioPanel(this, UsermodeOptions);
+	m_radio_UserMode->SetPaddingHoriz(m_radio_UserMode->GetPaddingVert() + 4);
 	m_radio_UserMode->Realize();
-	if( pxStaticText* woot = m_radio_UserMode->GetSubText(0) ) woot->Unwrapped();		// wrapping sucks for path names!
+	if (pxStaticText* woot = m_radio_UserMode->GetSubText(0))
+		woot->Unwrapped(); // wrapping sucks for path names!
 
-	m_dirpicker_custom = new DirPickerPanel( this, FolderId_Documents, AddAppName(_("Select a document root for %s")) );
+	m_dirpicker_custom = new DirPickerPanel(this, FolderId_Documents, AddAppName(_("Select a document root for %s")));
 
-	*this	+= Heading( isFirstTime ? usermodeExplained : usermodeWarning );
-	*this	+= m_radio_UserMode		| StdExpand();
-	*this	+= m_dirpicker_custom	| pxExpand.Border( wxLEFT, StdPadding + m_radio_UserMode->GetIndentation() );
-	*this	+= 4;
+	*this += Heading(isFirstTime ? usermodeExplained : usermodeWarning);
+	*this += m_radio_UserMode | StdExpand();
+	*this += m_dirpicker_custom | pxExpand.Border(wxLEFT, StdPadding + m_radio_UserMode->GetIndentation());
+	*this += 4;
 
 	Bind(wxEVT_RADIOBUTTON, &DocsFolderPickerPanel::OnRadioChanged, this);
 }
 
 DocsModeType Panels::DocsFolderPickerPanel::GetDocsMode() const
 {
-	return (DocsModeType) m_radio_UserMode->GetSelection();
+	return (DocsModeType)m_radio_UserMode->GetSelection();
 }
 
 void Panels::DocsFolderPickerPanel::Apply()
 {
-	DocsFolderMode			= (DocsModeType) m_radio_UserMode->GetSelection();
-	CustomDocumentsFolder	= m_dirpicker_custom->GetPath();
+	DocsFolderMode = (DocsModeType)m_radio_UserMode->GetSelection();
+	CustomDocumentsFolder = m_dirpicker_custom->GetPath();
 }
 
 void Panels::DocsFolderPickerPanel::AppStatusEvent_OnSettingsApplied()
 {
-	if( m_radio_UserMode ) m_radio_UserMode->SetSelection( DocsFolderMode );
-	if( m_dirpicker_custom ) m_dirpicker_custom->Enable( DocsFolderMode == DocsFolder_Custom );
+	if (m_radio_UserMode)
+		m_radio_UserMode->SetSelection(DocsFolderMode);
+	if (m_dirpicker_custom)
+		m_dirpicker_custom->Enable(DocsFolderMode == DocsFolder_Custom);
 }
 
-void Panels::DocsFolderPickerPanel::OnRadioChanged( wxCommandEvent& evt )
+void Panels::DocsFolderPickerPanel::OnRadioChanged(wxCommandEvent& evt)
 {
 	evt.Skip();
 
-	if( !m_radio_UserMode ) return;
+	if (!m_radio_UserMode)
+		return;
 
-	if( m_dirpicker_custom )
-		m_dirpicker_custom->Enable( m_radio_UserMode->GetSelection() == (int)DocsFolder_Custom );
+	if (m_dirpicker_custom)
+		m_dirpicker_custom->Enable(m_radio_UserMode->GetSelection() == (int)DocsFolder_Custom);
 
-	if( pxStaticText* woot = m_radio_UserMode->GetSubText(0) )
-		woot->Enable( m_radio_UserMode->GetSelection() == (int)DocsFolder_User );
+	if (pxStaticText* woot = m_radio_UserMode->GetSubText(0))
+		woot->Enable(m_radio_UserMode->GetSelection() == (int)DocsFolder_User);
 }
 
 // --------------------------------------------------------------------------------------
 //  LanguageSelectionPanel
 // --------------------------------------------------------------------------------------
-Panels::LanguageSelectionPanel::LanguageSelectionPanel( wxWindow* parent, bool showApply )
-	: BaseApplicableConfigPanel( parent, wxHORIZONTAL )
+Panels::LanguageSelectionPanel::LanguageSelectionPanel(wxWindow* parent, bool showApply)
+	: BaseApplicableConfigPanel(parent, wxHORIZONTAL)
 {
 	m_picker = NULL;
-	i18n_EnumeratePackages( m_langs );
+	i18n_EnumeratePackages(m_langs);
 
 	int size = m_langs.size();
-	std::unique_ptr<wxString[]> compiled( new wxString[size] );
+	std::unique_ptr<wxString[]> compiled(new wxString[size]);
 
-	for( int i=0; i<size; ++i )
-		compiled[i].Printf( L"%s", m_langs[i].englishName.c_str() );
+	for (int i = 0; i < size; ++i)
+		compiled[i].Printf(L"%s", m_langs[i].englishName.c_str());
 
-	m_picker = new wxComboBox( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize,
-		size, compiled.get(), wxCB_READONLY);
+	m_picker = new wxComboBox(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize,
+							  size, compiled.get(), wxCB_READONLY);
 
-	*this	+= 5;
-	*this	+= m_picker | pxSizerFlags::StdSpace();
-	*this	+= 5;
+	*this += 5;
+	*this += m_picker | pxSizerFlags::StdSpace();
+	*this += 5;
 
 	if (showApply)
 	{
-		wxButton* applyButton = new wxButton( this, pxID_RestartWizard, _("Apply") );
+		wxButton* applyButton = new wxButton(this, pxID_RestartWizard, _("Apply"));
 		applyButton->SetToolTip(_("Make this language my default right now!"));
 
 		*this += applyButton | pxSizerFlags::StdSpace();
@@ -131,10 +130,10 @@ Panels::LanguageSelectionPanel::LanguageSelectionPanel( wxWindow* parent, bool s
 
 	Bind(wxEVT_BUTTON, &LanguageSelectionPanel::OnApplyLanguage_Clicked, this, pxID_RestartWizard);
 
-	m_picker->SetSelection( 0 );		// always default to System Default
+	m_picker->SetSelection(0); // always default to System Default
 }
 
-void Panels::LanguageSelectionPanel::OnApplyLanguage_Clicked( wxCommandEvent& evt )
+void Panels::LanguageSelectionPanel::OnApplyLanguage_Clicked(wxCommandEvent& evt)
 {
 	evt.Skip();
 	Apply();
@@ -142,45 +141,45 @@ void Panels::LanguageSelectionPanel::OnApplyLanguage_Clicked( wxCommandEvent& ev
 
 void Panels::LanguageSelectionPanel::Apply()
 {
-	if( !m_picker ) return;
+	if (!m_picker)
+		return;
 
 	// The combo box's order is sorted and may not match our m_langs order, so
 	// we have to do a string comparison to find a match:
 
-	wxString sel( m_picker->GetString( m_picker->GetSelection() ) );
+	wxString sel(m_picker->GetString(m_picker->GetSelection()));
 
-	g_Conf->LanguageCode = "default";	// use this if no matches found
-	g_Conf->LanguageId = wxLANGUAGE_DEFAULT;
+	g_Conf->gui->LanguageCode = "default"; // use this if no matches found
+	g_Conf->gui->LanguageId = wxLANGUAGE_DEFAULT;
 	int size = m_langs.size();
-	for( int i=0; i<size; ++i )
+	for (int i = 0; i < size; ++i)
 	{
-		if( m_langs[i].englishName == sel )
+		if (m_langs[i].englishName == sel)
 		{
-			if( i18n_SetLanguage( m_langs[i].wxLangId, m_langs[i].canonicalName ) )
+			if (i18n_SetLanguage(m_langs[i].wxLangId, m_langs[i].canonicalName))
 			{
-				g_Conf->LanguageCode = m_langs[i].canonicalName;
-				g_Conf->LanguageId = m_langs[i].wxLangId;
+				g_Conf->gui->LanguageCode = m_langs[i].canonicalName;
+				g_Conf->gui->LanguageId = m_langs[i].wxLangId;
 			}
 			break;
 		}
 	}
-
 }
 
 void Panels::LanguageSelectionPanel::AppStatusEvent_OnSettingsApplied()
 {
 	if (m_picker)
 	{
-		m_picker->SetSelection( 0 );		// always default to System Default
+		m_picker->SetSelection(0); // always default to System Default
 
-		if (g_Conf->LanguageCode.empty())
-			g_Conf->LanguageCode = "default";
+		if (g_Conf->gui->LanguageCode.empty())
+			g_Conf->gui->LanguageCode = "default";
 
-		for (uint i=0; i<m_langs.size(); ++i)
+		for (uint i = 0; i < m_langs.size(); ++i)
 		{
-			if (0==m_langs[i].canonicalName.CmpNoCase(g_Conf->LanguageCode))
+			if (0 == m_langs[i].canonicalName.CmpNoCase(g_Conf->gui->LanguageCode))
 			{
-				m_picker->SetSelection( i );
+				m_picker->SetSelection(i);
 			}
 		}
 	}

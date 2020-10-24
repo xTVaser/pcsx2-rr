@@ -95,9 +95,9 @@ static int mg_BIToffset(u8* buffer)
 
 static void cdvdGetMechaVer(u8* ver)
 {
-	fs::path mecfile(g_Conf->FullpathToBios()); // TODO - HACK! EmuConfig.BiosFilename should be set properly and used instead!
+	fs::path mecfile(g_Conf->gui->FullpathToBios()); // TODO - HACK! EmuConfig.BiosFilename should be set properly and used instead!
 	mecfile.replace_extension("mec");
-	const std::string fname( mecfile);
+	const std::string fname(mecfile);
 
 	// Likely a bad idea to go further
 	if (fs::is_directory(mecfile))
@@ -144,7 +144,7 @@ NVMLayout* getNvmLayout()
 // be created for some reason.
 static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 {
-	fs::path nvmfile(g_Conf->FullpathToBios()); // TODO - HACK! EmuConfig.BiosFilename should be set properly and used instead!
+	fs::path nvmfile(g_Conf->gui->FullpathToBios()); // TODO - HACK! EmuConfig.BiosFilename should be set properly and used instead!
 	nvmfile.replace_extension("nvm");
 	const std::string fname(nvmfile);
 
@@ -190,7 +190,7 @@ static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 	{
 		wxString name(fname);
 		Console.Error(L"Failed to %s %s. Did only %zu/%zu bytes",
-				read ? L"read from" : L"write to", WX_STR(name), ret, bytes);
+					  read ? L"read from" : L"write to", WX_STR(name), ret, bytes);
 	}
 }
 
@@ -554,7 +554,7 @@ s32 cdvdCtrlTrayClose()
 	cdvd.TrayTimeout = 0; // Reset so it can't get closed twice by cdvdVsync()
 
 	cdvdDetectDisk();
-	GetCoreThread().ApplySettings(g_Conf->EmuOptions);
+	GetCoreThread().ApplySettings(g_Conf->emulator->;
 
 	return 0; // needs to be 0 for success according to homebrew test "CDVD"
 }
@@ -1480,13 +1480,13 @@ static __fi void cdvdWrite0F(u8 rt)
 }
 
 static __fi void cdvdWrite14(u8 rt)
-{ // PS1 MODE?? // This should be done in the SBUS_F240 bit 19 write in HwWrite.cpp
+{   // PS1 MODE?? // This should be done in the SBUS_F240 bit 19 write in HwWrite.cpp
 	//u32 cycle = psxRegs.cycle;
 
 	//if (rt == 0xFE)
-		//Console.Warning("*PCSX2*: go PS1 mode DISC SPEED = FAST");
+	//Console.Warning("*PCSX2*: go PS1 mode DISC SPEED = FAST");
 	//else
-		//Console.Warning("*PCSX2*: go PS1 mode DISC SPEED = %dX", rt);
+	//Console.Warning("*PCSX2*: go PS1 mode DISC SPEED = %dX", rt);
 
 	//psxReset();
 	//PSXCLK = 33868800;

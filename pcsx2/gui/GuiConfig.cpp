@@ -23,14 +23,14 @@ namespace PathDefs
 		}
 		else if (InstallationMode == InstallMode_Portable)
 
-		if (InstallationMode == InstallMode_Registered || InstallationMode == InstallMode_Portable)
-		{
-			static const std::string appCache( (std::string)
-			std::string(wxStandardPaths::Get().GetExecutablePath()));
-			return appCache;
-		}
-		else
-			pxFail( "Unimplemented user local folder mode encountered." );
+			if (InstallationMode == InstallMode_Registered || InstallationMode == InstallMode_Portable)
+			{
+				static const std::string appCache((std::string)
+													  std::string(wxStandardPaths::Get().GetExecutablePath()));
+				return appCache;
+			}
+			else
+				pxFail("Unimplemented user local folder mode encountered.");
 
 		static const std::string dotFail(".");
 		return dotFail;
@@ -40,24 +40,27 @@ namespace PathDefs
 	fs::path GetUserLocalDataDir()
 	{
 		fs::path temp = wxStandardPaths::Get().GetUserLocalDataDir().ToStdString();
-    	return temp;
+		return temp;
 	}
 
 	// Fetches the path location for user-consumable documents -- stuff users are likely to want to
 	// share with other programs: screenshots, memory cards, and savestates.
-	fs::path GetDocuments( DocsModeType mode )
+	fs::path GetDocuments(DocsModeType mode)
 	{
-	switch( mode )
-	{
+		switch (mode)
+		{
 #ifdef XDG_STD
 			// Move all user data file into central configuration directory (XDG_CONFIG_DIR)
-			case DocsFolder_User:	return GetUserLocalDataDir();
+			case DocsFolder_User:
+				return GetUserLocalDataDir();
 #else
-			case DocsFolder_User:	return std::string((wxStandardPaths::Get().GetDocumentsDir(), pxGetAppName()));
+			case DocsFolder_User:
+				return std::string((wxStandardPaths::Get().GetDocumentsDir(), pxGetAppName()));
 #endif
-			case DocsFolder_Custom: return CustomDocumentsFolder;
+			case DocsFolder_Custom:
+				return CustomDocumentsFolder;
 
-			jNO_DEFAULT
+				jNO_DEFAULT
 		}
 
 		return GetDocuments(mode);
@@ -65,7 +68,7 @@ namespace PathDefs
 
 	fs::path GetDocuments()
 	{
-		return GetDocuments( DocsFolderMode );
+		return GetDocuments(DocsFolderMode);
 	}
 
 	fs::path GetProgramDataDir()
@@ -73,11 +76,11 @@ namespace PathDefs
 #ifndef GAMEINDEX_DIR_COMPILATION
 		return AppRoot();
 #else
-	// Each linux distributions have his rules for path so we give them the possibility to
-	// change it with compilation flags. -- Gregory
+		// Each linux distributions have his rules for path so we give them the possibility to
+		// change it with compilation flags. -- Gregory
 #define xGAMEINDEX_str(s) GAMEINDEX_DIR_str(s)
 #define GAMEINDEX_DIR_str(s) #s
-		return std::string( xGAMEINDEX_str(GAMEINDEX_DIR_COMPILATION) );
+		return std::string(xGAMEINDEX_str(GAMEINDEX_DIR_COMPILATION));
 #endif
 	}
 
@@ -125,7 +128,7 @@ namespace PathDefs
 #else
 #define xPLUGIN_DIR_str(s) PLUGIN_DIR_str(s)
 #define PLUGIN_DIR_str(s) #s
-		return std::string( xPLUGIN_DIR_str(PLUGIN_DIR_COMPILATION) );
+		return std::string(xPLUGIN_DIR_str(PLUGIN_DIR_COMPILATION));
 #endif
 	}
 
@@ -147,136 +150,169 @@ namespace PathDefs
 		return (AppRoot().parent_path() / "langs").make_preferred();
 	}
 
-	std::string Get( FoldersEnum_t folderidx )
+	std::string Get(FoldersEnum_t folderidx)
 	{
-		switch( folderidx )
+		switch (folderidx)
 		{
-			case FolderId_Plugins:		return GetPlugins();
-			case FolderId_Settings:		return GetSettings();
-			case FolderId_Bios:			return GetBios();
-			case FolderId_Snapshots:	return GetSnapshots();
-			case FolderId_Savestates:	return GetSavestates();
-			case FolderId_MemoryCards:	return GetMemoryCards();
-			case FolderId_Logs:			return GetLogs();
-			case FolderId_Langs:		return GetLangs();
-			case FolderId_Cheats:		return GetCheats();
-			case FolderId_CheatsWS:		return GetCheatsWS();
+			case FolderId_Plugins:
+				return GetPlugins();
+			case FolderId_Settings:
+				return GetSettings();
+			case FolderId_Bios:
+				return GetBios();
+			case FolderId_Snapshots:
+				return GetSnapshots();
+			case FolderId_Savestates:
+				return GetSavestates();
+			case FolderId_MemoryCards:
+				return GetMemoryCards();
+			case FolderId_Logs:
+				return GetLogs();
+			case FolderId_Langs:
+				return GetLangs();
+			case FolderId_Cheats:
+				return GetCheats();
+			case FolderId_CheatsWS:
+				return GetCheatsWS();
 
-			case FolderId_Documents:	return CustomDocumentsFolder;
+			case FolderId_Documents:
+				return CustomDocumentsFolder;
 
-			jNO_DEFAULT
+				jNO_DEFAULT
 		}
 		return std::string(); // Aw hell naw
 	}
-};
-std::string& FolderOptions::operator[]( FoldersEnum_t folderidx )
+}; // namespace PathDefs
+std::string& FolderOptions::operator[](FoldersEnum_t folderidx)
 {
-	switch( folderidx )
+	switch (folderidx)
 	{
-		case FolderId_Plugins:		return PluginsFolder;
-		case FolderId_Settings:		return SettingsFolder;
-		case FolderId_Bios:			return Bios;
-		case FolderId_Snapshots:	return Snapshots;
-		case FolderId_Savestates:	return Savestates;
-		case FolderId_MemoryCards:	return MemoryCards;
-		case FolderId_Logs:			return Logs;
-		case FolderId_Langs:		return Langs;
-		case FolderId_Cheats:		return Cheats;
-		case FolderId_CheatsWS:		return CheatsWS;
+		case FolderId_Plugins:
+			return PluginsFolder;
+		case FolderId_Settings:
+			return SettingsFolder;
+		case FolderId_Bios:
+			return Bios;
+		case FolderId_Snapshots:
+			return Snapshots;
+		case FolderId_Savestates:
+			return Savestates;
+		case FolderId_MemoryCards:
+			return MemoryCards;
+		case FolderId_Logs:
+			return Logs;
+		case FolderId_Langs:
+			return Langs;
+		case FolderId_Cheats:
+			return Cheats;
+		case FolderId_CheatsWS:
+			return CheatsWS;
 
-		case FolderId_Documents:	return CustomDocumentsFolder;
+		case FolderId_Documents:
+			return CustomDocumentsFolder;
 
-		jNO_DEFAULT
+			jNO_DEFAULT
 	}
-	return PluginsFolder;		// unreachable, but suppresses warnings.
+	return PluginsFolder; // unreachable, but suppresses warnings.
 }
 
-const std::string& FolderOptions::operator[]( FoldersEnum_t folderidx ) const
+const std::string& FolderOptions::operator[](FoldersEnum_t folderidx) const
 {
-	return const_cast<FolderOptions*>( this )->operator[]( folderidx );
+	return const_cast<FolderOptions*>(this)->operator[](folderidx);
 }
 
-bool FolderOptions::IsDefault( FoldersEnum_t folderidx ) const
+bool FolderOptions::IsDefault(FoldersEnum_t folderidx) const
 {
-	switch( folderidx )
+	switch (folderidx)
 	{
-		case FolderId_Plugins:		return UseDefaultPluginsFolder;
-		case FolderId_Settings:		return UseDefaultSettingsFolder;
-		case FolderId_Bios:			return UseDefaultBios;
-		case FolderId_Snapshots:	return UseDefaultSnapshots;
-		case FolderId_Savestates:	return UseDefaultSavestates;
-		case FolderId_MemoryCards:	return UseDefaultMemoryCards;
-		case FolderId_Logs:			return UseDefaultLogs;
-		case FolderId_Langs:		return UseDefaultLangs;
-		case FolderId_Cheats:		return UseDefaultCheats;
-		case FolderId_CheatsWS:		return UseDefaultCheatsWS;
+		case FolderId_Plugins:
+			return UseDefaultPluginsFolder;
+		case FolderId_Settings:
+			return UseDefaultSettingsFolder;
+		case FolderId_Bios:
+			return UseDefaultBios;
+		case FolderId_Snapshots:
+			return UseDefaultSnapshots;
+		case FolderId_Savestates:
+			return UseDefaultSavestates;
+		case FolderId_MemoryCards:
+			return UseDefaultMemoryCards;
+		case FolderId_Logs:
+			return UseDefaultLogs;
+		case FolderId_Langs:
+			return UseDefaultLangs;
+		case FolderId_Cheats:
+			return UseDefaultCheats;
+		case FolderId_CheatsWS:
+			return UseDefaultCheatsWS;
 
-		case FolderId_Documents:	return false;
+		case FolderId_Documents:
+			return false;
 
-		jNO_DEFAULT
+			jNO_DEFAULT
 	}
 	return false;
 }
 
-void FolderOptions::Set( FoldersEnum_t folderidx, const std::string& src, bool useDefault )
+void FolderOptions::Set(FoldersEnum_t folderidx, const std::string& src, bool useDefault)
 {
-	switch( folderidx )
+	switch (folderidx)
 	{
 		case FolderId_Plugins:
 			PluginsFolder = src;
 			UseDefaultPluginsFolder = useDefault;
-		break;
+			break;
 
 		case FolderId_Settings:
 			SettingsFolder = src;
 			UseDefaultSettingsFolder = useDefault;
-		break;
+			break;
 
 		case FolderId_Bios:
 			Bios = src;
 			UseDefaultBios = useDefault;
-		break;
+			break;
 
 		case FolderId_Snapshots:
 			Snapshots = src;
 			UseDefaultSnapshots = useDefault;
-		break;
+			break;
 
 		case FolderId_Savestates:
 			Savestates = src;
 			UseDefaultSavestates = useDefault;
-		break;
+			break;
 
 		case FolderId_MemoryCards:
 			MemoryCards = src;
 			UseDefaultMemoryCards = useDefault;
-		break;
+			break;
 
 		case FolderId_Logs:
 			Logs = src;
 			UseDefaultLogs = useDefault;
-		break;
+			break;
 
 		case FolderId_Langs:
 			Langs = src;
 			UseDefaultLangs = useDefault;
-		break;
+			break;
 
 		case FolderId_Documents:
 			CustomDocumentsFolder = src;
-		break;
+			break;
 
 		case FolderId_Cheats:
 			Cheats = src;
 			UseDefaultCheats = useDefault;
-		break;
+			break;
 
 		case FolderId_CheatsWS:
 			CheatsWS = src;
 			UseDefaultCheatsWS = useDefault;
-		break;
+			break;
 
-		jNO_DEFAULT
+			jNO_DEFAULT
 	}
 }
 
@@ -330,25 +366,25 @@ namespace FilenameDefs
 }; // namespace FilenameDefs
 
 
-std::string GuiConfig::FullpathTo( PluginsEnum_t pluginidx ) const
+std::string GuiConfig::FullpathTo(PluginsEnum_t pluginidx) const
 {
-	return Path::Combine(PluginsFolder,  BaseFilenames[pluginidx] );
+	return Path::Combine(PluginsFolder, BaseFilenames[pluginidx]);
 }
 
 // returns true if the filenames are quite absolutely the equivalent.  Works for all
 // types of filenames, relative and absolute.  Very important that you use this function
 // rather than any other type of more direct string comparison!
-bool GuiConfig::FullpathMatchTest( PluginsEnum_t pluginId, const wxString& cmpto )
+bool GuiConfig::FullpathMatchTest(PluginsEnum_t pluginId, const wxString& cmpto)
 {
 	// Implementation note: wxFileName automatically normalizes things as needed in it's
 	// equality comparison implementations, so we can do a simple comparison as follows:
 
-	return wxFileName(cmpto).SameAs((wxFileName)FullpathTo(pluginId) );
+	return wxFileName(cmpto).SameAs((wxFileName)FullpathTo(pluginId));
 }
 
 static std::string GetResolvedFolder(FoldersEnum_t id)
 {
-	return g_Conf->Folders.IsDefault(id) ? PathDefs::Get(id) : g_Conf->Folders[id];
+	return g_Conf->gui->Folders.IsDefault(id) ? PathDefs::Get(id) : g_Conf->gui->Folders[id];
 }
 
 fs::path GetLogFolder()
@@ -368,7 +404,7 @@ fs::path GetCheatsWsFolder()
 
 fs::path GetSettingsFolder()
 {
-	if( !wxGetApp().Overrides.SettingsFolder.empty() )
+	if (!wxGetApp().Overrides.SettingsFolder.empty())
 		return wxGetApp().Overrides.SettingsFolder;
 
 	return UseDefaultSettingsFolder ? PathDefs::GetSettings().string() : SettingsFolder;
@@ -376,44 +412,44 @@ fs::path GetSettingsFolder()
 
 fs::path GetVmSettingsFilename()
 {
-    fs::path fname( !wxGetApp().Overrides.VmSettingsFile.empty() ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig() );
+	fs::path fname(!wxGetApp().Overrides.VmSettingsFile.empty() ? wxGetApp().Overrides.VmSettingsFile : FilenameDefs::GetVmConfig());
 	std::cout << "Path: " << Path::Combine(GetSettingsFolder(), fname) << std::endl;
-    return Path::Combine(GetSettingsFolder(), fname);
+	return Path::Combine(GetSettingsFolder(), fname);
 }
 
 fs::path GetUiSettingsFilename()
 {
-	fs::path fname( FilenameDefs::GetUiConfig() );
+	fs::path fname(FilenameDefs::GetUiConfig());
 	return (GetSettingsFolder() / fname).make_preferred();
 }
 
 fs::path GetUiKeysFilename()
 {
-	fs::path fname( FilenameDefs::GetUiKeysConfig() );
+	fs::path fname(FilenameDefs::GetUiKeysConfig());
 	return (GetSettingsFolder() / fname).make_preferred();
 }
 
-std::string GuiConfig::FullpathToBios() const				
-{ 
+std::string GuiConfig::FullpathToBios() const
+{
 	return Path::Combine(Folders.Bios, BaseFilenames.Bios.ToStdString());
 }
 
-std::string GuiConfig::FullpathToMcd( uint slot ) const
+std::string GuiConfig::FullpathToMcd(uint slot) const
 {
-	return Path::Combine( Folders.MemoryCards, Mcd[slot].Filename.GetFullName().ToStdString() );
+	return Path::Combine(Folders.MemoryCards, Mcd[slot].Filename.GetFullName().ToStdString());
 }
 
 // ------------------------------------------------------------------------
 bool GuiConfig::SaveMemcards(wxConfigBase* conf)
 {
-	
-	for( uint slot=0; slot<2; ++slot )
+
+	for (uint slot = 0; slot < 2; ++slot)
 	{
 		//conf->Write(wxString(fmt::format("Slot{}u_Enable", slot)), Mcd[slot].Enabled);
-	    //conf->Write(wxString(fmt::format("Slot{}u_Filename", slot)), Mcd[slot].Filename.GetFullName());
+		//conf->Write(wxString(fmt::format("Slot{}u_Filename", slot)), Mcd[slot].Filename.GetFullName());
 	}
 
-	for( uint slot=2; slot<8; ++slot )
+	for (uint slot = 2; slot < 8; ++slot)
 	{
 		//int mtport = FileMcd_GetMtapPort(slot)+1;
 		//int mtslot = FileMcd_GetMtapSlot(slot)+1;
@@ -427,39 +463,39 @@ bool GuiConfig::SaveMemcards(wxConfigBase* conf)
 }
 
 bool GuiConfig::SaveRootItems(wxConfigBase* base)
-{	
+{
 	std::string res = CurrentIso;
 
-	if(base->Write("RecentIsoCount", RecentIsoCount) &&
-	base->Write("Listbook_ImageSize", Listbook_ImageSize) &&
-	base->Write("Toolbar_ImageSize", Toolbar_ImageSize) &&
-	base->Write("Toolbar_ShowLabels", Toolbar_ShowLabels)&&
+	if (base->Write("RecentIsoCount", RecentIsoCount) &&
+		base->Write("Listbook_ImageSize", Listbook_ImageSize) &&
+		base->Write("Toolbar_ImageSize", Toolbar_ImageSize) &&
+		base->Write("Toolbar_ShowLabels", Toolbar_ShowLabels) &&
 
-	base->Write("CurrentIso", res) && // TODO - missing the allow relative flag
-	base->Write("CurrentBlockdump", CurrentBlockdump) &&
-	base->Write("CurrentELF", CurrentELF) &&
-	base->Write("CurrentIRX", CurrentIRX) &&
+		base->Write("CurrentIso", res) && // TODO - missing the allow relative flag
+		base->Write("CurrentBlockdump", CurrentBlockdump) &&
+		base->Write("CurrentELF", CurrentELF) &&
+		base->Write("CurrentIRX", CurrentIRX) &&
 
-	base->Write("EnableSpeedHacks", EnableSpeedHacks) &&
-	base->Write("EnableGameFixes", EnableGameFixes) &&
-	base->Write("EnableFastBoot", EnableFastBoot) &&
+		base->Write("EnableSpeedHacks", EnableSpeedHacks) &&
+		base->Write("EnableGameFixes", EnableGameFixes) &&
+		base->Write("EnableFastBoot", EnableFastBoot) &&
 
-	base->Write("EnablePresets", EnablePresets) &&
-	base->Write("PresetIndex", PresetIndex) &&
-	base->Write("AskOnBoot",  AskOnBoot))
+		base->Write("EnablePresets", EnablePresets) &&
+		base->Write("PresetIndex", PresetIndex) &&
+		base->Write("AskOnBoot", AskOnBoot))
 	{
 		return true;
 	}
 
-	#ifdef __WXMSW__
-	//IniEntry( McdCompressNTFS );
-	#endif
+#ifdef __WXMSW__
+//IniEntry( McdCompressNTFS );
+#endif
 
 	else
 	{
 		return false;
 	}
-	
+
 
 	// TODO - these are not basic types at all
 	//base->Write("CdvdSource", CdvdSource, CDVD_SourceLabels, CdvdSource );
@@ -482,31 +518,40 @@ bool GuiConfig::Save(wxConfigBase* conf)
 // ------------------------------------------------------------------------
 void FolderOptions::ApplyDefaults()
 {
-	if( UseDefaultBios )		Bios		  = PathDefs::GetBios();
-	if( UseDefaultSnapshots )	Snapshots	  = PathDefs::GetSnapshots();
-	if( UseDefaultSavestates )	Savestates	  = PathDefs::GetSavestates();
-	if( UseDefaultMemoryCards )	MemoryCards	  = PathDefs::GetMemoryCards();
-	if( UseDefaultLogs )		Logs		  = PathDefs::GetLogs();
-	if( UseDefaultLangs )		Langs		  = PathDefs::GetLangs();
-	if( UseDefaultPluginsFolder)PluginsFolder = PathDefs::GetPlugins();
-	if( UseDefaultCheats )      Cheats		  = PathDefs::GetCheats();
-	if( UseDefaultCheatsWS )    CheatsWS	  = PathDefs::GetCheatsWS();
+	if (UseDefaultBios)
+		Bios = PathDefs::GetBios();
+	if (UseDefaultSnapshots)
+		Snapshots = PathDefs::GetSnapshots();
+	if (UseDefaultSavestates)
+		Savestates = PathDefs::GetSavestates();
+	if (UseDefaultMemoryCards)
+		MemoryCards = PathDefs::GetMemoryCards();
+	if (UseDefaultLogs)
+		Logs = PathDefs::GetLogs();
+	if (UseDefaultLangs)
+		Langs = PathDefs::GetLangs();
+	if (UseDefaultPluginsFolder)
+		PluginsFolder = PathDefs::GetPlugins();
+	if (UseDefaultCheats)
+		Cheats = PathDefs::GetCheats();
+	if (UseDefaultCheatsWS)
+		CheatsWS = PathDefs::GetCheatsWS();
 }
 
 // ------------------------------------------------------------------------
-    FolderOptions::FolderOptions()
-	: Bios			( PathDefs::GetBios() )
-	, Snapshots		( PathDefs::GetSnapshots() )
-	, Savestates	( PathDefs::GetSavestates() )
-	, MemoryCards	( PathDefs::GetMemoryCards() )
-	, Langs			( PathDefs::GetLangs() )
-	, Logs			( PathDefs::GetLogs() )
-	, Cheats		( PathDefs::GetCheats() )
-	, CheatsWS      ( PathDefs::GetCheatsWS() )
+FolderOptions::FolderOptions()
+	: Bios(PathDefs::GetBios())
+	, Snapshots(PathDefs::GetSnapshots())
+	, Savestates(PathDefs::GetSavestates())
+	, MemoryCards(PathDefs::GetMemoryCards())
+	, Langs(PathDefs::GetLangs())
+	, Logs(PathDefs::GetLogs())
+	, Cheats(PathDefs::GetCheats())
+	, CheatsWS(PathDefs::GetCheatsWS())
 
-	, RunIso	( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
-	, RunELF	( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
-	, RunDisc	( PathDefs::GetDocuments() )
+	, RunIso(PathDefs::GetDocuments()) // raw default is always the Documents folder.
+	, RunELF(PathDefs::GetDocuments()) // raw default is always the Documents folder.
+	, RunDisc(PathDefs::GetDocuments())
 {
 	//bitset = 0xffffffff;
 }
@@ -515,42 +560,42 @@ bool FolderOptions::Save(wxConfigBase* conf) // conf write = write to config fil
 {
 
 	//when saving in portable mode, we save relative paths if possible
-	 //  --> on load, these relative paths will be expanded relative to the exe folder.
+	//  --> on load, these relative paths will be expanded relative to the exe folder.
 	bool rel = true;
- 
+
 	if (conf->Write("UseDefaultBios", UseDefaultBios) &&
-	conf->Write("UseDefaultSavestates", UseDefaultSavestates) &&
-	conf->Write("UseDefaultMemoryCards", UseDefaultMemoryCards) &&
-	conf->Write("UseDefaultLogs", UseDefaultLogs) &&
-	conf->Write("UseDefaultLangs", UseDefaultLangs) &&
-	conf->Write("UseDefaultPluginsFolder", UseDefaultPluginsFolder) &&
-	conf->Write("UseDefaultCheats", UseDefaultCheats) &&
-	conf->Write("UseDefaultCheatsWS", UseDefaultCheatsWS) &&
+		conf->Write("UseDefaultSavestates", UseDefaultSavestates) &&
+		conf->Write("UseDefaultMemoryCards", UseDefaultMemoryCards) &&
+		conf->Write("UseDefaultLogs", UseDefaultLogs) &&
+		conf->Write("UseDefaultLangs", UseDefaultLangs) &&
+		conf->Write("UseDefaultPluginsFolder", UseDefaultPluginsFolder) &&
+		conf->Write("UseDefaultCheats", UseDefaultCheats) &&
+		conf->Write("UseDefaultCheatsWS", UseDefaultCheatsWS) &&
 
-	conf->Write(Bios, rel) &&
-	conf->Write(Snapshots, rel) &&
-	conf->Write(Savestates, rel) &&
-	conf->Write(MemoryCards, rel) &&
-	conf->Write(Logs, rel) &&
-	conf->Write(Langs, rel) &&
-	conf->Write(Cheats, rel) &&
-	conf->Write(CheatsWS, rel) &&
-	conf->Write(PluginsFolder, wxString(Path::Combine(InstallFolder, "plugins"))) &&
+		conf->Write(Bios, rel) &&
+		conf->Write(Snapshots, rel) &&
+		conf->Write(Savestates, rel) &&
+		conf->Write(MemoryCards, rel) &&
+		conf->Write(Logs, rel) &&
+		conf->Write(Langs, rel) &&
+		conf->Write(Cheats, rel) &&
+		conf->Write(CheatsWS, rel) &&
+		conf->Write(PluginsFolder, wxString(Path::Combine(InstallFolder, "plugins"))) &&
 
-	conf->Write(RunIso.wstring(), rel) &&
-	conf->Write(RunELF.wstring(), rel))
-    {
-	    return true;
-    }
-    
+		conf->Write(RunIso.wstring(), rel) &&
+		conf->Write(RunELF.wstring(), rel))
+	{
+		return true;
+	}
+
 	// ApplyDefaults();
 
-	for( int i=0; i<FolderId_COUNT; ++i )
+	for (int i = 0; i < FolderId_COUNT; ++i)
 	{
-			operator[]( (FoldersEnum_t)i );
-	}	
+		operator[]((FoldersEnum_t)i);
+	}
 
-    return false;
+	return false;
 }
 
 #ifndef DISABLE_RECORDING
@@ -561,7 +606,7 @@ InputRecordingOptions::InputRecordingOptions()
 
 bool InputRecordingOptions::Save(wxConfigBase* conf)
 {
-	if(conf->Write("VirtualPadPositionX",VirtualPadPosition.x) &&
+	if (conf->Write("VirtualPadPositionX", VirtualPadPosition.x) &&
 		conf->Write("VirtualPadPositionY", VirtualPadPosition.y))
 	{
 		return true;
@@ -571,19 +616,18 @@ bool InputRecordingOptions::Save(wxConfigBase* conf)
 	{
 		return false;
 	}
-
 }
 #endif
 
 // ----------------------------------------------------------------------------
 FramerateOptions::FramerateOptions()
 {
-	NominalScalar			= 1.0;
-	TurboScalar				= 2.0;
-	SlomoScalar				= 0.50;
+	NominalScalar = 1.0;
+	TurboScalar = 2.0;
+	SlomoScalar = 0.50;
 
-	SkipOnLimit				= false;
-	SkipOnTurbo				= false;
+	SkipOnLimit = false;
+	SkipOnTurbo = false;
 }
 
 
@@ -612,41 +656,41 @@ void FramerateOptions::SanityCheck()
 
 UiTemplateOptions::UiTemplateOptions()
 {
-	LimiterUnlimited	= "Max";
-	LimiterTurbo		= "Turbo";
-	LimiterSlowmo		= "Slowmo";
-	LimiterNormal		= "Normal";
-	OutputFrame			= "Frame";
-	OutputField			= "Field";
-	OutputProgressive	= "Progressive";
-	OutputInterlaced	= "Interlaced";
-	Paused				= "<PAUSED> ";
-	TitleTemplate		= "Slot: ${slot} | Speed: ${speed} (${vfps}) | ${videomode} | Limiter: ${limiter} | ${gsdx} | ${omodei} | ${cpuusage}";
+	LimiterUnlimited = "Max";
+	LimiterTurbo = "Turbo";
+	LimiterSlowmo = "Slowmo";
+	LimiterNormal = "Normal";
+	OutputFrame = "Frame";
+	OutputField = "Field";
+	OutputProgressive = "Progressive";
+	OutputInterlaced = "Interlaced";
+	Paused = "<PAUSED> ";
+	TitleTemplate = "Slot: ${slot} | Speed: ${speed} (${vfps}) | ${videomode} | Limiter: ${limiter} | ${gsdx} | ${omodei} | ${cpuusage}";
 #ifndef DISABLE_RECORDING
-	RecordingTemplate	= "Slot: ${slot} | Frame: ${frame}/${maxFrame} | Rec. Mode: ${mode} | Speed: ${speed} (${vfps}) | Limiter: ${limiter}";
+	RecordingTemplate = "Slot: ${slot} | Frame: ${frame}/${maxFrame} | Rec. Mode: ${mode} | Speed: ${speed} (${vfps}) | Limiter: ${limiter}";
 #endif
 }
 
 bool UiTemplateOptions::Save(wxConfigBase* conf)
 {
-	if(conf->Write("LimiterUnlimited", LimiterUnlimited) &&
-	conf->Write("LimiterTurbo", LimiterTurbo) &&
-	conf->Write("LimiterSlowmo", LimiterSlowmo) &&
-	conf->Write("LimiterNormal", LimiterNormal) &&
-	conf->Write("OutputFrame", OutputFrame) &&
-	conf->Write("OutputField", OutputField) &&
-	conf->Write("OutputProgressive", OutputProgressive) &&
-	conf->Write("OutputInterlaced", OutputInterlaced) &&
-	conf->Write("Paused", Paused) &&
-	conf->Write("TitleTemplate", TitleTemplate) &&
+	if (conf->Write("LimiterUnlimited", LimiterUnlimited) &&
+		conf->Write("LimiterTurbo", LimiterTurbo) &&
+		conf->Write("LimiterSlowmo", LimiterSlowmo) &&
+		conf->Write("LimiterNormal", LimiterNormal) &&
+		conf->Write("OutputFrame", OutputFrame) &&
+		conf->Write("OutputField", OutputField) &&
+		conf->Write("OutputProgressive", OutputProgressive) &&
+		conf->Write("OutputInterlaced", OutputInterlaced) &&
+		conf->Write("Paused", Paused) &&
+		conf->Write("TitleTemplate", TitleTemplate) &&
 #ifndef DISABLE_RECORDING
-	conf->Write("RecordingTemplate", RecordingTemplate))
+		conf->Write("RecordingTemplate", RecordingTemplate))
 #endif
-    {
-	    return true;
-    }
+	{
+		return true;
+	}
 
-    else
+	else
 	{
 		return false;
 	}
@@ -674,24 +718,23 @@ int GuiConfig::GetMaxPresetIndex()
 	return 5;
 }
 
-bool GuiConfig::isOkGetPresetTextAndColor( int n, std::string& label, wxColor& c )
+bool GuiConfig::isOkGetPresetTextAndColor(int n, std::string& label, wxColor& c)
 {
 	const std::string presetNamesAndColors[][2] =
-	{
-		{ ("Safest (No hacks)"), "Blue" },
-		{ ("Safe (Default)"),	"Dark Green" },
-		{ ("Balanced"),			"Forest Green" },
-		{ ("Aggressive"),		"Orange" },
-		{ ("Very Aggressive"),	"Red"},
-		{ ("Mostly Harmful"),	"Purple" }
-	};
-	if( n<0 || n>GetMaxPresetIndex() )
+		{
+			{("Safest (No hacks)"), "Blue"},
+			{("Safe (Default)"), "Dark Green"},
+			{("Balanced"), "Forest Green"},
+			{("Aggressive"), "Orange"},
+			{("Very Aggressive"), "Red"},
+			{("Mostly Harmful"), "Purple"}};
+	if (n < 0 || n > GetMaxPresetIndex())
 		return false;
 
-	label = wxsFormat(L"%d - ", n+1) + presetNamesAndColors[n][0];
-	c	  = wxColor(presetNamesAndColors[n][1]);
+	label = wxsFormat(L"%d - ", n + 1) + presetNamesAndColors[n][0];
+	c = wxColor(presetNamesAndColors[n][1]);
 
-    return true;
+	return true;
 }
 
 ConsoleLogOptions::ConsoleLogOptions()
@@ -707,21 +750,20 @@ ConsoleLogOptions::ConsoleLogOptions()
 bool ConsoleLogOptions::Save(wxConfigBase* conf)
 {
 	if (conf->Write("Theme", Theme) &&
-	conf->Write("FontSize", FontSize) &&
-	conf->Write("IsVisible", Visible) &&
-	conf->Write("Autodock", AutoDock) &&
-	conf->Write("DisplaySizeX", DisplaySize.x) &&
-	conf->Write("DisplaySizeY", DisplaySize.y) &&
-	conf->Write("DisplayPositionX", DisplayPosition.x) &&
-	conf->Write("DisplayPositionY", DisplayPosition.y))
+		conf->Write("FontSize", FontSize) &&
+		conf->Write("IsVisible", Visible) &&
+		conf->Write("Autodock", AutoDock) &&
+		conf->Write("DisplaySizeX", DisplaySize.x) &&
+		conf->Write("DisplaySizeY", DisplaySize.y) &&
+		conf->Write("DisplayPositionX", DisplayPosition.x) &&
+		conf->Write("DisplayPositionY", DisplayPosition.y))
 	{
-	    return true;
+		return true;
 	}
 	else
 	{
 		return false;
 	}
-	
 }
 
 void ConsoleLogOptions::Load(wxConfigBase* conf)
@@ -763,32 +805,31 @@ GSWindowOptions::GSWindowOptions()
 bool GSWindowOptions::Save(wxConfigBase* conf)
 {
 	if (conf->Write("Zoom", Zoom) &&
-	conf->Write("OffsetX", OffsetX) &&
-	conf->Write("OffsetY", OffsetY) &&
-	conf->Write("StretchY", StretchY) &&
-	conf->Write("WindowPosX", WindowPos.x) &&
-	conf->Write("WindowPosY", WindowPos.y) &&
-	conf->Write("WindowSizeX", WindowSize.x) &&
-	conf->Write("WindowSizeY", WindowSize.y) &&
-	conf->Write("CloseOnEsc", CloseOnEsc) &&
-	conf->Write("AspectRatio", (int)AspectRatio) &&
-	conf->Write("IsMaximized", IsMaximized) &&
-	conf->Write("IsFullscreen", IsFullscreen) &&
-	conf->Write("AlwaysHideMouse", AlwaysHideMouse) &&
-	conf->Write("DisableScreenSaver", DisableScreenSaver) &&
-	conf->Write("DefaultToFullScreen", DefaultToFullscreen) &&
-	conf->Write("DisableResizeBorders", DisableResizeBorders) &&
-	conf->Write("FMVAspectRatioSwitch", (int)FMVAspectRatioSwitch) &&
-	conf->Write("EnableVsyncWindowFlag", EnableVsyncWindowFlag) &&
-	conf->Write("IsToggleFullscreenOnDoubleClick", IsToggleFullscreenOnDoubleClick))
+		conf->Write("OffsetX", OffsetX) &&
+		conf->Write("OffsetY", OffsetY) &&
+		conf->Write("StretchY", StretchY) &&
+		conf->Write("WindowPosX", WindowPos.x) &&
+		conf->Write("WindowPosY", WindowPos.y) &&
+		conf->Write("WindowSizeX", WindowSize.x) &&
+		conf->Write("WindowSizeY", WindowSize.y) &&
+		conf->Write("CloseOnEsc", CloseOnEsc) &&
+		conf->Write("AspectRatio", (int)AspectRatio) &&
+		conf->Write("IsMaximized", IsMaximized) &&
+		conf->Write("IsFullscreen", IsFullscreen) &&
+		conf->Write("AlwaysHideMouse", AlwaysHideMouse) &&
+		conf->Write("DisableScreenSaver", DisableScreenSaver) &&
+		conf->Write("DefaultToFullScreen", DefaultToFullscreen) &&
+		conf->Write("DisableResizeBorders", DisableResizeBorders) &&
+		conf->Write("FMVAspectRatioSwitch", (int)FMVAspectRatioSwitch) &&
+		conf->Write("EnableVsyncWindowFlag", EnableVsyncWindowFlag) &&
+		conf->Write("IsToggleFullscreenOnDoubleClick", IsToggleFullscreenOnDoubleClick))
 	{
 		return true;
 	}
-    else
+	else
 	{
 		return false;
 	}
-	
 }
 
 void GSWindowOptions::Load(wxConfigBase* conf)
@@ -858,8 +899,9 @@ bool FilenameOptions::Save(wxConfigBase* conf)
 		{
 			wxFileName plugin_filename = wxFileName(Plugins[i]);
 			conf->Write(pluginShortName, plugin_filename.GetFullPath());
-		} else
-		conf->Write(pluginShortName, wxString(Plugins[i]));
+		}
+		else
+			conf->Write(pluginShortName, wxString(Plugins[i]));
 	}
 
 	if (needRelativeName)
@@ -870,7 +912,7 @@ bool FilenameOptions::Save(wxConfigBase* conf)
 	else
 		conf->Write(L"BIOS", wxString(pc));
 
-		return true;
+	return true;
 }
 
 void FilenameOptions::Load(wxConfigBase* conf)
@@ -878,7 +920,7 @@ void FilenameOptions::Load(wxConfigBase* conf)
 	conf->Read("BIOS", Bios);
 }
 
-bool OpenFileConfig( std::string filename )
+bool OpenFileConfig(std::string filename)
 {
 	if (!folderUtils.DoesExist(filename))
 	{
@@ -895,30 +937,30 @@ bool OpenFileConfig( std::string filename )
 void RelocateLogfile()
 {
 
-    if (!folderUtils.DoesExist(g_Conf->Folders.Logs))
-    {
-	    if (!folderUtils.CreateFolder(g_Conf->Folders.Logs))
-	    {
-		    return;
+	if (!folderUtils.DoesExist(g_Conf->gui->Folders.Logs))
+	{
+		if (!folderUtils.CreateFolder(g_Conf->gui->Folders.Logs))
+		{
+			return;
 		}
-    }
-	std::string newLogName = ( g_Conf->Folders.Logs + "emuLog.txt");
+	}
+	std::string newLogName = (g_Conf->gui->Folders.Logs + "emuLog.txt");
 
-	if( (emuLog != nullptr) && (emuLogName != newLogName) )
+	if ((emuLog != nullptr) && (emuLogName != newLogName))
 	{
 		wxString logName(newLogName);
 
-		Console.WriteLn( L"\nRelocating Logfile...\n\tFrom: %s\n\tTo  : %s\n", WX_STR(emuLogName), WX_STR(logName) );
+		Console.WriteLn(L"\nRelocating Logfile...\n\tFrom: %s\n\tTo  : %s\n", WX_STR(emuLogName), WX_STR(logName));
 		wxGetApp().DisableDiskLogging();
 
-		fclose( emuLog );
+		fclose(emuLog);
 		emuLog = nullptr;
 	}
 
-	if( emuLog == nullptr )
+	if (emuLog == nullptr)
 	{
 		emuLogName = newLogName;
-		emuLog = wxFopen( emuLogName, "wb" );
+		emuLog = wxFopen(emuLogName, "wb");
 	}
 
 	wxGetApp().EnableAllLogging();
@@ -932,7 +974,7 @@ void RelocateLogfile()
 //   The overwrite option applies to PCSX2 options only.  Plugin option behavior will depend
 //   on the plugins.
 //
-void AppConfig_OnChangedSettingsFolder( bool overwrite )
+void AppConfig_OnChangedSettingsFolder(bool overwrite)
 {
 	if (!folderUtils.DoesExist(PathDefs::GetDocuments().string()))
 	{
@@ -943,21 +985,21 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 	}
 	if (!folderUtils.DoesExist(GetSettingsFolder()))
 	{
-		if(folderUtils.CreateFolder(GetSettingsFolder()))
+		if (folderUtils.CreateFolder(GetSettingsFolder()))
 		{
 			return;
 		}
 	}
 	std::string uiFileName = GetUiSettingsFilename();
-	if( overwrite )
+	if (overwrite)
 	{
-		if( folderUtils.DoesExist ( uiFileName ) && !fs::remove( uiFileName ) )
+		if (folderUtils.DoesExist(uiFileName) && !fs::remove(uiFileName))
 			throw Exception::AccessDenied(uiFileName)
 				.SetBothMsgs(pxL("Failed to overwrite existing settings file; permission was denied."));
 
 		std::string vmFileName = GetVmSettingsFilename();
 
-		if( folderUtils.DoesExist( vmFileName ) && !fs::remove( vmFileName ) )
+		if (folderUtils.DoesExist(vmFileName) && !fs::remove(vmFileName))
 			throw Exception::AccessDenied(vmFileName)
 				.SetBothMsgs(pxL("Failed to overwrite existing settings file; permission was denied."));
 	}
@@ -967,11 +1009,11 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 	//delete wxConfigBase::Set( OpenFileConfig( (std::string)jsonFilename ) );
 	//GetAppConfig()->SetRecordDefaults(true);
 
-	if( !overwrite )
+	if (!overwrite)
 		AppLoadSettings();
 
 	AppApplySettings();
-	AppSaveSettings();//Make sure both Yaml files are created if needed.
+	AppSaveSettings(); //Make sure both Yaml files are created if needed.
 }
 // --------------------------------------------------------------------------------------
 //  pxDudConfig
@@ -984,43 +1026,46 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 class pxDudConfig : public wxConfigBase
 {
 protected:
-	wxString	m_empty;
+	wxString m_empty;
 
 public:
 	virtual ~pxDudConfig() = default;
 
-	virtual void SetPath(const wxString& ) {}
+	virtual void SetPath(const wxString&) {}
 	virtual const wxString& GetPath() const { return m_empty; }
 
-	virtual bool GetFirstGroup(wxString& , long& ) const { return false; }
-	virtual bool GetNextGroup (wxString& , long& ) const { return false; }
-	virtual bool GetFirstEntry(wxString& , long& ) const { return false; }
-	virtual bool GetNextEntry (wxString& , long& ) const { return false; }
-	virtual size_t GetNumberOfEntries(bool ) const  { return 0; }
-	virtual size_t GetNumberOfGroups(bool ) const  { return 0; }
+	virtual bool GetFirstGroup(wxString&, long&) const { return false; }
+	virtual bool GetNextGroup(wxString&, long&) const { return false; }
+	virtual bool GetFirstEntry(wxString&, long&) const { return false; }
+	virtual bool GetNextEntry(wxString&, long&) const { return false; }
+	virtual size_t GetNumberOfEntries(bool) const { return 0; }
+	virtual size_t GetNumberOfGroups(bool) const { return 0; }
 
-	virtual bool HasGroup(const wxString& ) const { return false; }
-	virtual bool HasEntry(const wxString& ) const { return false; }
+	virtual bool HasGroup(const wxString&) const { return false; }
+	virtual bool HasEntry(const wxString&) const { return false; }
 
-	virtual bool Flush(bool ) { return false; }
+	virtual bool Flush(bool) { return false; }
 
-	virtual bool RenameEntry(const wxString&, const wxString& ) { return false; }
+	virtual bool RenameEntry(const wxString&, const wxString&) { return false; }
 
-	virtual bool RenameGroup(const wxString&, const wxString& ) { return false; }
+	virtual bool RenameGroup(const wxString&, const wxString&) { return false; }
 
 	virtual bool DeleteEntry(const wxString&, bool bDeleteGroupIfEmpty = true) { return false; }
-	virtual bool DeleteGroup(const wxString& ) { return false; }
+	virtual bool DeleteGroup(const wxString&) { return false; }
 	virtual bool DeleteAll() { return false; }
 
 protected:
-	virtual bool DoReadString(const wxString& , wxString *) const  { return false; }
-	virtual bool DoReadLong(const wxString& , long *) const  { return false; }
+	virtual bool DoReadString(const wxString&, wxString*) const { return false; }
+	virtual bool DoReadLong(const wxString&, long*) const { return false; }
 
-	virtual bool DoWriteString(const wxString& , const wxString& )  { return false; }
-	virtual bool DoWriteLong(const wxString& , long )  { return false; }
+	virtual bool DoWriteString(const wxString&, const wxString&) { return false; }
+	virtual bool DoWriteLong(const wxString&, long) { return false; }
 
 #if wxUSE_BASE64
-	virtual bool DoReadBinary(const wxString& key, wxMemoryBuffer* buf) const { return false; }
+	virtual bool DoReadBinary(const wxString& key, wxMemoryBuffer* buf) const
+	{
+		return false;
+	}
 	virtual bool DoWriteBinary(const wxString& key, const wxMemoryBuffer& buf) { return false; }
 #endif
 };
@@ -1032,25 +1077,25 @@ static void LoadUiSettings(wxConfigBase* conf)
 	//ConLog_LoadSaveSettings(conf);
 	//SysTraceLog_LoadSaveSettings();
 
-	g_Conf->Load();
+	g_Conf->gui->Load();
 
 	g_Conf = std::make_unique<GuiConfig>();
-	//cfg["GlobalConfig"] = g_Conf->Save();
+	//cfg["GlobalConfig"] = g_Conf->gui->Save();
 
-	if( !folderUtils.DoesExist( g_Conf->CurrentIso ) )
+	if (!folderUtils.DoesExist(g_Conf->gui->CurrentIso))
 	{
-		g_Conf->CurrentIso.clear();
+		g_Conf->gui->CurrentIso.clear();
 	}
 
 #if defined(_WIN32)
-	if( !folderUtils.DoesExist(g_Conf->Folders.RunDisc) )
+	if (!folderUtils.DoesExist(g_Conf->gui->Folders.RunDisc))
 	{
-		//g_Conf->Folders.RunDisc.Clear();
+		//g_Conf->gui->Folders.RunDisc.Clear();
 	}
 #else
-	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
+	if (!folderUtils.DoesExist(g_Conf->gui->Folders.RunDisc))
 	{
-		g_Conf->Folders.RunDisc.clear();
+		g_Conf->gui->Folders.RunDisc.clear();
 	}
 #endif
 	//sApp.DispatchUiSettingsEvent( loader );
@@ -1058,31 +1103,32 @@ static void LoadUiSettings(wxConfigBase* conf)
 
 void AppLoadSettings()
 {
-	if( wxGetApp().Rpc_TryInvoke(AppLoadSettings) ) return;
+	if (wxGetApp().Rpc_TryInvoke(AppLoadSettings))
+		return;
 }
 
 static void SaveUiSettings()
 {
-	if( !folderUtils.DoesExist( g_Conf->CurrentIso ) )
+	if (!folderUtils.DoesExist(g_Conf->gui->CurrentIso))
 	{
-		g_Conf->CurrentIso.clear();
+		g_Conf->gui->CurrentIso.clear();
 	}
 
 #if defined(_WIN32)
-	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
+	if (!folderUtils.DoesExist(g_Conf->gui->Folders.RunDisc))
 	{
-		g_Conf->Folders.RunDisc.clear();
+		g_Conf->gui->Folders.RunDisc.clear();
 	}
 #else
-	if (!folderUtils.DoesExist(g_Conf->Folders.RunDisc))
+	if (!folderUtils.DoesExist(g_Conf->gui->Folders.RunDisc))
 	{
-		g_Conf->Folders.RunDisc.clear();
+		g_Conf->gui->Folders.RunDisc.clear();
 	}
 #endif
 
-	sApp.GetRecentIsoManager().Add( g_Conf->CurrentIso );
+	sApp.GetRecentIsoManager().Add(g_Conf->gui->CurrentIso);
 
-	g_Conf->Save();
+	g_Conf->gui->Save();
 
 	//std::string toSave = saver.dump();
 
@@ -1094,7 +1140,8 @@ static void SaveRegSettings()
 {
 	bool conf_install;
 
-	if (InstallationMode == InstallMode_Portable) return;
+	if (InstallationMode == InstallMode_Portable)
+		return;
 
 	// sApp. macro cannot be use because you need the return value of OpenInstallSettingsFile method
 	//if( Pcsx2App* __app_ = (Pcsx2App*)wxApp::GetInstance() ) conf_install = std::unique_ptr<nlohmann::json>((*__app_).OpenInstallSettingsFile());
@@ -1110,10 +1157,10 @@ void AppSaveSettings()
 
 	static std::atomic<bool> isPosted(false);
 
-	if( !wxThread::IsMain() )
+	if (!wxThread::IsMain())
 	{
-		if( !isPosted.exchange(true) )
-			wxGetApp().PostIdleMethod( AppSaveSettings );
+		if (!isPosted.exchange(true))
+			wxGetApp().PostIdleMethod(AppSaveSettings);
 
 		return;
 	}
@@ -1132,88 +1179,85 @@ void AppSaveSettings()
 // automatically (which is typically highly undesired behavior in our system)
 wxConfigBase* GetAppConfig()
 {
-	return wxConfigBase::Get( false );
+	return wxConfigBase::Get(false);
 }
 
 
 GuiConfig::GuiConfig()
-	: MainGuiPosition( wxDefaultPosition )
-	, SysSettingsTabName( "Cpu" )
-	, McdSettingsTabName( "none" )
-	, ComponentsTabName( "Plugins" )
-	, AppSettingsTabName( "none" )
-	, GameDatabaseTabName( "none" )
+	: MainGuiPosition(wxDefaultPosition)
+	, SysSettingsTabName("Cpu")
+	, McdSettingsTabName("none")
+	, ComponentsTabName("Plugins")
+	, AppSettingsTabName("none")
+	, GameDatabaseTabName("none")
 {
-    LanguageId			= wxLANGUAGE_DEFAULT;
-    LanguageCode		= "default";
-		RecentIsoCount		= 20;
-	Listbook_ImageSize	= 32;
-	Toolbar_ImageSize	= 24;
-	Toolbar_ShowLabels	= true;
+	LanguageId = wxLANGUAGE_DEFAULT;
+	LanguageCode = "default";
+	RecentIsoCount = 20;
+	Listbook_ImageSize = 32;
+	Toolbar_ImageSize = 24;
+	Toolbar_ShowLabels = true;
 
-	#ifdef __WXMSW__
-	McdCompressNTFS		= true;
-	#endif
-	EnableSpeedHacks	= true;
-	EnableGameFixes		= false;
-	EnableFastBoot		= true;
+#ifdef __WXMSW__
+	McdCompressNTFS = true;
+#endif
+	EnableSpeedHacks = true;
+	EnableGameFixes = false;
+	EnableFastBoot = true;
 
-	EnablePresets		= true;
-	PresetIndex			= 1;
+	EnablePresets = true;
+	PresetIndex = 1;
 
-	CdvdSource			= CDVD_SourceType::Iso;
+	CdvdSource = CDVD_SourceType::Iso;
 
 	// To be moved to FileMemoryCard pluign (someday)
-	for( uint slot=0; slot<8; ++slot )
+	for (uint slot = 0; slot < 8; ++slot)
 	{
-		Mcd[slot].Enabled	= !FileMcd_IsMultitapSlot(slot);	// enables main 2 slots
-		Mcd[slot].Filename	= FileMcd_GetDefaultName( slot );
+		Mcd[slot].Enabled = !FileMcd_IsMultitapSlot(slot); // enables main 2 slots
+		Mcd[slot].Filename = FileMcd_GetDefaultName(slot);
 
 		// Folder memory card is autodetected later.
 		Mcd[slot].Type = MemoryCardType::MemoryCard_File;
 	}
 
 	GzipIsoIndexTemplate = "$(f).pindex.tmp";
-
 }
 
 void GuiConfig::Init()
 {
 
 	conf = new wxFileConfig();
-	
+
 	fs::path programFullPath = wxStandardPaths::Get().GetExecutablePath().ToStdString();
-	std::string programDir(Path::Combine(programFullPath.parent_path(), "settings/PCSX2_ui.ini"));	
-    conf->SetPath(programDir);
-	
+	std::string programDir(Path::Combine(programFullPath.parent_path(), "settings/PCSX2_ui.ini"));
+	conf->SetPath(programDir);
+
 	isInit = true;
 
-	Console.WriteLn(L"Path: " +  conf->GetPath());
+	Console.WriteLn(L"Path: " + conf->GetPath());
 }
 
 void GuiConfig::Load()
-{	
+{
 	if (!isInit)
 	{
 		Init();
 	}
 
-	console.Load(conf);	
+	console.Load(conf);
 	gsWindow.Load(conf);
 	BaseFilenames.Load(conf);
 	Templates.Save(conf);
 
-    conf->Read("MainGuiPositionX", MainGuiPosition.x);
-    conf->Read("MainGuiPositionY", MainGuiPosition.y);
-    conf->Read("SysSettingsTabName", SysSettingsTabName);
+	conf->Read("MainGuiPositionX", MainGuiPosition.x);
+	conf->Read("MainGuiPositionY", MainGuiPosition.y);
+	conf->Read("SysSettingsTabName", SysSettingsTabName);
 	conf->Read("McdSettingsTabName", McdSettingsTabName);
 	conf->Read("ComponentsTabName", ComponentsTabName);
 	conf->Read("AppSettingsTabName", AppSettingsTabName);
 	conf->Read("GameDatabaseTabName", GameDatabaseTabName);
-    conf->Read("LanguageId", (int)LanguageId);
-    conf->Read("LanguageCode", LanguageCode);
-
-
+	conf->Read("LanguageId", (int)LanguageId);
+	conf->Read("LanguageCode", LanguageCode);
 }
 
 
@@ -1226,33 +1270,31 @@ void GuiConfig::Save()
 	}
 
 	if (Input.Save(conf) &&
-	Folders.Save(conf) &&
-	console.Save(conf) &&
-	gsWindow.Save(conf) &&
-	Templates.Save(conf) &&
-	Framerate.Save(conf) &&
-	BaseFilenames.Save(conf) &&
+		Folders.Save(conf) &&
+		console.Save(conf) &&
+		gsWindow.Save(conf) &&
+		Templates.Save(conf) &&
+		Framerate.Save(conf) &&
+		BaseFilenames.Save(conf) &&
 
-    conf->Write("MainGuiPositionX", MainGuiPosition.x) &&
-    conf->Write("MainGuiPositionY", MainGuiPosition.y) &&
-    conf->Write("SysSettingsTabName", SysSettingsTabName) &&
-	conf->Write("McdSettingsTabName", McdSettingsTabName) &&
-	conf->Write("ComponentsTabName", ComponentsTabName) &&
-	conf->Write("AppSettingsTabName", AppSettingsTabName) &&
-	conf->Write("GameDatabaseTabName", GameDatabaseTabName) &&
-    conf->Write("LanguageId", (int)LanguageId) &&
-    conf->Write("LanguageCode", LanguageCode))
+		conf->Write("MainGuiPositionX", MainGuiPosition.x) &&
+		conf->Write("MainGuiPositionY", MainGuiPosition.y) &&
+		conf->Write("SysSettingsTabName", SysSettingsTabName) &&
+		conf->Write("McdSettingsTabName", McdSettingsTabName) &&
+		conf->Write("ComponentsTabName", ComponentsTabName) &&
+		conf->Write("AppSettingsTabName", AppSettingsTabName) &&
+		conf->Write("GameDatabaseTabName", GameDatabaseTabName) &&
+		conf->Write("LanguageId", (int)LanguageId) &&
+		conf->Write("LanguageCode", LanguageCode))
 	{
-	    conf->Flush();
+		conf->Flush();
 	}
 	else
 	{
 		return;
 	}
-	
 }
 
 GuiConfig::~GuiConfig()
 {
-   
 }

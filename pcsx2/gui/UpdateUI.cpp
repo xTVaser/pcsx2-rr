@@ -29,19 +29,19 @@
 // mojo for configurable/dynamic menus. >_<
 void MainEmuFrame::EnableMenuItem(int id, bool enable)
 {
-	if (wxMenuItem *item = m_menubar.FindItem(id))
+	if (wxMenuItem* item = m_menubar.FindItem(id))
 		item->Enable(enable);
 }
 
 void MainEmuFrame::SetMenuItemLabel(int id, wxString str)
 {
-	if (wxMenuItem *item = m_menubar.FindItem(id))
+	if (wxMenuItem* item = m_menubar.FindItem(id))
 		item->SetItemLabel(str);
 }
 
 void MainEmuFrame::CheckMenuItem(int id, bool checked)
 {
-	if (wxMenuItem *item = m_menubar.FindItem(id))
+	if (wxMenuItem* item = m_menubar.FindItem(id))
 		item->Check(checked);
 }
 
@@ -52,28 +52,31 @@ static void _SaveLoadStuff(bool enabled)
 
 #ifdef USE_NEW_SAVESLOTS_UI
 	// Run though all the slots. Update if they need updating or the crc changed.
-	for (Saveslot &slot : saveslot_cache)
+	for (Saveslot& slot : saveslot_cache)
 	{
 		// We need to reload the file information if the crc or serial # changed.
-		if ((slot.crc != ElfCRC)|| (slot.serialName != DiscSerial)) slot.invalid_cache = true;
+		if ((slot.crc != ElfCRC) || (slot.serialName != DiscSerial))
+			slot.invalid_cache = true;
 
 		// Either the cache needs updating, or the menu items do, or both.
 		if (slot.menu_update || slot.invalid_cache)
 		{
-			#ifdef SAVESLOT_LOGS
+#ifdef SAVESLOT_LOGS
 			Console.WriteLn("Updating slot %i.", slot.slot_num);
-			if (slot.menu_update) Console.WriteLn("Menu update needed.");
-			if (slot.invalid_cache) Console.WriteLn("Invalid cache. (CRC different or just initialized.)");
-			#endif
+			if (slot.menu_update)
+				Console.WriteLn("Menu update needed.");
+			if (slot.invalid_cache)
+				Console.WriteLn("Invalid cache. (CRC different or just initialized.)");
+#endif
 
 			if (slot.invalid_cache)
 			{
 				// Pull everything from disk.
 				slot.UpdateCache();
 
-				#ifdef SAVESLOT_LOGS
+#ifdef SAVESLOT_LOGS
 				slot.ConsoleDump();
-				#endif
+#endif
 			}
 
 			// Update from the cached information.
@@ -84,7 +87,6 @@ static void _SaveLoadStuff(bool enabled)
 			sMainFrame.SetMenuItemLabel(slot.load_item_id, slot.SlotName());
 			sMainFrame.SetMenuItemLabel(slot.save_item_id, slot.SlotName());
 		}
-
 	}
 #endif
 }
@@ -93,9 +95,9 @@ static void _SaveLoadStuff(bool enabled)
 // etc.  Typically called by SysEvtHandler whenever the message pump becomes idle.
 void UI_UpdateSysControls()
 {
-	#ifdef SAVESLOT_LOGS
+#ifdef SAVESLOT_LOGS
 	Console.WriteLn("In the routine for updating the UI.");
-	#endif
+#endif
 
 	if (wxGetApp().Rpc_TryInvokeAsync(&UI_UpdateSysControls))
 		return;
@@ -111,8 +113,8 @@ void UI_DisableSysShutdown()
 		return;
 
 	sMainFrame.EnableMenuItem(MenuId_Sys_Shutdown, false);
-	sMainFrame.EnableMenuItem(MenuId_IsoBrowse, !g_Conf->AskOnBoot);
-	wxGetApp().GetRecentIsoManager().EnableItems(!g_Conf->AskOnBoot);
+	sMainFrame.EnableMenuItem(MenuId_IsoBrowse, !g_Conf->gui->AskOnBoot);
+	wxGetApp().GetRecentIsoManager().EnableItems(!g_Conf->gui->AskOnBoot);
 }
 
 void UI_EnableSysShutdown()

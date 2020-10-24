@@ -15,7 +15,7 @@
 
 #pragma once
 
-// TODO - stop using yaml-cpp directly
+// TODO - config - stop using yaml-cpp directly
 #include "yaml-cpp/yaml.h"
 
 // Number of stereo samples per SndOut block.

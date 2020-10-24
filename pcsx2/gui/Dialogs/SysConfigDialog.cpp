@@ -28,65 +28,65 @@ using namespace pxSizerFlags;
 
 static void CheckHacksOverrides()
 {
-	if( !wxGetApp().Overrides.HasCustomHacks() ) return;
+	if (!wxGetApp().Overrides.HasCustomHacks())
+		return;
 
 	// The user has commandline overrides enabled, so the options they see here and/or apply won't match
 	// the commandline overrides.  Let them know!
 
-	wxDialogWithHelpers dialog( wxFindWindowByName( L"Dialog:" + Dialogs::SysConfigDialog::GetNameStatic() ), _("Config Overrides Warning") );
+	wxDialogWithHelpers dialog(wxFindWindowByName(L"Dialog:" + Dialogs::SysConfigDialog::GetNameStatic()), _("Config Overrides Warning"));
 
-	dialog += dialog.Text( pxEt( L"Warning!  You are running PCSX2 with command line options that override your configured settings.  These command line options will not be reflected in the Settings dialog, and will be disabled if you apply any changes here."
-	));
+	dialog += dialog.Text(pxEt(L"Warning!  You are running PCSX2 with command line options that override your configured settings.  These command line options will not be reflected in the Settings dialog, and will be disabled if you apply any changes here."));
 
 	// [TODO] : List command line option overrides in action?
 
-	pxIssueConfirmation( dialog, MsgButtons().OK(), L"Dialog.SysConfig.Overrides" );
+	pxIssueConfirmation(dialog, MsgButtons().OK(), L"Dialog.SysConfig.Overrides");
 }
 
 static void CheckPluginsOverrides()
 {
-	if( !wxGetApp().Overrides.HasPluginsOverride() ) return;
+	if (!wxGetApp().Overrides.HasPluginsOverride())
+		return;
 
 	// The user has commandline overrides enabled, so the options they see here and/or apply won't match
 	// the commandline overrides.  Let them know!
 
-	wxDialogWithHelpers dialog( NULL, _("Components Overrides Warning") );
+	wxDialogWithHelpers dialog(NULL, _("Components Overrides Warning"));
 
-	dialog += dialog.Text( pxEt( L"Warning!  You are running PCSX2 with command line options that override your configured plugin and/or folder settings.  These command line options will not be reflected in the settings dialog, and will be disabled when you apply settings changes here."
-	));
+	dialog += dialog.Text(pxEt(L"Warning!  You are running PCSX2 with command line options that override your configured plugin and/or folder settings.  These command line options will not be reflected in the settings dialog, and will be disabled when you apply settings changes here."));
 
 	// [TODO] : List command line option overrides in action?
 
-	pxIssueConfirmation( dialog, MsgButtons().OK(), L"Dialog.ComponentsConfig.Overrides" );
+	pxIssueConfirmation(dialog, MsgButtons().OK(), L"Dialog.ComponentsConfig.Overrides");
 }
 
 //Behavior when unchecking 'Presets' is to keep the GUI settings at the last preset (even if not yet applied).
 //
 //Alternative possible behavior when unchecking 'Presets' (currently not implemented) is to set the GUI to
-//	the last applied settings. If such behavior is to be implemented, g_Conf->EnablePresets should be set to
+//	the last applied settings. If such behavior is to be implemented, g_Conf->gui->EnablePresets should be set to
 //	false before it's applied to the GUI and then restored to it's original state such that the GUI reflects
 //	g_Conf's settings as if it doesn't force presets. (if a settings which has presets enable is applied to the
 //	GUI then most of the GUI is disabled).
-void Dialogs::SysConfigDialog::UpdateGuiForPreset ( int presetIndex, bool presetsEnabled )
+void Dialogs::SysConfigDialog::UpdateGuiForPreset(int presetIndex, bool presetsEnabled)
 {
- 	if( !m_listbook )
+	if (!m_listbook)
 		return;
 
 	//Console.WriteLn("Applying config to Gui: preset #%d, presets enabled: %s", presetIndex, presetsEnabled?"true":"false");
 
-	g_Conf->IsOkApplyPreset( presetIndex, false );	//apply a preset to a copy of g_Conf.
-	g_Conf->EnablePresets = presetsEnabled;	//override IsOkApplyPreset (which always applies/enabled) to actual required state
+	g_Conf->gui->IsOkApplyPreset(presetIndex, false); //apply a preset to a copy of g_Conf.
+	g_Conf->gui->EnablePresets = presetsEnabled;      //override IsOkApplyPreset (which always applies/enabled) to actual required state
 
 	//update the config panels of SysConfigDialog to reflect the preset.
 	size_t pages = m_labels.GetCount();
-	for( size_t i=0; i<pages; ++i )
+	for (size_t i = 0; i < pages; ++i)
 	{
 		//NOTE: We should only apply the preset to panels of class BaseApplicableConfigPanel_SpecificConfig
 		//      which supports it, and BaseApplicableConfigPanel implements IsSpecificConfig() as lame RTTI to detect it.
 		//		However, the panels in general (m_listbook->GetPage(i)) are of type wxNotebookPage which doesn't
 		//		support IsSpecificConfig(), so the panels (pages) that SysConfigDialog holds must be of class
 		//		BaseApplicableConfigPanel or derived, and not of the parent class wxNotebookPage.
-		if ( ((BaseApplicableConfigPanel*)(m_listbook->GetPage(i)))->IsSpecificConfig() )
+		if (((BaseApplicableConfigPanel*)(m_listbook->GetPage(i)))->IsSpecificConfig())
 		{
 			/*((BaseApplicableConfigPanel_SpecificConfig*)(m_listbook->GetPage(i)))
 				->ApplyConfigToGui( preset, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );*/
@@ -108,41 +108,39 @@ void Dialogs::SysConfigDialog::UpdateGuiForPreset ( int presetIndex, bool preset
 	//			4. Clicking Apply (presets still unchecked) --> patches will be enabled and not grayed out, presets are disabled.
 	//			--> If clicking Cancel instead of Apply at 4., will revert everything to the state of 1 (preset disabled, patches disabled and not grayed out).
 
-	bool origEnable=g_Conf->EnablePresets;
-	g_Conf->EnablePresets=true;	// will cause preset-related items to be grayed out at the menus regardless of their value.
+	bool origEnable = g_Conf->gui->EnablePresets;
+	g_Conf->gui->EnablePresets = true; // will cause preset-related items to be grayed out at the menus regardless of their value.
 	/*if ( GetMainFramePtr() )
 		GetMainFramePtr()->ApplyConfigToGui( preset, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );*/
 
 	// Not really needed as 'preset' is local and dumped anyway. For the sake of future modifications of more GUI elements.
-	g_Conf->EnablePresets=origEnable;
-
+	g_Conf->gui->EnablePresets = origEnable;
 }
 
 void Dialogs::SysConfigDialog::AddPresetsControl()
 {
-	m_slider_presets = new wxSlider( this, wxID_ANY, g_Conf->PresetIndex, 0, GuiConfig::GetMaxPresetIndex(),
-		wxDefaultPosition, wxDefaultSize, wxHORIZONTAL /*| wxSL_AUTOTICKS | wxSL_LABELS */);
-	m_slider_presets->SetMinSize(wxSize(100,25));
+	m_slider_presets = new wxSlider(this, wxID_ANY, g_Conf->gui->PresetIndex, 0, GuiConfig::GetMaxPresetIndex(),
+									wxDefaultPosition, wxDefaultSize, wxHORIZONTAL /*| wxSL_AUTOTICKS | wxSL_LABELS */);
+	m_slider_presets->SetMinSize(wxSize(100, 25));
 
 	const wchar_t* presetTooltip = pxEt(L"Presets apply some speed hacks that may boost speed on underpowered systems, or speed up games that have unusual performance requirements. Uncheck this box to apply settings manually.\n\n1) Safest - No speed hacks. Most reliable, but possibly slow setting.\n2) Safe - Default. A few speed hacks known to provide boosts, with minimal to no side effects.\n3) Balanced - May help quad core CPUs.\n4) Aggressive - May help underpowered CPUs on less demanding games, but risks causing problems in other cases.\n5) Very Aggressive - May help underpowered CPUs on less demanding games, but is likely to cause problems in other cases.\n6) Mostly Harmful - Harsh application of speed hacks. May help a very small set of games that have unusual performance requirements, but have adverse effects on most others. Not recommended for underpowered PCs.");
 
 	m_slider_presets->SetToolTip(
-		presetTooltip
-	);
-	m_slider_presets->Enable(g_Conf->EnablePresets);
+		presetTooltip);
+	m_slider_presets->Enable(g_Conf->gui->EnablePresets);
 
-	m_check_presets = new pxCheckBox( this, _("Preset:"), 0);
+	m_check_presets = new pxCheckBox(this, _("Preset:"), 0);
 	m_check_presets->SetToolTip(
-		presetTooltip
-	);
-	m_check_presets->SetValue(!!g_Conf->EnablePresets);
-	//Console.WriteLn("--> SysConfigDialog::AddPresetsControl: EnablePresets: %s", g_Conf->EnablePresets?"true":"false");
+		presetTooltip);
+	m_check_presets->SetValue(!!g_Conf->gui->EnablePresets);
+	//Console.WriteLn("--> SysConfigDialog::AddPresetsControl: EnablePresets: %s", g_Conf->gui->EnablePresets?"true":"false");
 
-	std::string l; wxColor c(wxColour( L"Red" ));
-	GuiConfig::isOkGetPresetTextAndColor(g_Conf->PresetIndex, l, c);
+	std::string l;
+	wxColor c(wxColour(L"Red"));
+	GuiConfig::isOkGetPresetTextAndColor(g_Conf->gui->PresetIndex, l, c);
 	m_msg_preset = new pxStaticText(this, l, wxALIGN_LEFT);
-	m_msg_preset->Enable(g_Conf->EnablePresets);
-	m_msg_preset->SetForegroundColour( c );
+	m_msg_preset->Enable(g_Conf->gui->EnablePresets);
+	m_msg_preset->SetForegroundColour(c);
 	m_msg_preset->Bold();
 
 	//I'm unable to do without the next 2 rows.. what am I missing?
@@ -151,10 +149,10 @@ void Dialogs::SysConfigDialog::AddPresetsControl()
 
 
 	*m_extraButtonSizer += 20;
-	*m_extraButtonSizer += m_check_presets  | pxMiddle;
+	*m_extraButtonSizer += m_check_presets | pxMiddle;
 	*m_extraButtonSizer += m_slider_presets | pxMiddle;
 	*m_extraButtonSizer += 5;
-	*m_extraButtonSizer += m_msg_preset     | pxMiddle;
+	*m_extraButtonSizer += m_msg_preset | pxMiddle;
 
 	Bind(wxEVT_SCROLL_THUMBTRACK, &Dialogs::SysConfigDialog::Preset_Scroll, this, m_slider_presets->GetId());
 	Bind(wxEVT_SCROLL_CHANGED, &Dialogs::SysConfigDialog::Preset_Scroll, this, m_slider_presets->GetId());
@@ -163,25 +161,25 @@ void Dialogs::SysConfigDialog::AddPresetsControl()
 
 
 
-void Dialogs::SysConfigDialog::Presets_Toggled(wxCommandEvent &event)
+void Dialogs::SysConfigDialog::Presets_Toggled(wxCommandEvent& event)
 {
-	m_slider_presets->Enable( m_check_presets->IsChecked() );
-	m_msg_preset->Enable( m_check_presets->IsChecked() );
-	UpdateGuiForPreset( m_slider_presets->GetValue(), m_check_presets->IsChecked() );
+	m_slider_presets->Enable(m_check_presets->IsChecked());
+	m_msg_preset->Enable(m_check_presets->IsChecked());
+	UpdateGuiForPreset(m_slider_presets->GetValue(), m_check_presets->IsChecked());
 
 	event.Skip();
 }
 
 
-void Dialogs::SysConfigDialog::Preset_Scroll(wxScrollEvent &event)
+void Dialogs::SysConfigDialog::Preset_Scroll(wxScrollEvent& event)
 {
 	std::string pl;
 	wxColor c;
 	GuiConfig::isOkGetPresetTextAndColor(m_slider_presets->GetValue(), pl, c);
 	m_msg_preset->SetLabel(pl);
-	m_msg_preset->SetForegroundColour( c );
+	m_msg_preset->SetForegroundColour(c);
 
-	UpdateGuiForPreset( m_slider_presets->GetValue(), m_check_presets->IsChecked() );
+	UpdateGuiForPreset(m_slider_presets->GetValue(), m_check_presets->IsChecked());
 	event.Skip();
 }
 
@@ -191,8 +189,8 @@ void Dialogs::SysConfigDialog::Preset_Scroll(wxScrollEvent &event)
 void Dialogs::SysConfigDialog::Apply()
 {
 	//Console.WriteLn("Applying preset to to g_Conf: Preset index: %d, EnablePresets: %s", (int)m_slider_presets->GetValue(), m_check_presets->IsChecked()?"true":"false");
-	g_Conf->EnablePresets	= m_check_presets->IsChecked();
-	g_Conf->PresetIndex		= m_slider_presets->GetValue();
+	g_Conf->gui->EnablePresets = m_check_presets->IsChecked();
+	g_Conf->gui->PresetIndex = m_slider_presets->GetValue();
 
 	if (GetMainFramePtr())
 		GetMainFramePtr()->CommitPreset_noTrigger();
@@ -204,25 +202,25 @@ void Dialogs::SysConfigDialog::Apply()
 void Dialogs::SysConfigDialog::Cancel()
 {
 	if (GetMainFramePtr())
-		GetMainFramePtr()->ApplyConfigToGui( *g_Conf, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );
+		GetMainFramePtr()->ApplyConfigToGui(*g_Conf, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE);
 }
 
 Dialogs::SysConfigDialog::SysConfigDialog(wxWindow* parent)
-	: BaseConfigurationDialog( parent, AddAppName(_("Emulation Settings - %s")), 580 )
+	: BaseConfigurationDialog(parent, AddAppName(_("Emulation Settings - %s")), 580)
 {
-	ScopedBusyCursor busy( Cursor_ReallyBusy );
+	ScopedBusyCursor busy(Cursor_ReallyBusy);
 
-	CreateListbook( wxGetApp().GetImgList_Config() );
-	const AppImageIds::ConfigIds& cfgid( wxGetApp().GetImgId().Config );
+	CreateListbook(wxGetApp().GetImgList_Config());
+	const AppImageIds::ConfigIds& cfgid(wxGetApp().GetImgId().Config);
 
 	//NOTE: all pages which are added to SysConfigDialog must be of class BaseApplicableConfigPanel or derived.
 	//		see comment inside UpdateGuiForPreset implementation for more info.
-	AddPage<CpuPanelEE>				( pxL("EE/IOP"),		cfgid.Cpu );
-	AddPage<CpuPanelVU>				( pxL("VUs"),			cfgid.Cpu );
-	AddPage<VideoPanel>				( pxL("GS"),			cfgid.Cpu );
-	AddPage<GSWindowSettingsPanel>	( pxL("GS Window"),		cfgid.Video );
-	AddPage<SpeedHacksPanel>		( pxL("Speedhacks"),	cfgid.Speedhacks );
-	AddPage<GameFixesPanel>			( pxL("Game Fixes"),	cfgid.Gamefixes );
+	AddPage<CpuPanelEE>(pxL("EE/IOP"), cfgid.Cpu);
+	AddPage<CpuPanelVU>(pxL("VUs"), cfgid.Cpu);
+	AddPage<VideoPanel>(pxL("GS"), cfgid.Cpu);
+	AddPage<GSWindowSettingsPanel>(pxL("GS Window"), cfgid.Video);
+	AddPage<SpeedHacksPanel>(pxL("Speedhacks"), cfgid.Speedhacks);
+	AddPage<GameFixesPanel>(pxL("Game Fixes"), cfgid.Gamefixes);
 
 	AddListbook();
 	AddOkCancel();
@@ -230,29 +228,29 @@ Dialogs::SysConfigDialog::SysConfigDialog(wxWindow* parent)
 
 	SetSizerAndFit(GetSizer());
 
-	if( wxGetApp().Overrides.HasCustomHacks() )
-		wxGetApp().PostMethod( CheckHacksOverrides );
+	if (wxGetApp().Overrides.HasCustomHacks())
+		wxGetApp().PostMethod(CheckHacksOverrides);
 }
 
 Dialogs::ComponentsConfigDialog::ComponentsConfigDialog(wxWindow* parent)
-	: BaseConfigurationDialog( parent, AddAppName(_("Components Selectors - %s")),  750 )
+	: BaseConfigurationDialog(parent, AddAppName(_("Components Selectors - %s")), 750)
 {
-	ScopedBusyCursor busy( Cursor_ReallyBusy );
+	ScopedBusyCursor busy(Cursor_ReallyBusy);
 
-	CreateListbook( wxGetApp().GetImgList_Config() );
-	const AppImageIds::ConfigIds& cfgid( wxGetApp().GetImgId().Config );
+	CreateListbook(wxGetApp().GetImgList_Config());
+	const AppImageIds::ConfigIds& cfgid(wxGetApp().GetImgId().Config);
 
-	AddPage<PluginSelectorPanel>	( pxL("Plugins"),		cfgid.Plugins );
-	AddPage<BiosSelectorPanel>		( pxL("BIOS"),			cfgid.Cpu );
-	AddPage<StandardPathsPanel>		( pxL("Folders"),		cfgid.Paths );
+	AddPage<PluginSelectorPanel>(pxL("Plugins"), cfgid.Plugins);
+	AddPage<BiosSelectorPanel>(pxL("BIOS"), cfgid.Cpu);
+	AddPage<StandardPathsPanel>(pxL("Folders"), cfgid.Paths);
 
 	AddListbook();
 	AddOkCancel();
 
 	SetSizerAndFit(GetSizer());
 
-	if( wxGetApp().Overrides.HasPluginsOverride() )
-		wxGetApp().PostMethod( CheckPluginsOverrides );
+	if (wxGetApp().Overrides.HasPluginsOverride())
+		wxGetApp().PostMethod(CheckPluginsOverrides);
 }
 
 Dialogs::InterfaceLanguageDialog::InterfaceLanguageDialog(wxWindow* parent)

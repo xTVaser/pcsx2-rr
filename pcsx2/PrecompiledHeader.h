@@ -82,7 +82,7 @@ typedef int BOOL;
 #include "Utilities/General.h"
 #include "x86emitter/tools.h"
 
-#include "config/EmulatorConfig.h"
+#include "config/GlobalConfig.h"
 
 typedef void FnType_Void();
 typedef FnType_Void* Fnptr_Void;

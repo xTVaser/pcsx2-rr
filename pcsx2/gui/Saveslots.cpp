@@ -32,7 +32,7 @@
 static int StatesC = 0;
 
 #ifdef USE_NEW_SAVESLOTS_UI
-std::array<Saveslot,StateSlotsCount> saveslot_cache = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+std::array<Saveslot, StateSlotsCount> saveslot_cache = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 #endif
 
 // FIXME : Use of the IsSavingOrLoading flag is mostly a hack until we implement a
@@ -45,8 +45,8 @@ public:
 	wxString GetEventName() const { return L"ClearSavingLoadingFlag"; }
 
 	virtual ~SysExecEvent_ClearSavingLoadingFlag() = default;
-	SysExecEvent_ClearSavingLoadingFlag() { }
-	SysExecEvent_ClearSavingLoadingFlag *Clone() const { return new SysExecEvent_ClearSavingLoadingFlag(); }
+	SysExecEvent_ClearSavingLoadingFlag() {}
+	SysExecEvent_ClearSavingLoadingFlag* Clone() const { return new SysExecEvent_ClearSavingLoadingFlag(); }
 
 protected:
 	void InvokeEvent()
@@ -122,7 +122,7 @@ void Sstates_updateLoadBackupMenuItem(bool isBeforeSave)
 {
 	wxString file = SaveStateBase::GetFilename(StatesC);
 
-	if (!(isBeforeSave && g_Conf->EmuOptions.BackupSavestate))
+	if (!(isBeforeSave && g_Conf->emulator->BackupSavestate))
 	{
 		file = file + L".backup";
 	}

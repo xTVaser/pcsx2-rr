@@ -28,7 +28,7 @@ namespace Panels
 	class BaseSelectorPanel;
 	class McdConfigPanel_Toggles;
 	class BaseMcdListPanel;
-}
+} // namespace Panels
 
 wxDECLARE_EVENT(pxEvt_SomethingChanged, wxCommandEvent);
 
@@ -42,44 +42,45 @@ namespace Dialogs
 		typedef BaseApplicableDialog _parent;
 
 	protected:
-		wxListbook*			m_listbook;
-		wxArrayString		m_labels;
-		bool				m_allowApplyActivation;
+		wxListbook* m_listbook;
+		wxArrayString m_labels;
+		bool m_allowApplyActivation;
 
 	public:
 		virtual ~BaseConfigurationDialog() = default;
 		BaseConfigurationDialog(wxWindow* parent, const wxString& title, int idealWidth);
 
 	public:
-		void AddOkCancel( wxSizer* sizer=NULL );
-		void AddListbook( wxSizer* sizer=NULL );
-		void CreateListbook( wxImageList& bookicons );
+		void AddOkCancel(wxSizer* sizer = NULL);
+		void AddListbook(wxSizer* sizer = NULL);
+		void CreateListbook(wxImageList& bookicons);
 
 		virtual void SomethingChanged();
 
-		template< typename T >
-		void AddPage( const wxChar* label, int iconid );
+		template <typename T>
+		void AddPage(const wxChar* label, int iconid);
 
-		void AllowApplyActivation( bool allow=true );
-		virtual bool SomethingChanged_StateModified_IsChanged(){ //returns the state of the apply button.
-			if( wxWindow* apply = FindWindow( wxID_APPLY ) )
+		void AllowApplyActivation(bool allow = true);
+		virtual bool SomethingChanged_StateModified_IsChanged()
+		{ //returns the state of the apply button.
+			if (wxWindow* apply = FindWindow(wxID_APPLY))
 				return apply->IsEnabled();
 			return false;
 		}
 
 	protected:
-		void OnOk_Click( wxCommandEvent& evt );
-		void OnCancel_Click( wxCommandEvent& evt );
-		void OnApply_Click( wxCommandEvent& evt );
-		void OnScreenshot_Click( wxCommandEvent& evt );
+		void OnOk_Click(wxCommandEvent& evt);
+		void OnCancel_Click(wxCommandEvent& evt);
+		void OnApply_Click(wxCommandEvent& evt);
+		void OnScreenshot_Click(wxCommandEvent& evt);
 
-		void OnSetSettingsPage( wxCommandEvent& evt );
-		void OnSomethingChanged( wxCommandEvent& evt );
+		void OnSetSettingsPage(wxCommandEvent& evt);
+		void OnSomethingChanged(wxCommandEvent& evt);
 
-		virtual wxString GetConfSettingsTabName() const=0;
+		virtual wxString GetConfSettingsTabName() const = 0;
 
-		virtual void Apply() {};
-		virtual void Cancel() {};
+		virtual void Apply(){};
+		virtual void Cancel(){};
 	};
 
 	// --------------------------------------------------------------------------------------
@@ -89,28 +90,29 @@ namespace Dialogs
 	{
 	public:
 		virtual ~SysConfigDialog() = default;
-		SysConfigDialog(wxWindow* parent=NULL);
+		SysConfigDialog(wxWindow* parent = NULL);
 		static wxString GetNameStatic() { return L"CoreSettings"; }
 		wxString GetDialogName() const { return GetNameStatic(); }
-   		void Apply();
+		void Apply();
 		void Cancel();
 
 		//Stores the state of the apply button in a global var.
 		//This var will be used by KB shortcuts commands to decide if the gui should be modified (only when no intermediate changes)
-		virtual bool SomethingChanged_StateModified_IsChanged(){
+		virtual bool SomethingChanged_StateModified_IsChanged()
+		{
 			return g_ConfigPanelChanged = BaseConfigurationDialog::SomethingChanged_StateModified_IsChanged();
 		}
 
 	protected:
-		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->SysSettingsTabName); }
+		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->gui->SysSettingsTabName); }
 
-		pxCheckBox*		m_check_presets;
-		wxSlider*		m_slider_presets;
-		pxStaticText*	m_msg_preset;
+		pxCheckBox* m_check_presets;
+		wxSlider* m_slider_presets;
+		pxStaticText* m_msg_preset;
 		void AddPresetsControl();
-		void Preset_Scroll(wxScrollEvent &event);
-		void Presets_Toggled(wxCommandEvent &event);
-		void UpdateGuiForPreset ( int presetIndex, bool presetsEnabled );
+		void Preset_Scroll(wxScrollEvent& event);
+		void Presets_Toggled(wxCommandEvent& event);
+		void UpdateGuiForPreset(int presetIndex, bool presetsEnabled);
 	};
 
 	// --------------------------------------------------------------------------------------
@@ -126,7 +128,7 @@ namespace Dialogs
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->AppSettingsTabName); }
+		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->gui->AppSettingsTabName); }
 	};
 
 
@@ -138,16 +140,16 @@ namespace Dialogs
 		typedef BaseConfigurationDialog _parent;
 
 	protected:
-		Panels::BaseMcdListPanel*	m_panel_mcdlist;
+		Panels::BaseMcdListPanel* m_panel_mcdlist;
 
 	public:
 		virtual ~McdConfigDialog() = default;
-		McdConfigDialog(wxWindow* parent=NULL);
+		McdConfigDialog(wxWindow* parent = NULL);
 		static wxString GetNameStatic() { return L"McdConfig"; }
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->McdSettingsTabName); }
+		virtual wxString GetConfSettingsTabName() const { return wxString(g_Conf->gui->McdSettingsTabName); }
 		//void OnMultitapClicked( wxCommandEvent& evt );
 	};
 
@@ -157,16 +159,16 @@ namespace Dialogs
 	class ComponentsConfigDialog : public BaseConfigurationDialog
 	{
 	protected:
-
 	public:
 		virtual ~ComponentsConfigDialog() = default;
-		ComponentsConfigDialog(wxWindow* parent=NULL);
+		ComponentsConfigDialog(wxWindow* parent = NULL);
 		static wxString GetNameStatic() { return L"AppSettings"; }
 		wxString GetDialogName() const { return GetNameStatic(); }
 
 	protected:
-		virtual wxString GetConfSettingsTabName() const {
-			return wxString(g_Conf->ComponentsTabName); 
+		virtual wxString GetConfSettingsTabName() const
+		{
+			return wxString(g_Conf->gui->ComponentsTabName);
 		}
 	};
 
@@ -176,31 +178,31 @@ namespace Dialogs
 	class CreateMemoryCardDialog : public wxDialogWithHelpers
 	{
 	protected:
-		wxDirName	m_mcdpath;
-		wxString	m_mcdfile;
-		wxTextCtrl*	m_text_filenameInput;
-		wxStaticText *m_mcd_Extension;
+		wxDirName m_mcdpath;
+		wxString m_mcdfile;
+		wxTextCtrl* m_text_filenameInput;
+		wxStaticText* m_mcd_Extension;
 
 		//wxFilePickerCtrl*	m_filepicker;
-		pxRadioPanel *m_radio_CardType;
+		pxRadioPanel* m_radio_CardType;
 
 #ifdef __WXMSW__
-		pxCheckBox *m_check_CompressNTFS;
+		pxCheckBox* m_check_CompressNTFS;
 #endif
 
 	public:
-		virtual ~CreateMemoryCardDialog()  = default;
-		CreateMemoryCardDialog( wxWindow* parent, wxDirName mcdpath, const wxString& suggested_mcdfileName);
+		virtual ~CreateMemoryCardDialog() = default;
+		CreateMemoryCardDialog(wxWindow* parent, wxDirName mcdpath, const wxString& suggested_mcdfileName);
 
 		//duplicate of MemoryCardFile::Create. Don't know why the existing method isn't used. - avih
-		static bool CreateIt( const wxString& mcdFile, uint sizeInMB, bool isPSX );
+		static bool CreateIt(const wxString& mcdFile, uint sizeInMB, bool isPSX);
 		wxString result_createdMcdFilename;
 		//wxDirName GetPathToMcds() const;
 
 	protected:
 		void CreateControls();
-		void OnRadioChanged(wxCommandEvent &evt);
-		void OnOk_Click(wxCommandEvent &evt);
+		void OnRadioChanged(wxCommandEvent& evt);
+		void OnOk_Click(wxCommandEvent& evt);
 	};
 
 	// --------------------------------------------------------------------------------------
@@ -209,19 +211,19 @@ namespace Dialogs
 	class ConvertMemoryCardDialog : public wxDialogWithHelpers
 	{
 	protected:
-		wxDirName     m_mcdPath;
-		wxString      m_mcdSourceFilename;
-		wxTextCtrl   *m_text_filenameInput;
-		pxRadioPanel *m_radio_CardType;
+		wxDirName m_mcdPath;
+		wxString m_mcdSourceFilename;
+		wxTextCtrl* m_text_filenameInput;
+		pxRadioPanel* m_radio_CardType;
 
 	public:
-		virtual ~ConvertMemoryCardDialog()  = default;
-		ConvertMemoryCardDialog( wxWindow* parent, const wxDirName& mcdPath, const McdOptions& mcdSourceConfig );
+		virtual ~ConvertMemoryCardDialog() = default;
+		ConvertMemoryCardDialog(wxWindow* parent, const wxDirName& mcdPath, const McdOptions& mcdSourceConfig);
 
 	protected:
-		void CreateControls( const MemoryCardType sourceType );
-		void OnOk_Click( wxCommandEvent& evt );
-		bool ConvertToFile( const wxFileName& sourcePath, const wxFileName& targetPath, const u32 sizeInMB );
-		bool ConvertToFolder( const wxFileName& sourcePath, const wxFileName& targetPath );
+		void CreateControls(const MemoryCardType sourceType);
+		void OnOk_Click(wxCommandEvent& evt);
+		bool ConvertToFile(const wxFileName& sourcePath, const wxFileName& targetPath, const u32 sizeInMB);
+		bool ConvertToFolder(const wxFileName& sourcePath, const wxFileName& targetPath);
 	};
-}
+} // namespace Dialogs

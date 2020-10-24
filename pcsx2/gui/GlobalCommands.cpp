@@ -75,13 +75,13 @@ namespace Implementations
 {
 	void Frameskip_Toggle()
 	{
-		g_Conf->EmuOptions.GS.FrameSkipEnable = !g_Conf->EmuOptions.GS.FrameSkipEnable;
-		SetGSConfig().FrameSkipEnable = g_Conf->EmuOptions.GS.FrameSkipEnable;
+		g_Conf->emulator->GS.FrameSkipEnable = !g_Conf->emulator->GS.FrameSkipEnable;
+		SetGSConfig().FrameSkipEnable = g_Conf->emulator->GS.FrameSkipEnable;
 
 		if (EmuConfig.GS.FrameSkipEnable)
 		{
 			OSDlog(Color_StrongRed, true, "(FrameSkipping) Enabled.");
-			OSDlog(Color_StrongRed, true, "  FrameDraws=%d, FrameSkips=%d", g_Conf->EmuOptions.GS.FramesToDraw, g_Conf->EmuOptions.GS.FramesToSkip);
+			OSDlog(Color_StrongRed, true, "  FrameDraws=%d, FrameSkips=%d", g_Conf->emulator->GS.FramesToDraw, g_Conf->emulator->GS.FramesToSkip);
 		}
 		else
 		{
@@ -93,45 +93,45 @@ namespace Implementations
 	{
 		ScopedCoreThreadPause pauser;
 
-		if (!g_Conf->EmuOptions.GS.FrameLimitEnable)
+		if (!g_Conf->emulator->GS.FrameLimitEnable)
 		{
-			g_Conf->EmuOptions.GS.FrameLimitEnable = true;
+			g_Conf->emulator->GS.FrameLimitEnable = true;
 			g_LimiterMode = Limit_Turbo;
 			OSDlog(Color_StrongRed, true, "(FrameLimiter) Turbo + FrameLimit ENABLED.");
-			g_Conf->EmuOptions.GS.FrameSkipEnable = !!g_Conf->Framerate.SkipOnTurbo;
+			g_Conf->emulator->GS.FrameSkipEnable = !!g_Conf->gui->Framerate.SkipOnTurbo;
 		}
 		else if (g_LimiterMode == Limit_Turbo)
 		{
 			g_LimiterMode = Limit_Nominal;
 
-			if (g_Conf->Framerate.SkipOnLimit)
+			if (g_Conf->gui->Framerate.SkipOnLimit)
 			{
 				OSDlog(Color_StrongRed, true, "(FrameLimiter) Turbo DISABLED. Frameskip ENABLED");
-				g_Conf->EmuOptions.GS.FrameSkipEnable = true;
+				g_Conf->emulator->GS.FrameSkipEnable = true;
 			}
 			else
 			{
 				OSDlog(Color_StrongRed, true, "(FrameLimiter) Turbo DISABLED.");
-				g_Conf->EmuOptions.GS.FrameSkipEnable = false;
+				g_Conf->emulator->GS.FrameSkipEnable = false;
 			}
 		}
 		else
 		{
 			g_LimiterMode = Limit_Turbo;
 
-			if (g_Conf->Framerate.SkipOnTurbo)
+			if (g_Conf->gui->Framerate.SkipOnTurbo)
 			{
 				OSDlog(Color_StrongRed, true, "(FrameLimiter) Turbo + Frameskip ENABLED.");
-				g_Conf->EmuOptions.GS.FrameSkipEnable = true;
+				g_Conf->emulator->GS.FrameSkipEnable = true;
 			}
 			else
 			{
 				OSDlog(Color_StrongRed, true, "(FrameLimiter) Turbo ENABLED.");
-				g_Conf->EmuOptions.GS.FrameSkipEnable = false;
+				g_Conf->emulator->GS.FrameSkipEnable = false;
 			}
 		}
 
-		gsUpdateFrequency(g_Conf->EmuOptions);
+		gsUpdateFrequency(g_Conf->emulator->;
 
 		pauser.AllowResume();
 	}
@@ -141,7 +141,7 @@ namespace Implementations
 		// Slow motion auto-enables the framelimiter even if it's disabled.
 		// This seems like desirable and expected behavior.
 
-		// FIXME: Inconsistent use of g_Conf->EmuOptions vs. EmuConfig.  Should figure
+		// FIXME: Inconsistent use of g_Conf->emulator->vs. EmuConfig.  Should figure
 		// out a better consistency approach... -air
 
 		ScopedCoreThreadPause pauser;
@@ -154,10 +154,10 @@ namespace Implementations
 		{
 			g_LimiterMode = Limit_Slomo;
 			OSDlog(Color_StrongRed, true, "(FrameLimiter) SlowMotion ENABLED.");
-			g_Conf->EmuOptions.GS.FrameLimitEnable = true;
+			g_Conf->emulator->GS.FrameLimitEnable = true;
 		}
 
-		gsUpdateFrequency(g_Conf->EmuOptions);
+		gsUpdateFrequency(g_Conf->emulator->;
 
 		pauser.AllowResume();
 	}
@@ -165,8 +165,8 @@ namespace Implementations
 	void Framelimiter_MasterToggle()
 	{
 		ScopedCoreThreadPause pauser;
-		g_Conf->EmuOptions.GS.FrameLimitEnable = !g_Conf->EmuOptions.GS.FrameLimitEnable;
-		OSDlog(Color_StrongRed, true, "(FrameLimiter) %s.", g_Conf->EmuOptions.GS.FrameLimitEnable ? "ENABLED" : "DISABLED");
+		g_Conf->emulator->GS.FrameLimitEnable = !g_Conf->emulator->GS.FrameLimitEnable;
+		OSDlog(Color_StrongRed, true, "(FrameLimiter) %s.", g_Conf->emulator->GS.FrameLimitEnable ? "ENABLED" : "DISABLED");
 
 		// Turbo/Slowmo don't make sense when framelimiter is toggled
 		g_LimiterMode = Limit_Nominal;
@@ -186,8 +186,8 @@ namespace Implementations
 
 	void GSwindow_CycleAspectRatio()
 	{
-		AspectRatioType& art = g_Conf->gsWindow.AspectRatio;
-		const char *arts = "Not modified";
+		AspectRatioType& art = g_Conf->gui->gsWindow.AspectRatio;
+		const char* arts = "Not modified";
 		if (art == AspectRatio_Stretch && switchAR) //avoids a double 4:3 when coming from FMV aspect ratio switch
 			art = AspectRatio_4_3;
 		switch (art)
@@ -214,27 +214,31 @@ namespace Implementations
 
 	void SetOffset(float x, float y)
 	{
-		g_Conf->gsWindow.OffsetX = x;
-		g_Conf->gsWindow.OffsetY = y;
-		OSDlog( Color_StrongBlue, true, "(GSwindow) Offset: x=%f, y=%f", x,y);
+		g_Conf->gui->gsWindow.OffsetX = x;
+		g_Conf->gui->gsWindow.OffsetY = y;
+		OSDlog(Color_StrongBlue, true, "(GSwindow) Offset: x=%f, y=%f", x, y);
 
 		UpdateImagePosition();
 	}
 
-	void GSwindow_OffsetYplus(){
-		SetOffset(g_Conf->gsWindow.OffsetX, g_Conf->gsWindow.OffsetY+1);
+	void GSwindow_OffsetYplus()
+	{
+		SetOffset(g_Conf->gui->gsWindow.OffsetX, g_Conf->gui->gsWindow.OffsetY + 1);
 	}
 
-	void GSwindow_OffsetYminus(){
-		SetOffset(g_Conf->gsWindow.OffsetX, g_Conf->gsWindow.OffsetY-1);
+	void GSwindow_OffsetYminus()
+	{
+		SetOffset(g_Conf->gui->gsWindow.OffsetX, g_Conf->gui->gsWindow.OffsetY - 1);
 	}
 
-	void GSwindow_OffsetXplus(){
-		SetOffset(g_Conf->gsWindow.OffsetX+1, g_Conf->gsWindow.OffsetY);
+	void GSwindow_OffsetXplus()
+	{
+		SetOffset(g_Conf->gui->gsWindow.OffsetX + 1, g_Conf->gui->gsWindow.OffsetY);
 	}
 
-	void GSwindow_OffsetXminus(){
-		SetOffset(g_Conf->gsWindow.OffsetX-1, g_Conf->gsWindow.OffsetY);
+	void GSwindow_OffsetXminus()
+	{
+		SetOffset(g_Conf->gui->gsWindow.OffsetX - 1, g_Conf->gui->gsWindow.OffsetY);
 	}
 
 	void GSwindow_OffsetReset()
@@ -246,7 +250,7 @@ namespace Implementations
 	{
 		if (zoom <= 0)
 			return;
-		g_Conf->gsWindow.StretchY = zoom;
+		g_Conf->gui->gsWindow.StretchY = zoom;
 		OSDlog(Color_StrongBlue, true, "(GSwindow) Vertical stretch: %f", zoom);
 
 		UpdateImagePosition();
@@ -254,11 +258,11 @@ namespace Implementations
 
 	void GSwindow_ZoomInY()
 	{
-		SetZoomY( g_Conf->gsWindow.StretchY+1 );
+		SetZoomY(g_Conf->gui->gsWindow.StretchY + 1);
 	}
 	void GSwindow_ZoomOutY()
 	{
-		SetZoomY( g_Conf->gsWindow.StretchY-1 );
+		SetZoomY(g_Conf->gui->gsWindow.StretchY - 1);
 	}
 	void GSwindow_ZoomResetY()
 	{
@@ -269,12 +273,12 @@ namespace Implementations
 	{
 		if (zoom < 0)
 			return;
-		g_Conf->gsWindow.Zoom = zoom;
+		g_Conf->gui->gsWindow.Zoom = zoom;
 
-		if ( zoom == 0 )
-			OSDlog( Color_StrongBlue, true, "(GSwindow) Zoom: 0 (auto, no black bars)");
+		if (zoom == 0)
+			OSDlog(Color_StrongBlue, true, "(GSwindow) Zoom: 0 (auto, no black bars)");
 		else
-			OSDlog( Color_StrongBlue, true, "(GSwindow) Zoom: %f", zoom);
+			OSDlog(Color_StrongBlue, true, "(GSwindow) Zoom: %f", zoom);
 
 		UpdateImagePosition();
 	}
@@ -282,23 +286,27 @@ namespace Implementations
 
 	void GSwindow_ZoomIn()
 	{
-		float z = g_Conf->gsWindow.Zoom;
-		if( z==0 ) z = 100;
+		float z = g_Conf->gui->gsWindow.Zoom;
+		if (z == 0)
+			z = 100;
 		z++;
 		SetZoom(z);
 	}
 	void GSwindow_ZoomOut()
 	{
-		float z = g_Conf->gsWindow.Zoom;
-		if( z==0 ) z = 100;
+		float z = g_Conf->gui->gsWindow.Zoom;
+		if (z == 0)
+			z = 100;
 		z--;
 		SetZoom(z);
 	}
 	void GSwindow_ZoomToggle()
 	{
-		float z = g_Conf->gsWindow.Zoom;
-		if( z==100 )	z = 0;
-		else			z = 100;
+		float z = g_Conf->gui->gsWindow.Zoom;
+		if (z == 100)
+			z = 0;
+		else
+			z = 100;
 
 		SetZoom(z);
 	}
@@ -321,7 +329,8 @@ namespace Implementations
 		CoreThread.Suspend();
 
 		gsframe = wxGetApp().GetGsFramePtr(); // just in case suspend removes this window
-		if (gsframe && !wxGetApp().HasGUI() && g_Conf->gsWindow.CloseOnEsc) {
+		if (gsframe && !wxGetApp().HasGUI() && g_Conf->gui->gsWindow.CloseOnEsc)
+		{
 			// When we run with --nogui, PCSX2 only knows to exit when the gs window closes.
 			// However, by default suspend just hides the gs window, so PCSX2 will not exit
 			// and there will also be no way to exit it even if no windows are left.
@@ -347,13 +356,13 @@ namespace Implementations
 				// have exited fullscreen without PCSX2 knowing about it, and since it's not
 				// suspended it would not re-init the fullscreen state if the confirmation is
 				// aborted. On such case we'd have needed to set the gsframe fullscreen mode
-				// here according to g_Conf->GSWindow.IsFullscreen
+				// here according to g_Conf->gui->GSWindow.IsFullscreen
 				CoreThread.Resume();
 				return;
 			}
 		}
 
-		if (g_Conf->gsWindow.CloseOnEsc)
+		if (g_Conf->gui->gsWindow.CloseOnEsc)
 			sMainFrame.SetFocus();
 	}
 
@@ -375,7 +384,7 @@ namespace Implementations
 
 	void Sys_TakeSnapshot()
 	{
-		GSmakeSnapshot( g_Conf->Folders.Snapshots.c_str() );
+		GSmakeSnapshot(g_Conf->gui->Folders.Snapshots.c_str());
 	}
 
 	void Sys_RenderToggle()
@@ -421,7 +430,7 @@ namespace Implementations
 				name += L"_" + part2;
 
 			gsText.Printf(L"%s.%d.gs", WX_STR(name), StatesC);
-			Text = Path::Combine(g_Conf->Folders.Savestates, gsText);
+			Text = Path::Combine(g_Conf->gui->Folders.Savestates, gsText);
 		}
 		else
 		{
@@ -500,7 +509,7 @@ namespace Implementations
 #ifndef DISABLE_RECORDING
 	void FrameAdvance()
 	{
-		if (g_Conf->EmuOptions.EnableRecordingTools)
+		if (g_Conf->emulator->EnableRecordingTools)
 		{
 			g_InputRecordingControls.FrameAdvance();
 		}
@@ -508,7 +517,7 @@ namespace Implementations
 
 	void TogglePause()
 	{
-		if (g_Conf->EmuOptions.EnableRecordingTools)
+		if (g_Conf->emulator->EnableRecordingTools)
 		{
 			g_InputRecordingControls.TogglePause();
 		}
@@ -516,7 +525,7 @@ namespace Implementations
 
 	void InputRecordingModeToggle()
 	{
-		if (g_Conf->EmuOptions.EnableRecordingTools)
+		if (g_Conf->emulator->EnableRecordingTools)
 		{
 			g_InputRecordingControls.RecordModeToggle();
 		}
@@ -849,9 +858,9 @@ void AcceleratorDictionary::Map(const KeyAcceleratorCode& _acode, const char* se
 	// Search override mapping at ini file
 	KeyAcceleratorCode acode = _acode;
 	wxString overrideStr;
-	wxAcceleratorEntry codeParser;	//Provides string parsing capabilities
-	wxFileConfig cfg(L"", L"", L"" , (std::string)GetUiKeysFilename(), wxCONFIG_USE_GLOBAL_FILE );
-	if( cfg.Read( wxString::FromUTF8(searchfor), &overrideStr) )
+	wxAcceleratorEntry codeParser; //Provides string parsing capabilities
+	wxFileConfig cfg(L"", L"", L"", (std::string)GetUiKeysFilename(), wxCONFIG_USE_GLOBAL_FILE);
+	if (cfg.Read(wxString::FromUTF8(searchfor), &overrideStr))
 	{
 		// needs a '\t' prefix (originally used for wxMenu accelerators parsing)...
 		if (codeParser.FromString(wxString(L"\t") + overrideStr))

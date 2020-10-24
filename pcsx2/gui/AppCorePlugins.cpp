@@ -47,57 +47,57 @@ class CorePluginsEvent : public pxActionEvent
 	typedef pxActionEvent _parent;
 
 protected:
-	PluginEventType		m_evt;
+	PluginEventType m_evt;
 
 public:
 	virtual ~CorePluginsEvent() = default;
-	CorePluginsEvent* Clone() const { return new CorePluginsEvent( *this ); }
+	CorePluginsEvent* Clone() const { return new CorePluginsEvent(*this); }
 
-	explicit CorePluginsEvent( PluginEventType evt, SynchronousActionState* sema=NULL )
-		: pxActionEvent( sema )
+	explicit CorePluginsEvent(PluginEventType evt, SynchronousActionState* sema = NULL)
+		: pxActionEvent(sema)
 	{
 		m_evt = evt;
 	}
 
-	explicit CorePluginsEvent( PluginEventType evt, SynchronousActionState& sema )
-		: pxActionEvent( sema )
+	explicit CorePluginsEvent(PluginEventType evt, SynchronousActionState& sema)
+		: pxActionEvent(sema)
 	{
 		m_evt = evt;
 	}
 
-	CorePluginsEvent( const CorePluginsEvent& src )
-		: pxActionEvent( src )
+	CorePluginsEvent(const CorePluginsEvent& src)
+		: pxActionEvent(src)
 	{
 		m_evt = src.m_evt;
 	}
 
-	void SetEventType( PluginEventType evt ) { m_evt = evt; }
+	void SetEventType(PluginEventType evt) { m_evt = evt; }
 	PluginEventType GetEventType() { return m_evt; }
 
 protected:
 	void InvokeEvent()
 	{
-		sApp.DispatchEvent( m_evt );
+		sApp.DispatchEvent(m_evt);
 	}
 };
 
-static void PostPluginStatus( PluginEventType pevt )
+static void PostPluginStatus(PluginEventType pevt)
 {
-	sApp.PostAction( CorePluginsEvent( pevt ) );
+	sApp.PostAction(CorePluginsEvent(pevt));
 }
 
 static void ConvertPluginFilenames(wxString (&passins)[PluginId_Count])
 {
-	ForPlugins([&] (const PluginInfo * pi) {
+	ForPlugins([&](const PluginInfo* pi) {
 		passins[pi->id] = wxGetApp().Overrides.Filenames[pi->id];
 
-		if( passins[pi->id].IsEmpty() || !wxFileExists( passins[pi->id] ) )
-			passins[pi->id] = g_Conf->FullpathTo( pi->id );
+		if (passins[pi->id].IsEmpty() || !wxFileExists(passins[pi->id]))
+			passins[pi->id] = g_Conf->gui->FullpathTo(pi->id);
 	});
 }
 
 typedef void (AppCorePlugins::*FnPtr_AppPluginManager)();
-typedef void (AppCorePlugins::*FnPtr_AppPluginPid)( PluginsEnum_t pid );
+typedef void (AppCorePlugins::*FnPtr_AppPluginPid)(PluginsEnum_t pid);
 
 // --------------------------------------------------------------------------------------
 //  SysExecEvent_AppPluginManager
@@ -105,14 +105,14 @@ typedef void (AppCorePlugins::*FnPtr_AppPluginPid)( PluginsEnum_t pid );
 class SysExecEvent_AppPluginManager : public SysExecEvent
 {
 protected:
-	FnPtr_AppPluginManager	m_method;
+	FnPtr_AppPluginManager m_method;
 
 public:
 	wxString GetEventName() const { return L"CorePluginsMethod"; }
 	virtual ~SysExecEvent_AppPluginManager() = default;
-	SysExecEvent_AppPluginManager* Clone() const { return new SysExecEvent_AppPluginManager( *this ); }
+	SysExecEvent_AppPluginManager* Clone() const { return new SysExecEvent_AppPluginManager(*this); }
 
-	SysExecEvent_AppPluginManager( FnPtr_AppPluginManager method )
+	SysExecEvent_AppPluginManager(FnPtr_AppPluginManager method)
 	{
 		m_method = method;
 	}
@@ -120,7 +120,8 @@ public:
 protected:
 	void InvokeEvent()
 	{
-		if( m_method ) (CorePlugins.*m_method)();
+		if (m_method)
+			(CorePlugins.*m_method)();
 	}
 };
 
@@ -133,16 +134,16 @@ class LoadSinglePluginEvent : public pxActionEvent
 	wxDECLARE_DYNAMIC_CLASS_NO_ASSIGN(LoadSinglePluginEvent);
 
 protected:
-	wxString		m_filename;
-	PluginsEnum_t	m_pid;
+	wxString m_filename;
+	PluginsEnum_t m_pid;
 
 public:
 	LoadSinglePluginEvent(const LoadSinglePluginEvent&) = default;
 	virtual ~LoadSinglePluginEvent() = default;
-	virtual LoadSinglePluginEvent *Clone() const { return new LoadSinglePluginEvent(*this); }
+	virtual LoadSinglePluginEvent* Clone() const { return new LoadSinglePluginEvent(*this); }
 
-	LoadSinglePluginEvent( PluginsEnum_t pid = PluginId_GS, const wxString& filename=wxEmptyString )
-		: m_filename( filename )
+	LoadSinglePluginEvent(PluginsEnum_t pid = PluginId_GS, const wxString& filename = wxEmptyString)
+		: m_filename(filename)
 	{
 		m_pid = pid;
 	}
@@ -150,7 +151,7 @@ public:
 protected:
 	void InvokeEvent()
 	{
-		GetCorePlugins().Load( m_pid, m_filename );
+		GetCorePlugins().Load(m_pid, m_filename);
 	}
 };
 
@@ -163,30 +164,31 @@ class SinglePluginMethodEvent : public pxActionEvent
 	wxDECLARE_DYNAMIC_CLASS_NO_ASSIGN(SinglePluginMethodEvent);
 
 protected:
-	PluginsEnum_t			m_pid;
-	FnPtr_AppPluginPid		m_method;
+	PluginsEnum_t m_pid;
+	FnPtr_AppPluginPid m_method;
 
 public:
 	SinglePluginMethodEvent(const SinglePluginMethodEvent&) = default;
 	virtual ~SinglePluginMethodEvent() = default;
-	virtual SinglePluginMethodEvent *Clone() const { return new SinglePluginMethodEvent(*this); }
+	virtual SinglePluginMethodEvent* Clone() const { return new SinglePluginMethodEvent(*this); }
 
-	SinglePluginMethodEvent( FnPtr_AppPluginPid method=NULL,  PluginsEnum_t pid = PluginId_GS )
+	SinglePluginMethodEvent(FnPtr_AppPluginPid method = NULL, PluginsEnum_t pid = PluginId_GS)
 	{
-		m_pid		= pid;
-		m_method	= method;
+		m_pid = pid;
+		m_method = method;
 	}
 
 protected:
 	void InvokeEvent()
 	{
 		//GetCorePlugins().Unload( m_pid );
-		if( m_method ) (CorePlugins.*m_method)( m_pid );
+		if (m_method)
+			(CorePlugins.*m_method)(m_pid);
 	}
 };
 
-wxIMPLEMENT_DYNAMIC_CLASS( LoadSinglePluginEvent,	 pxActionEvent );
-wxIMPLEMENT_DYNAMIC_CLASS( SinglePluginMethodEvent, pxActionEvent );
+wxIMPLEMENT_DYNAMIC_CLASS(LoadSinglePluginEvent, pxActionEvent);
+wxIMPLEMENT_DYNAMIC_CLASS(SinglePluginMethodEvent, pxActionEvent);
 
 // --------------------------------------------------------------------------------------
 //  AppCorePlugins
@@ -207,45 +209,48 @@ wxIMPLEMENT_DYNAMIC_CLASS( SinglePluginMethodEvent, pxActionEvent );
 
 static void _SetSettingsFolder()
 {
-	if (wxGetApp().Rpc_TryInvoke( _SetSettingsFolder )) return;
-	CorePlugins.SetSettingsFolder( (std::string)GetSettingsFolder());
+	if (wxGetApp().Rpc_TryInvoke(_SetSettingsFolder))
+		return;
+	CorePlugins.SetSettingsFolder((std::string)GetSettingsFolder());
 }
 
 static void _SetLogFolder()
 {
-	if (wxGetApp().Rpc_TryInvoke( _SetLogFolder )) return;
-	CorePlugins.SetLogFolder( (std::string)GetLogFolder());
+	if (wxGetApp().Rpc_TryInvoke(_SetLogFolder))
+		return;
+	CorePlugins.SetLogFolder((std::string)GetLogFolder());
 }
 
-void AppCorePlugins::Load( PluginsEnum_t pid, const wxString& srcfile )
+void AppCorePlugins::Load(PluginsEnum_t pid, const wxString& srcfile)
 {
-	if( !wxThread::IsMain() )
+	if (!wxThread::IsMain())
 	{
-		Sleep( 5 );
-		LoadSinglePluginEvent evt( pid, srcfile );
-		wxGetApp().ProcessAction( evt);
+		Sleep(5);
+		LoadSinglePluginEvent evt(pid, srcfile);
+		wxGetApp().ProcessAction(evt);
 		return;
 	}
 
-	_parent::Load( pid, srcfile );
+	_parent::Load(pid, srcfile);
 }
 
-void AppCorePlugins::Unload( PluginsEnum_t pid )
+void AppCorePlugins::Unload(PluginsEnum_t pid)
 {
-	if( !wxThread::IsMain() )
+	if (!wxThread::IsMain())
 	{
-		Sleep( 5 );
-		SinglePluginMethodEvent evt( &AppCorePlugins::Unload, pid );
-		wxGetApp().ProcessAction( evt );
+		Sleep(5);
+		SinglePluginMethodEvent evt(&AppCorePlugins::Unload, pid);
+		wxGetApp().ProcessAction(evt);
 		return;
 	}
 
-	_parent::Unload( pid );
+	_parent::Unload(pid);
 }
 
-void AppCorePlugins::Load( const wxString (&folders)[PluginId_Count] )
+void AppCorePlugins::Load(const wxString (&folders)[PluginId_Count])
 {
-	if( !pxAssert(!AreLoaded()) ) return;
+	if (!pxAssert(!AreLoaded()))
+		return;
 
 	_SetLogFolder();
 	SendLogFolder();
@@ -253,49 +258,51 @@ void AppCorePlugins::Load( const wxString (&folders)[PluginId_Count] )
 	_SetSettingsFolder();
 	SendSettingsFolder();
 
-	_parent::Load( folders );
-	PostPluginStatus( CorePlugins_Loaded );
+	_parent::Load(folders);
+	PostPluginStatus(CorePlugins_Loaded);
 }
 
 void AppCorePlugins::Unload()
 {
 	_parent::Unload();
-	PostPluginStatus( CorePlugins_Unloaded );
+	PostPluginStatus(CorePlugins_Unloaded);
 }
 
-void AppCorePlugins::Init( PluginsEnum_t pid )
+void AppCorePlugins::Init(PluginsEnum_t pid)
 {
-	if( !wxTheApp ) return;
+	if (!wxTheApp)
+		return;
 
-	if( !wxThread::IsMain() )
+	if (!wxThread::IsMain())
 	{
 		SinglePluginMethodEvent evt(&AppCorePlugins::Init, pid);
-		wxGetApp().ProcessAction( evt );
-		Sleep( 5 );
+		wxGetApp().ProcessAction(evt);
+		Sleep(5);
 		return;
 	}
 
-	_parent::Init( pid );
+	_parent::Init(pid);
 }
 
-void AppCorePlugins::Shutdown( PluginsEnum_t pid )
+void AppCorePlugins::Shutdown(PluginsEnum_t pid)
 {
-	if( !wxThread::IsMain() && wxTheApp )
+	if (!wxThread::IsMain() && wxTheApp)
 	{
-		SinglePluginMethodEvent evt( &AppCorePlugins::Shutdown, pid );
-		wxGetApp().ProcessAction( evt );
-		Sleep( 5 );
+		SinglePluginMethodEvent evt(&AppCorePlugins::Shutdown, pid);
+		wxGetApp().ProcessAction(evt);
+		Sleep(5);
 		return;
 	}
 
-	_parent::Shutdown( pid );
+	_parent::Shutdown(pid);
 }
 
 bool AppCorePlugins::Init()
 {
-	if( !NeedsInit() ) return false;
+	if (!NeedsInit())
+		return false;
 
-    _SetLogFolder();
+	_SetLogFolder();
 	SendLogFolder();
 
 	_SetSettingsFolder();
@@ -303,7 +310,7 @@ bool AppCorePlugins::Init()
 
 	if (_parent::Init())
 	{
-		PostPluginStatus( CorePlugins_Init );
+		PostPluginStatus(CorePlugins_Init);
 		return true;
 	}
 	return false;
@@ -313,7 +320,7 @@ bool AppCorePlugins::Shutdown()
 {
 	if (_parent::Shutdown())
 	{
-		PostPluginStatus( CorePlugins_Shutdown );
+		PostPluginStatus(CorePlugins_Shutdown);
 		return true;
 	}
 	return false;
@@ -323,11 +330,12 @@ void AppCorePlugins::Close()
 {
 	AffinityAssert_AllowFrom_CoreThread();
 
-	if( !NeedsClose() ) return;
+	if (!NeedsClose())
+		return;
 
-	PostPluginStatus( CorePlugins_Closing );
+	PostPluginStatus(CorePlugins_Closing);
 	_parent::Close();
-	PostPluginStatus( CorePlugins_Closed );
+	PostPluginStatus(CorePlugins_Closed);
 }
 
 void AppCorePlugins::Open()
@@ -340,20 +348,21 @@ void AppCorePlugins::Open()
 		return;
 	}*/
 
-    SetLogFolder( (std::string)GetLogFolder());
-	SetSettingsFolder( (std::string)GetSettingsFolder());
+	SetLogFolder((std::string)GetLogFolder());
+	SetSettingsFolder((std::string)GetSettingsFolder());
 
-	if( !NeedsOpen() ) return;
+	if (!NeedsOpen())
+		return;
 
-	PostPluginStatus( CorePlugins_Opening );
+	PostPluginStatus(CorePlugins_Opening);
 	_parent::Open();
-	PostPluginStatus( CorePlugins_Opened );
+	PostPluginStatus(CorePlugins_Opened);
 }
 
 // Yay, this plugin is guaranteed to always be opened first and closed last.
 bool AppCorePlugins::OpenPlugin_GS()
 {
-	if( GSopen2 && !s_DisableGsWindow )
+	if (GSopen2 && !s_DisableGsWindow)
 	{
 		sApp.OpenGsPanel();
 	}
@@ -369,7 +378,8 @@ bool AppCorePlugins::OpenPlugin_GS()
 void AppCorePlugins::ClosePlugin_GS()
 {
 	_parent::ClosePlugin_GS();
-	if( GetMTGS().IsSelf() && GSopen2 ) sApp.CloseGsPanel();
+	if (GetMTGS().IsSelf() && GSopen2)
+		sApp.CloseGsPanel();
 }
 
 
@@ -379,12 +389,12 @@ void AppCorePlugins::ClosePlugin_GS()
 class LoadCorePluginsEvent : public SysExecEvent
 {
 protected:
-	wxString			m_folders[PluginId_Count];
+	wxString m_folders[PluginId_Count];
 
 public:
 	LoadCorePluginsEvent()
 	{
-		ConvertPluginFilenames( m_folders );
+		ConvertPluginFilenames(m_folders);
 	}
 
 	wxString GetEventName() const
@@ -400,7 +410,7 @@ public:
 protected:
 	void InvokeEvent()
 	{
-		CorePlugins.Load( m_folders );
+		CorePlugins.Load(m_folders);
 	}
 	~LoadCorePluginsEvent() = default;
 };
@@ -411,42 +421,42 @@ protected:
 
 int EnumeratePluginsInFolder(std::string searchpath, std::vector<std::string>& dest)
 {
-    FolderUtils path;
+	FolderUtils path;
 
-    if (!path.DoesExist(searchpath)) return 0;
+	if (!path.DoesExist(searchpath))
+		return 0;
 
 #ifdef __WXMSW__
-    // Windows pretty well has a strict "must end in .dll" rule.
-    wxString pattern( L"*%s" );
+	// Windows pretty well has a strict "must end in .dll" rule.
+	wxString pattern(L"*%s");
 #else
-    // Other platforms seem to like to version their libs after the .so extension:
-    //    blah.so.3.1.fail?
-    wxString pattern( L"*%s*" );
+	// Other platforms seem to like to version their libs after the .so extension:
+	//    blah.so.3.1.fail?
+	wxString pattern(L"*%s*");
 #endif
 
-    for (const auto & entry : fs::directory_iterator(searchpath))
-    {
-        dest.push_back(entry.path());
-    }
+	for (const auto& entry : fs::directory_iterator(searchpath))
+	{
+		dest.push_back(entry.path());
+	}
 
-    //wxDir::GetAllFiles( searchpath.ToString(), realdest, pxsFmt( pattern, WX_STR(wxDynamicLibrary::GetDllExt())), wxDIR_FILES );
+	//wxDir::GetAllFiles( searchpath.ToString(), realdest, pxsFmt( pattern, WX_STR(wxDynamicLibrary::GetDllExt())), wxDIR_FILES );
 
-    // SECURITY ISSUE:  (applies primarily to Windows, but is a good idea on any platform)
-    //   The search folder order for plugins can vary across operating systems, and in some poorly designed
-    //   cases (old versions of windows), the search order is a security hazard because it does not
-    //   search where you might really expect.  In our case wedo not want *any* searching.  The only
-    //   plugins we want to load are the ones we found in the directly the user specified, so make
-    //   sure all paths are FULLY QUALIFIED ABSOLUTE PATHS.
-    //
-    // (for details, read: http://msdn.microsoft.com/en-us/library/ff919712.aspx )
+	// SECURITY ISSUE:  (applies primarily to Windows, but is a good idea on any platform)
+	//   The search folder order for plugins can vary across operating systems, and in some poorly designed
+	//   cases (old versions of windows), the search order is a security hazard because it does not
+	//   search where you might really expect.  In our case wedo not want *any* searching.  The only
+	//   plugins we want to load are the ones we found in the directly the user specified, so make
+	//   sure all paths are FULLY QUALIFIED ABSOLUTE PATHS.
+	//
+	// (for details, read: http://msdn.microsoft.com/en-us/library/ff919712.aspx )
 
-    for (auto& path : dest)
-    {
-        path = Path::MakeAbsolute(path);
-    }
+	for (auto& path : dest)
+	{
+		path = Path::MakeAbsolute(path);
+	}
 
-    return dest.size();
-
+	return dest.size();
 }
 
 // Posts a message to the App to reload plugins.  Plugins are loaded via a background thread
@@ -458,19 +468,20 @@ void LoadPluginsPassive()
 	AffinityAssert_AllowFrom_MainUI();
 
 	// Plugins already loaded?
-	if( !CorePlugins.AreLoaded() )
+	if (!CorePlugins.AreLoaded())
 	{
-		wxGetApp().SysExecutorThread.PostEvent( new LoadCorePluginsEvent() );
+		wxGetApp().SysExecutorThread.PostEvent(new LoadCorePluginsEvent());
 	}
 }
 
 static void _LoadPluginsImmediate()
 {
-	if( CorePlugins.AreLoaded() ) return;
+	if (CorePlugins.AreLoaded())
+		return;
 
 	wxString passins[PluginId_Count];
-	ConvertPluginFilenames( passins );
-	CorePlugins.Load( passins );
+	ConvertPluginFilenames(passins);
+	CorePlugins.Load(passins);
 }
 
 void LoadPluginsImmediate()
@@ -533,40 +544,40 @@ public:
 
 void UnloadPlugins()
 {
-	GetSysExecutorThread().PostEvent( new SysExecEvent_UnloadPlugins() );
+	GetSysExecutorThread().PostEvent(new SysExecEvent_UnloadPlugins());
 }
 
 void ShutdownPlugins()
 {
-	GetSysExecutorThread().PostEvent( new SysExecEvent_ShutdownPlugins() );
+	GetSysExecutorThread().PostEvent(new SysExecEvent_ShutdownPlugins());
 }
 
 void SysExecEvent_SaveSinglePlugin::InvokeEvent()
 {
-	s_DisableGsWindow = true;		// keeps the GS window smooth by avoiding closing the window
+	s_DisableGsWindow = true; // keeps the GS window smooth by avoiding closing the window
 
 	ScopedCoreThreadPause paused_core;
 
-	if( CorePlugins.AreLoaded() )
+	if (CorePlugins.AreLoaded())
 	{
 		std::unique_ptr<VmStateBuffer> plugstore;
 
-		if( CoreThread.HasActiveMachine() )
+		if (CoreThread.HasActiveMachine())
 		{
-			Console.WriteLn( Color_Green, L"Suspending single plugin: " + tbl_PluginInfo[m_pid].GetShortname() );
+			Console.WriteLn(Color_Green, L"Suspending single plugin: " + tbl_PluginInfo[m_pid].GetShortname());
 			plugstore = std::make_unique<VmStateBuffer>(L"StateCopy_SinglePlugin");
-			memSavingState save( plugstore.get() );
-			GetCorePlugins().Freeze( m_pid, save );
+			memSavingState save(plugstore.get());
+			GetCorePlugins().Freeze(m_pid, save);
 		}
 
-		GetCorePlugins().Close( m_pid );
-		_post_and_wait( paused_core );
+		GetCorePlugins().Close(m_pid);
+		_post_and_wait(paused_core);
 
-		if( plugstore )
+		if (plugstore)
 		{
-			Console.WriteLn( Color_Green, L"Recovering single plugin: " + tbl_PluginInfo[m_pid].GetShortname() );
-			memLoadingState load( plugstore.get() );
-			GetCorePlugins().Freeze( m_pid, load );
+			Console.WriteLn(Color_Green, L"Recovering single plugin: " + tbl_PluginInfo[m_pid].GetShortname());
+			memLoadingState load(plugstore.get());
+			GetCorePlugins().Freeze(m_pid, load);
 		}
 	}
 

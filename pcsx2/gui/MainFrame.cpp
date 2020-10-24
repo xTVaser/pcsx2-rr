@@ -57,14 +57,14 @@ void MainEmuFrame::UpdateStatusBar()
 {
 	wxString temp(wxEmptyString);
 
-	if (g_Conf->EnableFastBoot)
+	if (g_Conf->gui->EnableFastBoot)
 		temp += "Fast Boot - ";
 
-	if (g_Conf->CdvdSource == CDVD_SourceType::Iso)
-		temp += "Load: '" + g_Conf->CurrentIso.string() + "' ";
+	if (g_Conf->gui->CdvdSource == CDVD_SourceType::Iso)
+		temp += "Load: '" + g_Conf->gui->CurrentIso.string() + "' ";
 
 	m_statusbar.SetStatusText(temp, 0);
-	m_statusbar.SetStatusText(CDVD_SourceLabels[enum_cast(g_Conf->CdvdSource)], 1);
+	m_statusbar.SetStatusText(CDVD_SourceLabels[enum_cast(g_Conf->gui->CdvdSource)], 1);
 
 #ifdef __M_X86_64
 	m_statusbar.SetStatusText("x64", 2);
@@ -77,7 +77,7 @@ void MainEmuFrame::UpdateCdvdSrcSelection()
 {
 	MenuIdentifiers cdsrc = MenuId_Src_Iso;
 
-	switch (g_Conf->CdvdSource)
+	switch (g_Conf->gui->CdvdSource)
 	{
 		case CDVD_SourceType::Iso:
 			cdsrc = MenuId_Src_Iso;
@@ -175,7 +175,7 @@ void MainEmuFrame::OnMoveAround(wxMoveEvent& evt)
 
 	// evt.GetPosition() returns the client area position, not the window frame position.
 	// So read the window's screen-relative position directly.
-	g_Conf->MainGuiPosition = GetScreenPosition();
+	g_Conf->gui->MainGuiPosition = GetScreenPosition();
 
 	// wxGTK note: X sends gratuitous amounts of OnMove messages for various crap actions
 	// like selecting or deselecting a window, which muck up docking logic.  We filter them
@@ -186,7 +186,7 @@ void MainEmuFrame::OnMoveAround(wxMoveEvent& evt)
 		return;
 	lastpos = evt.GetPosition();
 
-	if( g_Conf->console.AutoDock )
+	if (g_Conf->gui->console.AutoDock)
 	{
 		if (ConsoleLogFrame* proglog = wxGetApp().GetProgramLog())
 		{
@@ -203,7 +203,7 @@ void MainEmuFrame::OnMoveAround(wxMoveEvent& evt)
 
 void MainEmuFrame::OnLogBoxHidden()
 {
-	g_Conf->console.Visible = false;
+	g_Conf->gui->console.Visible = false;
 	m_MenuItem_Console.Check(false);
 }
 
@@ -560,7 +560,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 
 #ifndef DISABLE_RECORDING
 	// Append the Recording options if previously enabled and setting has been picked up from ini
-	if (g_Conf->EmuOptions.EnableRecordingTools)
+	if (g_Conf->emulator->EnableRecordingTools)
 	{
 		m_menubar.Append(&m_menuRecording, _("&Input Record"));
 	}
@@ -615,16 +615,16 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	GetSizer()->SetSizeHints(this);
 
 	// Use default window position if the configured windowpos is invalid (partially offscreen)
-	if( g_Conf->MainGuiPosition == wxDefaultPosition || !pxIsValidWindowPosition(*this, g_Conf->MainGuiPosition))
-		g_Conf->MainGuiPosition = GetScreenPosition();
+	if (g_Conf->gui->MainGuiPosition == wxDefaultPosition || !pxIsValidWindowPosition(*this, g_Conf->gui->MainGuiPosition))
+		g_Conf->gui->MainGuiPosition = GetScreenPosition();
 	else
-		SetPosition(g_Conf->MainGuiPosition);
+		SetPosition(g_Conf->gui->MainGuiPosition);
 
 	// Updating console log positions after the main window has been fitted to its sizer ensures
 	// proper docked positioning, since the main window's size is invalid until after the sizer
 	// has been set/fit.
 
-	InitLogBoxPosition(g_Conf->console);
+	InitLogBoxPosition(g_Conf->gui->console);
 	CreatePcsx2Menu();
 	CreateCdvdMenu();
 	CreateConfigMenu();
@@ -635,7 +635,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 #endif
 	CreateHelpMenu();
 
-	m_MenuItem_Console.Check(g_Conf->console.Visible);
+	m_MenuItem_Console.Check(g_Conf->gui->console.Visible);
 
 	ConnectMenus();
 	Bind(wxEVT_MOVE, &MainEmuFrame::OnMoveAround, this);
@@ -728,7 +728,7 @@ void MainEmuFrame::ApplyCoreStatus()
 		}
 	}
 
-	const CDVD_SourceType Source = g_Conf->CdvdSource;
+	const CDVD_SourceType Source = g_Conf->gui->CdvdSource;
 
 	wxMenuItem* cdvd_menu = menubar.FindItem(MenuId_Boot_CDVD);
 
@@ -798,7 +798,7 @@ void MainEmuFrame::ApplyConfigToGui(GuiConfig& configToApply, int flags)
 void MainEmuFrame::CommitPreset_noTrigger()
 {
 	wxMenuBar& menubar(*GetMenuBar());
-	g_Conf->EmuOptions.EnablePatches = menubar.IsChecked(MenuId_EnablePatches);
+	g_Conf->emulator->EnablePatches = menubar.IsChecked(MenuId_EnablePatches);
 }
 
 static void AppendShortcutToMenuOption(wxMenuItem& item, wxString keyCodeStr)

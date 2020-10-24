@@ -87,8 +87,8 @@ static void WipeSettings()
 	wxGetApp().CleanupRestartable();
 	wxGetApp().CleanupResources();
 
-	wxRemoveFile( GetUiSettingsFilename().string() );
-	wxRemoveFile( GetVmSettingsFilename().string() );
+	wxRemoveFile(GetUiSettingsFilename().string());
+	wxRemoveFile(GetVmSettingsFilename().string());
 
 	// FIXME: wxRmdir doesn't seem to work here for some reason (possible file sharing issue
 	// with a plugin that leaves a file handle dangling maybe?).  But deleting the inis folder
@@ -140,7 +140,7 @@ wxWindowID SwapOrReset_Iso(wxWindow* owner, IScopedCoreThread& core_control, con
 {
 	wxWindowID result = wxID_CANCEL;
 
-	if( (g_Conf->CdvdSource == CDVD_SourceType::Iso) && (isoFilename.ToStdString() == g_Conf->CurrentIso.string()))
+	if ((g_Conf->gui->CdvdSource == CDVD_SourceType::Iso) && (isoFilename.ToStdString() == g_Conf->gui->CurrentIso.string()))
 	{
 		core_control.AllowResume();
 		return result;
@@ -166,7 +166,7 @@ wxWindowID SwapOrReset_Iso(wxWindow* owner, IScopedCoreThread& core_control, con
 	}
 
 	g_CDVDReset = true;
-	g_Conf->CdvdSource = CDVD_SourceType::Iso;
+	g_Conf->gui->CdvdSource = CDVD_SourceType::Iso;
 	SysUpdateIsoSrcFile(isoFilename);
 
 	if (result == wxID_RESET)
@@ -177,7 +177,7 @@ wxWindowID SwapOrReset_Iso(wxWindow* owner, IScopedCoreThread& core_control, con
 	else
 	{
 		Console.Indent().WriteLn("HotSwapping to new ISO src image!");
-		//g_Conf->CdvdSource = CDVDsrc_Iso;
+		//g_Conf->gui->CdvdSource = CDVDsrc_Iso;
 		//CoreThread.ChangeCdvdSource();
 		core_control.AllowResume();
 	}
@@ -189,11 +189,11 @@ wxWindowID SwapOrReset_Iso(wxWindow* owner, IScopedCoreThread& core_control, con
 //   wxID_CANCEL - User canceled the action outright.
 //   wxID_RESET  - User wants to reset the emu in addition to swap discs
 //   (anything else) - Standard swap, no reset.  (hotswap!)
-wxWindowID SwapOrReset_Disc( wxWindow* owner, IScopedCoreThread& core, const std::string driveLetter)
+wxWindowID SwapOrReset_Disc(wxWindow* owner, IScopedCoreThread& core, const std::string driveLetter)
 {
 	wxWindowID result = wxID_CANCEL;
 
-	if ((g_Conf->CdvdSource == CDVD_SourceType::Disc) && (driveLetter == g_Conf->Folders.RunDisc))
+	if ((g_Conf->gui->CdvdSource == CDVD_SourceType::Disc) && (driveLetter == g_Conf->gui->Folders.RunDisc))
 	{
 		core.AllowResume();
 		return result;
@@ -216,7 +216,7 @@ wxWindowID SwapOrReset_Disc( wxWindow* owner, IScopedCoreThread& core, const std
 		}
 	}
 
-	g_Conf->CdvdSource = CDVD_SourceType::Disc;
+	g_Conf->gui->CdvdSource = CDVD_SourceType::Disc;
 	SysUpdateDiscSrcDrive(driveLetter);
 	if (result == wxID_RESET)
 	{
@@ -234,7 +234,7 @@ wxWindowID SwapOrReset_Disc( wxWindow* owner, IScopedCoreThread& core, const std
 
 wxWindowID SwapOrReset_CdvdSrc(wxWindow* owner, CDVD_SourceType newsrc)
 {
-	if (newsrc == g_Conf->CdvdSource)
+	if (newsrc == g_Conf->gui->CdvdSource)
 		return wxID_CANCEL;
 	wxWindowID result = wxID_CANCEL;
 	ScopedCoreThreadPopup core;
@@ -245,7 +245,7 @@ wxWindowID SwapOrReset_CdvdSrc(wxWindow* owner, CDVD_SourceType newsrc)
 
 		wxString changeMsg;
 		changeMsg.Printf(_("You've selected to switch the CDVD source from %s to %s."),
-						 CDVD_SourceLabels[enum_cast(g_Conf->CdvdSource)], CDVD_SourceLabels[enum_cast(newsrc)]);
+						 CDVD_SourceLabels[enum_cast(g_Conf->gui->CdvdSource)], CDVD_SourceLabels[enum_cast(newsrc)]);
 
 		dialog += dialog.Heading(changeMsg + L"\n\n" +
 								 _("Do you want to swap discs or boot the new image (system reset)?"));
@@ -261,8 +261,8 @@ wxWindowID SwapOrReset_CdvdSrc(wxWindow* owner, CDVD_SourceType newsrc)
 	}
 
 	g_CDVDReset = true;
-	CDVD_SourceType oldsrc = g_Conf->CdvdSource;
-	g_Conf->CdvdSource = newsrc;
+	CDVD_SourceType oldsrc = g_Conf->gui->CdvdSource;
+	g_Conf->gui->CdvdSource = newsrc;
 
 	if (result != wxID_RESET)
 	{
@@ -276,7 +276,7 @@ wxWindowID SwapOrReset_CdvdSrc(wxWindow* owner, CDVD_SourceType newsrc)
 	else
 	{
 		core.DisallowResume();
-		sApp.SysExecute(g_Conf->CdvdSource);
+		sApp.SysExecute(g_Conf->gui->CdvdSource);
 	}
 
 	return result;
@@ -333,13 +333,13 @@ bool MainEmuFrame::_DoSelectIsoBrowser(wxString& result)
 	isoFilterTypes.Add(_("All Files (*.*)"));
 	isoFilterTypes.Add(L"*.*");
 
-	wxFileDialog ctrl(this, _("Select disc image, compressed disc image, or block-dump..."), g_Conf->Folders.RunIso.string(), wxEmptyString,
+	wxFileDialog ctrl(this, _("Select disc image, compressed disc image, or block-dump..."), g_Conf->gui->Folders.RunIso.string(), wxEmptyString,
 					  JoinString(isoFilterTypes, L"|"), wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (ctrl.ShowModal() != wxID_CANCEL)
 	{
 		result = ctrl.GetPath();
-		g_Conf->Folders.RunIso = result.ToStdString();
+		g_Conf->gui->Folders.RunIso = result.ToStdString();
 		return true;
 	}
 
@@ -350,13 +350,13 @@ bool MainEmuFrame::_DoSelectELFBrowser()
 {
 	static const wxChar* elfFilterType = L"ELF Files (.elf)|*.elf;*.ELF";
 
-	wxFileDialog ctrl( this, _("Select ELF file..."), g_Conf->Folders.RunELF.string(), wxEmptyString,
-		(wxString)elfFilterType + L"|" + _("All Files (*.*)") + L"|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST );
+	wxFileDialog ctrl(this, _("Select ELF file..."), g_Conf->gui->Folders.RunELF.string(), wxEmptyString,
+					  (wxString)elfFilterType + L"|" + _("All Files (*.*)") + L"|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (ctrl.ShowModal() != wxID_CANCEL)
 	{
-		g_Conf->Folders.RunELF = wxFileName( ctrl.GetPath() ).GetPath().ToStdString();
-		g_Conf->CurrentELF = ctrl.GetPath();
+		g_Conf->gui->Folders.RunELF = wxFileName(ctrl.GetPath()).GetPath().ToStdString();
+		g_Conf->gui->CurrentELF = ctrl.GetPath();
 		return true;
 	}
 
@@ -367,27 +367,26 @@ void MainEmuFrame::_DoBootCdvd()
 {
 	ScopedCoreThreadPause paused_core;
 
-	if (g_Conf->CdvdSource == CDVD_SourceType::Iso)
+	if (g_Conf->gui->CdvdSource == CDVD_SourceType::Iso)
 	{
-		bool selector = g_Conf->CurrentIso.empty();
+		bool selector = g_Conf->gui->CurrentIso.empty();
 
-		if( !selector && !wxFileExists(g_Conf->CurrentIso.c_str()) )
+		if (!selector && !wxFileExists(g_Conf->gui->CurrentIso.c_str()))
 		{
 			// User has an iso selected from a previous run, but it doesn't exist anymore.
 			// Issue a courtesy popup and then an Iso Selector to choose a new one.
 
 			wxDialogWithHelpers dialog(this, _("ISO file not found!"));
 			dialog += dialog.Heading(
-				_("An error occurred while trying to open the file:") + wxString(L"\n\n") + g_Conf->CurrentIso.c_str() + L"\n\n" +
-				_("Error: The configured ISO file does not exist.  Click OK to select a new ISO source for CDVD.")
-			);
+				_("An error occurred while trying to open the file:") + wxString(L"\n\n") + g_Conf->gui->CurrentIso.c_str() + L"\n\n" +
+				_("Error: The configured ISO file does not exist.  Click OK to select a new ISO source for CDVD."));
 
 			pxIssueConfirmation(dialog, MsgButtons().OK());
 
 			selector = true;
 		}
 
-		if (selector || g_Conf->AskOnBoot)
+		if (selector || g_Conf->gui->AskOnBoot)
 		{
 			wxString result;
 			if (!_DoSelectIsoBrowser(result))
@@ -413,7 +412,7 @@ void MainEmuFrame::_DoBootCdvd()
 		}
 	}
 
-	sApp.SysExecute(g_Conf->CdvdSource);
+	sApp.SysExecute(g_Conf->gui->CdvdSource);
 }
 
 void MainEmuFrame::Menu_CdvdSource_Click(wxCommandEvent& event)
@@ -439,13 +438,13 @@ void MainEmuFrame::Menu_CdvdSource_Click(wxCommandEvent& event)
 
 void MainEmuFrame::Menu_BootCdvd_Click(wxCommandEvent& event)
 {
-	g_Conf->EmuOptions.UseBOOT2Injection = g_Conf->EnableFastBoot;
+	g_Conf->emulator->UseBOOT2Injection = g_Conf->gui->EnableFastBoot;
 	_DoBootCdvd();
 }
 
 void MainEmuFrame::Menu_FastBoot_Click(wxCommandEvent& event)
 {
-	g_Conf->EnableFastBoot = GetMenuBar()->IsChecked(MenuId_Config_FastBoot);
+	g_Conf->gui->EnableFastBoot = GetMenuBar()->IsChecked(MenuId_Config_FastBoot);
 	AppApplySettings();
 	AppSaveSettings();
 	UpdateStatusBar();
@@ -481,7 +480,7 @@ void MainEmuFrame::Menu_IsoClear_Click(wxCommandEvent& event)
 	if (confirmed)
 	{
 		// If the CDVD mode is not ISO, or the system isn't running, wipe the CurrentIso field in INI file
-		if (g_Conf->CdvdSource != CDVD_SourceType::Iso || !SysHasValidState())
+		if (g_Conf->gui->CdvdSource != CDVD_SourceType::Iso || !SysHasValidState())
 			SysUpdateIsoSrcFile("");
 		wxGetApp().GetRecentIsoManager().Clear();
 		AppSaveSettings();
@@ -490,7 +489,7 @@ void MainEmuFrame::Menu_IsoClear_Click(wxCommandEvent& event)
 
 void MainEmuFrame::Menu_Ask_On_Boot_Click(wxCommandEvent& event)
 {
-	g_Conf->AskOnBoot = event.IsChecked();
+	g_Conf->gui->AskOnBoot = event.IsChecked();
 
 	if (SysHasValidState())
 		return;
@@ -501,8 +500,8 @@ void MainEmuFrame::Menu_Ask_On_Boot_Click(wxCommandEvent& event)
 
 void MainEmuFrame::Menu_Debug_CreateBlockdump_Click(wxCommandEvent& event)
 {
-	g_Conf->EmuOptions.CdvdDumpBlocks = event.IsChecked();
-	if (g_Conf->EmuOptions.CdvdDumpBlocks && SysHasValidState())
+	g_Conf->emulator->CdvdDumpBlocks = event.IsChecked();
+	if (g_Conf->emulator->CdvdDumpBlocks && SysHasValidState())
 		Console.Warning("VM must be rebooted to create a useful block dump.");
 
 	AppSaveSettings();
@@ -510,8 +509,8 @@ void MainEmuFrame::Menu_Debug_CreateBlockdump_Click(wxCommandEvent& event)
 
 void MainEmuFrame::Menu_MultitapToggle_Click(wxCommandEvent&)
 {
-	g_Conf->EmuOptions.MultitapPort0_Enabled = GetMenuBar()->IsChecked(MenuId_Config_Multitap0Toggle);
-	g_Conf->EmuOptions.MultitapPort1_Enabled = GetMenuBar()->IsChecked(MenuId_Config_Multitap1Toggle);
+	g_Conf->emulator->MultitapPort0_Enabled = GetMenuBar()->IsChecked(MenuId_Config_Multitap0Toggle);
+	g_Conf->emulator->MultitapPort1_Enabled = GetMenuBar()->IsChecked(MenuId_Config_Multitap1Toggle);
 	AppApplySettings();
 	AppSaveSettings();
 
@@ -520,7 +519,7 @@ void MainEmuFrame::Menu_MultitapToggle_Click(wxCommandEvent&)
 
 void MainEmuFrame::Menu_EnableBackupStates_Click(wxCommandEvent&)
 {
-	g_Conf->EmuOptions.BackupSavestate = GetMenuBar()->IsChecked( MenuId_EnableBackupStates );
+	g_Conf->emulator->BackupSavestate = GetMenuBar()->IsChecked(MenuId_EnableBackupStates);
 
 	//without the next line, after toggling this menu-checkbox, the change only applies from the 2nd save and onwards
 	//  (1st save after the toggle keeps the old pre-toggle value)..
@@ -531,28 +530,28 @@ void MainEmuFrame::Menu_EnableBackupStates_Click(wxCommandEvent&)
 
 void MainEmuFrame::Menu_EnablePatches_Click(wxCommandEvent&)
 {
-	g_Conf->EmuOptions.EnablePatches = GetMenuBar()->IsChecked(MenuId_EnablePatches);
+	g_Conf->emulator->EnablePatches = GetMenuBar()->IsChecked(MenuId_EnablePatches);
 	AppApplySettings();
 	AppSaveSettings();
 }
 
 void MainEmuFrame::Menu_EnableCheats_Click(wxCommandEvent&)
 {
-	g_Conf->EmuOptions.EnableCheats = GetMenuBar()->IsChecked(MenuId_EnableCheats);
+	g_Conf->emulator->EnableCheats = GetMenuBar()->IsChecked(MenuId_EnableCheats);
 	AppApplySettings();
 	AppSaveSettings();
 }
 
 void MainEmuFrame::Menu_EnableIPC_Click(wxCommandEvent&)
 {
-	g_Conf->EmuOptions.EnableIPC = GetMenuBar()->IsChecked(MenuId_EnableIPC);
+	g_Conf->emulator->EnableIPC = GetMenuBar()->IsChecked(MenuId_EnableIPC);
 	AppApplySettings();
 	AppSaveSettings();
 }
 
 void MainEmuFrame::Menu_EnableWideScreenPatches_Click(wxCommandEvent&)
 {
-	g_Conf->EmuOptions.EnableWideScreenPatches = GetMenuBar()->IsChecked(MenuId_EnableWideScreenPatches);
+	g_Conf->emulator->EnableWideScreenPatches = GetMenuBar()->IsChecked(MenuId_EnableWideScreenPatches);
 	AppApplySettings();
 	AppSaveSettings();
 }
@@ -609,7 +608,7 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent& event)
 			g_InputRecordingControls.Resume();
 	}
 
-	g_Conf->EmuOptions.EnableRecordingTools = checked;
+	g_Conf->emulator->EnableRecordingTools = checked;
 	// Enable Recording Logs
 	ConsoleLogFrame* progLog = wxGetApp().GetProgramLog();
 	progLog->UpdateLogList();
@@ -620,7 +619,7 @@ void MainEmuFrame::Menu_EnableRecordingTools_Click(wxCommandEvent& event)
 
 void MainEmuFrame::Menu_EnableHostFs_Click(wxCommandEvent&)
 {
-	g_Conf->EmuOptions.HostFs = GetMenuBar()->IsChecked(MenuId_EnableHostFs);
+	g_Conf->emulator->HostFs = GetMenuBar()->IsChecked(MenuId_EnableHostFs);
 	AppSaveSettings();
 }
 
@@ -629,8 +628,8 @@ void MainEmuFrame::Menu_OpenELF_Click(wxCommandEvent&)
 	ScopedCoreThreadClose stopped_core;
 	if (_DoSelectELFBrowser())
 	{
-		g_Conf->EmuOptions.UseBOOT2Injection = true;
-		sApp.SysExecute(g_Conf->CdvdSource, g_Conf->CurrentELF);
+		g_Conf->emulator->UseBOOT2Injection = true;
+		sApp.SysExecute(g_Conf->gui->CdvdSource, g_Conf->gui->CurrentELF);
 	}
 
 	stopped_core.AllowResume();
@@ -751,7 +750,7 @@ void MainEmuFrame::Menu_ConfigPlugin_Click(wxCommandEvent& event)
 		// If the CoreThread is paused prior to opening the PAD plugin settings then when the settings
 		// are closed the PAD will not re-open. To avoid this, we resume emulation prior to the plugins
 		// configuration handler doing so.
-		if (g_Conf->EmuOptions.EnableRecordingTools && g_InputRecordingControls.IsPaused())
+		if (g_Conf->emulator->EnableRecordingTools && g_InputRecordingControls.IsPaused())
 		{
 			g_InputRecordingControls.Resume();
 			GetCorePlugins().Configure(pid);
@@ -787,14 +786,14 @@ void MainEmuFrame::Menu_ShowConsole(wxCommandEvent& event)
 {
 	// Use messages to relay open/close commands (thread-safe)
 
-	g_Conf->console.Visible = event.IsChecked();
-	wxCommandEvent evt( wxEVT_MENU, g_Conf->console.Visible ? wxID_OPEN : wxID_CLOSE );
-	wxGetApp().ProgramLog_PostEvent( evt );
+	g_Conf->gui->console.Visible = event.IsChecked();
+	wxCommandEvent evt(wxEVT_MENU, g_Conf->gui->console.Visible ? wxID_OPEN : wxID_CLOSE);
+	wxGetApp().ProgramLog_PostEvent(evt);
 }
 
 void MainEmuFrame::Menu_ShowConsole_Stdio(wxCommandEvent& event)
 {
-	g_Conf->EmuOptions.ConsoleToStdio = GetMenuBar()->IsChecked(MenuId_Console_Stdio);
+	g_Conf->emulator->ConsoleToStdio = GetMenuBar()->IsChecked(MenuId_Console_Stdio);
 	AppSaveSettings();
 }
 
@@ -917,10 +916,10 @@ void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_Click(wxCommandEvent& even
 	{
 		return;
 	}
-	GSmakeSnapshot(g_Conf->Folders.Snapshots.c_str());
+	GSmakeSnapshot(g_Conf->gui->Folders.Snapshots.c_str());
 }
 
-void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_As_Click(wxCommandEvent &event)
+void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_As_Click(wxCommandEvent& event)
 {
 	if (!CoreThread.IsOpen())
 		return;
@@ -930,7 +929,7 @@ void MainEmuFrame::Menu_Capture_Screenshot_Screenshot_As_Click(wxCommandEvent &e
 	if (!wasPaused)
 		CoreThread.Pause();
 
-	wxFileDialog fileDialog(this, _("Select a file"), g_Conf->Folders.Snapshots, wxEmptyString, "PNG files (*.png)|*.png", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	wxFileDialog fileDialog(this, _("Select a file"), g_Conf->gui->Folders.Snapshots, wxEmptyString, "PNG files (*.png)|*.png", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 
 	if (fileDialog.ShowModal() == wxID_OK)
 		GSmakeSnapshot(fileDialog.GetPath().c_str());
@@ -1009,19 +1008,19 @@ void MainEmuFrame::Menu_Recording_Stop_Click(wxCommandEvent& event)
 
 void MainEmuFrame::Menu_Recording_TogglePause_Click(wxCommandEvent& event)
 {
-	if (g_Conf->EmuOptions.EnableRecordingTools)
+	if (g_Conf->emulator->EnableRecordingTools)
 		g_InputRecordingControls.TogglePause();
 }
 
 void MainEmuFrame::Menu_Recording_FrameAdvance_Click(wxCommandEvent& event)
 {
-	if (g_Conf->EmuOptions.EnableRecordingTools)
+	if (g_Conf->emulator->EnableRecordingTools)
 		g_InputRecordingControls.FrameAdvance();
 }
 
 void MainEmuFrame::Menu_Recording_ToggleRecordingMode_Click(wxCommandEvent& event)
 {
-	if (g_Conf->EmuOptions.EnableRecordingTools)
+	if (g_Conf->emulator->EnableRecordingTools)
 		g_InputRecordingControls.RecordModeToggle();
 }
 

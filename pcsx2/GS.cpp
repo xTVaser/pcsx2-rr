@@ -28,15 +28,15 @@ using namespace R5900;
 
 __aligned16 u8 g_RealGSMem[Ps2MemSize::GSregs];
 
-void gsOnModeChanged( Fixed100 framerate, u32 newTickrate )
+void gsOnModeChanged(Fixed100 framerate, u32 newTickrate)
 {
-	GetMTGS().SendSimplePacket( GS_RINGTYPE_MODECHANGE, framerate.Raw, newTickrate, 0 );
+	GetMTGS().SendSimplePacket(GS_RINGTYPE_MODECHANGE, framerate.Raw, newTickrate, 0);
 }
 
 
-void gsSetVideoMode(GS_VideoMode mode )
+void gsSetVideoMode(GS_VideoMode mode)
 {
-	if( gsVideoMode == mode )
+	if (gsVideoMode == mode)
 		return;
 
 	gsVideoMode = mode;
@@ -60,24 +60,25 @@ void gsUpdateFrequency(Pcsx2Config& config)
 {
 	switch (g_LimiterMode)
 	{
-	case LimiterModeType::Limit_Nominal:
-		config.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
-		break;
-	case LimiterModeType::Limit_Slomo:
-		config.GS.LimitScalar = g_Conf->Framerate.SlomoScalar;
-		break;
-	case LimiterModeType::Limit_Turbo:
-		config.GS.LimitScalar = g_Conf->Framerate.TurboScalar;
-		break;
-	default:
-		pxAssert("Unknown framelimiter mode!");
+		case LimiterModeType::Limit_Nominal:
+			config.GS.LimitScalar = g_Conf->gui->Framerate.NominalScalar;
+			break;
+		case LimiterModeType::Limit_Slomo:
+			config.GS.LimitScalar = g_Conf->gui->Framerate.SlomoScalar;
+			break;
+		case LimiterModeType::Limit_Turbo:
+			config.GS.LimitScalar = g_Conf->gui->Framerate.TurboScalar;
+			break;
+		default:
+			pxAssert("Unknown framelimiter mode!");
 	}
 	UpdateVSyncRate();
 }
 
-static __fi void gsCSRwrite( const tGS_CSR& csr )
+static __fi void gsCSRwrite(const tGS_CSR& csr)
 {
-	if (csr.RESET) {
+	if (csr.RESET)
+	{
 		GUNIT_WARN("GUNIT_WARN: csr.RESET");
 		//Console.Warning( "csr.RESET" );
 		//gifUnit.Reset(true); // Don't think gif should be reset...
@@ -88,37 +89,43 @@ static __fi void gsCSRwrite( const tGS_CSR& csr )
 		GSIMR.reset();
 	}
 
-	if(csr.FLUSH)
+	if (csr.FLUSH)
 	{
 		// Our emulated GS has no FIFO, but if it did, it would flush it here...
 		//Console.WriteLn("GS_CSR FLUSH GS fifo: %x (CSRr=%x)", value, GSCSRr);
 	}
-	
-	if(csr.SIGNAL)
+
+	if (csr.SIGNAL)
 	{
 		// SIGNAL : What's not known here is whether or not the SIGID register should be updated
 		//  here or when the IMR is cleared (below).
 		GUNIT_LOG("csr.SIGNAL");
-		if (gifUnit.gsSIGNAL.queued) {
+		if (gifUnit.gsSIGNAL.queued)
+		{
 			//DevCon.Warning("Firing pending signal");
-			GSSIGLBLID.SIGID = (GSSIGLBLID.SIGID & ~gifUnit.gsSIGNAL.data[1])
-				        | (gifUnit.gsSIGNAL.data[0]&gifUnit.gsSIGNAL.data[1]);
+			GSSIGLBLID.SIGID = (GSSIGLBLID.SIGID & ~gifUnit.gsSIGNAL.data[1]) | (gifUnit.gsSIGNAL.data[0] & gifUnit.gsSIGNAL.data[1]);
 
-			if (!GSIMR.SIGMSK) gsIrq();
-			CSRreg.SIGNAL  = true; // Just to be sure :p
+			if (!GSIMR.SIGMSK)
+				gsIrq();
+			CSRreg.SIGNAL = true; // Just to be sure :p
 		}
-		else CSRreg.SIGNAL = false;
+		else
+			CSRreg.SIGNAL = false;
 		gifUnit.gsSIGNAL.queued = false;
 		gifUnit.Execute(false, true); // Resume paused transfers
 	}
-	
-	if (csr.FINISH)	{
-		CSRreg.FINISH = false; 
+
+	if (csr.FINISH)
+	{
+		CSRreg.FINISH = false;
 		gifUnit.gsFINISH.gsFINISHFired = false; //Clear the previously fired FINISH (YS, Indiecar 2005, MGS3)
 	}
-	if(csr.HSINT)	CSRreg.HSINT	= false;
-	if(csr.VSINT)	CSRreg.VSINT	= false;
-	if(csr.EDWINT)	CSRreg.EDWINT	= false;
+	if (csr.HSINT)
+		CSRreg.HSINT = false;
+	if (csr.VSINT)
+		CSRreg.VSINT = false;
+	if (csr.EDWINT)
+		CSRreg.EDWINT = false;
 }
 
 static __fi void IMRwrite(u32 value)
@@ -128,33 +135,37 @@ static __fi void IMRwrite(u32 value)
 	if (CSRreg.GetInterruptMask() & (~value & GSIMR._u32) >> 8)
 		gsIrq();
 
-	GSIMR._u32 = (value & 0x1f00)|0x6000;
+	GSIMR._u32 = (value & 0x1f00) | 0x6000;
 }
 
 __fi void gsWrite8(u32 mem, u8 value)
 {
 	switch (mem)
 	{
-		// CSR 8-bit write handlers.
-		// I'm quite sure these would just write the CSR portion with the other
-		// bits set to 0 (no action).  The previous implementation masked the 8-bit 
-		// write value against the previous CSR write value, but that really doesn't
-		// make any sense, given that the real hardware's CSR circuit probably has no
-		// real "memory" where it saves anything.  (for example, you can't write to
-		// and change the GS revision or ID portions -- they're all hard wired.) --air
-	
+			// CSR 8-bit write handlers.
+			// I'm quite sure these would just write the CSR portion with the other
+			// bits set to 0 (no action).  The previous implementation masked the 8-bit
+			// write value against the previous CSR write value, but that really doesn't
+			// make any sense, given that the real hardware's CSR circuit probably has no
+			// real "memory" where it saves anything.  (for example, you can't write to
+			// and change the GS revision or ID portions -- they're all hard wired.) --air
+
 		case GS_CSR: // GS_CSR
-			gsCSRwrite( tGS_CSR((u32)value) );			break;
+			gsCSRwrite(tGS_CSR((u32)value));
+			break;
 		case GS_CSR + 1: // GS_CSR
-			gsCSRwrite( tGS_CSR(((u32)value) <<  8) );	break;
+			gsCSRwrite(tGS_CSR(((u32)value) << 8));
+			break;
 		case GS_CSR + 2: // GS_CSR
-			gsCSRwrite( tGS_CSR(((u32)value) << 16) );	break;
+			gsCSRwrite(tGS_CSR(((u32)value) << 16));
+			break;
 		case GS_CSR + 3: // GS_CSR
-			gsCSRwrite( tGS_CSR(((u32)value) << 24) );	break;
+			gsCSRwrite(tGS_CSR(((u32)value) << 24));
+			break;
 
 		default:
 			*PS2GS_BASE(mem) = value;
-		break;
+			break;
 	}
 	GIF_LOG("GS write 8 at %8.8lx with data %8.8lx", mem, value);
 }
@@ -168,20 +179,20 @@ __fi void gsWrite16(u32 mem, u16 value)
 
 	switch (mem)
 	{
-		// See note above about CSR 8 bit writes, and handling them as zero'd bits
-		// for all but the written parts.
-		
-		case GS_CSR:
-			gsCSRwrite( tGS_CSR((u32)value) );
-		return; // do not write to MTGS memory
+			// See note above about CSR 8 bit writes, and handling them as zero'd bits
+			// for all but the written parts.
 
-		case GS_CSR+2:
-			gsCSRwrite( tGS_CSR(((u32)value) << 16) );
-		return; // do not write to MTGS memory
+		case GS_CSR:
+			gsCSRwrite(tGS_CSR((u32)value));
+			return; // do not write to MTGS memory
+
+		case GS_CSR + 2:
+			gsCSRwrite(tGS_CSR(((u32)value) << 16));
+			return; // do not write to MTGS memory
 
 		case GS_IMR:
 			IMRwrite(value);
-		return; // do not write to MTGS memory
+			return; // do not write to MTGS memory
 	}
 
 	*(u16*)PS2GS_BASE(mem) = value;
@@ -192,18 +203,18 @@ __fi void gsWrite16(u32 mem, u16 value)
 
 __fi void gsWrite32(u32 mem, u32 value)
 {
-	pxAssume( (mem & 3) == 0 );
+	pxAssume((mem & 3) == 0);
 	GIF_LOG("GS write 32 at %8.8lx with data %8.8lx", mem, value);
 
 	switch (mem)
 	{
 		case GS_CSR:
 			gsCSRwrite(tGS_CSR(value));
-		return;
+			return;
 
 		case GS_IMR:
 			IMRwrite(value);
-		return;
+			return;
 	}
 
 	*(u32*)PS2GS_BASE(mem) = value;
@@ -212,7 +223,7 @@ __fi void gsWrite32(u32 mem, u32 value)
 //////////////////////////////////////////////////////////////////////////
 // GS Write 64 bit
 
-void __fastcall gsWrite64_generic( u32 mem, const mem64_t* value )
+void __fastcall gsWrite64_generic(u32 mem, const mem64_t* value)
 {
 	const u32* const srcval32 = (u32*)value;
 	GIF_LOG("GS Write64 at %8.8lx with data %8.8x_%8.8x", mem, srcval32[1], srcval32[0]);
@@ -220,26 +231,28 @@ void __fastcall gsWrite64_generic( u32 mem, const mem64_t* value )
 	*(u64*)PS2GS_BASE(mem) = *value;
 }
 
-void __fastcall gsWrite64_page_00( u32 mem, const mem64_t* value )
+void __fastcall gsWrite64_page_00(u32 mem, const mem64_t* value)
 {
-	gsWrite64_generic( mem, value );
+	gsWrite64_generic(mem, value);
 }
 
-void __fastcall gsWrite64_page_01( u32 mem, const mem64_t* value )
+void __fastcall gsWrite64_page_01(u32 mem, const mem64_t* value)
 {
 	GIF_LOG("GS Write64 at %8.8lx with data %8.8x_%8.8x", mem, (u32*)value[1], (u32*)value[0]);
 
-	switch( mem )
+	switch (mem)
 	{
 		case GS_BUSDIR:
 
 			gifUnit.stat.DIR = value[0] & 1;
-			if (gifUnit.stat.DIR) {      // Assume will do local->host transfer
+			if (gifUnit.stat.DIR)
+			{                            // Assume will do local->host transfer
 				gifUnit.stat.OPH = true; // Should we set OPH here?
 				gifUnit.FlushToMTGS();   // Send any pending GS Primitives to the GS
 				GUNIT_LOG("Busdir - GS->EE Download");
 			}
-			else {
+			else
+			{
 				GUNIT_LOG("Busdir - EE->GS Upload");
 			}
 
@@ -252,52 +265,52 @@ void __fastcall gsWrite64_page_01( u32 mem, const mem64_t* value )
 
 			// Important: writeback to gsRegs area *prior* to flushing the MTGS.  The flush will sync
 			// the GS and MTGS register states, and upload our screwy busdir register in the process. :)
-			gsWrite64_generic( mem, value );
+			gsWrite64_generic(mem, value);
 			GetMTGS().WaitGS();
-		return;
+			return;
 
 		case GS_CSR:
 			gsCSRwrite(tGS_CSR(*value));
-		return;
+			return;
 
 		case GS_IMR:
 			IMRwrite((u32)value[0]);
-		return;
+			return;
 	}
 
-	gsWrite64_generic( mem, value );
+	gsWrite64_generic(mem, value);
 }
 
 //////////////////////////////////////////////////////////////////////////
 // GS Write 128 bit
 
-void __fastcall gsWrite128_page_00( u32 mem, const mem128_t* value )
+void __fastcall gsWrite128_page_00(u32 mem, const mem128_t* value)
 {
-	gsWrite128_generic( mem, value );
+	gsWrite128_generic(mem, value);
 }
 
-void __fastcall gsWrite128_page_01( u32 mem, const mem128_t* value )
+void __fastcall gsWrite128_page_01(u32 mem, const mem128_t* value)
 {
-	switch( mem )
+	switch (mem)
 	{
 		case GS_CSR:
 			gsCSRwrite((u32)value[0]);
-		return;
+			return;
 
 		case GS_IMR:
 			IMRwrite((u32)value[0]);
-		return;
+			return;
 	}
 
-	gsWrite128_generic( mem, value );
+	gsWrite128_generic(mem, value);
 }
 
-void __fastcall gsWrite128_generic( u32 mem, const mem128_t* value )
+void __fastcall gsWrite128_generic(u32 mem, const mem128_t* value)
 {
 	const u32* const srcval32 = (u32*)value;
 
 	GIF_LOG("GS Write128 at %8.8lx with data %8.8x_%8.8x_%8.8x_%8.8x", mem,
-		srcval32[3], srcval32[2], srcval32[1], srcval32[0]);
+			srcval32[3], srcval32[2], srcval32[1], srcval32[0]);
 
 	CopyQWC(PS2GS_BASE(mem), value);
 }
@@ -323,11 +336,12 @@ __fi u32 gsRead32(u32 mem)
 __fi u64 gsRead64(u32 mem)
 {
 	// fixme - PS2GS_BASE(mem+4) = (g_RealGSMem+(mem + 4 & 0x13ff))
-	GIF_LOG("GS read 64 from %8.8lx  value: %8.8lx_%8.8lx", mem, *(u32*)PS2GS_BASE(mem+4), *(u32*)PS2GS_BASE(mem) );
+	GIF_LOG("GS read 64 from %8.8lx  value: %8.8lx_%8.8lx", mem, *(u32*)PS2GS_BASE(mem + 4), *(u32*)PS2GS_BASE(mem));
 	return *(u64*)PS2GS_BASE(mem);
 }
 
-void gsIrq() {
+void gsIrq()
+{
 	hwIntcIrq(INTC_GS);
 }
 
@@ -357,24 +371,24 @@ __fi void gsFrameSkip()
 	static int consec_drawn = 0;
 	static bool isSkipping = false;
 
-	if( !EmuConfig.GS.FrameSkipEnable )
+	if (!EmuConfig.GS.FrameSkipEnable)
 	{
-		if( isSkipping )
+		if (isSkipping)
 		{
 			// Frameskipping disabled on-the-fly .. make sure the GS is restored to non-skip
 			// behavior.
-			GSsetFrameSkip( false );
+			GSsetFrameSkip(false);
 			isSkipping = false;
 		}
 		return;
 	}
 
-	GSsetFrameSkip( isSkipping );
+	GSsetFrameSkip(isSkipping);
 
-	if( isSkipping )
+	if (isSkipping)
 	{
 		++consec_skipped;
-		if( consec_skipped >= EmuConfig.GS.FramesToSkip )
+		if (consec_skipped >= EmuConfig.GS.FramesToSkip)
 		{
 			consec_skipped = 0;
 			isSkipping = false;
@@ -383,7 +397,7 @@ __fi void gsFrameSkip()
 	else
 	{
 		++consec_drawn;
-		if( consec_drawn >= EmuConfig.GS.FramesToDraw )
+		if (consec_drawn >= EmuConfig.GS.FramesToDraw)
 		{
 			consec_drawn = 0;
 			isSkipping = true;
@@ -397,13 +411,13 @@ __fi void gsFrameSkip()
 void gsPostVsyncStart()
 {
 	//gifUnit.FlushToMTGS();  // Needed for some (broken?) homebrew game loaders
-	
+
 	GetMTGS().PostVsyncStart();
 }
 
 void _gs_ResetFrameskip()
 {
-	GSsetFrameSkip( 0 );
+	GSsetFrameSkip(0);
 }
 
 // Disables the GS Frameskip at runtime without any racy mess...

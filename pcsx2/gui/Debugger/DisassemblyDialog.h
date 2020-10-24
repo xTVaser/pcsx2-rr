@@ -25,7 +25,7 @@
 #include "DebuggerLists.h"
 #include "../MSWstuff.h"
 
-class DebuggerHelpDialog: public wxDialog
+class DebuggerHelpDialog : public wxDialog
 {
 public:
 	DebuggerHelpDialog(wxWindow* parent);
@@ -33,15 +33,15 @@ public:
 
 inline int getDebugFontWidth()
 {
-	return (int) ceil(g_Conf->EmuOptions.Debugger.FontWidth*MSW_GetDPIScale());
+	return (int)ceil(g_Conf->emulator->Debugger.FontWidth * MSW_GetDPIScale());
 }
 
 inline int getDebugFontHeight()
 {
-	return (int)ceil(g_Conf->EmuOptions.Debugger.FontHeight*MSW_GetDPIScale());
+	return (int)ceil(g_Conf->emulator->Debugger.FontHeight * MSW_GetDPIScale());
 }
 
-class CpuTabPage: public wxPanel
+class CpuTabPage : public wxPanel
 {
 public:
 	CpuTabPage(wxWindow* parent, DebugInterface* _cpu);
@@ -59,6 +59,7 @@ public:
 
 	void listBoxHandler(wxCommandEvent& event);
 	wxDECLARE_EVENT_TABLE();
+
 private:
 	void setBottomTabPage(wxWindow* win);
 	void postEvent(wxEventType type, int value);
@@ -81,18 +82,19 @@ private:
 class DisassemblyDialog : public wxFrame
 {
 public:
-	DisassemblyDialog( wxWindow* parent=NULL );
+	DisassemblyDialog(wxWindow* parent = NULL);
 	virtual ~DisassemblyDialog() = default;
 
 	static wxString GetNameStatic() { return L"DisassemblyDialog"; }
 	wxString GetDialogName() const { return GetNameStatic(); }
-	
+
 	void update();
 	void reset();
 	void populate();
 	void setDebugMode(bool debugMode, bool switchPC);
 
 	wxDECLARE_EVENT_TABLE();
+
 protected:
 	void onBreakRunClicked(wxCommandEvent& evt);
 	void onStepOverClicked(wxCommandEvent& evt);
@@ -108,6 +110,7 @@ protected:
 	void stepInto();
 	void stepOut();
 	void gotoPc();
+
 private:
 	CpuTabPage* eeTab;
 	CpuTabPage* iopTab;
