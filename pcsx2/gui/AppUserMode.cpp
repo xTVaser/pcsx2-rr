@@ -24,7 +24,6 @@
 #ifdef __WXMSW__
 #include "wx/msw/regconf.h"
 #endif
-#include "config/Configuration.h"
 
 wxIMPLEMENT_APP(Pcsx2App);
 
@@ -302,8 +301,7 @@ void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 
 void Pcsx2App::EstablishAppUserMode()
 {
-	Configuration cfg;
-	cfg.save();
+	
 
 	// TODO - stop mutating the json directly, serialize and deserialize!
 
@@ -357,6 +355,8 @@ void Pcsx2App::EstablishAppUserMode()
 
         yamlUtils.Save(GetPortableYamlPath(), toSave);
     }
+
+	g_Conf.get()->EmuOptions.loadFromFile(GetVmSettingsFilename());
 
 }
 

@@ -155,10 +155,11 @@ void Panels::GameFixesPanel::EnableStuff( GuiConfig* configToUse )
 
 void Panels::GameFixesPanel::OnEnable_Toggled( wxCommandEvent& evt )
 {
-	GuiConfig tmp=*g_Conf;
-	tmp.EnablePresets=false; //if clicked, button was enabled, so not using a preset --> let EnableStuff work
+	// TODO - broken
+	//GuiConfig tmp=*g_Conf;
+	//tmp.EnablePresets=false; //if clicked, button was enabled, so not using a preset --> let EnableStuff work
 
-	EnableStuff( &tmp );
+	//EnableStuff( &tmp );
 	evt.Skip();
 }
 

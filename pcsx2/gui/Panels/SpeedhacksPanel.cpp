@@ -347,21 +347,22 @@ void Panels::SpeedHacksPanel::Apply()
 
 void Panels::SpeedHacksPanel::OnEnable_Toggled( wxCommandEvent& evt )
 {
-	GuiConfig tmp=*g_Conf;
-	tmp.EnablePresets=false; //if clicked, button was enabled, so not using a preset --> let EnableStuff work
-	tmp.EnableSpeedHacks = m_check_Enable->GetValue();
+	g_Conf->EnablePresets=false; //if clicked, button was enabled, so not using a preset --> let EnableStuff work
+	g_Conf->EnableSpeedHacks = m_check_Enable->GetValue();
 
-	EnableStuff( &tmp );
+	// TODO why are we passing around pointers to global variables
+	//EnableStuff( &tmp );
 	evt.Skip();
 }
 
 void Panels::SpeedHacksPanel::Defaults_Click( wxCommandEvent& evt )
 {
-	//Can only get here presets are disabled at the GUI (= the 'Defaults' button is enabled).
-	GuiConfig currentConfigWithHacksReset = *g_Conf;
-	currentConfigWithHacksReset.EmuOptions.Speedhacks = Pcsx2Config::SpeedhackOptions();
-	currentConfigWithHacksReset.EnablePresets=false;//speed hacks gui depends on preset, apply it as if presets are disabled
-	ApplyConfigToGui( currentConfigWithHacksReset );
+	// TODO - nope, i broke defaults via making a brand new object, put them in a default function
+	g_Conf->EmuOptions.Speedhacks = Pcsx2Config::SpeedhackOptions();
+	g_Conf->EnablePresets=false;//speed hacks gui depends on preset, apply it as if presets are disabled
+
+	// TODO - 
+	// ApplyConfigToGui( currentConfigWithHacksReset );
 	evt.Skip();
 }
 

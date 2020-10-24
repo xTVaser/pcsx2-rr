@@ -242,9 +242,6 @@
     <ClCompile Include="..\..\x86\iMisc.cpp">
       <Filter>System</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Pcsx2Config.cpp">
-      <Filter>System</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\PluginManager.cpp">
       <Filter>System</Filter>
     </ClCompile>
@@ -916,9 +913,6 @@
     <ClCompile Include="..\..\SPU2\Dma.cpp">
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\config\Configuration.cpp">
-      <Filter>Configuration</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\SPU2\spu2.cpp">
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
@@ -1007,6 +1001,12 @@
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
     <ClCompile Include="..\..\gui\GuiConfig.cpp" />
+    <ClCompile Include="..\..\config\ConfigFile.cpp">
+      <Filter>Configuration</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\config\EmulatorConfig.cpp">
+      <Filter>Configuration</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Patch.h">
@@ -1471,9 +1471,6 @@
     <ClInclude Include="..\..\SPU2\Windows\Dialogs.h">
       <Filter>System\Ps2\SPU2</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\config\Configuration.h">
-      <Filter>Configuration</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\SPU2\spu2.h">
       <Filter>System\Ps2\SPU2</Filter>
     </ClInclude>
@@ -1529,6 +1526,12 @@
       <Filter>Recording\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="..\..\gui\GuiConfig.h" />
+    <ClInclude Include="..\..\config\ConfigFile.h">
+      <Filter>Configuration</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\config\EmulatorConfig.h">
+      <Filter>Configuration</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\wxResources.rc">

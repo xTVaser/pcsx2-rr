@@ -115,8 +115,8 @@ void Panels::FramelimiterPanel::ApplyConfigToGui( GuiConfig& configToApply, int 
 		m_spin_SlomoPct		->Enable( 1 );
 	}
 
-	m_text_BaseNtsc		->ChangeValue( gsconf.FramerateNTSC.ToString() );
-	m_text_BasePal		->ChangeValue( gsconf.FrameratePAL.ToString() );
+	m_text_BaseNtsc		->ChangeValue( std::to_string(gsconf.FramerateNTSC) );
+	m_text_BasePal		->ChangeValue( std::to_string(gsconf.FrameratePAL) );
 
 	m_spin_NominalPct	->SetValue( appfps.NominalScalar );
 	m_spin_NominalPct	->Enable(!configToApply.EnablePresets);
@@ -143,8 +143,8 @@ void Panels::FramelimiterPanel::Apply()
 	appfps.SlomoScalar		= m_spin_SlomoPct	->GetValue();
 
 	try {
-		gsconf.FramerateNTSC	= Fixed100::FromString( m_text_BaseNtsc->GetValue() );
-		gsconf.FrameratePAL		= Fixed100::FromString( m_text_BasePal->GetValue() );
+		gsconf.FramerateNTSC	= std::stof(m_text_BaseNtsc->GetValue().ToStdString() );
+		gsconf.FrameratePAL		= std::stof(m_text_BasePal->GetValue().ToStdString() );
 	}
 	catch( Exception::ParseError& )
 	{
@@ -328,12 +328,17 @@ Panels::VideoPanel::VideoPanel( wxWindow* parent ) :
 
 void Panels::VideoPanel::Defaults_Click(wxCommandEvent& evt)
 {
-	GuiConfig config = *g_Conf;
-	config.EmuOptions.GS = Pcsx2Config::GSOptions();
+	GuiConfig *config = g_Conf.get();
+	// TODO - bring back defaults into an explicit function instead of creating a new instance of an object just to set defaults.  I broke this upstream
+	// Why are we retrieving a global object to pass it into other functions, just access it there as needed?
+
+	// TODO
+
+	/*config.EmuOptions.GS = Pcsx2Config::GSOptions(); 
 	config.Framerate = FramerateOptions();
 	VideoPanel::ApplyConfigToGui(config);
 	m_fpan->ApplyConfigToGui(config);
-	m_span->ApplyConfigToGui(config);
+	m_span->ApplyConfigToGui(config);*/
 	evt.Skip();
 }
 

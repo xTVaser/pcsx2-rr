@@ -458,8 +458,6 @@ void Panels::PluginSelectorPanel::Apply()
 	// user never entered plugins panel?  Skip application since combo boxes are invalid/uninitialized.
 	if( !m_FileList ) return;
 
-	GuiConfig curconf( *g_Conf.get() );
-
 	ForPlugins([&] (const PluginInfo * pi) {
 		const PluginsEnum_t pid = pi->id;
 		int sel = m_ComponentBoxes->Get(pid).GetSelection();
@@ -486,7 +484,7 @@ void Panels::PluginSelectorPanel::Apply()
 	const PluginInfo* pi = tbl_PluginInfo;
 
 	do {
-		if( g_Conf->FullpathTo( pi->id ) != curconf.FullpathTo( pi->id ) )
+		if( g_Conf->FullpathTo( pi->id ) != g_Conf->FullpathTo( pi->id ) )
 			break;
 	} while( ++pi, pi->shortname != NULL );
 

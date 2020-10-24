@@ -7,6 +7,7 @@
 #include "MemoryCardFile.h"
 #include "Plugins.h"
 #include "PathDefs.h"
+#include "config/EmulatorConfig.h"
 
 #include <wx/config.h>
 #include <wx/stdpaths.h>

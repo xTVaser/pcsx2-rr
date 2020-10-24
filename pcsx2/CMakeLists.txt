@@ -91,7 +91,6 @@ set(pcsx2Sources
 	OutputIsoFile.cpp
 	Patch.cpp
 	Patch_Memory.cpp
-	Pcsx2Config.cpp
 	PluginManager.cpp
 	PrecompiledHeader.cpp
 	R3000A.cpp

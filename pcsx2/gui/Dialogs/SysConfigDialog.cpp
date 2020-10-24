@@ -74,9 +74,8 @@ void Dialogs::SysConfigDialog::UpdateGuiForPreset ( int presetIndex, bool preset
 
 	//Console.WriteLn("Applying config to Gui: preset #%d, presets enabled: %s", presetIndex, presetsEnabled?"true":"false");
 
-	GuiConfig preset = *g_Conf;
-	preset.IsOkApplyPreset( presetIndex, false );	//apply a preset to a copy of g_Conf.
-	preset.EnablePresets = presetsEnabled;	//override IsOkApplyPreset (which always applies/enabled) to actual required state
+	g_Conf->IsOkApplyPreset( presetIndex, false );	//apply a preset to a copy of g_Conf.
+	g_Conf->EnablePresets = presetsEnabled;	//override IsOkApplyPreset (which always applies/enabled) to actual required state
 
 	//update the config panels of SysConfigDialog to reflect the preset.
 	size_t pages = m_labels.GetCount();
@@ -89,8 +88,8 @@ void Dialogs::SysConfigDialog::UpdateGuiForPreset ( int presetIndex, bool preset
 		//		BaseApplicableConfigPanel or derived, and not of the parent class wxNotebookPage.
 		if ( ((BaseApplicableConfigPanel*)(m_listbook->GetPage(i)))->IsSpecificConfig() )
 		{
-			((BaseApplicableConfigPanel_SpecificConfig*)(m_listbook->GetPage(i)))
-				->ApplyConfigToGui( preset, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );
+			/*((BaseApplicableConfigPanel_SpecificConfig*)(m_listbook->GetPage(i)))
+				->ApplyConfigToGui( preset, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );*/
 		}
 	}
 
@@ -109,13 +108,13 @@ void Dialogs::SysConfigDialog::UpdateGuiForPreset ( int presetIndex, bool preset
 	//			4. Clicking Apply (presets still unchecked) --> patches will be enabled and not grayed out, presets are disabled.
 	//			--> If clicking Cancel instead of Apply at 4., will revert everything to the state of 1 (preset disabled, patches disabled and not grayed out).
 
-	bool origEnable=preset.EnablePresets;
-	preset.EnablePresets=true;	// will cause preset-related items to be grayed out at the menus regardless of their value.
-	if ( GetMainFramePtr() )
-		GetMainFramePtr()->ApplyConfigToGui( preset, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );
+	bool origEnable=g_Conf->EnablePresets;
+	g_Conf->EnablePresets=true;	// will cause preset-related items to be grayed out at the menus regardless of their value.
+	/*if ( GetMainFramePtr() )
+		GetMainFramePtr()->ApplyConfigToGui( preset, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );*/
 
 	// Not really needed as 'preset' is local and dumped anyway. For the sake of future modifications of more GUI elements.
-	preset.EnablePresets=origEnable;
+	g_Conf->EnablePresets=origEnable;
 
 }
 

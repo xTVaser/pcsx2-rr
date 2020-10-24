@@ -65,7 +65,9 @@ bool ApplyStateStruct::ApplyPage( int pageid )
 	std::string		oldSettingsFolder	= SettingsFolder;
 	bool			oldUseDefSet		= UseDefaultSettingsFolder;
 
-	GuiConfig confcopy( *g_Conf );
+	// TODO - ?????????????
+	// what is going on?
+	//GuiConfig confcopy( *g_Conf );
 
 	try
 	{
@@ -89,14 +91,15 @@ bool ApplyStateStruct::ApplyPage( int pageid )
 		if( !PathDefs::GetBios().c_str() )
 			//PathDefs::GetBios().Mkdir();//create the bios folder such that it can be opened at the first time wizard without an error message.
 
-		AppApplySettings( &confcopy );
+		//AppApplySettings( &confcopy );
+			printf("wtf lol");
 	}
 	catch( Exception::CannotApplySettings& ex )
 	{
 		DocsFolderMode = oldDocsMode;
 		SettingsFolder = oldSettingsFolder;
 		UseDefaultSettingsFolder = oldUseDefSet;
-		*g_Conf = confcopy;
+		//*g_Conf = confcopy;
 
 		if( ex.IsVerbose )
 		{
@@ -113,7 +116,7 @@ bool ApplyStateStruct::ApplyPage( int pageid )
 		DocsFolderMode = oldDocsMode;
 		SettingsFolder = oldSettingsFolder;
 		UseDefaultSettingsFolder = oldUseDefSet;
-		*g_Conf = confcopy;
+		//*g_Conf = confcopy;
 
 		throw;
 	}
