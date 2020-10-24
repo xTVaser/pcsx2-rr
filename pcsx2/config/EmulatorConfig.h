@@ -362,8 +362,6 @@ public:
 	bool operator!=(const Pcsx2Config& right) const;
 };
 
-extern const Pcsx2Config EmuConfig;
-
 Pcsx2Config::GSOptions& SetGSConfig();
 Pcsx2Config::RecompilerOptions& SetRecompilerConfig();
 Pcsx2Config::GamefixOptions& SetGameFixConfig();

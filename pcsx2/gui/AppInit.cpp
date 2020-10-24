@@ -444,7 +444,9 @@ bool Pcsx2App::OnInit()
 	pxDoAssert = AppDoAssert;
 	pxDoOutOfMemory = SysOutOfMemory_EmergencyResponse;
 
-	g_Conf = std::make_unique<GuiConfig>();
+	g_Conf = std::make_unique<GlobalConfig>();
+	g_Conf->emulator->loadFromFile(GetVmSettingsFilename());
+
 	wxInitAllImageHandlers();
 
 	Console.WriteLn("Applying operating system default language...");

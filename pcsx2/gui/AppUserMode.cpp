@@ -338,7 +338,4 @@ void Pcsx2App::EstablishAppUserMode()
 	{
 		// TODO - CONFIG - How do we disable the first-time wizard for installed mode?
 	}
-
-	// TODO - CONFIG - not the right spot? Load VM Settings
-	g_Conf.get()->EmuOptions.loadFromFile(GetVmSettingsFilename());
 }
