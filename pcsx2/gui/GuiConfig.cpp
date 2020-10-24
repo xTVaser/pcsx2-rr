@@ -409,8 +409,8 @@ bool GuiConfig::SaveMemcards(wxConfigBase* conf)
 	
 	for( uint slot=0; slot<2; ++slot )
 	{
-		//memcards[fmt::format("Slot{}u_Enable", slot)] = Mcd[slot].Enabled;
-		//memcards[fmt::format("Slot{}u_Filename", slot)] = Mcd[slot].Filename.GetFullName().ToStdString();
+		//conf->Write(wxString(fmt::format("Slot{}u_Enable", slot)), Mcd[slot].Enabled);
+	    //conf->Write(wxString(fmt::format("Slot{}u_Filename", slot)), Mcd[slot].Filename.GetFullName());
 	}
 
 	for( uint slot=2; slot<8; ++slot )
@@ -427,39 +427,42 @@ bool GuiConfig::SaveMemcards(wxConfigBase* conf)
 }
 
 bool GuiConfig::SaveRootItems(wxConfigBase* base)
-{
-	// TODO - YAML
+{	
+	std::string res = CurrentIso;
 
-	//YAML::Node yaml;
+	if(base->Write("RecentIsoCount", RecentIsoCount) &&
+	base->Write("Listbook_ImageSize", Listbook_ImageSize) &&
+	base->Write("Toolbar_ImageSize", Toolbar_ImageSize) &&
+	base->Write("Toolbar_ShowLabels", Toolbar_ShowLabels)&&
 
-	//yaml["RecentIsoCount"] = RecentIsoCount;
-	//yaml["Listbook_ImageSize"] = Listbook_ImageSize;
-	//yaml["Toolbar_ImageSize"] = Toolbar_ImageSize;
-	//yaml["Toolbar_ShowLabels"] = Toolbar_ShowLabels;
+	base->Write("CurrentIso", res) && // TODO - missing the allow relative flag
+	base->Write("CurrentBlockdump", CurrentBlockdump) &&
+	base->Write("CurrentELF", CurrentELF) &&
+	base->Write("CurrentIRX", CurrentIRX) &&
 
-	//std::string res = CurrentIso;
-	//yaml["CurrentIso"] = res; // TODO - missing the allow relative flag
-	//CurrentIso = res;
+	base->Write("EnableSpeedHacks", EnableSpeedHacks) &&
+	base->Write("EnableGameFixes", EnableGameFixes) &&
+	base->Write("EnableFastBoot", EnableFastBoot) &&
 
-	//yaml["CurrentBlockdump"] = CurrentBlockdump;
-	//yaml["CurrentELF"] = CurrentELF;
-	//yaml["CurrentIRX"] = CurrentIRX;
+	base->Write("EnablePresets", EnablePresets) &&
+	base->Write("PresetIndex", PresetIndex) &&
+	base->Write("AskOnBoot",  AskOnBoot))
+	{
+		return true;
+	}
 
-	//yaml["EnableSpeedHacks"] = EnableSpeedHacks;
-	//yaml["EnableGameFixes"] = EnableGameFixes;
-	//yaml["EnableFastBoot"] = EnableFastBoot;
+	#ifdef __WXMSW__
+	//IniEntry( McdCompressNTFS );
+	#endif
 
-	//yaml["EnablePresets"] = EnablePresets;
-	//yaml["PresetIndex"] = PresetIndex;
-	//yaml["AskOnBoot"] =  AskOnBoot;
+	else
+	{
+		return false;
+	}
+	
 
-	//#ifdef __WXMSW__
-	////IniEntry( McdCompressNTFS );
-	//#endif
-
-	//// TODO - these are not basic types at all
-	////yaml["CdvdSource"] = (CdvdSource, CDVD_SourceLabels, CdvdSource );
-	return true;
+	// TODO - these are not basic types at all
+	//base->Write("CdvdSource", CdvdSource, CDVD_SourceLabels, CdvdSource );
 }
 
 // ------------------------------------------------------------------------
@@ -514,8 +517,7 @@ bool FolderOptions::Save(wxConfigBase* conf) // conf write = write to config fil
 	//when saving in portable mode, we save relative paths if possible
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
 	bool rel = true;
-
-
+ 
 	if (conf->Write("UseDefaultBios", UseDefaultBios) &&
 	conf->Write("UseDefaultSavestates", UseDefaultSavestates) &&
 	conf->Write("UseDefaultMemoryCards", UseDefaultMemoryCards) &&
@@ -537,14 +539,18 @@ bool FolderOptions::Save(wxConfigBase* conf) // conf write = write to config fil
 
 	conf->Write(RunIso.wstring(), rel) &&
 	conf->Write(RunELF.wstring(), rel))
+    {
+	    return true;
+    }
+    
+	// ApplyDefaults();
 
-{
-	return true;
-}
-//		ApplyDefaults();
-
-		for( int i=0; i<FolderId_COUNT; ++i )
+	for( int i=0; i<FolderId_COUNT; ++i )
+	{
 			operator[]( (FoldersEnum_t)i );
+	}	
+
+    return false;
 }
 
 #ifndef DISABLE_RECORDING
@@ -621,26 +627,47 @@ UiTemplateOptions::UiTemplateOptions()
 #endif
 }
 
-/*nlohmann::json AppConfig::UiTemplateOptions::LoadSave();
+bool UiTemplateOptions::Save(wxConfigBase* conf)
 {
-	nlohmann::json ui;
-
-	ui["LimiterUnlimited"] = LimiterUnlimited;
-	ui["LimiterTurbo"] = LimiterTurbo;
-	ui["LimiterSlowmo"] = LimiterSlowmo;
-	ui["LimiterNormal"] = LimiterNormal;
-	ui["OutputFrame"] = OutputFrame;
-	ui["OutputField"] = OutputField;
-	ui["OutputProgressive"] = OutputProgressive;
-	ui["OutputInterlaced"] = OutputInterlaced;
-	ui["Paused"] = Paused;
-	ui["TitleTemplate"] = TitleTemplate;
+	if(conf->Write("LimiterUnlimited", LimiterUnlimited) &&
+	conf->Write("LimiterTurbo", LimiterTurbo) &&
+	conf->Write("LimiterSlowmo", LimiterSlowmo) &&
+	conf->Write("LimiterNormal", LimiterNormal) &&
+	conf->Write("OutputFrame", OutputFrame) &&
+	conf->Write("OutputField", OutputField) &&
+	conf->Write("OutputProgressive", OutputProgressive) &&
+	conf->Write("OutputInterlaced", OutputInterlaced) &&
+	conf->Write("Paused", Paused) &&
+	conf->Write("TitleTemplate", TitleTemplate) &&
 #ifndef DISABLE_RECORDING
-	ui["RecordingTemplate"] = RecordingTemplate;
+	conf->Write("RecordingTemplate", RecordingTemplate))
 #endif
+    {
+	    return true;
+    }
 
-return ui;
-}*/
+    else
+	{
+		return false;
+	}
+}
+
+void UiTemplateOptions::Load(wxConfigBase* conf)
+{
+	conf->Read("LimiterUnlimited", LimiterUnlimited);
+	conf->Read("LimiterTurbo", LimiterTurbo);
+	conf->Read("LimiterSlowmo", LimiterSlowmo);
+	conf->Read("LimiterNormal", LimiterNormal);
+	conf->Read("OutputFrame", OutputFrame);
+	conf->Read("OutputField", OutputField);
+	conf->Read("OutputProgressive", OutputProgressive);
+	conf->Read("OutputInterlaced", OutputInterlaced);
+	conf->Read("Paused", Paused);
+	conf->Read("TitleTemplate", TitleTemplate);
+#ifndef DISABLE_RECORDING
+	conf->Read("RecordingTemplate", RecordingTemplate);
+#endif
+}
 
 int GuiConfig::GetMaxPresetIndex()
 {
@@ -667,15 +694,6 @@ bool GuiConfig::isOkGetPresetTextAndColor( int n, std::string& label, wxColor& c
     return true;
 }
 
-
-
-
-
-
-
-
-
-
 ConsoleLogOptions::ConsoleLogOptions()
 	: DisplayPosition{100, 100}
 	, DisplaySize{680, 560}
@@ -688,15 +706,22 @@ ConsoleLogOptions::ConsoleLogOptions()
 
 bool ConsoleLogOptions::Save(wxConfigBase* conf)
 {
-	conf->Write("Theme", Theme);
-	conf->Write("FontSize", FontSize);
-	conf->Write("IsVisible", Visible);
-	conf->Write("Autodock", AutoDock);
-	conf->Write("DisplaySizeX", DisplaySize.x);
-	conf->Write("DisplaySizeY", DisplaySize.y);
-	conf->Write("DisplayPositionX", DisplayPosition.x);
-	conf->Write("DisplayPositionY", DisplayPosition.y);
-	return true;
+	if (conf->Write("Theme", Theme) &&
+	conf->Write("FontSize", FontSize) &&
+	conf->Write("IsVisible", Visible) &&
+	conf->Write("Autodock", AutoDock) &&
+	conf->Write("DisplaySizeX", DisplaySize.x) &&
+	conf->Write("DisplaySizeY", DisplaySize.y) &&
+	conf->Write("DisplayPositionX", DisplayPosition.x) &&
+	conf->Write("DisplayPositionY", DisplayPosition.y))
+	{
+	    return true;
+	}
+	else
+	{
+		return false;
+	}
+	
 }
 
 void ConsoleLogOptions::Load(wxConfigBase* conf)
@@ -735,27 +760,35 @@ GSWindowOptions::GSWindowOptions()
 	IsToggleFullscreenOnDoubleClick = true;
 }
 
-void GSWindowOptions::Save(wxConfigBase* conf)
+bool GSWindowOptions::Save(wxConfigBase* conf)
 {
-	conf->Write("Zoom", Zoom);
-	conf->Write("OffsetX", OffsetX);
-	conf->Write("OffsetY", OffsetY);
-	conf->Write("StretchY", StretchY);
-	conf->Write("WindowPosX", WindowPos.x);
-	conf->Write("WindowPosY", WindowPos.y);
-	conf->Write("WindowSizeX", WindowSize.x);
-	conf->Write("WindowSizeY", WindowSize.y);
-	conf->Write("CloseOnEsc", CloseOnEsc);
-	conf->Write("AspectRatio", (int)AspectRatio);
-	conf->Write("IsMaximized", IsMaximized);
-	conf->Write("IsFullscreen", IsFullscreen);
-	conf->Write("AlwaysHideMouse", AlwaysHideMouse);
-	conf->Write("DisableScreenSaver", DisableScreenSaver);
-	conf->Write("DefaultToFullScreen", DefaultToFullscreen);
-	conf->Write("DisableResizeBorders", DisableResizeBorders);
-	conf->Write("FMVAspectRatioSwitch", (int)FMVAspectRatioSwitch);
-	conf->Write("EnableVsyncWindowFlag", EnableVsyncWindowFlag);
-	conf->Write("IsToggleFullscreenOnDoubleClick", IsToggleFullscreenOnDoubleClick);
+	if (conf->Write("Zoom", Zoom) &&
+	conf->Write("OffsetX", OffsetX) &&
+	conf->Write("OffsetY", OffsetY) &&
+	conf->Write("StretchY", StretchY) &&
+	conf->Write("WindowPosX", WindowPos.x) &&
+	conf->Write("WindowPosY", WindowPos.y) &&
+	conf->Write("WindowSizeX", WindowSize.x) &&
+	conf->Write("WindowSizeY", WindowSize.y) &&
+	conf->Write("CloseOnEsc", CloseOnEsc) &&
+	conf->Write("AspectRatio", (int)AspectRatio) &&
+	conf->Write("IsMaximized", IsMaximized) &&
+	conf->Write("IsFullscreen", IsFullscreen) &&
+	conf->Write("AlwaysHideMouse", AlwaysHideMouse) &&
+	conf->Write("DisableScreenSaver", DisableScreenSaver) &&
+	conf->Write("DefaultToFullScreen", DefaultToFullscreen) &&
+	conf->Write("DisableResizeBorders", DisableResizeBorders) &&
+	conf->Write("FMVAspectRatioSwitch", (int)FMVAspectRatioSwitch) &&
+	conf->Write("EnableVsyncWindowFlag", EnableVsyncWindowFlag) &&
+	conf->Write("IsToggleFullscreenOnDoubleClick", IsToggleFullscreenOnDoubleClick))
+	{
+		return true;
+	}
+    else
+	{
+		return false;
+	}
+	
 }
 
 void GSWindowOptions::Load(wxConfigBase* conf)
@@ -808,7 +841,7 @@ const std::string& FilenameOptions::operator[](PluginsEnum_t pluginidx) const
 	return Plugins[pluginidx].ToStdString();
 }
 
-void FilenameOptions::Save(wxConfigBase* conf)
+bool FilenameOptions::Save(wxConfigBase* conf)
 {
 
 	static const std::string pc("Please Configure");
@@ -837,6 +870,7 @@ void FilenameOptions::Save(wxConfigBase* conf)
 	else
 		conf->Write(L"BIOS", wxString(pc));
 
+		return true;
 }
 
 void FilenameOptions::Load(wxConfigBase* conf)
@@ -844,101 +878,18 @@ void FilenameOptions::Load(wxConfigBase* conf)
 	conf->Read("BIOS", Bios);
 }
 
-
-// Apply one of several (currently 6) configuration subsets.
-// The scope of the subset which each preset controlls is hardcoded here.
-// Use ignoreMTVU to avoid updating the MTVU field.
-// Main purpose is for the preset enforcement at launch, to avoid overwriting a user's setting.
-bool GuiConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
+bool OpenFileConfig( std::string filename )
 {
-	if (n < 0 || n > GetMaxPresetIndex() )
+	if (!folderUtils.DoesExist(filename))
 	{
-		Console.WriteLn("DEV Warning: ApplyPreset(%d): index out of range, Aborting.", n);
 		return false;
 	}
 
-	//Console.WriteLn("Applying Preset %d ...", n);
-
-	//Have some original and default values at hand to be used later.
-	FramerateOptions	    original_Framerate = Framerate;
-	GuiConfig				default_AppConfig;
-	Pcsx2Config				default_Pcsx2Config;
-
-	//  NOTE:	Because the system currently only supports passing of an entire AppConfig to the GUI panels/menus to apply/reflect,
-	//			the GUI entities should be aware of the settings which the presets control, such that when presets are used:
-	//			1. The panels/entities should prevent manual modifications (by graying out) of settings which the presets control.
-	//			2. The panels should not apply values which the presets don't control if the value is initiated by a preset.
-	//			Currently controlled by the presets:
-	//			- AppConfig:	Framerate (except turbo/slowmo factors), EnableSpeedHacks, EnableGameFixes.
-	//			- EmuOptions:	Cpu, Gamefixes, SpeedHacks (except mtvu), EnablePatches, GS (except for FrameLimitEnable and VsyncEnable).
-	//
-	//			This essentially currently covers all the options on all the panels except for framelimiter which isn't
-	//			controlled by the presets, and the entire GSWindow panel which also isn't controlled by presets
-	//
-	//			So, if changing the scope of the presets (making them affect more or less values), the relevant GUI entities
-	//			should me modified to support it.
-
-	//Force some settings as a (current) base for all presets.
-
-	Framerate			= default_AppConfig.Framerate;
-	Framerate.SlomoScalar = original_Framerate.SlomoScalar;
-	Framerate.TurboScalar = original_Framerate.TurboScalar;
-
-	EnableGameFixes		= false;
-
-	EmuOptions.EnablePatches		= true;
-	EmuOptions.GS					= default_Pcsx2Config.GS;
-	//EmuOptions.GS.FrameLimitEnable	= original_GS.FrameLimitEnable;	//Frame limiter is not modified by presets
-
-	EmuOptions.Cpu					= default_Pcsx2Config.Cpu;
-	EmuOptions.Gamefixes			= default_Pcsx2Config.Gamefixes;
-	EmuOptions.Speedhacks			= default_Pcsx2Config.Speedhacks;
-	//EmuOptions.Speedhacks	= 0; //Turn off individual hacks to make it visually clear they're not used.
-	//EmuOptions.Speedhacks.vuThread	= original_SpeedHacks.vuThread;
-	EnableSpeedHacks = true;
-
-	// Actual application of current preset over the base settings which all presets use (mostly pcsx2's default values).
-
-	bool isRateSet = false, isSkipSet = false, isMTVUSet = ignoreMTVU ? true : false; // used to prevent application of specific lower preset values on fallthrough.
-	switch (n) // Settings will waterfall down to the Safe preset, then stop. So, Balanced and higher will inherit any settings through Safe.
+	else
 	{
-		case 5: // Mostly Harmful
-			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = 1); // +1 EE cyclerate
-			isSkipSet ? 0 : (isSkipSet = true, EmuOptions.Speedhacks.EECycleSkip = 1); // +1 EE cycle skip
-            // Fall through
-
-		case 4: // Very Aggressive
-			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = -2); // -2 EE cyclerate
-            // Fall through
-
-		case 3: // Aggressive
-			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = -1); // -1 EE cyclerate
-            // Fall throughaaad
-			isMTVUSet ? 0 : (isMTVUSet = true, EmuOptions.Speedhacks.vuThread = true); // Enable MTVU
-            // Fall through
-
-		case 1: // Safe (Default)
-			EmuOptions.Speedhacks.IntcStat = true;
-			EmuOptions.Speedhacks.WaitLoop = true;
-			EmuOptions.Speedhacks.vuFlagHack = true;
-
-			// If waterfalling from > Safe, break to avoid MTVU disable.
-			if (n > 1) break;
-            // Fall through
-
-		case 0: // Safest
-			isMTVUSet ? 0 : (isMTVUSet = true, EmuOptions.Speedhacks.vuThread = false); // Disable MTVU
-			break;
-
-		default:
-			Console.WriteLn("Developer Warning: Preset #%d is not implemented. (--> Using application default).", n);
+		bool loader = yamlUtils.Load(filename);
+		return loader;
 	}
-
-
-	EnablePresets=true;
-	PresetIndex=n;
-
-	return true;
 }
 
 void RelocateLogfile()
@@ -1249,7 +1200,20 @@ void GuiConfig::Load()
 
 	console.Load(conf);	
 	gsWindow.Load(conf);
-	Filenames.Load(conf);
+	BaseFilenames.Load(conf);
+	Templates.Save(conf);
+
+    conf->Read("MainGuiPositionX", MainGuiPosition.x);
+    conf->Read("MainGuiPositionY", MainGuiPosition.y);
+    conf->Read("SysSettingsTabName", SysSettingsTabName);
+	conf->Read("McdSettingsTabName", McdSettingsTabName);
+	conf->Read("ComponentsTabName", ComponentsTabName);
+	conf->Read("AppSettingsTabName", AppSettingsTabName);
+	conf->Read("GameDatabaseTabName", GameDatabaseTabName);
+    conf->Read("LanguageId", (int)LanguageId);
+    conf->Read("LanguageCode", LanguageCode);
+
+
 }
 
 
@@ -1261,19 +1225,31 @@ void GuiConfig::Save()
 		Init();
 	}
 
-	console.Save(conf);
-	gsWindow.Save(conf);
-	Filenames.Save(conf);
-    conf->Write("MainGuiPositionX", MainGuiPosition.x);
-    conf->Write("MainGuiPositionY", MainGuiPosition.y);
-    conf->Write("SysSettingsTabName", SysSettingsTabName);
-	conf->Write("McdSettingsTabName", McdSettingsTabName);
-	conf->Write("ComponentsTabName", ComponentsTabName);
-	conf->Write("AppSettingsTabName", AppSettingsTabName);
-	conf->Write("GameDatabaseTabName", GameDatabaseTabName);
-    conf->Write("LanguageId", (int)LanguageId);
-    conf->Write("LanguageCode", LanguageCode);
-	conf->Flush();
+	if (Input.Save(conf) &&
+	Folders.Save(conf) &&
+	console.Save(conf) &&
+	gsWindow.Save(conf) &&
+	Templates.Save(conf) &&
+	Framerate.Save(conf) &&
+	BaseFilenames.Save(conf) &&
+
+    conf->Write("MainGuiPositionX", MainGuiPosition.x) &&
+    conf->Write("MainGuiPositionY", MainGuiPosition.y) &&
+    conf->Write("SysSettingsTabName", SysSettingsTabName) &&
+	conf->Write("McdSettingsTabName", McdSettingsTabName) &&
+	conf->Write("ComponentsTabName", ComponentsTabName) &&
+	conf->Write("AppSettingsTabName", AppSettingsTabName) &&
+	conf->Write("GameDatabaseTabName", GameDatabaseTabName) &&
+    conf->Write("LanguageId", (int)LanguageId) &&
+    conf->Write("LanguageCode", LanguageCode))
+	{
+	    conf->Flush();
+	}
+	else
+	{
+		return;
+	}
+	
 }
 
 GuiConfig::~GuiConfig()
