@@ -567,13 +567,13 @@ Pcsx2Config::Pcsx2Config()
 }
 
 // TODO - bool for success?
-void Pcsx2Config::loadFromFile(fs::path settingsFolder)
+void Pcsx2Config::loadFromFile(fs::path srcfile)
 {
 	// TODO - construct the right path
 	YamlFile* cfg = config.get();
-	cfg->loadFromFile(settingsFolder);
+	cfg->loadFromFile(srcfile);
 
-	YamlFile* coreCfg = cfg->getSection("Core").get();
+	YamlFile* coreCfg = std::move(cfg->getSection("Core")).get();
 	CdvdVerboseReads = coreCfg->getBool("CdvdVerboseReads");
 	CdvdDumpBlocks = coreCfg->getBool("CdvdDumpBlocks");
 	CdvdShareWrite = coreCfg->getBool("CdvdShareWrite");
@@ -600,10 +600,10 @@ void Pcsx2Config::loadFromFile(fs::path settingsFolder)
 	GS.load(cfg->getSection("GS"));
 }
 
-void Pcsx2Config::saveToFile(fs::path settingsFolder)
+void Pcsx2Config::saveToFile(fs::path dstFile)
 {
 	YamlFile* cfg = config.get();
-	YamlFile* coreCfg = cfg->getSection("Core").get();
+	YamlFile* coreCfg = std::move(cfg->getSection("Core")).get();
 
 	coreCfg->setBool("CdvdVerboseReads", CdvdVerboseReads);
 	coreCfg->setBool("CdvdDumpBlocks", CdvdDumpBlocks);
@@ -631,7 +631,7 @@ void Pcsx2Config::saveToFile(fs::path settingsFolder)
 	cfg->setSection("GS", GS.save());
 
 	// Save to file
-	config.get()->saveToFile(settingsFolder);
+	config.get()->saveToFile(dstFile);
 }
 
 bool Pcsx2Config::MultitapEnabled(uint port) const

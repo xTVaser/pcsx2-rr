@@ -997,17 +997,17 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 			return;
 		}
 	}
-	std::string jsonFilename = GetUiSettingsFilename();
+	std::string uiFileName = GetUiSettingsFilename();
 	if( overwrite )
 	{
-		if( folderUtils.DoesExist ( jsonFilename ) && !fs::remove( jsonFilename ) )
-			throw Exception::AccessDenied(jsonFilename)
+		if( folderUtils.DoesExist ( uiFileName ) && !fs::remove( uiFileName ) )
+			throw Exception::AccessDenied(uiFileName)
 				.SetBothMsgs(pxL("Failed to overwrite existing settings file; permission was denied."));
 
-		std::string vmJsonFilename = GetVmSettingsFilename();
+		std::string vmFileName = GetVmSettingsFilename();
 
-		if( folderUtils.DoesExist( vmJsonFilename ) && !fs::remove( vmJsonFilename ) )
-			throw Exception::AccessDenied(vmJsonFilename)
+		if( folderUtils.DoesExist( vmFileName ) && !fs::remove( vmFileName ) )
+			throw Exception::AccessDenied(vmFileName)
 				.SetBothMsgs(pxL("Failed to overwrite existing settings file; permission was denied."));
 	}
 
@@ -1167,7 +1167,7 @@ void AppSaveSettings()
 		return;
 	}
 
-	//Console.WriteLn("Saving yaml files...");
+	Console.WriteLn("Saving config files...");
 
 	SaveUiSettings();
 	SaveRegSettings(); // save register because of PluginsFolder change
