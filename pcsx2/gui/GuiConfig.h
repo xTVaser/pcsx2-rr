@@ -263,7 +263,8 @@ struct UiTemplateOptions
 {
 	UiTemplateOptions();
 			
-	YAML::Node LoadSave();
+	bool Save(wxConfigBase* conf);
+	void Load(wxConfigBase* conf);
 
 	std::string LimiterUnlimited;
 	std::string LimiterTurbo;
@@ -288,13 +289,11 @@ private:
     wxConfigBase* conf;
 	bool isInit = false;
 
-
-
 public:	
 	ConsoleLogOptions console;
+	InputRecordingOptions Input;	
 	GSWindowOptions gsWindow;
-	FilenameOptions Filenames;
-	wxPoint		MainGuiPosition;
+	wxPoint	MainGuiPosition;
 
 	// Because remembering the last used tab on the settings panel is cool (tab is remembered
 	// by it's UTF/ASCII name).
@@ -346,7 +345,7 @@ public:
 	int			Listbook_ImageSize;
 
 	// Specifies the size of each toolbar icon, in pixels (any value >= 2 is valid, but realistically
-	// values should be between 64 and 16 for usability reasons)
+	// values should be betweeUiTemplateOptionsn 64 and 16 for usability reasons)
 	int			Toolbar_ImageSize;
 
 	// Enables display of toolbar text labels.
@@ -388,20 +387,9 @@ public:
 #endif
 	UiTemplateOptions		Templates;
 
-	// PCSX2-core emulation options, which are passed to the emu core prior to initiating
-	// an emulation session.  Note these are the options saved into the GUI ini file and
-	// which are shown as options in the gui preferences, but *not* necessarily the options
-	// used by emulation.  The gui allows temporary per-game and commandline level overrides.
-	Pcsx2Config				EmuOptions;
-
 	// Currently selected language ID -- wxWidgets version-specific identifier.  This is one side of
 	// a two-part configuration that also includes LanguageCode.
 	wxLanguage	LanguageId;
-
-
-
-
-
 
 	// Current language in use (correlates to the universal language codes, such as "en_US", "de_DE", etc).
 	// This code is not always unique, which is why we use the language ID also.

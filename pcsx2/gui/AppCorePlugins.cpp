@@ -25,10 +25,6 @@
 #include "GS.h"
 #include "GuiConfig.h"
 
-
-
-
-
 using namespace Threading;
 
 // The GS plugin needs to be opened to save/load the state during plugin configuration, but

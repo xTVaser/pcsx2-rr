@@ -417,7 +417,7 @@ public:
 	bool HasPluginsOverride() const
 	{
 		for( int i=0; i<PluginId_Count; ++i )
-			if( g_Conf->Filenames.Plugins[i].ToStdString().c_str() != nullptr ) return true;
+			if( g_Conf->BaseFilenames.Plugins[i].ToStdString().c_str() != nullptr ) return true;
 
 		return false;
 	}

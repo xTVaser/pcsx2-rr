@@ -618,26 +618,47 @@ UiTemplateOptions::UiTemplateOptions()
 #endif
 }
 
-/*nlohmann::json AppConfig::UiTemplateOptions::LoadSave();
+bool UiTemplateOptions::Save(wxConfigBase* conf)
 {
-	nlohmann::json ui;
-
-	ui["LimiterUnlimited"] = LimiterUnlimited;
-	ui["LimiterTurbo"] = LimiterTurbo;
-	ui["LimiterSlowmo"] = LimiterSlowmo;
-	ui["LimiterNormal"] = LimiterNormal;
-	ui["OutputFrame"] = OutputFrame;
-	ui["OutputField"] = OutputField;
-	ui["OutputProgressive"] = OutputProgressive;
-	ui["OutputInterlaced"] = OutputInterlaced;
-	ui["Paused"] = Paused;
-	ui["TitleTemplate"] = TitleTemplate;
+	if(conf->Write("LimiterUnlimited", LimiterUnlimited) &&
+	conf->Write("LimiterTurbo", LimiterTurbo) &&
+	conf->Write("LimiterSlowmo", LimiterSlowmo) &&
+	conf->Write("LimiterNormal", LimiterNormal) &&
+	conf->Write("OutputFrame", OutputFrame) &&
+	conf->Write("OutputField", OutputField) &&
+	conf->Write("OutputProgressive", OutputProgressive) &&
+	conf->Write("OutputInterlaced", OutputInterlaced) &&
+	conf->Write("Paused", Paused) &&
+	conf->Write("TitleTemplate", TitleTemplate) &&
 #ifndef DISABLE_RECORDING
-	ui["RecordingTemplate"] = RecordingTemplate;
+	conf->Write("RecordingTemplate", RecordingTemplate))
 #endif
+    {
+	    return true;
+    }
 
-return ui;
-}*/
+    else
+	{
+		return false;
+	}
+}
+
+void UiTemplateOptions::Load(wxConfigBase* conf)
+{
+	conf->Read("LimiterUnlimited", LimiterUnlimited);
+	conf->Read("LimiterTurbo", LimiterTurbo);
+	conf->Read("LimiterSlowmo", LimiterSlowmo);
+	conf->Read("LimiterNormal", LimiterNormal);
+	conf->Read("OutputFrame", OutputFrame);
+	conf->Read("OutputField", OutputField);
+	conf->Read("OutputProgressive", OutputProgressive);
+	conf->Read("OutputInterlaced", OutputInterlaced);
+	conf->Read("Paused", Paused);
+	conf->Read("TitleTemplate", TitleTemplate);
+#ifndef DISABLE_RECORDING
+	conf->Read("RecordingTemplate", RecordingTemplate);
+#endif
+}
 
 int GuiConfig::GetMaxPresetIndex()
 {
@@ -663,15 +684,6 @@ bool GuiConfig::isOkGetPresetTextAndColor( int n, std::string& label, wxColor& c
 
     return true;
 }
-
-
-
-
-
-
-
-
-
 
 ConsoleLogOptions::ConsoleLogOptions()
 	: DisplayPosition{100, 100}
@@ -839,103 +851,6 @@ void FilenameOptions::Save(wxConfigBase* conf)
 void FilenameOptions::Load(wxConfigBase* conf)
 {
 	conf->Read("BIOS", Bios);
-}
-
-
-// Apply one of several (currently 6) configuration subsets.
-// The scope of the subset which each preset controlls is hardcoded here.
-// Use ignoreMTVU to avoid updating the MTVU field.
-// Main purpose is for the preset enforcement at launch, to avoid overwriting a user's setting.
-bool GuiConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
-{
-	if (n < 0 || n > GetMaxPresetIndex() )
-	{
-		Console.WriteLn("DEV Warning: ApplyPreset(%d): index out of range, Aborting.", n);
-		return false;
-	}
-
-	//Console.WriteLn("Applying Preset %d ...", n);
-
-	//Have some original and default values at hand to be used later.
-	FramerateOptions	    original_Framerate = Framerate;
-	GuiConfig				default_AppConfig;
-	Pcsx2Config				default_Pcsx2Config;
-
-	//  NOTE:	Because the system currently only supports passing of an entire AppConfig to the GUI panels/menus to apply/reflect,
-	//			the GUI entities should be aware of the settings which the presets control, such that when presets are used:
-	//			1. The panels/entities should prevent manual modifications (by graying out) of settings which the presets control.
-	//			2. The panels should not apply values which the presets don't control if the value is initiated by a preset.
-	//			Currently controlled by the presets:
-	//			- AppConfig:	Framerate (except turbo/slowmo factors), EnableSpeedHacks, EnableGameFixes.
-	//			- EmuOptions:	Cpu, Gamefixes, SpeedHacks (except mtvu), EnablePatches, GS (except for FrameLimitEnable and VsyncEnable).
-	//
-	//			This essentially currently covers all the options on all the panels except for framelimiter which isn't
-	//			controlled by the presets, and the entire GSWindow panel which also isn't controlled by presets
-	//
-	//			So, if changing the scope of the presets (making them affect more or less values), the relevant GUI entities
-	//			should me modified to support it.
-
-	//Force some settings as a (current) base for all presets.
-
-	Framerate			= default_AppConfig.Framerate;
-	Framerate.SlomoScalar = original_Framerate.SlomoScalar;
-	Framerate.TurboScalar = original_Framerate.TurboScalar;
-
-	EnableGameFixes		= false;
-
-	EmuOptions.EnablePatches		= true;
-	EmuOptions.GS					= default_Pcsx2Config.GS;
-	//EmuOptions.GS.FrameLimitEnable	= original_GS.FrameLimitEnable;	//Frame limiter is not modified by presets
-
-	EmuOptions.Cpu					= default_Pcsx2Config.Cpu;
-	EmuOptions.Gamefixes			= default_Pcsx2Config.Gamefixes;
-	EmuOptions.Speedhacks			= default_Pcsx2Config.Speedhacks;
-	//EmuOptions.Speedhacks	= 0; //Turn off individual hacks to make it visually clear they're not used.
-	//EmuOptions.Speedhacks.vuThread	= original_SpeedHacks.vuThread;
-	EnableSpeedHacks = true;
-
-	// Actual application of current preset over the base settings which all presets use (mostly pcsx2's default values).
-
-	bool isRateSet = false, isSkipSet = false, isMTVUSet = ignoreMTVU ? true : false; // used to prevent application of specific lower preset values on fallthrough.
-	switch (n) // Settings will waterfall down to the Safe preset, then stop. So, Balanced and higher will inherit any settings through Safe.
-	{
-		case 5: // Mostly Harmful
-			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = 1); // +1 EE cyclerate
-			isSkipSet ? 0 : (isSkipSet = true, EmuOptions.Speedhacks.EECycleSkip = 1); // +1 EE cycle skip
-            // Fall through
-
-		case 4: // Very Aggressive
-			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = -2); // -2 EE cyclerate
-            // Fall through
-
-		case 3: // Aggressive
-			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = -1); // -1 EE cyclerate
-            // Fall throughaaad
-			isMTVUSet ? 0 : (isMTVUSet = true, EmuOptions.Speedhacks.vuThread = true); // Enable MTVU
-            // Fall through
-
-		case 1: // Safe (Default)
-			EmuOptions.Speedhacks.IntcStat = true;
-			EmuOptions.Speedhacks.WaitLoop = true;
-			EmuOptions.Speedhacks.vuFlagHack = true;
-
-			// If waterfalling from > Safe, break to avoid MTVU disable.
-			if (n > 1) break;
-            // Fall through
-
-		case 0: // Safest
-			isMTVUSet ? 0 : (isMTVUSet = true, EmuOptions.Speedhacks.vuThread = false); // Disable MTVU
-			break;
-
-		default:
-			Console.WriteLn("Developer Warning: Preset #%d is not implemented. (--> Using application default).", n);
-	}
-
-
-	EnablePresets=true;
-	PresetIndex=n;
-
-	return true;
 }
 
 bool OpenFileConfig( std::string filename )
@@ -1260,7 +1175,20 @@ void GuiConfig::Load()
 
 	console.Load(conf);	
 	gsWindow.Load(conf);
-	Filenames.Load(conf);
+	BaseFilenames.Load(conf);
+	Templates.Save(conf);
+
+    conf->Read("MainGuiPositionX", MainGuiPosition.x);
+    conf->Read("MainGuiPositionY", MainGuiPosition.y);
+    conf->Read("SysSettingsTabName", SysSettingsTabName);
+	conf->Read("McdSettingsTabName", McdSettingsTabName);
+	conf->Read("ComponentsTabName", ComponentsTabName);
+	conf->Read("AppSettingsTabName", AppSettingsTabName);
+	conf->Read("GameDatabaseTabName", GameDatabaseTabName);
+    conf->Read("LanguageId", (int)LanguageId);
+    conf->Read("LanguageCode", LanguageCode);
+
+
 }
 
 
@@ -1271,10 +1199,14 @@ void GuiConfig::Save()
 	{
 		Init();
 	}
-
+	Input.Save(conf);
+	Folders.Save(conf);
 	console.Save(conf);
 	gsWindow.Save(conf);
-	Filenames.Save(conf);
+	Templates.Save(conf);
+	Framerate.Save(conf);
+	BaseFilenames.Save(conf);
+
     conf->Write("MainGuiPositionX", MainGuiPosition.x);
     conf->Write("MainGuiPositionY", MainGuiPosition.y);
     conf->Write("SysSettingsTabName", SysSettingsTabName);
