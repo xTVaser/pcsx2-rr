@@ -14,22 +14,19 @@ YamlFile::YamlFile(std::string data)
 
 bool YamlFile::loadFromFile(fs::path path)
 {
-	YAML::Node node;
-	std::string toPrint = path;
 	try
 	{
-		node = YAML::Load(data);
+		YAML::Node node = YAML::LoadFile(path);
+		std::ostringstream os;
+		os << node;
+		data = os.str();
+		return true;
 	}
 	catch (const std::exception& e)
 	{
 		std::cerr << "ERROR: " << e.what() << std::endl;
+		return false;
 	}
-
-	std::ostringstream os;
-	os << node;
-	data = os.str();
-
-	return false;
 }
 
 bool YamlFile::saveToFile(fs::path path)
