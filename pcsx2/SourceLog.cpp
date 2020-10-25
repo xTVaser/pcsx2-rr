@@ -70,14 +70,29 @@ void SysTraceLog::DoWrite( const char *msg ) const
 	fflush( emuLog );
 }
 
+bool SysTraceLog::IsActive() const
+{
+	return g_Conf->emulator->Trace.EnableTraceLogFilters && Enabled;
+}
+
 void SysTraceLog_EE::ApplyPrefix( FastFormatAscii& ascii ) const
 {
 	ascii.Write( "%-4s(%8.8lx %8.8lx): ", ((SysTraceLogDescriptor*)m_Descriptor)->Prefix, cpuRegs.pc, cpuRegs.cycle );
 }
 
+bool SysTraceLog_EE::IsActive() const
+{
+	return SysTraceLog::IsActive() && g_Conf->emulator->Trace.EE.m_EnableAll;
+}
+
 void SysTraceLog_IOP::ApplyPrefix( FastFormatAscii& ascii ) const
 {
 	ascii.Write( "%-4s(%8.8lx %8.8lx): ", ((SysTraceLogDescriptor*)m_Descriptor)->Prefix, psxRegs.pc, psxRegs.cycle );
+}
+
+bool SysTraceLog_IOP::IsActive() const
+{
+	return SysTraceLog::IsActive() && g_Conf->emulator->Trace.IOP.m_EnableAll;
 }
 
 void SysTraceLog_VIFcode::ApplyPrefix( FastFormatAscii& ascii ) const

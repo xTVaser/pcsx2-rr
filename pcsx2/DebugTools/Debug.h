@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "config/GlobalConfig.h"
+#include "../config/GlobalConfig.h"
 #include "Utilities/TraceLog.h"
 #include "../Memory.h"
 
@@ -73,10 +73,7 @@ public:
 		: TextFileTraceLog( &desc->base ) {}
 
 	void DoWrite( const char *fmt ) const override;
-	bool IsActive() const override
-	{
-		return g_Conf->emulator->Trace.EnableTraceLogFilters && Enabled;
-	}
+	bool IsActive() const override;
 };
 
 class SysTraceLog_EE : public SysTraceLog
@@ -87,10 +84,7 @@ public:
 	SysTraceLog_EE( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
 
 	void ApplyPrefix( FastFormatAscii& ascii ) const override;
-	bool IsActive() const override
-	{
-		return SysTraceLog::IsActive() && g_Conf->emulator->Trace.EE.m_EnableAll;
-	}
+	bool IsActive() const override;
 	
 	wxString GetCategory() const override { return L"EE"; }
 };
@@ -112,10 +106,7 @@ class SysTraceLog_EE_Disasm : public SysTraceLog_EE
 public:
 	SysTraceLog_EE_Disasm( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
 
-	bool IsActive() const override
-	{
-		return _parent::IsActive() && g_Conf->emulator->Trace.EE.m_EnableDisasm;
-	}
+	bool IsActive() const override;
 
 	wxString GetCategory() const override { return _parent::GetCategory() + L".Disasm"; }
 };
@@ -127,10 +118,7 @@ class SysTraceLog_EE_Registers : public SysTraceLog_EE
 public:
 	SysTraceLog_EE_Registers( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
 
-	bool IsActive() const override
-	{
-		return _parent::IsActive() && g_Conf->emulator->Trace.EE.m_EnableRegisters;
-	}
+	bool IsActive() const override;
 
 	wxString GetCategory() const override { return _parent::GetCategory() + L".Registers"; }
 };
@@ -142,10 +130,7 @@ class SysTraceLog_EE_Events : public SysTraceLog_EE
 public:
 	SysTraceLog_EE_Events( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
 
-	bool IsActive() const override
-	{
-		return _parent::IsActive() && g_Conf->emulator->Trace.EE.m_EnableEvents;
-	}
+	bool IsActive() const override;
 
 	wxString GetCategory() const override { return _parent::GetCategory() + L".Events"; }
 };
@@ -159,10 +144,7 @@ public:
 	SysTraceLog_IOP( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
 
 	void ApplyPrefix( FastFormatAscii& ascii ) const override;
-	bool IsActive() const override
-	{
-		return SysTraceLog::IsActive() && g_Conf->emulator->Trace.IOP.m_EnableAll;
-	}
+	bool IsActive() const override;
 
 	wxString GetCategory() const override { return L"IOP"; }
 };
@@ -173,10 +155,7 @@ class SysTraceLog_IOP_Disasm : public SysTraceLog_IOP
 
 public:
 	SysTraceLog_IOP_Disasm( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
-	bool IsActive() const override
-	{
-		return _parent::IsActive() && g_Conf->emulator->Trace.IOP.m_EnableDisasm;
-	}
+	bool IsActive() const override;
 
 	wxString GetCategory() const override { return _parent::GetCategory() + L".Disasm"; }
 };
@@ -187,10 +166,7 @@ class SysTraceLog_IOP_Registers : public SysTraceLog_IOP
 
 public:
 	SysTraceLog_IOP_Registers( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
-	bool IsActive() const override
-	{
-		return _parent::IsActive() && g_Conf->emulator->Trace.IOP.m_EnableRegisters;
-	}
+	bool IsActive() const override;
 
 	wxString GetCategory() const override { return _parent::GetCategory() + L".Registers"; }
 };
@@ -201,10 +177,7 @@ class SysTraceLog_IOP_Events : public SysTraceLog_IOP
 
 public:
 	SysTraceLog_IOP_Events( const SysTraceLogDescriptor* desc ) : _parent( desc ) {}
-	bool IsActive() const override
-	{
-		return _parent::IsActive() && g_Conf->emulator->Trace.IOP.m_EnableEvents;
-	}
+	bool IsActive() const override;
 
 	wxString GetCategory() const override { return _parent::GetCategory() + L".Events"; }
 };

@@ -1010,6 +1010,9 @@
     <ClCompile Include="..\..\config\GlobalConfig.cpp">
       <Filter>Configuration</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\DebugTools\Debug.cpp">
+      <Filter>System\Ps2\Debug</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Patch.h">
