@@ -26,7 +26,17 @@ bool YamlFile::loadFromFile(fs::path path)
 
 bool YamlFile::saveToFile(fs::path path)
 {
-	YAML::Node node = YAML::Load(data);
+	YAML::Node node;
+	try
+	{
+	    node = YAML::Load(data);
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "ERROR: " << e.what() << std::endl;
+		return false;
+	}
+
 	std::ofstream fout(path);
 	fout << node;
 	return true;

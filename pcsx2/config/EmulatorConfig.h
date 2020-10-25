@@ -353,7 +353,7 @@ public:
 
 	bool EnableIPC;
 
-	void load();
+	bool load();
 	void save();
 
 	bool MultitapEnabled(uint port) const;

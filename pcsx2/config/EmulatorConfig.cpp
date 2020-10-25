@@ -734,37 +734,44 @@ bool Pcsx2Config::MultitapEnabled(uint port) const
 }
 
 // TODO - config - bool for success?
-void Pcsx2Config::load()
+bool Pcsx2Config::load()
 {
 	// TODO - construct the right path
-	config->loadFromFile(fmt::format("%s.%s", GetVmSettingsFilename().string(), config->fileExtension()));
-
-	std::shared_ptr<YamlFile> coreCfg = config->getSection("Core");
-	CdvdVerboseReads = coreCfg->getBool("CdvdVerboseReads");
-	CdvdDumpBlocks = coreCfg->getBool("CdvdDumpBlocks");
-	CdvdShareWrite = coreCfg->getBool("CdvdShareWrite");
-	EnablePatches = coreCfg->getBool("EnablePatches", true);
-	EnableCheats = coreCfg->getBool("EnableCheats");
-	EnableWideScreenPatches = coreCfg->getBool("EnableWideScreenPatches");
+	if (config->loadFromFile(fmt::format("%s.%s", GetVmSettingsFilename().string(), config->fileExtension())))
+	{
+		std::shared_ptr<YamlFile> coreCfg = config->getSection("Core");
+		CdvdVerboseReads = coreCfg->getBool("CdvdVerboseReads");
+		CdvdDumpBlocks = coreCfg->getBool("CdvdDumpBlocks");
+		CdvdShareWrite = coreCfg->getBool("CdvdShareWrite");
+		EnablePatches = coreCfg->getBool("EnablePatches", true);
+		EnableCheats = coreCfg->getBool("EnableCheats");
+		EnableWideScreenPatches = coreCfg->getBool("EnableWideScreenPatches");
 #ifndef DISABLE_RECORDING
-	EnableRecordingTools = coreCfg->getBool("EnableRecordingTools");
+		EnableRecordingTools = coreCfg->getBool("EnableRecordingTools");
 #endif
-	ConsoleToStdio = coreCfg->getBool("ConsoleToStdio");
-	HostFs = coreCfg->getBool("HostFs");
-	BackupSavestate = coreCfg->getBool("BackupSavestate", true);
-	McdEnableEjection = coreCfg->getBool("McdEnableEjection", true);
-	McdFolderAutoManage = coreCfg->getBool("McdFolderAutoManage", true);
-	MultitapPort0_Enabled = coreCfg->getBool("MultitapPort0_Enabled");
-	MultitapPort1_Enabled = coreCfg->getBool("MultitapPort1_Enabled");
+		ConsoleToStdio = coreCfg->getBool("ConsoleToStdio");
+		HostFs = coreCfg->getBool("HostFs");
+		BackupSavestate = coreCfg->getBool("BackupSavestate", true);
+		McdEnableEjection = coreCfg->getBool("McdEnableEjection", true);
+		McdFolderAutoManage = coreCfg->getBool("McdFolderAutoManage", true);
+		MultitapPort0_Enabled = coreCfg->getBool("MultitapPort0_Enabled");
+		MultitapPort1_Enabled = coreCfg->getBool("MultitapPort1_Enabled");
 
-	Recompiler.load(config->getSection("Recompiler"));
-	Speedhacks.load(config->getSection("SpeedHacks"));
-	Gamefixes.load(config->getSection("GameFixes"));
-	Profiler.load(config->getSection("Profiler"));
-	Debugger.load(config->getSection("Debugger"));
-	Cpu.load(config->getSection("Cpu"));
-	Trace.load(config->getSection("Trace"));
-	GS.load(config->getSection("GS"));
+		Recompiler.load(config->getSection("Recompiler"));
+		Speedhacks.load(config->getSection("SpeedHacks"));
+		Gamefixes.load(config->getSection("GameFixes"));
+		Profiler.load(config->getSection("Profiler"));
+		Debugger.load(config->getSection("Debugger"));
+		Cpu.load(config->getSection("Cpu"));
+		Trace.load(config->getSection("Trace"));
+		GS.load(config->getSection("GS"));
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+
 }
 
 // TODO - config - this isn't called anywhere! where did it used to get callled!
