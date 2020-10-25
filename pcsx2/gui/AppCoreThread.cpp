@@ -368,7 +368,7 @@ static void _ApplySettings(const Pcsx2Config& src, Pcsx2Config& fixup)
 	// Note: It's important that we apply the commandline overrides *before* database fixes.
 	// The database takes precedence (if enabled).
 
-	// TODO - ugh wtf is going on here lol, why is the entire config reference being assigned?
+	// TODO - config - what's going on here lol, why is the entire config reference being assigned?
 
 	//fixup = src;
 

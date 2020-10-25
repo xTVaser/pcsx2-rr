@@ -88,8 +88,8 @@ void Dialogs::SysConfigDialog::UpdateGuiForPreset(int presetIndex, bool presetsE
 		//		BaseApplicableConfigPanel or derived, and not of the parent class wxNotebookPage.
 		if (((BaseApplicableConfigPanel*)(m_listbook->GetPage(i)))->IsSpecificConfig())
 		{
-			/*((BaseApplicableConfigPanel_SpecificConfig*)(m_listbook->GetPage(i)))
-				->ApplyConfigToGui( preset, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );*/
+			((BaseApplicableConfigPanel_SpecificConfig*)(m_listbook->GetPage(i)))
+				->ApplyConfigToGui( GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );
 		}
 	}
 
@@ -110,8 +110,8 @@ void Dialogs::SysConfigDialog::UpdateGuiForPreset(int presetIndex, bool presetsE
 
 	bool origEnable = g_Conf->gui->EnablePresets;
 	g_Conf->gui->EnablePresets = true; // will cause preset-related items to be grayed out at the menus regardless of their value.
-	/*if ( GetMainFramePtr() )
-		GetMainFramePtr()->ApplyConfigToGui( preset, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );*/
+	if ( GetMainFramePtr() )
+		GetMainFramePtr()->ApplyConfigToGui( GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE );
 
 	// Not really needed as 'preset' is local and dumped anyway. For the sake of future modifications of more GUI elements.
 	g_Conf->gui->EnablePresets = origEnable;

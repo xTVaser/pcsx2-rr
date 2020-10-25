@@ -68,7 +68,7 @@ struct AppEventInfo
 
 struct AppSettingsEventInfo : AppEventInfo
 {
-	// TODO - found a remaining json usage!
+	// TODO - config - found a remaining json usage!
 
 	/*nlohmann::json&	json;
 

@@ -506,7 +506,7 @@ public:
 	void DispatchEvent(AppEventType evt);
 	void DispatchEvent(CoreThreadStatus evt);
 
-	// TODO - json!
+	// TODO - config - json!
 
 	/*void DispatchUiSettingsEvent( nlohmann::json& json );
 	void DispatchVmSettingsEvent( nlohmann::json& json );*/

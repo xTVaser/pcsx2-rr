@@ -215,7 +215,7 @@ void RecentIsoManager::EnableItems(bool display)
 	}
 }
 
-// TODO - we need this eventually
+// TODO - config
 //void RecentIsoManager::LoadListFrom( nlohmann::json& json )
 //{
 //	/*if (!ini.IsOk()) return;
@@ -244,6 +244,8 @@ void RecentIsoManager::AppStatusEvent_OnSettingsApplied()
 
 void RecentIsoManager::AppStatusEvent_OnUiSettingsLoadSave(const AppSettingsEventInfo& evt)
 {
+	// TODO - config
+
 	//if( ini.IsSaving() )
 	//{
 	// Wipe existing recent iso list if we're saving, because our size might have changed

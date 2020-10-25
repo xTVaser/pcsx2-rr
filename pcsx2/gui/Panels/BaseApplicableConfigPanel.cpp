@@ -90,7 +90,6 @@ bool ApplyStateStruct::ApplyPage(int pageid)
 				//PathDefs::GetBios().Mkdir();//create the bios folder such that it can be opened at the first time wizard without an error message.
 
 		AppApplySettings();
-		printf("wtf lol");
 	}
 	catch (Exception::CannotApplySettings& ex)
 	{
