@@ -20,6 +20,7 @@
 
 #include "PS2Edefs.h"
 #include "PluginCallbacks.h"
+#include "config/GlobalConfig.h"
 
 #include "Utilities/Threading.h"
 
