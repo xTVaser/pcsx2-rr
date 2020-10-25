@@ -252,7 +252,7 @@
     <ClCompile Include="..\..\config\GlobalConfig.cpp" />
     <ClCompile Include="..\..\config\PortableConfig.cpp" />
     <ClCompile Include="..\..\DebugTools\Breakpoints.cpp" />
-    <ClCompile Include="..\..\DebugTools\Debug.cpp" />
+    <ClCompile Include="..\..\DebugTools\DebugImpl.cpp" />
     <ClCompile Include="..\..\DebugTools\DebugInterface.cpp" />
     <ClCompile Include="..\..\DebugTools\DisassemblyManager.cpp" />
     <ClCompile Include="..\..\DebugTools\BiosDebugData.cpp" />
