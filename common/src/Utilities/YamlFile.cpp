@@ -14,8 +14,16 @@ YamlFile::YamlFile(std::string data)
 
 bool YamlFile::loadFromFile(fs::path path)
 {
-	// TODO - handle if the file can't be loaded
-	YAML::Node node = YAML::LoadFile(path);
+	YAML::Node node;
+	std::string toPrint = path;
+	try
+	{
+		node = YAML::Load(data);
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "ERROR: " << e.what() << std::endl;
+	}
 
 	std::ostringstream os;
 	os << node;
@@ -34,7 +42,6 @@ bool YamlFile::saveToFile(fs::path path)
 	catch (const std::exception& e)
 	{
 		std::cerr << "ERROR: " << e.what() << std::endl;
-		return false;
 	}
 
 	std::ofstream fout(path);
