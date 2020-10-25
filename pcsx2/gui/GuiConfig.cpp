@@ -445,17 +445,17 @@ bool GuiConfig::SaveMemcards(wxConfigBase* conf)
 
 	for (uint slot = 0; slot < 2; ++slot)
 	{
-		//conf->Write(wxString(fmt::format("Slot{}u_Enable", slot)), Mcd[slot].Enabled);
-		//conf->Write(wxString(fmt::format("Slot{}u_Filename", slot)), Mcd[slot].Filename.GetFullName());
+		conf->Write(wxString(fmt::format("Slot{}u_Enable", slot)), Mcd[slot].Enabled);
+		conf->Write(wxString(fmt::format("Slot{}u_Filename", slot)), Mcd[slot].Filename.GetFullName());
 	}
 
 	for (uint slot = 2; slot < 8; ++slot)
 	{
-		//int mtport = FileMcd_GetMtapPort(slot)+1;
-		//int mtslot = FileMcd_GetMtapSlot(slot)+1;
+		int mtport = FileMcd_GetMtapPort(slot)+1;
+		int mtslot = FileMcd_GetMtapSlot(slot)+1;
 
-		//memcards[fmt::format("Multitap%u_Slot%u_Enable", mtport, mtslot)] = Mcd[slot].Enabled;
-		//memcards[fmt::format("Multitap%u_Slot%u_Filename", mtport, mtslot)] = Mcd[slot].Filename.GetFullName().ToStdString();
+		conf->Write(wxString(fmt::format("Multitap%u_Slot%u_Enable", mtport, mtslot)), Mcd[slot].Enabled);
+		conf->Write(wxString(fmt::format("Multitap%u_Slot%u_Filename", mtport, mtslot)), Mcd[slot].Filename.GetFullName().ToStdString());
 	}
 
 

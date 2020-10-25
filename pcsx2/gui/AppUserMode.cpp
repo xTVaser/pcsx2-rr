@@ -16,16 +16,17 @@
 
 #include "PrecompiledHeader.h"
 #include "MainFrame.h"
+#include "GuiConfig.h"
+#include "YamlFile.h"
 #include "Utilities/PathUtils.h"
 #include "Dialogs/ModalPopups.h"
-#include "GuiConfig.h"
+#include "config/PortableConfig.h"
 #include <wx/stdpaths.h>
 
 
 #ifdef __WXMSW__
 #include "wx/msw/regconf.h"
 #endif
-#include <config\PortableConfig.h>
 
 wxIMPLEMENT_APP(Pcsx2App);
 
@@ -41,6 +42,8 @@ std::string SettingsFolder;
 
 std::string InstallFolder;
 std::string PluginsFolder;
+
+YamlFile yamlUtils;
 
 // TODO - CONFIG - global config
 std::unique_ptr<PortableConfig> portableConfig;
@@ -179,7 +182,7 @@ bool Pcsx2App::TestForPortableInstall()
 	}
 	else
 	{
-		wxString temp = conf->getPortableFilePath().parent_path();
+		wxString temp = conf->getPortableFilePath().parent_path().wstring();
 		Console.WriteLn(L"(UserMode) Found portable install @ %s", WX_STR(temp));
 	}
 
@@ -271,7 +274,7 @@ bool Pcsx2App::OpenInstallSettingsFile()
 
 	std::cout << "USERMODE: " << usermodefile << std::endl;
 
-	if (!yamlUtils.Load(usermodefile))
+	if (!yamlUtils.loadFromFile(usermodefile))
 	{
 		return false;
 	}

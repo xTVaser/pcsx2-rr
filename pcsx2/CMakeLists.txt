@@ -56,7 +56,9 @@ set(pcsx2Sources
 	Cache.cpp
 	COP0.cpp
 	COP2.cpp
-	config/Configuration.cpp
+	config/EmulatorConfig.cpp
+	config/GlobalConfig.cpp
+	config/PortableConfig.cpp
 	Counters.cpp
 	GameDatabase.cpp
 	Dump.cpp
@@ -133,8 +135,9 @@ set(pcsx2Headers
 	Cache.h
 	cheatscpp.h
 	Common.h
-	Config.h
-	config/Configuration.h
+	config/EmulatorConfig.h
+	config/GlobalConfig.h
+	config/PortableConfig.h
 	COP0.h
 	Counters.h
 	Dmac.h

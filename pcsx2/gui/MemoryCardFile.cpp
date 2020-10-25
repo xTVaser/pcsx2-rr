@@ -223,7 +223,7 @@ void FileMemoryCard::Open()
 		NTFS_CompressFile(str, g_Conf->gui->McdCompressNTFS);
 #endif
 
-		if (!m_file[slot].Open(str, L"r+b"))
+		if ( !m_file[slot].Open( str.c_str(), L"r+b" ) )
 		{
 			// Translation note: detailed description should mention that the memory card will be disabled
 			// for the duration of this session.
@@ -471,8 +471,7 @@ uint FileMcd_ConvertToSlot(uint port, uint slot)
 	if (slot == 0)
 		return port;
 	if (port == 0)
-		return slot + 1; // multitap 1
-	return slot + 4;     // multitap 2
+		return slot + 1; // multitap
 }
 
 static void PS2E_CALLBACK FileMcd_EmuOpen(PS2E_THISPTR thisptr, const PS2E_SessionInfo* session)
@@ -485,11 +484,11 @@ static void PS2E_CALLBACK FileMcd_EmuOpen(PS2E_THISPTR thisptr, const PS2E_Sessi
 			MemoryCardType type = MemoryCardType::MemoryCard_File; // default to file if we can't find anything at the path so it gets auto-generated
 
 			const std::string path = g_Conf->gui->FullpathToMcd(slot);
-			if (wxFileExists(path))
+			if (fs::exists(path))
 			{
 				type = MemoryCardType::MemoryCard_File;
 			}
-			else if (wxDirExists(path))
+			else if (fs::exists(path))
 			{
 				type = MemoryCardType::MemoryCard_Folder;
 			}
