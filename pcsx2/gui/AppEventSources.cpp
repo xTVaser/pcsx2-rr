@@ -25,6 +25,7 @@ template class EventSource< IEventListener_Plugins >;
 template class EventSource< IEventListener_AppStatus >;
 
 
+// TODO - config
 /*AppSettingsEventInfo::AppSettingsEventInfo( nlohmann::json& j, AppEventType evt_type )
 {
 	json = j;
@@ -162,7 +163,7 @@ void Pcsx2App::DispatchEvent( CoreThreadStatus evt )
 	CoreThread.RethrowException();
 }
 
-// TODO - ya...
+// TODO - config
 
 //void Pcsx2App::DispatchUiSettingsEvent( nlohmann::json& json )
 //{
