@@ -767,7 +767,7 @@ void MainEmuFrame::ApplyConfigToGui(GuiConfig& configToApply, int flags)
 {
 	wxMenuBar& menubar(*GetMenuBar());
 
-	menubar.Check(MenuId_EnablePatches, configToApply.EmuOptions.EnablePatches);
+	menubar.Check(MenuId_EnablePatches, g_Conf->emulator->EnablePatches);
 	menubar.Enable(MenuId_EnablePatches, !configToApply.EnablePresets);
 
 	if (!(flags & GuiConfig::APPLY_FLAG_FROM_PRESET))

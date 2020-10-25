@@ -78,7 +78,7 @@ namespace Implementations
 		g_Conf->emulator->GS.FrameSkipEnable = !g_Conf->emulator->GS.FrameSkipEnable;
 		SetGSConfig().FrameSkipEnable = g_Conf->emulator->GS.FrameSkipEnable;
 
-		if (EmuConfig.GS.FrameSkipEnable)
+		if (g_Conf->emulator->GS.FrameSkipEnable)
 		{
 			OSDlog(Color_StrongRed, true, "(FrameSkipping) Enabled.");
 			OSDlog(Color_StrongRed, true, "  FrameDraws=%d, FrameSkips=%d", g_Conf->emulator->GS.FramesToDraw, g_Conf->emulator->GS.FramesToSkip);
@@ -131,7 +131,7 @@ namespace Implementations
 			}
 		}
 
-		gsUpdateFrequency(g_Conf->emulator->;
+		gsUpdateFrequency(*g_Conf->emulator);
 
 		pauser.AllowResume();
 	}
@@ -157,7 +157,7 @@ namespace Implementations
 			g_Conf->emulator->GS.FrameLimitEnable = true;
 		}
 
-		gsUpdateFrequency(g_Conf->emulator->;
+		gsUpdateFrequency(*g_Conf->emulator);
 
 		pauser.AllowResume();
 	}
@@ -406,8 +406,8 @@ namespace Implementations
 
 		// FIXME: Some of the trace logs will require recompiler resets to be activated properly.
 #ifdef PCSX2_DEVBUILD
-		SetTraceConfig().Enabled = !EmuConfig.Trace.Enabled;
-		Console.WriteLn(EmuConfig.Trace.Enabled ? "Logging Enabled." : "Logging Disabled.");
+		SetTraceConfig().EnableTraceLogFilters = !g_Conf->emulator->Trace.EnableTraceLogFilters;
+		Console.WriteLn(g_Conf->emulator->Trace.EnableTraceLogFilters ? "Logging Enabled." : "Logging Disabled.");
 #endif
 	}
 

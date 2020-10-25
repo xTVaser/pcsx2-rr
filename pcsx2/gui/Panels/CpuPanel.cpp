@@ -228,12 +228,12 @@ void Panels::CpuPanelEE::Apply()
 
 void Panels::CpuPanelEE::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui(*g_Conf);
+	ApplyConfigToGui(*g_Conf->gui);
 }
 
 void Panels::CpuPanelEE::ApplyConfigToGui(GuiConfig& configToApply, int flags)
 {
-	const Pcsx2Config::RecompilerOptions& recOps(configToApply.EmuOptions.Cpu.Recompiler);
+	const Pcsx2Config::RecompilerOptions& recOps(g_Conf->emulator->Cpu.Recompiler);
 	m_panel_RecEE->SetSelection((int)recOps.EnableEE);
 	m_panel_RecIOP->SetSelection((int)recOps.EnableIOP);
 
@@ -273,12 +273,12 @@ void Panels::CpuPanelVU::Apply()
 
 void Panels::CpuPanelVU::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui(*g_Conf);
+	ApplyConfigToGui(*g_Conf->gui);
 }
 
 void Panels::CpuPanelVU::ApplyConfigToGui(GuiConfig& configToApply, int flags)
 {
-	Pcsx2Config::RecompilerOptions& recOps(configToApply.EmuOptions.Cpu.Recompiler);
+	Pcsx2Config::RecompilerOptions& recOps(g_Conf->emulator->Cpu.Recompiler);
 	m_panel_VU0->SetSelection(recOps.EnableVU0 ? 1 : 0);
 	m_panel_VU1->SetSelection(recOps.EnableVU1 ? 1 : 0);
 	m_panel_VU0->Enable(!configToApply.EnablePresets);
@@ -330,12 +330,12 @@ void Panels::AdvancedOptionsFPU::Apply()
 
 void Panels::AdvancedOptionsFPU::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui(*g_Conf);
+	ApplyConfigToGui(*g_Conf->gui);
 }
 
 void Panels::AdvancedOptionsFPU::ApplyConfigToGui(GuiConfig& configToApply, int flags)
 {
-	const Pcsx2Config::CpuOptions& cpuOps(configToApply.EmuOptions.Cpu);
+	const Pcsx2Config::CpuOptions& cpuOps(g_Conf->emulator->Cpu);
 	const Pcsx2Config::RecompilerOptions& recOps(cpuOps.Recompiler);
 
 	m_RoundModePanel->SetSelection(cpuOps.sseMXCSR.RoundingControl);
@@ -371,12 +371,12 @@ void Panels::AdvancedOptionsVU::Apply()
 
 void Panels::AdvancedOptionsVU::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui(*g_Conf);
+	ApplyConfigToGui(*g_Conf->gui);
 }
 
 void Panels::AdvancedOptionsVU::ApplyConfigToGui(GuiConfig& configToApply, int flags)
 {
-	const Pcsx2Config::CpuOptions& cpuOps(configToApply.EmuOptions.Cpu);
+	const Pcsx2Config::CpuOptions& cpuOps(g_Conf->emulator->Cpu);
 	const Pcsx2Config::RecompilerOptions& recOps(cpuOps.Recompiler);
 
 	m_RoundModePanel->SetSelection(cpuOps.sseVUMXCSR.RoundingControl);

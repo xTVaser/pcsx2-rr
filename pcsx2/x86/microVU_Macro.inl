@@ -284,7 +284,7 @@ static void recCFC2() {
 
 	COP2_Interlock(false);
 	if (!_Rt_) return;
-	if (!(cpuRegs.code & 1) && !EmuConfig.Gamefixes.VU0KickstartHack) {
+	if (!(cpuRegs.code & 1) && !g_Conf->emulator->Gamefixes.VU0KickstartHack) {
 		iFlushCall(FLUSH_EVERYTHING);
 		xMOV(eax, ptr[&cpuRegs.cycle]);
 		xADD(eax, scaleblockcycles_clear());
@@ -355,7 +355,7 @@ static void recCTC2() {
 	printCOP2("CTC2");
 	COP2_Interlock(1);
 	if (!_Rd_) return;
-	if (!(cpuRegs.code & 1) && !EmuConfig.Gamefixes.VU0KickstartHack) {
+	if (!(cpuRegs.code & 1) && !g_Conf->emulator->Gamefixes.VU0KickstartHack) {
 		iFlushCall(FLUSH_EVERYTHING);
 		xMOV(eax, ptr[&cpuRegs.cycle]);
 		xADD(eax, scaleblockcycles_clear());
@@ -428,7 +428,7 @@ static void recQMFC2() {
 	COP2_Interlock(false);
 	if (!_Rt_) return;
 
-	if (!(cpuRegs.code & 1) && !EmuConfig.Gamefixes.VU0KickstartHack) {
+	if (!(cpuRegs.code & 1) && !g_Conf->emulator->Gamefixes.VU0KickstartHack) {
 		iFlushCall(FLUSH_EVERYTHING);
 		xMOV(eax, ptr[&cpuRegs.cycle]);
 		xADD(eax, scaleblockcycles_clear());
@@ -450,7 +450,7 @@ static void recQMTC2() {
 	printCOP2("QMTC2");
 	COP2_Interlock(true);
 	if (!_Rd_) return;
-	if (!(cpuRegs.code & 1) && !EmuConfig.Gamefixes.VU0KickstartHack) {
+	if (!(cpuRegs.code & 1) && !g_Conf->emulator->Gamefixes.VU0KickstartHack) {
 		iFlushCall(FLUSH_EVERYTHING);
 		xMOV(eax, ptr[&cpuRegs.cycle]);
 		xADD(eax, scaleblockcycles_clear());

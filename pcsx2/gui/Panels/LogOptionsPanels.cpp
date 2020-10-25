@@ -105,7 +105,7 @@ CheckedStaticBox* Panels::iopLogOptionsPanel::GetStaticBox(const wxString& subgr
 
 void Panels::eeLogOptionsPanel::OnSettingsChanged()
 {
-	const TraceLogFilters& conf(g_Conf->emulator->Trace);
+	const Pcsx2Config::TraceLogFilters& conf(g_Conf->emulator->Trace);
 
 	SetValue(conf.EE.m_EnableAll);
 
@@ -116,7 +116,7 @@ void Panels::eeLogOptionsPanel::OnSettingsChanged()
 
 void Panels::iopLogOptionsPanel::OnSettingsChanged()
 {
-	const TraceLogFilters& conf(g_Conf->emulator->Trace);
+	const Pcsx2Config::TraceLogFilters& conf(g_Conf->emulator->Trace);
 
 	SetValue(conf.IOP.m_EnableAll);
 

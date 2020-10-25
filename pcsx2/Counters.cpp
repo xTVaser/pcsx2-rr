@@ -305,10 +305,10 @@ Fixed100 GetVerticalFrequency()
 			return 60;
 		case GS_VideoMode::PAL:
 		case GS_VideoMode::DVD_PAL:
-			return EmuConfig.GS.FrameratePAL;
+			return g_Conf->emulator->GS.FrameratePAL;
 		case GS_VideoMode::NTSC:
 		case GS_VideoMode::DVD_NTSC:
-			return EmuConfig.GS.FramerateNTSC;
+			return g_Conf->emulator->GS.FramerateNTSC;
 		case GS_VideoMode::SDTV_480P:
 			return 59.94;
 		case GS_VideoMode::HDTV_1080P:
@@ -344,7 +344,7 @@ u32 UpdateVSyncRate()
 
 		case GS_VideoMode::PAL:
 		case GS_VideoMode::DVD_PAL:
-			isCustom = (EmuConfig.GS.FrameratePAL != 50.0);
+			isCustom = (g_Conf->emulator->GS.FrameratePAL != 50.0);
 			scanlines = SCANLINES_TOTAL_PAL;
 			if (!gsIsInterlaced)
 				scanlines += 3;
@@ -352,7 +352,7 @@ u32 UpdateVSyncRate()
 
 		case GS_VideoMode::NTSC:
 		case GS_VideoMode::DVD_NTSC:
-			isCustom = (EmuConfig.GS.FramerateNTSC != 59.94);
+			isCustom = (g_Conf->emulator->GS.FramerateNTSC != 59.94);
 			scanlines = SCANLINES_TOTAL_NTSC;
 			if (!gsIsInterlaced)
 				scanlines += 1;
@@ -395,7 +395,7 @@ u32 UpdateVSyncRate()
 	}
 
 	Fixed100 fpslimit = framerate *
-						(pxAssert(EmuConfig.GS.LimitScalar > 0) ? EmuConfig.GS.LimitScalar : 1.0);
+						(pxAssert(g_Conf->emulator->GS.LimitScalar > 0) ? g_Conf->emulator->GS.LimitScalar : 1.0);
 
 	//s64 debugme = GetTickFrequency() / 3000;
 	s64 ticks = (GetTickFrequency() * 500) / (fpslimit * 1000).ToIntRounded();
@@ -431,7 +431,7 @@ static __fi void frameLimitUpdateCore()
 static __fi void frameLimit()
 {
 	// Framelimiter off in settings? Framelimiter go brrr.
-	if (!EmuConfig.GS.FrameLimitEnable)
+	if (!g_Conf->emulator->GS.FrameLimitEnable)
 	{
 		frameLimitUpdateCore();
 		return;
@@ -478,7 +478,7 @@ static __fi void VSyncStart(u32 sCycle)
 	frameLimit();       // limit FPS
 	gsPostVsyncStart(); // MUST be after framelimit; doing so before causes funk with frame times!
 
-	if (EmuConfig.Trace.Enabled && EmuConfig.Trace.EE.m_EnableAll)
+	if (g_Conf->emulator->Trace.EnableTraceLogFilters && g_Conf->emulator->Trace.EE.m_EnableAll)
 		SysTrace.EE.Counters.Write("    ================  EE COUNTER VSYNC START (frame: %d)  ================", g_FrameCount);
 
 	// EE Profiling and Debug code.
@@ -530,7 +530,7 @@ static __fi void GSVSync()
 
 static __fi void VSyncEnd(u32 sCycle)
 {
-	if (EmuConfig.Trace.Enabled && EmuConfig.Trace.EE.m_EnableAll)
+	if (g_Conf->emulator->Trace.EnableTraceLogFilters && g_Conf->emulator->Trace.EE.m_EnableAll)
 		SysTrace.EE.Counters.Write("    ================  EE COUNTER VSYNC END (frame: %d)  ================", g_FrameCount);
 
 	g_FrameCount++;

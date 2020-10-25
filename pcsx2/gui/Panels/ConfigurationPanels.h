@@ -154,7 +154,7 @@ namespace Panels
 		virtual ~AdvancedOptionsFPU() = default;
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
-		void ApplyConfigToGui( GuiConfig& configToApply, int flags=0 );
+		void ApplyConfigToGui( int flags=0 );
 	};
 
 	class AdvancedOptionsVU : public BaseAdvancedCpuOptions
@@ -164,7 +164,7 @@ namespace Panels
 		virtual ~AdvancedOptionsVU() = default;
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
-		void ApplyConfigToGui(  GuiConfig& configToApply, int flags=0 );
+		void ApplyConfigToGui( int flags=0 );
 
 	};
 
@@ -186,7 +186,7 @@ namespace Panels
 
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
-		void ApplyConfigToGui( GuiConfig& configToApply, int flags=0);
+		void ApplyConfigToGui( int flags=0);
 
 	protected:
 		void OnRestoreDefaults( wxCommandEvent& evt );
@@ -207,7 +207,7 @@ namespace Panels
 
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
-		void ApplyConfigToGui( GuiConfig& configToApply, int flags=0 );
+		void ApplyConfigToGui( int flags=0 );
 
 	protected:
 		void OnRestoreDefaults( wxCommandEvent& evt );
@@ -230,7 +230,7 @@ namespace Panels
 
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
-		void ApplyConfigToGui( GuiConfig& configToApply, int flags=0 );
+		void ApplyConfigToGui( int flags=0 );
 	};
 
 	// --------------------------------------------------------------------------------------
@@ -257,7 +257,7 @@ namespace Panels
 
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
-		void ApplyConfigToGui( GuiConfig& configToApply, int flags=0 );
+		void ApplyConfigToGui( int flags=0 );
 	};
 
 	// --------------------------------------------------------------------------------------
@@ -296,7 +296,7 @@ namespace Panels
 		virtual ~GSWindowSettingsPanel() = default;
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
-		void ApplyConfigToGui( GuiConfig& configToApply, int flags=0 );
+		void ApplyConfigToGui( int flags=0 );
 	};
 
 	class VideoPanel : public BaseApplicableConfigPanel_SpecificConfig
@@ -313,7 +313,7 @@ namespace Panels
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
 		void Defaults_Click(wxCommandEvent& evt);
-		void ApplyConfigToGui( GuiConfig& configToApply, int flags=0 );
+		void ApplyConfigToGui( int flags=0 );
 
 	protected:
 		void OnOpenWindowSettings( wxCommandEvent& evt );
@@ -347,9 +347,9 @@ namespace Panels
 		virtual ~SpeedHacksPanel() = default;
 		SpeedHacksPanel( wxWindow* parent );
 		void Apply();
-		void EnableStuff( GuiConfig* configToUse=NULL );
+		void EnableStuff();
 		void AppStatusEvent_OnSettingsApplied();
-		void ApplyConfigToGui( GuiConfig& configToApply, int flags=0 );
+		void ApplyConfigToGui( int flags=0 );
 
 	protected:
 		const wxChar* GetEECycleRateSliderMsg( int val );
@@ -376,11 +376,11 @@ namespace Panels
 	public:
 		GameFixesPanel( wxWindow* parent );
 		virtual ~GameFixesPanel() = default;
-		void EnableStuff( GuiConfig* configToUse=NULL );
+		void EnableStuff();
 		void OnEnable_Toggled( wxCommandEvent& evt );
 		void Apply();
 		void AppStatusEvent_OnSettingsApplied();
-		void ApplyConfigToGui( GuiConfig& configToApply, int flags=0 );
+		void ApplyConfigToGui( int flags=0 );
 	};
 
 	class SettingsDirPickerPanel : public DirPickerPanel

@@ -378,7 +378,7 @@ bool DoCDVDopen()
 
 	int cdtype = DoCDVDdetectDiskType();
 
-	if (!EmuConfig.CdvdDumpBlocks || (cdtype == CDVD_TYPE_NODISC))
+	if (!g_Conf->emulator->CdvdDumpBlocks || (cdtype == CDVD_TYPE_NODISC))
 	{
 		blockDumpFile.Close();
 		return true;

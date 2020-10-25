@@ -353,7 +353,7 @@ static const bool doDBitHandling = false;
 //------------------------------------------------------------------
 
 // Status Flag Speed Hack
-#define CHECK_VU_FLAGHACK  (EmuConfig.Speedhacks.vuFlagHack)
+#define CHECK_VU_FLAGHACK  (g_Conf->emulator->Speedhacks.vuFlagHack)
 // This hack only updates the Status Flag on blocks that will read it.
 // Most blocks do not read status flags, so this is a big speedup.
 

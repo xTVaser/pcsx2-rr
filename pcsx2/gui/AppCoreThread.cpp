@@ -199,7 +199,7 @@ void Pcsx2App::SysApplySettings()
 {
 	if (AppRpc_TryInvoke(&Pcsx2App::SysApplySettings))
 		return;
-	CoreThread.ApplySettings(g_Conf->emulator->;
+	CoreThread.ApplySettings(*g_Conf->emulator);
 
 	CDVD_SourceType cdvdsrc(g_Conf->gui->CdvdSource);
 	if (cdvdsrc != CDVDsys_GetSourceType() || (cdvdsrc == CDVD_SourceType::Iso && (CDVDsys_GetFile(cdvdsrc) != g_Conf->gui->CurrentIso)))
@@ -535,7 +535,7 @@ void AppCoreThread::ApplySettings(const Pcsx2Config& src)
 	RecursionGuard guard(localc);
 	if (guard.IsReentrant())
 		return;
-	if (fixup == EmuConfig)
+	if (fixup == *g_Conf->emulator)
 		return;
 
 	if (m_ExecMode >= ExecMode_Opened)
@@ -550,7 +550,7 @@ void AppCoreThread::ApplySettings(const Pcsx2Config& src)
 	}
 
 	if (m_ExecMode >= ExecMode_Paused)
-		GSsetVsync(EmuConfig.GS.GetVsync());
+		GSsetVsync(g_Conf->emulator->GS.GetVsync());
 }
 
 // --------------------------------------------------------------------------------------

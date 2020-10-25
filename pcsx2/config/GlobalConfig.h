@@ -1,7 +1,7 @@
 #pragma once
 
 #include "EmulatorConfig.h"
-#include <GuiConfig.h>
+#include "GuiConfig.h"
 
 class GlobalConfig
 {

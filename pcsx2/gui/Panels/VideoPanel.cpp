@@ -95,13 +95,13 @@ Panels::FramelimiterPanel::FramelimiterPanel(wxWindow* parent)
 
 void Panels::FramelimiterPanel::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui(*g_Conf);
+	ApplyConfigToGui();
 }
 
-void Panels::FramelimiterPanel::ApplyConfigToGui(GuiConfig& configToApply, int flags)
+void Panels::FramelimiterPanel::ApplyConfigToGui(int flags)
 {
-	const FramerateOptions& appfps(configToApply.Framerate);
-	const Pcsx2Config::GSOptions& gsconf(configToApply.EmuOptions.GS);
+	const FramerateOptions& appfps(g_Conf->gui->Framerate);
+	const Pcsx2Config::GSOptions& gsconf(g_Conf->emulator->GS);
 
 	if (!(flags & GuiConfig::APPLY_FLAG_FROM_PRESET))
 	{ //Presets don't control these: only change if config doesn't come from preset.
@@ -119,12 +119,12 @@ void Panels::FramelimiterPanel::ApplyConfigToGui(GuiConfig& configToApply, int f
 	m_text_BasePal->ChangeValue(std::to_string(gsconf.FrameratePAL));
 
 	m_spin_NominalPct->SetValue(appfps.NominalScalar);
-	m_spin_NominalPct->Enable(!configToApply.EnablePresets);
+	m_spin_NominalPct->Enable(!g_Conf->gui->EnablePresets);
 
 	// Vsync timing controls only on devel builds / via manual ini editing
 #ifdef PCSX2_DEVBUILD
-	m_text_BaseNtsc->Enable(!configToApply.EnablePresets);
-	m_text_BasePal->Enable(!configToApply.EnablePresets);
+	m_text_BaseNtsc->Enable(!g_Conf->gui->EnablePresets);
+	m_text_BasePal->Enable(!g_Conf->gui->EnablePresets);
 #else
 	m_text_BaseNtsc->Enable(0);
 	m_text_BasePal->Enable(0);
@@ -222,22 +222,22 @@ Panels::FrameSkipPanel::FrameSkipPanel(wxWindow* parent)
 
 void Panels::FrameSkipPanel::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui(*g_Conf);
+	ApplyConfigToGui();
 }
 
-void Panels::FrameSkipPanel::ApplyConfigToGui(GuiConfig& configToApply, int flags)
+void Panels::FrameSkipPanel::ApplyConfigToGui(int flags)
 {
-	const FramerateOptions& appfps(configToApply.Framerate);
-	const Pcsx2Config::GSOptions& gsconf(configToApply.EmuOptions.GS);
+	const FramerateOptions& appfps(g_Conf->gui->Framerate);
+	const Pcsx2Config::GSOptions& gsconf(g_Conf->emulator->GS);
 
 	m_radio_SkipMode->SetSelection(appfps.SkipOnLimit ? 2 : (appfps.SkipOnTurbo ? 1 : 0));
 
 	m_spin_FramesToDraw->SetValue(gsconf.FramesToDraw);
-	m_spin_FramesToDraw->Enable(!configToApply.EnablePresets);
+	m_spin_FramesToDraw->Enable(!g_Conf->gui->EnablePresets);
 	m_spin_FramesToSkip->SetValue(gsconf.FramesToSkip);
-	m_spin_FramesToSkip->Enable(!configToApply.EnablePresets);
+	m_spin_FramesToSkip->Enable(!g_Conf->gui->EnablePresets);
 
-	this->Enable(!configToApply.EnablePresets);
+	this->Enable(!g_Conf->gui->EnablePresets);
 }
 
 

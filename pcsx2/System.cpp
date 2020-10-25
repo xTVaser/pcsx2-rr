@@ -148,6 +148,7 @@ void SysOutOfMemory_EmergencyResponse(uptr blocksize)
 
 #include "svnrev.h"
 
+// TODO - config - why is the emu config defined a second time?
 const Pcsx2Config EmuConfig;
 
 // Provides an accessor for quick modification of GS options.  All GS options are allowed to be
@@ -177,11 +178,11 @@ Pcsx2Config::GamefixOptions& SetGameFixConfig()
 	return const_cast<Pcsx2Config::GamefixOptions&>(EmuConfig.Gamefixes);
 }
 
-TraceLogFilters& SetTraceConfig()
+Pcsx2Config::TraceLogFilters& SetTraceConfig()
 {
 	//DbgCon.WriteLn( "Direct modification of EmuConfig.TraceLog detected" );
 	AffinityAssert_AllowFrom_MainUI();
-	return const_cast<TraceLogFilters&>(EmuConfig.Trace);
+	return const_cast<Pcsx2Config::TraceLogFilters&>(EmuConfig.Trace);
 }
 
 

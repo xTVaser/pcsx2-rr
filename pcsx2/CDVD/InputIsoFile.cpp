@@ -221,7 +221,7 @@ bool InputIsoFile::Open(const wxString& srcfile, bool testOnly)
 		// Allow write sharing of the iso based on the ini settings.
 		// Mostly useful for romhacking, where the disc is frequently
 		// changed and the emulator would block modifications
-		m_reader = new FlatFileReader(EmuConfig.CdvdShareWrite);
+		m_reader = new FlatFileReader(g_Conf->emulator->CdvdShareWrite);
 	}
 
 	m_reader->Open(m_filename);

@@ -109,7 +109,7 @@ void doIbit(mV) {
 	if (mVUup.iBit) { 
 		incPC(-1);
 		mVU.regAlloc->clearRegVF(33);
-		if (EmuConfig.Gamefixes.ScarfaceIbit || EmuConfig.Gamefixes.CrashTagTeamRacingIbit) {
+		if (g_Conf->emulator->Gamefixes.ScarfaceIbit || g_Conf->emulator->Gamefixes.CrashTagTeamRacingIbit) {
 			xMOV(gprT1, ptr32[&curI]);
 			xMOV(ptr32[&mVU.getVI(REG_I)], gprT1);
 		}
@@ -373,7 +373,7 @@ void mVUtestCycles(microVU& mVU, microFlagCycles& mFC) {
 	iPC = mVUstartPC;
 	if (doEarlyExit(mVU)) {
 		xMOV(eax, ptr32[&mVU.cycles]);
-		if (!EmuConfig.Gamefixes.VU0KickstartHack)
+		if (!g_Conf->emulator->Gamefixes.VU0KickstartHack)
 			xSUB(eax, mVUcycles); // Running behind, make sure we have time to run the block
 		else
 			xSUB(eax, 1); // Running ahead, make sure cycles left are above 0

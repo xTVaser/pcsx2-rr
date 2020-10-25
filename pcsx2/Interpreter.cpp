@@ -255,7 +255,7 @@ void J()
 void JAL()
 {
 	// 0x3563b8 is the start address of the function that invalidate entry in TLB cache
-	if (EmuConfig.Gamefixes.GoemonTlbHack) {
+	if (g_Conf->emulator->Gamefixes.GoemonTlbHack) {
 		if (_JumpTarget_ == 0x3563b8)
 			GoemonUnloadTlb(cpuRegs.GPR.n.a0.UL[0]);
 	}
@@ -458,7 +458,7 @@ void BGEZALL()   // Branch if Rs >= 0 and link
 void JR()
 {
 	// 0x33ad48 and 0x35060c are the return address of the function (0x356250) that populate the TLB cache
-	if (EmuConfig.Gamefixes.GoemonTlbHack) {
+	if (g_Conf->emulator->Gamefixes.GoemonTlbHack) {
 		u32 add = cpuRegs.GPR.r[_Rs_].UL[0];
 		if (add == 0x33ad48 || add == 0x35060c)
 			GoemonPreloadTlb();

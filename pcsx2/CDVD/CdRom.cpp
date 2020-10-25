@@ -171,7 +171,7 @@ static void ReadTrack()
 	cdr.Prev[2] = itob(cdr.SetSector[2]);
 
 	CDVD_LOG("KEY *** %x:%x:%x", cdr.Prev[0], cdr.Prev[1], cdr.Prev[2]);
-	if (EmuConfig.CdvdVerboseReads)
+	if (g_Conf->emulator->CdvdVerboseReads)
 		DevCon.WriteLn("CD Read Sector %x", msf_to_lsn(cdr.SetSector));
 	cdr.RErr = DoCDVDreadTrack(msf_to_lsn(cdr.SetSector), CDVD_MODE_2340);
 }

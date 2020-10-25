@@ -64,9 +64,6 @@
 #endif
 
 
-std::unique_ptr<GlobalConfig> g_Conf;
-
-
 AspectRatioType iniAR;
 bool switchAR;
 

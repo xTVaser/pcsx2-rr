@@ -53,7 +53,7 @@ static void CDVDREAD_INT(u32 eCycle)
 {
 	// Give it an arbitary FAST value. Good for ~5000kb/s in ULE when copying a file from CDVD to HDD
 	// Keep long seeks out though, as games may try to push dmas while seeking. (Tales of the Abyss)
-	if (EmuConfig.Speedhacks.fastCDVD)
+	if (g_Conf->emulator->Speedhacks.fastCDVD)
 	{
 		if (eCycle < Cdvd_FullSeek_Cycles)
 			eCycle = 3000;
@@ -554,7 +554,7 @@ s32 cdvdCtrlTrayClose()
 	cdvd.TrayTimeout = 0; // Reset so it can't get closed twice by cdvdVsync()
 
 	cdvdDetectDisk();
-	GetCoreThread().ApplySettings(g_Conf->emulator->;
+	GetCoreThread().ApplySettings(*g_Conf->emulator);
 
 	return 0; // needs to be 0 for success according to homebrew test "CDVD"
 }
@@ -1261,7 +1261,7 @@ static void cdvdWrite04(u8 rt)
 			CDVD_LOG("CdRead > startSector=%d, seekTo=%d, nSectors=%d, RetryCnt=%x, Speed=%x(%x), ReadMode=%x(%x) (1074=%x)",
 					 cdvd.Sector, cdvd.SeekToSector, cdvd.nSectors, cdvd.RetryCnt, cdvd.Speed, cdvd.Param[9], cdvd.ReadMode, cdvd.Param[10], psxHu32(0x1074));
 
-			if (EmuConfig.CdvdVerboseReads)
+			if (g_Conf->emulator->CdvdVerboseReads)
 				Console.WriteLn(Color_Gray, L"CdRead: Reading Sector %07d (%03d Blocks of Size %d) at Speed=%dx",
 								cdvd.SeekToSector, cdvd.nSectors, cdvd.BlockSize, cdvd.Speed);
 
@@ -1327,7 +1327,7 @@ static void cdvdWrite04(u8 rt)
 			CDVD_LOG("CdReadCDDA > startSector=%d, nSectors=%d, RetryCnt=%x, Speed=%xx(%x), ReadMode=%x(%x) (1074=%x)",
 					 cdvd.Sector, cdvd.nSectors, cdvd.RetryCnt, cdvd.Speed, cdvd.Param[9], cdvd.ReadMode, cdvd.Param[10], psxHu32(0x1074));
 
-			if (EmuConfig.CdvdVerboseReads)
+			if (g_Conf->emulator->CdvdVerboseReads)
 				Console.WriteLn(Color_Gray, L"CdAudioRead: Reading Sector %07d (%03d Blocks of Size %d) at Speed=%dx",
 								cdvd.Sector, cdvd.nSectors, cdvd.BlockSize, cdvd.Speed);
 
@@ -1363,7 +1363,7 @@ static void cdvdWrite04(u8 rt)
 			CDVD_LOG("DvdRead > startSector=%d, seekTo=%d nSectors=%d, RetryCnt=%x, Speed=%x(%x), ReadMode=%x(%x) (1074=%x)",
 					 cdvd.Sector, cdvd.SeekToSector, cdvd.nSectors, cdvd.RetryCnt, cdvd.Speed, cdvd.Param[9], cdvd.ReadMode, cdvd.Param[10], psxHu32(0x1074));
 
-			if (EmuConfig.CdvdVerboseReads)
+			if (g_Conf->emulator->CdvdVerboseReads)
 				Console.WriteLn(Color_Gray, L"DvdRead: Reading Sector %07d (%03d Blocks of Size %d) at Speed=%dx",
 								cdvd.SeekToSector, cdvd.nSectors, cdvd.BlockSize, cdvd.Speed);
 
