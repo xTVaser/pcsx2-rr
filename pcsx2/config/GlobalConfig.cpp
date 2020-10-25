@@ -6,6 +6,14 @@ std::unique_ptr<GlobalConfig> g_Conf;
 
 GlobalConfig::GlobalConfig()
 {
-	gui = std::make_unique<GuiConfig>();
-	emulator = std::make_unique<Pcsx2Config>();
+
+	gui = new GuiConfig();
+
+	emulator = new Pcsx2Config();
+}
+
+GlobalConfig::~GlobalConfig()
+{
+	delete gui;
+	delete emulator;
 }
