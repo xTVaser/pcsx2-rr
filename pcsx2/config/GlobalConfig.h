@@ -13,4 +13,4 @@ public:
 	~GlobalConfig();
 };
 
-extern const std::unique_ptr<GlobalConfig> g_Conf;
+extern std::unique_ptr<GlobalConfig> g_Conf;

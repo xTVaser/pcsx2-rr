@@ -464,14 +464,12 @@ bool GuiConfig::SaveMemcards(wxConfigBase* conf)
 
 bool GuiConfig::SaveRootItems(wxConfigBase* base)
 {
-	std::string res = CurrentIso;
-
 	if (base->Write("RecentIsoCount", RecentIsoCount) &&
 		base->Write("Listbook_ImageSize", Listbook_ImageSize) &&
 		base->Write("Toolbar_ImageSize", Toolbar_ImageSize) &&
 		base->Write("Toolbar_ShowLabels", Toolbar_ShowLabels) &&
 
-		base->Write("CurrentIso", res) && // TODO - missing the allow relative flag
+		base->Write("CurrentIso", CurrentIso) && // TODO - missing the allow relative flag
 		base->Write("CurrentBlockdump", CurrentBlockdump) &&
 		base->Write("CurrentELF", CurrentELF) &&
 		base->Write("CurrentIRX", CurrentIRX) &&
