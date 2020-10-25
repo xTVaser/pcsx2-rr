@@ -44,7 +44,7 @@ bool Pcsx2Config::TraceLogFilters::operator==(const TraceLogFilters& right) cons
 
 bool Pcsx2Config::TraceLogFilters::operator!=(const TraceLogFilters& right) const
 {
-	return (*this) != right;
+	return !((*this) == right);
 }
 
 void Pcsx2Config::TraceLogFilters::TraceFilters::load(std::shared_ptr<YamlFile> configSection)
@@ -77,7 +77,7 @@ bool Pcsx2Config::TraceLogFilters::TraceFilters::operator==(const TraceFilters& 
 
 bool Pcsx2Config::TraceLogFilters::TraceFilters::operator!=(const TraceFilters& right) const
 {
-	return (*this) != right;
+	return !((*this) == right);
 }
 
 Pcsx2Config::SpeedhackOptions::SpeedhackOptions()
@@ -141,7 +141,7 @@ bool Pcsx2Config::SpeedhackOptions::operator==(const SpeedhackOptions& right) co
 
 bool Pcsx2Config::SpeedhackOptions::operator!=(const SpeedhackOptions& right) const
 {
-	return (*this) != right;
+	return !((*this) == right);
 }
 
 void Pcsx2Config::ProfilerOptions::load(std::shared_ptr<YamlFile> configSection)
@@ -177,7 +177,7 @@ bool Pcsx2Config::ProfilerOptions::operator==(const ProfilerOptions& right) cons
 
 bool Pcsx2Config::ProfilerOptions::operator!=(const ProfilerOptions& right) const
 {
-	return (*this) != right;
+	return !((*this) == right);
 }
 
 Pcsx2Config::CpuOptions::CpuOptions()
@@ -228,7 +228,7 @@ bool Pcsx2Config::CpuOptions::operator==(const CpuOptions& right) const
 
 bool Pcsx2Config::CpuOptions::operator!=(const CpuOptions& right) const
 {
-	return (*this) != right;
+	return !((*this) == right);
 }
 
 // Default GSOptions
@@ -324,7 +324,7 @@ bool Pcsx2Config::GSOptions::operator==(const GSOptions& right) const
 
 bool Pcsx2Config::GSOptions::operator!=(const GSOptions& right) const
 {
-	return (*this) != right;
+	return !((*this) == right);
 }
 
 const wxChar* const tbl_GamefixNames[] =
@@ -561,7 +561,7 @@ bool Pcsx2Config::GamefixOptions::operator==(const GamefixOptions& right) const
 
 bool Pcsx2Config::GamefixOptions::operator!=(const GamefixOptions& right) const
 {
-	return (*this) != right;
+	return !((*this) == right);
 }
 
 Pcsx2Config::DebugOptions::DebugOptions()
@@ -608,7 +608,7 @@ bool Pcsx2Config::DebugOptions::operator==(const DebugOptions& right) const
 
 bool Pcsx2Config::DebugOptions::operator!=(const DebugOptions& right) const
 {
-	return (*this) != right;
+	return !((*this) == right);
 }
 
 
@@ -719,7 +719,7 @@ bool Pcsx2Config::RecompilerOptions::operator==(const RecompilerOptions& right) 
 
 bool Pcsx2Config::RecompilerOptions::operator!=(const RecompilerOptions& right) const
 {
-	return (*this) != right;
+	return !((*this) == right);
 }
 
 Pcsx2Config::Pcsx2Config()
@@ -834,5 +834,5 @@ bool Pcsx2Config::operator==(const Pcsx2Config& right) const
 
 bool Pcsx2Config::operator!=(const Pcsx2Config& right) const
 {
-	return (*this) != right;
+	return !((*this) == right);
 }
