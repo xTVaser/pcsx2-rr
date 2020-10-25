@@ -17,7 +17,7 @@
 #include "PrecompiledHeader.h"
 #include "MainFrame.h"
 #include "GuiConfig.h"
-#include "YamlFile.h"
+#include "Utilities/YamlFile.h"
 #include "Utilities/PathUtils.h"
 #include "Dialogs/ModalPopups.h"
 #include "config/PortableConfig.h"

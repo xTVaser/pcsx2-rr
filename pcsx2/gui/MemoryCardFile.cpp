@@ -472,6 +472,8 @@ uint FileMcd_ConvertToSlot(uint port, uint slot)
 		return port;
 	if (port == 0)
 		return slot + 1; // multitap
+
+	return 0;
 }
 
 static void PS2E_CALLBACK FileMcd_EmuOpen(PS2E_THISPTR thisptr, const PS2E_SessionInfo* session)
@@ -644,18 +646,18 @@ Component_FileMcd::Component_FileMcd()
 {
 	memzero(api);
 
-	api.Base.EmuOpen = FileMcd_EmuOpen;
-	api.Base.EmuClose = FileMcd_EmuClose;
+	api.Base.EmuOpen = (void(__fastcall*)(_PS2E_ComponentAPI*, const PS2E_SessionInfo*))FileMcd_EmuOpen;
+	api.Base.EmuClose = (void(__fastcall*)(_PS2E_ComponentAPI*))FileMcd_EmuClose;
 
-	api.McdIsPresent = FileMcd_IsPresent;
-	api.McdGetSizeInfo = FileMcd_GetSizeInfo;
-	api.McdIsPSX = FileMcd_IsPSX;
-	api.McdRead = FileMcd_Read;
-	api.McdSave = FileMcd_Save;
-	api.McdEraseBlock = FileMcd_EraseBlock;
-	api.McdGetCRC = FileMcd_GetCRC;
-	api.McdNextFrame = FileMcd_NextFrame;
-	api.McdReIndex = FileMcd_ReIndex;
+	api.McdIsPresent = (BOOL(__fastcall*)(_PS2E_ComponentAPI*, uint, uint))FileMcd_IsPresent;
+	api.McdGetSizeInfo = (void(__fastcall*)(_PS2E_ComponentAPI*, uint, uint, PS2E_McdSizeInfo*))FileMcd_GetSizeInfo;
+	api.McdIsPSX = (bool(__fastcall*)(_PS2E_ComponentAPI*, uint, uint))FileMcd_IsPSX;
+	api.McdRead = (BOOL(__fastcall*)(_PS2E_ComponentAPI*, uint, uint, u8*, u32, int))FileMcd_Read;
+	api.McdSave = (BOOL(__fastcall*)(_PS2E_ComponentAPI*, uint, uint, const u8*, u32, int))FileMcd_Save;
+	api.McdEraseBlock = (BOOL(__fastcall*)(_PS2E_ComponentAPI*, uint, uint, u32))FileMcd_EraseBlock;
+	api.McdGetCRC = (u64(__fastcall*)(_PS2E_ComponentAPI*, uint, uint))FileMcd_GetCRC;
+	api.McdNextFrame = (void(__fastcall*)(_PS2E_ComponentAPI*, uint, uint))FileMcd_NextFrame;
+	api.McdReIndex = (bool(__fastcall*)(_PS2E_ComponentAPI*, uint, uint, const wxString&))FileMcd_ReIndex;
 }
 
 
@@ -717,8 +719,8 @@ static const PS2E_LibraryAPI FileMcd_Library =
 		FileMcd_GetName,
 		FileMcd_GetVersion,
 		FileMcd_Test,
-		FileMcd_NewComponentInstance,
-		FileMcd_DeleteComponentInstance,
+		(_PS2E_ComponentAPI * (__fastcall*)(u32)) FileMcd_NewComponentInstance,
+		(void(__fastcall*)(_PS2E_ComponentAPI*))FileMcd_DeleteComponentInstance,
 		FileMcd_SetSettingsFolder,
 		FileMcd_SetLogFolder};
 

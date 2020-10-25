@@ -74,7 +74,7 @@ void Dialogs::SysConfigDialog::UpdateGuiForPreset(int presetIndex, bool presetsE
 
 	//Console.WriteLn("Applying config to Gui: preset #%d, presets enabled: %s", presetIndex, presetsEnabled?"true":"false");
 
-	g_Conf->gui->IsOkApplyPreset(presetIndex, false); //apply a preset to a copy of g_Conf.
+	//g_Conf->gui->IsOkApplyPreset(presetIndex, false); //apply a preset to a copy of g_Conf.
 	g_Conf->gui->EnablePresets = presetsEnabled;      //override IsOkApplyPreset (which always applies/enabled) to actual required state
 
 	//update the config panels of SysConfigDialog to reflect the preset.

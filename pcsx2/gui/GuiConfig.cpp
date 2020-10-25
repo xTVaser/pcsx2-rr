@@ -1,7 +1,7 @@
 #include "PrecompiledHeader.h"
+#include "fmt/format.h"
 #include "GuiConfig.h"
 #include "App.h"
-
 FolderUtils folderUtils;
 
 namespace PathDefs
@@ -455,7 +455,7 @@ bool GuiConfig::SaveMemcards(wxConfigBase* conf)
 		int mtslot = FileMcd_GetMtapSlot(slot)+1;
 
 		conf->Write(wxString(fmt::format("Multitap%u_Slot%u_Enable", mtport, mtslot)), Mcd[slot].Enabled);
-		conf->Write(wxString(fmt::format("Multitap%u_Slot%u_Filename", mtport, mtslot)), Mcd[slot].Filename.GetFullName().ToStdString());
+		conf->Write(wxString(fmt::format("Multitap%u_Slot%u_Filename", mtport, mtslot)), Mcd[slot].Filename.GetFullName());
 	}
 
 
@@ -469,10 +469,10 @@ bool GuiConfig::SaveRootItems(wxConfigBase* base)
 		base->Write("Toolbar_ImageSize", Toolbar_ImageSize) &&
 		base->Write("Toolbar_ShowLabels", Toolbar_ShowLabels) &&
 
-		base->Write("CurrentIso", CurrentIso) && // TODO - missing the allow relative flag
-		base->Write("CurrentBlockdump", CurrentBlockdump) &&
-		base->Write("CurrentELF", CurrentELF) &&
-		base->Write("CurrentIRX", CurrentIRX) &&
+		base->Write("CurrentIso", wxString(CurrentIso.string())) && // TODO - missing the allow relative flag
+		base->Write("CurrentBlockdump", wxString(CurrentBlockdump)) &&
+		base->Write("CurrentELF", wxString(CurrentELF)) &&
+		base->Write("CurrentIRX", wxString(CurrentIRX)) &&
 
 		base->Write("EnableSpeedHacks", EnableSpeedHacks) &&
 		base->Write("EnableGameFixes", EnableGameFixes) &&
@@ -671,18 +671,18 @@ UiTemplateOptions::UiTemplateOptions()
 
 bool UiTemplateOptions::Save(wxConfigBase* conf)
 {
-	if (conf->Write("LimiterUnlimited", LimiterUnlimited) &&
-		conf->Write("LimiterTurbo", LimiterTurbo) &&
-		conf->Write("LimiterSlowmo", LimiterSlowmo) &&
-		conf->Write("LimiterNormal", LimiterNormal) &&
-		conf->Write("OutputFrame", OutputFrame) &&
-		conf->Write("OutputField", OutputField) &&
-		conf->Write("OutputProgressive", OutputProgressive) &&
-		conf->Write("OutputInterlaced", OutputInterlaced) &&
-		conf->Write("Paused", Paused) &&
-		conf->Write("TitleTemplate", TitleTemplate) &&
+	if (conf->Write("LimiterUnlimited", wxString(LimiterUnlimited)) &&
+		conf->Write("LimiterTurbo", wxString(LimiterTurbo)) &&
+		conf->Write("LimiterSlowmo", wxString(LimiterSlowmo)) &&
+		conf->Write("LimiterNormal", wxString(LimiterNormal)) &&
+		conf->Write("OutputFrame", wxString(OutputFrame)) &&
+		conf->Write("OutputField", wxString(OutputField)) &&
+		conf->Write("OutputProgressive", wxString(OutputProgressive)) &&
+		conf->Write("OutputInterlaced", wxString(OutputInterlaced)) &&
+		conf->Write("Paused", wxString(Paused)) &&
+		conf->Write("TitleTemplate", wxString(TitleTemplate)) &&
 #ifndef DISABLE_RECORDING
-		conf->Write("RecordingTemplate", RecordingTemplate))
+		conf->Write("RecordingTemplate", wxString(RecordingTemplate)))
 #endif
 	{
 		return true;
