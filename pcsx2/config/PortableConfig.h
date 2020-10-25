@@ -13,7 +13,7 @@ private:
 public:
 	PortableConfig();
 
-	fs::path getPortableFilePath();
+	fs::path getFilePath();
 
 	bool load();
 	bool save();

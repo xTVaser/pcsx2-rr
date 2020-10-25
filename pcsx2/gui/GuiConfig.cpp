@@ -323,22 +323,22 @@ namespace FilenameDefs
 {
 	std::string GetUiConfig()
 	{
-		return pxGetAppName().ToStdString() + "_ui.yaml";
+		return pxGetAppName().ToStdString() + "_ui";
 	}
 
 	std::string GetUiKeysConfig()
 	{
-		return pxGetAppName().ToStdString() + "_keys.yaml";
+		return pxGetAppName().ToStdString() + "_keys";
 	}
 
 	std::string GetVmConfig()
 	{
-		return pxGetAppName().ToStdString() + "_vm.yaml";
+		return pxGetAppName().ToStdString() + "_vm";
 	}
 
 	std::string GetUsermodeConfig()
 	{
-		return ("usermode.yaml");
+		return ("usermode");
 	}
 
 	const std::string& Memcard(uint port, uint slot)
@@ -454,8 +454,8 @@ bool GuiConfig::SaveMemcards(wxConfigBase* conf)
 		int mtport = FileMcd_GetMtapPort(slot)+1;
 		int mtslot = FileMcd_GetMtapSlot(slot)+1;
 
-		conf->Write(wxString(fmt::format("Multitap%u_Slot%u_Enable", mtport, mtslot)), Mcd[slot].Enabled);
-		conf->Write(wxString(fmt::format("Multitap%u_Slot%u_Filename", mtport, mtslot)), Mcd[slot].Filename.GetFullName());
+		conf->Write(wxString(fmt::format("Multitap{}_Slot{}_Enable", mtport, mtslot)), Mcd[slot].Enabled);
+		conf->Write(wxString(fmt::format("Multitap{}_Slot{}_Filename", mtport, mtslot)), Mcd[slot].Filename.GetFullName());
 	}
 
 

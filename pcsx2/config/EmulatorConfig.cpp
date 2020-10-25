@@ -737,7 +737,7 @@ bool Pcsx2Config::MultitapEnabled(uint port) const
 bool Pcsx2Config::load()
 {
 	// TODO - construct the right path
-	if (config->loadFromFile(fmt::format("%s.%s", GetVmSettingsFilename().string(), config->fileExtension())))
+	if (config->loadFromFile(fmt::format("{}.{}", GetVmSettingsFilename().string(), config->fileExtension())))
 	{
 		std::shared_ptr<YamlFile> coreCfg = config->getSection("Core");
 		CdvdVerboseReads = coreCfg->getBool("CdvdVerboseReads");
@@ -771,7 +771,6 @@ bool Pcsx2Config::load()
 	{
 		return false;
 	}
-
 }
 
 // TODO - config - this isn't called anywhere! where did it used to get callled!
@@ -806,7 +805,7 @@ void Pcsx2Config::save()
 	config->setSection("GS", GS.save());
 
 	// Save to file
-	config->saveToFile(fmt::format("%s.%s", GetVmSettingsFilename().string(), config->fileExtension()));
+	config->saveToFile(fmt::format("{}.{}", GetVmSettingsFilename().string(), config->fileExtension()));
 }
 
 bool Pcsx2Config::operator==(const Pcsx2Config& right) const

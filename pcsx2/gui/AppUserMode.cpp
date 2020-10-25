@@ -46,7 +46,7 @@ std::string PluginsFolder;
 YamlFile yamlUtils;
 
 // TODO - CONFIG - global config
-std::unique_ptr<PortableConfig> portableConfig;
+std::unique_ptr<PortableConfig> portableConfig = std::make_unique<PortableConfig>();
 
 const std::string PermissionFolders[] =
 	{
@@ -167,9 +167,8 @@ bool Pcsx2App::TestForPortableInstall()
 	InstallationMode = InstallMode_Portable;
 
 	// Load portable config file
-	PortableConfig* conf = portableConfig.get();
-	bool isPortable = conf->load();
-	std::string portableDirectory = conf->getPortableFilePath().parent_path();
+	bool isPortable = portableConfig->load();
+	std::string portableDirectory = portableConfig->getFilePath().parent_path();
 
 	// Couldn't load portable file, so it either exists or something else is wrong or
 	// we just aren't in portable mode!
@@ -182,7 +181,7 @@ bool Pcsx2App::TestForPortableInstall()
 	}
 	else
 	{
-		wxString temp = conf->getPortableFilePath().parent_path().wstring();
+		wxString temp = portableConfig->getFilePath().parent_path().wstring();
 		Console.WriteLn(L"(UserMode) Found portable install @ %s", WX_STR(temp));
 	}
 
@@ -210,8 +209,8 @@ void Pcsx2App::WipeUserModeSettings()
 	if (InstallationMode == InstallMode_Portable)
 	{
 		// Remove the portable.json entry "RunWizard" conforming to this instance of PCSX2.
-		portableConfig.get()->setRunWizard(false);
-		portableConfig.get()->save();
+		portableConfig->setRunWizard(false);
+		portableConfig->save();
 	}
 	else
 	{
