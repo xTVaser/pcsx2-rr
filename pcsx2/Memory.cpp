@@ -677,7 +677,7 @@ void memBindConditionalHandlers()
 {
 	if( hw_by_page[0xf] == 0xFFFFFFFF ) return;
 
-	if (EmuConfig.Speedhacks.IntcStat)
+	if (g_Conf->emulator->Speedhacks.IntcStat)
 	{
 		vtlbMemR16FP* page0F16(hwRead16_page_0F_INTC_HACK);
 		vtlbMemR32FP* page0F32(hwRead32_page_0F_INTC_HACK);

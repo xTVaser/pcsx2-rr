@@ -73,9 +73,9 @@ void Panels::BaseAdvancedCpuOptions::OnRestoreDefaults(wxCommandEvent& evt)
 
 void Panels::BaseAdvancedCpuOptions::RestoreDefaults()
 {
-	GuiConfig def;             // created with default values
-	def.EnablePresets = false; // disable presets otherwise it'll disable some widgets
-	ApplyConfigToGui(def);
+	// TODO - config - allow setting GUI (only?) stuff to defaults
+	g_Conf->gui->EnablePresets = false; // disable presets otherwise it'll disable some widgets
+	ApplyConfigToGui();
 }
 
 Panels::AdvancedOptionsFPU::AdvancedOptionsFPU(wxWindow* parent)
@@ -228,34 +228,34 @@ void Panels::CpuPanelEE::Apply()
 
 void Panels::CpuPanelEE::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui(*g_Conf->gui);
+	ApplyConfigToGui();
 }
 
-void Panels::CpuPanelEE::ApplyConfigToGui(GuiConfig& configToApply, int flags)
+void Panels::CpuPanelEE::ApplyConfigToGui(int flags)
 {
 	const Pcsx2Config::RecompilerOptions& recOps(g_Conf->emulator->Cpu.Recompiler);
 	m_panel_RecEE->SetSelection((int)recOps.EnableEE);
 	m_panel_RecIOP->SetSelection((int)recOps.EnableIOP);
 
-	m_panel_RecEE->Enable(!configToApply.EnablePresets);
-	m_panel_RecIOP->Enable(!configToApply.EnablePresets);
+	m_panel_RecEE->Enable(!g_Conf->gui->EnablePresets);
+	m_panel_RecIOP->Enable(!g_Conf->gui->EnablePresets);
 
 	//EECache option is exclusive to the EE Interpreter.
 	m_check_EECacheEnable->SetValue(recOps.EnableEECache);
-	m_check_EECacheEnable->Enable(!configToApply.EnablePresets && m_panel_RecEE->GetSelection() == 0);
-	m_button_RestoreDefaults->Enable(!configToApply.EnablePresets);
+	m_check_EECacheEnable->Enable(!g_Conf->gui->EnablePresets && m_panel_RecEE->GetSelection() == 0);
+	m_button_RestoreDefaults->Enable(!g_Conf->gui->EnablePresets);
 
 	if (flags & GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE)
 	{
-		m_advancedOptsFpu->ApplyConfigToGui(configToApply, true);
+		m_advancedOptsFpu->ApplyConfigToGui(true);
 	}
 }
 
 void Panels::CpuPanelEE::OnRestoreDefaults(wxCommandEvent& evt)
 {
-	GuiConfig def;             // created with default values
-	def.EnablePresets = false; // disable presets otherwise it'll disable some widgets
-	ApplyConfigToGui(def);
+	// TODO - config - allow setting GUI (only?) stuff to defaults
+	g_Conf->gui->EnablePresets = false; // disable presets otherwise it'll disable some widgets
+	ApplyConfigToGui();
 
 	if (BaseAdvancedCpuOptions* opts = (BaseAdvancedCpuOptions*)FindWindowByName(L"AdvancedOptionsFPU"))
 		opts->RestoreDefaults();
@@ -273,30 +273,30 @@ void Panels::CpuPanelVU::Apply()
 
 void Panels::CpuPanelVU::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui(*g_Conf->gui);
+	ApplyConfigToGui();
 }
 
-void Panels::CpuPanelVU::ApplyConfigToGui(GuiConfig& configToApply, int flags)
+void Panels::CpuPanelVU::ApplyConfigToGui(int flags)
 {
 	Pcsx2Config::RecompilerOptions& recOps(g_Conf->emulator->Cpu.Recompiler);
 	m_panel_VU0->SetSelection(recOps.EnableVU0 ? 1 : 0);
 	m_panel_VU1->SetSelection(recOps.EnableVU1 ? 1 : 0);
-	m_panel_VU0->Enable(!configToApply.EnablePresets);
-	m_panel_VU1->Enable(!configToApply.EnablePresets);
-	m_button_RestoreDefaults->Enable(!configToApply.EnablePresets);
+	m_panel_VU0->Enable(!g_Conf->gui->EnablePresets);
+	m_panel_VU1->Enable(!g_Conf->gui->EnablePresets);
+	m_button_RestoreDefaults->Enable(!g_Conf->gui->EnablePresets);
 
 	if (flags & GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE)
 	{
-		m_advancedOptsVu->ApplyConfigToGui(configToApply, true);
+		m_advancedOptsVu->ApplyConfigToGui(true);
 	}
 }
 
 
 void Panels::CpuPanelVU::OnRestoreDefaults(wxCommandEvent& evt)
 {
-	GuiConfig def;             // created with default values
-	def.EnablePresets = false; // disable presets otherwise it'll disable some widgets
-	ApplyConfigToGui(def);
+	// TODO - config - allow setting GUI (only?) stuff to defaults
+	g_Conf->gui->EnablePresets = false; // disable presets otherwise it'll disable some widgets
+	ApplyConfigToGui();
 
 	if (BaseAdvancedCpuOptions* opts = (BaseAdvancedCpuOptions*)FindWindowByName(L"AdvancedOptionsVU"))
 		opts->RestoreDefaults();
@@ -330,10 +330,10 @@ void Panels::AdvancedOptionsFPU::Apply()
 
 void Panels::AdvancedOptionsFPU::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui(*g_Conf->gui);
+	ApplyConfigToGui();
 }
 
-void Panels::AdvancedOptionsFPU::ApplyConfigToGui(GuiConfig& configToApply, int flags)
+void Panels::AdvancedOptionsFPU::ApplyConfigToGui(int flags)
 {
 	const Pcsx2Config::CpuOptions& cpuOps(g_Conf->emulator->Cpu);
 	const Pcsx2Config::RecompilerOptions& recOps(cpuOps.Recompiler);
@@ -349,7 +349,7 @@ void Panels::AdvancedOptionsFPU::ApplyConfigToGui(GuiConfig& configToApply, int 
 	else
 		m_ClampModePanel->SetSelection(0);
 
-	this->Enable(!configToApply.EnablePresets);
+	this->Enable(!g_Conf->gui->EnablePresets);
 }
 
 void Panels::AdvancedOptionsVU::Apply()
@@ -371,10 +371,10 @@ void Panels::AdvancedOptionsVU::Apply()
 
 void Panels::AdvancedOptionsVU::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui(*g_Conf->gui);
+	ApplyConfigToGui();
 }
 
-void Panels::AdvancedOptionsVU::ApplyConfigToGui(GuiConfig& configToApply, int flags)
+void Panels::AdvancedOptionsVU::ApplyConfigToGui(int flags)
 {
 	const Pcsx2Config::CpuOptions& cpuOps(g_Conf->emulator->Cpu);
 	const Pcsx2Config::RecompilerOptions& recOps(cpuOps.Recompiler);
@@ -390,7 +390,7 @@ void Panels::AdvancedOptionsVU::ApplyConfigToGui(GuiConfig& configToApply, int f
 	else
 		m_ClampModePanel->SetSelection(0);
 
-	this->Enable(!configToApply.EnablePresets);
+	this->Enable(!g_Conf->gui->EnablePresets);
 }
 
 void Panels::CpuPanelEE::EECache_Event(wxCommandEvent& event)

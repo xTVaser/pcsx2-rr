@@ -394,7 +394,7 @@ void __fastcall GoemonUnloadTlb(u32 key)
 // Generates a tlbMiss Exception
 static __ri void vtlb_Miss(u32 addr,u32 mode)
 {
-	if (EmuConfig.Gamefixes.GoemonTlbHack)
+	if (g_Conf->emulator->Gamefixes.GoemonTlbHack)
 		GoemonTlbMissDebug();
 
 	// Hack to handle expected tlb miss by some games.
@@ -763,7 +763,7 @@ void vtlb_Init()
 	vtlb_VMapUnmap((VTLB_VMAP_ITEMS-1)*VTLB_PAGE_SIZE,VTLB_PAGE_SIZE);
 
 	// The LUT is only used for 1 game so we allocate it only when the gamefix is enabled (save 4MB)
-	if (EmuConfig.Gamefixes.GoemonTlbHack)
+	if (g_Conf->emulator->Gamefixes.GoemonTlbHack)
 		vtlb_Alloc_Ppmap();
 
 	extern void vtlb_dynarec_init();

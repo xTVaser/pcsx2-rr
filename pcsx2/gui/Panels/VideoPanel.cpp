@@ -322,17 +322,13 @@ Panels::VideoPanel::VideoPanel(wxWindow* parent)
 
 void Panels::VideoPanel::Defaults_Click(wxCommandEvent& evt)
 {
-	GuiConfig* config = g_Conf.get();
-	// TODO - bring back defaults into an explicit function instead of creating a new instance of an object just to set defaults.  I broke this upstream
-	// Why are we retrieving a global object to pass it into other functions, just access it there as needed?
+	// TODO - config - defaults into explicit functions!
+	//config.EmuOptions.GS = Pcsx2Config::GSOptions(); 
+	//config.Framerate = FramerateOptions();
 
-	// TODO
-
-	/*config.EmuOptions.GS = Pcsx2Config::GSOptions(); 
-	config.Framerate = FramerateOptions();
-	VideoPanel::ApplyConfigToGui(config);
-	m_fpan->ApplyConfigToGui(config);
-	m_span->ApplyConfigToGui(config);*/
+	VideoPanel::ApplyConfigToGui();
+	m_fpan->ApplyConfigToGui();
+	m_span->ApplyConfigToGui();
 	evt.Skip();
 }
 
@@ -350,20 +346,20 @@ void Panels::VideoPanel::Apply()
 
 void Panels::VideoPanel::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui(*g_Conf);
+	ApplyConfigToGui();
 }
 
-void Panels::VideoPanel::ApplyConfigToGui(GuiConfig& configToApply, int flags)
+void Panels::VideoPanel::ApplyConfigToGui(int flags)
 {
 
-	m_check_SynchronousGS->SetValue(configToApply.EmuOptions.GS.SynchronousMTGS);
+	m_check_SynchronousGS->SetValue(g_Conf->emulator->GS.SynchronousMTGS);
 
-	m_check_SynchronousGS->Enable(!configToApply.EnablePresets);
+	m_check_SynchronousGS->Enable(!g_Conf->gui->EnablePresets);
 
 	if (flags & GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE)
 	{
-		m_span->ApplyConfigToGui(configToApply, true);
-		m_fpan->ApplyConfigToGui(configToApply, true);
+		m_span->ApplyConfigToGui(true);
+		m_fpan->ApplyConfigToGui(true);
 	}
 
 	Layout();

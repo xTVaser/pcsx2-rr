@@ -737,7 +737,7 @@ bool Pcsx2Config::MultitapEnabled(uint port) const
 void Pcsx2Config::load()
 {
 	// TODO - construct the right path
-	config->loadFromFile(fmt::format("%s.%s", GetVmSettingsFilename(), config->fileExtension()));
+	config->loadFromFile(fmt::format("%s.%s", GetVmSettingsFilename().string(), config->fileExtension()));
 
 	std::shared_ptr<YamlFile> coreCfg = config->getSection("Core");
 	CdvdVerboseReads = coreCfg->getBool("CdvdVerboseReads");
@@ -799,7 +799,7 @@ void Pcsx2Config::save()
 	config->setSection("GS", GS.save());
 
 	// Save to file
-	config->saveToFile(fmt::format("%s.%s", GetVmSettingsFilename(), config->fileExtension()));
+	config->saveToFile(fmt::format("%s.%s", GetVmSettingsFilename().string(), config->fileExtension()));
 }
 
 bool Pcsx2Config::operator==(const Pcsx2Config& right) const

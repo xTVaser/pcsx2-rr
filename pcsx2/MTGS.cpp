@@ -153,7 +153,7 @@ void SysMtgsThread::PostVsyncStart()
 	// If those are needed back, it's better to increase the VsyncQueueSize via PCSX_vm.ini.
 	// (The Xenosaga engine is known to run into this, due to it throwing bulks of data in one frame followed by 2 empty frames.)
 
-	if ((m_QueuedFrameCount.fetch_add(1) < EmuConfig.GS.VsyncQueueSize) /*|| (!EmuConfig.GS.VsyncEnable && !EmuConfig.GS.FrameLimitEnable)*/) return;
+	if ((m_QueuedFrameCount.fetch_add(1) < g_Conf->emulator->GS.VsyncQueueSize) /*|| (!EmuConfig.GS.VsyncEnable && !EmuConfig.GS.FrameLimitEnable)*/) return;
 
 	m_VsyncSignalListener.store(true, std::memory_order_release);
 	//Console.WriteLn( Color_Blue, "(EEcore Sleep) Vsync\t\tringpos=0x%06x, writepos=0x%06x", m_ReadPos.load(), m_WritePos.load() );
@@ -203,7 +203,7 @@ void SysMtgsThread::OpenPlugin()
 		result = GSopen( (void*)pDsp, "PCSX2", renderswitch ? 2 : 1 );
 
 
-	GSsetVsync(EmuConfig.GS.GetVsync());
+	GSsetVsync(g_Conf->emulator->GS.GetVsync());
 
 	if( result != 0 )
 	{
@@ -525,7 +525,7 @@ void SysMtgsThread::ExecuteTaskInThread()
 
 			uint newringpos = (m_ReadPos.load(std::memory_order_relaxed) + ringposinc) & RingBufferMask;
 
-			if( EmuConfig.GS.SynchronousMTGS )
+			if( g_Conf->emulator->GS.SynchronousMTGS )
 			{
 				pxAssert( m_WritePos == newringpos );
 			}
@@ -665,7 +665,7 @@ void SysMtgsThread::SendDataPacket()
 
 	m_WritePos.store(m_packet_writepos, std::memory_order_release);
 
-	if(EmuConfig.GS.SynchronousMTGS)
+	if(g_Conf->emulator->GS.SynchronousMTGS)
 	{
 		WaitGS();
 	}
@@ -799,7 +799,7 @@ __fi void SysMtgsThread::_FinishSimplePacket()
 	pxAssert( future_writepos != m_ReadPos.load(std::memory_order_acquire) );
 	m_WritePos.store(future_writepos, std::memory_order_release);
 
-	if( EmuConfig.GS.SynchronousMTGS )
+	if( g_Conf->emulator->GS.SynchronousMTGS )
 		WaitGS();
 	else
 		++m_CopyDataTally;
@@ -824,7 +824,7 @@ void SysMtgsThread::SendSimpleGSPacket(MTGS_RingCommand type, u32 offset, u32 si
 {
 	SendSimplePacket(type, (int)offset, (int)size, (int)path);
 
-	if(!EmuConfig.GS.SynchronousMTGS) {
+	if(!g_Conf->emulator->GS.SynchronousMTGS) {
 		if(!m_RingBufferIsBusy.load(std::memory_order_relaxed)) {
 			m_CopyDataTally += size / 16;
 			if (m_CopyDataTally > 0x2000) SetEvent();

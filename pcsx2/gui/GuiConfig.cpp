@@ -920,23 +920,8 @@ void FilenameOptions::Load(wxConfigBase* conf)
 	conf->Read("BIOS", Bios);
 }
 
-bool OpenFileConfig(std::string filename)
-{
-	if (!folderUtils.DoesExist(filename))
-	{
-		return false;
-	}
-
-	else
-	{
-		bool loader = yamlUtils.Load(filename);
-		return loader;
-	}
-}
-
 void RelocateLogfile()
 {
-
 	if (!folderUtils.DoesExist(g_Conf->gui->Folders.Logs))
 	{
 		if (!folderUtils.CreateFolder(g_Conf->gui->Folders.Logs))
@@ -1079,7 +1064,7 @@ static void LoadUiSettings(wxConfigBase* conf)
 
 	g_Conf->gui->Load();
 
-	g_Conf = std::make_unique<GuiConfig>();
+	// TODO - config - clean this up, removed the unique_ptr stuff here
 	//cfg["GlobalConfig"] = g_Conf->gui->Save();
 
 	if (!folderUtils.DoesExist(g_Conf->gui->CurrentIso))

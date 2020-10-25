@@ -143,7 +143,7 @@ void Panels::GSWindowSettingsPanel::AppStatusEvent_OnSettingsApplied()
 	//ApplyConfigToGui( *g_Conf );
 }
 
-void Panels::GSWindowSettingsPanel::ApplyConfigToGui(GuiConfig& configToApply, int flags)
+void Panels::GSWindowSettingsPanel::ApplyConfigToGui(int flags)
 {
 	const GSWindowOptions& conf(g_Conf->gui->gsWindow);
 

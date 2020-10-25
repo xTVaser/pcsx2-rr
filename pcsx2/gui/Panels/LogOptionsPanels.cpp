@@ -287,9 +287,9 @@ Panels::BaseCpuLogOptionsPanel* Panels::LogOptionsPanel::GetCpuPanel(const wxStr
 
 void Panels::LogOptionsPanel::AppStatusEvent_OnSettingsApplied()
 {
-	TraceLogFilters& conf(g_Conf->emulator->Trace);
+	Pcsx2Config::TraceLogFilters& conf(g_Conf->emulator->Trace);
 
-	m_masterEnabler->SetValue(conf.Enabled);
+	m_masterEnabler->SetValue(conf.EnableTraceLogFilters);
 
 	m_eeSection->OnSettingsChanged();
 	m_iopSection->OnSettingsChanged();
@@ -320,7 +320,7 @@ void Panels::LogOptionsPanel::OnCheckBoxClicked(wxCommandEvent& evt)
 
 void Panels::LogOptionsPanel::Apply()
 {
-	g_Conf->emulator->Trace.Enabled = m_masterEnabler->GetValue();
+	g_Conf->emulator->Trace.EnableTraceLogFilters = m_masterEnabler->GetValue();
 
 	m_eeSection->Apply();
 	m_iopSection->Apply();
@@ -335,9 +335,10 @@ void Panels::LogOptionsPanel::Apply()
 
 #define GetSet(cpu, name) SysTrace.cpu.name.Enabled = m_##name->GetValue()
 
+// TODO - config - duplicate code
 void Panels::eeLogOptionsPanel::Apply()
 {
-	TraceFiltersEE& conf(g_Conf->emulator->Trace.EE);
+	Pcsx2Config::TraceLogFilters::TraceFilters& conf(g_Conf->emulator->Trace.EE);
 
 	conf.m_EnableAll = GetValue();
 	conf.m_EnableDisasm = m_disasmPanel->GetValue();
@@ -347,7 +348,7 @@ void Panels::eeLogOptionsPanel::Apply()
 
 void Panels::iopLogOptionsPanel::Apply()
 {
-	TraceFiltersIOP& conf(g_Conf->emulator->Trace.IOP);
+	Pcsx2Config::TraceLogFilters::TraceFilters& conf(g_Conf->emulator->Trace.IOP);
 
 	conf.m_EnableAll = GetValue();
 	conf.m_EnableDisasm = m_disasmPanel->GetValue();

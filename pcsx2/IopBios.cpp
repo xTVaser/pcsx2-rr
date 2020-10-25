@@ -339,7 +339,7 @@ namespace ioman {
 		if (not_number_pos == std::string::npos)
 			return false;
 
-		return ((!g_GameStarted || EmuConfig.HostFs) && 0 == path.compare(0, 4, "host") && path[not_number_pos] == ':');
+		return ((!g_GameStarted || g_Conf->emulator->HostFs) && 0 == path.compare(0, 4, "host") && path[not_number_pos] == ':');
 	}
 
 	int open_HLE()

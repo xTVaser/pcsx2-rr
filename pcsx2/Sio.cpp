@@ -97,7 +97,7 @@ void ClearMcdEjectTimeoutNow()
 // wants to add support for using the extra memcard slots.
 static bool IsMtapPresent(uint port)
 {
-	return EmuConfig.MultitapEnabled(port);
+	return g_Conf->emulator->MultitapEnabled(port);
 	//return (0 != PADqueryMtap(port+1));
 }
 
@@ -1148,7 +1148,7 @@ void SaveStateBase::sioFreeze()
 
 	Freeze(m_mcdCRCs);
 
-	if (IsLoading() && EmuConfig.McdEnableEjection)
+	if (IsLoading() && g_Conf->emulator->McdEnableEjection)
 	{
 		// Notes on the ForceEjectionTimeout:
 		//  * TOTA works with values as low as 20 here.

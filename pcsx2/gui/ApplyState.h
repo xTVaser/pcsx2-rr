@@ -221,7 +221,7 @@ public:
 	BaseApplicableConfigPanel_SpecificConfig( wxWindow* parent, wxOrientation orient, const wxString& staticLabel );
 
 	//possible flags are: AppConfig: APPLY_FLAG_MANUALLY_PROPAGATE and APPLY_FLAG_IS_FROM_PRESET
-	virtual void ApplyConfigToGui(GuiConfig& configToApply, int flags=0)=0;
+	virtual void ApplyConfigToGui(int flags=0)=0;
 };
 
 class ApplicableWizardPage : public wxWizardPageSimple, public IApplyState

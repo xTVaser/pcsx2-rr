@@ -97,7 +97,7 @@ static void WipeSettings()
 	//wxRmdir( GetSettingsFolder().ToString() );
 
 	wxGetApp().GetRecentIsoManager().Clear();
-	g_Conf = std::unique_ptr<GuiConfig>(new GuiConfig());
+	// TODO - config - method to clear/reset GUI config
 	sMainFrame.RemoveCdvdMenu();
 
 	sApp.WipeUserModeSettings();

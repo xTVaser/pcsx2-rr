@@ -38,6 +38,7 @@ bool PortableConfig::save()
 	YamlFile* cfg = file.get();
 	cfg->setBool("RunWizard", true);
 	cfg->saveToFile(m_filePath);
+	return true;
 }
 
 void PortableConfig::setRunWizard(bool runWizard)

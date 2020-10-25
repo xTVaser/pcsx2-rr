@@ -206,7 +206,7 @@ template< typename T>
 static __ri void IopHwTraceLog( u32 addr, T val, bool mode )
 {
 	if (!IsDevBuild) return;
-	if (!EmuConfig.Trace.Enabled || !EmuConfig.Trace.IOP.m_EnableAll || !EmuConfig.Trace.IOP.m_EnableRegisters) return;
+	if (!g_Conf->emulator->Trace.EnableTraceLogFilters || !g_Conf->emulator->Trace.IOP.m_EnableAll || !g_Conf->emulator->Trace.IOP.m_EnableRegisters) return;
 
 	FastFormatAscii valStr;
 	FastFormatAscii labelStr;

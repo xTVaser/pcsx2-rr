@@ -263,7 +263,7 @@ _mVUt __fi void* mVUsearchProg(u32 startPC, uptr pState) {
 		std::deque<microProgram*>::iterator it(list->begin());
 		for ( ; it != list->end(); ++it) {
 			bool b = mVUcmpProg(mVU, *it[0], 0);
-			if (EmuConfig.Gamefixes.ScarfaceIbit) {
+			if (g_Conf->emulator->Gamefixes.ScarfaceIbit) {
 				if (isVU1 && ((((u32*)mVU.regs().Micro)[startPC / 4 + 1]) == 0x80200118) &&
 						     ((((u32*)mVU.regs().Micro)[startPC / 4 + 3]) == 0x81000062)) {
 					b = true;
@@ -271,7 +271,7 @@ _mVUt __fi void* mVUsearchProg(u32 startPC, uptr pState) {
 					mVU.prog.cur = it[0];
 					mVU.prog.isSame = 1;
 				}
-            } else if (EmuConfig.Gamefixes.CrashTagTeamRacingIbit) {
+            } else if (g_Conf->emulator->Gamefixes.CrashTagTeamRacingIbit) {
 				// Crash tag team tends to make changes to the I register settings in the addresses 0x2bd0 - 0x3ff8
 				// so detect when the code is only changed in this region and don't recompile. Use the same Scarface hack
 				// to access the new I regsiter settings (Look at doIbit() in microVU_Compile.inl

@@ -758,36 +758,36 @@ void MainEmuFrame::ApplyCoreStatus()
 //Apply a config to the menu such that the menu reflects it properly
 void MainEmuFrame::ApplySettings()
 {
-	ApplyConfigToGui(*g_Conf);
+	ApplyConfigToGui();
 }
 
 //MainEmuFrame needs to be aware which items are affected by presets if AppConfig::APPLY_FLAG_FROM_PRESET is on.
 //currently only EnablePatches is affected when the settings come from a preset.
-void MainEmuFrame::ApplyConfigToGui(GuiConfig& configToApply, int flags)
+void MainEmuFrame::ApplyConfigToGui(int flags)
 {
 	wxMenuBar& menubar(*GetMenuBar());
 
 	menubar.Check(MenuId_EnablePatches, g_Conf->emulator->EnablePatches);
-	menubar.Enable(MenuId_EnablePatches, !configToApply.EnablePresets);
+	menubar.Enable(MenuId_EnablePatches, !g_Conf->gui->EnablePresets);
 
 	if (!(flags & GuiConfig::APPLY_FLAG_FROM_PRESET))
 	{ //these should not be affected by presets
-		menubar.Check(MenuId_EnableBackupStates, configToApply.EmuOptions.BackupSavestate);
-		menubar.Check(MenuId_EnableCheats, configToApply.EmuOptions.EnableCheats);
-		menubar.Check(MenuId_EnableIPC, configToApply.EmuOptions.EnableIPC);
-		menubar.Check(MenuId_EnableWideScreenPatches, configToApply.EmuOptions.EnableWideScreenPatches);
+		menubar.Check(MenuId_EnableBackupStates, g_Conf->emulator->BackupSavestate);
+		menubar.Check(MenuId_EnableCheats, g_Conf->emulator->EnableCheats);
+		menubar.Check(MenuId_EnableIPC, g_Conf->emulator->EnableIPC);
+		menubar.Check(MenuId_EnableWideScreenPatches, g_Conf->emulator->EnableWideScreenPatches);
 #ifndef DISABLE_RECORDING
-		menubar.Check(MenuId_EnableInputRecording, configToApply.EmuOptions.EnableRecordingTools);
+		menubar.Check(MenuId_EnableInputRecording, g_Conf->emulator->EnableRecordingTools);
 #endif
-		menubar.Check(MenuId_EnableHostFs, configToApply.EmuOptions.HostFs);
-		menubar.Check(MenuId_Debug_CreateBlockdump, configToApply.EmuOptions.CdvdDumpBlocks);
+		menubar.Check(MenuId_EnableHostFs, g_Conf->emulator->HostFs);
+		menubar.Check(MenuId_Debug_CreateBlockdump, g_Conf->emulator->CdvdDumpBlocks);
 #if defined(__unix__)
-		menubar.Check(MenuId_Console_Stdio, configToApply.EmuOptions.ConsoleToStdio);
+		menubar.Check(MenuId_Console_Stdio, g_Conf->emulator->ConsoleToStdio);
 #endif
 
-		menubar.Check(MenuId_Config_Multitap0Toggle, configToApply.EmuOptions.MultitapPort0_Enabled);
-		menubar.Check(MenuId_Config_Multitap1Toggle, configToApply.EmuOptions.MultitapPort1_Enabled);
-		menubar.Check(MenuId_Config_FastBoot, configToApply.EnableFastBoot);
+		menubar.Check(MenuId_Config_Multitap0Toggle, g_Conf->emulator->MultitapPort0_Enabled);
+		menubar.Check(MenuId_Config_Multitap1Toggle, g_Conf->emulator->MultitapPort1_Enabled);
+		menubar.Check(MenuId_Config_FastBoot, g_Conf->gui->EnableFastBoot);
 	}
 
 	UpdateCdvdSrcSelection(); //shouldn't be affected by presets but updates from g_Conf anyway and not from configToApply, so no problem here.

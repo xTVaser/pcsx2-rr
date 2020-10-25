@@ -103,12 +103,10 @@ void Panels::GameFixesPanel::Apply()
 	wxGetApp().Overrides.ApplyCustomGamefixes = false;
 }
 
-void Panels::GameFixesPanel::EnableStuff(GuiConfig* configToUse)
+void Panels::GameFixesPanel::EnableStuff()
 {
-	if (!configToUse)
-		configToUse = g_Conf.get();
 	for (GamefixId i = GamefixId_FIRST; i < pxEnumEnd; ++i)
-		m_checkbox[i]->Enable(m_check_Enable->GetValue() && !configToUse->EnablePresets);
+		m_checkbox[i]->Enable(m_check_Enable->GetValue() && !g_Conf->gui->EnablePresets);
 
 	Layout();
 }
@@ -125,17 +123,17 @@ void Panels::GameFixesPanel::OnEnable_Toggled(wxCommandEvent& evt)
 
 void Panels::GameFixesPanel::AppStatusEvent_OnSettingsApplied()
 {
-	ApplyConfigToGui(*g_Conf);
+	ApplyConfigToGui();
 }
 
-void Panels::GameFixesPanel::ApplyConfigToGui(GuiConfig& configToApply, int flags)
+void Panels::GameFixesPanel::ApplyConfigToGui(int flags)
 {
-	const Pcsx2Config::GamefixOptions& opts(configToApply.EmuOptions.Gamefixes);
+	const Pcsx2Config::GamefixOptions& opts(g_Conf->emulator->Gamefixes);
 	for (GamefixId i = GamefixId_FIRST; i < pxEnumEnd; ++i)
 		m_checkbox[i]->SetValue(opts.Get((GamefixId)i)); //apply the use/don't-use fix values
 
-	m_check_Enable->SetValue(configToApply.EnableGameFixes); //main gamefixes checkbox
-	EnableStuff(&configToApply);                             // enable/disable the all the fixes controls according to the main one
+	m_check_Enable->SetValue(g_Conf->gui->EnableGameFixes); //main gamefixes checkbox
+	EnableStuff();                             // enable/disable the all the fixes controls according to the main one
 
-	this->Enable(!configToApply.EnablePresets);
+	this->Enable(!g_Conf->gui->EnablePresets);
 }

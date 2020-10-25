@@ -65,10 +65,6 @@ bool ApplyStateStruct::ApplyPage(int pageid)
 	std::string oldSettingsFolder = SettingsFolder;
 	bool oldUseDefSet = UseDefaultSettingsFolder;
 
-	// TODO - config - ?????????????
-	// what is going on?
-	//GuiConfig confcopy( *g_Conf );
-
 	try
 	{
 		PanelApplyList_t::iterator yay = PanelList.begin();
@@ -86,12 +82,14 @@ bool ApplyStateStruct::ApplyPage(int pageid)
 		// Note: apply first, then save -- in case the apply fails.
 
 		if (!PathDefs::GetSettings().c_str())
+			printf(""); // TODO - config
 			//PathDefs::GetSettings().Mkdir();//create the inis folder such that the plugins can be configured at the first time wizard.
 
 			if (!PathDefs::GetBios().c_str())
+				printf(""); // TODO - config
 				//PathDefs::GetBios().Mkdir();//create the bios folder such that it can be opened at the first time wizard without an error message.
 
-				AppApplySettings(&confcopy);
+		AppApplySettings();
 		printf("wtf lol");
 	}
 	catch (Exception::CannotApplySettings& ex)
@@ -116,8 +114,7 @@ bool ApplyStateStruct::ApplyPage(int pageid)
 		DocsFolderMode = oldDocsMode;
 		SettingsFolder = oldSettingsFolder;
 		UseDefaultSettingsFolder = oldUseDefSet;
-		//*g_Conf = confcopy;
-
+		// TODO - config - removed a re-assignment on g_Conf because....no!?...but maybe yes?
 		throw;
 	}
 

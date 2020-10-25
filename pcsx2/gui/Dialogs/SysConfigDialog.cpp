@@ -202,7 +202,7 @@ void Dialogs::SysConfigDialog::Apply()
 void Dialogs::SysConfigDialog::Cancel()
 {
 	if (GetMainFramePtr())
-		GetMainFramePtr()->ApplyConfigToGui(*g_Conf, GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE);
+		GetMainFramePtr()->ApplyConfigToGui(GuiConfig::APPLY_FLAG_FROM_PRESET | GuiConfig::APPLY_FLAG_MANUALLY_PROPAGATE);
 }
 
 Dialogs::SysConfigDialog::SysConfigDialog(wxWindow* parent)

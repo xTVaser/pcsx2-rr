@@ -252,13 +252,10 @@ Panels::SpeedHacksPanel::SpeedHacksPanel(wxWindow* parent)
 }
 
 // Doesn't modify values - only locks(gray out)/unlocks as necessary.
-void Panels::SpeedHacksPanel::EnableStuff(GuiConfig* configToUse)
+void Panels::SpeedHacksPanel::EnableStuff()
 {
-	if (!configToUse)
-		configToUse = g_Conf.get();
-
-	bool hasPreset = configToUse->EnablePresets;
-	bool hacksEnabled = configToUse->EnableSpeedHacks;
+	bool hasPreset = g_Conf->gui->EnablePresets;
+	bool hacksEnabled = g_Conf->gui->EnableSpeedHacks;
 	bool HacksEnabledAndNoPreset = hacksEnabled && !hasPreset;
 
 	// Main checkbox and Restore-defaults - locked only if presets are enabled
@@ -277,7 +274,7 @@ void Panels::SpeedHacksPanel::EnableStuff(GuiConfig* configToUse)
 	m_check_fastCDVD->Enable(HacksEnabledAndNoPreset);
 
 	// Grayout MTVU on safest preset
-	m_check_vuThread->Enable(hacksEnabled && (!hasPreset || configToUse->PresetIndex != 0));
+	m_check_vuThread->Enable(hacksEnabled && (!hasPreset || g_Conf->gui->PresetIndex != 0));
 
 	// Layout necessary to ensure changed slider text gets re-aligned properly
 	// and to properly gray/ungray pxStaticText stuff (I suspect it causes a
@@ -288,15 +285,15 @@ void Panels::SpeedHacksPanel::EnableStuff(GuiConfig* configToUse)
 void Panels::SpeedHacksPanel::AppStatusEvent_OnSettingsApplied()
 {
 	//Console.WriteLn("SpeedHacksPanel::AppStatusEvent_OnSettingsApplied()");
-	ApplyConfigToGui(*g_Conf);
+	ApplyConfigToGui();
 }
 
-void Panels::SpeedHacksPanel::ApplyConfigToGui(GuiConfig& configToApply, int flags)
+void Panels::SpeedHacksPanel::ApplyConfigToGui(int flags)
 {
-	Pcsx2Config::SpeedhackOptions& opts = configToApply.EmuOptions.Speedhacks;
+	Pcsx2Config::SpeedhackOptions& opts = g_Conf->emulator->Speedhacks;
 
 	// First, set the values of the widgets (checked/unchecked etc).
-	m_check_Enable->SetValue(configToApply.EnableSpeedHacks);
+	m_check_Enable->SetValue(g_Conf->gui->EnableSpeedHacks);
 
 	m_slider_eeRate->SetValue(opts.EECycleRate);
 	m_slider_eeSkip->SetValue(opts.EECycleSkip);
@@ -312,7 +309,7 @@ void Panels::SpeedHacksPanel::ApplyConfigToGui(GuiConfig& configToApply, int fla
 
 
 	// Then, lock(gray out)/unlock the widgets as necessary.
-	EnableStuff(&configToApply);
+	EnableStuff();
 
 	//Console.WriteLn("SpeedHacksPanel::ApplyConfigToGui: EnabledPresets: %s", configToApply.EnablePresets?"true":"false");
 }

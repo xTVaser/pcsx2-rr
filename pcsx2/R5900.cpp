@@ -103,7 +103,7 @@ void cpuReset()
 
 	g_GameStarted = false;
 	g_GameLoading = false;
-	g_SkipBiosHack = EmuConfig.UseBOOT2Injection;
+	g_SkipBiosHack = g_Conf->emulator->UseBOOT2Injection;
 
 	ElfCRC = 0;
 	DiscSerial = L"";

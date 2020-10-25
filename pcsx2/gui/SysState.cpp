@@ -686,7 +686,7 @@ void StateCopy_SaveToSlot(uint num)
 	const wxString file(SaveStateBase::GetFilename(num));
 
 	// Backup old Savestate if one exists.
-	if (wxFileExists(file) && EmuConfig.BackupSavestate)
+	if (wxFileExists(file) && g_Conf->emulator->BackupSavestate)
 	{
 		const wxString copy(SaveStateBase::GetFilename(num) + pxsFmt(L".backup"));
 

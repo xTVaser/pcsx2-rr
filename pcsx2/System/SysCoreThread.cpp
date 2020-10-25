@@ -200,7 +200,7 @@ void SysCoreThread::_reset_stuff_as_needed()
 	{
 		SysClearExecutionCache();
 		memBindConditionalHandlers();
-		SetCPUState(EmuConfig.Cpu.sseMXCSR, EmuConfig.Cpu.sseVUMXCSR);
+		SetCPUState(g_Conf->emulator->Cpu.sseMXCSR, g_Conf->emulator->Cpu.sseVUMXCSR);
 
 		m_resetRecompilers = false;
 		m_resetProfilers = false;
@@ -257,7 +257,7 @@ void SysCoreThread::GameStartingInThread()
 #ifdef USE_SAVESLOT_UI_UPDATES
 	UI_UpdateSysControls();
 #endif
-	if (EmuConfig.EnableIPC && m_IpcState == OFF)
+	if (g_Conf->emulator->EnableIPC && m_IpcState == OFF)
 	{
 		m_IpcState = ON;
 		m_socketIpc = std::make_unique<SocketIPC>(this);

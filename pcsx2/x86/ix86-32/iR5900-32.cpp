@@ -875,7 +875,7 @@ void SetBranchReg( u32 reg )
 		_allocX86reg(calleeSavedReg2d, X86TYPE_PCWRITEBACK, 0, MODE_WRITE);
 		_eeMoveGPRtoR(calleeSavedReg2d, reg);
 
-		if (EmuConfig.Gamefixes.GoemonTlbHack) {
+		if (g_Conf->emulator->Gamefixes.GoemonTlbHack) {
 			xMOV(ecx, calleeSavedReg2d);
 			vtlb_DynV2P();
 			xMOV(calleeSavedReg2d, eax);
@@ -980,7 +980,7 @@ void iFlushCall(int flushtype)
 static u32 scaleblockcycles_calculation()
 {
 	bool lowcycles = (s_nBlockCycles <= 40);
-	s8 cyclerate = EmuConfig.Speedhacks.EECycleRate;
+	s8 cyclerate = g_Conf->emulator->Speedhacks.EECycleRate;
 	u32 scale_cycles = 0;
 
 	if (cyclerate == 0 || lowcycles || cyclerate < -99 || cyclerate > 3)
@@ -1070,7 +1070,7 @@ static void iBranchTest(u32 newpc)
 	//    cpuRegs.cycle += blockcycles;
 	//    if( cpuRegs.cycle > g_nextEventCycle ) { DoEvents(); }
 
-	if (EmuConfig.Speedhacks.WaitLoop && s_nBlockFF && newpc == s_branchTo)
+	if (g_Conf->emulator->Speedhacks.WaitLoop && s_nBlockFF && newpc == s_branchTo)
 	{
 		xMOV(eax, ptr32[&g_nextEventCycle]);
 		xADD(ptr32[&cpuRegs.cycle], scaleblockcycles());
@@ -1647,7 +1647,7 @@ bool skipMPEG_By_Pattern(u32 sPC) {
 void LoadAllPatchesAndStuff(const Pcsx2Config&);
 void doPlace0Patches()
 {
-    LoadAllPatchesAndStuff(EmuConfig);
+    LoadAllPatchesAndStuff(*g_Conf->emulator);
     ApplyLoadedPatches(PPT_ONCE_ON_LOAD);
 }
 
@@ -1753,7 +1753,7 @@ static void __fastcall recRecompile( const u32 startpc )
 	_initX86regs();
 	_initXMMregs();
 
-	if( EmuConfig.Cpu.Recompiler.PreBlockCheckEE )
+	if( g_Conf->emulator->Cpu.Recompiler.PreBlockCheckEE )
 	{
 		// per-block dump checks, for debugging purposes.
 		// [TODO] : These must be enabled from the GUI or INI to be used, otherwise the
@@ -1762,7 +1762,7 @@ static void __fastcall recRecompile( const u32 startpc )
 		xFastCall((void*)PreBlockCheck, pc);
 	}
 
-	if (EmuConfig.Gamefixes.GoemonTlbHack) {
+	if (g_Conf->emulator->Gamefixes.GoemonTlbHack) {
 		if (pc == 0x33ad48 || pc == 0x35060c) {
 			// 0x33ad48 and 0x35060c are the return address of the function (0x356250) that populate the TLB cache
 			xFastCall((void*)GoemonPreloadTlb);

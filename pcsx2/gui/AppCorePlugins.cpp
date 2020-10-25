@@ -369,7 +369,7 @@ bool AppCorePlugins::OpenPlugin_GS()
 
 	bool retval = _parent::OpenPlugin_GS();
 
-	GSsetVsync(EmuConfig.GS.GetVsync());
+	GSsetVsync(g_Conf->emulator->GS.GetVsync());
 
 	return retval;
 }

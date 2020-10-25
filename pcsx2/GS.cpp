@@ -371,7 +371,7 @@ __fi void gsFrameSkip()
 	static int consec_drawn = 0;
 	static bool isSkipping = false;
 
-	if (!EmuConfig.GS.FrameSkipEnable)
+	if (!g_Conf->emulator->GS.FrameSkipEnable)
 	{
 		if (isSkipping)
 		{
@@ -388,7 +388,7 @@ __fi void gsFrameSkip()
 	if (isSkipping)
 	{
 		++consec_skipped;
-		if (consec_skipped >= EmuConfig.GS.FramesToSkip)
+		if (consec_skipped >= g_Conf->emulator->GS.FramesToSkip)
 		{
 			consec_skipped = 0;
 			isSkipping = false;
@@ -397,7 +397,7 @@ __fi void gsFrameSkip()
 	else
 	{
 		++consec_drawn;
-		if (consec_drawn >= EmuConfig.GS.FramesToDraw)
+		if (consec_drawn >= g_Conf->emulator->GS.FramesToDraw)
 		{
 			consec_drawn = 0;
 			isSkipping = true;

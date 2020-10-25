@@ -52,7 +52,7 @@ void recJ()
 	// SET_FPUSTATE;
 	u32 newpc = (_Target_ << 2) + ( pc & 0xf0000000 );
 	recompileNextInstruction(1);
-	if (EmuConfig.Gamefixes.GoemonTlbHack)
+	if (g_Conf->emulator->Gamefixes.GoemonTlbHack)
 		SetBranchImm(vtlb_V2P(newpc));
 	else
 		SetBranchImm(newpc);
@@ -78,7 +78,7 @@ void recJAL()
 	}
 
 	recompileNextInstruction(1);
-	if (EmuConfig.Gamefixes.GoemonTlbHack)
+	if (g_Conf->emulator->Gamefixes.GoemonTlbHack)
 		SetBranchImm(vtlb_V2P(newpc));
 	else
 		SetBranchImm(newpc);
@@ -106,7 +106,7 @@ void recJALR()
 	_allocX86reg(calleeSavedReg2d, X86TYPE_PCWRITEBACK, 0, MODE_WRITE);
 	_eeMoveGPRtoR(calleeSavedReg2d, _Rs_);
 
-	if (EmuConfig.Gamefixes.GoemonTlbHack) {
+	if (g_Conf->emulator->Gamefixes.GoemonTlbHack) {
 		xMOV(ecx, calleeSavedReg2d);
 		vtlb_DynV2P();
 		xMOV(calleeSavedReg2d, eax);

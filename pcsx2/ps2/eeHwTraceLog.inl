@@ -266,7 +266,7 @@ template< typename T>
 static __ri void eeHwTraceLog( u32 addr, T val, bool mode )
 {
 	if (!IsDevBuild) return;
-	if (!g_Conf->emulator->Trace.Enabled || !g_Conf->emulator->Trace.EE.m_EnableAll || !g_Conf->emulator->Trace.EE.m_EnableRegisters) return;
+	if (!g_Conf->emulator->Trace.EnableTraceLogFilters || !g_Conf->emulator->Trace.EE.m_EnableAll || !g_Conf->emulator->Trace.EE.m_EnableRegisters) return;
 	if (!_eelog_enabled(addr)) return;
 
 	FastFormatAscii valStr;
