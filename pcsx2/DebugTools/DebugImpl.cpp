@@ -1,7 +1,7 @@
 
 #include "PrecompiledHeader.h"
 
-#include "Debug.h"
+#include "debug/debug.h"
 
 bool SysTraceLog_EE_Disasm::IsActive() const
 {

@@ -287,6 +287,7 @@ set(pcsx2SPU2Headers
 
 # DebugTools sources
 set(pcsx2DebugToolsSources
+	DebugTools/DebugImpl.cpp
 	DebugTools/DebugInterface.cpp
 	DebugTools/DisassemblyManager.cpp
 	DebugTools/ExpressionParser.cpp

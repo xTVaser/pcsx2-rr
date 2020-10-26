@@ -42,7 +42,8 @@ set(UtilitiesSources
 	ThreadTools.cpp
 	wxAppWithHelpers.cpp
 	wxGuiTools.cpp
-	wxHelpers.cpp
+	wxHelpers.cpp	
+	YamlFile.cpp
 	)
 
 # variable with all headers of this library
@@ -80,6 +81,7 @@ set(UtilitiesHeaders
 	../../include/Utilities/wxAppWithHelpers.h
 	../../include/Utilities/wxBaseTools.h
 	../../include/Utilities/wxGuiTools.h
+	../../include/Utilities/YamlFile.h
 	PrecompiledHeader.h
 	ThreadingInternal.h
 )
