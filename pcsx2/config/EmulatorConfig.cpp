@@ -657,6 +657,10 @@ void Pcsx2Config::RecompilerOptions::load(std::shared_ptr<YamlFile> configSectio
 	EnableVU0 = configSection->getBool("EnableVU0", true);
 	EnableVU1 = configSection->getBool("EnableVU1", true);
 
+	// TODO - config - confirm with master on these, seemed to be missing!
+	UseMicroVU0 = configSection->getBool("UseMicroVU0", true);
+	UseMicroVU1 = configSection->getBool("UseMicroVU1", true);
+
 	vuOverflow = configSection->getBool("vuOverflow", true);
 	vuExtraOverflow = configSection->getBool("vuExtraOverflow", false);
 	vuSignOverflow = configSection->getBool("vuSignOverflow", false);
@@ -736,41 +740,37 @@ bool Pcsx2Config::MultitapEnabled(uint port) const
 // TODO - config - bool for success?
 bool Pcsx2Config::load()
 {
-	// TODO - construct the right path
-	if (config->loadFromFile(fmt::format("{}.{}", GetVmSettingsFilename().string(), config->fileExtension())))
-	{
-		std::shared_ptr<YamlFile> coreCfg = config->getSection("Core");
-		CdvdVerboseReads = coreCfg->getBool("CdvdVerboseReads");
-		CdvdDumpBlocks = coreCfg->getBool("CdvdDumpBlocks");
-		CdvdShareWrite = coreCfg->getBool("CdvdShareWrite");
-		EnablePatches = coreCfg->getBool("EnablePatches", true);
-		EnableCheats = coreCfg->getBool("EnableCheats");
-		EnableWideScreenPatches = coreCfg->getBool("EnableWideScreenPatches");
+	config->loadFromFile(fmt::format("{}.{}", GetVmSettingsFilename().string(), config->fileExtension()));
+	std::shared_ptr<YamlFile> coreCfg = config->getSection("Core");
+	CdvdVerboseReads = coreCfg->getBool("CdvdVerboseReads");
+	CdvdDumpBlocks = coreCfg->getBool("CdvdDumpBlocks");
+	CdvdShareWrite = coreCfg->getBool("CdvdShareWrite");
+	EnablePatches = coreCfg->getBool("EnablePatches", true);
+	EnableCheats = coreCfg->getBool("EnableCheats");
+	EnableWideScreenPatches = coreCfg->getBool("EnableWideScreenPatches");
 #ifndef DISABLE_RECORDING
-		EnableRecordingTools = coreCfg->getBool("EnableRecordingTools");
+	EnableRecordingTools = coreCfg->getBool("EnableRecordingTools");
 #endif
-		ConsoleToStdio = coreCfg->getBool("ConsoleToStdio");
-		HostFs = coreCfg->getBool("HostFs");
-		BackupSavestate = coreCfg->getBool("BackupSavestate", true);
-		McdEnableEjection = coreCfg->getBool("McdEnableEjection", true);
-		McdFolderAutoManage = coreCfg->getBool("McdFolderAutoManage", true);
-		MultitapPort0_Enabled = coreCfg->getBool("MultitapPort0_Enabled");
-		MultitapPort1_Enabled = coreCfg->getBool("MultitapPort1_Enabled");
+	EnableIPC = coreCfg->getBool("EnableIPC");
+	ConsoleToStdio = coreCfg->getBool("ConsoleToStdio");
+	HostFs = coreCfg->getBool("HostFs");
+	BackupSavestate = coreCfg->getBool("BackupSavestate", true);
+	McdEnableEjection = coreCfg->getBool("McdEnableEjection", true);
+	McdFolderAutoManage = coreCfg->getBool("McdFolderAutoManage", true);
+	MultitapPort0_Enabled = coreCfg->getBool("MultitapPort0_Enabled");
+	MultitapPort1_Enabled = coreCfg->getBool("MultitapPort1_Enabled");
 
-		Recompiler.load(config->getSection("Recompiler"));
-		Speedhacks.load(config->getSection("SpeedHacks"));
-		Gamefixes.load(config->getSection("GameFixes"));
-		Profiler.load(config->getSection("Profiler"));
-		Debugger.load(config->getSection("Debugger"));
-		Cpu.load(config->getSection("Cpu"));
-		Trace.load(config->getSection("Trace"));
-		GS.load(config->getSection("GS"));
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	Recompiler.load(config->getSection("Recompiler"));
+	Speedhacks.load(config->getSection("SpeedHacks"));
+	Gamefixes.load(config->getSection("GameFixes"));
+	Profiler.load(config->getSection("Profiler"));
+	Debugger.load(config->getSection("Debugger"));
+	Cpu.load(config->getSection("Cpu"));
+	Trace.load(config->getSection("Trace"));
+	GS.load(config->getSection("GS"));
+
+	// TODO - maybe void is fine
+	return true;
 }
 
 // TODO - config - this isn't called anywhere! where did it used to get callled!

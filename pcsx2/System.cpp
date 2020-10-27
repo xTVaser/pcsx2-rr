@@ -148,16 +148,13 @@ void SysOutOfMemory_EmergencyResponse(uptr blocksize)
 
 #include "svnrev.h"
 
-// TODO - config - why is the emu config defined a second time?
-const Pcsx2Config EmuConfig;
-
 // Provides an accessor for quick modification of GS options.  All GS options are allowed to be
 // changed "on the fly" by the *main/gui thread only*.
 Pcsx2Config::GSOptions& SetGSConfig()
 {
 	//DbgCon.WriteLn( "Direct modification of EmuConfig.GS detected" );
 	AffinityAssert_AllowFrom_MainUI();
-	return const_cast<Pcsx2Config::GSOptions&>(EmuConfig.GS);
+	return const_cast<Pcsx2Config::GSOptions&>(g_Conf->emulator->GS);
 }
 
 // Provides an accessor for quick modification of Recompiler options.
@@ -166,7 +163,7 @@ Pcsx2Config::RecompilerOptions& SetRecompilerConfig()
 {
 	//DbgCon.WriteLn( "Direct modification of EmuConfig.Gamefixes detected" );
 	AffinityAssert_AllowFrom_MainUI();
-	return const_cast<Pcsx2Config::RecompilerOptions&>(EmuConfig.Cpu.Recompiler);
+	return const_cast<Pcsx2Config::RecompilerOptions&>(g_Conf->emulator->Cpu.Recompiler);
 }
 
 // Provides an accessor for quick modification of Gamefix options.
@@ -175,14 +172,14 @@ Pcsx2Config::GamefixOptions& SetGameFixConfig()
 {
 	//DbgCon.WriteLn( "Direct modification of EmuConfig.Gamefixes detected" );
 	AffinityAssert_AllowFrom_MainUI();
-	return const_cast<Pcsx2Config::GamefixOptions&>(EmuConfig.Gamefixes);
+	return const_cast<Pcsx2Config::GamefixOptions&>(g_Conf->emulator->Gamefixes);
 }
 
 Pcsx2Config::TraceLogFilters& SetTraceConfig()
 {
 	//DbgCon.WriteLn( "Direct modification of EmuConfig.TraceLog detected" );
 	AffinityAssert_AllowFrom_MainUI();
-	return const_cast<Pcsx2Config::TraceLogFilters&>(EmuConfig.Trace);
+	return const_cast<Pcsx2Config::TraceLogFilters&>(g_Conf->emulator->Trace);
 }
 
 
@@ -585,10 +582,10 @@ void SysCpuProviderPack::ApplyConfig() const
 	CpuVU0 = CpuProviders->interpVU0;
 	CpuVU1 = CpuProviders->interpVU1;
 
-	if( EmuConfig.Cpu.Recompiler.EnableVU0 )
+	if( g_Conf->emulator->Cpu.Recompiler.EnableVU0 )
 		CpuVU0 = (BaseVUmicroCPU*)CpuProviders->microVU0;
 
-	if( EmuConfig.Cpu.Recompiler.EnableVU1 )
+	if( g_Conf->emulator->Cpu.Recompiler.EnableVU1 )
 		CpuVU1 = (BaseVUmicroCPU*)CpuProviders->microVU1;
 }
 

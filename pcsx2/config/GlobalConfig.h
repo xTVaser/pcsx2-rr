@@ -6,11 +6,10 @@
 class GlobalConfig
 {
 public:
-	GuiConfig* gui;
-	Pcsx2Config* emulator;
+	std::unique_ptr<GuiConfig> gui;
+	std::unique_ptr<Pcsx2Config> emulator;
 
 	GlobalConfig();
-	~GlobalConfig();
 };
 
 extern std::unique_ptr<GlobalConfig> g_Conf;

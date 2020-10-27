@@ -85,10 +85,10 @@ struct Pcsx2Config
 	{
 		struct TraceFilters
 		{
-			bool m_EnableAll, // Master Enable switch (if false, no logs at all)
-				m_EnableDisasm,
-				m_EnableRegisters,
-				m_EnableEvents; // Enables logging of event-driven activity -- counters, DMAs, etc.
+			bool m_EnableAll = false, // Master Enable switch (if false, no logs at all)
+				 m_EnableDisasm = false,
+				 m_EnableRegisters = false,
+				 m_EnableEvents = false; // Enables logging of event-driven activity -- counters, DMAs, etc.
 
 			void load(std::shared_ptr<YamlFile> configSection);
 			std::shared_ptr<YamlFile> save();
@@ -103,7 +103,7 @@ struct Pcsx2Config
 		// *very* high volume, and debug builds get noticably slower if they have to invoke
 		// methods/accessors to test the log enable bits.  Debug builds are slow enough already,
 		// so I prefer this to help keep them usable.
-		bool EnableTraceLogFilters;
+		bool EnableTraceLogFilters = false;
 
 		TraceFilters EE;
 		TraceFilters IOP;
@@ -118,11 +118,11 @@ struct Pcsx2Config
 	struct ProfilerOptions
 	{
 		bool
-			EnableProfiler, // universal toggle for the profiler.
-			RecBlocks_EE,   // Enables per-block profiling for the EE recompiler [unimplemented]
-			RecBlocks_IOP,  // Enables per-block profiling for the IOP recompiler [unimplemented]
-			RecBlocks_VU0,  // Enables per-block profiling for the VU0 recompiler [unimplemented]
-			RecBlocks_VU1;  // Enables per-block profiling for the VU1 recompiler [unimplemented]
+			EnableProfiler = false, // universal toggle for the profiler.
+			RecBlocks_EE = false,   // Enables per-block profiling for the EE recompiler [unimplemented]
+			RecBlocks_IOP = false,  // Enables per-block profiling for the IOP recompiler [unimplemented]
+			RecBlocks_VU0 = false,  // Enables per-block profiling for the VU0 recompiler [unimplemented]
+			RecBlocks_VU1 = false;  // Enables per-block profiling for the VU1 recompiler [unimplemented]
 
 		void load(std::shared_ptr<YamlFile> configSection);
 		std::shared_ptr<YamlFile> save();
@@ -135,32 +135,32 @@ struct Pcsx2Config
 	struct RecompilerOptions
 	{
 		bool
-			EnableEE,
-			EnableIOP,
-			EnableVU0,
-			EnableVU1;
+			EnableEE = true,
+			EnableIOP = true,
+			EnableVU0 = false,
+			EnableVU1 = true;
 
 		bool
-			UseMicroVU0,
-			UseMicroVU1;
+			UseMicroVU0 = true,
+			UseMicroVU1 = true;
 
 		bool
-			vuOverflow,
-			vuExtraOverflow,
-			vuSignOverflow,
-			vuUnderflow;
+			vuOverflow = true,
+			vuExtraOverflow = false,
+			vuSignOverflow = false,
+			vuUnderflow = false;
 
 		bool
-			fpuOverflow,
-			fpuExtraOverflow,
-			fpuFullMode;
+			fpuOverflow = true,
+			fpuExtraOverflow = false,
+			fpuFullMode = false;
 
 		bool
-			StackFrameChecks,
-			PreBlockCheckEE,
-			PreBlockCheckIOP;
+			StackFrameChecks = false,
+			PreBlockCheckEE = false,
+			PreBlockCheckIOP = false;
 		bool
-			EnableEECache;
+			EnableEECache = false;
 
 		RecompilerOptions();
 		void ApplySanityCheck();
@@ -198,20 +198,20 @@ struct Pcsx2Config
 	{
 		// forces the MTGS to execute tags/tasks in fully blocking/synchronous
 		// style.  Useful for debugging potential bugs in the MTGS pipeline.
-		bool SynchronousMTGS;
+		bool SynchronousMTGS = false;
 
-		int VsyncQueueSize;
+		int VsyncQueueSize = 2;
 
-		bool FrameLimitEnable;
-		bool FrameSkipEnable;
-		VsyncMode VsyncEnable;
+		bool FrameLimitEnable = true;
+		bool FrameSkipEnable = false;
+		VsyncMode VsyncEnable = VsyncMode::Off;
 
-		int FramesToDraw; // number of consecutive frames (fields) to render
-		int FramesToSkip; // number of consecutive frames (fields) to skip
+		int FramesToDraw = 2; // number of consecutive frames (fields) to render
+		int FramesToSkip = 2; // number of consecutive frames (fields) to skip
 
-		float LimitScalar;
-		float FramerateNTSC;
-		float FrameratePAL;
+		float LimitScalar = 1.0;
+		float FramerateNTSC = 59.94;
+		float FrameratePAL = 50.0;
 
 		GSOptions();
 
@@ -229,24 +229,24 @@ struct Pcsx2Config
 	struct GamefixOptions
 	{
 		bool
-			VuAddSubHack,           // Tri-ace games, they use an encryption algorithm that requires VU ADDI opcode to be bit-accurate.
-			FpuCompareHack,         // Digimon Rumble Arena 2, fixes spinning/hanging on intro-menu.
-			FpuMulHack,             // Tales of Destiny hangs.
-			FpuNegDivHack,          // Gundam games messed up camera-view.
-			XgKickHack,             // Erementar Gerad, adds more delay to VU XGkick instructions. Corrects the color of some graphics, but breaks Tri-ace games and others.
-			IPUWaitHack,            // FFX FMV, makes GIF flush before doing IPU work. Fixes bad graphics overlay.
-			EETimingHack,           // General purpose timing hack.
-			SkipMPEGHack,           // Skips MPEG videos (Katamari and other games need this)
-			OPHFlagHack,            // Bleach Blade Battlers
-			DMABusyHack,            // Denies writes to the DMAC when it's busy. This is correct behaviour but bad timing can cause problems.
-			VIFFIFOHack,            // Pretends to fill the non-existant VIF FIFO Buffer.
-			VIF1StallHack,          // Like above, processes FIFO data before the stall is allowed (to make sure data goes over).
-			GIFFIFOHack,            // Enabled the GIF FIFO (more correct but slower)
-			FMVinSoftwareHack,      // Toggle in and out of software rendering when an FMV runs.
-			GoemonTlbHack,          // Gomeon tlb miss hack. The game need to access unmapped virtual address. Instead to handle it as exception, tlb are preloaded at startup
-			ScarfaceIbit,           // Scarface I bit hack. Needed to stop constant VU recompilation
-			CrashTagTeamRacingIbit, // Crash Tag Team Racing I bit hack. Needed to stop constant VU recompilation
-			VU0KickstartHack;       // Speed up VU0 at start of program to avoid some VU1 sync issues
+			VuAddSubHack = false,           // Tri-ace games, they use an encryption algorithm that requires VU ADDI opcode to be bit-accurate.
+			FpuCompareHack = false,         // Digimon Rumble Arena 2, fixes spinning/hanging on intro-menu.
+			FpuMulHack = false,             // Tales of Destiny hangs.
+			FpuNegDivHack = false,          // Gundam games messed up camera-view.
+			XgKickHack = false,             // Erementar Gerad, adds more delay to VU XGkick instructions. Corrects the color of some graphics, but breaks Tri-ace games and others.
+			IPUWaitHack = false,            // FFX FMV, makes GIF flush before doing IPU work. Fixes bad graphics overlay.
+			EETimingHack = false,           // General purpose timing hack.
+			SkipMPEGHack = false,           // Skips MPEG videos (Katamari and other games need this)
+			OPHFlagHack = false,            // Bleach Blade Battlers
+			DMABusyHack = false,            // Denies writes to the DMAC when it's busy. This is correct behaviour but bad timing can cause problems.
+			VIFFIFOHack = false,            // Pretends to fill the non-existant VIF FIFO Buffer.
+			VIF1StallHack = false,          // Like above, processes FIFO data before the stall is allowed (to make sure data goes over).
+			GIFFIFOHack = false,            // Enabled the GIF FIFO (more correct but slower)
+			FMVinSoftwareHack = false,      // Toggle in and out of software rendering when an FMV runs.
+			GoemonTlbHack = false,          // Gomeon tlb miss hack. The game need to access unmapped virtual address. Instead to handle it as exception, tlb are preloaded at startup
+			ScarfaceIbit = false,           // Scarface I bit hack. Needed to stop constant VU recompilation
+			CrashTagTeamRacingIbit = false, // Crash Tag Team Racing I bit hack. Needed to stop constant VU recompilation
+			VU0KickstartHack = false;       // Speed up VU0 at start of program to avoid some VU1 sync issues
 		GamefixOptions();
 
 		void load(std::shared_ptr<YamlFile> configSection);
@@ -269,14 +269,14 @@ struct Pcsx2Config
 	struct SpeedhackOptions
 	{
 		bool
-			fastCDVD,   // enables fast CDVD access
-			IntcStat,   // tells Pcsx2 to fast-forward through intc_stat waits.
-			WaitLoop,   // enables constant loop detection and fast-forwarding
-			vuFlagHack, // microVU specific flag hack
-			vuThread;   // Enable Threaded VU1
+			fastCDVD = false,  // enables fast CDVD access
+			IntcStat = false,  // tells Pcsx2 to fast-forward through intc_stat waits.
+			WaitLoop = true,   // enables constant loop detection and fast-forwarding
+			vuFlagHack = true, // microVU specific flag hack
+			vuThread = true;   // Enable Threaded VU1
 
-		s8 EECycleRate; // EE cycle rate selector (1.0, 1.5, 2.0)
-		u8 EECycleSkip; // EE Cycle skip factor (0, 1, 2, or 3)
+		s8 EECycleRate = 0; // EE cycle rate selector (1.0, 1.5, 2.0)
+		u8 EECycleSkip = 0; // EE Cycle skip factor (0, 1, 2, or 3)
 
 		SpeedhackOptions();
 
@@ -291,14 +291,14 @@ struct Pcsx2Config
 
 	struct DebugOptions
 	{
-		bool ShowDebuggerOnStart;
-		bool AlignMemoryWindowStart;
+		bool ShowDebuggerOnStart = false;
+		bool AlignMemoryWindowStart = true;
 
-		u8 FontWidth;
-		u8 FontHeight;
-		u32 WindowWidth;
-		u32 WindowHeight;
-		u32 MemoryViewBytesPerRow;
+		u8 FontWidth = 8;
+		u8 FontHeight = 12;
+		u32 WindowWidth = 0;
+		u32 WindowHeight = 0;
+		u32 MemoryViewBytesPerRow = 16;
 
 		DebugOptions();
 
@@ -314,27 +314,30 @@ private:
 
 public:
 	bool
-		CdvdVerboseReads, // enables cdvd read activity verbosely dumped to the console
-		CdvdDumpBlocks,   // enables cdvd block dumping
-		CdvdShareWrite,   // allows the iso to be modified while it's loaded
-		EnablePatches,    // enables patch detection and application
-		EnableCheats,     // enables cheat detection and application
-		EnableWideScreenPatches,
+		CdvdVerboseReads = false, // enables cdvd read activity verbosely dumped to the console
+		CdvdDumpBlocks = false,   // enables cdvd block dumping
+		CdvdShareWrite = false,   // allows the iso to be modified while it's loaded
+		EnablePatches = true,     // enables patch detection and application
+		EnableCheats = false,     // enables cheat detection and application
+		EnableWideScreenPatches = false,
 #ifndef DISABLE_RECORDING
-		EnableRecordingTools,
+		EnableRecordingTools = false,
 #endif
+		EnableIPC = false,
 		// when enabled uses BOOT2 injection, skipping sony bios splashes
-		UseBOOT2Injection,
-		BackupSavestate,
+		UseBOOT2Injection = false,
+		BackupSavestate = true,
 		// enables simulated ejection of memory cards when loading savestates
-		McdEnableEjection,
-		McdFolderAutoManage,
+		McdEnableEjection = true,
+		McdFolderAutoManage = true,
 
-		MultitapPort0_Enabled,
-		MultitapPort1_Enabled,
+		MultitapPort0_Enabled = false,
+		MultitapPort1_Enabled = false,
 
-		ConsoleToStdio,
-		HostFs;
+		ConsoleToStdio = false,
+		HostFs = false;
+
+	fs::path BiosFilename;
 
 	CpuOptions Cpu;
 	GSOptions GS;
@@ -342,16 +345,10 @@ public:
 	GamefixOptions Gamefixes;
 	ProfilerOptions Profiler;
 	DebugOptions Debugger;
-
 	RecompilerOptions Recompiler;
-
 	TraceLogFilters Trace;
 
-	fs::path BiosFilename;
-
 	Pcsx2Config();
-
-	bool EnableIPC;
 
 	bool load();
 	void save();
