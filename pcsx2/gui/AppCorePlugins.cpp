@@ -89,7 +89,7 @@ static void PostPluginStatus(PluginEventType pevt)
 static void ConvertPluginFilenames(wxString (&passins)[PluginId_Count])
 {
 	ForPlugins([&](const PluginInfo* pi) {
-		passins[pi->id] = wxGetApp().Overrides.Filenames[pi->id];
+		passins[pi->id] = wxGetApp().Overrides.Filenames.Plugins[pi->id];
 
 		if (passins[pi->id].IsEmpty() || !wxFileExists(passins[pi->id]))
 			passins[pi->id] = g_Conf->gui->FullpathTo(pi->id);

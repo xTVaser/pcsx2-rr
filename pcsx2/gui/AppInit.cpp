@@ -320,11 +320,9 @@ bool Pcsx2App::ParseOverrides(wxCmdLineParser& parser)
 			if (parsed)
 				Overrides.Filenames.Plugins[pi->id] = dest;
 		}
-
-		Overrides.Filenames.Plugins[pi->id] = dest;
 	});
 
-	return true;
+	return parsed;
 }
 
 bool Pcsx2App::OnCmdLineParsed(wxCmdLineParser& parser)
