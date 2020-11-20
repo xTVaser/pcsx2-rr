@@ -563,7 +563,7 @@ SCAJ-20111:
   name: "Crash Bandicoot 5"
   region: "NTSC-Unk"
   gameFixes:
-    - XgKickHack # Fixes bad Geometry.
+    - XGKickHack # Fixes bad Geometry.
     - VU0KickstartHack # Fixes loading hang.
 SCAJ-20112:
   name: "Tales of Rebirth"
@@ -773,7 +773,7 @@ SCAJ-20161:
   name: "Siren 2"
   region: "NTSC-J"
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
 SCAJ-20162:
   name: "Rogue Galaxy"
   region: "NTSC-Unk"
@@ -793,7 +793,7 @@ SCAJ-20167:
   name: "Siren 2"
   region: "NTSC-Ch-J"
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
 SCAJ-20168:
   name: "Rule of Rose"
   region: "NTSC-Unk"
@@ -1151,7 +1151,7 @@ SCES-50004:
   region: "PAL-M6"
   compat: 5
   gameFixes:
-    - XgKickHack
+    - XGKickHack
 SCES-50005:
   name: "Wipeout Fusion"
   region: "PAL-M5"
@@ -1443,12 +1443,12 @@ SCES-50934:
   region: "PAL-M7"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
 SCES-50935:
   name: "WRC II Extreme"
   region: "PAL-Unk"
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
 SCES-50956:
   name: "Ferrari F355 Challenge"
   region: "PAL-M5"
@@ -1490,7 +1490,7 @@ SCES-51004:
   name: "Formula One 2002"
   region: "PAL-M6"
   gameFixes:
-    - XgKickHack
+    - XGKickHack
 SCES-51039:
   name: "This is Football 2003"
   region: "PAL-M7"
@@ -1588,7 +1588,7 @@ SCES-51592:
   region: "PAL-M6"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
 SCES-51593:
   name: "Hardware Online Arena [Beta, Promo & Full Release]"
   region: "PAL-M4"
@@ -1658,7 +1658,7 @@ SCES-51684:
   region: "PAL-M8"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
 SCES-51685:
   name: "Primal"
   region: "PAL-E-R"
@@ -1791,7 +1791,7 @@ SCES-52389:
   region: "PAL-M8"
   compat: 1
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
   patches:
     default:
       content: |-
@@ -2029,7 +2029,7 @@ SCES-53247:
   region: "PAL-M8"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
 SCES-53285:
   name: "Ratchet - Gladiator"
   region: "PAL-M5"
@@ -2163,7 +2163,7 @@ SCES-53680:
   name: "WRC avec Sebastien Loeb"
   region: "PAL-M5"
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
   patches:
     79BAD675:
       content: |-
@@ -2183,7 +2183,7 @@ SCES-53851:
   region: "PAL-M5"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
   patches:
     default:
       content: |-
@@ -2786,7 +2786,7 @@ SCKA-20069:
   name: "Siren 2"
   region: "NTSC-K"
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
 SCKA-20070:
   name: "Ace Combat Zero - The Belkan War"
   region: "NTSC-K"
@@ -2840,7 +2840,7 @@ SCKA-20092:
   name: "K-1 World Grand Prix 2006"
   region: "NTSC-K"
   gameFixes:
-    - XgKickHack # Fixes grey fighters problem.
+    - XGKickHack # Fixes grey fighters problem.
 SCKA-20096:
   name: "Barnyard"
   region: "NTSC-K"
@@ -3110,7 +3110,7 @@ SCPS-15019:
   name: "Formula One 2001"
   region: "NTSC-J"
   gameFixes:
-    - XgKickHack
+    - XGKickHack
 SCPS-15020:
   name: "Legaia 2 - Duel Saga"
   region: "NTSC-J"
@@ -3155,7 +3155,7 @@ SCPS-15032:
   name: "Formula One 2002"
   region: "NTSC-J"
   gameFixes:
-    - XgKickHack
+    - XGKickHack
 SCPS-15033:
   name: "Dark Chronicle"
   region: "NTSC-J"
@@ -3471,7 +3471,7 @@ SCPS-15106:
   region: "NTSC-J"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
   patches:
     626552EB:
       content: |-
@@ -3522,7 +3522,7 @@ SCPS-15119:
   region: "NTSC-J"
   compat: 5
   gameFixes:
-    - OPHFLagHack # Special moves "Bankai" hang otherwise
+    - OPHFlagHack # Special moves "Bankai" hang otherwise
 SCPS-15120:
   name: "Ratchet & Clank 5 Gekitotsu! Dodeka Ginga no Mirimiri Gundan"
   region: "NTSC-J"
@@ -3809,7 +3809,7 @@ SCPS-19326:
   name: "Siren 2 [PlayStation 2 The Best]"
   region: "NTSC-J"
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
 SCPS-19327:
   name: "Ape Escape 3 [PlayStation 2 the Best - Reprint]"
   region: "NTSC-J"
@@ -4044,7 +4044,7 @@ SCPS-55047:
   name: "Formula One 2002"
   region: "NTSC-J"
   gameFixes:
-    - XgKickHack
+    - XGKickHack
 SCPS-55048:
   name: "Dark Chronicle"
   region: "NTSC-J"
@@ -4335,7 +4335,7 @@ SCUS-97150:
   region: "NTSC-U"
   compat: 5
   gameFixes:
-    - XgKickHack
+    - XGKickHack
 SCUS-97152:
   name: "Dark Cloud [Demo]"
   region: "NTSC-U"
@@ -6562,7 +6562,7 @@ SLES-50230:
   region: "PAL-M5"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
 SLES-50231:
   name: "International League Soccer"
   region: "PAL-M5"
@@ -7779,7 +7779,7 @@ SLES-50879:
   region: "PAL-M5"
   compat: 5
   gameFixes:
-    - FPUNegDivHack # Fixes sky being shown over the 3d.
+    - FpuNegDivHack # Fixes sky being shown over the 3d.
     - EETimingHack # Flickery videos without it.
 SLES-50880:
   name: "BMX XXX"
@@ -7905,7 +7905,7 @@ SLES-50958:
   name: "Warhammer 40,000 - Firewarrior"
   region: "PAL-M4"
   gameFixes:
-    - XgKickHack # Fixes corrupted graphics.
+    - XGKickHack # Fixes corrupted graphics.
 SLES-50963:
   name: "Riding Spirits"
   region: "PAL-M5"
@@ -8440,7 +8440,7 @@ SLES-51232:
   region: "PAL-M4"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes black models on certain games in World Tour.
+    - XGKickHack # Fixes black models on certain games in World Tour.
 SLES-51233:
   name: "DragonBall Z - Budokai"
   region: "PAL-M4"
@@ -8531,14 +8531,14 @@ SLES-51272:
   clampModes:
     vuClampMode: 3  # Fixes water rendering.
   gameFixes:
-    - XgKickHack # Fixes SPS while ingame.
+    - XGKickHack # Fixes SPS while ingame.
 SLES-51273:
   name: "Wakeboarding Unleashed"
   region: "PAL-F"
   clampModes:
     vuClampMode: 3  # Fixes water rendering.
   gameFixes:
-    - XgKickHack # Fixes SPS while ingame.
+    - XGKickHack # Fixes SPS while ingame.
 SLES-51275:
   name: "Summoner 2"
   region: "PAL-I"
@@ -8992,7 +8992,7 @@ SLES-51509:
   name: "World of Outlaws - Sprint Cars"
   region: "PAL-E"
   gameFixes:
-    - XgKickHack
+    - XGKickHack
 SLES-51510:
   name: "Dancing Stage Fever MegaMix"
   region: "PAL-M5"
@@ -9125,7 +9125,7 @@ SLES-51624:
   region: "PAL-E"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes missing blue lines on the characters in dark areas.
+    - XGKickHack # Fixes missing blue lines on the characters in dark areas.
 SLES-51625:
   name: "Ultimate Mindgames"
   region: "PAL-E"
@@ -10183,7 +10183,7 @@ SLES-52230:
   name: "Muppets Party Cruise"
   region: "PAL-E-F"
   gameFixes:
-    - OPHFLagHack # Fixes some hanging throughout the game.
+    - OPHFlagHack # Fixes some hanging throughout the game.
 SLES-52237:
   name: "dot Hack - Part 1 - Infection"
   region: "PAL-M5"
@@ -10872,7 +10872,7 @@ SLES-52568:
   region: "PAL-M5"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes bad Geometry.
+    - XGKickHack # Fixes bad Geometry.
     - VU0KickstartHack # Fixes loading hang.
 SLES-52569:
   name: "Spyro - A Hero's Tail"
@@ -12617,7 +12617,7 @@ SLES-53439:
   name: "Crash Tag Team Racing"
   region: "PAL-M6"
   gameFixes:
-    - CrashTagTeamRacingIbit # Fixes constant recompilation problems.
+    - CrashTagTeamRacingIbitHack # Fixes constant recompilation problems.
 SLES-53441:
   name: "Heroes of the Pacific"
   region: "PAL-M5"
@@ -14976,7 +14976,7 @@ SLES-54549:
   region: "PAL-M5"
   compat: 5
   gameFixes:
-    - FPUNegDivHack # Fixes black fade effects and some overlays texts in the menus.
+    - FpuNegDivHack # Fixes black fade effects and some overlays texts in the menus.
 SLES-54550:
   name: "White Van Racer"
   region: "PAL-E"
@@ -15034,7 +15034,7 @@ SLES-54569:
   region: "PAL-E"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes blank textures
+    - XGKickHack # Fixes blank textures
 SLES-54579:
   name: "Flintstones, The - Bedrock Racing"
   region: "PAL-PL-P"
@@ -15362,7 +15362,7 @@ SLES-54727:
   name: "Naruto - Uzumaki Chronicles"
   region: "PAL-M5"
   gameFixes:
-    - OPHFLagHack
+    - OPHFlagHack
 SLES-54728:
   name: "Mountain Bike Adrenaline featuring Salomon"
   region: "PAL-M5"
@@ -16146,7 +16146,7 @@ SLES-55090:
   name: "Naruto - Uzumaki Chronicles 2"
   region: "PAL-M5"
   gameFixes:
-    - OPHFLagHack
+    - OPHFlagHack
 SLES-55091:
   name: "Hoppie"
   region: "PAL-E"
@@ -17350,7 +17350,7 @@ SLKA-15007:
   region: "NTSC-K"
   compat: 5
   gameFixes:
-    - OPHFLagHack
+    - OPHFlagHack
 SLKA-15008:
   name: "Choro Q HG2"
   region: "NTSC-E-F-G"
@@ -17359,7 +17359,7 @@ SLKA-15021:
   region: "NTSC-K"
   compat: 5
   gameFixes:
-    - OPHFLagHack
+    - OPHFlagHack
 SLKA-15032:
   name: "Gradius V"
   region: "NTSC-K"
@@ -17841,7 +17841,7 @@ SLKA-25313:
   region: "NTSC-K"
   compat: 5
   gameFixes:
-    - OPHFLagHack
+    - OPHFlagHack
 SLKA-25314:
   name: "Kidou Senshi Gundam SEED: Rengou vs. Z.A.F.T."
   region: "NTSC-K"
@@ -17923,7 +17923,7 @@ SLKA-25366:
   region: "NTSC-K"
   compat: 5
   gameFixes:
-    - OPHFLagHack
+    - OPHFlagHack
 SLKA-25374:
   name: "FIFA Street 2"
   region: "NTSC-K"
@@ -18634,7 +18634,7 @@ SLPM-62203:
   name: "Dog of Bay"
   region: "NTSC-J"
   gameFixes:
-    - XgKickHack # Fixes corrupted textures.
+    - XGKickHack # Fixes corrupted textures.
 SLPM-62204:
   name: "LEGO Racers 2"
   region: "NTSC-J"
@@ -18722,7 +18722,7 @@ SLPM-62236:
   region: "NTSC-J"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes black models on certain games in World Tour.
+    - XGKickHack # Fixes black models on certain games in World Tour.
 SLPM-62237:
   name: "Gakuen Toshi Vara Noir [Limited Edition]"
   region: "NTSC-J"
@@ -18812,7 +18812,7 @@ SLPM-62271:
   name: "Simple 2000 Series Vol.20 - The Dungeon RPG"
   region: "NTSC-J"
   gameFixes:
-    - XgKickHack # Fixes missing blue lines on the characters in dark areas.
+    - XGKickHack # Fixes missing blue lines on the characters in dark areas.
 SLPM-62272:
   name: "Simple 2000 Series Vol.18 - The Party Sugoroku"
   region: "NTSC-J"
@@ -19719,7 +19719,7 @@ SLPM-62623:
   region: "NTSC-J"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes chocolate coloured characters.
+    - XGKickHack # Fixes chocolate coloured characters.
 SLPM-62624:
   name: "Indoor Helicopter Adventure 2"
   region: "NTSC-J"
@@ -21830,7 +21830,7 @@ SLPM-65583:
   region: "NTSC-J"
   compat: 4
   gameFixes:
-    - XgKickHack
+    - XGKickHack
   patches:
     C4467D30:
       content: |-
@@ -22517,7 +22517,7 @@ SLPM-65801:
   region: "NTSC-J"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes bad geometry.
+    - XGKickHack # Fixes bad geometry.
     - VU0KickstartHack # Fixes loading hang.
 SLPM-65802:
   name: "Def Jam - Vendetta [EA Best Hits]"
@@ -24117,7 +24117,7 @@ SLPM-66329:
   region: "NTSC-J"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes rendering problems.
+    - XGKickHack # Fixes rendering problems.
 SLPM-66330:
   name: "Tokimeki Memorial - Girl's Side - 2nd Kiss"
   region: "NTSC-J"
@@ -26678,7 +26678,7 @@ SLPS-20057:
   name: "Dog of Bay"
   region: "NTSC-J"
   gameFixes:
-    - XgKickHack # Fixes corrupted textures.
+    - XGKickHack # Fixes corrupted textures.
 SLPS-20058:
   name: "Kengo"
   region: "NTSC-J"
@@ -26808,7 +26808,7 @@ SLPS-20120:
   name: "Formula One 2001"
   region: "NTSC-J"
   gameFixes:
-    - XgKickHack
+    - XGKickHack
 SLPS-20121:
   name: "Kanon"
   region: "NTSC-J"
@@ -27328,7 +27328,7 @@ SLPS-20430:
   region: "NTSC-J"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes cell shade like effect.
+    - XGKickHack # Fixes cell shade like effect.
 SLPS-20431:
   name: "Simple 2000 Series Vol.86 - The Menkyou Shutoku Simulation"
   region: "NTSC-J"
@@ -29228,7 +29228,7 @@ SLPS-25542:
   region: "NTSC-J"
   compat: 5
   gameFixes:
-    - OPHFLagHack
+    - OPHFlagHack
 SLPS-25543:
   name: "Futakoi - Koi to Mizugi no Survival"
   region: "NTSC-J"
@@ -29810,7 +29810,7 @@ SLPS-25710:
   region: "NTSC-J"
   compat: 4
   gameFixes:
-    - XgKickHack # Fixes grey fighters problem.
+    - XGKickHack # Fixes grey fighters problem.
 SLPS-25711:
   name: "Kashimashi! Girl Meets Girl [Best Collection]"
   region: "NTSC-J"
@@ -29824,7 +29824,7 @@ SLPS-25714:
   name: "Naruto - Konoha Spirits"
   region: "NTSC-J"
   gameFixes:
-    - OPHFLagHack
+    - OPHFlagHack
 SLPS-25715:
   name: "Tales of Destiny"
   region: "NTSC-J"
@@ -31928,7 +31928,7 @@ SLUS-20283:
   name: "World of Outlaws - Sprint Cars 2002"
   region: "NTSC-U"
   gameFixes:
-    - XgKickHack
+    - XGKickHack
 SLUS-20284:
   name: "Freaky Flyers"
   region: "NTSC-U"
@@ -32484,7 +32484,7 @@ SLUS-20418:
   clampModes:
     vuClampMode: 3  # Fixes water rendering.
   gameFixes:
-    - XgKickHack # Fixes SPS while ingame.
+    - XGKickHack # Fixes SPS while ingame.
 SLUS-20419:
   name: "World Rally Championship"
   region: "NTSC-U"
@@ -32738,7 +32738,7 @@ SLUS-20480:
   region: "NTSC-U"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes black models on certain games in World Tour.
+    - XGKickHack # Fixes black models on certain games in World Tour.
 SLUS-20482:
   name: "Sphinx and the Cursed Mummy"
   region: "NTSC-U"
@@ -33006,7 +33006,7 @@ SLUS-20546:
   region: "NTSC-U"
   compat: 4
   gameFixes:
-    - OPHFLagHack # Avoid hanging at the "press start" screen.
+    - OPHFlagHack # Avoid hanging at the "press start" screen.
   # Comments from old GameIndex.dbf for this Game
   #  Needs EmotionEngine set to "Interpreter" and "Enable EE Cache" enabled.
 SLUS-20547:
@@ -33215,7 +33215,7 @@ SLUS-20597:
   region: "NTSC-U"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes corrupted graphics.
+    - XGKickHack # Fixes corrupted graphics.
 SLUS-20598:
   name: "Everblue 2"
   region: "NTSC-U"
@@ -33374,7 +33374,7 @@ SLUS-20635:
   region: "NTSC-U"
   compat: 5
   gameFixes:
-    - OPHFLagHack # Fixes some hanging throughout the game.
+    - OPHFlagHack # Fixes some hanging throughout the game.
 SLUS-20636:
   name: "Suffering, The"
   region: "NTSC-U"
@@ -34472,7 +34472,7 @@ SLUS-20909:
   region: "NTSC-U"
   compat: 5
   gameFixes:
-    - XgKickHack # Fixes bad geometry.
+    - XGKickHack # Fixes bad geometry.
     - VU0KickstartHack # Fixes loading hang.
 SLUS-20910:
   name: "Test Drive - Eve of Destruction"
@@ -35694,7 +35694,7 @@ SLUS-21191:
   region: "NTSC-U"
   compat: 5
   gameFixes:
-    - CrashTagTeamRacingIbit # Fixes constant recompilation problems.
+    - CrashTagTeamRacingIbitHack # Fixes constant recompilation problems.
 SLUS-21192:
   name: "Cabela's Outdoor Adventures 2006"
   region: "NTSC-U"
@@ -37137,7 +37137,7 @@ SLUS-21498:
   region: "NTSC-U"
   compat: 5
   gameFixes:
-    - OPHFLagHack
+    - OPHFlagHack
 SLUS-21499:
   name: "Evolution GT"
   region: "NTSC-U"
@@ -37377,7 +37377,7 @@ SLUS-21594:
   region: "NTSC-U"
   compat: 5
   gameFixes:
-    - OPHFLagHack
+    - OPHFlagHack
 SLUS-21595:
   name: "T.M.N.T. - Teenage Mutant Ninja Turtles"
   region: "NTSC-U"
@@ -37574,7 +37574,7 @@ SLUS-21634:
   region: "NTSC-U"
   compat: 5
   gameFixes:
-    - FPUNegDivHack # Fixes black fade effects and some overlays texts in the menus.
+    - FpuNegDivHack # Fixes black fade effects and some overlays texts in the menus.
 SLUS-21635:
   name: "Monster Jam"
   region: "NTSC-U"
@@ -38989,7 +38989,7 @@ SLUS-29049:
   name: "Warhammer 40,000 - Fire Warrior [Demo]"
   region: "NTSC-U"
   gameFixes:
-    - XgKickHack # Fixes corrupted graphics.
+    - XGKickHack # Fixes corrupted graphics.
 SLUS-29050:
   name: "Everquest Online Adventures [Regular Demo]"
   region: "NTSC-U"
@@ -39116,7 +39116,7 @@ SLUS-29101:
   name: "Crash Twinsanity & Spyro - A Hero's Tail [Demo]"
   region: "NTSC-U"
   gameFixes:
-    - XgKickHack # Fixes bad geometry.
+    - XGKickHack # Fixes bad geometry.
     - VU0KickstartHack # Fixes loading hang (only for Crash).
 SLUS-29104:
   name: "Galactic Wrestling - Featuring Ultimate Muscle [Demo]"
@@ -39362,7 +39362,7 @@ TCES-53247:
   name: "WRC: Rally Evolved Beta Trial Code"
   region: "PAL-E"
   gameFixes:
-    - XgKickHack # Fixes SPS.
+    - XGKickHack # Fixes SPS.
 TCES-53286:
   name: "Jak X Beta Trial Code"
   region: "PAL-E"
@@ -39401,7 +39401,7 @@ TCPS-10111:
   name: "Eremental Gerad"
   region: "NTSC-J"
   gameFixes:
-    - XgKickHack # Fixes chocolate coloured characters.
+    - XGKickHack # Fixes chocolate coloured characters.
 TCPS-10113:
   name: "Mushihime-sama"
   region: "NTSC-J"
