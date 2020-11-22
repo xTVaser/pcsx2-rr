@@ -19,6 +19,7 @@
 
 #include "fmt/core.h"
 #include "yaml-cpp/yaml.h"
+#include <fstream>
 
 std::string GameDatabaseSchema::GameEntry::memcardFiltersAsString()
 {
@@ -145,7 +146,7 @@ GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::entryFromYaml(const std::str
 			}
 		}
 	}
-	catch (YAML::RepresentationException e)
+	catch (const YAML::RepresentationException& e)
 	{
 		Console.Error(fmt::format("[GameDB] Invalid GameDB syntax detected on serial: '{}'.  Error Details - {}", serial, e.msg));
 		gameEntry.isValid = false;
@@ -168,23 +169,28 @@ int YamlGameDatabaseImpl::numGames()
 	return gameDb.size();
 }
 
-bool YamlGameDatabaseImpl::initDatabase(const std::string filePath)
+bool YamlGameDatabaseImpl::initDatabase(std::ifstream& stream)
 {
 	try
 	{
+		if (!stream)
+		{
+			Console.Error("[GameDB] Unable to open GameDB file.");
+			return false;
+		}
 		// yaml-cpp has memory leak issues if you persist and modify a YAML::Node
 		// convert to a map and throw it away instead!
-		YAML::Node data = YAML::LoadFile(filePath);
+		YAML::Node data = YAML::Load(stream);
 		for (YAML::const_iterator entry = data.begin(); entry != data.end(); entry++)
 		{
-			// we don't want to throw away the entire GameDB file if a single entry is made, but we do
-			// want to yell about it so it can be corrected
+			// we don't want to throw away the entire GameDB file if a single entry is made incorrectly,
+			// but we do want to yell about it so it can be corrected
 			try
 			{
 				std::string serial = entry->first.as<std::string>();
 				gameDb[serial] = entryFromYaml(serial, entry->second);
 			}
-			catch (YAML::RepresentationException e)
+			catch (const YAML::RepresentationException& e)
 			{
 				Console.Error(fmt::format("[GameDB] Invalid GameDB syntax detected.  Error Details - {}", e.msg));
 			}
@@ -192,7 +198,7 @@ bool YamlGameDatabaseImpl::initDatabase(const std::string filePath)
 	}
 	catch (const std::exception& e)
 	{
-		Console.Error(fmt::format("Error occured when initializing GameDB: {}", e.what()));
+		Console.Error(fmt::format("[GameDB] Error occured when initializing GameDB: {}", e.what()));
 		return false;
 	}
 

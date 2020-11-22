@@ -84,7 +84,7 @@ public:
 class IGameDatabase
 {
 public:
-	virtual bool initDatabase(const std::string filePath) = 0;
+	virtual bool initDatabase(std::ifstream& stream) = 0;
 	virtual GameDatabaseSchema::GameEntry findGame(const std::string serial) = 0;
 	virtual int numGames() = 0;
 };
@@ -92,7 +92,7 @@ public:
 class YamlGameDatabaseImpl : public IGameDatabase
 {
 public:
-	bool initDatabase(const std::string filePath) override;
+	bool initDatabase(std::ifstream& stream) override;
 	GameDatabaseSchema::GameEntry findGame(const std::string serial) override;
 	int numGames() override;
 
