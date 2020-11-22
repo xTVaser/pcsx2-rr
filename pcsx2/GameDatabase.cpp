@@ -121,6 +121,11 @@ GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::entryFromYaml(const std::str
 				gameEntry.patches[crc] = patchCol;
 			}
 		}
+
+		if (serial == "SLUS-20071")
+		{
+			DevCon.WriteLn(fmt::format("[GameDB] Found {} patches!", gameEntry.patches.size()));
+		}
 	}
 	catch (const YAML::RepresentationException& e)
 	{
@@ -137,6 +142,7 @@ GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::entryFromYaml(const std::str
 
 GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::findGame(const std::string serial)
 {
+	DevCon.WriteLn(fmt::format("[GameDB] Searching for {}", serial));
 	if (gameDb.count(serial) == 1)
 		return gameDb[serial];
 
@@ -169,6 +175,10 @@ bool YamlGameDatabaseImpl::initDatabase(std::ifstream& stream)
 			try
 			{
 				std::string serial = entry.first.as<std::string>();
+				if (serial == "SLUS-20071")
+				{
+					DevCon.WriteLn(fmt::format("[GameDB] Found SLUS-20071"));
+				}
 				gameDb[serial] = entryFromYaml(serial, entry.second);
 			}
 			catch (const YAML::RepresentationException& e)
