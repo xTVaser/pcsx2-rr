@@ -100,11 +100,7 @@ private:
 	std::unordered_map<std::string, GameDatabaseSchema::GameEntry> gameDb;
 	GameDatabaseSchema::GameEntry entryFromYaml(const std::string serial, const YAML::Node& node);
 
-	// TODO - config - move these into a generic library
-	std::string safeGetString(const YAML::Node& n, std::string key, std::string def = "");
-	int safeGetInt(const YAML::Node& n, std::string key, int def = 0);
-	std::vector<std::string> safeGetMultilineString(const YAML::Node& n, std::string key, std::vector<std::string> def = {});
-	std::vector<std::string> safeGetStringList(const YAML::Node& n, std::string key, std::vector<std::string> def = {});
+	std::vector<std::string> convertMultiLineStringToVector(const std::string multiLineString);
 };
 
 extern IGameDatabase* AppHost_GetGameDatabase();
