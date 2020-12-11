@@ -112,7 +112,7 @@ Panels::GSWindowSettingsPanel::GSWindowSettingsPanel( wxWindow* parent )
 	//s_AspectRatio.AddGrowableCol( 0 );
 	s_AspectRatio.AddGrowableCol( 1 );
 
-	s_AspectRatio += Label(fmt::format("{} ({})", "Aspect Ratio", wxGetApp().GlobalAccels->findKeycodeWithCommandId("GSwindow_CycleAspectRatio").toTitleizedString())) | pxMiddle;
+	s_AspectRatio += Label(_("Aspect Ratio")) , fmt::format("{} ({})", " ", wxGetApp().GlobalAccels->findKeycodeWithCommandId("GSwindow_CycleAspectRatio").toTitleizedString());
 	s_AspectRatio += m_combo_AspectRatio | pxAlignRight;
 	s_AspectRatio += Label(_("FMV Aspect Ratio Override:")) | pxMiddle;
 	s_AspectRatio += m_combo_FMVAspectRatioSwitch | pxAlignRight;
