@@ -860,6 +860,7 @@ void AcceleratorDictionary::Map(const KeyAcceleratorCode& _acode, const char* se
 	KeyAcceleratorCode acode = _acode;
 	wxString overrideStr;
 	wxAcceleratorEntry codeParser; //Provides string parsing capabilities
+	wxString ye = GetUiKeysFilename();
 	wxFileConfig cfg(L"", L"", L"", GetUiKeysFilename(), wxCONFIG_USE_GLOBAL_FILE);
 	if (cfg.Read(wxString::FromUTF8(searchfor), &overrideStr))
 	{
@@ -1006,6 +1007,11 @@ void Pcsx2App::InitDefaultGlobalAccelerators()
 
 	GlobalAccels->Map(AAC(WXK_F4), "Framelimiter_MasterToggle");
 	GlobalAccels->Map(AAC(WXK_F4).Shift(), "Frameskip_Toggle");
+
+// Doesn't read from the ini file at this point because `AppConfig::GetUiKeysFilename` is blank at this point!
+	GlobalAccels->Map(AAC(WXK_TAB), "Framelimiter_TurboToggle");
+	GlobalAccels->Map(AAC(WXK_TAB).Shift(), "Framelimiter_SlomoToggle");
+
 
 	/*GlobalAccels->Map( AAC( WXK_ESCAPE ),		"Sys_Suspend");
 	GlobalAccels->Map( AAC( WXK_F8 ),			"Sys_TakeSnapshot");

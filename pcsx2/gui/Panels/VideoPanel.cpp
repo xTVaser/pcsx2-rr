@@ -15,10 +15,12 @@
 
 #include "PrecompiledHeader.h"
 #include "App.h"
+#include "AppAccelerators.h"
 #include "Dialogs/ConfigurationDialog.h"
 #include "ConfigurationPanels.h"
 
 #include <wx/spinctrl.h>
+#include "fmt/core.h"
 
 using namespace pxSizerFlags;
 
@@ -60,17 +62,18 @@ Panels::FramelimiterPanel::FramelimiterPanel( wxWindow* parent )
 	s_spins += Label(L"%")							| StdExpand();
 	s_spins += 5;
 
-	s_spins += Label(_("Slow Motion Adjust (Shift + Tab):"))		| StdExpand();
+	s_spins += Label(fmt::format("{} ({})", "Slow Motion Adjust", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_SlomoToggle").toTitleizedString())) | StdExpand();
 	s_spins += 5;
 	s_spins += m_spin_SlomoPct						| pxBorder(wxTOP, 3);
 	s_spins += Label(L"%")							| StdExpand();
 	s_spins += 5;
 
-	s_spins	+= Label(_("Turbo Adjust (Tab):"))			| StdExpand();
-	s_spins	+= 5;
-	s_spins	+= m_spin_TurboPct						| pxBorder(wxTOP, 3);
-	s_spins	+= Label(L"%" )							| StdExpand();
-	s_spins	+= 5;
+	// TODO - Figure out how to format the result from the result of the translation macro.
+	s_spins += Label(fmt::format("{} ({})", "Turbo Adjust", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_TurboToggle").toTitleizedString())) | StdExpand();
+	s_spins += 5;
+	s_spins += m_spin_TurboPct						| pxBorder(wxTOP, 3);
+	s_spins += Label(L"%") 							| StdExpand();
+	s_spins += 5;
 
 	wxFlexGridSizer& s_fps( *new wxFlexGridSizer( 5 ) );
 	s_fps.AddGrowableCol( 0 );
