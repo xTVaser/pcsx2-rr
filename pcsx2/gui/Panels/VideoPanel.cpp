@@ -180,11 +180,11 @@ Panels::FrameSkipPanel::FrameSkipPanel( wxWindow* parent )
 		),
 
 		RadioPanelItem(
-			_("Skip when on Turbo only (TAB to enable)")
+			fmt::format("{} ({})", "Skip only on Turbo, to enable press", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_TurboToggle").toTitleizedString())
 		),
 
 		RadioPanelItem(
-			_("Constant skipping (Shift + F4)"),
+			fmt::format("{} ({})", "Constant skipping", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Frameskip_Toggle").toTitleizedString()),
 			wxEmptyString,
 			_("Normal and Turbo limit rates skip frames.  Slow motion mode will still disable frameskipping.")
 		),

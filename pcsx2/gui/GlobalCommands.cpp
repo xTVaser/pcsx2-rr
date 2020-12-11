@@ -1012,8 +1012,12 @@ void Pcsx2App::InitDefaultGlobalAccelerators()
 	GlobalAccels->Map(AAC(WXK_TAB), "Framelimiter_TurboToggle");
 	GlobalAccels->Map(AAC(WXK_TAB).Shift(), "Framelimiter_SlomoToggle");
 
+	GlobalAccels->Map(AAC(WXK_F6), "GSwindow_CycleAspectRatio");
+	GlobalAccels->Map(AAC(WXK_RETURN).Alt(), "FullscreenToggle");
 
-	/*GlobalAccels->Map( AAC( WXK_ESCAPE ),		"Sys_Suspend");
+	GlobalAccels->Map(AAC(WXK_ESCAPE), "Sys_Suspend");
+
+/*	
 	GlobalAccels->Map( AAC( WXK_F8 ),			"Sys_TakeSnapshot");
 	GlobalAccels->Map( AAC( WXK_F8 ).Shift(),	"Sys_TakeSnapshot");
 	GlobalAccels->Map( AAC( WXK_F8 ).Shift().Cmd(),"Sys_TakeSnapshot");
@@ -1022,6 +1026,5 @@ void Pcsx2App::InitDefaultGlobalAccelerators()
 	GlobalAccels->Map( AAC( WXK_F10 ),			"Sys_LoggingToggle");
 	GlobalAccels->Map( AAC( WXK_F11 ),			"Sys_FreezeGS");
 	GlobalAccels->Map( AAC( WXK_F12 ),			"Sys_RecordingToggle");
-
-	GlobalAccels->Map( AAC( WXK_RETURN ).Alt(),	"FullscreenToggle" );*/
+*/;
 }
