@@ -1,0 +1,58 @@
+plugins {
+    id "com.diffplug.spotless" version "5.8.2"
+}
+repositories {
+    mavenCentral()
+}
+
+def ie3LicHead = '/*\n' +
+			' * © $YEAR. TU Dortmund University,\n' +
+			' * Institute of Energy Systems, Energy Efficiency and Energy Economics,\n' +
+			' * Research group Distribution grid planning and operation\n' +
+			'*/'
+
+
+// See - https://github.com/diffplug/spotless/blob/main/plugin-gradle/README.md
+spotless {
+  def licenseHeaderTemplate = '/*  PCSX2 - PS2 Emulator for PCs\n' +
+                              ' *  Copyright (C) $YEAR PCSX2 Dev Team\n' +
+                              ' *\n' +
+                              ' *  PCSX2 is free software: you can redistribute it and/or modify it under the terms\n' +
+                              ' *  of the GNU Lesser General Public License as published by the Free Software Found-\n' +
+                              ' *  ation, either version 3 of the License, or (at your option) any later version.\n' +
+                              ' *\n' +
+                              ' *  PCSX2 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;\n' +
+                              ' *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR\n' +
+                              ' *  PURPOSE.  See the GNU General Public License for more details.\n' +
+                              ' *\n' +
+                              ' *  You should have received a copy of the GNU General Public License along with PCSX2.\n' +
+                              ' *  If not, see <http://www.gnu.org/licenses/>.\n' +
+                              ' */\n\n'
+
+  // optional: limit format enforcement to just the files changed by this feature branch
+  //ratchetFrom 'origin/master'
+
+  format 'cpp', {
+    // bugs for spotless - looks like if it can find multiple clang-format.exe's it breaks! - shouldn't be a problem for CI
+    target '**/*.cpp', '**/*.h', '**/*.c', '**/*.hpp', '**/*.inl'
+    targetExclude '3rdparty/**'
+
+    // See - https://github.com/diffplug/spotless/blob/main/plugin-gradle/README.md#clang-format
+    // See - https://github.com/diffplug/spotless/blob/main/lib/src/main/java/com/diffplug/spotless/cpp/ClangFormatStep.java
+    clangFormat().style("file")
+
+    // See - https://github.com/diffplug/spotless/blob/main/plugin-gradle/README.md#license-header
+    // Relevant - https://github.com/diffplug/spotless/issues/255#issuecomment-400401042
+    // - as such, this regex may be fragile
+    licenseHeader(licenseHeaderTemplate, '(#pragma|#include|#define)')
+  }
+  format 'misc', {
+      // define the files to apply `misc` to
+      target '**/*.md', '.gitignore'
+
+      // define the steps to apply to those files
+      trimTrailingWhitespace()
+      indentWithSpaces() // or spaces. Takes an integer argument if you don't like 4
+      endWithNewline()
+  }
+}
