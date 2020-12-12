@@ -1,0 +1,39 @@
+name: Linting & Formatting
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - .gitignore
+      - "**/*.md"
+      - .clang-format
+      - debian-packager/
+      - bin/PCSX2_keys.ini.default
+      - "plugins/LilyPad/**"
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - .gitignore
+      - "**/*.md"
+      - .clang-format
+      - debian-packager/
+      - bin/PCSX2_keys.ini.default
+      - "plugins/LilyPad/**"
+
+jobs:
+  lint:
+    runs-on: ubuntu-20.04
+    continue-on-error: true
+    timeout-minutes: 5
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Spotless Check
+        run: |
+          gradle wrapper
+          ./gradlew spotlessCheck
