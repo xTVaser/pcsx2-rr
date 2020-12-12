@@ -474,11 +474,11 @@ void MainEmuFrame::CreateWindowsMenu()
 void MainEmuFrame::CreateCaptureMenu()
 {
 	m_menuCapture.Append(MenuId_Capture_Video, _("Video"), &m_submenuVideoCapture);
-	m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Start Screenrecorder \tF12"));
+	m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Start Screenrecorder"));
 	m_submenuVideoCapture.Append(MenuId_Capture_Video_Stop, _("Stop Screenrecorder"))->Enable(false);
 
 	m_menuCapture.Append(MenuId_Capture_Screenshot, _("Screenshot"), &m_submenuScreenshot);
-	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot, _("Screenshot \tF8"));
+	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot, _("Screenshot"));
 	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot_As, _("Screenshot As..."));
 }
 
@@ -710,7 +710,7 @@ void MainEmuFrame::ApplyCoreStatus()
 		if (!CoreThread.IsClosing())
 		{
 			susres->Enable();
-			susres->SetItemLabel(_("Paus&e" " \tEsc"));
+			susres->SetItemLabel(_("Paus&e"));
 			susres->SetHelp(_("Safely pauses emulation and preserves the PS2 state."));
 		}
 		else
@@ -719,12 +719,12 @@ void MainEmuFrame::ApplyCoreStatus()
 			susres->Enable(ActiveVM);
 			if (ActiveVM)
 			{
-				susres->SetItemLabel(_("R&esume" " \tEsc"));
+				susres->SetItemLabel(_("R&esume"));
 				susres->SetHelp(_("Resumes the suspended emulation state."));
 			}
 			else
 			{
-				susres->SetItemLabel(_("Pause/Resume" " \tEsc"));
+				susres->SetItemLabel(_("Pause/Resume"));
 				susres->SetHelp(_("No emulation state is active; cannot suspend or resume."));
 			}
 		}
@@ -815,6 +815,10 @@ void MainEmuFrame::AppendKeycodeNamesToMenuOptions()
 
 	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Sys_LoadStates), wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_DefrostCurrentSlot").toTitleizedString());
 	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Sys_SaveStates), wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_FreezeCurrentSlot").toTitleizedString());
+
+	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Sys_SuspendResume), wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_Suspend").toTitleizedString());
+	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Capture_Video_Record), wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_RecordingToggle").toTitleizedString());
+	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Capture_Screenshot_Screenshot), wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_TakeSnapshot").toTitleizedString());
 }
 
 #ifndef DISABLE_RECORDING

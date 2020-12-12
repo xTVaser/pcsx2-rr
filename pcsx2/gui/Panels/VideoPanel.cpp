@@ -67,7 +67,7 @@ Panels::FramelimiterPanel::FramelimiterPanel( wxWindow* parent )
 
 	// Label(_("Slow Motion Adjust:")) , ("{} ({})", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_SlomoToggle")) | StdExpand();
 
-	s_spins += Label(_("Slow Motion Adjust:  (Shift+Tab)"))  | StdExpand();
+	s_spins += Label(_("Slow Motion Adjust:") + wxString(" ") + fmt::format("({})", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_SlomoToggle").toTitleizedString())) | StdExpand();
 	s_spins += 5;
 	s_spins += m_spin_SlomoPct						| pxBorder(wxTOP, 3);
 	s_spins += Label(L"%")							| StdExpand();
@@ -75,8 +75,7 @@ Panels::FramelimiterPanel::FramelimiterPanel( wxWindow* parent )
 
 	// TODO - Figure out how to format the result from the result of the translation macro. TempWorkaround for translation. 
 	// Label(_("Turbo Adjust:")), ("{} ({})", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_TurboToggle").toTitleizedString());
-	
-	s_spins += Label(_("Turbo Adjust:  (Tab)"))			| StdExpand();
+	s_spins += Label(_("Turbo Adjust:") + wxString(" ") + fmt::format("({})", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_TurboToggle").toTitleizedString())) | StdExpand();
 	s_spins += 5;
 	s_spins += m_spin_TurboPct						| pxBorder(wxTOP, 3);
 	s_spins += Label(L"%") 							| StdExpand();
