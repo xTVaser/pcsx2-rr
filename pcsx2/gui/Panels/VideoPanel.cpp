@@ -31,7 +31,10 @@ using namespace pxSizerFlags;
 Panels::FramelimiterPanel::FramelimiterPanel( wxWindow* parent )
 	: BaseApplicableConfigPanel_SpecificConfig( parent )
 {
-	m_check_LimiterDisable = new pxCheckBox( this, _("Disable Framelimiting" + fmt::format("{} ({})", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_MasterToggle").toTitleizedString())),
+	// TODO: Implement custom hotkeys with translatable string intact + not blank in GUI.
+	// m_check_LimiterDisable = new pxCheckBox( this, _("Disable Framelimiting") + ("{} ({})", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_MasterToggle").toTitleizedString())),
+
+	m_check_LimiterDisable = new pxCheckBox( this, _("Disable Framelimiting  (F4)"),
 		_("Uncaps FPS. Useful for running benchmarks." ) );
 
 	m_check_LimiterDisable->SetToolTip( pxEt( L"Note that when Framelimiting is disabled, Turbo and SlowMotion modes will not be available either."
@@ -62,18 +65,21 @@ Panels::FramelimiterPanel::FramelimiterPanel( wxWindow* parent )
 	s_spins += Label(L"%")							| StdExpand();
 	s_spins += 5;
 
-	s_spins += Label(_("Slow Motion Adjust:")), fmt::format("{} ({})", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_SlomoToggle").toTitleizedString());
+	// Label(_("Slow Motion Adjust:")) , ("{} ({})", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_SlomoToggle")) | StdExpand();
+
+	s_spins += Label(_("Slow Motion Adjust:  (Shift+Tab)"))  | StdExpand();
 	s_spins += 5;
 	s_spins += m_spin_SlomoPct						| pxBorder(wxTOP, 3);
-	s_spins += Label(L"%Framelimiter_SlomoToggle")							| StdExpand();
+	s_spins += Label(L"%")							| StdExpand();
 	s_spins += 5;
 
-	// TODO - Figure out how to format the result from the result of the translation macro. TempWorkaround for translation.
+	// TODO - Figure out how to format the result from the result of the translation macro. TempWorkaround for translation. 
+	// Label(_("Turbo Adjust:")), ("{} ({})", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_TurboToggle").toTitleizedString());
 	
-	s_spins += Label(_("Turbo Adjust:")) , fmt::format("{} ({})", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Framelimiter_TurboToggle").toTitleizedString());
+	s_spins += Label(_("Turbo Adjust:  (Tab)"))			| StdExpand();
 	s_spins += 5;
 	s_spins += m_spin_TurboPct						| pxBorder(wxTOP, 3);
-	s_spins += Label(L"%Framelimiter_TurboToggle") 							| StdExpand();
+	s_spins += Label(L"%") 							| StdExpand();
 	s_spins += 5;
 
 	wxFlexGridSizer& s_fps( *new wxFlexGridSizer( 5 ) );
@@ -185,7 +191,7 @@ Panels::FrameSkipPanel::FrameSkipPanel( wxWindow* parent )
 		),
 
 		RadioPanelItem(
-			_("Constant skipping") + fmt::format("{} ({})", "", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Frameskip_Toggle").toTitleizedString()),
+			_("Constant skipping") + fmt::format("{} ({})", " ", wxGetApp().GlobalAccels->findKeycodeWithCommandId("Frameskip_Toggle").toTitleizedString()),
 			wxEmptyString,
 			_("Normal and Turbo limit rates skip frames.  Slow motion mode will still disable frameskipping.")
 		),
