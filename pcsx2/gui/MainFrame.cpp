@@ -403,7 +403,9 @@ void MainEmuFrame::CreatePcsx2Menu()
 
 	m_menuSys.AppendSeparator();
 
-	m_menuSys.Append(MenuId_Sys_LoadStates, _("&Load state"), &m_LoadStatesSubmenu);
+	wxMenuItem* item = m_menuSys.Append(MenuId_Sys_LoadStates, _("&Load state"), &m_LoadStatesSubmenu);
+	AppendShortcutToMenuOption(*item, wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_DefrostCurrentSlot").toTitleizedString());
+
 	m_menuSys.Append(MenuId_Sys_SaveStates, _("&Save state"), &m_SaveStatesSubmenu);
 
 	m_menuSys.Append(MenuId_EnableBackupStates, _("&Backup before save"), wxEmptyString, wxITEM_CHECK);
@@ -818,7 +820,6 @@ void MainEmuFrame::AppendShortcutToMenuOption(wxMenuItem& item, wxString keyCode
 
 void MainEmuFrame::AppendKeycodeNamesToMenuOptions()
 {
-	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Sys_LoadStates), wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_DefrostCurrentSlot").toTitleizedString());
 	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Sys_SaveStates), wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_FreezeCurrentSlot").toTitleizedString());
 
 	AppendShortcutToMenuOption(*m_submenuVideoCapture.FindChildItem(MenuId_Capture_Video_Record), wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_RecordingToggle").toTitleizedString());
