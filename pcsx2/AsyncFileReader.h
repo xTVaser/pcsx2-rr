@@ -16,19 +16,23 @@
 #pragma once
 
 #ifdef _WIN32
-#				include <Windows.h>
-#				undef Yield
+#include <Windows.h>
+#undef Yield
 #elif defined(__linux__)
-#				include <libaio.h>
+#include <libaio.h>
 #elif defined(__POSIX__)
-#	include <aio.h>
+#include <aio.h>
 #endif
 #include <memory>
 
 class AsyncFileReader
 {
 protected:
-	AsyncFileReader() : m_dataoffset(0), m_blocksize(0) {}
+	AsyncFileReader()
+		: m_dataoffset(0)
+		, m_blocksize(0)
+	{
+	}
 
 	wxString m_filename;
 
@@ -36,19 +40,19 @@ protected:
 	uint m_blocksize;
 
 public:
-	virtual ~AsyncFileReader(void) {};
+	virtual ~AsyncFileReader(void){};
 
-	virtual bool Open(const wxString& fileName)=0;
+	virtual bool Open(const wxString& fileName) = 0;
 
-	virtual int ReadSync(void* pBuffer, uint sector, uint count)=0;
+	virtual int ReadSync(void* pBuffer, uint sector, uint count) = 0;
 
-	virtual void BeginRead(void* pBuffer, uint sector, uint count)=0;
-	virtual int FinishRead(void)=0;
-	virtual void CancelRead(void)=0;
+	virtual void BeginRead(void* pBuffer, uint sector, uint count) = 0;
+	virtual int FinishRead(void) = 0;
+	virtual void CancelRead(void) = 0;
 
-	virtual void Close(void)=0;
+	virtual void Close(void) = 0;
 
-	virtual uint GetBlockCount(void) const=0;
+	virtual uint GetBlockCount(void) const = 0;
 
 	virtual void SetBlockSize(uint bytes) {}
 	virtual void SetDataOffset(int bytes) {}
@@ -63,7 +67,7 @@ public:
 
 class FlatFileReader : public AsyncFileReader
 {
-	DeclareNoncopyableObject( FlatFileReader );
+	DeclareNoncopyableObject(FlatFileReader);
 
 #ifdef _WIN32
 	HANDLE hOverlappedFile;
@@ -106,11 +110,12 @@ public:
 
 class MultipartFileReader : public AsyncFileReader
 {
-	DeclareNoncopyableObject( MultipartFileReader );
+	DeclareNoncopyableObject(MultipartFileReader);
 
 	static const int MaxParts = 8;
 
-	struct Part {
+	struct Part
+	{
 		uint start;
 		uint end; // exclusive
 		bool isReading;
@@ -144,7 +149,7 @@ public:
 
 class BlockdumpFileReader : public AsyncFileReader
 {
-	DeclareNoncopyableObject( BlockdumpFileReader );
+	DeclareNoncopyableObject(BlockdumpFileReader);
 
 	wxFileInputStream* m_file;
 
