@@ -728,6 +728,8 @@ void MainEmuFrame::ApplyCoreStatus()
 				susres->SetHelp(_("No emulation state is active; cannot suspend or resume."));
 			}
 		}
+		// Re-init keybinding after changing the label
+		AppendShortcutToMenuOption(*susres, wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_SuspendResume").toTitleizedString());
 	}
 
 	const CDVD_SourceType Source = g_Conf->CdvdSource;
@@ -803,8 +805,12 @@ void MainEmuFrame::CommitPreset_noTrigger()
 	g_Conf->EmuOptions.EnablePatches = menubar.IsChecked(MenuId_EnablePatches);
 }
 
-static void AppendShortcutToMenuOption(wxMenuItem& item, wxString keyCodeStr)
+void MainEmuFrame::AppendShortcutToMenuOption(wxMenuItem& item, wxString keyCodeStr)
 {
+	if (&item == nullptr)
+	{
+		return;
+	}
 	wxString text = item.GetItemLabel();
 	const size_t tabPos = text.rfind(L'\t');
 	item.SetItemLabel(text.Mid(0, tabPos) + L"\t" + keyCodeStr);
@@ -812,13 +818,11 @@ static void AppendShortcutToMenuOption(wxMenuItem& item, wxString keyCodeStr)
 
 void MainEmuFrame::AppendKeycodeNamesToMenuOptions()
 {
-
 	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Sys_LoadStates), wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_DefrostCurrentSlot").toTitleizedString());
 	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Sys_SaveStates), wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_FreezeCurrentSlot").toTitleizedString());
 
-	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Sys_SuspendResume), wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_Suspend").toTitleizedString());
-	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Capture_Video_Record), wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_RecordingToggle").toTitleizedString());
-	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Capture_Screenshot_Screenshot), wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_TakeSnapshot").toTitleizedString());
+	AppendShortcutToMenuOption(*m_submenuVideoCapture.FindChildItem(MenuId_Capture_Video_Record), wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_RecordingToggle").toTitleizedString());
+	AppendShortcutToMenuOption(*m_submenuScreenshot.FindChildItem(MenuId_Capture_Screenshot_Screenshot), wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_TakeSnapshot").toTitleizedString());
 }
 
 #ifndef DISABLE_RECORDING

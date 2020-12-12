@@ -169,6 +169,7 @@ public:
 
 	void ApplyConfigToGui(AppConfig& configToApply, int flags = 0);
 	void CommitPreset_noTrigger();
+	static void AppendShortcutToMenuOption(wxMenuItem& item, wxString keyCodeStr);
 	void AppendKeycodeNamesToMenuOptions();
 	void UpdateStatusBar();
 #ifndef DISABLE_RECORDING

@@ -1015,7 +1015,7 @@ void Pcsx2App::InitDefaultGlobalAccelerators()
 	GlobalAccels->Map(AAC(WXK_F6), "GSwindow_CycleAspectRatio");
 	GlobalAccels->Map(AAC(WXK_RETURN).Alt(), "FullscreenToggle");
 
-	GlobalAccels->Map(AAC(WXK_ESCAPE), "Sys_Suspend");
+	GlobalAccels->Map(AAC(WXK_ESCAPE), "Sys_SuspendResume");
 
 	GlobalAccels->Map(AAC( WXK_F8 ),"Sys_TakeSnapshot");
 //	GlobalAccels->Map(AAC( WXK_F8 ).Shift(),	"Sys_TakeSnapshot");
