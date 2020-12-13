@@ -39,7 +39,7 @@ spotless {
 
     // See - https://github.com/diffplug/spotless/blob/main/plugin-gradle/README.md#clang-format
     // See - https://github.com/diffplug/spotless/blob/main/lib/src/main/java/com/diffplug/spotless/cpp/ClangFormatStep.java
-    clangFormat().style("file")
+    clangFormat('10.0.0-4ubuntu1').style("file")
 
     // See - https://github.com/diffplug/spotless/blob/main/plugin-gradle/README.md#license-header
     // Relevant - https://github.com/diffplug/spotless/issues/255#issuecomment-400401042
