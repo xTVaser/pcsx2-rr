@@ -88,8 +88,8 @@ static void PostPluginStatus(PluginEventType pevt)
 
 static void ConvertPluginFilenames(wxString (&passins)[PluginId_Count])
 {
-	ForPlugins([&](const PluginInfo* pi) {
-		passins[pi->id] = wxGetApp().Overrides.Filenames[pi->id].GetFullPath();
+	ForPlugins([&] (const PluginInfo * pi) {
+		passins[pi->id] = wxGetApp().Overrides.Filenames[pi->id];
 
 		if (passins[pi->id].IsEmpty() || !wxFileExists(passins[pi->id]))
 			passins[pi->id] = g_Conf->FullpathTo(pi->id);
@@ -209,16 +209,8 @@ wxIMPLEMENT_DYNAMIC_CLASS(SinglePluginMethodEvent, pxActionEvent);
 
 static void _SetSettingsFolder()
 {
-	if (wxGetApp().Rpc_TryInvoke(_SetSettingsFolder))
-		return;
-	CorePlugins.SetSettingsFolder(GetSettingsFolder().ToString());
-}
-
-static void _SetLogFolder()
-{
-	if (wxGetApp().Rpc_TryInvoke(_SetLogFolder))
-		return;
-	CorePlugins.SetLogFolder(GetLogFolder().ToString());
+	if (wxGetApp().Rpc_TryInvoke( _SetLogFolder )) return;
+	CorePlugins.SetLogFolder( GetLogFolder().string() );
 }
 
 void AppCorePlugins::Load(PluginsEnum_t pid, const wxString& srcfile)
@@ -342,8 +334,8 @@ void AppCorePlugins::Open()
 {
 	AffinityAssert_AllowFrom_CoreThread();
 
-	SetLogFolder(GetLogFolder().ToString());
-	SetSettingsFolder(GetSettingsFolder().ToString());
+    SetLogFolder( GetLogFolder().string() );
+	SetSettingsFolder( GetSettingsFolder().string() );
 
 	if (!NeedsOpen())
 		return;
@@ -448,7 +440,7 @@ int EnumeratePluginsInFolder(const wxDirName& searchpath, wxArrayString* dest)
 
 	for (uint i = 0; i < realdest->GetCount(); ++i)
 	{
-		(*realdest)[i] = Path::MakeAbsolute((*realdest)[i]);
+		(*realdest)[i] = Path::MakeAbsolute((*realdest)[i].ToStdString());
 	}
 
 	return realdest->GetCount();

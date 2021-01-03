@@ -42,8 +42,8 @@ void PADSaveConfig()
 {
 	FILE* f;
 
-	wxString iniName(L"PAD.ini");
-	const std::string iniFile = std::string(GetSettingsFolder().Combine(iniName).GetFullPath()); // default path, just in case
+	std::string iniName("PAD.ini");
+	const std::string iniFile = std::string(Path::Combine(GetSettingsFolder(), iniName)); // default path, just in case
 	f = fopen(iniFile.c_str(), "w");
 	if (f == NULL)
 	{
@@ -77,8 +77,8 @@ void PADLoadConfig()
 	g_conf.init();
 
 
-	wxString iniName(L"PAD.ini");
-	const std::string iniFile = std::string(GetSettingsFolder().Combine(iniName).GetFullPath()); // default path, just in case
+	std::string iniName("PAD.ini");
+	const std::string iniFile = Path::Combine(GetSettingsFolder(), iniName); // default path, just in case
 	f = fopen(iniFile.c_str(), "r");
 	if (f == NULL)
 	{

@@ -69,7 +69,7 @@ void SaveConf()
      */
 
 
-	const std::string file(GetSettingsFolder().Combine(wxString("DEV9.cfg")).GetFullPath());
+	const std::string file(Path::Combine(GetSettingsFolder(), "DEV9.cfg"));
 
 	Console.WriteLn("CONF: %s", file.c_str());
 
@@ -89,7 +89,7 @@ void SaveConf()
 void LoadConf()
 {
 
-	const std::string file(GetSettingsFolder().Combine(wxString("DEV9.cfg")).GetFullPath());
+	const std::string file(Path::Combine(GetSettingsFolder(), "DEV9.cfg"));
 	if (-1 == access(file.c_str(), F_OK))
 		return;
 
