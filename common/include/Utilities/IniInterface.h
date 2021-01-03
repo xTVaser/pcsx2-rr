@@ -15,8 +15,9 @@
 
 #pragma once
 
-#include "Path.h"
+#include "PathUtils.h"
 #include "FixedPointTypes.h"
+#include <string>
 #include <wx/config.h>
 #include <wx/gdicmn.h>
 
@@ -53,8 +54,10 @@ public:
     virtual bool IsLoading() const = 0;
     bool IsSaving() const { return !IsLoading(); }
 
+    virtual void Entry(const std::string &var, std::string &value, const std::string defvalue = std::string()) = 0;
     virtual void Entry(const wxString &var, wxString &value, const wxString defvalue = wxString()) = 0;
     virtual void Entry(const wxString &var, wxDirName &value, const wxDirName defvalue = wxDirName(), bool isAllowRelative = false) = 0;
+    virtual void Entry(const wxString &var, fs::path &value, const fs::path defvalue = fs::path(), bool isAllowRelative = false) = 0;
     virtual void Entry(const wxString &var, wxFileName &value, const wxFileName defvalue = wxFileName(), bool isAllowRelative = false) = 0;
     virtual void Entry(const wxString &var, int &value, const int defvalue = 0) = 0;
     virtual void Entry(const wxString &var, uint &value, const uint defvalue = 0) = 0;
@@ -117,8 +120,10 @@ public:
 
     bool IsLoading() const { return true; }
 
+    void Entry(const std::string &var, std::string &value, const std::string defvalue = std::string());
     void Entry(const wxString &var, wxString &value, const wxString defvalue = wxEmptyString);
     void Entry(const wxString &var, wxDirName &value, const wxDirName defvalue = wxDirName(), bool isAllowRelative = false);
+    void Entry(const wxString &var, fs::path &value, const fs::path defvalue = fs::path(), bool isAllowRelative = false);
     void Entry(const wxString &var, wxFileName &value, const wxFileName defvalue = wxFileName(), bool isAllowRelative = false);
     void Entry(const wxString &var, int &value, const int defvalue = 0);
     void Entry(const wxString &var, uint &value, const uint defvalue = 0);
@@ -155,8 +160,10 @@ public:
 
     bool IsLoading() const { return false; }
 
+    void Entry(const std::string &var, std::string &value, const std::string defvalue = std::string());
     void Entry(const wxString &var, wxString &value, const wxString defvalue = wxString());
     void Entry(const wxString &var, wxDirName &value, const wxDirName defvalue = wxDirName(), bool isAllowRelative = false);
+    void Entry(const wxString &var, fs::path &value, const fs::path defvalue = fs::path(), bool isAllowRelative = false);
     void Entry(const wxString &var, wxFileName &value, const wxFileName defvalue = wxFileName(), bool isAllowRelative = false);
     void Entry(const wxString &var, int &value, const int defvalue = 0);
     void Entry(const wxString &var, uint &value, const uint defvalue = 0);
@@ -179,7 +186,7 @@ protected:
 // GCC Note: wxT() macro is required when using string token pasting.  For some reason L generates
 // syntax errors. >_<
 //
-#define IniEntry(varname) ini.Entry(wxT(#varname), varname, varname)
+#define IniEntry(varname) ini.Entry(#varname, varname, varname)
 #define IniEntryDirFile(varname, isAllowRelative) ini.Entry(wxT(#varname), varname, varname, isAllowRelative)
 #define IniBitfield(varname) varname = ini.EntryBitfield(wxT(#varname), varname, varname)
 #define IniBitBool(varname) varname = ini.EntryBitBool(wxT(#varname), !!varname, varname)

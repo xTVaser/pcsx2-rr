@@ -270,19 +270,20 @@ public:
 		UiTemplateOptions();
 		void LoadSave(IniInterface& conf);
 
-		wxString LimiterUnlimited;
-		wxString LimiterTurbo;
-		wxString LimiterSlowmo;
-		wxString LimiterNormal;
-		wxString OutputFrame;
-		wxString OutputField;
-		wxString OutputProgressive;
-		wxString OutputInterlaced;
-		wxString Paused;
-		wxString TitleTemplate;
-#ifndef DISABLE_RECORDING
-		wxString RecordingTemplate;
-#endif
+
+		std::string LimiterUnlimited;
+		std::string LimiterTurbo;
+		std::string LimiterSlowmo;
+		std::string LimiterNormal;
+		std::string OutputFrame;
+		std::string OutputField;
+		std::string OutputProgressive;
+		std::string OutputInterlaced;
+		std::string Paused;
+		std::string TitleTemplate;
+		#ifndef DISABLE_RECORDING
+		std::string RecordingTemplate;
+		#endif
 	};
 
 public:
@@ -340,12 +341,12 @@ public:
 
 	bool		AskOnBoot;
 
-	wxString				CurrentIso;
-    wxString				CurrentBlockdump;
-	wxString				CurrentELF;
-	wxString				CurrentIRX;
+	std::string				CurrentIso;
+	std::string				CurrentBlockdump;
+	std::string				CurrentELF;
+	std::string				CurrentIRX;
 	CDVD_SourceType			CdvdSource;
-	wxString				CurrentGameArgs;
+	std::string				CurrentGameArgs;
 
 	// Memorycard options - first 2 are default slots, last 6 are multitap 1 and 2
 	// slots (3 each)
