@@ -209,12 +209,6 @@ wxIMPLEMENT_DYNAMIC_CLASS(SinglePluginMethodEvent, pxActionEvent);
 
 static void _SetSettingsFolder()
 {
-	if (wxGetApp().Rpc_TryInvoke( _SetSettingsFolder )) return;
-	CorePlugins.SetSettingsFolder( GetSettingsFolder().string() );
-}
-
-static void _SetLogFolder()
-{
 	if (wxGetApp().Rpc_TryInvoke( _SetLogFolder )) return;
 	CorePlugins.SetLogFolder( GetLogFolder().string() );
 }
