@@ -861,7 +861,7 @@ void AppApplySettings( const AppConfig* oldconf )
 	folderUtils.CreateFolder(g_Conf->Folders.Snapshots);
 	folderUtils.CreateFolder(g_Conf->Folders.Cheats);
 	folderUtils.CreateFolder(g_Conf->Folders.CheatsWS);
-	folderUtils.CreateFolder(g_Conf->Folders.Langs);
+	
 
 
 	g_Conf->EmuOptions.BiosFilename = g_Conf->FullpathToBios();
