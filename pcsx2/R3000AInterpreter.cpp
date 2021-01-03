@@ -129,8 +129,8 @@ void psxJALR()
 static __fi void execI()
 {
 	// Inject IRX hack
-	if (psxRegs.pc == 0x1630 && g_Conf->CurrentIRX.Length() > 3) {
-		if (iopMemRead32(0x20018) == 0x1F) {
+	if (psxRegs.pc == 0x1630 && g_Conf->CurrentIRX.size() > 3) {
+				if (iopMemRead32(0x20018) == 0x1F) {
 			// FIXME do I need to increase the module count (0x1F -> 0x20)
 			iopMemWrite32(0x20094, 0xbffc0000);
 		}
