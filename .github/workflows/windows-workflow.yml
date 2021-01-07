@@ -39,7 +39,7 @@ jobs:
           ARCH=$([ "${{ matrix.platform }}" == Win32 ] && echo "32bit" || echo "64bit")
           echo "aaa"
           ARTIFACT_NAME=""
-          if [ ${{ github.event_name == 'pull_request' }} ]; then
+          if [ ${{ github.event_name }} == "pull_request" ]; then
             echo "a"
             PR_SHA=$(git rev-parse --short "${{ github.event.pull_request.head.sha }}")
             ARTIFACT_NAME="PCSX2-${ARCH}"
