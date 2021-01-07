@@ -2,27 +2,7 @@ name: Windows Build
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
-on:
-  push:
-    branches:
-      - "*"
-    paths-ignore:
-      - .gitignore
-      - "**/*.md"
-      - .clang-format
-      - debian-packager/
-      - bin/PCSX2_keys.ini.default
-      - "pcsx2/PAD/Linux/**"
-  pull_request:
-    branches:
-      - "*"
-    paths-ignore:
-      - .gitignore
-      - "**/*.md"
-      - .clang-format
-      - debian-packager/
-      - bin/PCSX2_keys.ini.default
-      - "pcsx2/PAD/Linux/**"
+on: push
 
 jobs:
   build:
