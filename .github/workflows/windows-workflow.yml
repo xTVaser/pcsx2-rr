@@ -31,36 +31,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Prepare Artifact Metadata
-        id: artifact-metadata
-        shell: bash
-        run: |
-          echo "aa"
-          ARCH=$([ "${{ matrix.platform }}" == Win32 ] && echo "32bit" || echo "64bit")
-          echo "aaa"
-          ARTIFACT_NAME=""
-          if [ ${{ github.event_name }} == "pull_request" ]; then
-            echo "a"
-            PR_SHA=$(git rev-parse --short "${{ github.event.pull_request.head.sha }}")
-            ARTIFACT_NAME="PCSX2-${ARCH}"
-            if [ ! -z "${{ github.event.pull_request.number }}" ]; then
-              PR_NUM=${{ github.event.pull_request.number }}
-              ARTIFACT_NAME="${ARTIFACT_NAME}-pr[${PR_NUM}]"
-            fi
-            ARTIFACT_NAME="${ARTIFACT_NAME}-sha[${PR_SHA}]"
-            if [ ! -z "${{ github.event.pull_request.title }}" ]; then
-              PR_TITLE=$(echo "${{ github.event.pull_request.title }}" | tr -cd '[a-zA-Z0-9[:space:]]_-')
-              ARTIFACT_NAME="${ARTIFACT_NAME}-title["${PR_TITLE}""
-            fi
-          else
-            echo "wat"
-            SHA=$(git rev-parse --short "$GITHUB_SHA")
-            ARTIFACT_NAME="PCSX2-${ARCH}-sha[${SHA}"
-          fi
-          TRIMMED_ARTIFACT_NAME=$(printf "%.199s]" "$ARTIFACT_NAME")
-          echo "name=$TRIMMED_ARTIFACT_NAME"
-          echo "##[set-output name=name;]${TRIMMED_ARTIFACT_NAME}"
-
       - name: Cache Submodules
         id: cache-submodules
         uses: actions/cache@v2
@@ -89,7 +59,31 @@ jobs:
       - name: Build PCSX2
         run: msbuild "buildbot.xml" /m /v:n /t:ReleaseAll /p:Platform=${{ matrix.platform }}
 
-      
+      - name: Prepare Artifact Metadata
+        id: artifact-metadata
+        shell: bash
+        run: |
+          ARCH=$([ "${{ matrix.platform }}" == Win32 ] && echo "32bit" || echo "64bit")
+          ARTIFACT_NAME=""
+          if [ ${{ github.event_name }} == "pull_request" ]; then
+            PR_SHA=$(git rev-parse --short "${{ github.event.pull_request.head.sha }}")
+            ARTIFACT_NAME="PCSX2-${ARCH}"
+            if [ ! -z "${{ github.event.pull_request.number }}" ]; then
+              PR_NUM=${{ github.event.pull_request.number }}
+              ARTIFACT_NAME="${ARTIFACT_NAME}-pr[${PR_NUM}]"
+            fi
+            ARTIFACT_NAME="${ARTIFACT_NAME}-sha[${PR_SHA}]"
+            if [ ! -z "${{ github.event.pull_request.title }}" ]; then
+              PR_TITLE=$(echo "${{ github.event.pull_request.title }}" | tr -cd '[a-zA-Z0-9[:space:]]_-')
+              ARTIFACT_NAME="${ARTIFACT_NAME}-title["${PR_TITLE}""
+            fi
+          else
+            SHA=$(git rev-parse --short "$GITHUB_SHA")
+            ARTIFACT_NAME="PCSX2-${ARCH}-sha[${SHA}"
+          fi
+          TRIMMED_ARTIFACT_NAME=$(printf "%.199s]" "$ARTIFACT_NAME")
+          echo "name=$TRIMMED_ARTIFACT_NAME"
+          echo "##[set-output name=name;]${TRIMMED_ARTIFACT_NAME}"
 
       - name: Prepare Artifact Folder
         shell: bash
