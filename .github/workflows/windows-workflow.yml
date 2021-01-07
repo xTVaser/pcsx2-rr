@@ -15,7 +15,7 @@ on:
       - "pcsx2/PAD/Linux/**"
   pull_request:
     branches:
-      - master
+      - "*"
     paths-ignore:
       - .gitignore
       - "**/*.md"
