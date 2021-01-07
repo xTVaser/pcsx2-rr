@@ -35,7 +35,8 @@ jobs:
         id: artifact-metadata
         shell: bash
         run: |
-          BRANCH=${GITHUB_REF#refs/heads/}
+          echo "a"
+          BRANCH="${GITHUB_REF#refs/heads/}"
           ARCH=$([ "${{ matrix.platform }}" == Win32 ] && echo "32bit" || echo "64bit")
           ARTIFACT_NAME=""
           if [ ${{ github.event_name == 'pull_request' }} ]; then
