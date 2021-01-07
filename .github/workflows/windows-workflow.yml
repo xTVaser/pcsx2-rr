@@ -91,6 +91,7 @@ jobs:
         working-directory: ./bin
         run: |
           shopt -s extglob dotglob
+          mkdir "${{ steps.artifact-metadata.outputs.name }}"
           mv !("${{ steps.artifact-metadata.outputs.name }}") "${{ steps.artifact-metadata.outputs.name }}"
           shopt -u dotglob
 
