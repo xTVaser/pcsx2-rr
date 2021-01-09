@@ -180,11 +180,11 @@ fs::path Path::isPortable(fs::path p, bool isPort)
 {
     if (isPort)
     {
-		return fs::relative(p);
+        return fs::relative(p);
     }
-	else
-	{
-		return fs::absolute(p);
+    else
+    {
+        return fs::absolute(p);
     }
 }
 
