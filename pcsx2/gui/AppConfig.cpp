@@ -564,16 +564,16 @@ void App_LoadSaveInstallSettings( IniInterface& ini )
 		NULL
 	};
 
-    wxString CustomDoc = CustomDocumentsFolder.string();
-    wxString Setting = SettingsFolder.string();
+    wxString CustomDoc = Path::ToWxString(CustomDocumentsFolder);
+    wxString Setting = Path::ToWxString(SettingsFolder);
     wxFileName InstallF(InstallFolder);
 
 	ini.EnumEntry( L"DocumentsFolderMode",	DocsFolderMode,	DocsFolderModeNames, (InstallationMode == InstallMode_Registered) ? DocsFolder_User : DocsFolder_Custom);
 
-	ini.Entry( L"CustomDocumentsFolder",	CustomDoc,		wxString(PathDefs::AppRoot().string()) );
+	ini.Entry( L"CustomDocumentsFolder",	CustomDoc,		Path::ToWxString(PathDefs::AppRoot()) );
 
 	ini.Entry( L"UseDefaultSettingsFolder", UseDefaultSettingsFolder,	true );
-	ini.Entry( L"SettingsFolder",			Setting,				wxString(PathDefs::GetSettings().string()) );
+	ini.Entry( L"SettingsFolder",			Setting,				Path::ToWxString(PathDefs::GetSettings()) );
 
 	// "Install_Dir" conforms to the NSIS standard install directory key name.
 	// Attempt to load plugins based on the Install Folder.
@@ -605,7 +605,7 @@ void AppConfig::LoadSaveMemcards( IniInterface& ini )
 
 	for( uint slot=0; slot<2; ++slot )
 	{
-		wxString Filename (Mcd[slot].Filename.wstring());;
+		wxString Filename = Path::ToWxString(Mcd[slot].Filename);
 		ini.Entry( pxsFmt( L"Slot%u_Enable", slot+1 ),
 			Mcd[slot].Enabled, Mcd[slot].Enabled );
 		ini.Entry( pxsFmt( L"Slot%u_Filename", slot+1 ),
@@ -614,7 +614,7 @@ void AppConfig::LoadSaveMemcards( IniInterface& ini )
 
 	for( uint slot=2; slot<8; ++slot )
 	{
-       wxString Filename (Mcd[slot].Filename.wstring());;
+       wxString Filename (Path::ToWxString(Mcd[slot].Filename));
 		int mtport = FileMcd_GetMtapPort(slot)+1;
 		int mtslot = FileMcd_GetMtapSlot(slot)+1;
 
@@ -1320,7 +1320,7 @@ static void LoadVmSettings()
 	// Load virtual machine options and apply some defaults overtop saved items, which
 	// are regulated by the PCSX2 UI.
 
-	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( GetVmSettingsFilename().string() ) );
+	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( Path::ToWxString(GetVmSettingsFilename()) ) );
 	IniLoader vmloader( vmini.get() );
 	g_Conf->EmuOptions.LoadSave( vmloader );
 	g_Conf->EmuOptions.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
@@ -1371,7 +1371,7 @@ static void SaveUiSettings()
 
 static void SaveVmSettings()
 {
-	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( GetVmSettingsFilename().string() ) );
+	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( Path::ToWxString(GetVmSettingsFilename()) ) );
 	IniSaver vmsaver( vmini.get() );
 	g_Conf->EmuOptions.LoadSave( vmsaver );
 

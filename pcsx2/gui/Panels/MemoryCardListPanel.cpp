@@ -600,9 +600,9 @@ void Panels::MemoryCardListPanel_Simple::AppStatusEvent_OnSettingsApplied()
 	}
 	DoRefresh();
 
-	_parent::AppStatusEvent_OnSettingsApplied();
+		_parent::AppStatusEvent_OnSettingsApplied();
+	}
 }
-
 
 //BUG: the next function is never reached because, for some reason, IsoDropTarget::OnDropFiles is called instead.
 //     Interestingly, IsoDropTarget::OnDropFiles actually "detects" a memory card file as a valid Audio-CD ISO...  - avih
@@ -730,7 +730,7 @@ void Panels::MemoryCardListPanel_Simple::UiDeleteCard(McdSlotItem& card)
 	if (result)
 	{
 
-		wxFileName fullpath(m_FolderPicker->GetPath() + card.Filename.GetFullName());
+		wxFileName fullpath(m_FolderPicker->GetPath() + Path::ToWxString(card.Filename));
 		Apply();
 
 		if (fullpath.FileExists())
@@ -803,7 +803,7 @@ bool Panels::MemoryCardListPanel_Simple::UiDuplicateCard(McdSlotItem& src, McdSl
 			break;
 		}
 
-		dest.Filename = newFilename;
+		dest.Filename = newFilename.ToStdString();
 		break;
 	}
 

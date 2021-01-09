@@ -868,13 +868,13 @@ void AppApplySettings( const AppConfig* oldconf )
 		i18n_SetLanguage( g_Conf->LanguageId, g_Conf->LanguageCode );
 	}
 	
-	CorePlugins.SetSettingsFolder( GetSettingsFolder().string() );
+	CorePlugins.SetSettingsFolder( Path::ToWxString(GetSettingsFolder()) );
 
 	// Update the compression attribute on the Memcards folder.
 	// Memcards generally compress very well via NTFS compression.
 
 	#ifdef __WXMSW__
-	NTFS_CompressFile( g_Conf->Folders.MemoryCards.string(), g_Conf->McdCompressNTFS );
+	NTFS_CompressFile( Path::ToWxString(g_Conf->Folders.MemoryCards), g_Conf->McdCompressNTFS );
 	#endif
 	sApp.DispatchEvent( AppStatus_SettingsApplied );
 

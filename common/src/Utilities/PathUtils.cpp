@@ -259,6 +259,15 @@ bool FolderUtils::DoesExist(fs::path path)
     }
 }
 
+wxString Path::ToWxString(const fs::path& path)
+{
+#ifdef _WIN32
+	return wxString(path.wstring());
+#else
+	return wxString(path.string());
+#endif
+}
+
 bool FolderUtils::Empty(std::string path)
 {
     return fs::is_empty(path);

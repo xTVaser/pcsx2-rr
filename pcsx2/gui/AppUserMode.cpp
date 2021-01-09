@@ -150,7 +150,7 @@ bool Pcsx2App::TestForPortableInstall()
 			Console.WriteLn(L"(UserMode) Portable mode requested via commandline switch!");
 		else
 		{
-			wxString temp = portableYamlFile.string();
+			wxString temp = Path::ToWxString(portableYamlFile);
 			Console.WriteLn(L"(UserMode) Found portable install yaml @ %s", WX_STR(temp));
 		}
 		// Just because the portable yaml file exists doesn't mean we can actually run in portable
