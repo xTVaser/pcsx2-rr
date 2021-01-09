@@ -26,7 +26,7 @@ using namespace pxSizerFlags;
 
 static wxString GetNormalizedConfigFolder( FoldersEnum_t folderId )
 {
-	return Path::Normalize( g_Conf->Folders.IsDefault( folderId ) ? PathDefs::Get(folderId) : g_Conf->Folders[folderId].string() );
+	return Path::Normalize( g_Conf->Folders.IsDefault(folderId) ? PathDefs::Get(folderId) : Path::ToWxString(g_Conf->Folders[folderId]) );
 }
 
 // Pass me TRUE if the default path is to be used, and the DirPickerCtrl disabled from use.
@@ -261,7 +261,7 @@ void Panels::DirPickerPanel::Apply()
 {
 	std::string path( GetPath().ToString().ToStdString() );
 
-	if (!folderUtils.DoesExist(path))
+	if (!Path::DoesExist(path))
 	{
 		wxDialogWithHelpers dialog( NULL, _("Create folder?") );
 		dialog += dialog.Heading(AddAppName(_("A configured folder does not exist.  Should %s try to create it?")));
@@ -272,7 +272,7 @@ void Panels::DirPickerPanel::Apply()
 			throw Exception::CannotApplySettings( this );
 	}
 
-	folderUtils.CreateFolder(path);
+	Path::CreateFolder(path);
 	g_Conf->Folders.Set( m_FolderId, path , m_checkCtrl ? m_checkCtrl->GetValue() : false );
 }
 

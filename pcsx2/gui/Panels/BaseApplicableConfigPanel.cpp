@@ -83,11 +83,11 @@ bool ApplyStateStruct::ApplyPage( int pageid )
 
 		// Note: apply first, then save -- in case the apply fails.
 
-		if( !folderUtils.DoesExist(PathDefs::GetSettings()) )
-			folderUtils.CreateFolder(PathDefs::GetSettings());//create the inis folder such that the plugins can be configured at the first time wizard.
+		if( !Path::DoesExist(PathDefs::GetSettings()) )
+			Path::CreateFolder(PathDefs::GetSettings());//create the inis folder such that the plugins can be configured at the first time wizard.
 
-		if( !folderUtils.DoesExist(PathDefs::GetBios()) )
-			folderUtils.CreateFolder(PathDefs::GetBios());//create the bios folder such that it can be opened at the first time wizard without an error message.
+		if( !Path::DoesExist(PathDefs::GetBios()) )
+			Path::CreateFolder(PathDefs::GetBios());//create the bios folder such that it can be opened at the first time wizard without an error message.
 
 		AppApplySettings( &confcopy );
 	}

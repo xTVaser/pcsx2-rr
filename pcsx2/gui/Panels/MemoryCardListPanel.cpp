@@ -349,7 +349,7 @@ public:
 			//   Note: For the sake of usability, automatically enable dest if a ps2-port.
 			if (src.IsPresent)
 			{
-				wxFileName	tmpFilename = wxFileName(dest.Filename.relative_path().wstring());
+				wxFileName tmpFilename = wxFileName(Path::ToWxString(dest.Filename.relative_path()));
 				bool		tmpPresent  = dest.IsPresent;
 				if (src.Slot<0 && m_listview->GetMcdProvider().isFileAssignedToInternalSlot(tmpFilename))
 					m_listview->GetMcdProvider().RemoveCardFromSlot(tmpFilename);
@@ -548,7 +548,7 @@ void Panels::MemoryCardListPanel_Simple::Apply()
 	{
 		g_Conf->Mcd[slot].Type = m_Cards[slot].Type;
 		g_Conf->Mcd[slot].Enabled = m_Cards[slot].IsEnabled && m_Cards[slot].IsPresent;
-		wxString toPrint(g_Conf->Mcd[slot].Filename.wstring());
+		wxString toPrint = Path::ToWxString(g_Conf->Mcd[slot].Filename);
 		if (m_Cards[slot].IsPresent)
 			g_Conf->Mcd[slot].Filename = m_Cards[slot].Filename;
 		else
@@ -603,8 +603,8 @@ void Panels::MemoryCardListPanel_Simple::AppStatusEvent_OnSettingsApplied()
 	DoRefresh();
 
 	_parent::AppStatusEvent_OnSettingsApplied();
+	}
 }
-
 
 //BUG: the next function is never reached because, for some reason, IsoDropTarget::OnDropFiles is called instead.
 //     Interestingly, IsoDropTarget::OnDropFiles actually "detects" a memory card file as a valid Audio-CD ISO...  - avih
@@ -633,7 +633,7 @@ void Panels::MemoryCardListPanel_Simple::DoRefresh()
 		//	continue;
 
 		//wxFileName fullpath( m_FolderPicker->GetPath() + g_Conf->Mcd[slot].Filename.GetFullName() );
-		wxFileName fullpath(Path::Combine(m_FolderPicker->GetPath().ToString().ToStdString(), m_Cards[slot].Filename.string()));
+		wxFileName fullpath(Path::ToWxString(Path::Combine(m_FolderPicker->GetPath().ToString().ToStdString(), m_Cards[slot].Filename.string())));
 
 		EnumerateMemoryCard(m_Cards[slot], fullpath, m_FolderPicker->GetPath());
 		m_Cards[slot].Slot = slot;
@@ -670,7 +670,7 @@ void Panels::MemoryCardListPanel_Simple::UiCreateNewCard(McdSlotItem& card)
 		card.IsEnabled = true;
 		card.Filename  = dialog.result_createdMcdFilename.ToStdString();
 		card.IsPresent = true;
-		wxString toPrint(card.Filename.wstring());
+		wxString toPrint = Path::ToWxString(card.Filename);
 		if (card.Slot >= 0) {
 			Console.WriteLn(L"Setting new memory card to slot %u: '%s'", card.Slot, WX_STR(toPrint));
 		} else {
@@ -720,7 +720,7 @@ void Panels::MemoryCardListPanel_Simple::UiDeleteCard(McdSlotItem& card)
 	if (card.IsFormatted)
 	{
 		wxString content;
-		wxString toPrint(card.Filename.wstring());
+		wxString toPrint = Path::ToWxString(card.Filename);
 		content.Printf(
 			pxE( L"You are about to delete the formatted memory card '%s'. All data on this card will be lost!  Are you absolutely and quite positively sure?"), 
 			WX_STR(toPrint)
@@ -731,8 +731,9 @@ void Panels::MemoryCardListPanel_Simple::UiDeleteCard(McdSlotItem& card)
 
 	if (result)
 	{
+		wxFileName fullpath(Path::ToWxString(Path::Combine(m_FolderPicker->GetPath().ToString().ToStdString(), card.Filename)));
 
-		wxFileName fullpath(m_FolderPicker->GetPath() + card.Filename.GetFullName());
+		card.IsEnabled = false;
 		Apply();
 
 		if (fullpath.FileExists())
@@ -804,15 +805,11 @@ bool Panels::MemoryCardListPanel_Simple::UiDuplicateCard(McdSlotItem& src, McdSl
 			dest.Filename = newFilename.ToStdString();
 			break;
 		}
-
-		dest.Filename = newFilename;
-		break;
-	}
-
+		
 		wxFileName srcfile(Path::ToWxString(Path::Combine(m_FolderPicker->GetPath().ToString().ToStdString(), src.Filename)));
 		wxFileName destfile(Path::ToWxString(Path::Combine(m_FolderPicker->GetPath().ToString().ToStdString(), dest.Filename)));
 		ScopedBusyCursor doh( Cursor_ReallyBusy );
-		
+
 		if( !(    ( srcfile.FileExists() && wxCopyFile( srcfile.GetFullPath(), destfile.GetFullPath(), true ) )
 			   || ( !srcfile.FileExists() && CopyDirectory( srcfile.GetFullPath(), destfile.GetFullPath() ) ) ) )
 		{
@@ -838,9 +835,10 @@ bool Panels::MemoryCardListPanel_Simple::UiDuplicateCard(McdSlotItem& src, McdSl
 		dest.IsPresent=true;
 		dest.IsEnabled = true;
 
-	Apply();
-	DoRefresh();
-	return true;
+		Apply();
+		DoRefresh();
+		return true;
+	}
 }
 
 void Panels::MemoryCardListPanel_Simple::UiRenameCard(McdSlotItem& card)
@@ -853,7 +851,7 @@ void Panels::MemoryCardListPanel_Simple::UiRenameCard(McdSlotItem& card)
 
 	const wxDirName basepath(m_listview->GetMcdProvider().GetMcdPath());
 	wxString newFilename;
-	wxString toPrint(card.Filename.wstring());
+	wxString toPrint = Path::ToWxString(card.Filename);
 	while (1){
 		wxString title;
 		title.Printf(_("Select a new name for the memory card '%s'\n( '.ps2' will be added automatically)"),
@@ -881,7 +879,7 @@ void Panels::MemoryCardListPanel_Simple::UiRenameCard(McdSlotItem& card)
 	bool origEnabled = card.IsEnabled;
 	card.IsEnabled = false;
 	Apply();
-	if( !wxRenameFile( (basepath + card.Filename.wstring()).GetFullPath(), (basepath + wxFileName(newFilename)).GetFullPath(), false ) )
+	if( !wxRenameFile( wxFileName(Path::ToWxString(Path::Combine(basepath.ToString().ToStdString(), card.Filename))).GetFullPath(), (basepath + wxFileName(newFilename)).GetFullPath(), false ) )
 	{
 		card.IsEnabled = origEnabled;
 		Apply();
@@ -1014,7 +1012,7 @@ void Panels::MemoryCardListPanel_Simple::UiAssignUnassignFile(McdSlotItem& card)
 			McdSlotItem& selCard = GetCardForViewIndex(i);
 			wxString sel = GetPortName(selCard.Slot) + L"   ( ";
 			if (selCard.IsPresent)
-				sel += selCard.Filename.relative_path().wstring();
+				sel += Path::ToWxString(selCard.Filename.relative_path());
 			else
 				sel += _("Empty");
 			sel += L" )";
@@ -1022,7 +1020,7 @@ void Panels::MemoryCardListPanel_Simple::UiAssignUnassignFile(McdSlotItem& card)
 			selections.Add(sel);
 		}
 		wxString title;
-		wxString toPrint(card.Filename.relative_path().wstring());
+		wxString toPrint = Path::ToWxString(card.Filename.relative_path());
 		title.Printf(_("Select a target port for '%s'"), WX_STR(toPrint));
 		int res=wxGetSingleChoiceIndex(title, _("Insert card"), selections, this);
 		if( res<0 )
@@ -1160,11 +1158,12 @@ void Panels::MemoryCardListPanel_Simple::ReadFilesAtMcdFolder()
 	{
 		McdSlotItem currentCardFile;
 		bool isOk=EnumerateMemoryCard( currentCardFile, memcardList[i], m_FolderPicker->GetPath() );
-		if( isOk && !isFileAssignedAndVisibleOnList( wxFileName(currentCardFile.Filename.wstring()) ) )
+		if( isOk && !isFileAssignedAndVisibleOnList( wxFileName(Path::ToWxString(currentCardFile.Filename)) ) )
 		{
 			currentCardFile.Slot = -1;
 			currentCardFile.IsEnabled = false;
 			m_allFilesystemCards.push_back(currentCardFile);
+			//DevCon.WriteLn(L"Enumerated file: '%s'", WX_STR(currentCardFile.Filename.GetFullName()) );
 		}
 		/*else
 			DevCon.WriteLn(L"MCD folder card file skipped: '%s'", WX_STR(memcardList[i]) );*/

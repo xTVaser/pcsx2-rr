@@ -409,13 +409,13 @@ public:
 
 	bool HasSettingsOverride() const
 	{
-		return folderUtils.DoesExist(SettingsFolder) || VmSettingsFile.IsOk();
+		return Path::DoesExist(SettingsFolder) || VmSettingsFile.IsOk();
 	}
 
 	bool HasPluginsOverride() const
 	{
 		for( int i=0; i<PluginId_Count; ++i )
-			if( folderUtils.DoesExist(Filenames.Plugins[i]) ) return true;
+			if( Path::DoesExist(Filenames.Plugins[i]) ) return true;
 
 		return false;
 	}
