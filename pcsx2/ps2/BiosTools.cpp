@@ -268,14 +268,14 @@ void LoadBIOS()
 	{
 		fs::path Bios( g_Conf->FullpathToBios() );
 		if( fs::is_directory(g_Conf->BaseFilenames.Bios))
-			throw Exception::FileNotFound( Bios.string() )
+			throw Exception::FileNotFound(Path::ToWxString(Bios))
 				.SetDiagMsg(L"BIOS has not been configured, or the configuration has been corrupted.")
 				.SetUserMsg(_("The PS2 BIOS could not be loaded.  The BIOS has not been configured, or the configuration has been corrupted.  Please re-configure."));
 
 		s64 filesize = Path::GetFileSize( Bios );
 		if( filesize <= 0 )
 		{
-			throw Exception::FileNotFound( Bios.string() )
+			throw Exception::FileNotFound(Path::ToWxString(Bios))
 				.SetDiagMsg(L"Configured BIOS file does not exist, or has a file size of zero.")
 				.SetUserMsg(_("The configured BIOS file does not exist.  Please re-configure."));
 		}
@@ -283,7 +283,7 @@ void LoadBIOS()
 		BiosChecksum = 0;
 
 		wxString biosZone;
-		wxFFile fp( Bios.string() , "rb");
+		wxFFile fp(Path::ToWxString(Bios), "rb");
 		fp.Read( eeMem->ROM, std::min<s64>( Ps2MemSize::Rom, filesize ) );
 
 		// If file is less than 2mb it doesn't have an OSD (Devel consoles)
@@ -295,7 +295,7 @@ void LoadBIOS()
 
 		ChecksumIt( BiosChecksum, eeMem->ROM );
 
-		pxInputStream memfp( wxString(Bios.string()), new wxMemoryInputStream( eeMem->ROM, sizeof(eeMem->ROM) ) );
+		pxInputStream memfp(Path::ToWxString(Bios), new wxMemoryInputStream(eeMem->ROM, sizeof(eeMem->ROM)));
 		LoadBiosVersion( memfp, BiosVersion, BiosDescription, BiosRegion, biosZone );
 
 		Console.SetTitle( pxsFmt( L"Running BIOS (%s v%u.%u)",
@@ -333,7 +333,7 @@ void LoadBIOS()
 
 bool IsBIOS(const wxString& filename, wxString& description)
 {
-	wxFileName Bios( g_Conf->Folders.Bios.wstring() + filename );
+	wxFileName Bios( Path::ToWxString(g_Conf->Folders.Bios) + filename );
 	pxInputStream inway( filename, new wxFFileInputStream( filename ) );
 
 	if (!inway.IsOk()) return false;

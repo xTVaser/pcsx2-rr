@@ -39,76 +39,76 @@ namespace PathDefs
 {
 	namespace Base
 	{
-		const wxDirName& Snapshots()
+		const std::string& Snapshots()
 		{
-			static const wxDirName retval( L"snaps" );
-			return retval;
+			static const std::string temp("snaps");
+			return temp;
 		}
 
-		const wxDirName& Savestates()
+		const std::string& Savestates()
 		{
-			static const wxDirName retval( L"sstates" );
-			return retval;
+			static const std::string temp("sstates");
+			return temp;
 		}
 
-		const wxDirName& MemoryCards()
+		const std::string& MemoryCards()
 		{
-			static const wxDirName retval( L"memcards" );
-			return retval;
+			static const std::string temp("memcards");
+			return temp;
 		}
 
-		const wxDirName& Settings()
+		const std::string& Settings()
 		{
-			static const wxDirName retval( L"inis" );
-			return retval;
+			static const std::string temp("settings");
+			return temp;
 		}
 
-		const wxDirName& Plugins()
+		const std::string& Plugins()
 		{
-			static const wxDirName retval( L"plugins" );
-			return retval;
+			static const std::string temp("plugins");
+			return temp;
 		}
 
-		const wxDirName& Logs()
+		const std::string& Logs()
 		{
-			static const wxDirName retval( L"logs" );
-			return retval;
+			static const std::string temp("logs");
+			return temp;
 		}
 
-		const wxDirName& Bios()
+		const std::string& Bios()
 		{
-			static const wxDirName retval(L"bios");
-			return retval;
+			static const std::string temp("bios");
+			return temp;
 		}
 
-		const wxDirName& Cheats()
+		const std::string& Cheats()
 		{
-			static const wxDirName retval(L"cheats");
-			return retval;
+			static const std::string temp("cheats");
+			return temp;
 		}
 
-		const wxDirName& CheatsWS()
+		const std::string& CheatsWS()
 		{
-			static const wxDirName retval(L"cheats_ws");
-			return retval;
+			static const std::string temp("cheats_ws");
+			return temp;
 		}
 
-		const wxDirName& Langs()
+		const std::string& Langs()
 		{
-			static const wxDirName retval( L"Langs" );
-			return retval;
+			static const std::string temp("Langs");
+			return temp;
 		}
 
-		const wxDirName& Dumps()
+		const std::string& Dumps()
 		{
-			static const wxDirName retval( L"dumps" );
-			return retval;
+			static const std::string temp("dumps");
+			return temp;
 		}
 		
-		const wxDirName& Docs()
+		const std::string& Docs()
 		{
-			static const wxDirName retval( L"docs" );
-			return retval;
+			static const std::string temp("docs");
+			return temp;
 		}
 	};
 
@@ -566,16 +566,16 @@ void App_LoadSaveInstallSettings( IniInterface& ini )
 		NULL
 	};
 
-    wxString CustomDoc = CustomDocumentsFolder.string();
-    wxString Setting = SettingsFolder.string();
+    wxString CustomDoc = Path::ToWxString(CustomDocumentsFolder);
+    wxString Setting = Path::ToWxString(SettingsFolder);
     wxFileName InstallF(InstallFolder);
 
 	ini.EnumEntry( L"DocumentsFolderMode",	DocsFolderMode,	DocsFolderModeNames, (InstallationMode == InstallMode_Registered) ? DocsFolder_User : DocsFolder_Custom);
 
-	ini.Entry( L"CustomDocumentsFolder",	CustomDoc,		wxString(PathDefs::AppRoot().string()) );
+	ini.Entry( L"CustomDocumentsFolder",	CustomDoc,		Path::ToWxString(PathDefs::AppRoot()) );
 
 	ini.Entry( L"UseDefaultSettingsFolder", UseDefaultSettingsFolder,	true );
-	ini.Entry( L"SettingsFolder",			Setting,				wxString(PathDefs::GetSettings().string()) );
+	ini.Entry( L"SettingsFolder",			Setting,				Path::ToWxString(PathDefs::GetSettings()) );
 
 	// "Install_Dir" conforms to the NSIS standard install directory key name.
 	// Attempt to load plugins based on the Install Folder.
@@ -607,7 +607,7 @@ void AppConfig::LoadSaveMemcards( IniInterface& ini )
 
 	for( uint slot=0; slot<2; ++slot )
 	{
-		wxString Filename (Mcd[slot].Filename.wstring());;
+		wxString Filename = Path::ToWxString(Mcd[slot].Filename);
 		ini.Entry( pxsFmt( L"Slot%u_Enable", slot+1 ),
 			Mcd[slot].Enabled, Mcd[slot].Enabled );
 		ini.Entry( pxsFmt( L"Slot%u_Filename", slot+1 ),
@@ -616,7 +616,7 @@ void AppConfig::LoadSaveMemcards( IniInterface& ini )
 
 	for( uint slot=2; slot<8; ++slot )
 	{
-       wxString Filename (Mcd[slot].Filename.wstring());;
+		wxString Filename (Path::ToWxString(Mcd[slot].Filename));
 		int mtport = FileMcd_GetMtapPort(slot)+1;
 		int mtslot = FileMcd_GetMtapSlot(slot)+1;
 
@@ -785,7 +785,7 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	IniEntryDirFile( Langs,  rel );
 	IniEntryDirFile( Cheats, rel );
 	IniEntryDirFile( CheatsWS, rel );
-	ini.Entry( L"PluginsFolder", PluginsFolder, InstallFolder + PathDefs::Base::Plugins().ToString().ToStdString(), rel );
+	ini.Entry( L"PluginsFolder", PluginsFolder, InstallFolder + PathDefs::Base::Plugins(), rel );
 
 	IniEntryDirFile( RunIso, rel );
 	IniEntryDirFile( RunELF, rel );
@@ -1143,7 +1143,7 @@ wxFileConfig* OpenFileConfig( const wxString& filename )
 
 void RelocateLogfile()
 {
-	folderUtils.CreateFolder(g_Conf->Folders.Logs);
+	Path::CreateFolder(g_Conf->Folders.Logs);
 
 	wxString newlogname( Path::Combine( g_Conf->Folders.Logs.string(), "emuLog.txt" ) );
 
@@ -1175,8 +1175,8 @@ void RelocateLogfile()
 //
 void AppConfig_OnChangedSettingsFolder( bool overwrite )
 {
-	folderUtils.CreateFolder(PathDefs::GetDocuments());
-	folderUtils.CreateFolder(GetSettingsFolder());
+	Path::CreateFolder(PathDefs::GetDocuments());
+	Path::CreateFolder(GetSettingsFolder());
 
 	const wxString iniFilename( GetUiSettingsFilename() );
 
@@ -1301,12 +1301,12 @@ static void LoadUiSettings()
 	}
 
 #if defined(_WIN32)
-	if( !folderUtils.DoesExist(g_Conf->Folders.RunDisc.make_preferred()) )
+	if( !Path::DoesExist(g_Conf->Folders.RunDisc.make_preferred()) )
 	{
 		g_Conf->Folders.RunDisc.clear();
 	}
 #else
-	if ( !folderUtils.DoesExist(g_Conf->Folders.RunDisc.make_preferred()))
+	if ( !Path::DoesExist(g_Conf->Folders.RunDisc.make_preferred()))
 	{
 		g_Conf->Folders.RunDisc.clear();
 	}
@@ -1320,7 +1320,7 @@ static void LoadVmSettings()
 	// Load virtual machine options and apply some defaults overtop saved items, which
 	// are regulated by the PCSX2 UI.
 
-	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( GetVmSettingsFilename().string() ) );
+	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( Path::ToWxString(GetVmSettingsFilename()) ) );
 	IniLoader vmloader( vmini.get() );
 	g_Conf->EmuOptions.LoadSave( vmloader );
 	g_Conf->EmuOptions.GS.LimitScalar = g_Conf->Framerate.NominalScalar;
@@ -1365,7 +1365,7 @@ static void SaveUiSettings()
 
 static void SaveVmSettings()
 {
-	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( GetVmSettingsFilename().string() ) );
+	std::unique_ptr<wxFileConfig> vmini( OpenFileConfig( Path::ToWxString(GetVmSettingsFilename()) ) );
 	IniSaver vmsaver( vmini.get() );
 	g_Conf->EmuOptions.LoadSave( vmsaver );
 
