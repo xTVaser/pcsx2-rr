@@ -811,11 +811,11 @@ void AppConfig::FilenameOptions::LoadSave( IniInterface& ini )
 	static const wxFileName pc( L"Please Configure" );
 
 	//when saving in portable mode, we just save the non-full-path filename
- 	//  --> on load they'll be initialized with default (relative) paths (works both for plugins and bios)
+	//  --> on load they'll be initialized with default (relative) paths (works both for plugins and bios)
 	//note: this will break if converting from install to portable, and custom folders are used. We can live with that.
 	bool needRelativeName = ini.IsSaving() && IsPortable();
 
-    for (int i = 0; i < PluginId_Count; i++)
+	for (int i = 0; i < PluginId_Count; i++)
 	{
 		wxFileName plugin_filename = wxFileName(Plugins[i]);
 		ini.Entry(tbl_PluginInfo[i].GetShortname(), plugin_filename, pc);

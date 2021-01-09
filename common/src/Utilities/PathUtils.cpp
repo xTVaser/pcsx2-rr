@@ -180,11 +180,11 @@ fs::path Path::isPortable(fs::path p, bool isPort)
 {
     if (isPort)
     {
-		return fs::relative(p);
+        return fs::relative(p);
     }
-	else
-	{
-		return fs::absolute(p);
+    else
+    {
+        return fs::absolute(p);
     }
 }
 
@@ -242,21 +242,21 @@ bool FolderUtils::DoesExist(fs::path path)
 {
     /*if (fs::exists(path.make_preferred()) || !fs::is_empty(path.make_preferred()))
     {
-		return true;
+        return true;
     }
-	else
-	{
-		return false;
+    else
+    {
+        return false;
     }*/
 
-	try
-	{
-		return fs::exists(path.make_preferred());
-	}
-	catch (fs::filesystem_error ex)
-	{
-		return false;
-	}
+    try
+    {
+        return fs::exists(path.make_preferred());
+    }
+    catch (fs::filesystem_error ex)
+    {
+        return false;
+    }
 }
 
 bool FolderUtils::Empty(std::string path)
