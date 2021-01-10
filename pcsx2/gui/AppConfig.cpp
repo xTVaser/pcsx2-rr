@@ -39,76 +39,76 @@ namespace PathDefs
 {
 	namespace Base
 	{
-		const wxDirName& Snapshots()
+		const std::string& Snapshots()
 		{
-			static const wxDirName retval( L"snaps" );
-			return retval;
+			static const std::string temp("snaps");
+			return temp;
 		}
 
-		const wxDirName& Savestates()
+		const std::string& Savestates()
 		{
-			static const wxDirName retval( L"sstates" );
-			return retval;
+			static const std::string temp("sstates");
+			return temp;
 		}
 
-		const wxDirName& MemoryCards()
+		const std::string& MemoryCards()
 		{
-			static const wxDirName retval( L"memcards" );
-			return retval;
+			static const std::string temp("memcards");
+			return temp;
 		}
 
-		const wxDirName& Settings()
+		const std::string& Settings()
 		{
-			static const wxDirName retval( L"inis" );
-			return retval;
+			static const std::string temp("settings");
+			return temp;
 		}
 
-		const wxDirName& Plugins()
+		const std::string& Plugins()
 		{
-			static const wxDirName retval( L"plugins" );
-			return retval;
+			static const std::string temp("plugins");
+			return temp;
 		}
 
-		const wxDirName& Logs()
+		const std::string& Logs()
 		{
-			static const wxDirName retval( L"logs" );
-			return retval;
+			static const std::string temp("logs");
+			return temp;
 		}
 
-		const wxDirName& Bios()
+		const std::string& Bios()
 		{
-			static const wxDirName retval(L"bios");
-			return retval;
+			static const std::string temp("bios");
+			return temp;
 		}
 
-		const wxDirName& Cheats()
+		const std::string& Cheats()
 		{
-			static const wxDirName retval(L"cheats");
-			return retval;
+			static const std::string temp("cheats");
+			return temp;
 		}
 
-		const wxDirName& CheatsWS()
+		const std::string& CheatsWS()
 		{
-			static const wxDirName retval(L"cheats_ws");
-			return retval;
+			static const std::string temp("cheats_ws");
+			return temp;
 		}
 
-		const wxDirName& Langs()
+		const std::string& Langs()
 		{
-			static const wxDirName retval( L"Langs" );
-			return retval;
+			static const std::string temp("Langs");
+			return temp;
 		}
 
-		const wxDirName& Dumps()
+		const std::string& Dumps()
 		{
-			static const wxDirName retval( L"dumps" );
-			return retval;
+			static const std::string temp("dumps");
+			return temp;
 		}
 		
-		const wxDirName& Docs()
+		const std::string& Docs()
 		{
-			static const wxDirName retval( L"docs" );
-			return retval;
+			static const std::string temp("docs");
+			return temp;
 		}
 	};
 
@@ -782,7 +782,7 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	IniEntryDirFile( Langs,  rel );
 	IniEntryDirFile( Cheats, rel );
 	IniEntryDirFile( CheatsWS, rel );
-	ini.Entry( L"PluginsFolder", PluginsFolder, InstallFolder + PathDefs::Base::Plugins().ToString().ToStdString(), rel );
+	ini.Entry( L"PluginsFolder", PluginsFolder, InstallFolder + PathDefs::Base::Plugins(), rel );
 
 	IniEntryDirFile( RunIso, rel );
 	IniEntryDirFile( RunELF, rel );

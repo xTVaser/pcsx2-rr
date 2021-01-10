@@ -20,7 +20,7 @@
 #include "yaml-cpp/yaml.h"
 #include "AppConfig.h"
 #include <wx/stdpaths.h>
-
+#include "PathDefs.h"
 
 #ifdef __WXMSW__
 #include "wx/msw/regconf.h"
@@ -47,16 +47,16 @@ FolderUtils folderUtils;
 
 
 const std::string PermissionFolders[] =
-	{
-		"settings",
-		"memcards",
-		"sstates",
-		"snapshots",
-		"logs",
-		"cheats_ws",
+{
+		PathDefs::Base::Settings(),
+		PathDefs::Base::MemoryCards(),
+		PathDefs::Base::Savestates(),
+		PathDefs::Base::Snapshots(),
+		PathDefs::Base::Logs(),
+		PathDefs::Base::CheatsWS(),
 #ifdef PCSX2_DEVBUILD
-		"dumps",
-#endif
+		PathDefs::Base::Dumps(),
+#endif 
 };
 
 // The UserLocalData folder can be redefined depending on whether or not PCSX2 is in
