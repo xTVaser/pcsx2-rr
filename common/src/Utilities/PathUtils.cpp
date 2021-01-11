@@ -220,17 +220,17 @@ void pxExplore(const char *path)
     pxExplore(fromUTF8(path));
 }
 
-bool FolderUtils::CreateFolder(fs::path path)
+bool Path::CreateFolder(fs::path path)
 {
     return fs::create_directories(path.make_preferred()); // An attempt to create the User mode Dir which already exists
 }
 
-bool FolderUtils::DoesExist(std::string path)
+bool Path::DoesExist(std::string path)
 {
     return fs::exists(fs::path(path).make_preferred());
 }
 
-bool FolderUtils::DoesExist(fs::path path)
+bool Path::DoesExist(fs::path path)
 {
     /*if (fs::exists(path.make_preferred()) || !fs::is_empty(path.make_preferred()))
     {
@@ -260,7 +260,7 @@ wxString Path::ToWxString(const fs::path& path)
 #endif
 }
 
-bool FolderUtils::Empty(std::string path)
+bool Path::Empty(std::string path)
 {
     return fs::is_empty(path);
 }
