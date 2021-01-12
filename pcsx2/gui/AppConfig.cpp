@@ -181,7 +181,7 @@ namespace PathDefs
 
 	fs::path GetSnapshots()
 	{
-		return (GetDocuments() / "snapshots").make_preferred();
+		return (GetDocuments() / "snaps").make_preferred();
 	}
 
 	fs::path GetBios()
@@ -762,7 +762,7 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
 	bool rel = ( ini.IsLoading() || IsPortable() );
 	
-	Bios = Path::isPortable(Bios, IsPortable());
+	//Bios = Path::isPortable(Bios, IsPortable());
 	Snapshots = Path::isPortable(Snapshots, IsPortable());
 	Savestates = Path::isPortable(Savestates, IsPortable());
 	MemoryCards = Path::isPortable(MemoryCards, IsPortable());
