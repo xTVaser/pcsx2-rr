@@ -164,8 +164,8 @@ std::string Path::GetDirectory(const std::string &src)
 
 fs::path Path::GetExecutableDirectory()
 {
-	fs::path exePath(wxStandardPaths::Get().GetExecutablePath().ToStdString());
-    return exePath.parent_path();
+	fs::path exePath(wxStandardPaths::Get().GetExecutablePath().ToStdWstring());
+	return exePath.parent_path();
 }
 
 fs::path Path::isPortable(fs::path p, bool isPort)
