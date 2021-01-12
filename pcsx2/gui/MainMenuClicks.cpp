@@ -109,8 +109,18 @@ static void WipeSettings()
 	wxGetApp().CleanupRestartable();
 	wxGetApp().CleanupResources();
 
-	fs::remove_all(GetUiSettingsFilename().make_preferred());
-	fs::remove_all(GetVmSettingsFilename().make_preferred());
+	try
+	{
+		for (auto& p : fs::directory_iterator(GetUiSettingsFilename().parent_path()))
+		{
+			fs::remove_all(p.path());
+		}
+	} catch (const std::exception& e)
+	{
+		DevCon.WriteLn("Failure to Delete");
+	}
+
+	//fs::remove_all(GetVmSettingsFilename().make_preferred());
 
 	// FIXME: wxRmdir doesn't seem to work here for some reason (possible file sharing issue
 	// with a plugin that leaves a file handle dangling maybe?).  But deleting the inis folder
