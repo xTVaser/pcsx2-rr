@@ -710,7 +710,7 @@ void SysCorePlugins::Load( const wxString (&folders)[PluginId_Count] )
 	ConsoleIndentScope indent;
 
 	ForPlugins([&] (const PluginInfo * pi) {
-		Load( pi->id, folders[pi->id] );
+		Load( pi->id, folders[pi->id].ToStdWstring() );
 		pxYield( 2 );
 	});
 

@@ -246,7 +246,7 @@ namespace PathDefs
 		return (PathDefs::AppRoot() / "Langs").make_preferred();
 	}
 
-	std::string Get( FoldersEnum_t folderidx )
+	fs::path Get( FoldersEnum_t folderidx )
 	{
 		switch( folderidx )
 		{
@@ -265,7 +265,7 @@ namespace PathDefs
 
 			jNO_DEFAULT
 		}
-		return std::string();
+		return fs::path();
 	}
 };
 
@@ -430,9 +430,9 @@ namespace FilenameDefs
 	}
 };
 
-std::string AppConfig::FullpathTo( PluginsEnum_t pluginidx ) const
+fs::path AppConfig::FullpathTo( PluginsEnum_t pluginidx ) const
 {
-	return Path::Combine( PluginsFolder.string(), BaseFilenames[pluginidx] );
+	return PluginsFolder / BaseFilenames[pluginidx];
 }
 
 // returns true if the filenames are quite absolutely the equivalent.  Works for all
@@ -443,7 +443,7 @@ bool AppConfig::FullpathMatchTest( PluginsEnum_t pluginId, const wxString& cmpto
 	// Implementation note: wxFileName automatically normalizes things as needed in it's
 	// equality comparison implementations, so we can do a simple comparison as follows:
 
-	return wxFileName(cmpto).SameAs( wxFileName(FullpathTo(pluginId)) );
+	return wxFileName(cmpto).SameAs( wxFileName(Path::ToWxString(FullpathTo(pluginId)) ));
 }
 
 static std::string GetResolvedFolder(FoldersEnum_t id)
@@ -492,11 +492,11 @@ fs::path GetUiKeysFilename()
 	return (GetSettingsFolder() / fname).make_preferred();
 }
 
-std::string AppConfig::FullpathToBios() const				{ return Path::Combine(Folders.Bios.string(), BaseFilenames.Bios); }
+fs::path AppConfig::FullpathToBios() const				{ return Folders.Bios / BaseFilenames.Bios; }
 
-std::string AppConfig::FullpathToMcd( uint slot ) const
+fs::path AppConfig::FullpathToMcd( uint slot ) const
 {
-	return Path::Combine( Folders.MemoryCards.string(), Mcd[slot].Filename.string() );
+	return Folders.MemoryCards / Mcd[slot].Filename;
 }
 
 bool IsPortable()
@@ -799,7 +799,7 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 }
 
 // ------------------------------------------------------------------------
-const std::string& AppConfig::FilenameOptions::operator[]( PluginsEnum_t pluginidx ) const
+const fs::path& AppConfig::FilenameOptions::operator[]( PluginsEnum_t pluginidx ) const
 {
 	IndexBoundsAssumeDev( L"Filename[Plugin]", pluginidx, PluginId_Count );
 	return Plugins[pluginidx];
@@ -809,7 +809,7 @@ void AppConfig::FilenameOptions::LoadSave( IniInterface& ini )
 {
 	ScopedIniGroup path( ini, L"Filenames" );
 
-	static const wxFileName pc( L"Please Configure" );
+	static const fs::path pc( "Please Configure" );
 
 	//when saving in portable mode, we just save the non-full-path filename
 	//  --> on load they'll be initialized with default (relative) paths (works both for plugins and bios)
@@ -818,22 +818,14 @@ void AppConfig::FilenameOptions::LoadSave( IniInterface& ini )
 
 	for (int i = 0; i < PluginId_Count; i++)
 	{
-		wxFileName plugin_filename = wxFileName(Plugins[i]);
-		ini.Entry(tbl_PluginInfo[i].GetShortname(), plugin_filename, pc);
+		fs::path plugin_path = Plugins[i];
+		ini.Entry(tbl_PluginInfo[i].GetShortname(), plugin_path, pc);
 		
 		// Why is this not required for the BIOS part below?
-		Plugins[i] = plugin_filename.GetFullPath().ToStdString();
+		Plugins[i] = plugin_path;
 	}
 
-	if( needRelativeName ) 
-	{ 
-		wxFileName bios_filename(Bios);
-		ini.Entry( L"BIOS", bios_filename, pc );
-	} 
-	else
-	{
-		ini.Entry( "BIOS", Bios, pc.GetFullPath().ToStdString() );
-	}
+	ini.Entry( "BIOS", Bios, pc );
 }
 
 // ------------------------------------------------------------------------
