@@ -189,13 +189,14 @@ public:
 	// ------------------------------------------------------------------------
 	struct FilenameOptions
 	{
-		std::string Bios;
-		std::string Plugins[PluginId_Count];
+		fs::path Bios;
+		fs::path Plugins[PluginId_Count];
 		bool needRelativeName = false;
+
 
 		void LoadSave( IniInterface& conf );
 
-		const std::string& operator[]( PluginsEnum_t pluginidx ) const;
+		const fs::path& operator[]( PluginsEnum_t pluginidx ) const;
 	};
 
 	// ------------------------------------------------------------------------
@@ -383,9 +384,9 @@ public:
 public:
 	AppConfig();
 
-	std::string FullpathToBios() const;
-	std::string FullpathToMcd( uint slot ) const;
-	std::string FullpathTo( PluginsEnum_t pluginId ) const;
+	fs::path FullpathToBios() const;
+	fs::path FullpathToMcd( uint slot ) const;
+	fs::path FullpathTo( PluginsEnum_t pluginId ) const;
 
 	bool FullpathMatchTest( PluginsEnum_t pluginId, const wxString& cmpto ) const;
 
