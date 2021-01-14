@@ -400,7 +400,7 @@ void Panels::PluginSelectorPanel::DispatchEvent( const PluginEventType& evt )
 		int sel = box.GetSelection();
 		if (sel != wxNOT_FOUND) {
 			m_ComponentBoxes->GetConfigButton(pi->id).Enable(
-			(m_FileList==NULL || m_FileList->Count() == 0) ? false :
+			(m_FileList==NULL || m_FileList->size() == 0) ? false :
 			g_Conf->FullpathMatchTest( pi->id,(*m_FileList)[((uptr)box.GetClientData(sel))] )
 		);
 		}
@@ -470,8 +470,8 @@ void Panels::PluginSelectorPanel::Apply()
 				.SetUserMsg(pxsFmt( _("Please select a valid plugin for the %s."), WX_STR(plugname) ) + L"\n\n" + GetApplyFailedMsg() );
 		}
 
-		g_Conf->BaseFilenames.Plugins[pid] = fs::path(GetFilename((uptr)m_ComponentBoxes->Get(pid).GetClientData(sel)).ToStdWstring());
-		
+		g_Conf->BaseFilenames.Plugins[pid] = fs::path(GetFilename((uptr)m_ComponentBoxes->Get(pid).GetClientData(sel)));
+
 	});
 
 	// ----------------------------------------------------------------------------
@@ -564,9 +564,9 @@ bool Panels::PluginSelectorPanel::ValidateEnumerationStatus()
 
 	// Impl Note: unique_ptr used so that resources get cleaned up if an exception
 	// occurs during file enumeration.
-	std::unique_ptr<wxArrayString> pluginlist(new wxArrayString());
+	std::unique_ptr<std::vector<fs::path>> pluginlist(new std::vector<fs::path>());
 
-	int pluggers = EnumeratePluginsInFolder(m_ComponentBoxes->GetPluginsPath(), pluginlist.get());
+	int pluggers = EnumeratePluginsInFolder(m_ComponentBoxes->GetPluginsPath().ToString().ToStdWstring(), pluginlist.get());
 
 	if( !m_FileList || (*pluginlist != *m_FileList) )
 		validated = false;
@@ -623,7 +623,7 @@ void Panels::PluginSelectorPanel::OnConfigure_Clicked( wxCommandEvent& evt )
 	// Otherwise who knows what sort of funny business could happen configuring a plugin while
 	// another instance/version is running. >_<
 
-	const wxString filename( (*m_FileList)[(uptr)m_ComponentBoxes->Get(pid).GetClientData(sel)] );
+	const fs::path filename( (*m_FileList)[(uptr)m_ComponentBoxes->Get(pid).GetClientData(sel)] );
 
 	if( CorePlugins.AreLoaded() && !g_Conf->FullpathMatchTest( pid, filename ) )
 	{
@@ -631,7 +631,7 @@ void Panels::PluginSelectorPanel::OnConfigure_Clicked( wxCommandEvent& evt )
 		return;
 	}
 
-	wxDynamicLibrary dynlib( filename );
+	wxDynamicLibrary dynlib( Path::ToWxString(filename) );
 
 	if( ConfigureFnptr configfunc = (ConfigureFnptr)dynlib.GetSymbol( tbl_PluginInfo[pid].GetShortname() + L"configure" ) )
 	{
@@ -641,7 +641,7 @@ void Panels::PluginSelectorPanel::OnConfigure_Clicked( wxCommandEvent& evt )
 		ScopedCoreThreadPause paused_core( new SysExecEvent_SaveSinglePlugin(pid) );
 		if (!CorePlugins.AreLoaded())
 		{
-			CorePlugins.Load(pid, filename.ToStdWstring());
+			CorePlugins.Load(pid, Path::ToWxString(filename));
 			CorePlugins.SendLogFolder();
 			CorePlugins.SendSettingsFolder();
 			configfunc();
@@ -670,8 +670,43 @@ void Panels::PluginSelectorPanel::OnEnumComplete( wxCommandEvent& evt )
 
 	int emptyBoxes = 0;
 	const PluginInfo* pi = tbl_PluginInfo;
+	const PluginsEnum_t pid = pi->id;
 
-	do
+	if (pi->shortname != 0)
+	{
+		for (auto& file : fs::directory_iterator(PathDefs::GetPlugins()))
+		{
+			if (pid == PluginId_GS)
+			{
+				int count = (int)m_ComponentBoxes->Get(pid).GetCount();
+
+				int index_avx2 = -1;
+				int index_sse4 = -1;
+				int index_sse2 = -1;
+
+				for (int i = 0; i < count; i++)
+				{
+					auto str = file.path();
+					if (x86caps.hasAVX2 && str.string().find("AVX2") != std::string::npos) index_avx2 = i;
+					if (x86caps.hasStreamingSIMD4Extensions && str.string().find("SSE4") != std::string::npos) index_sse4 = i;
+					if (str.string().find("SSE2") != std::string::npos) index_sse2 = i;
+				}
+
+				if (index_avx2 >= 0) m_ComponentBoxes->Get(pid).SetSelection(index_avx2);
+				else if (index_sse4 >= 0) m_ComponentBoxes->Get(pid).SetSelection(index_sse4);
+				else if (index_sse2 >= 0) m_ComponentBoxes->Get(pid).SetSelection(index_sse2);
+				else m_ComponentBoxes->Get(pid).SetSelection(0);
+			}
+			else
+			{
+				m_ComponentBoxes->Get(pid).SetSelection(0);
+				m_ComponentBoxes->GetConfigButton(pid).Enable(!CorePlugins.AreLoaded());
+			}
+
+		}
+		++pi;
+	}
+	/*do
 	{
 		const PluginsEnum_t pid = pi->id;
 		if( m_ComponentBoxes->Get(pid).GetCount() <= 0 )
@@ -706,7 +741,7 @@ void Panels::PluginSelectorPanel::OnEnumComplete( wxCommandEvent& evt )
 
 			m_ComponentBoxes->GetConfigButton(pid).Enable( !CorePlugins.AreLoaded() );
 		}
-	} while( ++pi, pi->shortname != NULL );
+	} while( ++pi, pi->shortname != NULL );*/
 
 	m_ComponentBoxes->Show();
 	m_StatusPanel->Hide();
@@ -731,7 +766,7 @@ void Panels::PluginSelectorPanel::OnProgress( wxCommandEvent& evt )
 	if( DisableThreading )
 	{
 		const u32 nextidx = evtidx+1;
-		if( nextidx == m_FileList->Count() )
+		if( nextidx == m_FileList->size() )
 		{
 			wxCommandEvent done( pxEvt_EnumerationFinished );
 			GetEventHandler()->AddPendingEvent( done );
@@ -740,8 +775,8 @@ void Panels::PluginSelectorPanel::OnProgress( wxCommandEvent& evt )
 			m_EnumeratorThread->DoNextPlugin( nextidx );
 	}
 
-	m_StatusPanel->AdvanceProgress( (evtidx < m_FileList->Count()-1) ?
-		(*m_FileList)[evtidx + 1] : wxString(_("Completing tasks..."))
+	m_StatusPanel->AdvanceProgress( (evtidx < m_FileList->size()-1) ?
+		Path::ToWxString((*m_FileList)[evtidx + 1]) : wxString(_("Completing tasks..."))
 	);
 
 	EnumeratedPluginInfo& result( m_EnumeratorThread->Results[evtidx] );
@@ -753,7 +788,7 @@ void Panels::PluginSelectorPanel::OnProgress( wxCommandEvent& evt )
 			if( result.PassedTest & pi->typemask )
 			{
 				int sel = m_ComponentBoxes->Get(pid).Append( wxsFormat( L"%s %s [%s]",
-					WX_STR(result.Name), WX_STR(result.Version[pid]), WX_STR(Path::GetFilenameWithoutExt( (*m_FileList)[evtidx] )) ),
+					WX_STR(result.Name), WX_STR(result.Version[pid]), WX_STR(Path::GetFilenameWithoutExt( Path::ToWxString((*m_FileList)[evtidx] ))) ),
 					(void*)evtidx
 				);
 
@@ -782,14 +817,14 @@ Panels::PluginSelectorPanel::EnumThread::EnumThread( PluginSelectorPanel& master
 
 void Panels::PluginSelectorPanel::EnumThread::DoNextPlugin( int curidx )
 {
-	DbgCon.Indent().WriteLn( L"Plugin: " + m_master.GetFilename( curidx ) );
+	DbgCon.Indent().WriteLn( "Plugin: " + m_master.GetFilename( curidx ).string() );
 
 	try
 	{
 		EnumeratedPluginInfo& result( Results[curidx] );
 		result.TypeMask = 0;
 
-		PluginEnumerator penum( m_master.GetFilename( curidx ) );
+		PluginEnumerator penum( Path::ToWxString(m_master.GetFilename( curidx )) );
 
 		result.Name = penum.GetName();
 

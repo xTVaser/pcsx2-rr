@@ -436,12 +436,12 @@ fs::path AppConfig::FullpathTo( PluginsEnum_t pluginidx ) const
 // returns true if the filenames are quite absolutely the equivalent.  Works for all
 // types of filenames, relative and absolute.  Very important that you use this function
 // rather than any other type of more direct string comparison!
-bool AppConfig::FullpathMatchTest( PluginsEnum_t pluginId, const wxString& cmpto ) const
+bool AppConfig::FullpathMatchTest( PluginsEnum_t pluginId, const std::string& cmpto ) const
 {
 	// Implementation note: wxFileName automatically normalizes things as needed in it's
 	// equality comparison implementations, so we can do a simple comparison as follows:
 
-	return wxFileName(cmpto).SameAs( wxFileName(Path::ToWxString(FullpathTo(pluginId)) ));
+	return wxFileName(Path::ToWxString(cmpto)).SameAs( wxFileName(Path::ToWxString(FullpathTo(pluginId)) ));
 }
 
 static std::string GetResolvedFolder(FoldersEnum_t id)
