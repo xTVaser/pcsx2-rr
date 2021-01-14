@@ -232,15 +232,6 @@ bool Path::DoesExist(std::string path)
 
 bool Path::DoesExist(fs::path path)
 {
-    /*if (fs::exists(path.make_preferred()) || !fs::is_empty(path.make_preferred()))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }*/
-
     try
     {
         return fs::exists(path.make_preferred());

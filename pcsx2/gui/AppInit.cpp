@@ -311,7 +311,7 @@ bool Pcsx2App::ParseOverrides(wxCmdLineParser& parser)
 			}
 
 			if (parsed)
-				Overrides.Filenames.Plugins[pi->id] = dest;
+				Overrides.Filenames.Plugins[pi->id] = fs::path(dest.ToStdWstring());
 		}
 	});
 
