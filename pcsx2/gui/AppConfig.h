@@ -377,7 +377,7 @@ public:
 	fs::path FullpathToMcd( uint slot ) const;
 	fs::path FullpathTo( PluginsEnum_t pluginId ) const;
 
-	bool FullpathMatchTest( PluginsEnum_t pluginId, const wxString& cmpto ) const;
+	bool FullpathMatchTest( PluginsEnum_t pluginId, const std::string& cmpto ) const;
 
 	void LoadSave( IniInterface& ini );
 	void LoadSaveRootItems( IniInterface& ini );

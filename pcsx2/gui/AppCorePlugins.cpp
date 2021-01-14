@@ -411,16 +411,16 @@ protected:
 //  Public API / Interface
 // --------------------------------------------------------------------------------------
 
-int EnumeratePluginsInFolder(const wxDirName& searchpath, wxArrayString* dest)
+int EnumeratePluginsInFolder(const fs::path& searchpath, std::vector<fs::path>* dest)
 {
-	if (!searchpath.Exists())
+	if (!fs::exists(searchpath))
 		return 0;
 
-	std::unique_ptr<wxArrayString> placebo;
-	wxArrayString* realdest = dest;
+	std::unique_ptr<std::vector<fs::path>> placebo;
+	std::vector<fs::path> * realdest = dest;
 	if (realdest == NULL)
 	{
-		placebo = std::make_unique<wxArrayString>();
+		placebo = std::make_unique<std::vector<fs::path>>();
 		realdest = placebo.get();
 	}
 
@@ -433,7 +433,12 @@ int EnumeratePluginsInFolder(const wxDirName& searchpath, wxArrayString* dest)
 	wxString pattern(L"*%s*");
 #endif
 
-	wxDir::GetAllFiles(searchpath.ToString(), realdest, pxsFmt(pattern, WX_STR(wxDynamicLibrary::GetDllExt())), wxDIR_FILES);
+	//wxDir::GetAllFiles(searchpath.ToString(), realdest, pxsFmt(pattern, WX_STR(wxDynamicLibrary::GetDllExt())), wxDIR_FILES);
+
+	for (auto& plugin : fs::directory_iterator(searchpath))
+	{
+		realdest->push_back(plugin);
+	}
 
 	// SECURITY ISSUE:  (applies primarily to Windows, but is a good idea on any platform)
 	//   The search folder order for plugins can vary across operating systems, and in some poorly designed
@@ -444,12 +449,12 @@ int EnumeratePluginsInFolder(const wxDirName& searchpath, wxArrayString* dest)
 	//
 	// (for details, read: http://msdn.microsoft.com/en-us/library/ff919712.aspx )
 
-	for (uint i = 0; i < realdest->GetCount(); ++i)
+	for (uint i = 0; i < realdest->size(); ++i)
 	{
-		(*realdest)[i] = Path::MakeAbsolute((*realdest)[i].ToStdString());
+		(*realdest)[i] = Path::MakeAbsolute((*realdest)[i]);
 	}
 
-	return realdest->GetCount();
+	return realdest->size();
 }
 
 // Posts a message to the App to reload plugins.  Plugins are loaded via a background thread

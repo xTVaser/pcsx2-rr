@@ -804,7 +804,7 @@ extern pxDoAssertFnType AppDoAssert;
 //  External App-related Globals and Shortcuts
 // --------------------------------------------------------------------------------------
 
-extern int  EnumeratePluginsInFolder( const wxDirName& searchPath, wxArrayString* dest );
+extern int  EnumeratePluginsInFolder( const fs::path& searchPath, std::vector<fs::path>* dest );
 extern void LoadPluginsPassive();
 extern void LoadPluginsImmediate();
 extern void UnloadPlugins();
