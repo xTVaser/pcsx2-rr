@@ -559,7 +559,7 @@ namespace Panels
 		ComboBoxPanel*	m_ComponentBoxes;
 		bool			m_Canceled;
 
-		std::unique_ptr<wxArrayString>	m_FileList;	// list of potential plugin files
+		std::unique_ptr<std::vector<fs::path>>	m_FileList;	// list of potential plugin files
 		std::unique_ptr<EnumThread>		m_EnumeratorThread;
 
 	public:
@@ -584,8 +584,8 @@ namespace Panels
 		virtual void DoRefresh();
 		virtual bool ValidateEnumerationStatus();
 
-		int FileCount() const { return m_FileList->Count(); }
-		const wxString& GetFilename( int i ) const { return (*m_FileList)[i]; }
+		int FileCount() const { return m_FileList->size(); }
+		const fs::path& GetFilename( int i ) const { return (*m_FileList)[i]; }
 
 		friend class EnumThread;
 	};
