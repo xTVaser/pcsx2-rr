@@ -1279,7 +1279,8 @@ AppIniLoader::AppIniLoader()
 
 static void LoadUiSettings()
 {
-	AppIniLoader loader;
+	std::unique_ptr<wxFileConfig> uini(OpenFileConfig(Path::ToWxString(GetUiSettingsFilename())));
+	IniLoader loader(uini.get());
 	ConLog_LoadSaveSettings( loader );
 	SysTraceLog_LoadSaveSettings( loader );
 
@@ -1333,26 +1334,21 @@ void AppLoadSettings()
 
 static void SaveUiSettings()
 {	
-	if( !wxFile::Exists( g_Conf->CurrentIso ) )
+	if( !Path::DoesExist( g_Conf->CurrentIso ) )
 	{
 		g_Conf->CurrentIso.clear();
 	}
-
-#if defined(_WIN32)
+	
 	if (!Path::DoesExist(g_Conf->Folders.RunDisc.make_preferred()))
 	{
 		g_Conf->Folders.RunDisc.clear();
 	}
-#else
-	if (!Path::DoesExist(g_Conf->Folders.RunDisc.make_preferred()))
-	{
-		g_Conf->Folders.RunDisc.clear();
-	}
-#endif
 
 	sApp.GetRecentIsoManager().Add( g_Conf->CurrentIso );
 
-	AppIniSaver saver;
+	std::unique_ptr<wxFileConfig> uiini(OpenFileConfig(Path::ToWxString(GetUiSettingsFilename())));
+	IniSaver saver(uiini.get());
+	std::string path = saver.GetConfig().GetPath();
 	g_Conf->LoadSave( saver );
 	ConLog_LoadSaveSettings( saver );
 	SysTraceLog_LoadSaveSettings( saver );
