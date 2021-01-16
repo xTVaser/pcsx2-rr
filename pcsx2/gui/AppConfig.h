@@ -352,7 +352,7 @@ public:
 
 	bool		AskOnBoot;
 
-	std::string				CurrentIso;
+	fs::path				CurrentIso;
 	std::string				CurrentBlockdump;
 	std::string				CurrentELF;
 	std::string				CurrentIRX;
