@@ -640,7 +640,7 @@ void AppConfig::LoadSaveRootItems( IniInterface& ini )
 	IniEntry( Toolbar_ImageSize );
 	IniEntry( Toolbar_ShowLabels );
 
-	wxFileName res(CurrentIso);
+	wxFileName res(Path::ToWxString(CurrentIso));
 	ini.Entry( L"CurrentIso", res, res, ini.IsLoading() || IsPortable() );
 	CurrentIso = res.GetFullPath();
 
@@ -1348,7 +1348,6 @@ static void SaveUiSettings()
 
 	std::unique_ptr<wxFileConfig> uiini(OpenFileConfig(Path::ToWxString(GetUiSettingsFilename())));
 	IniSaver saver(uiini.get());
-	std::string path = saver.GetConfig().GetPath();
 	g_Conf->LoadSave( saver );
 	ConLog_LoadSaveSettings( saver );
 	SysTraceLog_LoadSaveSettings( saver );
