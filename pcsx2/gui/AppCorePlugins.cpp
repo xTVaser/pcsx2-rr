@@ -18,12 +18,15 @@
 #include "AppSaveStates.h"
 #include "GSFrame.h"
 
+#include "fmt/core.h"
 #include <wx/dir.h>
 #include <wx/file.h>
 
 #include "Plugins.h"
 #include "GS.h"
 #include "AppConfig.h"
+
+#include <regex>
 
 using namespace Threading;
 
@@ -418,26 +421,36 @@ int EnumeratePluginsInFolder(const fs::path& searchpath, std::vector<fs::path>* 
 
 	std::unique_ptr<std::vector<fs::path>> placebo;
 	std::vector<fs::path> * realdest = dest;
+	std::error_code ec;
 	if (realdest == NULL)
 	{
 		placebo = std::make_unique<std::vector<fs::path>>();
 		realdest = placebo.get();
 	}
 
+	// C++ doesn't have a convienant way to auto escape in a regex, so do it manually...
+	wxString dllExt = wxDynamicLibrary::GetDllExt();
+	dllExt.Replace(".", "\.");
 #ifdef __WXMSW__
 	// Windows pretty well has a strict "must end in .dll" rule.
-	wxString pattern(L"*%s");
+	std::regex filePattern(fmt::format("^.*{}$", dllExt.ToStdString()));
 #else
 	// Other platforms seem to like to version their libs after the .so extension:
 	//    blah.so.3.1.fail?
-	wxString pattern(L"*%s*");
+	std::regex filePattern(fmt::format("^.*{}.*$", dllExt.ToStdString()));
 #endif
 
-	//wxDir::GetAllFiles(searchpath.ToString(), realdest, pxsFmt(pattern, WX_STR(wxDynamicLibrary::GetDllExt())), wxDIR_FILES);
-
-	for (auto& plugin : fs::directory_iterator(searchpath))
+	for (auto& plugin : fs::directory_iterator(searchpath, ec))
 	{
-		realdest->push_back(plugin);
+		if (plugin.is_regular_file() && std::regex_match(plugin.path().c_str(), filePattern))
+		{
+			realdest->push_back(plugin);
+		}
+		if (ec.value() > 0)
+		{
+			Console.Error(Path::ToWxString(ec.message()));
+			return -1;
+		}
 	}
 
 	// SECURITY ISSUE:  (applies primarily to Windows, but is a good idea on any platform)
