@@ -162,14 +162,26 @@ bool Pcsx2App::TestForPortableInstall()
 		}
 
 		// Success -- all user-based folders have write access.  PCSX2 should be able to run error-free!
-		// Force-set the custom documents mode, and set the
-		runWizard = stream["RunWizard"].as<bool>();
+		try
+		{
+			runWizard = stream["RunWizard"].as<bool>();
+		}
+		catch (const YAML::Exception& e)
+		{
+			// If the portable.yaml file gets into a bad state, we clear it and reset it
+			runWizard = true;
+			stream = YAML::Node();
+			stream["RunWizard"] = runWizard;
+			// Save it immediately incase the Wizard is exited early, etc.
+			Save(GetPortableYamlPath());
+		}
+
+		// Force-set the custom documents mode
 		InstallationMode = InstallMode_Portable;
 		DocsFolderMode = DocsFolder_Custom;
 		CustomDocumentsFolder = portableDocsFolder;
 
-
-	    //  Run the First Time Wizard!
+	  // Run the First Time Wizard!
 		// ----------------------------
 		// Wizard is only run once.  The status of the wizard having been run is stored in
 		// the installation yaml file, which can be either the portable install (useful for admins)
@@ -212,15 +224,21 @@ void Pcsx2App::WipeUserModeSettings()
 	}
 }
 
-static std::ifstream& getFileAsStream(const fs::path& file)
+std::ifstream Pcsx2App::getFileAsInputStream(const fs::path& file)
 {
-
 #ifdef _WIN32
-	static std::ifstream in(file.wstring());
-	return in;
+	return std::ifstream(file.wstring());
 #else
-	static std::ifstream in(file);
-	return in;
+	return std::ifstream(file);
+#endif
+}
+
+std::ofstream Pcsx2App::getFileAsOutputStream(const fs::path& file)
+{
+#ifdef _WIN32
+	return std::ofstream(file.wstring());
+#else
+	return std::ofstream(file);
 #endif
 }
 
@@ -230,7 +248,9 @@ bool Pcsx2App::Load(fs::path fileName)
 	{
 		try
 		{
-			stream = YAML::Load(getFileAsStream(fileName));
+			std::ifstream in = getFileAsInputStream(fileName);
+			stream = YAML::Load(in);
+			in.close();
 			std::ostringstream os;
 			os << stream;
 			data = os.str();
@@ -249,28 +269,26 @@ bool Pcsx2App::Load(fs::path fileName)
 	}
 }
 
-YAML::Node Pcsx2App::Save(fs::path fileName)
+void Pcsx2App::Save(fs::path fileName)
 {
 	if (!Path::DoesExist(fileName.parent_path().make_preferred()))
 	{
 		Path::CreateFolder(fileName.parent_path().make_preferred());
-	}
+	} 
 
-	if (!stream)
+	if (stream)
 	{
 		try
 		{
-			stream = YAML::Load(fileName.make_preferred());
+			std::ofstream out = getFileAsOutputStream(fileName);
+			out << stream;
+			out.close();
 		}
 		catch (const std::exception& e)
 		{
 			DevCon.Warning("ERROR: ", e.what());
 		}
 	}
-	std::ofstream fout(fileName.make_preferred());
-	fout << stream;
-
-	return stream;
 }
 
 bool Pcsx2App::OpenInstallSettingsFile()
@@ -339,8 +357,6 @@ void Pcsx2App::ForceFirstTimeWizardOnNextRun()
 
 void Pcsx2App::EstablishAppUserMode()
 {
-	// TODO - stop mutating the yaml directly, serialize and deserialize!
-
 	bool conf_install = TestForPortableInstall();
 
 	if (!conf_install)
