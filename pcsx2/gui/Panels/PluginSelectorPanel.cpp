@@ -817,7 +817,7 @@ Panels::PluginSelectorPanel::EnumThread::EnumThread( PluginSelectorPanel& master
 
 void Panels::PluginSelectorPanel::EnumThread::DoNextPlugin( int curidx )
 {
-	DbgCon.Indent().WriteLn( "Plugin: " + m_master.GetFilename( curidx ).string() );
+	DbgCon.Indent().WriteLn( "Plugin: " + Path::ToWxString(m_master.GetFilename( curidx )) );
 
 	try
 	{
