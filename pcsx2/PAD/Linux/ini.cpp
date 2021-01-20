@@ -43,7 +43,7 @@ void PADSaveConfig()
 	FILE* f;
 
 	std::string iniName("PAD.ini");
-	const std::string iniFile = std::string(Path::Combine(GetSettingsFolder(), iniName)); // default path, just in case
+	const std::string iniFile = Path::Combine(GetSettingsFolder(), iniName).string(); // default path, just in case
 	f = fopen(iniFile.c_str(), "w");
 	if (f == NULL)
 	{

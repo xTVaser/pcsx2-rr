@@ -88,17 +88,15 @@ bool wxDirName::Mkdir()
 
 bool Path::IsRelative(const std::string &path)
 {
-	return fs::path(path).is_relative();
+    return fs::path(path).is_relative();
 }
 
-// Returns -1 if the file does not exist.
-s64 Path::GetFileSize(const std::string &path)
+s64 Path::GetFileSize(const fs::path &path)
 {
-    if (!fs::exists(path.c_str()))
+    if (!fs::exists(path))
         return -1;
     return (s64)fs::file_size(path);
 }
-
 
 wxString Path::Normalize(const wxString &src)
 {
@@ -117,20 +115,11 @@ std::string Path::MakeAbsolute(const std::string &src)
     return ghc::filesystem::absolute(src);
 }
 
-// Concatenates two pathnames together, inserting delimiters (backslash on win32)
-// as needed! Assumes the 'dest' is allocated to at least g_MaxPath length.
-//
-fs::path Path::Combine(fs::path &srcPath, fs::path &srcFile)
+fs::path Path::Combine(const fs::path &srcPath, const fs::path &srcFile)
 {
     return (srcPath / srcFile).make_preferred();
 }
 
-std::string Path::Combine(const std::string &srcPath, const std::string &srcFile)
-{
-    fs::path srcP = srcPath;
-    fs::path srcF = srcFile;
-    return (srcP / srcF).make_preferred();
-}
 // Replaces the extension of the file with the one given.
 // This function works for path names as well as file names.
 std::string Path::ReplaceExtension(const wxString &src, const wxString &ext)
@@ -225,29 +214,28 @@ bool Path::CreateFolder(const fs::path& path)
     return fs::create_directories(path); // An attempt to create the User mode Dir which already exists
 }
 
-bool Path::DoesExist(std::string path)
+bool Path::DoesExist(const fs::path& path)
 {
-    return fs::exists(fs::path(path).make_preferred());
-}
+    std::error_code ec;
 
-bool Path::DoesExist(fs::path path)
-{
-	try
-	{
-		return fs::exists(path.make_preferred());
-	}
-	catch (fs::filesystem_error ex)
-	{
-		return false;
-	}
+    return fs::exists(path, ec);
 }
 
 wxString Path::ToWxString(const fs::path& path)
 {
 #ifdef _WIN32
-	return wxString(path.wstring());
+    return wxString(path.wstring());
 #else
-	return wxString(path.string());
+    return wxString(path.string());
+#endif
+}
+
+fs::path Path::FromWxString(const wxString& path)
+{
+#ifdef _WIN32
+    return fs::path(path.ToStdWstring());
+#else
+    return fs::path(path.ToStdString());
 #endif
 }
 

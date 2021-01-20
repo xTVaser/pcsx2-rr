@@ -32,7 +32,7 @@ public:
 		DESTRUCTOR_CATCHALL
 	}
 
-	AppGameDatabase& LoadFromFile(const fs::path& file = PathDefs::GetProgramDataDir() / "GameIndex.yaml");
+	AppGameDatabase& LoadFromFile(const fs::path& file = Path::Combine(PathDefs::GetProgramDataDir(), "GameIndex.yaml"));
 
 private:
 	std::ifstream getFileAsStream(const fs::path& file);
