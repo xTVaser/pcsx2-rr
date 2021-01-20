@@ -120,7 +120,7 @@ void OnBrowse(HWND hW)
 	memcpy(wbuff, HDD_DEF, sizeof(HDD_DEF));
 
 	//GHC uses UTF8 on all platforms
-	ghc::filesystem::path inis = GetSettingsFolder().ToUTF8().data();
+	fs::path inis = GetSettingsFolder();
 	wstring w_inis = inis.wstring();
 
 	OPENFILENAMEW ofn;
@@ -139,12 +139,12 @@ void OnBrowse(HWND hW)
 
 	if (GetOpenFileName(&ofn))
 	{
-		ghc::filesystem::path hddFile(std::wstring(ofn.lpstrFile));
+		fs::path hddFile(std::wstring(ofn.lpstrFile));
 
-		if (ghc::filesystem::exists(hddFile))
+		if (fs::exists(hddFile))
 		{
 			//Get file size
-			int filesizeGb = ghc::filesystem::file_size(hddFile) / (1024 * 1024 * 1024);
+			int filesizeGb = fs::file_size(hddFile) / (1024 * 1024 * 1024);
 			//Set slider
 			SendMessage(GetDlgItem(hW, IDC_HDDSIZE_SPIN), UDM_SETPOS,
 						(WPARAM)0,
@@ -201,7 +201,7 @@ void OnOk(HWND hW)
 	config.ethEnable = Button_GetCheck(GetDlgItem(hW, IDC_ETHENABLED));
 	config.hddEnable = Button_GetCheck(GetDlgItem(hW, IDC_HDDENABLED));
 
-	ghc::filesystem::path hddPath(std::wstring(config.Hdd));
+	fs::path hddPath(std::wstring(config.Hdd));
 
 	if (config.hddEnable && hddPath.empty())
 	{
@@ -212,11 +212,11 @@ void OnOk(HWND hW)
 	if (hddPath.is_relative())
 	{
 		//GHC uses UTF8 on all platforms
-		ghc::filesystem::path path(GetSettingsFolder().ToUTF8().data());
+		fs::path path = GetSettingsFolder();
 		hddPath = path / hddPath;
 	}
 
-	if (config.hddEnable && !ghc::filesystem::exists(hddPath))
+	if (config.hddEnable && !fs::exists(hddPath))
 	{
 		HddCreate hddCreator;
 		hddCreator.filePath = hddPath;

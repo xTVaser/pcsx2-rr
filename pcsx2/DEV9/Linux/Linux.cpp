@@ -112,11 +112,11 @@ void OnInitDialog()
 
 void OnBrowse(GtkButton* button, gpointer usr_data)
 {
-	ghc::filesystem::path inis(GetSettingsFolder().ToString().ToStdString());
+	ghc::filesystem::path inis(GetSettingsFolder() );
 
 	static const wxChar* hddFilterType = L"HDD|*.raw;*.RAW";
 
-	wxFileDialog ctrl(nullptr, _("HDD Image File"), GetSettingsFolder().ToString(), HDD_DEF,
+	wxFileDialog ctrl(nullptr, _("HDD Image File"), Path::ToWxString(GetSettingsFolder()), HDD_DEF,
 					  (wxString)hddFilterType + L"|" + _("All Files (*.*)") + L"|*.*", wxFD_SAVE);
 
 	if (ctrl.ShowModal() != wxID_CANCEL)
@@ -168,7 +168,7 @@ void OnOk()
 	if (hddPath.is_relative())
 	{
 		//GHC uses UTF8 on all platforms
-		ghc::filesystem::path path(GetSettingsFolder().ToUTF8().data());
+		ghc::filesystem::path path(GetSettingsFolder());
 		hddPath = path / hddPath;
 	}
 

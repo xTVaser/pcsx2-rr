@@ -198,9 +198,9 @@ s32 DEV9open(void* pDsp)
 #endif
 
 #ifdef _WIN32
-	ghc::filesystem::path hddPath(std::wstring(config.Hdd));
+	fs::path hddPath(std::wstring(config.Hdd));
 #else
-	ghc::filesystem::path hddPath(config.Hdd);
+	fs::path hddPath(config.Hdd);
 #endif
 
 	if (hddPath.empty())
@@ -209,7 +209,7 @@ s32 DEV9open(void* pDsp)
 	if (hddPath.is_relative())
 	{
 		//GHC uses UTF8 on all platforms
-		ghc::filesystem::path path(GetSettingsFolder().ToUTF8().data());
+		fs::path path = GetSettingsFolder();
 		hddPath = path / hddPath;
 	}
 
