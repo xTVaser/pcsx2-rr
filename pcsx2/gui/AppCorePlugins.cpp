@@ -429,7 +429,7 @@ int EnumeratePluginsInFolder(const fs::path& searchpath, std::vector<fs::path>* 
 
 	// C++ doesn't have a convienant way to auto escape in a regex, so do it manually...
 	wxString dllExt = wxDynamicLibrary::GetDllExt();
-	dllExt.Replace(".", "\.");
+	dllExt.Replace(".", "\\.");
 #ifdef __WXMSW__
 	// Windows pretty well has a strict "must end in .dll" rule.
 	std::regex filePattern(fmt::format("^.*{}$", dllExt.ToStdString()));

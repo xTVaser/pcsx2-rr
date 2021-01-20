@@ -372,7 +372,7 @@ bool MainEmuFrame::_DoSelectIsoBrowser(wxString& result)
 	if (ctrl.ShowModal() != wxID_CANCEL)
 	{
 		result = ctrl.GetPath();
-		g_Conf->Folders.RunIso = fs::path(result.ToStdWstring());
+		g_Conf->Folders.RunIso = Path::FromWxString(result);
 		return true;
 	}
 
@@ -388,8 +388,8 @@ bool MainEmuFrame::_DoSelectELFBrowser()
 
 	if (ctrl.ShowModal() != wxID_CANCEL)
 	{
-		g_Conf->Folders.RunELF = wxFileName(ctrl.GetPath()).GetPath().ToStdString();
-		g_Conf->CurrentELF = ctrl.GetPath().ToStdString();
+		g_Conf->Folders.RunELF = Path::FromWxString(wxFileName(ctrl.GetPath()).GetPath());
+		g_Conf->CurrentELF = Path::FromWxString(ctrl.GetPath());
 		return true;
 	}
 

@@ -497,7 +497,7 @@ static void _ApplySettings(const Pcsx2Config& src, Pcsx2Config& fixup)
 		else
 		{
 			// No ws cheat files found at the cheats_ws folder, try the ws cheats zip file.
-			wxString cheats_ws_archive = Path::ToWxString(Path::Combine(PathDefs::GetProgramDataDir().string(), "cheats_ws.zip"));
+			wxString cheats_ws_archive = Path::ToWxString(Path::Combine(PathDefs::GetProgramDataDir(), "cheats_ws.zip"));
 			int numberDbfCheatsLoaded = LoadPatchesFromZip(gameCRC, cheats_ws_archive);
 			PatchesCon->WriteLn(Color_Green, "(Wide Screen Cheats DB) Patches Loaded: %d", numberDbfCheatsLoaded);
 			gameWsHacks.Printf(L" [%d widescreen hacks]", numberDbfCheatsLoaded);
