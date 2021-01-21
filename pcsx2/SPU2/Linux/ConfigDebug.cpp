@@ -54,8 +54,8 @@ wxString RegDumpFileName;
 
 void CfgSetLogDir(const char* dir)
 {
-	LogsFolder = (dir == nullptr) ? wxString(L"logs") : fromUTF8(dir);
-	DumpsFolder = (dir == nullptr) ? wxString(L"logs") : fromUTF8(dir);
+	LogsFolder = Path::FromWxString((dir == nullptr) ? wxString(L"logs") : fromUTF8(dir));
+	DumpsFolder = Path::FromWxString((dir == nullptr) ? wxString(L"logs") : fromUTF8(dir));
 	LogLocationSetByPcsx2 = (dir != nullptr);
 }
 

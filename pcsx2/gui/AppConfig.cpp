@@ -787,7 +787,7 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	IniEntryDirFile( Langs,  rel );
 	IniEntryDirFile( Cheats, rel );
 	IniEntryDirFile( CheatsWS, rel );
-	// TODO - verify this refactor, this append seems potentially buggy
+
 	ini.Entry( L"PluginsFolder", PluginsFolder, Path::Combine(InstallFolder, PathDefs::Base::Plugins()), rel );
 
 	IniEntryDirFile( RunIso, rel );

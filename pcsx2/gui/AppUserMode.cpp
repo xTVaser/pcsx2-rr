@@ -253,7 +253,7 @@ bool Pcsx2App::Load(fs::path fileName)
 		}
 		catch (const std::exception& e)
 		{
-			DevCon.Error("Could not load '%s'. Error: %s", fileName, e.what());
+			DevCon.Error("Could not load '%s'. Error: %s", WX_STR(Path::ToWxString(fileName)), e.what());
 			return false;
 		}
 	}
