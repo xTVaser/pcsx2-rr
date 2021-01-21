@@ -40,8 +40,8 @@ bool _RegDump = false;
 // the configured crap in the ini file.
 static bool LogLocationSetByPcsx2 = false;
 
-static std::string LogsFolder;
-static std::string DumpsFolder;
+static fs::path LogsFolder;
+static fs::path DumpsFolder;
 
 wxString AccessLogFileName;
 wxString WaveLogFileName;
@@ -59,19 +59,19 @@ void CfgSetLogDir(const char* dir)
 	LogLocationSetByPcsx2 = (dir != nullptr);
 }
 
-FILE* OpenBinaryLog(const std::string& logfile)
+FILE* OpenBinaryLog(const fs::path& logfile)
 {
-	return wxFopen(Path::Combine(LogsFolder, logfile), L"wb");
+	return wxFopen(Path::ToWxString(Path::Combine(LogsFolder, logfile)), L"wb");
 }
 
-FILE* OpenLog(const std::string& logfile)
+FILE* OpenLog(const fs::path& logfile)
 {
-	return wxFopen(Path::Combine(LogsFolder, logfile), L"w");
+	return wxFopen(Path::ToWxString(Path::Combine(LogsFolder, logfile)), L"w");
 }
 
-FILE* OpenDump(const std::string& logfile)
+FILE* OpenDump(const fs::path& logfile)
 {
-	return wxFopen(Path::Combine(DumpsFolder, logfile), L"w");
+	return wxFopen(Path::ToWxString(Path::Combine(DumpsFolder, logfile)), L"w");
 }
 
 namespace DebugConfig

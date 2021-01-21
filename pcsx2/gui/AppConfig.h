@@ -63,7 +63,7 @@ extern bool				UseDefaultPluginsFolder;
 extern fs::path		CustomDocumentsFolder;		// allows the specification of a custom home folder for PCSX2 documents files.
 extern fs::path		SettingsFolder;				// dictates where the settings folder comes from, *if* UseDefaultSettingsFolder is FALSE.
 
-extern std::string		InstallFolder;
+extern fs::path		InstallFolder;
 extern fs::path		PluginsFolder;
 
 extern fs::path  GetSettingsFolder();
@@ -377,7 +377,7 @@ public:
 	fs::path FullpathToMcd( uint slot ) const;
 	fs::path FullpathTo( PluginsEnum_t pluginId ) const;
 
-	bool FullpathMatchTest( PluginsEnum_t pluginId, const std::string& cmpto ) const;
+	bool FullpathMatchTest( PluginsEnum_t pluginId, const fs::path& cmpto ) const;
 
 	void LoadSave( IniInterface& ini );
 	void LoadSaveRootItems( IniInterface& ini );
