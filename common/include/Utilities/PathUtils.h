@@ -12,14 +12,14 @@ namespace fs = ghc::filesystem;
 namespace Path
 {
 	extern bool IsRelative(const std::string& path);
-	extern s64 GetFileSize(const std::string& path);
+	// Returns -1 if the file does not exist.
+	extern s64 GetFileSize(const fs::path& file);
 
 	extern wxString Normalize(const wxString& srcpath);
 	extern wxString Normalize(const wxDirName& srcpath);
 	extern std::string MakeAbsolute(const std::string& srcpath);
 
-	extern fs::path Combine(fs::path &srcPath, fs::path &srcFile);
-	extern std::string Combine(const std::string& srcPath, const std::string& srcFile);
+	extern fs::path Combine(const fs::path &srcPath, const fs::path &srcFile);
 	extern std::string ReplaceExtension(const wxString& src, const wxString& ext);
 	extern std::string ReplaceFilename(const wxString& src, const wxString& newfilename);
 	extern std::string GetFilename(const std::string& src);
@@ -29,11 +29,10 @@ namespace Path
 	extern fs::path GetExecutableDirectory();
 	extern fs::path isPortable(fs::path p, bool isPortable);
 	extern wxString ToWxString(const fs::path&);
+	extern fs::path FromWxString(const wxString&);
 	extern bool CreateFolder(fs::path path);
 	// Is the folder empty
 	extern bool Empty(std::string);
-	// Does the path exist
-	extern bool DoesExist(std::string path);
 	// Does the path exist
 	extern bool DoesExist(fs::path path);
 } // namespace Path

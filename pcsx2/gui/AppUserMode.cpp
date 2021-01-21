@@ -33,13 +33,12 @@ bool 					runWizard  = true; // This should default to true unless the stream sa
 
 std::vector<std::string> ErrorFolders;
 
-std::string data;
 std::string usermodePath;
 
 fs::path CustomDocumentsFolder;
 fs::path SettingsFolder;
 
-std::string InstallFolder;
+fs::path InstallFolder;
 fs::path PluginsFolder;
 
 YAML::Node stream;
@@ -62,10 +61,9 @@ const std::string PermissionFolders[] =
 // UserLocalData folder is the current working directory.
 InstallationModeType			InstallationMode;
 
-static fs::path GetPortableYamlPath()
+static fs::path GetPortableYamlFilePath()
 {
-	fs::path programDir = Path::GetExecutableDirectory() / "portable.yaml";
-	return programDir.make_preferred();
+	return Path::Combine(Path::GetExecutableDirectory(), "portable.yaml");
 }
 
 static wxString GetMsg_PortableModeRights()
@@ -73,7 +71,7 @@ static wxString GetMsg_PortableModeRights()
 	return pxE( L"Please ensure that these folders are created and that your user account is granted write permissions to them -- or re-run PCSX2 with elevated (administrator) rights, which should grant PCSX2 the ability to create the necessary folders itself.  If you do not have elevated rights on this computer, then you will need to switch to User Documents mode (click button below).");
 };
 
-bool Pcsx2App::TestUserPermissionsRights(const std::string& testFolder)
+bool Pcsx2App::TestUserPermissionsRights(const fs::path& testFolder)
 {
 
 	std::string createme, accessme;
@@ -137,8 +135,8 @@ bool Pcsx2App::TestForPortableInstall()
 {
 	InstallationMode = InstallMode_Portable;
 
-	fs::path portableYamlFile = GetPortableYamlPath();
-	std::string portableDocsFolder = portableYamlFile.parent_path();
+	fs::path portableYamlFile = GetPortableYamlFilePath();
+	fs::path portableDocsFolder = portableYamlFile.parent_path();
 
 	bool isPortable = Load(portableYamlFile);
 
@@ -169,11 +167,12 @@ bool Pcsx2App::TestForPortableInstall()
 		catch (const YAML::Exception& e)
 		{
 			// If the portable.yaml file gets into a bad state, we clear it and reset it
+			DevCon.Error("Invalid portable.yaml file, resetting... ");
 			runWizard = true;
 			stream = YAML::Node();
 			stream["RunWizard"] = runWizard;
 			// Save it immediately incase the Wizard is exited early, etc.
-			Save(GetPortableYamlPath());
+			Save(GetPortableYamlFilePath());
 		}
 
 		// Force-set the custom documents mode
@@ -190,7 +189,7 @@ bool Pcsx2App::TestForPortableInstall()
 		{
 			DoFirstTimeWizard();	
 			stream["RunWizard"] = false;	
-			Save(GetPortableYamlPath()); // Save Portable Yaml
+			Save(GetPortableYamlFilePath()); // Save Portable Yaml
 			
 			// Save user's new general settings
 			AppConfig_OnChangedSettingsFolder(true);
@@ -210,8 +209,7 @@ void Pcsx2App::WipeUserModeSettings()
 	if (InstallationMode == InstallMode_Portable)
 	{
 		// Remove the portable file entry "RunWizard" conforming to this instance of PCSX2.
-		std::string portableYamlFile(GetPortableYamlPath());
-		bool test = Load(portableYamlFile);
+		fs::path portableYamlFile(GetPortableYamlFilePath());
 		stream["RunWizard"] = true;
 		Save(portableYamlFile);
 	}
@@ -251,15 +249,11 @@ bool Pcsx2App::Load(fs::path fileName)
 			std::ifstream in = getFileAsInputStream(fileName);
 			stream = YAML::Load(in);
 			in.close();
-			std::ostringstream os;
-			os << stream;
-			data = os.str();
 			return true;
 		}
 		catch (const std::exception& e)
 		{
-			DevCon.Warning("ERROR: ", e.what());
-			data = "";
+			DevCon.Error("Could not load '%s'. Error: %s", fileName, e.what());
 			return false;
 		}
 	}
@@ -303,7 +297,7 @@ bool Pcsx2App::OpenInstallSettingsFile()
 	InstallationMode = InstallationModeType::InstallMode_Registered;
 	fs::path usrlocaldir = PathDefs::GetUserLocalDataDir();
 
-	InstallFolder = (wxFileName(wxStandardPaths::Get().GetExecutablePath())).GetPath().ToStdString();
+	InstallFolder = Path::FromWxString((wxFileName(wxStandardPaths::Get().GetExecutablePath())).GetPath());
 
 	std::string usermodeFile = (GetAppName().ToStdString() + "-reg.yaml");
 	usermodePath = Path::Combine(usrlocaldir, usermodeFile); 
@@ -317,7 +311,7 @@ bool Pcsx2App::OpenInstallSettingsFile()
 		stream["CustomDocumentsFolder"] = CustomDocumentsFolder.string();
 		stream["UseDefaultSettingsFolder"] = UseDefaultSettingsFolder;
 		stream["SettingsFolder"] = SettingsFolder.string();
-		stream["Install_Dir"] = InstallFolder;
+		stream["Install_Dir"] = InstallFolder.string();
 		stream["RunWizard"] = false;
 		Save(usermodePath);
 		DoFirstTimeWizard();

@@ -566,7 +566,7 @@ bool Panels::PluginSelectorPanel::ValidateEnumerationStatus()
 	// occurs during file enumeration.
 	std::unique_ptr<std::vector<fs::path>> pluginlist(new std::vector<fs::path>());
 
-	int pluggers = EnumeratePluginsInFolder(m_ComponentBoxes->GetPluginsPath().ToString().ToStdWstring(), pluginlist.get());
+	int pluggers = EnumeratePluginsInFolder(Path::FromWxString(m_ComponentBoxes->GetPluginsPath().ToString()), pluginlist.get());
 
 	if( !m_FileList || (*pluginlist != *m_FileList) )
 		validated = false;

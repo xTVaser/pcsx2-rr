@@ -150,7 +150,7 @@ namespace PathDefs
 			// Move all user data file into central configuration directory (XDG_CONFIG_DIR)
 			case DocsFolder_User:	return GetUserLocalDataDir();
 #else
-			case DocsFolder_User:	return Path::Combine(wxStandardPaths::Get().GetDocumentsDir().ToStdString(), pxGetAppName().ToStdString());
+			case DocsFolder_User:	return Path::Combine(Path::FromWxString(wxStandardPaths::Get().GetDocumentsDir()), Path::FromWxString(pxGetAppName()));
 #endif
 			case DocsFolder_Custom: return CustomDocumentsFolder;
 
@@ -180,37 +180,37 @@ namespace PathDefs
 
 	fs::path GetSnapshots()
 	{
-		return (GetDocuments() / "snaps").make_preferred();
+		return Path::Combine(GetDocuments(), "snaps");
 	}
 
 	fs::path GetBios()
 	{
-		return (GetDocuments() / "bios").make_preferred();
+		return Path::Combine(GetDocuments(), "bios");
 	}
 
 	fs::path GetCheats()
 	{
-		return (GetDocuments() / "cheats").make_preferred();
+		return Path::Combine(GetDocuments(), "cheats");
 	}
 
 	fs::path GetCheatsWS()
 	{
-		return (GetDocuments() / "cheats_ws").make_preferred();
+		return Path::Combine(GetDocuments(), "cheats_ws");
 	}
 
 	fs::path GetDocs()
 	{
-		return (AppRoot().parent_path() / "docs").make_preferred();
+		return Path::Combine(GetDocuments(), "docs");
 	}
 
 	fs::path GetSavestates()
 	{
-		return (GetDocuments() / "sstates").make_preferred();
+		return Path::Combine(GetDocuments(), "sstates");
 	}
 
 	fs::path GetMemoryCards()
 	{
-		return (GetDocuments() / "memcards").make_preferred();
+		return Path::Combine(GetDocuments(), "memcards");
 	}
 
 	fs::path GetPlugins()
@@ -218,30 +218,29 @@ namespace PathDefs
 		// Each linux distributions have his rules for path so we give them the possibility to
 		// change it with compilation flags. -- Gregory
 #ifndef PLUGIN_DIR_COMPILATION
-		return (AppRoot() / "plugins").make_preferred();
+		return Path::Combine(AppRoot(), "plugins");
 #else
 #define xPLUGIN_DIR_str(s) PLUGIN_DIR_str(s)
 #define PLUGIN_DIR_str(s) #s
-		return std::string( xPLUGIN_DIR_str(PLUGIN_DIR_COMPILATION) );
+		return fs::path(std::string(xPLUGIN_DIR_str(PLUGIN_DIR_COMPILATION)));
 #endif
 	}
 
 	fs::path GetSettings()
 	{
-		fs::path docPath = GetDocuments();
-		fs::path path = GetDocuments() / "settings";
+		fs::path path = Path::Combine(GetDocuments(), "settings");
 		SettingsFolder = path;
 		return path;
 	}
 
 	fs::path GetLogs()
 	{
-		return (GetDocuments() / "logs").make_preferred();
+		return Path::Combine(GetDocuments(), "logs");
 	}
 
 	fs::path GetLangs()
 	{
-		return (PathDefs::AppRoot() / "Langs").make_preferred();
+		return Path::Combine(AppRoot(), "Langs");
 	}
 
 	fs::path Get( FoldersEnum_t folderidx )
@@ -436,7 +435,7 @@ fs::path AppConfig::FullpathTo( PluginsEnum_t pluginidx ) const
 // returns true if the filenames are quite absolutely the equivalent.  Works for all
 // types of filenames, relative and absolute.  Very important that you use this function
 // rather than any other type of more direct string comparison!
-bool AppConfig::FullpathMatchTest( PluginsEnum_t pluginId, const std::string& cmpto ) const
+bool AppConfig::FullpathMatchTest( PluginsEnum_t pluginId, const fs::path& cmpto ) const
 {
 	// Implementation note: wxFileName automatically normalizes things as needed in it's
 	// equality comparison implementations, so we can do a simple comparison as follows:
@@ -474,27 +473,34 @@ fs::path GetSettingsFolder()
 
 fs::path GetVmSettingsFilename()
 {
-	fs::path fname( !wxGetApp().Overrides.VmSettingsFile.GetFullPath().ToStdString().empty() ? wxGetApp().Overrides.VmSettingsFile.GetFullPath().ToStdString() : FilenameDefs::GetVmConfig().GetFullPath().ToStdString() );
+	fs::path fname = Path::FromWxString(FilenameDefs::GetVmConfig().GetFullPath());
+	if (wxGetApp().Overrides.VmSettingsFile.IsOk())
+	{
+		fname = Path::FromWxString(wxGetApp().Overrides.VmSettingsFile.GetFullPath());
+	}
 	return Path::Combine(GetSettingsFolder(), fname);
 }
 
 fs::path GetUiSettingsFilename()
 {
-	fs::path fname( FilenameDefs::GetUiConfig().GetFullPath().ToStdString() );
-	return (GetSettingsFolder() / fname ).make_preferred();
+	fs::path fname = Path::FromWxString(FilenameDefs::GetUiConfig().GetFullPath());
+	return Path::Combine(GetSettingsFolder(), fname);
 }
 
 fs::path GetUiKeysFilename()
 {
-	fs::path fname( FilenameDefs::GetUiKeysConfig().GetFullPath().ToStdString() );
-	return (GetSettingsFolder() / fname).make_preferred();
+	fs::path fname = Path::FromWxString(FilenameDefs::GetUiKeysConfig().GetFullPath());
+	return Path::Combine(GetSettingsFolder(), fname);
 }
 
-fs::path AppConfig::FullpathToBios() const				{ return Folders.Bios / BaseFilenames.Bios; }
-
-fs::path AppConfig::FullpathToMcd( uint slot ) const
+fs::path AppConfig::FullpathToBios() const
 {
-	return Folders.MemoryCards / Mcd[slot].Filename;
+	return Path::Combine(Folders.Bios, BaseFilenames.Bios);
+}
+
+fs::path AppConfig::FullpathToMcd(uint slot) const
+{
+	return Path::Combine(Folders.MemoryCards, Mcd[slot].Filename);
 }
 
 bool IsPortable()
@@ -533,7 +539,7 @@ AppConfig::AppConfig()
 	for( uint slot=0; slot<8; ++slot )
 	{
 		Mcd[slot].Enabled	= !FileMcd_IsMultitapSlot(slot);	// enables main 2 slots
-		Mcd[slot].Filename	= FileMcd_GetDefaultName( slot ).ToStdString();
+		Mcd[slot].Filename	= Path::FromWxString(FileMcd_GetDefaultName( slot ));
 
 		// Folder memory card is autodetected later.
 		Mcd[slot].Type = MemoryCardType::MemoryCard_File;
@@ -565,7 +571,7 @@ void App_LoadSaveInstallSettings( IniInterface& ini )
 
     wxString CustomDoc = Path::ToWxString(CustomDocumentsFolder);
     wxString Setting = Path::ToWxString(SettingsFolder);
-    wxFileName InstallF(InstallFolder);
+    wxFileName InstallF(Path::ToWxString(InstallFolder));
 
 	ini.EnumEntry( L"DocumentsFolderMode",	DocsFolderMode,	DocsFolderModeNames, (InstallationMode == InstallMode_Registered) ? DocsFolder_User : DocsFolder_Custom);
 
@@ -642,7 +648,7 @@ void AppConfig::LoadSaveRootItems( IniInterface& ini )
 
 	wxFileName res(Path::ToWxString(CurrentIso));
 	ini.Entry( L"CurrentIso", res, res, ini.IsLoading() || IsPortable() );
-	CurrentIso = res.GetFullPath().ToStdWstring();
+	CurrentIso = Path::FromWxString(res.GetFullPath());
 
 	IniEntry( CurrentBlockdump );
 	IniEntry( CurrentELF );
@@ -781,7 +787,8 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	IniEntryDirFile( Langs,  rel );
 	IniEntryDirFile( Cheats, rel );
 	IniEntryDirFile( CheatsWS, rel );
-	ini.Entry( L"PluginsFolder", PluginsFolder, InstallFolder + PathDefs::Base::Plugins(), rel );
+	// TODO - verify this refactor, this append seems potentially buggy
+	ini.Entry( L"PluginsFolder", PluginsFolder, Path::Combine(InstallFolder, PathDefs::Base::Plugins()), rel );
 
 	IniEntryDirFile( RunIso, rel );
 	IniEntryDirFile( RunELF, rel );
@@ -1136,7 +1143,7 @@ void RelocateLogfile()
 {
 	Path::CreateFolder(g_Conf->Folders.Logs);
 
-	wxString newlogname( Path::Combine( g_Conf->Folders.Logs.string(), "emuLog.txt" ) );
+	wxString newlogname = Path::ToWxString(Path::Combine(g_Conf->Folders.Logs, "emuLog.txt"));
 
 	if( (emuLog != NULL) && (emuLogName != newlogname) )
 	{
