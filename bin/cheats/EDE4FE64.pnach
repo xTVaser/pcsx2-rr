@@ -1,0 +1,8 @@
+gametitle=Jak x Daxter: Kyuusekai no Isan - (NTSC-J) - (SCPS-15021)
+comment=Enables Developer/Debug Mode - Credit to water111 for discovering / documenting the required ELF edits
+comment=Credits to Luminar Light for making the patch for this game build.
+
+// NOP Disabling DebugSegment
+patch=0,EE,0010028c,word,00000000
+// NOP Disabling MasterDebug
+patch=0,EE,00100298,word,00000000
