@@ -1,0 +1,36 @@
+gametitle=Jak II [Demo] - (U)(SCUS-97273)
+comment=Enables Developer/Debug Mode - Credit to water111 and Vaser for discovering / documenting the required ELF edits for the Jak 2 Demo. 
+comment=Thanks to Luminar Light for patching and documenting the required level loading patches.
+comment=When the game boots, you will see a "work in progress" splash screen, followed by a black screen. The game is running in the background. 
+comment=When the screen is black, press L3 + Select, and then press X. Then, use the continue feature from the debug menu to "escape" the missing fortress level.
+
+// NOP Disabling MasterDebug
+patch=0,EE,001002ec,word,00000000
+// NOP Disabling DebugSegment
+patch=0,EE,001002f4,word,00000000
+// NOP SendFromBufferD call in InitListener - This is called only when MasterDebug is on
+patch=0,EE,00108660,word,00000000
+
+// 0x4ff0000 for global heap initialization - Set in InitMachine
+patch=0,EE,00102fac,word,3c0604ff
+
+// This is about changing the stack pointer
+// Shoves a MIPS instruction into near the very top of the entry point
+// Ghidra blows up here, but binary ninja can handle it
+// Orginally at this position there is `2D E8 40 00` - `daddu $sp, $v0, $zero`
+// This changes it to - `lui sp, 0x0800` Which loads the value 0x0800 to the stackpointer register, modifying it.
+patch=0,EE,00100068,word,3c1d0800
+
+// This disables a couple of different demo flags
+patch=0,EE,00100298,word,00000000
+patch=0,EE,001002a4,word,00000000
+
+// This changes the DebugBootMessage from `demo` to `play`.
+patch=0,EE,00126e10,word,79616c70
+
+// This solves an issue caused by changing the DebugBootMessage
+// The level loading system is patched to load `demo` and `demo-vis` instead of `fea` and `forexita-vis`.
+// By doing this, you avoid a softlock at the start of the game
+patch=1,EE,0077BB18,word,6f6d6564 
+patch=1,EE,0077C938,word,6d6d6564 
+patch=1,EE,0077C93C,word,7369762d
