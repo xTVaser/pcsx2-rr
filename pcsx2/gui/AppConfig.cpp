@@ -769,7 +769,6 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
 	bool rel = ( ini.IsLoading() || IsPortable() );
 	
-	//Bios = Path::isPortable(Bios, IsPortable());
 	Snapshots = Path::isPortable(Snapshots, IsPortable());
 	Savestates = Path::isPortable(Savestates, IsPortable());
 	MemoryCards = Path::isPortable(MemoryCards, IsPortable());
@@ -777,9 +776,6 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	Langs = Path::isPortable(Langs, IsPortable());
 	Cheats = Path::isPortable(Cheats, IsPortable());
 	CheatsWS = Path::isPortable(CheatsWS, IsPortable());
-	/*RunIso = Path::isPortable(RunIso, IsPortable());
-	RunELF = Path::isPortable(RunELF, IsPortable());
-	RunDisc = Path::isPortable(RunDisc, IsPortable());*/
 
 	IniEntryDirFile( Bios,  rel);
 	IniEntryDirFile( Snapshots,  rel );
@@ -1298,7 +1294,7 @@ static void LoadUiSettings()
 	g_Conf = std::make_unique<AppConfig>();
 	g_Conf->LoadSave( loader );
 
-	if( !Path::DoesExist( g_Conf->CurrentIso ) )
+	if (!Path::DoesExist(g_Conf->CurrentIso) || !fs::is_regular_file(g_Conf->CurrentIso))
 	{
 		g_Conf->CurrentIso.clear();
 	}
