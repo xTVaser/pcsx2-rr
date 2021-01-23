@@ -85,6 +85,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="..\..\gui\Panels\MemoryCardPanelColumns.h" />
     <None Include="..\..\PAD\Windows\Default.ini" />
     <None Include="..\..\Utilities\folderdesc.txt" />
     <None Include="..\..\Docs\License.txt" />
