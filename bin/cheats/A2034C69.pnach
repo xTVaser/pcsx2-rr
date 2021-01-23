@@ -1,8 +1,6 @@
 gametitle=Jak II [Demo] - (U)(SCUS-97273)
 comment=Enables Developer/Debug Mode - Credit to water111 and Vaser for discovering / documenting the required ELF edits for the Jak 2 Demo. 
-comment=Thanks to Luminar Light for patching and documenting the required level loading patches.
-comment=When the game boots, you will see a "work in progress" splash screen, followed by a black screen. The game is running in the background. 
-comment=When the screen is black, press L3 + Select, D-Pad Down, and then press X. Then, use the continue feature from the debug menu to "escape" the missing fortress level.
+comment=Thanks to Luminar Light for figuring out how to get around the missing level problem.
 
 // NOP Disabling MasterDebug
 patch=0,EE,001002ec,word,00000000
@@ -28,9 +26,6 @@ patch=0,EE,001002a4,word,00000000
 // This changes the DebugBootMessage from `demo` to `play`.
 patch=0,EE,00126e10,word,79616c70
 
-// This solves an issue caused by changing the DebugBootMessage
-// The level loading system is patched to load `demo` and `demo-vis` instead of `fea` and `forexita-vis`.
-// By doing this, you avoid a softlock at the start of the game
-patch=1,EE,0077BB18,word,6f6d6564 
-patch=1,EE,0077C938,word,6d6d6564 
-patch=1,EE,0077C93C,word,7369762d
+// The level that the game wants to load by default (forexita) is missing, causing an unescapeable freeze on startup. The easiest way to get around this is by using DebugBootLevel.
+// This sets DebugBootLevel to STR (the level of the Strip Mine).
+patch=0,EE,00126d90,word,00727473
