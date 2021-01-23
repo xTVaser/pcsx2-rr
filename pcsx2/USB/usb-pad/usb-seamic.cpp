@@ -257,7 +257,7 @@ namespace usb_pad
 		uint8_t port;
 		struct freeze
 		{
-			int nothing;
+			int notused;
 		} f;
 	} SeamicState;
 
