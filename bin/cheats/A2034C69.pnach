@@ -1,0 +1,31 @@
+gametitle=Jak II [Demo] - (U)(SCUS-97273)
+comment=Enables Developer/Debug Mode - Credit to water111 and Vaser for discovering / documenting the required ELF edits for the Jak 2 Demo. 
+comment=Thanks to Luminar Light for figuring out how to get around the missing level problem.
+
+// NOP Disabling MasterDebug
+patch=0,EE,001002ec,word,00000000
+// NOP Disabling DebugSegment
+patch=0,EE,001002f4,word,00000000
+// NOP SendFromBufferD call in InitListener - This is called only when MasterDebug is on
+patch=0,EE,00108660,word,00000000
+
+// 0x4ff0000 for global heap initialization - Set in InitMachine
+patch=0,EE,00102fac,word,3c0604ff
+
+// This is about changing the stack pointer
+// Shoves a MIPS instruction into near the very top of the entry point
+// Ghidra blows up here, but binary ninja can handle it
+// Orginally at this position there is `2D E8 40 00` - `daddu $sp, $v0, $zero`
+// This changes it to - `lui sp, 0x0800` Which loads the value 0x0800 to the stackpointer register, modifying it.
+patch=0,EE,00100068,word,3c1d0800
+
+// This disables a couple of different demo flags
+patch=0,EE,00100298,word,00000000
+patch=0,EE,001002a4,word,00000000
+
+// This changes the DebugBootMessage from `demo` to `play`.
+patch=0,EE,00126e10,word,79616c70
+
+// The level that the game wants to load by default (forexita) is missing, causing an unescapeable freeze on startup. The easiest way to get around this is by using DebugBootLevel.
+// This sets DebugBootLevel to STR (the level of the Strip Mine).
+patch=0,EE,00126d90,word,00727473
