@@ -2,7 +2,7 @@ gametitle=Jak II [Demo] - (U)(SCUS-97273)
 comment=Enables Developer/Debug Mode - Credit to water111 and Vaser for discovering / documenting the required ELF edits for the Jak 2 Demo. 
 comment=Thanks to Luminar Light for patching and documenting the required level loading patches.
 comment=When the game boots, you will see a "work in progress" splash screen, followed by a black screen. The game is running in the background. 
-comment=When the screen is black, press L3 + Select, and then press X. Then, use the continue feature from the debug menu to "escape" the missing fortress level.
+comment=When the screen is black, press L3 + Select, D-Pad Down, and then press X. Then, use the continue feature from the debug menu to "escape" the missing fortress level.
 
 // NOP Disabling MasterDebug
 patch=0,EE,001002ec,word,00000000
