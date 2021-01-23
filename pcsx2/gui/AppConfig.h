@@ -26,6 +26,7 @@
 #include <wx/colour.h>
 #include <wx/gdicmn.h>
 #include <memory>
+#include <map>
 
 enum DocsModeType
 {
@@ -207,6 +208,13 @@ public:
 		MemoryCardType Type;	// the memory card implementation that should be used
 	};
 
+	struct MemoryCardListPanelOptions
+	{
+		std::map<std::string, int> columnWidths;
+
+		void LoadSave( IniInterface& conf );
+	};
+
 	// ------------------------------------------------------------------------
 	// The GS window receives much love from the land of Options and Settings.
 	//
@@ -352,6 +360,7 @@ public:
 	// Memorycard options - first 2 are default slots, last 6 are multitap 1 and 2
 	// slots (3 each)
 	McdOptions				Mcd[8];
+	MemoryCardListPanelOptions MemoryCardListPanel;
 	wxString				GzipIsoIndexTemplate; // for quick-access index with gzipped ISO
 
 	ConsoleLogOptions		ProgLogBox;
