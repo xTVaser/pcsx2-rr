@@ -30,6 +30,7 @@
 #include "svnrev.h"
 #include "Saveslots.h"
 
+#include "fmt/core.h"
 // ------------------------------------------------------------------------
 wxMenu* MainEmuFrame::MakeStatesSubMenu(int baseid, int loadBackupId) const
 {
@@ -48,8 +49,15 @@ wxMenu* MainEmuFrame::MakeStatesSubMenu(int baseid, int loadBackupId) const
 		wxMenuItem* m = mnuSubstates->Append(loadBackupId, _("Backup"));
 		m->Enable(false);
 	}
-
+	// Implement custom hotkeys (F2) + (Shift + F2) with translatable string intact + not blank in GUI.
+	// baseid in the negatives will order in a different section, so if you want to increase more slots you can still easily do this, as -1 it will have the same function as opening file for savestates, which is bad
+	// For safety i also made them inactive aka grayed out to signify that's it's only for informational purposes
+	// Fixme: In the future this can still be expanded to actually cycle savestates in the GUI.
 	mnuSubstates->Append(baseid - 1, _("File..."));
+	wxMenuItem* CycleNext = mnuSubstates->Append(baseid - 2, _("Cycle to next slot") + wxString("  ") + fmt::format("({})", wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_CycleSlotForward").toTitleizedString()));
+	CycleNext->Enable(false);
+	wxMenuItem* CycleBack = mnuSubstates->Append(baseid - 3, _("Cycle to previous slot") + wxString("  ") + fmt::format("({})", wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_CycleSlotBackward").toTitleizedString()));
+	CycleBack->Enable(false);
 	return mnuSubstates;
 }
 
@@ -377,8 +385,6 @@ void MainEmuFrame::CreatePcsx2Menu()
 	m_menuSys.Append(MenuId_Config_FastBoot, _("Fast Boot"),
 					 _("Skips PS2 splash screens when booting from ISO or DVD media"), wxITEM_CHECK);
 
-	m_menuSys.AppendCheckItem(MenuId_Debug_CreateBlockdump, _("Create &Blockdump"), _("Creates a block dump for debugging purposes."));
-
 	m_menuSys.Append(MenuId_GameSettingsSubMenu, _("&Game Settings"), &m_GameSettingsSubmenu);
 
 	m_GameSettingsSubmenu.Append(MenuId_EnablePatches, _("Automatic &Gamefixes"),
@@ -402,10 +408,15 @@ void MainEmuFrame::CreatePcsx2Menu()
 	m_GameSettingsSubmenu.Append(MenuId_EnableHostFs, _("Enable &Host Filesystem"),
 								 wxEmptyString, wxITEM_CHECK);
 
-	m_menuSys.AppendSeparator();
+	m_GameSettingsSubmenu.Append(MenuId_Debug_CreateBlockdump, _("Create &Blockdump"), _("Creates a block dump for debugging purposes."), wxITEM_CHECK);
 
-	m_menuSys.Append(MenuId_Sys_LoadStates, _("&Load state"), &m_LoadStatesSubmenu);
-	m_menuSys.Append(MenuId_Sys_SaveStates, _("&Save state"), &m_SaveStatesSubmenu);
+	m_menuSys.AppendSeparator();
+	// Implement custom hotkeys (F3) with translatable string intact + not blank in GUI.
+	wxMenuItem* sysLoadStateItem = m_menuSys.Append(MenuId_Sys_LoadStates, _("&Load state"), &m_LoadStatesSubmenu);
+	AppendShortcutToMenuOption(*sysLoadStateItem, wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_DefrostCurrentSlot").toTitleizedString());
+	// Implement custom hotkeys (F1) with translatable string intact + not blank in GUI.
+	wxMenuItem* sysSaveStateItem = m_menuSys.Append(MenuId_Sys_SaveStates, _("&Save state"), &m_SaveStatesSubmenu);
+	AppendShortcutToMenuOption(*sysSaveStateItem, wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_FreezeCurrentSlot").toTitleizedString());
 
 	m_menuSys.Append(MenuId_EnableBackupStates, _("&Backup before save"), wxEmptyString, wxITEM_CHECK);
 
@@ -442,7 +453,7 @@ void MainEmuFrame::CreateConfigMenu()
 	m_menuConfig.Append(MenuId_Config_McdSettings, _("&Memory Cards..."));
 	m_menuConfig.Append(MenuId_Config_BIOS, _("&Plugin/BIOS Selector..."));
 	m_menuConfig.Append(MenuId_Config_SPU2, _("&Audio Settings..."));
-	m_menuConfig.Append(MenuId_Config_DEV9,			_("&Network and HDD Settings...") );
+	m_menuConfig.Append(MenuId_Config_DEV9, _("&Network and HDD Settings..."));
 	m_menuConfig.Append(MenuId_Config_USB, _("&USB Settings..."));
 	m_menuConfig.Append(MenuId_Config_PAD, _("&GamePad Settings..."));
 
@@ -475,11 +486,22 @@ void MainEmuFrame::CreateWindowsMenu()
 void MainEmuFrame::CreateCaptureMenu()
 {
 	m_menuCapture.Append(MenuId_Capture_Video, _("Video"), &m_submenuVideoCapture);
-	m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Start Screenrecorder"));
+	// Implement custom hotkeys (F12) with translatable string intact + not blank in GUI.
+	wxMenuItem* sysVideoCaptureItem = m_submenuVideoCapture.Append(MenuId_Capture_Video_Record, _("Start Screenrecorder"));
+	AppendShortcutToMenuOption(*sysVideoCaptureItem, wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_RecordingToggle").toTitleizedString());
 	m_submenuVideoCapture.Append(MenuId_Capture_Video_Stop, _("Stop Screenrecorder"))->Enable(false);
-
+	// Implement custom hotkeys (F8) + (Shift + F8) + (Ctrl + Shift + F8) with translatable string intact + not blank in GUI.
+	// Fixme: GlobalCommands.cpp L1029-L1031 is having issues because FrameForGS already maps the hotkey first.
+	// Fixme: When you uncomment L1029-L1031 on that file; Linux says that Ctrl is already used for something else and will append (Shift + F8) while Windows will (Ctrl + Shift + F8)
 	m_menuCapture.Append(MenuId_Capture_Screenshot, _("Screenshot"), &m_submenuScreenshot);
-	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot, _("Screenshot"));
+	wxMenuItem* sysScreenShotItem = m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot, _("Take Screenshot"));
+	// HACK: in AcceleratorDictionary::Map the Sys_TakeSnapshot entry gets Shift and Cmd (Ctrl) hardcoded to it because it is similarly hardcoded in GSdx
+	// So... remove such modifiers as the GUI menu entry is only for the base keybinding without modifiers.
+	// We can be confident in doing so, as if a user adds these modifiers themselves, the same function rejects it.
+	KeyAcceleratorCode keyCode = wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_TakeSnapshot");
+	keyCode.Shift(false);
+	keyCode.Cmd(false);
+	AppendShortcutToMenuOption(*sysScreenShotItem, keyCode.toTitleizedString());
 	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot_As, _("Screenshot As..."));
 }
 
@@ -632,7 +654,6 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 
 	ApplyCoreStatus();
 	ApplySettings();
-	AppendKeycodeNamesToMenuOptions();
 }
 
 MainEmuFrame::~MainEmuFrame()
@@ -710,6 +731,8 @@ void MainEmuFrame::ApplyCoreStatus()
 				susres->SetHelp(_("No emulation state is active; cannot suspend or resume."));
 			}
 		}
+		// Re-init keybinding after changing the label.
+		AppendShortcutToMenuOption(*susres, wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_SuspendResume").toTitleizedString());
 	}
 
 	const CDVD_SourceType Source = g_Conf->CdvdSource;
@@ -785,18 +808,11 @@ void MainEmuFrame::CommitPreset_noTrigger()
 	g_Conf->EmuOptions.EnablePatches = menubar.IsChecked(MenuId_EnablePatches);
 }
 
-static void AppendShortcutToMenuOption(wxMenuItem& item, wxString keyCodeStr)
+void MainEmuFrame::AppendShortcutToMenuOption(wxMenuItem& item, wxString keyCodeStr)
 {
 	wxString text = item.GetItemLabel();
 	const size_t tabPos = text.rfind(L'\t');
 	item.SetItemLabel(text.Mid(0, tabPos) + L"\t" + keyCodeStr);
-}
-
-void MainEmuFrame::AppendKeycodeNamesToMenuOptions()
-{
-
-	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Sys_LoadStates), wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_DefrostCurrentSlot").toTitleizedString());
-	AppendShortcutToMenuOption(*m_menuSys.FindChildItem(MenuId_Sys_SaveStates), wxGetApp().GlobalAccels->findKeycodeWithCommandId("States_FreezeCurrentSlot").toTitleizedString());
 }
 
 #ifndef DISABLE_RECORDING

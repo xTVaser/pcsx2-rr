@@ -14,17 +14,43 @@
  */
 
 #pragma once
-#include "DEV9.h"
 
-void ata_init();
-void ata_term();
+#include <wx/progdlg.h>
 
-template <int sz>
-void ata_write(u32 addr, u32 value);
-template <int sz>
-u8 ata_read(u32 addr);
+#include <string>
+#include <thread>
+#include <atomic>
+#include <condition_variable>
+#include <chrono>
+#include "ghc/filesystem.h"
 
-EXPORT_C_(void)
-ata_readDMA8Mem(u32* pMem, int size);
-EXPORT_C_(void)
-ata_writeDMA8Mem(u32* pMem, int size);
+class HddCreate
+{
+public:
+	ghc::filesystem::path filePath;
+	int neededSize;
+
+	std::atomic_bool errored{false};
+
+private:
+	wxProgressDialog* progressDialog;
+	std::atomic_int written{0};
+
+	std::thread fileThread;
+
+	std::atomic_bool canceled{false};
+
+	std::mutex completedMutex;
+	std::condition_variable completedCV;
+	bool completed = false;
+
+	std::chrono::steady_clock::time_point lastUpdate;
+
+public:
+	void Start();
+
+private:
+	void SetFileProgress(int currentSize);
+	void SetError();
+	void WriteImage(ghc::filesystem::path hddPath, int reqSizeMB);
+};

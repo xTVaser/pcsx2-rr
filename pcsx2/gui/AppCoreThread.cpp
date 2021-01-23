@@ -553,7 +553,7 @@ void AppCoreThread::ApplySettings(const Pcsx2Config& src)
 	if (fixup == EmuConfig)
 		return;
 
-	if (m_ExecMode >= ExecMode_Opened)
+	if (m_ExecMode >= ExecMode_Opened && !IsSelf())
 	{
 		ScopedCoreThreadPause paused_core;
 		_parent::ApplySettings(fixup);
@@ -585,8 +585,11 @@ void AppCoreThread::OnResumeInThread(bool isSuspended)
 	{
 		CDVDsys_ChangeSource(g_Conf->CdvdSource);
 		cdvdCtrlTrayOpen();
+		DoCDVDopen();
 		m_resetCdvd = false;
 	}
+	else if (isSuspended)
+		DoCDVDopen();
 
 	_parent::OnResumeInThread(isSuspended);
 	PostCoreStatus(CoreThread_Resumed);

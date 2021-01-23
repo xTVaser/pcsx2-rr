@@ -6,3 +6,6 @@
 *.props text eol=crlf
 *.vcxproj text eol=crlf
 *.vcxproj.filters text eol=crlf
+
+# Vendored 3rdparty Libraries to not pollute PRs
+3rdparty/yaml-cpp/yaml-cpp/* linguist-vendored
