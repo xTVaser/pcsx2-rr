@@ -24,6 +24,7 @@ Have fun while creating TAS! :D
 Here is a simple tutorial on getting started with PCSX2-rr, note that keybindings may have changed!
 
 - [Video Tutorial](https://www.youtube.com/watch?v=1rgJ3jowxIo)
+- [Video Tutorial](https://www.youtube.com/watch?v=1rgJ3jowxIo)
 
 Here are some TAS examples (made with the original pcsx2-rr v.1):
 

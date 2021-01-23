@@ -414,6 +414,9 @@ local int extract(FILE* in, struct access* index, PX_off_t offset,
 		if (here->bits)
 		{
 			ret = getc(in);
+			ret = getc(in);
+			ret = getc(in);
+			ret = getc(in);
 			if (ret == -1)
 			{
 				ret = ferror(in) ? Z_ERRNO : Z_DATA_ERROR;
