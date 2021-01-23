@@ -121,6 +121,7 @@ public:
     bool IsLoading() const { return true; }
 
     void Entry(const std::string &var, std::string &value, const std::string defvalue = std::string());
+    void Entry(const std::string &var, int &value, const int defvalue = 0);
     void Entry(const wxString &var, wxString &value, const wxString defvalue = wxEmptyString);
     void Entry(const wxString &var, wxDirName &value, const wxDirName defvalue = wxDirName(), bool isAllowRelative = false);
     void Entry(const wxString &var, fs::path &value, const fs::path defvalue = fs::path(), bool isAllowRelative = false);

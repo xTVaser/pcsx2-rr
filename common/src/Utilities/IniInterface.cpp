@@ -124,6 +124,14 @@ void IniLoader::Entry(const std::string &var, std::string &value, const std::str
 	}
 }
 
+void IniLoader::Entry(const std::string& var, int& value, const int defvalue)
+{
+	if (m_Config)
+		m_Config->Read(Path::ToWxString(var), &value, defvalue);
+	else
+		value = defvalue;
+}
+
 void IniLoader::Entry(const wxString &var, wxString &value, const wxString defvalue)
 {
     if (m_Config)
