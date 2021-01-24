@@ -98,6 +98,18 @@ s64 Path::GetFileSize(const fs::path &path)
     return (s64)fs::file_size(path);
 }
 
+wxString Path::Normalize(const wxString &src)
+{
+    wxFileName normalize(src);
+    normalize.Normalize();
+    return normalize.GetFullPath();
+}
+
+wxString Path::Normalize(const wxDirName &src)
+{
+    return wxDirName(src).Normalize().ToString();
+}
+
 std::string Path::Normalize(const std::string &src)
 {
     fs::path normalize(fs::canonical(src));
