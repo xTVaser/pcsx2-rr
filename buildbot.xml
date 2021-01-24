@@ -31,7 +31,7 @@
       <BloatToDelete Include="$(MSBuildProjectDirectory)\bin\**\*.lib"/>
       <BloatToDelete Include="$(MSBuildProjectDirectory)\bin\**\*.pdb"/>
     </ItemGroup>
-    <Delete Files="@(BloatToDelete)" />
+    <!-- <Delete Files="@(BloatToDelete)" /> -->
   </Target>
   <Target Name="CleanCruft">
     <ItemGroup>
