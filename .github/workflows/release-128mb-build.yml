@@ -1,7 +1,5 @@
-name: Windows Build
+name: 128MB Build Release
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   push:
     branches:
@@ -9,17 +7,116 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      # Prevent one build from failing everything (although maybe those should be included as experimental builds instead)
+      fail-fast: false
+      matrix:
+        os: [windows-2019]
+        platform: [Win32]
+        experimental: [false]
+
+    name: ${{ matrix.os }}-${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+    # Set some sort of timeout in the event of run-away builds.  We are limited on concurrent jobs so, get rid of them.
+    timeout-minutes: 30
+
     steps:
-      - uses: actions/checkout@v2
+      # NOTE - useful for debugging
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Cache Submodules
+        id: cache-submodules
+        uses: actions/cache@v2
+        with:
+          key: submodules-${{ hashFiles('./.gitmodules') }}
+          path: |
+            ./.git/modules/
+            ./3rdparty/fmt
+            ./3rdparty/xz
+            ./3rdparty/yaml-cpp
+            ./3rdparty/gtest
+
+      - name: Checkout Submodules
+        if: steps.cache-submodules.outputs.cache-hit != 'true'
+        run: git submodule update --init --recursive --jobs 2
+
+      - name: Verify VS Project Files
+        shell: powershell
+        run: .\.github\workflows\scripts\windows\validate-vs-filters.ps1
+
+      - name: Setup msbuild
+        uses: microsoft/setup-msbuild@v1.0.2
+        with:
+          vs-version: 16.7
+
+      - name: Build PCSX2
+        run: msbuild "buildbot.xml" /m /v:n /t:ReleaseAll /p:Platform=${{ matrix.platform }}
+
+      - name: Prepare Artifact Metadata
+        id: artifact-metadata
+        shell: bash
+        run: |
+          ARCH=$([ "${{ matrix.platform }}" == Win32 ] && echo "32bit" || echo "64bit")
+          ARTIFACT_NAME=""
+          if [ ${{ github.event_name }} == "pull_request" ]; then
+            PR_SHA=$(git rev-parse --short "${{ github.event.pull_request.head.sha }}")
+            ARTIFACT_NAME="PCSX2-${ARCH}"
+            if [ ! -z "${{ github.event.pull_request.number }}" ]; then
+              PR_NUM=${{ github.event.pull_request.number }}
+              ARTIFACT_NAME="${ARTIFACT_NAME}-pr[${PR_NUM}]"
+            fi
+            ARTIFACT_NAME="${ARTIFACT_NAME}-sha[${PR_SHA}]"
+            if [ ! -z "${{ github.event.pull_request.title }}" ]; then
+              PR_TITLE=$(echo "${{ github.event.pull_request.title }}" | tr -cd '[a-zA-Z0-9[:space:]]_-')
+              ARTIFACT_NAME="${ARTIFACT_NAME}-title["${PR_TITLE}""
+            fi
+          else
+            SHA=$(git rev-parse --short "$GITHUB_SHA")
+            ARTIFACT_NAME="PCSX2-${ARCH}-sha[${SHA}"
+          fi
+          TRIMMED_ARTIFACT_NAME=$(printf "%.199s]" "$ARTIFACT_NAME")
+          echo "name=$TRIMMED_ARTIFACT_NAME"
+          echo "##[set-output name=name;]${TRIMMED_ARTIFACT_NAME}"
+
+      - name: Prepare Artifact Folder
+        shell: bash
+        working-directory: ./bin
+        run: |
+          shopt -s extglob dotglob
+          mkdir "${{ steps.artifact-metadata.outputs.name }}"
+          mv !("${{ steps.artifact-metadata.outputs.name }}") "${{ steps.artifact-metadata.outputs.name }}"
+          shopt -u dotglob
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        continue-on-error: true
+        with:
+          name: ${{ steps.artifact-metadata.outputs.name }}
+          path: bin
+          retention-days: 30 # https://docs.github.com/en/free-pro-team@latest/actions/reference/usage-limits-billing-and-administration#artifact-and-log-retention-policy
+
+      # Could be made more robust with
+      # - https://github.com/dawidd6/action-download-artifact
+      # - https://github.com/marketplace/actions/workflow-dispatch
       - name: Bump version and push tag
+        if: github.ref == 'refs/heads/128mb-build'
         id: tag_version
         uses: mathieudutour/github-tag-action@v5.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release_branches: 128mb-build
           tag_prefix: 128mb/v
+
       - name: Create a GitHub release
+        if: github.ref == 'refs/heads/128mb-build'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -27,3 +124,21 @@ jobs:
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
           release_name: 128MB Build - Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
+
+      - name: Prepare Artifact for Release
+        if: github.ref == 'refs/heads/128mb-build'
+        shell: powershell
+        run: |
+          Compress-Archive -Path ./bin/* -DestinationPath ./128mb-build.zip
+
+      - name: Upload Release Asset
+        if: github.ref == 'refs/heads/128mb-build'
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./128mb-build.zip
+          asset_name: PCSX2-${{ steps.tag_version.outputs.new_tag }}.zip
+          asset_content_type: application/zip
