@@ -1364,7 +1364,7 @@ static void SaveUiSettings()
 		g_Conf->Folders.RunDisc.clear();
 	}
 
-	sApp.GetRecentIsoManager().Add( Path::ToWxString(g_Conf->CurrentIso) );
+	sApp.GetRecentIsoManager().Add( g_Conf->CurrentIso );
 
 	std::unique_ptr<wxFileConfig> uiini(OpenFileConfig(Path::ToWxString(GetUiSettingsFilename())));
 	IniSaver saver(uiini.get());

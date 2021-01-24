@@ -15,8 +15,8 @@ namespace Path
 	// Returns -1 if the file does not exist.
 	extern s64 GetFileSize(const fs::path& file);
 
-	extern wxString Normalize(const wxString& srcpath);
-	extern wxString Normalize(const wxDirName& srcpath);
+	extern std::string Normalize(const std::string& srcpath);
+	extern std::string Normalize(const fs::path& srcpath);
 	extern std::string MakeAbsolute(const std::string& srcpath);
 
 	extern fs::path Combine(const fs::path &srcPath, const fs::path &srcFile);

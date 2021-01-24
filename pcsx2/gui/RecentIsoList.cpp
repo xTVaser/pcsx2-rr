@@ -141,11 +141,11 @@ void RecentIsoManager::Repopulate()
 	m_Clear = m_Menu->Append(MenuIdentifiers::MenuId_IsoClear, _("Clear ISO list"));
 }
 
-void RecentIsoManager::Add( const wxString& src )
+void RecentIsoManager::Add( const fs::path& src )
 {
-	if( src.IsEmpty() ) return;
+	if( src.empty() ) return;
 
-	wxString normalized( Path::Normalize( src ) );
+	wxString normalized( Path::ToWxString(Path::Normalize( src )) );
 
 	int cnt = m_Items.size();
 
@@ -220,11 +220,11 @@ void RecentIsoManager::LoadListFrom( IniInterface& ini )
 	ScopedIniGroup groupie( ini, L"RecentIso" );
 	for( uint i=0; i<m_MaxLength; ++i )
 	{
-		wxFileName loadtmp(L"");
+		fs::path loadtmp("");
 		ini.Entry( pxsFmt( L"Filename%02d", i ), loadtmp, loadtmp, true );
-		if( loadtmp.GetFullName()!=L"" ) Add( loadtmp.GetFullPath() );
+		if( loadtmp !="" ) Add( loadtmp );
 	}
-	Add( Path::ToWxString(g_Conf->CurrentIso) );
+	Add( g_Conf->CurrentIso );
 
 	ini.GetConfig().SetRecordDefaults( true );
 }

@@ -26,7 +26,7 @@ using namespace pxSizerFlags;
 
 static wxString GetNormalizedConfigFolder(FoldersEnum_t folderId)
 {
-	return Path::Normalize(Path::ToWxString(g_Conf->Folders.IsDefault(folderId) ? PathDefs::Get(folderId) : g_Conf->Folders[folderId]));
+	return Path::ToWxString(Path::Normalize(g_Conf->Folders.IsDefault(folderId) ? PathDefs::Get(folderId) : g_Conf->Folders[folderId]));
 }
 
 // Pass me TRUE if the default path is to be used, and the DirPickerCtrl disabled from use.
@@ -37,7 +37,7 @@ void Panels::DirPickerPanel::UpdateCheckStatus( bool someNoteworthyBoolean )
 	m_pickerCtrl->Enable( !someNoteworthyBoolean );
 	if (someNoteworthyBoolean)
 	{
-		wxString normalized(Path::Normalize(Path::ToWxString(PathDefs::Get(m_FolderId))));
+		wxString normalized(Path::ToWxString(Path::Normalize((PathDefs::Get(m_FolderId)))));
 		m_pickerCtrl->SetPath( normalized );
 
 		wxFileDirPickerEvent event( m_pickerCtrl->GetEventType(), m_pickerCtrl, m_pickerCtrl->GetId(), normalized );

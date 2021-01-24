@@ -98,16 +98,15 @@ s64 Path::GetFileSize(const fs::path &path)
     return (s64)fs::file_size(path);
 }
 
-wxString Path::Normalize(const wxString &src)
+std::string Path::Normalize(const std::string &src)
 {
-    wxFileName normalize(src);
-    normalize.Normalize();
-    return normalize.GetFullPath();
+    fs::path normalize(fs::canonical(src));
+    return normalize;
 }
 
-wxString Path::Normalize(const wxDirName &src)
+std::string Path::Normalize(const fs::path &src)
 {
-    return wxDirName(src).Normalize().ToString();
+    return fs::canonical(src);
 }
 
 std::string Path::MakeAbsolute(const std::string &src)
@@ -133,7 +132,8 @@ std::string Path::ReplaceFilename(const wxString &src, const wxString &newfilena
 {
     wxFileName jojo(src);
     jojo.SetFullName(newfilename);
-    return std::string(jojo.GetFullPath().ToUTF8());
+    fs::path KonoDioDa(FromWxString(jojo.GetName()));
+    return KonoDioDa;
 }
 
 std::string Path::GetFilename(const std::string &src)
@@ -153,7 +153,7 @@ std::string Path::GetDirectory(const std::string &src)
 
 fs::path Path::GetExecutableDirectory()
 {
-	fs::path exePath(wxStandardPaths::Get().GetExecutablePath().ToStdWstring());
+	fs::path exePath(FromWxString(wxStandardPaths::Get().GetExecutablePath()));
 	return exePath.parent_path();
 }
 
