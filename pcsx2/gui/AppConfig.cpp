@@ -1189,7 +1189,7 @@ void AppConfig_OnChangedSettingsFolder( bool overwrite )
 	Path::CreateFolder(PathDefs::GetDocuments());
 	Path::CreateFolder(GetSettingsFolder());
 
-	const wxString iniFilename( GetUiSettingsFilename() );
+	const wxString iniFilename(Path::ToWxString(GetUiSettingsFilename()));
 
 	if( overwrite )
 	{
