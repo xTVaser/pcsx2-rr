@@ -1,0 +1,21 @@
+gametitle=Jak 3 [September 2004 Preview] (PAL)(SCES-51608)
+comment=Enables Developer/Debug Mode - Credit to water111 for discovering / documenting the required ELF edits in Jak 1/2.  ELF edits for Jak 3 figured out by xTVaser.
+comment=Credits to Luminar Light for making the patch for this game build.
+comment=You must run DISKINFO.BIN for this patch to work.
+
+// NOP Disabling MasterDebug
+patch=0,EE,00100404,word,00000000
+// NOP Disabling DebugSegment
+patch=0,EE,00100408,word,00000000
+// NOP SendFromBufferD call in InitListener - This is called only when MasterDebug is on
+patch=0,EE,00109998,word,00000000
+
+// 0x4ff0000 for global heap initialization - Set in InitMachine
+patch=0,EE,0010372c,word,3c0604ff
+
+// This is about changing the stack pointer
+// Shoves a MIPS instruction into near the very top of the entry point
+// Ghidra blows up here, but binary ninja can handle it
+// Orginally at this position there is `2D E8 40 00` - `daddu $sp, $v0, $zero`
+// This changes it to - `lui sp, 0x0800` Which loads the value 0x0800 to the stackpointer register, modifying it.
+patch=0,EE,0010017c,word,3c1d0800
