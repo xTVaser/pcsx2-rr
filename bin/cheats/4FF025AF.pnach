@@ -1,7 +1,7 @@
 gametitle=Jak II: Renegade [July 2003 Preview] (PAL)(SCES-51608)
 comment=Enables Developer/Debug Mode - Credit to water111 for discovering / documenting the required ELF edits
 comment=Credits to Luminar Light for making the patch for this game build.
-cooment=You must run FIREWIRE.IRX (DRIVERS folder) for this patch to work.
+comment=You must run FIREWIRE.IRX (DRIVERS folder) for this patch to work.
 
 // NOP Disabling MasterDebug
 patch=0,EE,001003f8,word,00000000
