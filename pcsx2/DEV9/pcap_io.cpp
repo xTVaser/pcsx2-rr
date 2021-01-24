@@ -41,9 +41,7 @@
 pcap_t* adhandle;
 pcap_dumper_t* dump_pcap;
 char errbuf[PCAP_ERRBUF_SIZE];
-mac_address virtual_mac = {0x00, 0x04, 0x1F, 0x82, 0x30, 0x31}; // first three recognized by Xlink as Sony PS2
 mac_address broadcast_mac = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-mac_address host_mac = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 #endif
 int pcap_io_running = 0;
 extern u8 eeprom[];
@@ -114,28 +112,14 @@ int GetMACAddress(char* adapter, mac_address* addr)
 	return retval;
 }
 
-int pcap_io_init(char* adapter)
+int pcap_io_init(char* adapter, mac_address virtual_mac)
 {
 #ifndef _WIN32
 	struct bpf_program fp;
 	char filter[1024] = "ether broadcast or ether dst ";
 	int dlt;
 	char* dlt_name;
-	emu_printf("Opening adapter '%s'...", adapter);
-	u16 checksum;
-	GetMACAddress(adapter, &host_mac);
-
-	//Lets take the hosts last 2 bytes to make it unique on Xlink
-	virtual_mac.bytes[4] = host_mac.bytes[4];
-	virtual_mac.bytes[5] = host_mac.bytes[5];
-
-	for (int ii = 0; ii < 6; ii++)
-		eeprom[ii] = virtual_mac.bytes[ii];
-
-	//The checksum seems to be all the values of the mac added up in 16bit chunks
-	checksum = (dev9.eeprom[0] + dev9.eeprom[1] + dev9.eeprom[2]) & 0xffff;
-
-	dev9.eeprom[3] = checksum;
+	Console.WriteLn("Opening adapter '%s'...", adapter);
 
 	/* Open the adapter */
 	if ((adhandle = pcap_open_live(adapter, // name of the device
@@ -146,8 +130,8 @@ int pcap_io_init(char* adapter)
 								   errbuf   // error buffer
 								   )) == NULL)
 	{
-		fprintf(stderr, "%s", errbuf);
-		fprintf(stderr, "\nUnable to open the adapter. %s is not supported by pcap\n", adapter);
+		Console.Error("%s", errbuf);
+		Console.Error("Unable to open the adapter. %s is not supported by pcap", adapter);
 		return -1;
 	}
 	char virtual_mac_str[18];
@@ -157,13 +141,13 @@ int pcap_io_init(char* adapter)
 
 	if (pcap_compile(adhandle, &fp, filter, 1, PCAP_NETMASK_UNKNOWN) == -1)
 	{
-		fprintf(stderr, "Error calling pcap_compile: %s\n", pcap_geterr(adhandle));
+		Console.Error("Error calling pcap_compile: %s", pcap_geterr(adhandle));
 		return -1;
 	}
 
 	if (pcap_setfilter(adhandle, &fp) == -1)
 	{
-		fprintf(stderr, "Error setting filter: %s\n", pcap_geterr(adhandle));
+		Console.Error("Error setting filter: %s", pcap_geterr(adhandle));
 		return -1;
 	}
 
@@ -171,7 +155,7 @@ int pcap_io_init(char* adapter)
 	dlt = pcap_datalink(adhandle);
 	dlt_name = (char*)pcap_datalink_val_to_name(dlt);
 
-	fprintf(stderr, "Device uses DLT %d: %s\n", dlt, dlt_name);
+	Console.Error("Device uses DLT %d: %s", dlt, dlt_name);
 	switch (dlt)
 	{
 		case DLT_EN10MB:
@@ -187,7 +171,7 @@ int pcap_io_init(char* adapter)
 	dump_pcap = pcap_dump_open(adhandle, plfile.c_str());
 
 	pcap_io_running = 1;
-	emu_printf("Ok.\n");
+	Console.WriteLn("Adapter Ok.");
 #endif
 	return 0;
 }
@@ -345,13 +329,31 @@ char* pcap_io_get_dev_desc(int num)
 
 
 PCAPAdapter::PCAPAdapter()
+	: NetAdapter()
 {
+#ifndef _WIN32
 	if (config.ethEnable == 0)
 		return;
-	if (pcap_io_init(config.Eth) == -1)
+
+	mac_address hostMAC;
+	mac_address newMAC;
+
+	GetMACAddress(config.Eth, &hostMAC);
+	memcpy(&newMAC, ps2MAC, 6);
+
+	//Lets take the hosts last 2 bytes to make it unique on Xlink
+	newMAC.bytes[5] = hostMAC.bytes[4];
+	newMAC.bytes[4] = hostMAC.bytes[5];
+
+	SetMACAddress((u8*)&newMAC);
+
+	if (pcap_io_init(config.Eth, newMAC) == -1)
 	{
 		SysMessage("Can't open Device '%s'\n", config.Eth);
 	}
+#else
+	Console.Error("pcap not supported on windows\n");
+#endif
 }
 bool PCAPAdapter::blocks()
 {

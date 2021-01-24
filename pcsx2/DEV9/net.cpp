@@ -74,11 +74,31 @@ void TermNet()
 	{
 		RxRunning = false;
 		nif->close();
-		emu_printf("Waiting for RX-net thread to terminate..");
+		Console.WriteLn("Waiting for RX-net thread to terminate..");
 		rx_thread.join();
-		emu_printf(".done\n");
+		Console.WriteLn("Done");
 
 		delete nif;
 		nif = nullptr;
 	}
+}
+
+NetAdapter::NetAdapter()
+{
+	//Ensure eeprom matches our default 
+	SetMACAddress(nullptr);
+}
+
+void NetAdapter::SetMACAddress(u8* mac)
+{
+	if (mac == nullptr)
+		memcpy(ps2MAC, defaultMAC, 6);
+	else
+		memcpy(ps2MAC, mac, 6);
+
+	for (int i = 0; i < 3; i++)
+		dev9.eeprom[i] = ((u16*)ps2MAC)[i];
+
+	//The checksum seems to be all the values of the mac added up in 16bit chunks
+	dev9.eeprom[3] = (dev9.eeprom[0] + dev9.eeprom[1] + dev9.eeprom[2]) & 0xffff;
 }

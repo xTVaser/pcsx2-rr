@@ -390,7 +390,7 @@ namespace Implementations
 	void Sys_TakeSnapshot()
 	{
 		if (GSmakeSnapshot(g_Conf->Folders.Snapshots.ToUTF8()))
-		   OSDlog(ConsoleColors::Color_Black, true, "Snapshot taken");
+			OSDlog(ConsoleColors::Color_Black, true, "Snapshot taken");
 	}
 
 	void Sys_RenderToggle()
@@ -1012,15 +1012,26 @@ void Pcsx2App::InitDefaultGlobalAccelerators()
 	GlobalAccels->Map(AAC(WXK_F4), "Framelimiter_MasterToggle");
 	GlobalAccels->Map(AAC(WXK_F4).Shift(), "Frameskip_Toggle");
 
-	/*GlobalAccels->Map( AAC( WXK_ESCAPE ),		"Sys_Suspend");
-	GlobalAccels->Map( AAC( WXK_F8 ),			"Sys_TakeSnapshot");
-	GlobalAccels->Map( AAC( WXK_F8 ).Shift(),	"Sys_TakeSnapshot");
-	GlobalAccels->Map( AAC( WXK_F8 ).Shift().Cmd(),"Sys_TakeSnapshot");
-	GlobalAccels->Map( AAC( WXK_F9 ),			"Sys_RenderswitchToggle");
+	// At this early stage of startup, the application assumes installed mode, so portable mode custom keybindings may present issues.
+	// Relevant - https://github.com/PCSX2/pcsx2/blob/678829a5b2b8ca7a3e42d8edc9ab201bf00b0fe9/pcsx2/gui/AppInit.cpp#L479
+	// Compared to L990 of GlobalCommands.cpp which also does an init for the GlobalAccelerators.
+	// The idea was to have: Reading from the PCSX2_keys.ini in the ini folder based on PCSX2_keys.ini.default which get overridden. 
+	// We also need to make it easier to do custom hotkeys for both normal/portable PCSX2 in the GUI.
+	GlobalAccels->Map(AAC(WXK_TAB), "Framelimiter_TurboToggle");
+	GlobalAccels->Map(AAC(WXK_TAB).Shift(), "Framelimiter_SlomoToggle");
 
-	GlobalAccels->Map( AAC( WXK_F10 ),			"Sys_LoggingToggle");
-	GlobalAccels->Map( AAC( WXK_F11 ),			"Sys_FreezeGS");
-	GlobalAccels->Map( AAC( WXK_F12 ),			"Sys_RecordingToggle");
+	GlobalAccels->Map(AAC(WXK_F6), "GSwindow_CycleAspectRatio");
+	GlobalAccels->Map(AAC(WXK_RETURN).Alt(), "FullscreenToggle");
 
-	GlobalAccels->Map( AAC( WXK_RETURN ).Alt(),	"FullscreenToggle" );*/
+	GlobalAccels->Map(AAC(WXK_ESCAPE), "Sys_SuspendResume");
+
+	// Fixme: GS Dumps could need a seperate label and hotkey binding or less interlinked with normal screenshots/snapshots , which messes with overloading lots of different mappings, commented the other GlobalAccels for this reason. GSdx hardcodes keybindings.
+	 GlobalAccels->Map(AAC(WXK_F8), "Sys_TakeSnapshot");
+	// GlobalAccels->Map(AAC(WXK_F8).Shift(), "Sys_TakeSnapshot");
+	// GlobalAccels->Map(AAC(WXK_F8).Shift().Cmd(), "Sys_TakeSnapshot");
+	GlobalAccels->Map(AAC(WXK_F9), "Sys_RenderswitchToggle");
+
+	// GlobalAccels->Map(AAC(WXK_F10),	"Sys_LoggingToggle");
+	// GlobalAccels->Map(AAC(WXK_F11),	"Sys_FreezeGS");
+	GlobalAccels->Map(AAC(WXK_F12), "Sys_RecordingToggle");
 }

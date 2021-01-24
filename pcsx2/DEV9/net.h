@@ -17,6 +17,9 @@
 #include <stdlib.h>
 #include <string.h> //uh isnt memcpy @ stdlib ?
 
+// first three recognized by Xlink as Sony PS2
+const u8 defaultMAC[6] = {0x00, 0x04, 0x1F, 0x82, 0x30, 0x31};
+
 struct NetPacket
 {
 	NetPacket() { size = 0; }
@@ -36,13 +39,20 @@ extern mtfifo<NetPacket*> tx_fifo;
 
 class NetAdapter
 {
+protected:
+	u8 ps2MAC[6];
+
 public:
+	NetAdapter();
 	virtual bool blocks() = 0;
 	virtual bool isInitialised() = 0;
 	virtual bool recv(NetPacket* pkt) = 0; //gets a packet
 	virtual bool send(NetPacket* pkt) = 0; //sends the packet and deletes it when done
 	virtual void close() {}
 	virtual ~NetAdapter() {}
+
+protected:
+	void SetMACAddress(u8* mac);
 };
 
 void tx_put(NetPacket* ptr);

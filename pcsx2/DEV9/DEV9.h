@@ -28,6 +28,7 @@
 #include "PS2Edefs.h"
 #include "PS2Eext.h"
 #include "net.h"
+#include "ATA/ATA.h"
 
 #ifdef _WIN32
 
@@ -42,24 +43,27 @@
 
 #endif
 
-//#define DEV9_LOG_ENABLE
-
-#ifdef DEV9_LOG_ENABLE
-#define DEV9_LOG __Log
-#else
-#define DEV9_LOG(...)
-#endif
-
 void rx_process(NetPacket* pk);
 bool rx_fifo_can_rx();
 
 #define ETH_DEF "eth0"
+#ifdef _WIN32
+#define HDD_DEF L"DEV9hdd.raw"
+#else
 #define HDD_DEF "DEV9hdd.raw"
+#endif
+
+#define HDD_MIN_GB 8
+#define HDD_MAX_GB 120
 
 typedef struct
 {
 	char Eth[256];
+#ifdef _WIN32
+	wchar_t Hdd[256];
+#else
 	char Hdd[256];
+#endif
 	int HddSize;
 
 	int hddEnable;
@@ -70,6 +74,8 @@ EXTERN Config config;
 
 typedef struct
 {
+	ATA* ata;
+
 	s8 dev9R[0x10000];
 	u8 eeprom_state;
 	u8 eeprom_command;
@@ -87,14 +93,21 @@ typedef struct
 	u16 txfifo_rd_ptr;
 
 	u8 bd_swap;
-	u16 atabuf[1024];
-	u32 atacount;
-	u32 atasize;
 	u16 phyregs[32];
-	int irqcause;
-	u8 atacmd;
-	u32 atasector;
-	u32 atansector;
+
+	u16 irqcause;
+	u16 irqmask;
+	u16 dma_ctrl;
+	u16 xfr_ctrl;
+	u16 if_ctrl;
+
+	u16 pio_mode;
+	u16 mdma_mode;
+	u16 udma_mode;
+
+	//Non-Regs
+	int fifo_bytes_read;
+	int fifo_bytes_write;
 } dev9Struct;
 
 //EEPROM states
@@ -126,11 +139,9 @@ s32 _DEV9open();
 void _DEV9close();
 //void DEV9thread();
 
-EXTERN PluginLog DEV9Log;
 //Yes these are meant to be a lowercase extern
 extern std::string s_strIniPath;
 extern std::string s_strLogPath;
-void __Log(char* fmt, ...);
 
 void SysMessage(char* fmt, ...);
 
@@ -146,20 +157,33 @@ void SysMessage(char* fmt, ...);
  */
 
 // clang-format off
+#define SPD_INTR_ATA_FIFO_DATA		(1 << 1)
+#define SPD_INTR_ATA_FIFO_FULL		(1 << 15) //Or Error/underflow/overfolw(?)
+#define SPD_INTR_ATA_FIFO_EMPTY		(1 << 14)
+#define SPD_INTR_ATA_FIFO_OVERFLOW	(SPD_INTR_ATA_FIFO_FULL | SPD_INTR_ATA_FIFO_EMPTY) //by HDD only?
 
 #define SPD_REGBASE			0x10000000
 
-#define SPD_R_REV			(SPD_REGBASE + 0x00)
-#define SPD_R_REV_1			(SPD_REGBASE + 0x02)
-				// bit 0: smap
-				// bit 1: hdd
-				// bit 5: flash
-#define SPD_R_REV_3			(SPD_REGBASE + 0x04)
-#define SPD_R_0e			(SPD_REGBASE + 0x0e)
+#define ATA_INTR_INTRQ			(1 << 0)
+
+#define SPD_R_REV_1				(SPD_REGBASE + 0x00)
+#define SPD_R_REV_2				(SPD_REGBASE + 0x02)
+#define		SPD_CAPS_SMAP		(1 << 0)
+#define		SPD_CAPS_ATA		(1 << 1)
+#define		SPD_CAPS_UART		(1 << 3)
+#define		SPD_CAPS_DVR		(1 << 4)
+#define		SPD_CAPS_FLASH		(1 << 5)
+#define SPD_R_REV_3				(SPD_REGBASE + 0x04)
+#define SPD_R_0e				(SPD_REGBASE + 0x0e)
 
 #define SPD_R_DMA_CTRL			(SPD_REGBASE + 0x24)
+#define		SPD_DMA_TO_SMAP		(1 << 0)
+#define		SPD_DMA_FASTEST		(1 << 1)
+#define		SPD_DMA_WIDE		(1 << 2)
+#define		SPD_DMA_PAUSE		(1 << 4) //Pause SPEED->IOP DMA, by keeping DREQ inactive
 #define SPD_R_INTR_STAT			(SPD_REGBASE + 0x28)
 #define SPD_R_INTR_MASK			(SPD_REGBASE + 0x2a)
+
 #define SPD_R_PIO_DIR			(SPD_REGBASE + 0x2c)
 #define SPD_R_PIO_DATA			(SPD_REGBASE + 0x2e)
 #define	  SPD_PP_DOUT		(1<<4)	/* Data output, read port */
@@ -173,13 +197,29 @@ void SysMessage(char* fmt, ...);
 #define	  SPD_PP_OP_EWDS	0
 
 #define SPD_R_XFR_CTRL			(SPD_REGBASE + 0x32)
-#define SPD_R_IF_CTRL			(SPD_REGBASE + 0x64)
-#define   SPD_IF_ATA_RESET	0x80
-#define   SPD_IF_DMA_ENABLE	0x04
-#define SPD_R_PIO_MODE			(SPD_REGBASE + 0x70)
-#define SPD_R_MWDMA_MODE		(SPD_REGBASE + 0x72)
-#define SPD_R_UDMA_MODE			(SPD_REGBASE + 0x74)
+#define		SPD_XFR_WRITE		(1 << 0)
+#define		SPD_XFR_DMAEN		(1 << 1)
+#define SPD_R_DBUF_STAT			(SPD_REGBASE + 0x38)
+//Read
+#define		SPD_DBUF_AVAIL_MAX	0x10
+#define		SPD_DBUF_AVAIL_MASK	0x1F
+#define		SPD_DBUF_STAT_1		(1 << 5) //HDD->SPEED: Buffer has free space,                        IOP->SPEED: Buffer is completely empty
+#define		SPD_DBUF_STAT_2		(1 << 6) //HDD->SPEED: Buffer is completely empty, no data written   IOP->SPEED: Buffer has data
+#define		SPD_DBUF_STAT_FULL	(1 << 7)
+//HDD->SPEED: both SPD_DBUF_STAT_2 and SPD_DBUF_STAT_FULL set to 1 indicates overflow
+//Write
+#define		SPD_DBUF_RESET_FIFO	(1 << 1) //Set SPD_DBUF_STAT_1 & SPD_DBUF_STAT_2, SPD_DBUF_AVAIL set to 0
 
+#define SPD_R_IF_CTRL			(SPD_REGBASE + 0x64)
+#define		SPD_IF_UDMA			(1 << 0)
+#define		SPD_IF_READ			(1 << 1)
+#define		SPD_IF_ATA_DMAEN	(1 << 2) //Allow HDD<->SPEED DMA, auto cleared on trasfer end
+#define		SPD_IF_HDD_RESET	(1 << 6) //HDD Hard Reset, 0=act.low/1=inact.high.
+#define		SPD_IF_ATA_RESET	(1 << 7) //Reset ATA Interface
+
+#define SPD_R_PIO_MODE			(SPD_REGBASE + 0x70)
+#define SPD_R_MDMA_MODE			(SPD_REGBASE + 0x72)
+#define SPD_R_UDMA_MODE			(SPD_REGBASE + 0x74)
 
 /*
  * SMAP (PS2 Network Adapter) register definitions.
@@ -551,8 +591,6 @@ typedef struct _smap_bd {
 #define	SMAP_DsPHYTER_10BTSCR		0x1A
 #define	SMAP_DsPHYTER_CDCTRL		0x1B
 
-// clang-format on
-
 /*
  * ATA hardware types and definitions.
  *
@@ -561,23 +599,47 @@ typedef struct _smap_bd {
  * * code included from the ps2drv iop driver, modified by linuzappz  *
  */
 
-
-#define ATA_DEV9_HDD_BASE (SPD_REGBASE + 0x40)
+#define ATA_DEV9_HDD_BASE	(SPD_REGBASE + 0x40)
 /* AIF on T10Ks - Not supported yet.  */
-#define ATA_AIF_HDD_BASE (SPD_REGBASE + 0x4000000 + 0x60)
+#define ATA_AIF_HDD_BASE	(SPD_REGBASE + 0x4000000 + 0x60)
 
-#define ATA_R_DATA (ATA_DEV9_HDD_BASE + 0x00)
-#define ATA_R_ERROR (ATA_DEV9_HDD_BASE + 0x02)
-#define ATA_R_NSECTOR (ATA_DEV9_HDD_BASE + 0x04)
-#define ATA_R_SECTOR (ATA_DEV9_HDD_BASE + 0x06)
-#define ATA_R_LCYL (ATA_DEV9_HDD_BASE + 0x08)
-#define ATA_R_HCYL (ATA_DEV9_HDD_BASE + 0x0a)
-#define ATA_R_SELECT (ATA_DEV9_HDD_BASE + 0x0c)
-#define ATA_R_STATUS (ATA_DEV9_HDD_BASE + 0x0e)
-#define ATA_R_CONTROL (ATA_DEV9_HDD_BASE + 0x1c)
-#define ATA_DEV9_INT (0x01)
-#define ATA_DEV9_INT_DMA (0x02) //not sure rly
-#define ATA_DEV9_HDD_END (ATA_R_CONTROL + 4)
+#define ATA_R_DATA			(ATA_DEV9_HDD_BASE + 0x00)
+#define ATA_R_ERROR			(ATA_DEV9_HDD_BASE + 0x02) //On Read
+#define ATA_R_FEATURE		(ATA_DEV9_HDD_BASE + 0x02) //On Write
+#define ATA_R_NSECTOR		(ATA_DEV9_HDD_BASE + 0x04)
+#define ATA_R_SECTOR		(ATA_DEV9_HDD_BASE + 0x06)
+#define ATA_R_LCYL			(ATA_DEV9_HDD_BASE + 0x08)
+#define ATA_R_HCYL			(ATA_DEV9_HDD_BASE + 0x0a)
+#define ATA_R_SELECT		(ATA_DEV9_HDD_BASE + 0x0c)
+#define ATA_R_STATUS		(ATA_DEV9_HDD_BASE + 0x0e) //On Read
+#define ATA_R_CMD			(ATA_DEV9_HDD_BASE + 0x0e) //On Write
+#define ATA_R_ALT_STATUS	(ATA_DEV9_HDD_BASE + 0x1c) //On Read
+#define ATA_R_CONTROL		(ATA_DEV9_HDD_BASE + 0x1c) //On Write
+#define ATA_DEV9_INT		(0x01)
+#define ATA_DEV9_INT_DMA	(0x02) //not sure rly
+#define ATA_DEV9_HDD_END	(ATA_R_CONTROL + 4)
+
+
+/* r_error bits.  */
+#define ATA_ERR_MARK	0x01
+#define ATA_ERR_TRACK0	0x02
+#define ATA_ERR_ABORT	0x04
+#define ATA_ERR_MCR		0x08
+#define ATA_ERR_ID		0x10
+#define ATA_ERR_MC		0x20
+#define ATA_ERR_ECC		0x40
+#define ATA_ERR_ICRC	0x80
+
+/* r_status bits.  */
+#define ATA_STAT_ERR	0x01
+#define ATA_STAT_INDEX	0x02
+#define ATA_STAT_ECC	0x04
+#define ATA_STAT_DRQ	0x08
+#define ATA_STAT_SEEK	0x10
+#define ATA_STAT_WRERR	0x20
+#define ATA_STAT_READY	0x40
+#define ATA_STAT_BUSY	0x80
+
 /*
  * NAND Flash via Dev9 driver definitions
  *
@@ -603,6 +665,8 @@ typedef struct _smap_bd {
 #define SM_CMD_ERASECONFIRM 0xd0
 #define SM_CMD_GETSTATUS 0x70
 #define SM_CMD_READID 0x90
+
+// clang-format on
 
 typedef struct
 {
@@ -663,8 +727,6 @@ u32 DEV9read32(u32 addr);
 void DEV9write8(u32 addr, u8 value);
 void DEV9write16(u32 addr, u16 value);
 void DEV9write32(u32 addr, u32 value);
-
-int emu_printf(const char* fmt, ...);
 
 #ifdef _WIN32
 #pragma warning(error : 4013)

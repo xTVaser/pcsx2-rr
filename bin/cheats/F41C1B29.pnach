@@ -1,0 +1,27 @@
+gametitle=Jak II: Renegade [Demo] - (PAL)(SCED-51700)
+comment=Enables Developer/Debug Mode - Credit to water111 for discovering / documenting the required ELF edits
+comment=Credits to Luminar Light for making this pnach.
+
+// NOP Disabling MasterDebug
+patch=0,EE,00100400,word,00000000
+// NOP Disabling DebugSegment
+patch=0,EE,00100408,word,00000000
+// NOP SendFromBufferD call in InitListener - This is called only when MasterDebug is on
+patch=0,EE,00108930,word,00000000
+
+// 0x4ff0000 for global heap initialization - Set in InitMachine
+patch=0,EE,001031dc,word,3c0604ff
+
+// This is about changing the stack pointer
+// Shoves a MIPS instruction into near the very top of the entry point
+// Ghidra blows up here, but binary ninja can handle it
+// Orginally at this position there is `2D E8 40 00` - `daddu $sp, $v0, $zero`
+// This changes it to - `lui sp, 0x0800` Which loads the value 0x0800 to the stackpointer register, modifying it.
+patch=0,EE,0010017c,word,3c1d0800
+
+// Change DebugBootMessage from `demo` to `play`.
+patch=0,EE,00127610,word,79616c70
+
+// The level that the game wants to load by default (prison) is missing, causing an unescapeable freeze on startup. The easiest way to get around this is by using DebugBootLevel.
+// This sets DebugBootLevel to STR (the level of the Strip Mine).
+patch=0,EE,00127590,word,00727473
