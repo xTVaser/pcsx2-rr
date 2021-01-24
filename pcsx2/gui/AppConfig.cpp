@@ -722,23 +722,11 @@ void AppConfig::MemoryCardListPanelOptions::LoadSave(IniInterface& ini)
 
 	// TODO - config - once we switch to YAML, we could just iterate through what's in the file
 	// instead of having to have everything hard-coded...
-	if (ini.IsLoading())
+	for (auto const& columnInfo : LIST_VIEW_DEFAULT_COLUMN_INFO)
 	{
-		for (auto const& columnInfo : LIST_VIEW_DEFAULT_COLUMN_INFO)
-		{
-			int value = columnInfo.width;
-			std::string key = fmt::format("ColumnWidth_{}", columnInfo.key);
-			ini.Entry(key, value, value);
-			columnWidths[key] = value;
-		}
-	}
-	else
-	{
-		for (auto const& [key, val] : columnWidths)
-		{
-			int value = val;
-			ini.Entry(key, value, val);
-		}
+		const int defValue = columnInfo.width;
+		const std::string key = fmt::format("ColumnWidth_{}", columnInfo.key);
+		ini.Entry(key, columnWidths, defValue);
 	}
 }
 

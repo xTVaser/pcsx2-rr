@@ -124,12 +124,14 @@ void IniLoader::Entry(const std::string &var, std::string &value, const std::str
 	}
 }
 
-void IniLoader::Entry(const std::string& var, int& value, const int defvalue)
+void IniLoader::Entry(const std::string& key, std::map<std::string, int>& var, const int defValue)
 {
+	int value = defValue;
 	if (m_Config)
-		m_Config->Read(Path::ToWxString(var), &value, defvalue);
-	else
-		value = defvalue;
+	{
+		m_Config->Read(Path::ToWxString(key), &value, defValue);
+	}
+	var[key] = value;
 }
 
 void IniLoader::Entry(const wxString &var, wxString &value, const wxString defvalue)
@@ -346,6 +348,18 @@ void IniSaver::Entry(const std::string &var, std::string &value, const std::stri
 	if (!m_Config)
 		return;
 	m_Config->Write(var, saver);
+}
+
+void IniSaver::Entry(const std::string& key, std::map<std::string, int>& var, const int defValue)
+{
+	if (!m_Config)
+		return;
+	int value = defValue;
+	if (var.count(key) == 1)
+	{
+		value = var[key];
+	}
+	m_Config->Write(key, value);
 }
 
 void IniSaver::Entry(const wxString &var, wxString &value, const wxString defvalue)
