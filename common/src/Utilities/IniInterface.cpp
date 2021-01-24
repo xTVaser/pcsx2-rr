@@ -173,10 +173,10 @@ void IniLoader::Entry(const wxString& var, fs::path& value, const fs::path defva
 	}
 	else
 	{
-        value = dest.ToStdWstring();
+        value = Path::FromWxString(dest);
 		if (isAllowRelative)
 		{
-			value = g_fullBaseDirName.ToString().ToStdWstring() / value;
+			value = Path::FromWxString(g_fullBaseDirName.ToString()).relative_path();
 		}
 		if (value.is_absolute())
 		{
