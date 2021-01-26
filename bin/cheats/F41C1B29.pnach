@@ -1,6 +1,7 @@
 gametitle=Jak II: Renegade [Demo] - (PAL)(SCED-51700)
 comment=Enables Developer/Debug Mode - Credit to water111 for discovering / documenting the required ELF edits
 comment=Credits to Luminar Light for making this pnach.
+comment=You will spawn in the void. Use the Debug Menu to escape.
 
 // NOP Disabling MasterDebug
 patch=0,EE,00100400,word,00000000
@@ -22,6 +23,7 @@ patch=0,EE,0010017c,word,3c1d0800
 // Change DebugBootMessage from `demo` to `play`.
 patch=0,EE,00127610,word,79616c70
 
-// The level that the game wants to load by default (prison) is missing, causing an unescapeable freeze on startup. The easiest way to get around this is by using DebugBootLevel.
-// This sets DebugBootLevel to STR (the level of the Strip Mine).
-patch=0,EE,00127590,word,00727473
+// The level that the game wants to load on startup with 'play' DebugBootMessage is missing. Getting around this problem with DebugBootLevel is not a correct solution, since it modifies how the game looks for DGO files - making most levels unreachable.
+// It is possible to tell the game to load a different DGO instead of the missing one. The patches below will make the game load 'DEMO.DGO' instead of 'PRI.DGO'.
+// This is the only level that it wants on startup - the game will work fine now, but you will spawn in the void. Just use the Debug Menu to escape.
+patch=1,EE,0087AB78,word,6f6d6564

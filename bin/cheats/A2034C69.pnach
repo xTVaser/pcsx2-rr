@@ -1,6 +1,7 @@
 gametitle=Jak II [Demo] - (U)(SCUS-97273)
 comment=Enables Developer/Debug Mode - Credit to water111 and Vaser for discovering / documenting the required ELF edits for the Jak 2 Demo. 
 comment=Thanks to Luminar Light for figuring out how to get around the missing level problem.
+comment=You will spawn in the void. Use the Debug Menu to escape.
 
 // NOP Disabling MasterDebug
 patch=0,EE,001002ec,word,00000000
@@ -19,13 +20,11 @@ patch=0,EE,00102fac,word,3c0604ff
 // This changes it to - `lui sp, 0x0800` Which loads the value 0x0800 to the stackpointer register, modifying it.
 patch=0,EE,00100068,word,3c1d0800
 
-// This disables a couple of different demo flags
-patch=0,EE,00100298,word,00000000
-patch=0,EE,001002a4,word,00000000
-
 // This changes the DebugBootMessage from `demo` to `play`.
 patch=0,EE,00126e10,word,79616c70
 
-// The level that the game wants to load by default (forexita) is missing, causing an unescapeable freeze on startup. The easiest way to get around this is by using DebugBootLevel.
-// This sets DebugBootLevel to STR (the level of the Strip Mine).
-patch=0,EE,00126d90,word,00727473
+// The levels that the game wants to load on startup with 'play' DebugBootMessage are missing. Getting around this problem with DebugBootLevel is not a correct solution, since it modifies how the game looks for DGO files - making most levels unreachable.
+// It is possible to tell the game to load a different DGO instead of the missing ones. The patches below will make the game load 'DEMO.DGO' instead of 'FEA.DGO' and 'PRI.DGO'.
+// These are the only two levels that it wants on startup - the game will work fine now, but you will spawn in the void. Just use the Debug Menu to escape.
+patch=1,EE,0077BB18,word,6f6d6564
+patch=1,EE,0077C1B8,word,6f6d6564
