@@ -598,7 +598,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	// background logo size, which is what it'll eventually be resized to.
 	wxSize backsize(m_background->GetBitmap().GetWidth(), m_background->GetBitmap().GetHeight());
 
-	wxString wintitle = "PCSX2 - 128MB - [27598fe]";
+	wxString wintitle = "PCSX2 - 128MB Build";
 	SetTitle( wintitle );
 
 	// Ideally the __WXMSW__ port should use the embedded IDI_ICON2 icon, because wxWidgets sucks and
