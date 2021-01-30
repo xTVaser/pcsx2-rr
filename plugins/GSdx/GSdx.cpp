@@ -201,7 +201,7 @@ void GSdxApp::Init()
 	m_current_renderer_type = GSRendererType::Undefined;
 
 	if (m_ini.empty())
-		m_ini = "inis/GSdx.ini";
+		m_ini = "settings/GSdx.ini";
 	m_section = "Settings";
 
 #ifdef _WIN32
@@ -485,7 +485,7 @@ void GSdxApp::SetConfigDir(const char* dir)
 {
 	if( dir == NULL )
 	{
-		m_ini = "inis/GSdx.ini";
+		m_ini = "settings/GSdx.ini";
 	}
 	else
 	{
