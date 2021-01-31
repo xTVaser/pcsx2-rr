@@ -157,11 +157,11 @@ fs::path Path::GetExecutableDirectory()
 	return exePath.parent_path();
 }
 
-fs::path Path::isPortable(fs::path p, bool isPort)
+fs::path Path::isPortable(fs::path p, fs::path b, bool isPort)
 {
     if (isPort)
     {
-        return fs::relative(p);
+        return fs::relative(p, b);
     }
     else
     {

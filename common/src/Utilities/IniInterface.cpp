@@ -85,10 +85,12 @@ void IniInterface::SetPath(const wxString &path)
         m_Config->SetPath(path);
 }
 
-void IniInterface::Flush()
+bool IniInterface::Flush()
 {
     if (m_Config)
-        m_Config->Flush();
+        return m_Config->Flush();
+    else
+        return false;
 }
 
 
@@ -173,16 +175,16 @@ void IniLoader::Entry(const wxString& var, fs::path& value, const fs::path defva
 	}
 	else
 	{
-        value = Path::FromWxString(dest);
+        value = Path::FromWxString(dest).make_preferred();
 		if (isAllowRelative)
 		{
-			value = Path::FromWxString(g_fullBaseDirName.ToString()).relative_path();
+			value = fs::canonical(Path::FromWxString(dest));
 		}
 		if (value.is_absolute())
 		{
 			try
 			{
-				value = fs::canonical(value);
+				value = fs::absolute(value);
 			}
 			catch (fs::filesystem_error ex)
 			{
@@ -388,13 +390,10 @@ void IniSaver::Entry(const wxString &var, fs::path &value, const fs::path defval
 {
 	if (!m_Config)
 		return;
-	wxDirName res(value.wstring());
+	wxDirName res(Path::ToWxString(value));
 
 	if (res.IsAbsolute())
 		res.Normalize();
-
-	if (isAllowRelative)
-		res = wxDirName::MakeAutoRelativeTo(res, g_fullBaseDirName.ToString());
 
     m_Config->Write(var, res.ToString());
 }

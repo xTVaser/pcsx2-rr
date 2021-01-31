@@ -592,7 +592,11 @@ void App_LoadSaveInstallSettings( IniInterface& ini )
 
 	//ini.Entry( L"PluginsFolder",			PluginsFolder,				InstallFolder + PathDefs::Base::Plugins() );
 
-	ini.Flush();
+	if (!ini.Flush())
+	{
+		Console.Error(L"You don\'t have permissions to write settings");
+		return;
+	}
 }
 
 void App_LoadInstallSettings( wxConfigBase* ini )
@@ -692,7 +696,11 @@ void AppConfig::LoadSave( IniInterface& ini )
 #endif
 	Templates		.LoadSave( ini );
 
-	ini.Flush();
+	if (!ini.Flush())
+	{
+		Console.Error(L"You don\'t have permissions to write settings");
+		return;
+	}
 }
 
 // ------------------------------------------------------------------------
@@ -785,14 +793,15 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	//when saving in portable mode, we save relative paths if possible
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
 	bool rel = ( ini.IsLoading() || IsPortable() );
-	
-	Snapshots = Path::isPortable(Snapshots, IsPortable());
-	Savestates = Path::isPortable(Savestates, IsPortable());
-	MemoryCards = Path::isPortable(MemoryCards, IsPortable());
-	Logs = Path::isPortable(Logs, IsPortable());
-	Langs = Path::isPortable(Langs, IsPortable());
-	Cheats = Path::isPortable(Cheats, IsPortable());
-	CheatsWS = Path::isPortable(CheatsWS, IsPortable());
+
+	//Bios = Path::isPortable(Bios, PathDefs::GetDocuments(), IsPortable());
+	Snapshots = Path::isPortable(Snapshots, PathDefs::GetDocuments(), IsPortable());
+	Savestates = Path::isPortable(Savestates, PathDefs::GetDocuments(), IsPortable());
+	MemoryCards = Path::isPortable(MemoryCards, PathDefs::GetDocuments(), IsPortable());
+	Logs = Path::isPortable(Logs, PathDefs::GetDocuments(), IsPortable());
+	Langs = Path::isPortable(Langs, PathDefs::GetDocuments(), IsPortable());
+	Cheats = Path::isPortable(Cheats, PathDefs::GetDocuments(), IsPortable());
+	CheatsWS = Path::isPortable(CheatsWS, PathDefs::GetDocuments(), IsPortable());
 
 	IniEntryDirFile( Bios,  rel);
 	IniEntryDirFile( Snapshots,  rel );
