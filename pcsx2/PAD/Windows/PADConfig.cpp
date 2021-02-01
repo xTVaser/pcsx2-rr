@@ -935,9 +935,7 @@ int SaveSettings(wchar_t* file = 0)
 
 	// Need this either way for saving path.
 	if (!file)
-	{
 		file = padSettings;
-	}
 	else
 	{
 		wchar_t* c = wcsrchr(file, '\\');

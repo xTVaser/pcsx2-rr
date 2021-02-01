@@ -348,9 +348,7 @@ void IniSaver::Entry(const std::string& key, std::map<std::string, int>& var, co
         return;
     int value = defValue;
     if (var.count(key) == 1)
-    {
         value = var[key];
-    }
     m_Config->Write(key, value);
 }
 

@@ -484,9 +484,7 @@ void* GSdxApp::GetModuleHandlePtr()
 void GSdxApp::SetConfigDir(const char* dir)
 {
 	if( dir == NULL )
-	{
 		m_ini = "settings/GSdx.ini";
-	}
 	else
 	{
 		m_ini = dir;

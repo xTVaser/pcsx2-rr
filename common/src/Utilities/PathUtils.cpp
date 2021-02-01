@@ -164,9 +164,7 @@ fs::path Path::getPath(const fs::path& p, const fs::path& b, bool isPort)
         return fs::relative(p, b);
     }
     else
-    {
         return fs::absolute(p);
-    }
 }
 
 // returns the base/root directory of the given path.
