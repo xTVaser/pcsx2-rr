@@ -442,9 +442,7 @@ int EnumeratePluginsInFolder(const fs::path& searchpath, std::vector<fs::path>* 
 	for (auto& plugin : fs::directory_iterator(searchpath))
 	{
 		if (plugin.is_regular_file() && std::regex_match(plugin.path().c_str(), filePattern))
-		{
 			realdest->push_back(plugin);
-		}
 	}
 
 	// SECURITY ISSUE:  (applies primarily to Windows, but is a good idea on any platform)

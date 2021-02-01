@@ -393,9 +393,7 @@ bool DoCDVDopen()
 		somepick = L"Untitled";
 
 	if (g_Conf->CurrentBlockdump.empty())
-	{
 		g_Conf->CurrentBlockdump = wxGetCwd();
-	}
 
 	wxString temp = Path::ToWxString(Path::Combine(g_Conf->CurrentBlockdump, Path::FromWxString(somepick)));
 

@@ -120,20 +120,16 @@ void IniLoader::Entry(const std::string &var, std::string &value, const std::str
         m_Config->Read(var, &dest, defvalue);
         value = dest.ToStdString();
     }
-	else
-	{
-		value = defvalue;
-	}
+    else
+        value = defvalue;
 }
 
 void IniLoader::Entry(const std::string& key, std::map<std::string, int>& var, const int defValue)
 {
-	int value = defValue;
-	if (m_Config)
-	{
-		m_Config->Read(Path::ToWxString(key), &value, defValue);
-	}
-	var[key] = value;
+    int value = defValue;
+    if (m_Config)
+        m_Config->Read(Path::ToWxString(key), &value, defValue);
+    var[key] = value;
 }
 
 void IniLoader::Entry(const wxString &var, wxString &value, const wxString defvalue)
@@ -164,34 +160,29 @@ void IniLoader::Entry(const wxString &var, wxDirName &value, const wxDirName def
 
 void IniLoader::Entry(const wxString& var, fs::path& value, const fs::path defvalue, bool isAllowRelative)
 {
-	wxString dest;
-	if (m_Config)
-	{
-		m_Config->Read(var, &dest, wxEmptyString);
-	}
-	if (dest.IsEmpty())
-	{
-		value = defvalue;
-	}
-	else
-	{
+    wxString dest;
+    if (m_Config)
+        m_Config->Read(var, &dest, wxEmptyString);
+
+    if (dest.IsEmpty())
+        value = defvalue;
+    else
+    {
         value = Path::FromWxString(dest).make_preferred();
-		if (isAllowRelative)
-		{
-			value = fs::canonical(Path::FromWxString(dest));
-		}
-		if (value.is_absolute())
-		{
-			try
-			{
-				value = fs::absolute(value);
-			}
-			catch (fs::filesystem_error ex)
-			{
-				value = defvalue;
-			}
-		}
-	}
+        if (isAllowRelative)
+            value = fs::canonical(Path::FromWxString(dest));
+        if (value.is_absolute())
+        {
+            try
+            {
+                value = fs::absolute(value);
+            }
+            catch (fs::filesystem_error ex)
+            {
+                value = defvalue;
+            }
+        }
+    }
 }
 
 void IniLoader::Entry(const wxString &var, wxFileName &value, const wxFileName defvalue, bool isAllowRelative)
@@ -354,14 +345,12 @@ void IniSaver::Entry(const std::string &var, std::string &value, const std::stri
 
 void IniSaver::Entry(const std::string& key, std::map<std::string, int>& var, const int defValue)
 {
-	if (!m_Config)
-		return;
-	int value = defValue;
-	if (var.count(key) == 1)
-	{
-		value = var[key];
-	}
-	m_Config->Write(key, value);
+    if (!m_Config)
+        return;
+    int value = defValue;
+    if (var.count(key) == 1)
+        value = var[key];
+    m_Config->Write(key, value);
 }
 
 void IniSaver::Entry(const wxString &var, wxString &value, const wxString defvalue)
@@ -388,12 +377,12 @@ void IniSaver::Entry(const wxString &var, wxDirName &value, const wxDirName defv
 
 void IniSaver::Entry(const wxString &var, fs::path &value, const fs::path defvalue, bool isAllowRelative)
 {
-	if (!m_Config)
-		return;
-	wxDirName res(Path::ToWxString(value));
+    if (!m_Config)
+        return;
+    wxDirName res(Path::ToWxString(value));
 
-	if (res.IsAbsolute())
-		res.Normalize();
+    if (res.IsAbsolute())
+        res.Normalize();
 
     m_Config->Write(var, res.ToString());
 }

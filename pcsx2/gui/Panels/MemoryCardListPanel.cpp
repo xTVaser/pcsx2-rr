@@ -262,9 +262,7 @@ void Panels::BaseMcdListPanel::CreateLayout()
 void Panels::BaseMcdListPanel::Apply()
 {
 	if (m_listview)
-	{
 		m_listview->SaveColumns();
-	}
 }
 
 void Panels::BaseMcdListPanel::AppStatusEvent_OnSettingsApplied()
@@ -353,12 +351,14 @@ public:
 				dest.IsPresent = src.IsPresent;
 
 				if (dest.Slot>=0)
-				{//2 internal slots: swap
+				{
+					//2 internal slots: swap
 					src.Filename  = Path::FromWxString(tmpFilename.GetFullPath());
 					src.IsPresent = tmpPresent;
 				}
 				else
-				{ //dest is at the filesystem (= remove card from slot)
+				{ 
+					//dest is at the filesystem (= remove card from slot)
 					src.Filename = L"";
 					src.IsPresent = false;
 					src.IsEnabled = false;
@@ -664,12 +664,10 @@ void Panels::MemoryCardListPanel_Simple::UiCreateNewCard(McdSlotItem& card)
 		card.IsEnabled = true;
 		card.Filename  = Path::FromWxString(dialog.result_createdMcdFilename);
 		card.IsPresent = true;
-		wxString toPrint = Path::ToWxString(card.Filename);
-		if (card.Slot >= 0) {
-			Console.WriteLn(L"Setting new memory card to slot %u: '%s'", card.Slot, WX_STR(toPrint));
-		} else {
-			Console.WriteLn(L"Created a new unassigned memory card file: '%s'", WX_STR(toPrint));
-		}
+		if (card.Slot >= 0) 
+			Console.WriteLn(L"Setting new memory card to slot %u: '%s'", card.Slot, card.Filename.c_str());
+		else 
+			Console.WriteLn(L"Created a new unassigned memory card file: '%s'", card.Filename.c_str());
 	}
 	else
 	{
@@ -848,9 +846,11 @@ void Panels::MemoryCardListPanel_Simple::UiRenameCard(McdSlotItem& card)
 	wxString toPrint = Path::ToWxString(card.Filename);
 	while (1){
 		wxString title;
-		title.Printf(_("Select a new name for the memory card '%s'\n( '.ps2' will be added automatically)"),
-						WX_STR(toPrint)
-						);
+		title.Printf
+		(
+			_("Select a new name for the memory card '%s'\n( '.ps2' will be added automatically)"),
+			WX_STR(toPrint)		
+		);
 		newFilename = wxGetTextFromUser(title, _("Rename memory card"));
 		if (newFilename == L"")
 			return;

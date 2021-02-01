@@ -210,9 +210,7 @@ void Pcsx2App::SysApplySettings()
 
 	CDVD_SourceType cdvdsrc(g_Conf->CdvdSource);
 	if (cdvdsrc != CDVDsys_GetSourceType() || (cdvdsrc == CDVD_SourceType::Iso && (CDVDsys_GetFile(cdvdsrc) != Path::ToWxString(g_Conf->CurrentIso))))
-	{
 		CoreThread.ResetCdvd();
-	}
 
 	CDVDsys_SetFile(CDVD_SourceType::Iso, Path::ToWxString(g_Conf->CurrentIso));
 }

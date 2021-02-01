@@ -82,12 +82,8 @@ bool Pcsx2App::TestUserPermissionsRights(const fs::path& testFolder)
 		fs::path folder = Path::Combine(testFolder, PermissionFolders[i]);
 
 		if (!Path::DoesExist(folder))
-		{
 			if (!Path::CreateFolder(folder))
-			{
 				ErrorFolders.push_back(folder);
-			}
-		}
 	}
 
 	for (int i = 0; i < ErrorFolders.size(); i++)
@@ -96,14 +92,9 @@ bool Pcsx2App::TestUserPermissionsRights(const fs::path& testFolder)
 	}
 
 	if (ErrorFolders.empty())
-	{
 		return false;
-	}
-
 	else
-	{
 		return true;
-	}
 }
 
 static void DoFirstTimeWizard()
@@ -185,7 +176,7 @@ bool Pcsx2App::TestForPortableInstall()
 		// Wizard is only run once.  The status of the wizard having been run is stored in
 		// the installation yaml file, which can be either the portable install (useful for admins)
 		// or the registry/user local documents position.		
-		if (runWizard == true)
+		if (runWizard)
 		{
 			DoFirstTimeWizard();	
 			stream["RunWizard"] = false;	
@@ -199,9 +190,7 @@ bool Pcsx2App::TestForPortableInstall()
 		return isPortable;
 	}
 	else
-	{
 		return false;
-	}
 }
 // Reset RunWizard so the FTWizard is run again on next PCSX2 start.
 void Pcsx2App::WipeUserModeSettings()
