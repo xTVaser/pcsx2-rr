@@ -168,7 +168,7 @@ void Panels::BiosSelectorPanel::DoRefresh()
 
 	m_ComboBox->Clear();
 
-	const wxFileName right(Path::ToWxString(g_Conf->FullpathToBios()));
+	const wxFileName right(Path::ToWxString(g_Conf->FullpathToBios().parent_path()));
 	bool biosSet = false;
 
 	for(size_t i=0; i<m_BiosList->GetCount(); ++i)

@@ -499,7 +499,7 @@ fs::path GetUiKeysFilename()
 
 fs::path AppConfig::FullpathToBios() const
 {
-	return Path::Combine(Folders.Bios, BaseFilenames.Bios);
+	return Path::Combine(Folders.Bios, BaseFilenames.Bios.filename());
 }
 
 fs::path AppConfig::FullpathToMcd(uint slot) const
