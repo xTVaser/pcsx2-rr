@@ -83,6 +83,33 @@
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Devel|x64'">comctl32.lib;ws2_32.lib;shlwapi.lib;winmm.lib;rpcrt4.lib;iphlpapi.lib;dsound.lib;dxguid.lib;dinput8.lib;hid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">comctl32.lib;ws2_32.lib;shlwapi.lib;winmm.lib;rpcrt4.lib;iphlpapi.lib;dsound.lib;dxguid.lib;dinput8.lib;hid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">IF EXIST "$(OutDir)\portable.build.yaml" (
+  COPY  "$(OutDir)\portable.build.yaml" "$(OutDir)\portable.yaml"
+) ELSE (
+  IF EXIST "$(ProjectRootDir)\Docs\portable.yaml" (
+    COPY "$(ProjectRootDir)\Docs\portable.yaml" "$(OutDir)\portable.yaml"
+  )
+)</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Devel|Win32'">IF EXIST "$(OutDir)\portable.build.yaml" (
+  COPY  "$(OutDir)\portable.build.yaml" "$(OutDir)\portable.yaml"
+) ELSE (
+  IF EXIST "$(ProjectRootDir)\Docs\portable.yaml" (
+    COPY "$(ProjectRootDir)\Docs\portable.yaml" "$(OutDir)\portable.yaml"
+  )
+)</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">IF EXIST "$(OutDir)\portable.build.yaml" (
+  COPY  "$(OutDir)\portable.build.yaml" "$(OutDir)\portable.yaml"
+) ELSE (
+  IF EXIST "$(ProjectRootDir)\Docs\portable.yaml" (
+    COPY "$(ProjectRootDir)\Docs\portable.yaml" "$(OutDir)\portable.yaml"
+  )
+)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="..\..\gui\Panels\MemoryCardPanelColumns.h" />
