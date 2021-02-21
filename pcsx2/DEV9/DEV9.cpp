@@ -1122,7 +1122,7 @@ void ApplyConfigIfRunning(Config oldConfig)
 	if (hddPath.is_relative())
 	{
 		//GHC uses UTF8 on all platforms
-		ghc::filesystem::path path(GetSettingsFolder().ToUTF8().data());
+		ghc::filesystem::path path(GetSettingsFolder());
 		hddPath = path / hddPath;
 	}
 
