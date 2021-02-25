@@ -157,16 +157,6 @@ fs::path Path::GetExecutableDirectory()
 	return exePath.parent_path();
 }
 
-fs::path Path::isPortable(fs::path p, fs::path b, bool isPort)
-{
-    if (isPort)
-    {
-        return fs::relative(p, b);
-    }
-    else
-        return fs::absolute(p);
-}
-
 // returns the base/root directory of the given path.
 // Example /this/that/something.txt -> dest == "/"
 std::string Path::GetRootDirectory(const wxString &src)

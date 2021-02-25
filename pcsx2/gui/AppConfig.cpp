@@ -39,81 +39,6 @@
 //
 namespace PathDefs
 {
-	namespace Base
-	{
-		const std::string& Snapshots()
-		{
-			static const std::string temp("snaps");
-			return temp;
-		}
-
-		const std::string& Savestates()
-		{
-			static const std::string temp("sstates");
-			return temp;
-		}
-
-		const std::string& MemoryCards()
-		{
-			static const std::string temp("memcards");
-			return temp;
-		}
-
-		const std::string& Settings()
-		{
-			static const std::string temp("settings");
-			return temp;
-		}
-
-		const std::string& Plugins()
-		{
-			static const std::string temp("plugins");
-			return temp;
-		}
-
-		const std::string& Logs()
-		{
-			static const std::string temp("logs");
-			return temp;
-		}
-
-		const std::string& Bios()
-		{
-			static const std::string temp("bios");
-			return temp;
-		}
-
-		const std::string& Cheats()
-		{
-			static const std::string temp("cheats");
-			return temp;
-		}
-
-		const std::string& CheatsWS()
-		{
-			static const std::string temp("cheats_ws");
-			return temp;
-		}
-
-		const std::string& Langs()
-		{
-			static const std::string temp("Langs");
-			return temp;
-		}
-
-		const std::string& Dumps()
-		{
-			static const std::string temp("dumps");
-			return temp;
-		}
-		
-		const std::string& Docs()
-		{
-			static const std::string temp("docs");
-			return temp;
-		}
-	};
-
 	// Specifies the root folder for the application install.
 	// (currently it's the CWD, but in the future I intend to move all binaries to a "bin"
 	// sub folder, in which case the approot will become "..") [- Air?]
@@ -761,10 +686,6 @@ AppConfig::FolderOptions::FolderOptions()
 	, Logs			( PathDefs::GetLogs() )
 	, Cheats		( PathDefs::GetCheats() )
 	, CheatsWS      ( PathDefs::GetCheatsWS() )
-
-	//, RunIso(PathDefs::GetDocuments()) // raw default is always the Documents folder.
-	//, RunELF(PathDefs::GetDocuments()) // raw default is always the Documents folder.
-	, RunDisc(PathDefs::GetDocuments())
 {
 	bitset = 0xffffffff;
 }
@@ -788,33 +709,21 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	IniBitBool( UseDefaultCheats );
 	IniBitBool( UseDefaultCheatsWS );
 
-	//when saving in portable mode, we save relative paths if possible
-	 //  --> on load, these relative paths will be expanded relative to the exe folder.
-	bool rel = ( ini.IsLoading() || IsPortable() );
+	PluginsFolder = InstallFolder / PathDefs::Base::Plugins;
 
-	//Bios = Path::isPortable(Bios, PathDefs::GetDocuments(), IsPortable());
-	Snapshots = Path::isPortable(Snapshots, PathDefs::GetDocuments(), IsPortable());
-	Savestates = Path::isPortable(Savestates, PathDefs::GetDocuments(), IsPortable());
-	MemoryCards = Path::isPortable(MemoryCards, PathDefs::GetDocuments(), IsPortable());
-	Logs = Path::isPortable(Logs, PathDefs::GetDocuments(), IsPortable());
-	Langs = Path::isPortable(Langs, PathDefs::GetDocuments(), IsPortable());
-	Cheats = Path::isPortable(Cheats, PathDefs::GetDocuments(), IsPortable());
-	CheatsWS = Path::isPortable(CheatsWS, PathDefs::GetDocuments(), IsPortable());
+	IniEntryDirFile( Bios );
+	IniEntryDirFile( PluginsFolder );
+	IniEntryDirFile( Snapshots );
+	IniEntryDirFile( Savestates );
+	IniEntryDirFile( MemoryCards );
+	IniEntryDirFile( Langs );
+	IniEntryDirFile( Logs );
+	IniEntryDirFile( Cheats );
+	IniEntryDirFile( CheatsWS );
 
-	IniEntryDirFile( Bios,  rel);
-	IniEntryDirFile( Snapshots,  rel );
-	IniEntryDirFile( Savestates,  rel );
-	IniEntryDirFile( MemoryCards,  rel );
-	IniEntryDirFile( Logs,  rel );
-	IniEntryDirFile( Langs,  rel );
-	IniEntryDirFile( Cheats, rel );
-	IniEntryDirFile( CheatsWS, rel );
-
-	ini.Entry( L"PluginsFolder", PluginsFolder, Path::Combine(InstallFolder, PathDefs::Base::Plugins()), rel );
-
-	IniEntryDirFile( RunIso, rel );
-	IniEntryDirFile( RunELF, rel );
-	IniEntryDirFile( RunDisc, rel );
+	IniEntryDirFile( RunIso );
+	IniEntryDirFile( RunELF );
+	IniEntryDirFile( RunDisc );
 
 	if( ini.IsLoading() )
 	{

@@ -45,14 +45,14 @@ YAML::Node stream;
 
 const std::string PermissionFolders[] =
 {
-		PathDefs::Base::Settings(),
-		PathDefs::Base::MemoryCards(),
-		PathDefs::Base::Savestates(),
-		PathDefs::Base::Snapshots(),
-		PathDefs::Base::Logs(),
-		PathDefs::Base::CheatsWS(),
+		PathDefs::Base::Settings,
+		PathDefs::Base::MemoryCards,
+		PathDefs::Base::Savestates,
+		PathDefs::Base::Snapshots,
+		PathDefs::Base::Logs,
+		PathDefs::Base::CheatsWS,
 #ifdef PCSX2_DEVBUILD
-		PathDefs::Base::Dumps(),
+		PathDefs::Base::Dumps,
 #endif 
 };
 
