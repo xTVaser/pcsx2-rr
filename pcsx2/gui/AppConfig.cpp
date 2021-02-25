@@ -199,7 +199,7 @@ fs::path& AppConfig::FolderOptions::operator[]( FoldersEnum_t folderidx )
 {
 	switch( folderidx )
 	{
-		case FolderId_Plugins:		return PluginsFolder;
+		case FolderId_Plugins:		return Plugins;
 		case FolderId_Settings:		return SettingsFolder;
 		case FolderId_Bios:			return Bios;
 		case FolderId_Snapshots:	return Snapshots;
@@ -214,7 +214,7 @@ fs::path& AppConfig::FolderOptions::operator[]( FoldersEnum_t folderidx )
 
 		jNO_DEFAULT
 	}
-	return PluginsFolder;		// unreachable, but suppresses warnings.
+	return Plugins;		// unreachable, but suppresses warnings.
 }
 
 const fs::path& AppConfig::FolderOptions::operator[]( FoldersEnum_t folderidx ) const
@@ -226,7 +226,7 @@ bool AppConfig::FolderOptions::IsDefault( FoldersEnum_t folderidx ) const
 {
 	switch( folderidx )
 	{
-		case FolderId_Plugins:		return UseDefaultPluginsFolder;
+		case FolderId_Plugins:		return UseDefaultPlugins;
 		case FolderId_Settings:		return UseDefaultSettingsFolder;
 		case FolderId_Bios:			return UseDefaultBios;
 		case FolderId_Snapshots:	return UseDefaultSnapshots;
@@ -249,8 +249,8 @@ void AppConfig::FolderOptions::Set( FoldersEnum_t folderidx, const fs::path& src
 	switch( folderidx )
 	{
 		case FolderId_Plugins:
-			PluginsFolder = src;
-			UseDefaultPluginsFolder = useDefault;
+			Plugins = src;
+			UseDefaultPlugins = useDefault;
 		break;
 
 		case FolderId_Settings:
@@ -358,7 +358,7 @@ namespace FilenameDefs
 
 fs::path AppConfig::FullpathTo( PluginsEnum_t pluginidx ) const
 {
-	return PluginsFolder / BaseFilenames[pluginidx];
+	return g_Conf->Folders.Plugins / BaseFilenames[pluginidx];
 }
 
 // returns true if the filenames are quite absolutely the equivalent.  Works for all
@@ -671,7 +671,7 @@ void AppConfig::FolderOptions::ApplyDefaults()
 	if( UseDefaultMemoryCards )	MemoryCards	  = PathDefs::GetMemoryCards();
 	if( UseDefaultLogs )		Logs		  = PathDefs::GetLogs();
 	if( UseDefaultLangs )		Langs		  = PathDefs::GetLangs();
-	if( UseDefaultPluginsFolder)PluginsFolder = PathDefs::GetPlugins();
+	if( UseDefaultPlugins)Plugins = PathDefs::GetPlugins();
 	if( UseDefaultCheats )      Cheats		  = PathDefs::GetCheats();
 	if( UseDefaultCheatsWS )    CheatsWS	  = PathDefs::GetCheatsWS();
 }
@@ -679,6 +679,7 @@ void AppConfig::FolderOptions::ApplyDefaults()
 // ------------------------------------------------------------------------
 AppConfig::FolderOptions::FolderOptions()
 	: Bios			( PathDefs::GetBios() )
+	, Plugins(PathDefs::GetPlugins())
 	, Snapshots		( PathDefs::GetSnapshots() )
 	, Savestates	( PathDefs::GetSavestates() )
 	, MemoryCards	( PathDefs::GetMemoryCards() )
@@ -705,14 +706,12 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	IniBitBool( UseDefaultMemoryCards );
 	IniBitBool( UseDefaultLogs );
 	IniBitBool( UseDefaultLangs );
-	IniBitBool( UseDefaultPluginsFolder );
+	IniBitBool( UseDefaultPlugins );
 	IniBitBool( UseDefaultCheats );
 	IniBitBool( UseDefaultCheatsWS );
 
-	PluginsFolder = InstallFolder / PathDefs::Base::Plugins;
-
 	IniEntryDirFile( Bios );
-	IniEntryDirFile( PluginsFolder );
+	IniEntryDirFile( Plugins );
 	IniEntryDirFile( Snapshots );
 	IniEntryDirFile( Savestates );
 	IniEntryDirFile( MemoryCards );

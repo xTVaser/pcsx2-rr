@@ -28,7 +28,6 @@
 
 DocsModeType			DocsFolderMode = DocsFolder_User;
 bool					UseDefaultSettingsFolder = true;
-bool					UseDefaultPluginsFolder = true;
 bool 					runWizard  = true; // This should default to true unless the stream says otherwise. If this doesn't get flipped somethings wrong and setup required
 
 std::vector<std::string> ErrorFolders;
@@ -37,9 +36,7 @@ std::string usermodePath;
 
 fs::path CustomDocumentsFolder;
 fs::path SettingsFolder;
-
 fs::path InstallFolder;
-fs::path PluginsFolder;
 
 YAML::Node stream;
 
