@@ -422,6 +422,7 @@ wxMessageOutput* Pcsx2AppTraits::CreateMessageOutput()
 //  Pcsx2StandardPaths
 // --------------------------------------------------------------------------------------
 #ifdef wxUSE_STDPATHS
+#ifndef __APPLE__ // macOS uses wx's defaults
 class Pcsx2StandardPaths : public wxStandardPaths
 {
 public:
@@ -462,11 +463,16 @@ public:
 #endif
 
 };
+#endif // ifdef __APPLE__
 
 wxStandardPaths& Pcsx2AppTraits::GetStandardPaths()
 {
+#ifdef __APPLE__
+	return _parent::GetStandardPaths();
+#else
 	static Pcsx2StandardPaths stdPaths;
 	return stdPaths;
+#endif
 }
 #endif
 
@@ -1177,7 +1183,10 @@ void Pcsx2App::SysExecute( CDVD_SourceType cdvdsrc, const wxString& elf_override
 {
 	SysExecutorThread.PostEvent( new SysExecEvent_Execute(cdvdsrc, elf_override) );
 #ifndef DISABLE_RECORDING
-	g_InputRecording.RecordingReset();
+	if (g_Conf->EmuOptions.EnableRecordingTools)
+	{
+		g_InputRecording.RecordingReset();
+	}
 #endif
 }
 

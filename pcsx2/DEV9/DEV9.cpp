@@ -97,6 +97,8 @@ int mapping;
 std::string s_strIniPath = "inis";
 std::string s_strLogPath = "logs";
 
+bool isRunning = false;
+
 s32 DEV9init()
 {
 	DevCon.WriteLn("DEV9init");
@@ -219,7 +221,11 @@ s32 DEV9open(void* pDsp)
 			config.hddEnable = false;
 	}
 
-	return _DEV9open();
+	if (config.ethEnable)
+		InitNet();
+
+	isRunning = true;
+	return 0;
 }
 
 void DEV9close()
@@ -227,7 +233,8 @@ void DEV9close()
 	DevCon.WriteLn("DEV9close");
 
 	dev9.ata->Close();
-	_DEV9close();
+	TermNet();
+	isRunning = false;
 }
 
 int DEV9irqHandler(void)
@@ -1075,4 +1082,76 @@ void DEV9setLogDir(const char* dir)
 {
 	// Get the path to the log directory.
 	s_strLogPath = (dir == NULL) ? "logs" : dir;
+}
+
+void ApplyConfigIfRunning(Config oldConfig)
+{
+	if (!isRunning)
+		return;
+
+	//Eth
+	if (config.ethEnable)
+	{
+		if (oldConfig.ethEnable)
+		{
+			//Reload Net if adapter changed
+			if (strcmp(oldConfig.Eth, config.Eth) != 0 ||
+				oldConfig.EthApi != config.EthApi)
+			{
+				TermNet();
+				InitNet();
+			}
+		}
+		else
+			InitNet();
+	}
+	else if (oldConfig.ethEnable)
+		TermNet();
+
+		//Hdd
+		//Hdd Validate Path
+#ifdef _WIN32
+	ghc::filesystem::path hddPath(std::wstring(config.Hdd));
+#else
+	ghc::filesystem::path hddPath(config.Hdd);
+#endif
+
+	if (hddPath.empty())
+		config.hddEnable = false;
+
+	if (hddPath.is_relative())
+	{
+		//GHC uses UTF8 on all platforms
+		ghc::filesystem::path path(GetSettingsFolder().ToUTF8().data());
+		hddPath = path / hddPath;
+	}
+
+	//Hdd Compare with old config
+	if (config.hddEnable)
+	{
+		if (oldConfig.hddEnable)
+		{
+			//ATA::Open/Close dosn't set any regs
+			//So we can close/open to apply settings
+#ifdef _WIN32
+			if (wcscmp(config.Hdd, oldConfig.Hdd))
+#else
+			if (strcmp(config.Hdd, oldConfig.Hdd))
+#endif
+			{
+				dev9.ata->Close();
+				if (dev9.ata->Open(hddPath) != 0)
+					config.hddEnable = false;
+			}
+
+			if (config.HddSize != oldConfig.HddSize)
+			{
+				dev9.ata->Close();
+				if (dev9.ata->Open(hddPath) != 0)
+					config.hddEnable = false;
+			}
+		}
+	}
+	else if (oldConfig.hddEnable)
+		dev9.ata->Close();
 }

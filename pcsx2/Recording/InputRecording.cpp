@@ -16,14 +16,12 @@
 #include "PrecompiledHeader.h"
 
 #include "AppSaveStates.h"
+#include "Counters.h"
 
 #ifndef DISABLE_RECORDING
 
-#include <vector>
-
 #include "AppGameDatabase.h"
 #include "DebugTools/Debug.h"
-#include "Counters.h"
 
 #include "InputRecording.h"
 #include "InputRecordingControls.h"
@@ -46,15 +44,8 @@ void SaveStateBase::InputRecordingFreeze()
 		// marker has not been set (which comes from the save-state), we initialize it.
 		if (g_InputRecording.IsInitialLoad())
 			g_InputRecording.SetupInitialState(g_FrameCount);
-		else if (g_InputRecording.IsActive())
-		{
-			// Explicitly set the frame change tracking variable as to not
-			// detect saving or loading a savestate as a frame being drawn
-			g_InputRecordingControls.SetFrameCountTracker(g_FrameCount);
-
-			if (IsLoading())
-				g_InputRecording.SetFrameCounter(g_FrameCount);
-		}
+		else if (g_InputRecording.IsActive() && IsLoading())
+			g_InputRecording.SetFrameCounter(g_FrameCount);
 	}
 #endif
 }
@@ -186,14 +177,13 @@ void InputRecording::IncrementFrameCounter()
 		switch (state)
 		{
 		case InputRecordingMode::Recording:
-			GetInputRecordingData().SetTotalFrames(frameCounter);
+			inputRecordingData.SetTotalFrames(frameCounter);
 			[[fallthrough]];
 		case InputRecordingMode::Replaying:
 			if (frameCounter == inputRecordingData.GetTotalFrames())
 				incrementUndo = false;
 		}
 	}
-	g_InputRecording.LogAndRedraw();
 }
 
 void InputRecording::LogAndRedraw()
@@ -264,11 +254,11 @@ void InputRecording::SetToReplayMode()
 
 void InputRecording::SetFrameCounter(u32 newGFrameCount)
 {
-	if (newGFrameCount > startingFrame + (u32)g_InputRecording.GetInputRecordingData().GetTotalFrames())
+	if (newGFrameCount > startingFrame + (u32)inputRecordingData.GetTotalFrames())
 	{
 		inputRec::consoleLog("Warning, you've loaded PCSX2 emulation to a point after the end of the original recording. This should be avoided.");
 		inputRec::consoleLog("Savestate's framecount has been ignored.");
-		frameCounter = g_InputRecording.GetInputRecordingData().GetTotalFrames();
+		frameCounter = inputRecordingData.GetTotalFrames();
 		if (state == InputRecordingMode::Replaying)
 			SetToRecordMode();
 		incrementUndo = false;
@@ -283,7 +273,7 @@ void InputRecording::SetFrameCounter(u32 newGFrameCount)
 		}
 		else if (newGFrameCount == 0 && state == InputRecordingMode::Recording)
 			SetToReplayMode();
-		frameCounter = static_cast<s32>(newGFrameCount - startingFrame);
+		frameCounter = newGFrameCount - (s32)startingFrame;
 		incrementUndo = true;
 	}
 }
@@ -316,7 +306,6 @@ void InputRecording::SetupInitialState(u32 newStartingFrame)
 		SetToReplayMode();
 	}
 
-	g_InputRecordingControls.DisableFrameAdvance();
 	if (inputRecordingData.FromSaveState())
 		inputRec::consoleLog(fmt::format("Internal Starting Frame: {}", startingFrame));
 	frameCounter = 0;
@@ -326,7 +315,7 @@ void InputRecording::SetupInitialState(u32 newStartingFrame)
 
 void InputRecording::FailedSavestate()
 {
-	inputRec::consoleLog(fmt::format("{}_SaveState.p2s is not compatible with this version of PCSX2", inputRecordingData.GetFilename()));
+	inputRec::consoleLog(fmt::format("{} is not compatible with this version of PCSX2", savestate));
 	inputRec::consoleLog(fmt::format("Original PCSX2 version used: {}", inputRecordingData.GetHeader().emu));
 	inputRecordingData.Close();
 	initialLoad = false;
@@ -353,9 +342,10 @@ bool InputRecording::Create(wxString fileName, const bool fromSaveState, wxStrin
 	state = InputRecordingMode::Recording;
 	if (fromSaveState)
 	{
-		if (wxFileExists(fileName + "_SaveState.p2s"))
-			wxCopyFile(fileName + "_SaveState.p2s", fileName + "_SaveState.p2s.bak", true);
-		StateCopy_SaveToFile(fileName + "_SaveState.p2s");
+		savestate = fileName + "_SaveState.p2s";
+		if (wxFileExists(savestate))
+			wxCopyFile(savestate, savestate + ".bak", true);
+		StateCopy_SaveToFile(savestate);
 	}
 	else
 		sApp.SysExecute(g_Conf->CdvdSource);
@@ -374,12 +364,11 @@ bool InputRecording::Create(wxString fileName, const bool fromSaveState, wxStrin
 	return true;
 }
 
-bool InputRecording::Play(wxString fileName)
+bool InputRecording::Play(wxWindow* parent, wxString filename)
 {
-	if (!inputRecordingData.OpenExisting(fileName))
+	if (!inputRecordingData.OpenExisting(filename))
 		return false;
 
-	state = InputRecordingMode::Replaying;
 	// Either load the savestate, or restart the game
 	if (inputRecordingData.FromSaveState())
 	{
@@ -389,22 +378,69 @@ bool InputRecording::Play(wxString fileName)
 			inputRecordingData.Close();
 			return false;
 		}
-		if (!wxFileExists(inputRecordingData.GetFilename() + "_SaveState.p2s"))
+
+		savestate = inputRecordingData.GetFilename() + "_SaveState.p2s";
+		if (!wxFileExists(savestate))
 		{
-			inputRec::consoleLog(fmt::format("Could not locate savestate file at location - {}_SaveState.p2s",
-											 inputRecordingData.GetFilename().ToStdString()));
-			inputRecordingData.Close();
-			return false;
+			wxFileDialog loadStateDialog(parent, _("Select the savestate that will accompany this recording"), L"", L"",
+										 L"Savestate files (*.p2s)|*.p2s", wxFD_OPEN);
+			if (loadStateDialog.ShowModal() == wxID_CANCEL)
+			{
+				inputRec::consoleLog(fmt::format("Could not locate savestate file at location - {}", savestate));
+				inputRec::log("Savestate load failed");
+				inputRecordingData.Close();
+				return false;
+			}
+
+			savestate = loadStateDialog.GetPath();
+			inputRec::consoleLog(fmt::format("Base savestate set to {}", savestate));
 		}
+		state = InputRecordingMode::Replaying;
 		initialLoad = true;
-		StateCopy_LoadFromFile(inputRecordingData.GetFilename() + "_SaveState.p2s");
+		StateCopy_LoadFromFile(savestate);
 	}
 	else
 	{
+		state = InputRecordingMode::Replaying;
 		initialLoad = true;
 		sApp.SysExecute(g_Conf->CdvdSource);
 	}
 	return true;
+}
+
+void InputRecording::GoToFirstFrame(wxWindow* parent)
+{
+	if (inputRecordingData.FromSaveState())
+	{
+		if (!wxFileExists(savestate))
+		{
+			const bool initiallyPaused = g_InputRecordingControls.IsPaused();
+
+			if (!initiallyPaused)
+				g_InputRecordingControls.PauseImmediately();
+
+			inputRec::consoleLog(fmt::format("Could not locate savestate file at location - {}\n", savestate));
+			wxFileDialog loadStateDialog(parent, _("Select a savestate to accompany the recording with"), L"", L"",
+										 L"Savestate files (*.p2s)|*.p2s", wxFD_OPEN);
+			int result = loadStateDialog.ShowModal();
+			if (!initiallyPaused)
+				g_InputRecordingControls.Resume();
+
+			if (result == wxID_CANCEL)
+			{
+				inputRec::log("Savestate load cancelled");
+				return;
+			}
+			savestate = loadStateDialog.GetPath();
+			inputRec::consoleLog(fmt::format ("Base savestate swapped to {}", savestate));
+		}
+		StateCopy_LoadFromFile(savestate);
+	}
+	else
+		sApp.SysExecute(g_Conf->CdvdSource);
+
+	if (IsRecording())
+		SetToReplayMode();
 }
 
 wxString InputRecording::resolveGameName()

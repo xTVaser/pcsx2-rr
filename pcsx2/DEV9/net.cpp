@@ -22,6 +22,15 @@
 #endif
 #include "net.h"
 #include "DEV9.h"
+#ifdef _WIN32
+#include "Win32/tap.h"
+#endif
+#include "pcap_io.h"
+
+#ifdef _WIN32
+#include "Win32\tap.h"
+#endif
+#include "pcap_io.h"
 
 NetAdapter* nif;
 std::thread rx_thread;
@@ -48,9 +57,45 @@ void tx_put(NetPacket* pkt)
 	//pkt must be copied if its not processed by here, since it can be allocated on the callers stack
 }
 
-void InitNet(NetAdapter* ad)
+NetAdapter* GetNetAdapter()
 {
-	nif = ad;
+	NetAdapter* na = nullptr;
+
+	switch (config.EthApi)
+	{
+#ifdef _WIN32
+		case NetApi::TAP:
+			na = static_cast<NetAdapter*>(new TAPAdapter());
+			break;
+#endif
+		case NetApi::PCAP_Bridged:
+		case NetApi::PCAP_Switched:
+			na = static_cast<NetAdapter*>(new PCAPAdapter());
+			break;
+		default:
+			return 0;
+	}
+
+	if (!na->isInitialised())
+	{
+		delete na;
+		return 0;
+	}
+	return na;
+}
+
+void InitNet()
+{
+	NetAdapter* na = GetNetAdapter();
+
+	if (!na)
+	{
+		Console.Error("Failed to GetNetAdapter()");
+		config.ethEnable = false;
+		return;
+	}
+
+	nif = na;
 	RxRunning = true;
 
 	rx_thread = std::thread(NetRxThread);
@@ -83,9 +128,40 @@ void TermNet()
 	}
 }
 
+const char* NetApiToString(NetApi api)
+{
+	switch (api)
+	{
+		case NetApi::PCAP_Bridged:
+			return "PCAP (Bridged)";
+		case NetApi::PCAP_Switched:
+			return "PCAP (Switched)";
+		case NetApi::TAP:
+			return "TAP";
+		default:
+			return "UNK";
+	}
+}
+
+const wchar_t* NetApiToWstring(NetApi api)
+{
+	switch (api)
+	{
+		case NetApi::PCAP_Bridged:
+			return L"PCAP (Bridged)";
+		case NetApi::PCAP_Switched:
+			return L"PCAP (Switched)";
+		case NetApi::TAP:
+			return L"TAP";
+		default:
+			return L"UNK";
+	}
+}
+
+
 NetAdapter::NetAdapter()
 {
-	//Ensure eeprom matches our default 
+	//Ensure eeprom matches our default
 	SetMACAddress(nullptr);
 }
 
@@ -101,4 +177,21 @@ void NetAdapter::SetMACAddress(u8* mac)
 
 	//The checksum seems to be all the values of the mac added up in 16bit chunks
 	dev9.eeprom[3] = (dev9.eeprom[0] + dev9.eeprom[1] + dev9.eeprom[2]) & 0xffff;
+}
+
+bool NetAdapter::VerifyPkt(NetPacket* pkt, int read_size)
+{
+	if ((memcmp(pkt->buffer, ps2MAC, 6) != 0) && (memcmp(pkt->buffer, &broadcastMAC, 6) != 0))
+	{
+		//ignore strange packets
+		return false;
+	}
+
+	if (memcmp(pkt->buffer + 6, ps2MAC, 6) == 0)
+	{
+		//avoid pcap looping packets
+		return false;
+	}
+	pkt->size = read_size;
+	return true;
 }

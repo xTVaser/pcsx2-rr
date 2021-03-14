@@ -96,7 +96,7 @@ bool GSWndDX::Create(const std::string& title, int w, int h)
 	// TODO: wc.hIcon = ;
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-	wc.lpszClassName = "GSWndDX";
+	wc.lpszClassName = L"GSWndDX";
 
 	if(!GetClassInfo(wc.hInstance, wc.lpszClassName, &wc))
 	{
@@ -132,8 +132,8 @@ bool GSWndDX::Create(const std::string& title, int w, int h)
 	r.bottom = r.top + h;
 
 	AdjustWindowRect(r, style, FALSE);
-
-	m_hWnd = CreateWindow(wc.lpszClassName, title.c_str(), style, r.left, r.top, r.width(), r.height(), NULL, NULL, wc.hInstance, (LPVOID)this);
+	std::wstring tmp = std::wstring(title.begin(), title.end());
+	m_hWnd = CreateWindow(wc.lpszClassName, tmp.c_str(), style, r.left, r.top, r.width(), r.height(), NULL, NULL, wc.hInstance, (LPVOID)this);
 
 	if (!m_hWnd)
 		throw GSDXRecoverableError();
@@ -181,7 +181,10 @@ bool GSWndDX::SetWindowText(const char* title)
 {
 	if(!m_managed) return false;
 
-	::SetWindowText(m_hWnd, title);
+	const size_t tmp_size = strlen(title) + 1;
+	std::wstring tmp(tmp_size, L'#');
+	mbstowcs(&tmp[0], title, tmp_size);
+	::SetWindowText(m_hWnd, tmp.c_str());
 
 	return m_frame;
 }

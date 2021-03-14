@@ -410,24 +410,15 @@ void GSRendererOGL::EmulateBlending(bool& DATE_GL42, bool& DATE_GL45)
 	bool sw_blending         = false;
 
 	// No blending so early exit
-	if (!(PRIM->ABE || PRIM->AA1 && m_vt.m_primclass == GS_LINE_CLASS)) {
-#ifdef ENABLE_OGL_DEBUG
-		if (m_env.PABE.PABE)
-			GL_INS("ERROR: ENV PABE without ABE!");
-#endif
+	if (!(PRIM->ABE || m_env.PABE.PABE || (PRIM->AA1 && m_vt.m_primclass == GS_LINE_CLASS))) {
 		dev->OMSetBlendState();
 		return;
 	}
 
 	if (m_env.PABE.PABE) {
-		GL_INS("ERROR: ENV PABE not supported!");
-		if (m_sw_blending >= ACC_BLEND_MEDIUM) {
-			// m_ps_sel.pabe = 1;
-			m_require_full_barrier |= (ALPHA.C == 1);
-			sw_blending = true;
-		}
-		// Breath of Fire Dragon Quarter, Strawberry Shortcake, Super Robot Wars.
-		//ASSERT(0);
+		// Breath of Fire Dragon Quarter, Strawberry Shortcake, Super Robot Wars, Cartoon Network Racing.
+		GL_INS("PABE mode ENABLED");
+		m_ps_sel.pabe = 1;
 	}
 
 	// Compute the blending equation to detect special case
@@ -1048,25 +1039,18 @@ void GSRendererOGL::DrawPrims(GSTexture* rt, GSTexture* ds, GSTextureCache::Sour
 				m_require_full_barrier = true;
 				DATE_GL45 = true;
 			}
-			else
+			else if (m_accurate_date)
 			{
 				// Note: Fast level (DATE_one) was removed as it's less accurate.
-				if (m_accurate_date)
+				GL_PERF("DATE: Full AD with alpha %d-%d", m_vt.m_alpha.min, m_vt.m_alpha.max);
+				if (GLLoader::found_GL_ARB_shader_image_load_store && GLLoader::found_GL_ARB_clear_texture)
 				{
-					GL_PERF("DATE: Full AD with alpha %d-%d", m_vt.m_alpha.min, m_vt.m_alpha.max);
-					if (GLLoader::found_GL_ARB_shader_image_load_store && GLLoader::found_GL_ARB_clear_texture)
-					{
-						DATE_GL42 = true;
-					}
-					else
-					{
-						m_require_full_barrier = true;
-						DATE_GL45 = true;
-					}
+					DATE_GL42 = true;
 				}
 				else
 				{
-					GL_PERF("DATE: Off AD with alpha %d-%d", m_vt.m_alpha.min, m_vt.m_alpha.max);
+					m_require_full_barrier = true;
+					DATE_GL45 = true;
 				}
 			}
 		}

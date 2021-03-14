@@ -23,6 +23,8 @@
 
 void ADMAOutLogWrite(void* lpData, u32 ulSize);
 
+#include "interpolate_table.h"
+
 static const s32 tbl_XA_Factor[16][2] =
 	{
 		{0, 0},
@@ -154,6 +156,22 @@ static __forceinline s32 GetNextDataBuffered(V_Core& thiscore, uint voiceidx)
 
 	if ((vc.SCurrent & 3) == 0)
 	{
+		if (vc.PendingLoopStart)
+		{
+			if ((Cycles - vc.PlayCycle) >= 4 )
+			{
+				if (vc.LoopCycle < vc.PlayCycle)
+				{
+					vc.LoopStartA = vc.PendingLoopStartA;
+					ConLog("Core %d Voice %d Loop Written by HW within 4T of Key On, Now Applying\n", thiscore.Index, voiceidx);
+					vc.LoopMode = 1;
+				}
+				else
+					ConLog("Loop point from waveform set within 4T's, ignoring HW write\n");
+
+				vc.PendingLoopStart = false;
+			}
+		}
 		IncrementNextA(thiscore, voiceidx);
 
 		if ((vc.NextA & 7) == 0) // vc.SCurrent == 24 equivalent
@@ -192,13 +210,16 @@ static __forceinline s32 GetNextDataBuffered(V_Core& thiscore, uint voiceidx)
 		vc.LoopFlags = *memptr >> 8; // grab loop flags from the upper byte.
 
 		if ((vc.LoopFlags & XAFLAG_LOOP_START) && !vc.LoopMode)
+		{
 			vc.LoopStartA = vc.NextA & 0xFFFF8;
+			vc.LoopCycle = Cycles;
+		}
 
 		const int cacheIdx = vc.NextA / pcm_WordsPerBlock;
 		PcmCacheEntry& cacheLine = pcm_cache_data[cacheIdx];
 		vc.SBuffer = cacheLine.Sampledata;
 
-		if (cacheLine.Validated)
+		if (cacheLine.Validated && vc.Prev1 == cacheLine.Prev1 && vc.Prev2 == cacheLine.Prev2)
 		{
 			// Cached block!  Read from the cache directly.
 			// Make sure to propagate the prev1/prev2 ADPCM:
@@ -215,7 +236,11 @@ static __forceinline s32 GetNextDataBuffered(V_Core& thiscore, uint voiceidx)
 		{
 			// Only flag the cache if it's a non-dynamic memory range.
 			if (vc.NextA >= SPU2_DYN_MEMLINE)
+			{
 				cacheLine.Validated = true;
+				cacheLine.Prev1 = vc.Prev1;
+				cacheLine.Prev2 = vc.Prev2;
+			}
 
 			if (IsDevBuild)
 			{
@@ -335,9 +360,22 @@ static __forceinline void CalculateADSR(V_Core& thiscore, uint voiceidx)
 	pxAssume(vc.ADSR.Value >= 0); // ADSR should never be negative...
 }
 
+
+__forceinline static s32 GaussianInterpolate(s32 pv4, s32 pv3, s32 pv2, s32 pv1, s32 i)
+{
+	s32 out = 0;
+	out =  (interpTable[0x0FF-i] * pv4) >> 15;
+	out += (interpTable[0x1FF-i] * pv3) >> 15;
+	out += (interpTable[0x100+i] * pv2) >> 15;
+	out += (interpTable[0x000+i] * pv1) >> 15;
+
+	return out;
+}
+
 /*
    Tension: 65535 is high, 32768 is normal, 0 is low
 */
+
 template <s32 i_tension>
 __forceinline static s32 HermiteInterpolate(
 	s32 y0, // 16.0
@@ -357,9 +395,9 @@ __forceinline static s32 HermiteInterpolate(
 
 	s32 val = ((2 * y1 + m0 + m1 - 2 * y2) * mu) >> 12;       // 16.0
 	val = ((val - 3 * y1 - 2 * m0 - m1 + 3 * y2) * mu) >> 12; // 16.0
-	val = ((val + m0) * mu) >> 11;                            // 16.0
+	val = ((val + m0) * mu) >> 12;                            // 16.0
 
-	return (val + (y1 << 1));
+	return (val + (y1));
 }
 
 __forceinline static s32 CatmullRomInterpolate(
@@ -384,7 +422,7 @@ __forceinline static s32 CatmullRomInterpolate(
 	val = ((a2 + val) * mu) >> 12;
 	val = ((a1 + val) * mu) >> 12;
 
-	return (a0 + val);
+	return (a0 + val) >> 1;
 }
 
 __forceinline static s32 CubicInterpolate(
@@ -401,9 +439,9 @@ __forceinline static s32 CubicInterpolate(
 
 	s32 val = ((a0)*mu) >> 12;
 	val = ((val + a1) * mu) >> 12;
-	val = ((val + a2) * mu) >> 11;
+	val = ((val + a2) * mu) >> 12;
 
-	return (val + (y1 << 1));
+	return (val + y1);
 }
 
 // Returns a 16 bit result in Value.
@@ -414,7 +452,7 @@ static __forceinline s32 GetVoiceValues(V_Core& thiscore, uint voiceidx)
 {
 	V_Voice& vc(thiscore.Voices[voiceidx]);
 
-	while (vc.SP > 0)
+	while (vc.SP >= 0)
 	{
 		if (InterpType >= 2)
 		{
@@ -431,9 +469,9 @@ static __forceinline s32 GetVoiceValues(V_Core& thiscore, uint voiceidx)
 	switch (InterpType)
 	{
 		case 0:
-			return vc.PV1 << 1;
+			return vc.PV1;
 		case 1:
-			return (vc.PV1 << 1) - (((vc.PV2 - vc.PV1) * vc.SP) >> 11);
+			return (vc.PV1) - (((vc.PV2 - vc.PV1) * mu) >> 12);
 
 		case 2:
 			return CubicInterpolate(vc.PV4, vc.PV3, vc.PV2, vc.PV1, mu);
@@ -441,6 +479,8 @@ static __forceinline s32 GetVoiceValues(V_Core& thiscore, uint voiceidx)
 			return HermiteInterpolate<16384>(vc.PV4, vc.PV3, vc.PV2, vc.PV1, mu);
 		case 4:
 			return CatmullRomInterpolate(vc.PV4, vc.PV3, vc.PV2, vc.PV1, mu);
+		case 5:
+			return GaussianInterpolate(vc.PV4, vc.PV3, vc.PV2, vc.PV1, (mu & 0x0ff0) >> 4);
 
 			jNO_DEFAULT;
 	}
@@ -567,6 +607,9 @@ static __forceinline StereoOut32 MixVoice(uint coreidx, uint voiceidx)
 				case 4:
 					Value = GetVoiceValues<4>(thiscore, voiceidx);
 					break;
+				case 5:
+					Value = GetVoiceValues<5>(thiscore, voiceidx);
+					break;
 
 					jNO_DEFAULT;
 			}
@@ -580,19 +623,8 @@ static __forceinline StereoOut32 MixVoice(uint coreidx, uint voiceidx)
 		// use a full 64-bit multiply/result here.
 
 		CalculateADSR(thiscore, voiceidx);
-		Value = MulShr32(Value, vc.ADSR.Value);
-
-		// Store Value for eventual modulation later
-		// Pseudonym's Crest calculation idea. Actually calculates a crest, unlike the old code which was just peak.
-		if (vc.PV1 < vc.NextCrest)
-		{
-			vc.OutX = MulShr32(vc.NextCrest, vc.ADSR.Value);
-			vc.NextCrest = -0x8000;
-		}
-		if (vc.PV1 > vc.PV2)
-		{
-			vc.NextCrest = vc.PV1;
-		}
+		Value = ApplyVolume(Value, vc.ADSR.Value);
+		vc.OutX = Value;
 
 		if (IsDevBuild)
 			DebugCores[coreidx].Voices[voiceidx].displayPeak = std::max(DebugCores[coreidx].Voices[voiceidx].displayPeak, (s32)vc.OutX);
