@@ -27,7 +27,6 @@ namespace Path
 	extern wxString GetFilenameWithoutExt(const wxString& src);
 	extern std::string GetRootDirectory(const wxString& src);
 	extern fs::path GetExecutableDirectory();
-	extern fs::path getPath(const fs::path &p, const fs::path &b, bool isPortable);
 	extern wxString ToWxString(const fs::path&);
 	extern bool CreateFolder(const fs::path& path);
 	extern fs::path FromWxString(const wxString&);

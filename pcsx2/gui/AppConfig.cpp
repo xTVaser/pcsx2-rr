@@ -764,8 +764,8 @@ AppConfig::FolderOptions::FolderOptions()
 	, Cheats		( PathDefs::GetCheats() )
 	, CheatsWS      ( PathDefs::GetCheatsWS() )
 
-	//, RunIso(PathDefs::GetDocuments()) // raw default is always the Documents folder.
-	//, RunELF(PathDefs::GetDocuments()) // raw default is always the Documents folder.
+	, RunIso(PathDefs::GetDocuments()) // raw default is always the Documents folder.
+	, RunELF(PathDefs::GetDocuments()) // raw default is always the Documents folder.
 	, RunDisc(PathDefs::GetDocuments())
 {
 	bitset = 0xffffffff;
@@ -794,16 +794,7 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
 	bool rel = ( ini.IsLoading() || IsPortable() );
 
-	//Bios = Path::getPath(Bios, PathDefs::GetDocuments(), IsPortable());
-	Snapshots = Path::getPath(Snapshots, PathDefs::GetDocuments(), IsPortable());
-	Savestates = Path::getPath(Savestates, PathDefs::GetDocuments(), IsPortable());
-	MemoryCards = Path::getPath(MemoryCards, PathDefs::GetDocuments(), IsPortable());
-	Logs = Path::getPath(Logs, PathDefs::GetDocuments(), IsPortable());
-	Langs = Path::getPath(Langs, PathDefs::GetDocuments(), IsPortable());
-	Cheats = Path::getPath(Cheats, PathDefs::GetDocuments(), IsPortable());
-	CheatsWS = Path::getPath(CheatsWS, PathDefs::GetDocuments(), IsPortable());
-
-	IniEntryDirFile( Bios,  rel);
+	IniEntryDirFile( Bios,  false);
 	IniEntryDirFile( Snapshots,  rel );
 	IniEntryDirFile( Savestates,  rel );
 	IniEntryDirFile( MemoryCards,  rel );
