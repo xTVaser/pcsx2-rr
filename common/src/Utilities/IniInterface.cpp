@@ -168,9 +168,9 @@ void IniLoader::Entry(const wxString& var, fs::path& value, fs::path base, const
     else
     {
         fs::path Temp = Path::FromWxString(dest);
-        value = Temp.make_preferred();
         if (isAllowRelative)
-            value = fs::canonical(Temp);
+            value = Path::Combine(base, Temp);
+            //value = fs::canonical(Temp);
 
         if (!value.is_absolute())
         {
@@ -183,6 +183,7 @@ void IniLoader::Entry(const wxString& var, fs::path& value, fs::path base, const
                 value = defvalue;
             }
         }
+        value = Temp;
     }
 }
 
