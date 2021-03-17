@@ -172,11 +172,11 @@ void IniLoader::Entry(const wxString& var, fs::path& value, fs::path base, const
             value = Path::Combine(base, Temp);
             //value = fs::canonical(Temp);
 
-        if (!value.is_absolute())
+        if (!Temp.is_absolute())
         {
             try
             {
-                value = fs::absolute(value);
+                Temp = fs::canonical(Temp);
             }
             catch (const fs::filesystem_error& ex)
             {
