@@ -158,7 +158,7 @@ void IniLoader::Entry(const wxString &var, wxDirName &value, const wxDirName def
     }
 }
 
-void IniLoader::Entry(const wxString& var, fs::path& value, const fs::path defvalue, bool isAllowRelative)
+void IniLoader::Entry(const wxString& var, fs::path& value, fs::path base, const fs::path defvalue, bool isAllowRelative)
 {
     wxString dest;
     if (m_Config)
@@ -171,7 +171,8 @@ void IniLoader::Entry(const wxString& var, fs::path& value, const fs::path defva
         value = Temp.make_preferred();
         if (isAllowRelative)
             value = fs::canonical(Temp);
-        if (value.is_absolute())
+
+        if (!value.is_absolute())
         {
             try
             {
@@ -375,17 +376,17 @@ void IniSaver::Entry(const wxString &var, wxDirName &value, const wxDirName defv
      m_Config->Write(var, res.ToString());
 }
 
-void IniSaver::Entry(const wxString &var, fs::path &value, const fs::path defvalue, bool isAllowRelative)
+void IniSaver::Entry(const wxString &var, fs::path &value, fs::path base, const fs::path defvalue, bool isAllowRelative)
 {
     if (!m_Config)
         return;
     fs::path res(value);
 
     if (isAllowRelative)
-        res = fs::relative(value);
+        res = fs::relative(value, base);
 
-    if (res.is_absolute())
-        fs::canonical(res);
+    else
+        fs::absolute(res);
 
     wxString saver = Path::ToWxString(res);
 

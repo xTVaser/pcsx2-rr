@@ -794,20 +794,20 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	 //  --> on load, these relative paths will be expanded relative to the exe folder.
 	bool rel = ( ini.IsLoading() || IsPortable() );
 
-	IniEntryDirFile( Bios,  false);
-	IniEntryDirFile( Snapshots,  rel );
-	IniEntryDirFile( Savestates,  rel );
-	IniEntryDirFile( MemoryCards,  rel );
-	IniEntryDirFile( Logs,  rel );
-	IniEntryDirFile( Langs,  rel );
-	IniEntryDirFile( Cheats, rel );
-	IniEntryDirFile( CheatsWS, rel );
+	IniEntryDirFile(Bios, Bios, PathDefs::GetDocuments(), false);
+	IniEntryDirFile(Snapshots, Snapshots, PathDefs::GetDocuments(), rel );
+	IniEntryDirFile( Savestates, Savestates, PathDefs::GetDocuments(), rel );
+	IniEntryDirFile( MemoryCards, MemoryCards, PathDefs::GetDocuments(), false );
+	IniEntryDirFile( Logs, Logs, PathDefs::GetDocuments(), rel );
+	IniEntryDirFile( Langs, Langs, PathDefs::GetDocuments(), rel );
+	IniEntryDirFile( Cheats, Cheats, PathDefs::GetDocuments(), rel );
+	IniEntryDirFile( CheatsWS, CheatsWS, PathDefs::GetDocuments(), rel );
 
-	ini.Entry( L"PluginsFolder", PluginsFolder, Path::Combine(InstallFolder, PathDefs::Base::Plugins()), rel );
+	ini.Entry( L"PluginsFolder", PluginsFolder, PathDefs::AppRoot(), Path::Combine(InstallFolder, PathDefs::Base::Plugins()), rel );
 
-	IniEntryDirFile( RunIso, rel );
-	IniEntryDirFile( RunELF, rel );
-	IniEntryDirFile( RunDisc, rel );
+	IniEntryDirFile( RunIso, RunIso, PathDefs::GetDocuments(), rel );
+	IniEntryDirFile( RunELF, RunELF, PathDefs::GetDocuments(), rel );
+	IniEntryDirFile( RunDisc, RunDisc, PathDefs::GetDocuments(), rel );
 
 	if( ini.IsLoading() )
 	{
