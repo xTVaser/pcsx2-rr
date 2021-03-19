@@ -12,6 +12,14 @@ namespace fs = ghc::filesystem;
 namespace Path
 {
 	extern bool IsRelative(const std::string& path);
+	/**
+	 * @brief Indicates whether dir2 is contained within dir1
+	 * @param dir1 Directory that may or may not contain the second directory
+	 * @param dir2 The second directory
+	 * @return true/false
+	*/
+	extern bool IsDirectoryWithinDirectory(fs::path base, fs::path dir);
+
 	// Returns -1 if the file does not exist.
 	extern s64 GetFileSize(const fs::path& file);
 
@@ -19,7 +27,7 @@ namespace Path
 	extern wxString Normalize(const wxDirName& srcpath);
 	extern std::string MakeAbsolute(const std::string& srcpath);
 
-	extern fs::path Combine(const fs::path &srcPath, const fs::path &srcFile);
+	extern fs::path Combine(const fs::path& srcPath, const fs::path& srcFile);
 	extern std::string ReplaceExtension(const wxString& src, const wxString& ext);
 	extern std::string ReplaceFilename(const wxString& src, const wxString& newfilename);
 	extern std::string GetFilename(const std::string& src);
@@ -35,4 +43,3 @@ namespace Path
 	// Does the path exist
 	extern bool DoesExist(const fs::path& path);
 } // namespace Path
-
