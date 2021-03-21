@@ -1,0 +1,8 @@
+gametitle=Jak and Daxter: The Precursor Legacy [October 19 2001 Build] (NTSC)(SCUS-97124)
+comment=Enables Developer/Debug Mode - Credit to water111 for discovering / documenting the required ELF edits
+comment=Credit to Luminar Light for making the pnach for this build.
+
+// NOP Disabling DebugSegment
+patch=0,EE,00100250,word,00000000
+// NOP Disabling MasterDebug
+patch=0,EE,0010025c,word,00000000

@@ -388,6 +388,7 @@ CRC::Game CRC::m_games[] =
 	{0x9C712FF0, Jak1, EU, TextureInsideRt}, // Jak and Daxter: The Precursor Legacy
 	{0x1B3976AB, Jak1, US, TextureInsideRt},
 	{0x472E7699, Jak1, US, TextureInsideRt},
+	{0xC6124FF2, Jak1, US, TextureInsideRt}, // Jak TPL October 19 Build [FIREWIRE.IRX]
 	{0x96A608C5, Jak1, US, TextureInsideRt}, // Cingular Wireless Demo, PS Underground Demo
 	{0xEDE4FE64, Jak1, JP, TextureInsideRt}, // Jak x Daxter: Kyuusekai no Isan
 	{0x2A7FD3B4, Jak1, JP, TextureInsideRt}, // Demo, Taikenba
