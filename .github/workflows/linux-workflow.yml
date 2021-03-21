@@ -74,18 +74,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Cache Submodules
-        id: cache-submodules
-        uses: actions/cache@v2
-        with:
-          key: submodules-${{ hashFiles('./.gitmodules') }}
-          path: |
-            ./.git/modules/
-            ./3rdparty/fmt
-            ./3rdparty/xz
-            ./3rdparty/yaml-cpp
-            ./3rdparty/gtest
-
       - name: Checkout Submodules
         if: steps.cache-submodules.outputs.cache-hit != 'true'
         run: git submodule update --init --recursive --jobs 2
@@ -99,7 +87,7 @@ jobs:
           message("::set-output name=timestamp::${current_date}")
 
       - name: ccache cache files
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: .ccache
           key: ${{ matrix.os }}-${{ matrix.platform }}-${{ matrix.compiler }}${{ matrix.detail }}-ccache-${{ steps.ccache_cache_timestamp.outputs.timestamp }}

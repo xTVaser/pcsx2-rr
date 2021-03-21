@@ -18,6 +18,13 @@
 
 #pragma once
 
+// IPC uses a concept of "slot" to be able to communicate with multiple
+// emulators at the same time, each slot should be unique to each emulator to
+// allow PnP and configurable by the end user so that several runs don't
+// conflict with each others
+#define IPC_DEFAULT_SLOT 28011
+#define IPC_EMULATOR_NAME "pcsx2"
+
 #include "Utilities/PersistentThread.h"
 #include "System/SysThreads.h"
 #ifdef _WIN32
@@ -29,7 +36,6 @@ using namespace Threading;
 
 class SocketIPC : public pxThread
 {
-
 	// parent thread
 	typedef pxThread _parent;
 
@@ -37,7 +43,6 @@ protected:
 #ifdef _WIN32
 	// windows claim to have support for AF_UNIX sockets but that is a blatant lie,
 	// their SDK won't even run their own examples, so we go on TCP sockets.
-#define PORT 28011
 	SOCKET m_sock = INVALID_SOCKET;
 	// the message socket used in thread's accept().
 	SOCKET m_msgsock = INVALID_SOCKET;
@@ -92,6 +97,11 @@ protected:
 		MsgWrite32 = 6,         /**< Write 32 bit value to memory. */
 		MsgWrite64 = 7,         /**< Write 64 bit value to memory. */
 		MsgVersion = 8,         /**< Returns PCSX2 version. */
+		MsgSaveState = 9,       /**< Saves a savestate. */
+		MsgLoadState = 0xA,     /**< Loads a savestate. */
+		MsgTitle = 0xB,         /**< Returns the game title. */
+		MsgID = 0xC,            /**< Returns the game ID. */
+		MsgUUID = 0xD,          /**< Returns the game UUID. */
 		MsgUnimplemented = 0xFF /**< Unimplemented IPC message. */
 	};
 
@@ -144,6 +154,12 @@ protected:
 	static inline char* MakeFailIPC(char* ret_buffer, uint32_t size);
 
 	/**
+	 * Initializes an open socket for IPC communication.
+	 * return value: -1 if a fatal failure happened, 0 otherwise. 
+	 */
+	int StartSocket();
+
+	/**
 	 * Converts an uint to an char* in little endian 
 	 * res_array: the array to modify 
 	 * res: the value to convert
@@ -189,7 +205,7 @@ public:
 	bool m_end = true;
 
 	/* Initializers */
-	SocketIPC(SysCoreThread* vm);
+	SocketIPC(SysCoreThread* vm, unsigned int slot = IPC_DEFAULT_SLOT);
 	virtual ~SocketIPC();
 
 }; // class SocketIPC

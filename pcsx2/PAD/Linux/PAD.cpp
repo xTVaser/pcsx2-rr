@@ -57,7 +57,7 @@ void __LogToConsole(const char* fmt, ...)
 	if (padLog != NULL)
 		vfprintf(padLog, fmt, list);
 
-	printf("OnePAD: ");
+	printf("PAD: ");
 	vprintf(fmt, list);
 	va_end(list);
 }
@@ -136,11 +136,6 @@ void PADsetLogDir(const char* dir)
 void PADclose()
 {
 	_PADclose();
-}
-
-u32 PADquery()
-{
-	return 3; // both
 }
 
 s32 PADsetSlot(u8 port, u8 slot)

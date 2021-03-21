@@ -129,9 +129,9 @@ bool IsTAPDevice(const TCHAR* guid)
 	return false;
 }
 
-vector<tap_adapter>* GetTapAdapters()
+std::vector<AdapterEntry> TAPAdapter::GetAdapters()
 {
-	vector<tap_adapter>* tap_nic = new vector<tap_adapter>();
+	std::vector<AdapterEntry> tap_nic;
 	LONG status;
 	HKEY control_net_key;
 	DWORD len;
@@ -141,13 +141,13 @@ vector<tap_adapter>* GetTapAdapters()
 						  &control_net_key);
 
 	if (status != ERROR_SUCCESS)
-		return false;
+		return tap_nic;
 
 	status = RegQueryInfoKey(control_net_key, nullptr, nullptr, nullptr, &cSubKeys, nullptr, nullptr,
 							 nullptr, nullptr, nullptr, nullptr, nullptr);
 
 	if (status != ERROR_SUCCESS)
-		return false;
+		return tap_nic;
 
 	for (DWORD i = 0; i < cSubKeys; i++)
 	{
@@ -183,8 +183,11 @@ vector<tap_adapter>* GetTapAdapters()
 			{
 				if (IsTAPDevice(enum_name))
 				{
-					tap_adapter t = {_tcsdup(name_data), _tcsdup(enum_name)};
-					tap_nic->push_back(t);
+					AdapterEntry t;
+					t.type = NetApi::TAP;
+					t.name = std::wstring(name_data);
+					t.guid = std::wstring(enum_name);
+					tap_nic.push_back(t);
 				}
 			}
 
@@ -307,7 +310,6 @@ bool TAPAdapter::isInitialised()
 {
 	return (htap != NULL);
 }
-u8 broadcast_adddrrrr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 //gets a packet.rv :true success
 bool TAPAdapter::recv(NetPacket* pkt)
 {
@@ -337,23 +339,8 @@ bool TAPAdapter::recv(NetPacket* pkt)
 		}
 	}
 
-
 	if (result)
-	{
-		if ((memcmp(pkt->buffer, dev9.eeprom, 6) != 0) && (memcmp(pkt->buffer, &broadcast_adddrrrr, 6) != 0))
-		{
-			//ignore strange packets
-			return false;
-		}
-
-		if (memcmp(pkt->buffer + 6, dev9.eeprom, 6) == 0)
-		{
-			//avoid pcap looping packets
-			return false;
-		}
-		pkt->size = read_size;
-		return true;
-	}
+		return VerifyPkt(pkt, read_size);
 	else
 		return false;
 }

@@ -205,7 +205,6 @@ for ARG in "$@"; do
         --prof              ) flags="$flags -DCMAKE_BUILD_TYPE=Prof"    ; build="$root/build_prof";;
         --strip             ) flags="$flags -DCMAKE_BUILD_STRIP=TRUE" ;;
         --sdl12             ) flags="$flags -DSDL2_API=FALSE" ;;
-        --extra             ) flags="$flags -DEXTRA_PLUGINS=TRUE" ;;
         --use-system-yaml   ) flags="$flags -DUSE_SYSTEM_YAML=TRUE" ;;
         --asan              ) flags="$flags -DUSE_ASAN=TRUE" ;;
         --gtk2              ) flags="$flags -DGTK2_API=TRUE" ;;
@@ -232,7 +231,6 @@ for ARG in "$@"; do
             echo
             echo "--clean         : Do a clean build."
             echo "--clean-plugins : Do a clean build of plugins, but not of pcsx2."
-            echo "--extra         : Build all plugins"
             echo "--no-simd       : Only allow sse2"
             echo
             echo "** Developer option **"
@@ -240,7 +238,7 @@ for ARG in "$@"; do
             echo
             echo "** Distribution Compatibilities **"
             echo "--sdl12         : Build with SDL1.2 (requires if wx is linked against SDL1.2)"
-            echo "--no-portaudio  : Skip portaudio for spu2x."
+            echo "--no-portaudio  : Skip portaudio for SPU2."
             echo "--use-system-yaml  : Use the system version of yaml-cpp, if available."
             echo
             echo "** Expert Developer option **"
