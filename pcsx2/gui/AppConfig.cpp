@@ -152,7 +152,7 @@ namespace PathDefs
 	{
 		switch( mode )
 		{
-#ifdef XDG_STD
+#if defined(XDG_STD) || defined(__APPLE__) // Expected location for this kind of stuff on macOS
 			// Move all user data file into central configuration directory (XDG_CONFIG_DIR)
 			case DocsFolder_User:	return GetUserLocalDataDir();
 #else
@@ -173,7 +173,9 @@ namespace PathDefs
 
 	wxDirName GetProgramDataDir()
 	{
-#ifndef GAMEINDEX_DIR_COMPILATION
+#ifdef __APPLE__
+		return wxDirName(wxStandardPaths::Get().GetResourcesDir());
+#elif !defined(GAMEINDEX_DIR_COMPILATION)
 		return AppRoot();
 #else
 		// Each linux distributions have his rules for path so we give them the possibility to
@@ -244,7 +246,11 @@ namespace PathDefs
 
 	wxDirName GetLangs()
 	{
+#ifdef __APPLE__
+		return wxDirName(wxStandardPaths::Get().GetResourcesDir());
+#else
 		return AppRoot() + Base::Langs();
+#endif
 	}
 
 	wxDirName Get( FoldersEnum_t folderidx )
@@ -676,6 +682,7 @@ void AppConfig::LoadSave( IniInterface& ini )
 #ifndef DISABLE_RECORDING
 	inputRecording.loadSave(ini);
 #endif
+	AudioCapture.LoadSave( ini );
 	Templates		.LoadSave( ini );
 
 	ini.Flush();
@@ -949,6 +956,18 @@ void AppConfig::FramerateOptions::LoadSave( IniInterface& ini )
 	IniEntry( SkipOnTurbo );
 }
 
+AppConfig::CaptureOptions::CaptureOptions()
+{
+	EnableAudio = true;
+}
+
+void AppConfig::CaptureOptions::LoadSave(IniInterface& ini)
+{
+	ScopedIniGroup path(ini, L"Capture");
+
+	IniEntry( EnableAudio );
+}
+
 AppConfig::UiTemplateOptions::UiTemplateOptions()
 {
 	LimiterUnlimited	= L"Max";
@@ -1058,7 +1077,9 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 	EmuOptions.EnablePatches		= true;
 	EmuOptions.GS					= default_Pcsx2Config.GS;
 	EmuOptions.GS.FrameLimitEnable	= original_GS.FrameLimitEnable;	//Frame limiter is not modified by presets
-	
+	EmuOptions.GS.VsyncEnable		= original_GS.VsyncEnable;
+	EmuOptions.GS.VsyncQueueSize	= original_GS.VsyncQueueSize;
+
 	EmuOptions.Cpu					= default_Pcsx2Config.Cpu;
 	EmuOptions.Gamefixes			= default_Pcsx2Config.Gamefixes;
 	EmuOptions.Speedhacks			= default_Pcsx2Config.Speedhacks;

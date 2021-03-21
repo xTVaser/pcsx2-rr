@@ -14,9 +14,7 @@
  */
 
 #pragma once
-#if !defined(_WIN32)
 #include "pcap.h"
-#endif
 #include "net.h"
 
 #ifdef __cplusplus
@@ -24,7 +22,7 @@ extern "C" {
 #endif
 
 
-#ifndef _WIN32
+//#ifndef _WIN32
 #pragma pack(push, 1)
 typedef struct _ip_address
 {
@@ -150,22 +148,24 @@ typedef struct _full_arp_packet
 
 #define ARP_REQUEST 0x0100 //values are big-endian
 
-extern mac_address virtual_mac;
-extern mac_address broadcast_mac;
-
 #define mac_compare(a, b) (memcmp(&(a), &(b), 6))
 #define ip_compare(a, b) (memcmp(&(a), &(b), 4))
 
-#endif
+//#endif
 /*
 int pcap_io_init(char *adapter);
 int pcap_io_send(void* packet, int plen);
 int pcap_io_recv(void* packet, int max_len);
 void pcap_io_close();
-*/
 int pcap_io_get_dev_num();
 char* pcap_io_get_dev_desc(int num);
 char* pcap_io_get_dev_name(int num);
+*/
+
+#ifdef _WIN32
+bool load_pcap();
+void unload_pcap();
+#endif
 
 #ifdef __cplusplus
 }
@@ -182,4 +182,5 @@ public:
 	//sends the packet and deletes it when done (if successful).rv :true success
 	virtual bool send(NetPacket* pkt);
 	virtual ~PCAPAdapter();
+	static std::vector<AdapterEntry> GetAdapters();
 };

@@ -23,6 +23,8 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <string.h>
+#include <vector>
+#include "fmt/format.h"
 
 #include <string>
 #include "ghc/filesystem.h"
@@ -37,28 +39,10 @@
 #include "../ATA/HddCreate.h"
 
 static GtkBuilder* builder = nullptr;
-
-void SysMessage(char* fmt, ...)
-{
-	va_list list;
-	char tmp[512];
-
-	va_start(list, fmt);
-	vsprintf(tmp, fmt, list);
-	va_end(list);
-
-	GtkWidget* dialog = gtk_message_dialog_new(NULL,
-											   GTK_DIALOG_MODAL,
-											   GTK_MESSAGE_ERROR,
-											   GTK_BUTTONS_CLOSE,
-											   "%s", tmp);
-	gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_hide(dialog);
-}
+std::vector<AdapterEntry> adapters;
 
 void OnInitDialog()
 {
-	char* dev;
 	gint idx = 0;
 	static int initialized = 0;
 
@@ -69,14 +53,17 @@ void OnInitDialog()
 
 	gtk_combo_box_text_append_text((GtkComboBoxText*)gtk_builder_get_object(builder, "IDC_BAYTYPE"), "Expansion");
 	gtk_combo_box_text_append_text((GtkComboBoxText*)gtk_builder_get_object(builder, "IDC_BAYTYPE"), "PC Card");
-	for (int i = 0; i < pcap_io_get_dev_num(); i++)
+
+	adapters = PCAPAdapter::GetAdapters();
+
+	for (size_t i = 0; i < adapters.size(); i++)
 	{
-		dev = pcap_io_get_dev_name(i);
-		gtk_combo_box_text_append_text((GtkComboBoxText*)gtk_builder_get_object(builder, "IDC_ETHDEV"), dev);
-		if (strcmp(dev, config.Eth) == 0)
-		{
+		std::string dev = fmt::format("{}: {}", (char*)NetApiToString(adapters[i].type), adapters[i].name.c_str());
+
+		gtk_combo_box_text_append_text((GtkComboBoxText*)gtk_builder_get_object(builder, "IDC_ETHDEV"), dev.c_str());
+		if (config.EthApi == adapters[i].type && strcmp(adapters[i].guid.c_str(), config.Eth) == 0)
 			gtk_combo_box_set_active((GtkComboBox*)gtk_builder_get_object(builder, "IDC_ETHDEV"), idx);
-		}
+
 		idx++;
 	}
 
@@ -153,9 +140,12 @@ void OnSlide(GtkRange* range, gpointer usr_data)
 
 void OnOk()
 {
-	char* ptr = gtk_combo_box_text_get_active_text((GtkComboBoxText*)gtk_builder_get_object(builder, "IDC_ETHDEV"));
-	if (ptr != nullptr)
-		strcpy(config.Eth, ptr);
+	int ethIndex = gtk_combo_box_get_active((GtkComboBox*)gtk_builder_get_object(builder, "IDC_ETHDEV"));
+	if (ethIndex != -1)
+	{
+		strcpy(config.Eth, adapters[ethIndex].guid.c_str());
+		config.EthApi = adapters[ethIndex].type;
+	}
 
 	strcpy(config.Hdd, gtk_entry_get_text((GtkEntry*)gtk_builder_get_object(builder, "IDC_HDDFILE")));
 	config.HddSize = gtk_spin_button_get_value((GtkSpinButton*)gtk_builder_get_object(builder, "IDC_HDDSIZE_SPIN")) * 1024;
@@ -186,6 +176,8 @@ void OnOk()
 void DEV9configure()
 {
 	ScopedCoreThreadPause paused_core;
+	Config oldConfig = config;
+
 	gtk_init(NULL, NULL);
 	GError* error = NULL;
 	if (builder == nullptr)
@@ -217,37 +209,8 @@ void DEV9configure()
 			break;
 	}
 	gtk_widget_hide(GTK_WIDGET(dlg));
+
+	ApplyConfigIfRunning(oldConfig);
+
 	paused_core.AllowResume();
-}
-
-NetAdapter* GetNetAdapter()
-{
-	NetAdapter* na;
-	na = new PCAPAdapter();
-
-	if (!na->isInitialised())
-	{
-		delete na;
-		return 0;
-	}
-	return na;
-}
-s32 _DEV9open()
-{
-	NetAdapter* na = GetNetAdapter();
-	if (!na)
-	{
-		Console.Error("Failed to GetNetAdapter()");
-		config.ethEnable = false;
-	}
-	else
-	{
-		InitNet(na);
-	}
-	return 0;
-}
-
-void _DEV9close()
-{
-	TermNet();
 }

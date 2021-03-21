@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - master
+      - '128mb-build'
     paths-ignore:
       - .gitignore
       - "**/*.md"
@@ -16,6 +17,7 @@ on:
   pull_request:
     branches:
       - master
+      - '128mb-build'
     paths-ignore:
       - .gitignore
       - "**/*.md"
@@ -50,18 +52,6 @@ jobs:
 
       - name: Checkout Repository
         uses: actions/checkout@v2
-
-      - name: Cache Submodules
-        id: cache-submodules
-        uses: actions/cache@v2
-        with:
-          key: submodules-${{ hashFiles('./.gitmodules') }}
-          path: |
-            ./.git/modules/
-            ./3rdparty/fmt
-            ./3rdparty/xz
-            ./3rdparty/yaml-cpp
-            ./3rdparty/gtest
 
       - name: Checkout Submodules
         if: steps.cache-submodules.outputs.cache-hit != 'true'

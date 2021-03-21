@@ -455,7 +455,7 @@ void GSRendererDX11::EmulateBlending()
 	bool sw_blending         = false;
 
 	// No blending so early exit
-	if (!(PRIM->ABE || (PRIM->AA1 && m_vt.m_primclass == GS_LINE_CLASS)))
+	if (!(PRIM->ABE || m_env.PABE.PABE || (PRIM->AA1 && m_vt.m_primclass == GS_LINE_CLASS)))
 		return;
 
 	m_om_bsel.abe = 1;
@@ -470,7 +470,9 @@ void GSRendererDX11::EmulateBlending()
 			m_om_bsel.abe = 0;
 		}
 
-		// Breath of Fire Dragon Quarter, Strawberry Shortcake, Super Robot Wars.
+		// Breath of Fire Dragon Quarter, Strawberry Shortcake, Super Robot Wars, Cartoon Network Racing.
+		// fprintf(stderr, "%d: PABE mode ENABLED\n", s_n);
+		m_ps_sel.pabe = 1;
 	}
 
 	m_om_bsel.blend_index = uint8(((ALPHA.A * 3 + ALPHA.B) * 3 + ALPHA.C) * 3 + ALPHA.D);
@@ -821,17 +823,10 @@ void GSRendererDX11::DrawPrims(GSTexture* rt, GSTexture* ds, GSTextureCache::Sou
 				// Leave the check in to make sure other DATE cases are triggered correctly.
 				// fprintf(stderr, "%d: DATE: Slow with alpha %d-%d not supported\n", s_n, m_vt.m_alpha.min, m_vt.m_alpha.max);
 			}
-			else
+			else if (m_accurate_date)
 			{
-				if (m_accurate_date)
-				{
-					// fprintf(stderr, "%d: DATE: Fast AD with alpha %d-%d\n", s_n, m_vt.m_alpha.min, m_vt.m_alpha.max);
-					DATE_one = true;
-				}
-				else
-				{
-					// fprintf(stderr, "%d: "DATE: Off AD with alpha %d-%d\n", s_n, m_vt.m_alpha.min, m_vt.m_alpha.max);
-				}
+				// fprintf(stderr, "%d: DATE: Fast AD with alpha %d-%d\n", s_n, m_vt.m_alpha.min, m_vt.m_alpha.max);
+				DATE_one = true;
 			}
 		}
 		else if (!m_om_bsel.wa && !m_context->TEST.ATE)

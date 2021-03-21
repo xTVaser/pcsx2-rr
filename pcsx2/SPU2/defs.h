@@ -136,6 +136,10 @@ public:
 struct V_Voice
 {
 	u32 PlayCycle; // SPU2 cycle where the Playing started
+	u32 LoopCycle; // SPU2 cycle where it last set its own Loop
+
+	u32 PendingLoopStartA;
+	bool PendingLoopStart;
 
 	V_VolumeSlideLR Volume;
 
@@ -189,7 +193,7 @@ struct V_Voice
 	s32 SCurrent;
 
 	// it takes a few ticks for voices to start on the real SPU2?
-	bool Start();
+	void Start();
 	void Stop();
 };
 
@@ -406,12 +410,16 @@ struct V_Core
 	s32 DMAICounter;   // DMA Interrupt Counter
 	u32 LastClock;     // DMA Interrupt Clock Cycle Counter
 	u32 InputDataLeft; // Input Buffer
-	u32 InputPosRead;
+	u32 InputDataTransferred; // Used for simulating MADR increase (GTA VC)
 	u32 InputPosWrite;
 	u32 InputDataProgress;
 
 	V_Reverb Revb;              // Reverb Registers
 	V_ReverbBuffers RevBuffers; // buffer pointers for reverb, pre-calculated and pre-clipped.
+
+	s32 RevbDownBuf[2][64]; // Downsample buffer for reverb, one for each channel
+	s32 RevbUpBuf[2][64]; // Upsample buffer for reverb, one for each channel
+	u32 RevbSampleBufPos;
 	u32 EffectsStartA;
 	u32 EffectsEndA;
 	u32 ExtEffectsStartA;
@@ -487,6 +495,9 @@ struct V_Core
 	void Reverb_AdvanceBuffer();
 	StereoOut32 DoReverb(const StereoOut32& Input);
 	s32 RevbGetIndexer(s32 offset);
+
+	s32 ReverbDownsample(bool right);
+	StereoOut32 ReverbUpsample(bool phase);
 
 	StereoOut32 ReadInput();
 	StereoOut32 ReadInput_HiFi();
@@ -594,6 +605,8 @@ struct PcmCacheEntry
 {
 	bool Validated;
 	s16 Sampledata[pcm_DecodedSamplesPerBlock];
+	s32 Prev1;
+	s32 Prev2;
 };
 
 extern PcmCacheEntry* pcm_cache_data;

@@ -979,9 +979,6 @@
     <ClCompile Include="..\..\SPU2\spu2freeze.cpp">
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\SPU2\spu2replay.cpp">
-      <Filter>System\Ps2\SPU2</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\SPU2\spu2sys.cpp">
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
@@ -1100,6 +1097,9 @@
       <Filter>System\Ps2\DEV9</Filter>
     </ClCompile>
     <ClCompile Include="..\..\DEV9\pcap_io.cpp">
+      <Filter>System\Ps2\DEV9</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\DEV9\Win32\pcap_io_win32.cpp">
       <Filter>System\Ps2\DEV9</Filter>
     </ClCompile>
     <ClCompile Include="..\..\DEV9\smap.cpp">
@@ -1305,6 +1305,9 @@
     </ClCompile>
     <ClCompile Include="..\..\PAD\Windows\PADRawInput.cpp">
       <Filter>System\Ps2\PAD</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gui\Dialogs\IPCDialog.cpp">
+      <Filter>AppHost\Dialogs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1776,10 +1779,10 @@
     <ClInclude Include="..\..\SPU2\spu2.h">
       <Filter>System\Ps2\SPU2</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\SPU2\spu2replay.h">
+    <ClInclude Include="..\..\SPU2\Mixer.h">
       <Filter>System\Ps2\SPU2</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\SPU2\Mixer.h">
+    <ClInclude Include="..\..\SPU2\interpolate_table.h">
       <Filter>System\Ps2\SPU2</Filter>
     </ClInclude>
     <ClInclude Include="..\..\SPU2\Lowpass.h">
@@ -1846,6 +1849,9 @@
       <Filter>System\Ps2\DEV9</Filter>
     </ClInclude>
     <ClInclude Include="..\..\DEV9\smap.h">
+      <Filter>System\Ps2\DEV9</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\DEV9\Win32\pcap_io_win32_funcs.h">
       <Filter>System\Ps2\DEV9</Filter>
     </ClInclude>
     <ClInclude Include="..\..\DEV9\Win32\resource.h">
