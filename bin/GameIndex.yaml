@@ -41,6 +41,11 @@ A6630572:
   region: "PAL"
   gameFixes:
     - VU0KickstartHack # Fixes Character SPS.
+C6124FF2:
+  name: "Jak and Daxter: The Precursor Legacy [October 19 2001 Build]"
+  region: "NTSC"
+  gameFixes:
+    - VU0KickstartHack # Fixes Character SPS. 
 C71BAB1E:
   name: "Jak II: Renegade [August 2003 Review]"
   region: "PAL"
