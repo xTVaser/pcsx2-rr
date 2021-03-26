@@ -24,6 +24,7 @@
 #include "Plugins.h"
 #include "GS.h"
 #include "AppConfig.h"
+#include "gui/Dialogs/ModalPopups.h"
 
 using namespace Threading;
 
@@ -328,9 +329,7 @@ bool AppCorePlugins::Shutdown()
 
 void AppCorePlugins::Close()
 {
-	AffinityAssert_AllowFrom_CoreThread();
-
-	if (!NeedsClose())
+	if (!(NeedsClose() || GSDump::isRunning))
 		return;
 
 	PostPluginStatus(CorePlugins_Closing);

@@ -165,6 +165,11 @@ void MainEmuFrame::Menu_ResetAllSettings_Click(wxCommandEvent& event)
 //   (anything else) - Standard swap, no reset.  (hotswap!)
 wxWindowID SwapOrReset_Iso(wxWindow* owner, IScopedCoreThread& core_control, const wxString& isoFilename, const wxString& descpart1)
 {
+	if (GSDump::isRunning)
+	{
+		wxMessageBox("Please close the GS debugger first before playing a game", _("GS Debugger"), wxICON_ERROR);
+		return wxID_CANCEL;
+	}
 	wxWindowID result = wxID_CANCEL;
 
 	if ((g_Conf->CdvdSource == CDVD_SourceType::Iso) && (isoFilename == g_Conf->CurrentIso))
@@ -222,6 +227,11 @@ wxWindowID SwapOrReset_Iso(wxWindow* owner, IScopedCoreThread& core_control, con
 //   (anything else) - Standard swap, no reset.  (hotswap!)
 wxWindowID SwapOrReset_Disc(wxWindow* owner, IScopedCoreThread& core, const wxString driveLetter)
 {
+	if (GSDump::isRunning)
+	{
+		wxMessageBox("Please close the GS debugger first before playing a game", _("GS Debugger"), wxICON_ERROR);
+		return wxID_CANCEL;
+	}
 	wxWindowID result = wxID_CANCEL;
 
 	if ((g_Conf->CdvdSource == CDVD_SourceType::Disc) && (driveLetter == g_Conf->Folders.RunDisc.GetPath()))
@@ -270,6 +280,11 @@ wxWindowID SwapOrReset_Disc(wxWindow* owner, IScopedCoreThread& core, const wxSt
 
 wxWindowID SwapOrReset_CdvdSrc(wxWindow* owner, CDVD_SourceType newsrc)
 {
+	if (GSDump::isRunning)
+	{
+		wxMessageBox("Please close the GS debugger first before playing a game", _("GS Debugger"), wxICON_ERROR);
+		return wxID_CANCEL;
+	}
 	if (newsrc == g_Conf->CdvdSource)
 		return wxID_CANCEL;
 	wxWindowID result = wxID_CANCEL;
@@ -359,8 +374,8 @@ bool MainEmuFrame::_DoSelectIsoBrowser(wxString& result)
 
 	wxArrayString isoFilterTypes;
 
-	isoFilterTypes.Add(pxsFmt(_("All Supported (%s)"), WX_STR((isoSupportedLabel + L" .dump" + L" .gz" + L" .cso"))));
-	isoFilterTypes.Add(isoSupportedList + L";*.dump" + L";*.gz" + L";*.cso");
+	isoFilterTypes.Add(pxsFmt(_("All Supported (%s)"), WX_STR((isoSupportedLabel + L" .dump" + L" .gz" + L" .cso" + L" .chd"))));
+	isoFilterTypes.Add(isoSupportedList + L";*.dump" + L";*.gz" + L";*.cso" + L";*.chd");
 
 	isoFilterTypes.Add(pxsFmt(_("Disc Images (%s)"), WX_STR(isoSupportedLabel)));
 	isoFilterTypes.Add(isoSupportedList);
@@ -368,8 +383,8 @@ bool MainEmuFrame::_DoSelectIsoBrowser(wxString& result)
 	isoFilterTypes.Add(pxsFmt(_("Blockdumps (%s)"), L".dump"));
 	isoFilterTypes.Add(L"*.dump");
 
-	isoFilterTypes.Add(pxsFmt(_("Compressed (%s)"), L".gz .cso"));
-	isoFilterTypes.Add(L"*.gz;*.cso");
+	isoFilterTypes.Add(pxsFmt(_("Compressed (%s)"), L".gz .cso .chd"));
+	isoFilterTypes.Add(L"*.gz;*.cso;*.chd");
 
 	isoFilterTypes.Add(_("All Files (*.*)"));
 	isoFilterTypes.Add(L"*.*");
@@ -406,6 +421,11 @@ bool MainEmuFrame::_DoSelectELFBrowser()
 
 void MainEmuFrame::_DoBootCdvd()
 {
+	if (GSDump::isRunning)
+	{
+		wxMessageBox("Please close the GS debugger first before playing a game", _("GS Debugger"), wxICON_ERROR);
+		return;
+	}
 	ScopedCoreThreadPause paused_core;
 
 	if (g_Conf->CdvdSource == CDVD_SourceType::Iso)
@@ -823,6 +843,11 @@ void MainEmuFrame::Menu_SysShutdown_Click(wxCommandEvent& event)
 
 void MainEmuFrame::Menu_ConfigPlugin_Click(wxCommandEvent& event)
 {
+	if (GSDump::isRunning)
+	{
+		wxMessageBox("Please open the settings window from the main GS Debugger window", _("GS Debugger"), wxICON_ERROR);
+		return;
+	}
 	const int eventId = event.GetId() - MenuId_PluginBase_Settings;
 
 	PluginsEnum_t pid = (PluginsEnum_t)(eventId / PluginMenuId_Interval);
@@ -904,6 +929,11 @@ void MainEmuFrame::Menu_Wiki(wxCommandEvent& event)
 void MainEmuFrame::Menu_ShowAboutBox(wxCommandEvent& event)
 {
 	AppOpenDialog<AboutBoxDialog>(this);
+}
+
+void MainEmuFrame::Menu_ShowGSDump(wxCommandEvent& event)
+{
+	AppOpenDialog<GSDumpDialog>(this);
 }
 
 void MainEmuFrame::Menu_Capture_Video_ToggleCapture_Click(wxCommandEvent& event)

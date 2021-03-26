@@ -208,6 +208,7 @@ set(pcsx2CDVDSources
 	CDVD/OutputIsoFile.cpp
 	CDVD/ChunksCache.cpp
 	CDVD/CompressedFileReader.cpp
+	CDVD/ChdFileReader.cpp
 	CDVD/CsoFileReader.cpp
 	CDVD/GzippedFileReader.cpp
 	CDVD/IsoFS/IsoFile.cpp
@@ -226,6 +227,7 @@ set(pcsx2CDVDHeaders
 	CDVD/ChunksCache.h
 	CDVD/CompressedFileReader.h
 	CDVD/CompressedFileReaderUtils.h
+	CDVD/ChdFileReader.h
 	CDVD/CsoFileReader.h
 	CDVD/GzippedFileReader.h
 	CDVD/IsoFileFormats.h
@@ -600,6 +602,7 @@ set(pcsx2GuiSources
 	gui/ConsoleLogger.cpp
 	gui/CpuUsageProvider.cpp
 	gui/Dialogs/AboutBoxDialog.cpp
+	gui/Dialogs/GSDumpDialog.cpp
 	gui/Dialogs/AssertionDialog.cpp
 	gui/Dialogs/BaseConfigurationDialog.cpp
 	gui/Dialogs/ConfirmationDialogs.cpp
@@ -712,6 +715,7 @@ set(pcsx2GuiResources
     ${res_bin}/ConfigIcon_Speedhacks.h
     ${res_bin}/ConfigIcon_Video.h
     ${res_bin}/Logo.h
+    ${res_bin}/NoIcon.h
     ${res_bin}/Breakpoint_Active.h
     ${res_bin}/Breakpoint_Inactive.h
     )
@@ -1092,7 +1096,7 @@ include_directories(
 file(MAKE_DIRECTORY ${res_bin})
 
 foreach(res_file IN ITEMS
-        AppIcon16 AppIcon32 AppIcon64 BackgroundLogo Logo ButtonIcon_Camera
+        AppIcon16 AppIcon32 AppIcon64 BackgroundLogo Logo NoIcon ButtonIcon_Camera
         ConfigIcon_Cpu ConfigIcon_Gamefixes ConfigIcon_MemoryCard
         ConfigIcon_Paths ConfigIcon_Plugins ConfigIcon_Speedhacks ConfigIcon_Video Breakpoint_Active Breakpoint_Inactive)
     add_custom_command(OUTPUT  "${res_bin}/${res_file}.h" COMMAND perl ${CMAKE_SOURCE_DIR}/linux_various/hex2h.pl "${res_src}/${res_file}.png" "${res_bin}/${res_file}" )

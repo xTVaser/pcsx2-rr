@@ -29,6 +29,7 @@
 #endif
 
 #include "Utilities/pxStreams.h"
+#include "gui/Dialogs/ModalPopups.h"
 
 #include "svnrev.h"
 #include "ConsoleLogger.h"
@@ -881,7 +882,7 @@ void SysCorePlugins::_generalclose( PluginsEnum_t pid )
 
 void SysCorePlugins::ClosePlugin_GS()
 {
-	if( GetMTGS().IsSelf() )
+	if( GetMTGS().IsSelf() || GSDump::isRunning )
 		_generalclose( PluginId_GS );
 	else
 	{
@@ -901,7 +902,7 @@ void SysCorePlugins::Close( PluginsEnum_t pid )
 {
 	pxAssert( (uint)pid < PluginId_Count );
 
-	if( !IsOpen(pid) ) return;
+	if (!(IsOpen(pid) || GSDump::isRunning) ) return;
 	
 	if( !GetMTGS().IsSelf() )		// stop the spam!
 		Console.Indent().WriteLn( "Closing %s", tbl_PluginInfo[pid].shortname );
@@ -920,7 +921,7 @@ void SysCorePlugins::Close( PluginsEnum_t pid )
 
 void SysCorePlugins::Close()
 {
-	if( !NeedsClose() ) return;	// Spam stopper; returns before writing any logs. >_<
+	if( !(NeedsClose() || GSDump::isRunning) ) return;	// Spam stopper; returns before writing any logs. >_<
 
 	// Close plugins in reverse order of the initialization procedure, which
 	// ensures the GS gets closed last.
@@ -1010,7 +1011,7 @@ bool SysCorePlugins::Init()
 //
 bool SysCorePlugins::Shutdown()
 {
-	if( !NeedsShutdown() ) return false;
+	if( !NeedsShutdown()) return false;
 
 	pxAssertDev( !NeedsClose(), "Cannot shut down plugins prior to Close()" );
 	
@@ -1041,9 +1042,9 @@ bool SysCorePlugins::Shutdown()
 
 // For internal use only, unless you're the MTGS.  Then it's for you too!
 // Returns false if the plugin returned an error.
-bool SysCorePlugins::DoFreeze( PluginsEnum_t pid, int mode, freezeData* data )
+bool SysCorePlugins::DoFreeze( PluginsEnum_t pid, int mode, freezeData* data, bool bypass_tsafety )
 {
-	if( (pid == PluginId_GS) && !GetMTGS().IsSelf() )
+	if( (pid == PluginId_GS) && !GetMTGS().IsSelf() && !bypass_tsafety )
 	{
 		// GS needs some thread safety love...
 
