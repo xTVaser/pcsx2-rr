@@ -1,0 +1,10 @@
+# Documentation - https://github.com/actions/labeler
+
+# Add 'repo' label to any root file changes
+Docs:
+  - '*.md'
+  - '**/*.md'
+
+'New Feature':
+  - 'pcsx2/*'
+  - 'pcsx2/**/*'
