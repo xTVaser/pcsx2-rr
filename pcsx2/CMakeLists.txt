@@ -790,7 +790,6 @@ set(pcsx2ps2Headers
 	ps2/Iop/IopHw_Internal.h)
 
 # RDebug sources
-# 
 set(pcsx2RDebugSources
 	RDebug/deci2.cpp
 	RDebug/deci2_dbgp.cpp
