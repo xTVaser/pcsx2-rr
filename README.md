@@ -19,6 +19,8 @@ If you would like to make an improvement to the project, don't hesitate to follo
 
 Have fun while creating TAS! :D
 
+CHANGE!
+
 ## Video Examples
 
 Here is a simple tutorial on getting started with PCSX2-rr, note that keybindings may have changed!
