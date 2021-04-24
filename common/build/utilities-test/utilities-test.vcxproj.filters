@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="test-main.cpp" />
+    <ClCompile Include="PrecompiledHeader.cpp" />
+    <ClCompile Include="test-string-utils.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="test-file-utils.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PrecompiledHeader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Tests">
+      <UniqueIdentifier>{21ab8928-77ab-4ef6-bf33-7a604ebc7553}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
