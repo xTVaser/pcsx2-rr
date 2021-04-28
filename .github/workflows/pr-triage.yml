@@ -14,6 +14,12 @@ jobs:
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
 
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: |
+        echo "$GITHUB_CONTEXT"
+
     - uses: xTVaser/first-interaction@v1.2.0
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
