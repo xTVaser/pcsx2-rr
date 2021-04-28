@@ -27,7 +27,7 @@ Here is a simple tutorial on getting started with PCSX2-rr, note that keybinding
 
 Here are some TAS examples (made with the original pcsx2-rr v.1):
 
-- [TAS of Chulip part0 (WIP) pcsx2-1.4.0-rr (nicovideo)](http://www.nicovideo.jp/watch/sm30385451)
+- [TAS of Chulip part0 (WIP) pcsx2-1.4da a a sd.0-rr (nicovideo)](http://www.nicovideo.jp/watch/sm30385451)
 - [TAS of Chulip part0 (WIP) pcsx2-1.4.0-rr (youtube)](https://youtu.be/Ib2MnRfCCzc)
 
 ## Getting the Emulator
