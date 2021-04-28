@@ -14,7 +14,7 @@ jobs:
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
 
-    - uses: xTVaser/first-interaction-with-label-support@v1.2.0
+    - uses: xTVaser/first-interaction@v1.2.0
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         pr-message: |-
