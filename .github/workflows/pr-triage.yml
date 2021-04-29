@@ -23,7 +23,7 @@ jobs:
     - uses: xTVaser/first-interaction@v1.2.1
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
-        debugMode: true
+        debug-mode: true
         pr-message: |-
           ## Thank you for submitting a contribution to PCSX2
 
