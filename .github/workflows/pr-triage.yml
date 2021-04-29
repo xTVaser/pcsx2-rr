@@ -31,4 +31,4 @@ jobs:
           Additionally, as per recent changes in Github Actions, your pull request will need to be approved by a maintainer before Github Actions can run against it.
 
           Please be patient until this happens, in the meantime if you'd like to confirm the builds passing before that happens, you have the option of opening a PR on your own fork, just make sure your fork's master branch is up to date!  [You can find more information about this change here.](https://github.blog/2021-04-22-github-actions-update-helping-maintainers-combat-bad-actors/)
-
+        pr-labels: "First Time Contribution"
