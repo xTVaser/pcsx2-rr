@@ -20,7 +20,7 @@ jobs:
       run: |
         echo "$GITHUB_CONTEXT"
 
-    - uses: xTVaser/first-interaction@v1.2.1
+    - uses: xTVaser/first-interaction@v1.2.2
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
         debug-mode: true
