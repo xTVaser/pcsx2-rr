@@ -1,0 +1,44 @@
+# Generate with - https://github.com/github-tools/github-release-notes
+# Run - `gren changelog --token=<your personal access token> --generate --override`
+dataSource: prs
+groupBy:
+  "Core Improvements - Counters":
+    - "Counters"
+  "Core Improvements - Vector Units":
+    - "Vector Units"
+  "Core Improvements - VIF":
+    - "VIF"
+  "Core Improvements - CDVD":
+    - "CDVD"
+  "Core Improvements - DEV9":
+    - "DEV9"
+  "Core Improvements - IPU":
+    - "IPU"
+  "Core Improvements - Memory Card":
+    - "Memory Card"
+  "Core Improvements - PAD":
+    - "PAD: Linux/Mac"
+    - "PAD: Windows"
+  "Core Improvements - SPU2":
+    - "SPU2"
+  "Core Improvements - USB":
+    - "USB"
+  "GSdx Improvements":
+    - "Plugin: GS"
+    - "GS: Direct3D"
+    - "GS: Hardware"
+    - "GS: OpenGL"
+    - "GS: Texture Cache"
+    - "GS: Software"
+  "GameDB Changes":
+    - "GameDB"
+  "Misc. Improvments - GUI Interface":
+    - "GUI/WX"
+  "Misc. Improvments - Input Recording":
+    - "TAS Functionality"
+  "Misc. Improvments - Debugger":
+    - "Debugger"
+  "Misc. Improvements - IPC":
+    - "IPC"
+template:
+  issue: "- {{name}} [{{text}}]({{url}}) by {{user}}"
