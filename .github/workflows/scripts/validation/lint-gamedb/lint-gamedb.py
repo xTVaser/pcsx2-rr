@@ -53,12 +53,12 @@ def is_hex_number(string):
 
 
 def validate_string_option(serial, key, value):
-    if isinstance(value, str):
+    if not isinstance(value, str):
         issue_list.append("[{}]: '{}' must be a string".format(serial, key))
 
 
 def validate_int_option(serial, key, value, low, high):
-    if isinstance(value, int) or (value < low or value > high):
+    if not isinstance(value, int) or (value < low or value > high):
         issue_list.append(
             "[{}]: '{}' must be an int and between {}-{} (inclusive)".format(
                 serial, key, low, high
