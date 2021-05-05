@@ -17818,7 +17818,7 @@ SLKA-25254:
   region: "NTSC-K"
   compat: 5
   gameFixes:
-    - BADBADBAD
+    - FpuCompareHack
 SLKA-25255:
   name: "Mobile Suit Gundam - Seed - Never Ending Tomorrow"
   region: "NTSC-K"
