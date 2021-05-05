@@ -85,7 +85,7 @@ with open(file_path) as f:
 
     print("File loaded successfully, validating schema...")
     progress_counter = 0
-    for serial, game_options in gamedb.items(): # noqa: C901
+    for serial, game_options in gamedb.items(): # noqa: MC0001
         progress_counter = progress_counter + 1
         if progress_counter % 500 == 0 or progress_counter >= len(gamedb.items()):
             print(
