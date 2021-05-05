@@ -1,0 +1,24 @@
+name: Validate GameDB Changes
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "**/GameIndex.yaml"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "**/GameIndex.yaml"
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate GameDB
+        env:
+          SCRIPT_DIR: "./.github/workflows/scripts/validation/lint-gamedb"
+        run: |
+          pip install -r "${SCRIPT_DIR}/requirements.txt"
+          python "${SCRIPT_DIR}/lint-gamedb.py"
