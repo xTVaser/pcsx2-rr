@@ -48,17 +48,17 @@ def is_hex_number(string):
     try:
         int(string, 16)
         return True
-    except:
+    except Exception:
         return False
 
 
 def validate_string_option(serial, key, value):
-    if type(value) != str:
+    if isinstance(value, str):
         issue_list.append("[{}]: '{}' must be a string".format(serial, key))
 
 
 def validate_int_option(serial, key, value, low, high):
-    if type(value) != int or (value < low or value > high):
+    if isinstance(value, int) or (value < low or value > high):
         issue_list.append(
             "[{}]: '{}' must be an int and between {}-{} (inclusive)".format(
                 serial, key, low, high
@@ -77,6 +77,7 @@ with open(file_path) as f:
         print("Attempting to parse GameDB file...")
         gamedb = yaml.load(f, Loader=yaml.FullLoader)
     except Exception as err:
+        print(err)
         print(
             "Unable to parse GameDB. Exiting, verify that the file indeed is valid YAML."
         )
@@ -84,7 +85,7 @@ with open(file_path) as f:
 
     print("File loaded successfully, validating schema...")
     progress_counter = 0
-    for serial, game_options in gamedb.items():
+    for serial, game_options in gamedb.items(): # noqa: C901
         progress_counter = progress_counter + 1
         if progress_counter % 500 == 0 or progress_counter >= len(gamedb.items()):
             print(
@@ -111,7 +112,7 @@ with open(file_path) as f:
                 validate_int_option(serial, key, value, 0, 6)
 
             # ROUND MODE VALIDATION
-            if key == "roundModes" and type(value) == dict:
+            if key == "roundModes" and isinstance(value, dict):
                 for roundMode, roundValue in game_options["roundModes"].items():
                     validate_valid_options(serial, key, roundMode, allowed_round_modes)
                     validate_int_option(serial, key, roundValue, 0, 3)
@@ -121,7 +122,7 @@ with open(file_path) as f:
                 )
 
             # CLAMP MODE VALIDATION
-            if key == "clampModes" and type(value) == dict:
+            if key == "clampModes" and isinstance(value, dict):
                 for clampMode, clampValue in game_options["clampModes"].items():
                     validate_valid_options(serial, key, clampMode, allowed_clamp_modes)
                     validate_int_option(serial, key, clampValue, 0, 3)
@@ -131,7 +132,7 @@ with open(file_path) as f:
                 )
 
             # GAME FIX VALIDATION
-            if key == "gameFixes" and type(value) == list:
+            if key == "gameFixes" and isinstance(value, list):
                 for gamefix in game_options["gameFixes"]:
                     validate_valid_options(serial, key, gamefix, allowed_game_fixes)
             elif key == "gameFixes":
@@ -140,7 +141,7 @@ with open(file_path) as f:
                 )
 
             # SPEEDHACKS VALIDATION
-            if key == "speedHacks" and type(value) == dict:
+            if key == "speedHacks" and isinstance(value, dict):
                 for speedhack, speedhackValue in game_options["speedHacks"].items():
                     validate_valid_options(serial, key, speedhack, allowed_speed_hacks)
                     validate_int_option(serial, speedhack, speedhackValue, 0, 1)
@@ -158,7 +159,7 @@ with open(file_path) as f:
                 )
 
             # PATCH VALIDATION
-            if key == "patches" and type(value) == dict:
+            if key == "patches" and isinstance(value, dict):
                 for crc, patch in game_options["patches"].items():
                     if crc != "default" and not is_hex_number(str(crc)):
                         issue_list.append(
