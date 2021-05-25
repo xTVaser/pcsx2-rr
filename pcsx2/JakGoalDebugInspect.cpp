@@ -61,17 +61,15 @@ uptr goalGetSymValFromName(const char* name)
 
 #include "App.h"
 #include <wx/stdpaths.h>
-
-bool oddeven = 0;
+ 
 void goalWriteAllInfo()
 {
 	wxDirName dir = (wxDirName)wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
-	wxString file_name = oddeven ? "method_info1.txt" : "method_info0.txt";
+	wxString file_name = "method_info.txt";
 	wxString file_path = (dir + file_name).GetFullPath();
 	FILE* file = fopen(file_path, "w");
 	if (file == NULL)
 		return;
-	oddeven = !oddeven;
 	for (auto& type : goalTypeMethods)
 	{
 		fprintf(file, "[TYPE] %s\n", type.first);
