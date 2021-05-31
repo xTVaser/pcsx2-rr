@@ -5,7 +5,7 @@ name: Windows Build
 on:
   push:
     branches:
-      - master
+      - '*'
     paths-ignore:
       - .gitignore
       - "**/*.md"
@@ -74,7 +74,8 @@ jobs:
         env:
           # Set to 'true' to retain the .pdb / .exp / .lib, etc files which can be useful for repro'ing issues that only occur in the compiled .exe
           RetainDebuggingArtifacts: ${{ github.event.inputs.retainDebugArtifacts == 'true' }}
-        run: msbuild "buildbot.xml" /m /v:n /t:ReleaseAll /p:Platform=${{ matrix.platform }}
+        # TODO - Rebuild:'s are a temporary workaround for the following issue in msbuild - https://github.com/dotnet/msbuild/issues/6373
+        run: msbuild "buildbot.xml" /m /v:n /t:ReleaseAll /p:Platform=${{ matrix.platform }} /t:pcsx2:Rebuild
 
       - name: Prepare Artifact Metadata
         id: artifact-metadata
