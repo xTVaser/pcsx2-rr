@@ -68,7 +68,7 @@
       <!--ConfigCPU Include="Devel AVX2;Devel"/-->
     </ItemGroup>
   </Target>
-  <Target Name="ReleaseAll">
+  <Target Name="ReleaseAll" AfterTargets="Rebuild">
     <PropertyGroup>
       <BaseConfiguration>Release</BaseConfiguration>
     </PropertyGroup>
