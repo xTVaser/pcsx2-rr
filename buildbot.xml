@@ -43,7 +43,7 @@
     </ItemGroup>
     <Delete Files="@(CruftToDelete)" />
   </Target>
-  <Target Name="InternalBuild" AfterTargets="DebugAll;DevelAll;ReleaseAll">
+  <Target Name="InternalBuild" AfterTargets="DebugAll;DevelAll;ReleaseAll;Rebuild">
     <MSBuild Projects="@(SolutionSet)" BuildInParallel="false" Properties="Configuration=$(BaseConfiguration)" Targets="Clean" />
     <MSBuild Projects="@(ProjectSetCPU)" BuildInParallel="false" Properties="Configuration=%(ConfigCPU.Identity)" Targets="Clean" />
     <CallTarget Targets="CleanCruft" />
@@ -68,7 +68,7 @@
       <!--ConfigCPU Include="Devel AVX2;Devel"/-->
     </ItemGroup>
   </Target>
-  <Target Name="ReleaseAll" AfterTargets="Rebuild">
+  <Target Name="ReleaseAll">
     <PropertyGroup>
       <BaseConfiguration>Release</BaseConfiguration>
     </PropertyGroup>
