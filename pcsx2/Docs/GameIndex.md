@@ -81,14 +81,13 @@ However, YAML is case-sensitive and will allow multiple serials that only differ
 ## Compatibility
 
 `compat` can be set to the following values:
-
-*   `0` = Unknown Compatibility Status
-*   `1` = Nothing
-*   `2` = Intro
-*   `3` = Menu
-*   `4` = In-game
-*   `5` = Playable
-*   `6` = Perfect
+- `0` = Unknown Compatibility Status
+- `1` = Nothing
+- `2` = Intro
+- `3` = Menu
+- `4` = In-game
+- `5` = Playable
+- `6` = Perfect
 
 ## Rounding Modes
 

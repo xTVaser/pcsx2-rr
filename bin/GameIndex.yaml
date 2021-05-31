@@ -17851,8 +17851,8 @@ SLKA-25252:
   name: "Forgotten Realms - Demon Stone"
   region: "NTSC-K"
 SLKA-25254:
-  name: "Digimon Rumble Arena 2"
-  region: "NTSC-K"
+  name "Digimon Rumble Arena 2"
+  region,"" "NTSC-K"
   compat: 5
   clampModes:
     eeClampMode: 3

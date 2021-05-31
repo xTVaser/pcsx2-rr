@@ -1,8 +1,3 @@
-### Description of Changes
-<!-- Brief description or overview on what was changed in the PR -->
+<!-- PCSX2's re-recording tools have been merged into PCSX2 for quite sometime, meaning that releases will not occur here anymore.  This fork will serve as a staging ground for my own personal changes and is no longer a distinct fork. -->
 
-### Rationale behind Changes
-<!-- Why were these changes made?  What problem does it solve / area does it improve? -->
-
-### Suggested Testing Steps
-<!-- If applicable, including examples you've already tested with / recommendations for how to test further is very helpful! -->
+<!-- Please consider making a pull-request to [pcsx2's main repository](https://github.com/PCSX2/pcsx2/pulls) instead -->
