@@ -75,7 +75,7 @@ jobs:
           # Set to 'true' to retain the .pdb / .exp / .lib, etc files which can be useful for repro'ing issues that only occur in the compiled .exe
           RetainDebuggingArtifacts: ${{ github.event.inputs.retainDebugArtifacts == 'true' }}
         # TODO - Rebuild:'s are a temporary workaround for the following issue in msbuild - https://github.com/dotnet/msbuild/issues/6373
-        run: msbuild "buildbot.xml" /m /v:n /t:ReleaseAll /p:Platform=${{ matrix.platform }}
+        run: msbuild "buildbot.xml" /m /v:n /t:pcsx2:Rebuild,ReleaseAll /p:Platform=${{ matrix.platform }}
 
       - name: Prepare Artifact Metadata
         id: artifact-metadata
