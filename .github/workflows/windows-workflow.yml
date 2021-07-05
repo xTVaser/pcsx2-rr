@@ -79,6 +79,14 @@ jobs:
         env:
           # Set to 'true' to retain the .pdb / .exp / .lib, etc files which can be useful for repro'ing issues that only occur in the compiled .exe
           RetainDebuggingArtifacts: ${{ github.event.inputs.retainDebugArtifacts == 'true' }}
+          BUILDCACHE_DIR: ./.buildcache/
+          BUILDCACHE_IMPERSONATE: cl.exe
+          BUILDCACHE_HARD_LINKS: 1
+          BUILDCACHE_LOCAL_LOCKS: 1
+          # Debug options below
+          BUILDCACHE_LOG_FILE: ./.buildcache.txt
+          BUILDCACHE_PERF: true
+          BUILDCACHE_DEBUG: 1
         run: msbuild "buildbot.xml" /m /v:n /t:ReleaseAll /p:Platform=${{ matrix.platform }}
 
       - name: Testing Cache After
