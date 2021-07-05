@@ -8,11 +8,11 @@
     <ExtensionsToDeleteOnClean>*.bsc;*.idb;*.sbr;*.res;*.pch;*.pdb;*.obj;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;$(TargetPath);$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
   </PropertyGroup>
   <PropertyGroup Label="Globals">
-    <CLToolExe>$(MSBuildThisFileDirectory)\.github\workflows\bin\buildcache\buildcache-0-27-0.exe</CLToolExe>
+    <CLToolExe>$(SolutionDir).github\workflows\bin\buildcache\buildcache-0-27-0.exe</CLToolExe>
   </PropertyGroup>
   <Target Name="BuildcacheSetEnv" BeforeTargets="ClCompile">
     <!-- Not ready for merging!  This requires disabling for non-CI builds! -->
-    <SetEnv Name="BUILDCACHE_DIR" Value="$(MSBuildThisFileDirectory)\.buildcache\" Prefix="false"></SetEnv>
+    <SetEnv Name="BUILDCACHE_DIR" Value="$(SolutionDir).buildcache\" Prefix="false"></SetEnv>
     <SetEnv Name="BUILDCACHE_IMPERSONATE" Value="cl.exe" Prefix="false"></SetEnv>
     <SetEnv Name="BUILDCACHE_HARD_LINKS" Value="1" Prefix="false"></SetEnv>
     <SetEnv Name="BUILDCACHE_LOCAL_LOCKS" Value="1" Prefix="false"></SetEnv>
