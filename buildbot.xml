@@ -8,7 +8,6 @@
   </ItemGroup>
   <!-- Add common build  properties here. -->
   <PropertyGroup>
-    <CLToolExe>$(MSBuildThisFileDirectory)\.github\workflows\bin\buildcache\buildcache-0-27-0.exe</CLToolExe>
     <CreateHardLinksIfPossible>true</CreateHardLinksIfPossible>
     <CompileFastPlz>BuildInParallel=True;
       CreateHardLinksForCopyFilesToOutputDirectoryIfPossible=$(CreateHardLinksIfPossible);
@@ -63,19 +62,18 @@
       <ConfigCPU Include="Devel AVX2;Devel"/>
     </ItemGroup>
   </Target>
-  <Target Name="BuildcacheSetEnv" BeforeTargets="ClCompile">
+  <Target Name="ReleaseAll">
     <!-- Not ready for merging!  This requires disabling for non-CI builds! -->
     <SetEnv Name="BUILDCACHE_DIR" Value="$(MSBuildThisFileDirectory)\.buildcache\" Prefix="false"></SetEnv>
     <SetEnv Name="BUILDCACHE_IMPERSONATE" Value="cl.exe" Prefix="false"></SetEnv>
     <SetEnv Name="BUILDCACHE_HARD_LINKS" Value="1" Prefix="false"></SetEnv>
     <SetEnv Name="BUILDCACHE_LOCAL_LOCKS" Value="1" Prefix="false"></SetEnv>
+    <!-- I suspect I can disable this -->
     <SetEnv Name="BUILDCACHE_LOG_FILE" Value="$(MSBuildThisFileDirectory)\.buildcache.txt" Prefix="false"></SetEnv>
     <SetEnv Name="BUILDCACHE_PERF" Value="true" Prefix="false"></SetEnv>
-    <!-- I suspect I can disable this -->
     <SetEnv Name="BUILDCACHE_DEBUG" Value="1" Prefix="false"></SetEnv>
-  </Target>
-  <Target Name="ReleaseAll">
     <PropertyGroup>
+      <CLToolExe>$(MSBuildThisFileDirectory)\.github\workflows\bin\buildcache\buildcache-0-27-0.exe</CLToolExe>
       <BaseConfiguration>Release</BaseConfiguration>
     </PropertyGroup>
     <ItemGroup>
