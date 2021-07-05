@@ -13,6 +13,7 @@
 *.bsc
 *.aps
 *.exe
+!/.github/**/*.exe
 *.wav
 
 *.trace
