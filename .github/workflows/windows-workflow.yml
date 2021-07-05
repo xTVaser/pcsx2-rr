@@ -70,11 +70,21 @@ jobs:
         with:
           vs-version: 16.7
 
+      - name: Testing Cache Before
+        shell: bash
+        run: |
+          ls -lh
+
       - name: Build PCSX2
         env:
           # Set to 'true' to retain the .pdb / .exp / .lib, etc files which can be useful for repro'ing issues that only occur in the compiled .exe
           RetainDebuggingArtifacts: ${{ github.event.inputs.retainDebugArtifacts == 'true' }}
         run: msbuild "buildbot.xml" /m /v:n /t:ReleaseAll /p:Platform=${{ matrix.platform }}
+
+      - name: Testing Cache After
+        shell: bash
+        run: |
+          ls -lh
 
       - name: Prepare Artifact Metadata
         id: artifact-metadata
