@@ -87,7 +87,7 @@ jobs:
           # BUILDCACHE_LOG_FILE: ./.buildcache.txt
           # BUILDCACHE_PERF: true
           # BUILDCACHE_DEBUG: 1
-        run: msbuild "buildbot.xml" /m /v:n /t:ReleaseAll /p:Platform=${{ matrix.platform }}
+        run: msbuild "buildbot.xml" /m /v:m /t:ReleaseAll /p:Platform=${{ matrix.platform }}
 
       - name: Testing Cache After
         shell: bash
