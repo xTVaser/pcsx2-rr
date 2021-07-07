@@ -7,6 +7,8 @@
 //------------------------------------------------------------------------------
 
 
+// ignore me!
+
 #include <streams.h>        // DirectShow base class definitions
 #include <mmsystem.h>       // Needed for definition of timeGetTime
 #include <limits.h>         // Standard data type limit definitions
