@@ -106,7 +106,7 @@
       <EnableEnhancedInstructionSet Condition="$(Configuration.Contains(AVX2))">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <MinimalRebuild>false</MinimalRebuild>
       <!-- <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName> -->
-      <ObjectFileName>$(IntDir)%(Filename).obj</ObjectFileName>
+      <ObjectFileName>$(IntDir)%(RelativeDir)%(Filename).obj</ObjectFileName>
       <!-- SH 2/3 flashlight, explicitly set here don't change -->
       <!-- https://github.com/PCSX2/pcsx2/commit/16431653e4d92fda4069031897e24fbe4688d36a -->
       <FloatingPointModel>Precise</FloatingPointModel>
@@ -643,7 +643,7 @@
     <ClCompile Include="Ipu\yuv2rgb.cpp" />
     <ClCompile Include="Ipu\mpeg2lib\Idct.cpp" />
     <ClCompile Include="Ipu\mpeg2lib\Mpeg.cpp" />
-    <ClCompile Include="GS2.cpp" />
+    <ClCompile Include="GS.cpp" />
     <ClCompile Include="GSState.cpp" />
     <ClCompile Include="MTGS.cpp" />
     <ClCompile Include="DebugTools\DisR3000A.cpp" />
@@ -1036,7 +1036,7 @@
     <ClInclude Include="Ipu\yuv2rgb.h" />
     <ClInclude Include="Ipu\mpeg2lib\Mpeg.h" />
     <ClInclude Include="Ipu\mpeg2lib\Vlc.h" />
-    <ClInclude Include="GS2.h" />
+    <ClInclude Include="GS.h" />
     <ClInclude Include="DebugTools\Debug.h" />
     <ClInclude Include="DebugTools\DisASM.h" />
     <ClInclude Include="DebugTools\DisVUmicro.h" />
