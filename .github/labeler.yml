@@ -1,0 +1,108 @@
+# Documentation - https://github.com/actions/labeler
+
+# General Labels
+'Build | Project System':
+  - '.github/*'
+  - '.github/**/*'
+  - '*.sln'
+  - '**/*.sln'
+  - '*.vcxproj*'
+  - '**/*.vcxproj*'
+  - 'cmake/*'
+  - 'cmake/**/*'
+  - 'CMakeLists.txt'
+  - '**/CMakeLists.txt'
+  - 'buildbot.xml'
+  - 'build.sh'
+'Dependencies':
+  - '3rdparty/*'
+  - '3rdparty/**/*'
+  - '**/3rdpartyDeps.props'
+  - '.gitmodules'
+'Documentation':
+  - '*.md'
+  - '**/*.md'
+  - '*.pdf'
+  - '**/*.pdf'
+'GUI/WX':
+  - 'pcsx2/gui/*'
+  - 'pcsx2/gui/**/*'
+'GameDB':
+  - '**/GameIndex.*'
+'Installer | Package':
+  - 'nsis/*'
+  - 'nsis/**/*'
+  - 'build.sh'
+
+# Tools / Features
+'Debugger':
+  - 'pcsx2/DebugTools/*'
+  - 'pcsx2/DebugTools/**/*'
+  - 'pcsx2/gui/Debugger/*'
+  - 'pcsx2/gui/Debugger/**/*'
+'IPC':
+  - 'pcsx2/IPC*'
+  - 'pcsx2/**/IPC*'
+'TAS Functionality':
+  - 'pcsx2/Recording/*'
+  - 'pcsx2/Recording/**/*'
+
+# Emulation Components
+'Counters':
+  - 'pcsx2/Counters.*'
+'Vector Units':
+  - 'pcsx2/VU*'
+  - 'pcsx2/**/VU*'
+  - 'pcsx2/*VU*'
+  - 'pcsx2/**/*VU*'
+'VIF':
+  - 'pcsx2/Vif*'
+  - 'pcsx2/**/Vif*'
+  - 'pcsx2/VIF*'
+  - 'pcsx2/**/VIF*'
+
+# GS Related Labels
+'GS':
+  - 'pcsx2/GS/*'
+  - 'pcsx2/GS/**/*'
+'GS: Direct3D':
+  - 'pcsx2/GS/Renderers/DX11/*'
+  - 'pcsx2/GS/Renderers/DX11/**/*'
+'GS: Hardware':
+  - 'pcsx2/GS/Renderers/HW/*'
+  - 'pcsx2/GS/Renderers/HW/**/*'
+'GS: OpenGL':
+  - 'pcsx2/GS/Renderers/OpenGL/*'
+  - 'pcsx2/GS/Renderers/OpenGL/**/*'
+'GS: Texture Cache':
+  - 'pcsx2/GS/Renderers/*TextureCache*.*'
+  - 'pcsx2/GS/Renderers/**/*TextureCache*.*'
+'GS: Software':
+  - 'pcsx2/GS/Renderers/SW/*'
+  - 'pcsx2/GS/Renderers/SW/**/*'
+
+# Other Core Components
+'CDVD':
+  - 'pcsx2/CDVD/*'
+  - 'pcsx2/CDVD/**/*'
+'DEV9':
+  - 'pcsx2/DEV9/*'
+  - 'pcsx2/DEV9/**/*'
+'IPU':
+  - 'pcsx2/IPU/*'
+  - 'pcsx2/IPU/**/*'
+'Memory Card':
+  - 'pcsx2/gui/MemoryCard*'
+  - 'pcsx2/gui/**/MemoryCard*'
+'PAD: Linux/Mac':
+  - 'pcsx2/PAD/Linux/*'
+  - 'pcsx2/PAD/Linux/**/*'
+'PAD: Windows':
+  - 'pcsx2/PAD/Windows/*'
+  - 'pcsx2/PAD/Windows/**/*'
+'SPU2':
+  - 'pcsx2/SPU2/*'
+  - 'pcsx2/SPU2/**/*'
+'USB':
+  - 'pcsx2/USB/*'
+  - 'pcsx2/USB/**/*'

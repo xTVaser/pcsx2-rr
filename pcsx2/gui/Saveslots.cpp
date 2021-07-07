@@ -72,7 +72,6 @@ void States_FreezeCurrentSlot()
 		return;
 	}
 
-	GSchangeSaveState(StatesC, SaveStateBase::GetFilename(StatesC).ToUTF8());
 	StateCopy_SaveToSlot(StatesC);
 
 #ifdef USE_NEW_SAVESLOTS_UI
@@ -98,7 +97,6 @@ void _States_DefrostCurrentSlot(bool isFromBackup)
 		return;
 	}
 
-	GSchangeSaveState(StatesC, SaveStateBase::GetFilename(StatesC).ToUTF8());
 	StateCopy_LoadFromSlot(StatesC, isFromBackup);
 
 	GetSysExecutorThread().PostIdleEvent(SysExecEvent_ClearSavingLoadingFlag());
@@ -127,10 +125,6 @@ void States_updateLoadBackupMenuItem()
 static void OnSlotChanged()
 {
 	OSDlog(Color_StrongGreen, true, " > Selected savestate slot %d", StatesC);
-
-	if (GSchangeSaveState != NULL)
-		GSchangeSaveState(StatesC, SaveStateBase::GetFilename(StatesC).utf8_str());
-
 	States_updateLoadBackupMenuItem();
 }
 
@@ -139,20 +133,23 @@ int States_GetCurrentSlot()
 	return StatesC;
 }
 
-void States_SetCurrentSlot(int slot)
+void States_SetCurrentSlot(int slot_num)
 {
-	StatesC = std::min(std::max(slot, 0), StateSlotsCount);
+	StatesC = std::min(std::max(slot_num, 0), StateSlotsCount);
+	for (Saveslot& slot : saveslot_cache)
+	{
+		sMainFrame.CheckMenuItem(slot.load_item_id, slot.slot_num == slot_num);
+		sMainFrame.CheckMenuItem(slot.save_item_id, slot.slot_num == slot_num);
+	}
 	OnSlotChanged();
 }
 
 void States_CycleSlotForward()
 {
-	StatesC = (StatesC + 1) % StateSlotsCount;
-	OnSlotChanged();
+	States_SetCurrentSlot((StatesC + 1) % StateSlotsCount);
 }
 
 void States_CycleSlotBackward()
 {
-	StatesC = (StatesC + StateSlotsCount - 1) % StateSlotsCount;
-	OnSlotChanged();
+	States_SetCurrentSlot((StatesC + StateSlotsCount - 1) % StateSlotsCount);
 }

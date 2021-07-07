@@ -17,8 +17,8 @@
 #include "videodeviceproxy.h"
 #include "usb-eyetoy-webcam.h"
 #include "ov519.h"
-#include "../qemu-usb/desc.h"
-#include "../shared/inifile_usb.h"
+#include "USB/qemu-usb/desc.h"
+#include "USB/shared/inifile_usb.h"
 
 namespace usb_eyetoy
 {
@@ -426,7 +426,8 @@ namespace usb_eyetoy
 						s->mpeg_frame_size = s->videodev->GetImage(s->mpeg_frame_data, 320 * 240 * 2);
 						if (s->mpeg_frame_size == 0)
 						{
-							goto send_packet;
+							p->status = USB_RET_NAK;
+							break;
 						}
 
 						uint8_t header[] = {
@@ -455,8 +456,6 @@ namespace usb_eyetoy
 						memcpy(data, footer, sizeof(footer));
 						s->frame_step = 0;
 					}
-
-				send_packet:
 					usb_packet_copy(p, data, max_ep_size);
 				}
 				else if (devep == 2)

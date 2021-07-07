@@ -43,34 +43,11 @@ static bool IsInitialized = false;
 
 static u32 pClocks = 0;
 
-u32* cyclePtr = nullptr;
 u32 lClocks = 0;
 //static bool cpu_detected = false;
 
-static bool CheckSSE()
-{
-	return true;
-
-#if 0
-	if( !cpu_detected )
-	{
-		cpudetectInit();
-		cpu_detected = true;
-	}
-	if( !x86caps.hasStreamingSIMDExtensions || !x86caps.hasStreamingSIMD2Extensions )
-	{
-		SysMessage( "Your CPU does not support SSE2 instructions.\nThe SPU2 plugin requires SSE2 to run." );
-		return false;
-	}
-	return true;
-#endif
-}
-
 void SPU2configure()
 {
-	if (!CheckSSE())
-		return;
-
 	ScopedCoreThreadPause paused_core;
 	configure();
 	paused_core.AllowResume();
@@ -81,15 +58,6 @@ void SPU2configure()
 // --------------------------------------------------------------------------------------
 
 u16* DMABaseAddr;
-
-u32 SPU2ReadMemAddr(int core)
-{
-	return Cores[core].MADR;
-}
-void SPU2WriteMemAddr(int core, u32 value)
-{
-	Cores[core].MADR = value;
-}
 
 void SPU2setDMABaseAddr(uptr baseaddr)
 {
@@ -108,8 +76,7 @@ void SPU2setLogDir(const char* dir)
 
 void SPU2readDMA4Mem(u16* pMem, u32 size) // size now in 16bit units
 {
-	if (cyclePtr != nullptr)
-		TimeUpdate(*cyclePtr);
+	TimeUpdate(psxRegs.cycle);
 
 	FileLog("[%10d] SPU2 readDMA4Mem size %x\n", Cycles, size << 1);
 	Cores[0].DoDMAread(pMem, size);
@@ -117,8 +84,7 @@ void SPU2readDMA4Mem(u16* pMem, u32 size) // size now in 16bit units
 
 void SPU2writeDMA4Mem(u16* pMem, u32 size) // size now in 16bit units
 {
-	if (cyclePtr != nullptr)
-		TimeUpdate(*cyclePtr);
+	TimeUpdate(psxRegs.cycle);
 
 	FileLog("[%10d] SPU2 writeDMA4Mem size %x at address %x\n", Cycles, size << 1, Cores[0].TSA);
 
@@ -145,8 +111,7 @@ void SPU2interruptDMA7()
 
 void SPU2readDMA7Mem(u16* pMem, u32 size)
 {
-	if (cyclePtr != nullptr)
-		TimeUpdate(*cyclePtr);
+	TimeUpdate(psxRegs.cycle);
 
 	FileLog("[%10d] SPU2 readDMA7Mem size %x\n", Cycles, size << 1);
 	Cores[1].DoDMAread(pMem, size);
@@ -154,8 +119,7 @@ void SPU2readDMA7Mem(u16* pMem, u32 size)
 
 void SPU2writeDMA7Mem(u16* pMem, u32 size)
 {
-	if (cyclePtr != nullptr)
-		TimeUpdate(*cyclePtr);
+	TimeUpdate(psxRegs.cycle);
 
 	FileLog("[%10d] SPU2 writeDMA7Mem size %x at address %x\n", Cycles, size << 1, Cores[1].TSA);
 
@@ -360,7 +324,7 @@ s32 SPU2open(void* pDsp)
 #endif
 
 	IsOpened = true;
-	lClocks = (cyclePtr != nullptr) ? *cyclePtr : 0;
+	lClocks = psxRegs.cycle;
 
 	try
 	{
@@ -378,7 +342,6 @@ s32 SPU2open(void* pDsp)
 		return -1;
 	}
 	SPU2setDMABaseAddr((uptr)iopMem->Main);
-	SPU2setClockPtr(&psxRegs.cycle);
 	return 0;
 }
 
@@ -435,11 +398,6 @@ void SPU2shutdown()
 #endif
 }
 
-void SPU2setClockPtr(u32* ptr)
-{
-	cyclePtr = ptr;
-}
-
 #ifdef DEBUG_KEYS
 static u32 lastTicks;
 static bool lState[6];
@@ -449,15 +407,7 @@ void SPU2async(u32 cycles)
 {
 	DspUpdate();
 
-	if (cyclePtr != nullptr)
-	{
-		TimeUpdate(*cyclePtr);
-	}
-	else
-	{
-		pClocks += cycles;
-		TimeUpdate(pClocks);
-	}
+	TimeUpdate(psxRegs.cycle);
 
 #ifdef DEBUG_KEYS
 	u32 curTicks = GetTickCount();
@@ -537,8 +487,7 @@ u16 SPU2read(u32 rmem)
 	}
 	else
 	{
-		if (cyclePtr != nullptr)
-			TimeUpdate(*cyclePtr);
+		TimeUpdate(psxRegs.cycle);
 
 		if (rmem >> 16 == 0x1f80)
 		{
@@ -566,8 +515,7 @@ void SPU2write(u32 rmem, u16 value)
 	// If the SPU2 isn't in in sync with the IOP, samples can end up playing at rather
 	// incorrect pitches and loop lengths.
 
-	if (cyclePtr != nullptr)
-		TimeUpdate(*cyclePtr);
+	TimeUpdate(psxRegs.cycle);
 
 	if (rmem >> 16 == 0x1f80)
 		Cores[0].WriteRegPS1(rmem, value);
@@ -627,54 +575,4 @@ s32 SPU2freeze(int mode, freezeData* data)
 
 	// technically unreachable, but kills a warning:
 	return 0;
-}
-
-void SPU2DoFreezeOut(void* dest)
-{
-	ScopedLock lock(mtx_SPU2Status);
-
-	freezeData fP = {0, (s8*)dest};
-	if (SPU2freeze(FREEZE_SIZE, &fP) != 0)
-		return;
-	if (!fP.size)
-		return;
-
-	Console.Indent().WriteLn("Saving SPU2");
-
-	if (SPU2freeze(FREEZE_SAVE, &fP) != 0)
-		throw std::runtime_error(" * SPU2: Error saving state!\n");
-}
-
-
-void SPU2DoFreezeIn(pxInputStream& infp)
-{
-	ScopedLock lock(mtx_SPU2Status);
-
-	freezeData fP = {0, nullptr};
-	if (SPU2freeze(FREEZE_SIZE, &fP) != 0)
-		fP.size = 0;
-
-	Console.Indent().WriteLn("Loading SPU2");
-
-	if (!infp.IsOk() || !infp.Length())
-	{
-		// no state data to read, but SPU2 expects some state data?
-		// Issue a warning to console...
-		if (fP.size != 0)
-			Console.Indent().Warning("Warning: No data for SPU2 found. Status may be unpredictable.");
-
-		return;
-
-		// Note: Size mismatch check could also be done here on loading, but
-		// some plugins may have built-in version support for non-native formats or
-		// older versions of a different size... or could give different sizes depending
-		// on the status of the plugin when loading, so let's ignore it.
-	}
-
-	ScopedAlloc<s8> data(fP.size);
-	fP.data = data.GetPtr();
-
-	infp.Read(fP.data, fP.size);
-	if (SPU2freeze(FREEZE_LOAD, &fP) != 0)
-		throw std::runtime_error(" * SPU2: Error loading state!\n");
 }

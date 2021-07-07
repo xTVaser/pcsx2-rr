@@ -41,7 +41,7 @@ void gsSetVideoMode(GS_VideoMode mode )
 }
 
 
-// Make sure framelimiter options are in sync with the plugin's capabilities.
+// Make sure framelimiter options are in sync with GS capabilities.
 void gsReset()
 {
 	GetMTGS().ResetGS();
@@ -347,6 +347,11 @@ __fi u64 gsRead64(u32 mem)
 		default: // Only SIGLBLID and CSR are readable, everything else mirrors CSR
 			return *(u64*)PS2GS_BASE(GS_CSR + (mem & 0xF));
 	}
+}
+
+__fi u128 gsNonMirroredRead(u32 mem)
+{
+	return *(u128*)PS2GS_BASE(mem);
 }
 
 void gsIrq() {

@@ -76,25 +76,24 @@ SocketIPC::SocketIPC(SysCoreThread* vm, unsigned int slot)
 	}
 
 #else
+	char* runtime_dir = nullptr;
 #ifdef __APPLE__
-	char* runtime_dir = std::getenv("TMPDIR");
+	runtime_dir = std::getenv("TMPDIR");
 #else
-	char* runtime_dir = std::getenv("XDG_RUNTIME_DIR");
+	runtime_dir = std::getenv("XDG_RUNTIME_DIR");
 #endif
 	// fallback in case macOS or other OSes don't implement the XDG base
 	// spec
-	if (runtime_dir == NULL)
-		m_socket_name = (char*)"/tmp/" IPC_EMULATOR_NAME ".sock";
+	if (runtime_dir == nullptr)
+		m_socket_name = "/tmp/" IPC_EMULATOR_NAME ".sock";
 	else
-		m_socket_name = strcat(runtime_dir, "/" IPC_EMULATOR_NAME ".sock");
+	{
+		m_socket_name = runtime_dir;
+		m_socket_name += "/" IPC_EMULATOR_NAME ".sock";
+	}
 
 	if (slot != IPC_DEFAULT_SLOT)
-	{
-		// maximum size of .%u
-		char slot_ending[34];
-		sprintf(slot_ending, ".%u", slot);
-		m_socket_name = strcat(m_socket_name, slot_ending);
-	}
+		m_socket_name += "." + std::to_string(slot);
 
 	struct sockaddr_un server;
 
@@ -105,11 +104,11 @@ SocketIPC::SocketIPC(SysCoreThread* vm, unsigned int slot)
 		return;
 	}
 	server.sun_family = AF_UNIX;
-	strcpy(server.sun_path, m_socket_name);
+	strcpy(server.sun_path, m_socket_name.c_str());
 
 	// we unlink the socket so that when releasing this thread the socket gets
 	// freed even if we didn't close correctly the loop
-	unlink(m_socket_name);
+	unlink(m_socket_name.c_str());
 	if (bind(m_sock, (struct sockaddr*)&server, sizeof(struct sockaddr_un)))
 	{
 		Console.WriteLn(Color_Red, "IPC: Error while binding to socket! Shutting down...");
@@ -245,7 +244,7 @@ SocketIPC::~SocketIPC()
 #ifdef _WIN32
 	WSACleanup();
 #else
-	unlink(m_socket_name);
+	unlink(m_socket_name.c_str());
 #endif
 	close_portable(m_sock);
 	close_portable(m_msgsock);
@@ -447,6 +446,40 @@ SocketIPC::IPCBuffer SocketIPC::ParseCommand(char* buf, char* ret_buffer, u32 bu
 				uuid[255] = 0x00;
 				memcpy(&ret_buffer[ret_cnt], uuid, 256);
 				ret_cnt += 256;
+				break;
+			}
+			case MsgGameVersion:
+			{
+				if (!m_vm->HasActiveMachine())
+					goto error;
+				if (!SafetyChecks(buf_cnt, 0, ret_cnt, 256, buf_size))
+					goto error;
+				char version[256] = {};
+				sprintf(version, "%s", GameInfo::gameVersion.ToUTF8().data());
+				version[255] = 0x00;
+				memcpy(&ret_buffer[ret_cnt], version, 256);
+				ret_cnt += 256;
+				break;
+			}
+			case MsgStatus:
+			{
+				if (!SafetyChecks(buf_cnt, 0, ret_cnt, 4, buf_size))
+					goto error;
+				EmuStatus status;
+				switch (m_vm->HasActiveMachine())
+				{
+					case true:
+						if (CoreThread.IsClosing())
+							status = Paused;
+						else
+							status = Running;
+						break;
+					case false:
+						status = Shutdown;
+						break;
+				}
+				ToArray(ret_buffer, status, ret_cnt);
+				ret_cnt += 4;
 				break;
 			}
 			default:

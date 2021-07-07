@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2010  PCSX2 Dev Team
+ *  Copyright (C) 2002-2021  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -22,6 +22,7 @@
 #include "Dialogs/ModalPopups.h"
 #include "IsoDropTarget.h"
 
+#include "fmt/core.h"
 #include <wx/iconbndl.h>
 
 #include <unordered_map>
@@ -29,12 +30,14 @@
 
 #include "svnrev.h"
 #include "Saveslots.h"
+
 #ifndef DISABLE_RECORDING
-#	include "Recording/InputRecording.h"
+#include "Recording/InputRecording.h"
+#include "Recording/InputRecordingControls.h"
 #endif
 
+extern std::atomic_bool init_gspanel;
 
-#include "fmt/core.h"
 // ------------------------------------------------------------------------
 wxMenu* MainEmuFrame::MakeStatesSubMenu(int baseid, int loadBackupId) const
 {
@@ -43,7 +46,8 @@ wxMenu* MainEmuFrame::MakeStatesSubMenu(int baseid, int loadBackupId) const
 	for (int i = 0; i < 10; i++)
 	{
 		// Will be changed once an iso is loaded.
-		mnuSubstates->Append(baseid + i + 1, wxsFormat(_("Slot %d"), i));
+		wxMenuItem* m = mnuSubstates->Append(baseid + i + 1, wxsFormat(_("Slot %d"), i), wxEmptyString, wxITEM_CHECK);
+		m->Check(i == 0); // 0 is the default selected slot
 	}
 
 	if (loadBackupId >= 0)
@@ -152,6 +156,10 @@ bool MainEmuFrame::Destroy()
 //
 void MainEmuFrame::OnCloseWindow(wxCloseEvent& evt)
 {
+	// the main thread is busy suspending everything, so let's not try to call it 
+	// when closing the emulator
+	init_gspanel = false;
+
 	if (IsBeingDeleted())
 		return;
 
@@ -270,16 +278,15 @@ void MainEmuFrame::ConnectMenus()
 	// Config
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_SysSettings_Click, this, MenuId_Config_SysSettings);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_McdSettings_Click, this, MenuId_Config_McdSettings);
-	Bind(wxEVT_MENU, &MainEmuFrame::Menu_SelectPluginsBios_Click, this, MenuId_Config_BIOS);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_SelectBios_Click, this, MenuId_Config_BIOS);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_AudioSettings_Click, this, MenuId_Config_SPU2);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_NetworkSettings_Click, this, MenuId_Config_DEV9);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_USBSettings_Click, this, MenuId_Config_USB);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_PADSettings_Click, this, MenuId_Config_PAD);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_GSSettings_Click, this, MenuId_Config_GS);
 
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_GSSettings_Click, this, MenuId_Video_CoreSettings);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_WindowSettings_Click, this, MenuId_Video_WindowSettings);
-	for (int i = 0; i < PluginId_Count; ++i)
-		Bind(wxEVT_MENU, &MainEmuFrame::Menu_ConfigPlugin_Click, this, MenuId_PluginBase_Settings + i * PluginMenuId_Interval);
 
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_MultitapToggle_Click, this, MenuId_Config_Multitap0Toggle);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_MultitapToggle_Click, this, MenuId_Config_Multitap1Toggle);
@@ -298,6 +305,7 @@ void MainEmuFrame::ConnectMenus()
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Github, this, MenuId_Help_Github);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Wiki, this, MenuId_Help_Wiki);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_ShowAboutBox, this, MenuId_About);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_ShowGSDump, this, MenuId_GSDump);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_ChangeLang, this, MenuId_ChangeLang);
 
 	// Debug
@@ -315,6 +323,7 @@ void MainEmuFrame::ConnectMenus()
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_New_Click, this, MenuId_Recording_New);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_Play_Click, this, MenuId_Recording_Play);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_Stop_Click, this, MenuId_Recording_Stop);
+	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_Config_FrameAdvance, this, MenuId_Recording_Config_FrameAdvance);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_TogglePause_Click, this, MenuId_Recording_TogglePause);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_FrameAdvance_Click, this, MenuId_Recording_FrameAdvance);
 	Bind(wxEVT_MENU, &MainEmuFrame::Menu_Recording_ToggleRecordingMode_Click, this, MenuId_Recording_ToggleRecordingMode);
@@ -340,25 +349,6 @@ void MainEmuFrame::InitLogBoxPosition(AppConfig::ConsoleLogOptions& conf)
 	}
 }
 
-void MainEmuFrame::DispatchEvent(const PluginEventType& plugin_evt)
-{
-	if (!pxAssertMsg(GetMenuBar() != NULL, "Mainframe menu bar is NULL!"))
-		return;
-
-	//ApplyCoreStatus();
-
-	if (plugin_evt == CorePlugins_Unloaded)
-	{
-		for (int i = 0; i < PluginId_Count; ++i)
-			m_PluginMenuPacks[i].OnUnloaded();
-	}
-	else if (plugin_evt == CorePlugins_Loaded)
-	{
-		for (int i = 0; i < PluginId_Count; ++i)
-			m_PluginMenuPacks[i].OnLoaded();
-	}
-}
-
 void MainEmuFrame::DispatchEvent(const CoreThreadStatus& status)
 {
 	if (!pxAssertMsg(GetMenuBar() != NULL, "Mainframe menu bar is NULL!"))
@@ -371,16 +361,6 @@ void MainEmuFrame::AppStatusEvent_OnSettingsApplied()
 	ApplySettings();
 }
 
-int GetPluginMenuId_Settings(PluginsEnum_t pid)
-{
-	return MenuId_PluginBase_Settings + ((int)pid * PluginMenuId_Interval);
-}
-
-static int GetPluginMenuId_Name(PluginsEnum_t pid)
-{
-	return MenuId_PluginBase_Name + ((int)pid * PluginMenuId_Interval);
-}
-
 void MainEmuFrame::CreatePcsx2Menu()
 {
 	// ------------------------------------------------------------------------
@@ -391,45 +371,42 @@ void MainEmuFrame::CreatePcsx2Menu()
 	m_menuSys.Append(MenuId_Sys_SuspendResume, _("Initializing..."));
 
 	m_menuSys.Append(MenuId_Sys_Shutdown, _("Shut&down"),
-					 _("Wipes all internal VM states and shuts down plugins."));
+		_("Wipes all internal VM states."));
 	m_menuSys.FindItem(MenuId_Sys_Shutdown)->Enable(false);
 
 	m_menuSys.Append(MenuId_Boot_ELF, _("&Run ELF..."),
-					 _("For running raw PS2 binaries directly."));
+		_("For running raw PS2 binaries directly."));
 
 	m_menuSys.AppendSeparator();
 
 	m_menuSys.Append(MenuId_Config_FastBoot, _("Fast Boot"),
-					 _("Skips PS2 splash screens when booting from ISO or DVD media"), wxITEM_CHECK);
+		_("Skips PS2 splash screens when booting from ISO or DVD media"), wxITEM_CHECK);
 
 	m_menuSys.Append(MenuId_GameSettingsSubMenu, _("&Game Settings"), &m_GameSettingsSubmenu);
 
 	m_GameSettingsSubmenu.Append(MenuId_EnablePatches, _("Automatic &Gamefixes"),
-								 _("Automatically applies needed Gamefixes to known problematic games."), wxITEM_CHECK);
+		_("Automatically applies needed Gamefixes to known problematic games."), wxITEM_CHECK);
 
 	m_GameSettingsSubmenu.Append(MenuId_EnableCheats, _("Enable &Cheats"),
-								 _("Use cheats otherwise known as pnachs from the cheats folder."), wxITEM_CHECK);
+		_("Use cheats otherwise known as pnachs from the cheats folder."), wxITEM_CHECK);
 
 	m_GameSettingsSubmenu.Append(MenuId_IPC, _("Configure &IPC"), &m_submenuIPC);
 
 	m_submenuIPC.Append(MenuId_IPC_Enable, _("&Enable IPC"),
-						wxEmptyString, wxITEM_CHECK);
+		wxEmptyString, wxITEM_CHECK);
 
 	m_submenuIPC.Append(MenuId_IPC_Settings, _("IPC &Settings"));
 
 	m_GameSettingsSubmenu.Append(MenuId_EnableWideScreenPatches, _("Enable &Widescreen Patches"),
-								 _("Enabling Widescreen Patches may occasionally cause issues."), wxITEM_CHECK);
+		_("Enabling Widescreen Patches may occasionally cause issues."), wxITEM_CHECK);
 
 #ifndef DISABLE_RECORDING
 	m_GameSettingsSubmenu.Append(MenuId_EnableInputRecording, _("Enable &Input Recording"),
-								 _("Input Recording for controller/keyboard presses, tools for automation and playback."), wxITEM_CHECK);
+		_("Input Recording for controller/keyboard presses, tools for automation and playback."), wxITEM_CHECK);
 #endif
 
-
 	m_GameSettingsSubmenu.Append(MenuId_EnableHostFs, _("Enable &Host Filesystem"),
-								 wxEmptyString, wxITEM_CHECK);
-
-	m_GameSettingsSubmenu.Append(MenuId_Debug_CreateBlockdump, _("Create &Blockdump"), _("Creates a block dump for debugging purposes."), wxITEM_CHECK);
+		wxEmptyString, wxITEM_CHECK);
 
 	m_menuSys.AppendSeparator();
 	// Implement custom hotkeys (F3) with translatable string intact + not blank in GUI.
@@ -444,7 +421,7 @@ void MainEmuFrame::CreatePcsx2Menu()
 	m_menuSys.AppendSeparator();
 
 	m_menuSys.Append(MenuId_Exit, _("E&xit"),
-					 AddAppName(_("Closing %s may be hazardous to your health.")));
+		AddAppName(_("Closing %s may be hazardous to your health.")));
 }
 
 void MainEmuFrame::CreateCdvdMenu()
@@ -472,17 +449,14 @@ void MainEmuFrame::CreateConfigMenu()
 {
 	m_menuConfig.Append(MenuId_Config_SysSettings, _("Emulation &Settings..."));
 	m_menuConfig.Append(MenuId_Config_McdSettings, _("&Memory Cards..."));
-	m_menuConfig.Append(MenuId_Config_BIOS, _("&Plugin/BIOS Selector..."));
+	m_menuConfig.Append(MenuId_Config_BIOS, _("&BIOS Selector..."));
 	m_menuConfig.Append(MenuId_Config_SPU2, _("&Audio Settings..."));
 	m_menuConfig.Append(MenuId_Config_DEV9, _("&Network and HDD Settings..."));
 	m_menuConfig.Append(MenuId_Config_USB, _("&USB Settings..."));
 	m_menuConfig.Append(MenuId_Config_PAD, _("&GamePad Settings..."));
-
+	m_menuConfig.Append(MenuId_Config_GS, _("&Graphical Settings..."));
 	m_menuConfig.AppendSeparator();
 
-	m_menuConfig.Append(MenuId_Config_GS, _("&Video (GS)"), m_PluginMenuPacks[PluginId_GS]);
-
-	m_menuConfig.AppendSeparator();
 	m_menuConfig.Append(MenuId_Config_Multitap0Toggle, _("Multitap &1"), wxEmptyString, wxITEM_CHECK);
 	m_menuConfig.Append(MenuId_Config_Multitap1Toggle, _("Multitap &2"), wxEmptyString, wxITEM_CHECK);
 
@@ -490,12 +464,16 @@ void MainEmuFrame::CreateConfigMenu()
 
 	m_menuConfig.Append(MenuId_ChangeLang, L"Change &Language..."); // Always in English
 	m_menuConfig.Append(MenuId_Config_ResetAll, _("C&lear All Settings..."),
-						AddAppName(_("Clears all %s settings and re-runs the startup wizard.")));
+		AddAppName(_("Clears all %s settings and re-runs the startup wizard.")));
 }
 
 void MainEmuFrame::CreateWindowsMenu()
 {
-	m_menuWindow.Append(MenuId_Debug_Open, _("&Show Debug"), wxEmptyString, wxITEM_CHECK);
+	m_menuWindow.Append(MenuId_Debug_CreateBlockdump, _("Create &Blockdump"), _("Creates a block dump for debugging purposes."), wxITEM_CHECK);
+	m_menuWindow.Append(MenuId_Debug_Open, _("&Show Debugger"), wxEmptyString, wxITEM_CHECK);
+#if defined(PCSX2_DEVBUILD) || defined(PCSX2_CI)
+	m_menuWindow.Append(MenuId_GSDump, _("Show &GS Debugger"));
+#endif
 
 	m_menuWindow.Append(&m_MenuItem_Console);
 #if defined(__unix__)
@@ -521,7 +499,7 @@ void MainEmuFrame::CreateCaptureMenu()
 	// Fixme: When you uncomment L1029-L1031 on that file; Linux says that Ctrl is already used for something else and will append (Shift + F8) while Windows will (Ctrl + Shift + F8)
 	m_menuCapture.Append(MenuId_Capture_Screenshot, _("Screenshot"), &m_submenuScreenshot);
 	wxMenuItem* sysScreenShotItem = m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot, _("Take Screenshot"));
-	// HACK: in AcceleratorDictionary::Map the Sys_TakeSnapshot entry gets Shift and Cmd (Ctrl) hardcoded to it because it is similarly hardcoded in GSdx
+	// HACK: in AcceleratorDictionary::Map the Sys_TakeSnapshot entry gets Shift and Cmd (Ctrl) hardcoded to it because it is similarly hardcoded in GS
 	// So... remove such modifiers as the GUI menu entry is only for the base keybinding without modifiers.
 	// We can be confident in doing so, as if a user adds these modifiers themselves, the same function rejects it.
 	KeyAcceleratorCode keyCode = wxGetApp().GlobalAccels->findKeycodeWithCommandId("Sys_TakeSnapshot");
@@ -531,17 +509,25 @@ void MainEmuFrame::CreateCaptureMenu()
 	m_submenuScreenshot.Append(MenuId_Capture_Screenshot_Screenshot_As, _("Screenshot As..."));
 }
 
-void MainEmuFrame::CreateRecordMenu()
+void MainEmuFrame::CreateInputRecordingMenu()
 {
 #ifndef DISABLE_RECORDING
 	m_menuRecording.Append(MenuId_Recording_New, _("New"), _("Create a new input recording."))->Enable(false);
 	m_menuRecording.Append(MenuId_Recording_Stop, _("Stop"), _("Stop the active input recording."))->Enable(false);
 	m_menuRecording.Append(MenuId_Recording_Play, _("Play"), _("Playback an existing input recording."))->Enable(false);
 	m_menuRecording.AppendSeparator();
+
+	m_menuRecording.Append(MenuId_Recording_Settings, _("Settings"), &m_submenu_recording_settings);
+	wxString frame_advance_label = wxString(_("Configure Frame Advance"));
+	frame_advance_label.Append(fmt::format(" ({})", g_Conf->inputRecording.m_frame_advance_amount));
+	m_submenu_recording_settings.Append(MenuId_Recording_Config_FrameAdvance, frame_advance_label, _("Change the amount of frames advanced each time"));
+	m_menuRecording.AppendSeparator();
+
 	m_menuRecording.Append(MenuId_Recording_TogglePause, _("Toggle Pause"), _("Pause or resume emulation on the fly."))->Enable(false);
 	m_menuRecording.Append(MenuId_Recording_FrameAdvance, _("Frame Advance"), _("Advance emulation forward by a single frame at a time."))->Enable(false);
 	m_menuRecording.Append(MenuId_Recording_ToggleRecordingMode, _("Toggle Recording Mode"), _("Save/playback inputs to/from the recording file."))->Enable(false);
 	m_menuRecording.AppendSeparator();
+
 	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port0, _("Virtual Pad (Port 1)"));
 	m_menuRecording.Append(MenuId_Recording_VirtualPad_Port1, _("Virtual Pad (Port 2)"));
 #endif
@@ -581,32 +567,30 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	, m_submenuScreenshot(*new wxMenu())
 #ifndef DISABLE_RECORDING
 	, m_menuRecording(*new wxMenu())
+	, m_submenu_recording_settings(*new wxMenu())
 #endif
 	, m_menuHelp(*new wxMenu())
 	, m_LoadStatesSubmenu(*MakeStatesSubMenu(MenuId_State_Load01, MenuId_State_LoadBackup))
 	, m_SaveStatesSubmenu(*MakeStatesSubMenu(MenuId_State_Save01))
 	, m_GameSettingsSubmenu(*new wxMenu())
 
-	, m_MenuItem_Console(*new wxMenuItem(&m_menuWindow, MenuId_Console, _("&Show Console"), wxEmptyString, wxITEM_CHECK))
+	, m_MenuItem_Console(*new wxMenuItem(&m_menuWindow, MenuId_Console, _("&Show Program Log"), wxEmptyString, wxITEM_CHECK))
 #if defined(__unix__)
-	, m_MenuItem_Console_Stdio(*new wxMenuItem(&m_menuWindow, MenuId_Console_Stdio, _("&Console to Stdio"), wxEmptyString, wxITEM_CHECK))
+	, m_MenuItem_Console_Stdio(*new wxMenuItem(&m_menuWindow, MenuId_Console_Stdio, _("&Program Log to Stdio"), wxEmptyString, wxITEM_CHECK))
 #endif
 
 {
 	m_RestartEmuOnDelete = false;
 	m_capturingVideo = false;
 
-	for (int i = 0; i < PluginId_Count; ++i)
-		m_PluginMenuPacks[i].Populate((PluginsEnum_t)i);
-
 	// ------------------------------------------------------------------------
 	// Initial menubar setup.  This needs to be done first so that the menu bar's visible size
 	// can be factored into the window size (which ends up being background+status+menus)
 
-	m_menubar.Append(&m_menuSys, _("&PCSX2"));
+	m_menubar.Append(&m_menuSys, _("&System"));
 	m_menubar.Append(&m_menuCDVD, _("CD&VD"));
 	m_menubar.Append(&m_menuConfig, _("&Config"));
-	m_menubar.Append(&m_menuWindow, _("&Window"));
+	m_menubar.Append(&m_menuWindow, _("&Debug"));
 	m_menubar.Append(&m_menuCapture, _("&Capture"));
 
 	SetMenuBar(&m_menubar);
@@ -665,7 +649,7 @@ MainEmuFrame::MainEmuFrame(wxWindow* parent, const wxString& title)
 	CreateWindowsMenu();
 	CreateCaptureMenu();
 #ifndef DISABLE_RECORDING
-	CreateRecordMenu();
+	CreateInputRecordingMenu();
 #endif
 	CreateHelpMenu();
 
@@ -821,6 +805,10 @@ void MainEmuFrame::ApplyConfigToGui(AppConfig& configToApply, int flags)
 		menubar.Check(MenuId_Capture_Video_IncludeAudio, configToApply.AudioCapture.EnableAudio);
 #ifndef DISABLE_RECORDING
 		menubar.Check(MenuId_EnableInputRecording, configToApply.EmuOptions.EnableRecordingTools);
+		wxString frame_advance_label = wxString(_("Configure Frame Advance"));
+		frame_advance_label.Append(fmt::format(" ({})", configToApply.inputRecording.m_frame_advance_amount));
+		m_submenu_recording_settings.SetLabel(MenuId_Recording_Config_FrameAdvance, frame_advance_label);
+		g_InputRecordingControls.setFrameAdvanceAmount(configToApply.inputRecording.m_frame_advance_amount);
 #endif
 		menubar.Check(MenuId_EnableHostFs, configToApply.EmuOptions.HostFs);
 		menubar.Check(MenuId_Debug_CreateBlockdump, configToApply.EmuOptions.CdvdDumpBlocks);
@@ -867,61 +855,3 @@ void MainEmuFrame::enableRecordingMenuItem(MenuIdentifiers menuId, bool enable)
 	item.Enable(enable);
 }
 #endif
-
-// ------------------------------------------------------------------------
-//   "Extensible" Plugin Menus
-// ------------------------------------------------------------------------
-
-void PerPluginMenuInfo::Populate(PluginsEnum_t pid)
-{
-	if (!pxAssert(pid < PluginId_Count))
-		return;
-
-	PluginId = pid;
-
-	MyMenu.Append(GetPluginMenuId_Name(PluginId), _("No plugins loaded."))->Enable(false);
-	MyMenu.AppendSeparator();
-
-	if (PluginId == PluginId_GS)
-	{
-		MyMenu.Append(MenuId_Video_CoreSettings, _("&Core GS Settings..."),
-					  _("Modify hardware emulation settings regulated by the PCSX2 core virtual machine."));
-
-		MyMenu.Append(MenuId_Video_WindowSettings, _("&Window Settings..."),
-					  _("Modify window and appearance options, including aspect ratio."));
-
-		MyMenu.AppendSeparator();
-	}
-
-	// Populate options from the plugin here.
-
-	MyMenu.Append(GetPluginMenuId_Settings(PluginId), _("&Plugin Settings..."),
-				  wxsFormat(_("Opens the %s plugin's advanced settings dialog."), tbl_PluginInfo[pid].GetShortname().c_str()));
-}
-
-// deletes menu items belonging to (created by) the plugin.  Leaves menu items created
-// by the PCSX2 core intact.
-void PerPluginMenuInfo::OnUnloaded()
-{
-	// Delete any menu options added by plugins (typically a plugin will have already
-	// done its own proper cleanup when the plugin was shutdown or unloaded, but lets
-	// not trust them, shall we?)
-
-	MenuItemAddonList& curlist(m_PluginMenuItems);
-	for (uint mx = 0; mx < curlist.size(); ++mx)
-		MyMenu.Delete(curlist[mx].Item);
-
-	curlist.clear();
-
-	MyMenu.SetLabel(GetPluginMenuId_Name(PluginId), _("No plugin loaded"));
-	MyMenu.Enable(GetPluginMenuId_Settings(PluginId), false);
-}
-
-void PerPluginMenuInfo::OnLoaded()
-{
-	if (!CorePlugins.IsLoaded(PluginId))
-		return;
-	MyMenu.SetLabel(GetPluginMenuId_Name(PluginId),
-					CorePlugins.GetName(PluginId) + L" " + CorePlugins.GetVersion(PluginId));
-	MyMenu.Enable(GetPluginMenuId_Settings(PluginId), true);
-}

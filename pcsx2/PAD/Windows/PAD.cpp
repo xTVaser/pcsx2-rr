@@ -171,7 +171,7 @@ struct PadFreezeData
 	u8 config;
 
 	u8 vibrate[8];
-	u8 umask[2];
+	u8 umask[3];
 
 	// Vibration indices.
 	u8 vibrateI[2];
@@ -590,7 +590,7 @@ void Update(unsigned int port, unsigned int slot)
 	if (!currentDeviceActiveAndBound && activeWindow)
 	{
 		if (anyDeviceActiveAndBound)
-			Console.Warning("PAD: Warning! No controls are bound to a currently attached device!\nPlease attach a controller that has been setup for use with PAD or go to the Plugin settings and setup new controls.\n");
+			Console.Warning("PAD: Warning! No controls are bound to a currently attached device!\nPlease attach a controller that has been setup for use with PAD or go to GamePad Settings and setup new controls.\n");
 		anyDeviceActiveAndBound = false;
 	}
 	dm->PostRead();
@@ -813,7 +813,9 @@ void ResetPad(int port, int slot)
 	else
 		pads[port][slot].mode = MODE_DIGITAL;
 
-	pads[port][slot].umask[0] = pads[port][slot].umask[1] = 0xFF;
+	pads[port][slot].umask[0] = 0xFF;
+	pads[port][slot].umask[1] = 0xFF;
+	pads[port][slot].umask[2] = 0x03;
 	// Sets up vibrate variable.
 	ResetVibrate(port, slot);
 	pads[port][slot].initialized = 1;
@@ -1316,7 +1318,7 @@ u8 PADpoll(u8 value)
 				{
 					queryMaskMode[1] = pad->umask[0];
 					queryMaskMode[2] = pad->umask[1];
-					queryMaskMode[3] = 0x03;
+					queryMaskMode[3] = pad->umask[2];
 					// Not entirely sure about this.
 					//queryMaskMode[3] = 0x01 | (pad->mode == MODE_DS2_NATIVE)*2;
 					queryMaskMode[6] = 0x5A;
@@ -1478,25 +1480,11 @@ u8 PADpoll(u8 value)
 				break;
 			// SET_DS2_NATIVE_MODE
 			case 0x4F:
-				if (query.lastByte == 3 || query.lastByte == 4)
+				if (query.lastByte >2 && query.lastByte < 6)
 				{
 					pad->umask[query.lastByte - 3] = value;
 				}
-				else if (query.lastByte == 5)
-				{
-					if (!(value & 1))
-					{
-						pad->mode = MODE_DIGITAL;
-					}
-					else if (!(value & 2))
-					{
-						pad->mode = MODE_ANALOG;
-					}
-					else
-					{
-						pad->mode = MODE_DS2_NATIVE;
-					}
-				}
+				pad->mode = MODE_DS2_NATIVE;
 				break;
 			default:
 				DEBUG_OUT(0);
@@ -1536,7 +1524,7 @@ keyEvent* PADkeyEvent()
 		// mouse/kb capture. In practice, WindowsMessagingMouse::Deactivate is called from PADclose, but doesn't
 		// manage to release the mouse, maybe due to the thread from which it's called or some
 		// state or somehow being too late.
-		// This explicitly triggers inactivity (releasing mouse/kb hooks) before PCSX2 starts to close the plugins.
+		// This explicitly triggers inactivity (releasing mouse/kb hooks) before PCSX2 starts to close subcomponents.
 		// Regardless, the mouse/kb hooks will get re-enabled on resume if required without need for further hacks.
 
 		PrepareActivityState(false);
@@ -1566,14 +1554,12 @@ keyEvent* PADkeyEvent()
 	return &ev;
 }
 
-struct PadPluginFreezeData
+struct PadFullFreezeData
 {
 	char format[8];
 	// Currently all different versions are incompatible.
 	// May split into major/minor with some compatibility rules.
 	u32 version;
-	// So when loading, know which plugin's settings I'm loading.
-	// Not a big deal.  Use a static variable when saving to figure it out.
 	u8 port;
 	// active slot for port
 	u8 slot[2];
@@ -1591,13 +1577,13 @@ s32 PADfreeze(int mode, freezeData* data)
 
 	if (mode == FREEZE_SIZE)
 	{
-		data->size = sizeof(PadPluginFreezeData);
+		data->size = sizeof(PadFullFreezeData);
 	}
 	else if (mode == FREEZE_LOAD)
 	{
-		PadPluginFreezeData& pdata = *(PadPluginFreezeData*)(data->data);
+		PadFullFreezeData& pdata = *(PadFullFreezeData*)(data->data);
 		StopVibrate();
-		if (data->size != sizeof(PadPluginFreezeData) ||
+		if (data->size != sizeof(PadFullFreezeData) ||
 			pdata.version != PAD_SAVE_STATE_VERSION ||
 			strcmp(pdata.format, "PadMode"))
 			return 0;
@@ -1634,9 +1620,9 @@ s32 PADfreeze(int mode, freezeData* data)
 	}
 	else if (mode == FREEZE_SAVE)
 	{
-		if (data->size != sizeof(PadPluginFreezeData))
+		if (data->size != sizeof(PadFullFreezeData))
 			return 0;
-		PadPluginFreezeData& pdata = *(PadPluginFreezeData*)(data->data);
+		PadFullFreezeData& pdata = *(PadFullFreezeData*)(data->data);
 
 
 		// Tales of the Abyss - pad fix
@@ -1676,50 +1662,4 @@ s32 PADsetSlot(u8 port, u8 slot)
 	// First slot always allowed.
 	// return pads[port][slot].enabled | !slot;
 	return 1;
-}
-
-void PADDoFreezeOut(void* dest)
-{
-	freezeData fP = {0, (s8*)dest};
-	if (PADfreeze(FREEZE_SIZE, &fP) != 0)
-		return;
-	if (!fP.size)
-		return;
-
-	Console.Indent().WriteLn("Saving PAD");
-
-	if (PADfreeze(FREEZE_SAVE, &fP) != 0)
-		throw std::runtime_error(" * PAD: Error saving state!\n");
-}
-
-
-void PADDoFreezeIn(pxInputStream& infp)
-{
-	freezeData fP = {0, nullptr};
-	if (PADfreeze(FREEZE_SIZE, &fP) != 0)
-		fP.size = 0;
-
-	Console.Indent().WriteLn("Loading PAD");
-
-	if (!infp.IsOk() || !infp.Length())
-	{
-		// no state data to read, but PAD expects some state data?
-		// Issue a warning to console...
-		if (fP.size != 0)
-			Console.Indent().Warning("Warning: No data for PAD found. Status may be unpredictable.");
-
-		return;
-
-		// Note: Size mismatch check could also be done here on loading, but
-		// some plugins may have built-in version support for non-native formats or
-		// older versions of a different size... or could give different sizes depending
-		// on the status of the plugin when loading, so let's ignore it.
-	}
-
-	ScopedAlloc<s8> data(fP.size);
-	fP.data = data.GetPtr();
-
-	infp.Read(fP.data, fP.size);
-	if (PADfreeze(FREEZE_LOAD, &fP) != 0)
-		throw std::runtime_error(" * PAD: Error loading state!\n");
 }

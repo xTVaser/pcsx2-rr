@@ -109,33 +109,18 @@ bool Gif_HandlerAD_MTVU(u8* pMem)
 	u32 reg = pMem[8];
 	u32* data = (u32*)pMem;
 
-	if (reg == 0x50)
-	{
-		Console.Error("GIF Handler Debug - BITBLTBUF");
-		return 1;
-	}
-	else if (reg == 0x52)
-	{
-		Console.Error("GIF Handler Debug - TRXREG");
-		return 1;
-	}
-	else if (reg == 0x53)
-	{
-		Console.Error("GIF Handler Debug - TRXDIR");
-		return 1;
-	}
-	else if (reg == 0x60)
+	if (reg == 0x60)
 	{ // SIGNAL
 		GUNIT_WARN("GIF Handler - SIGNAL");
-		if (vu1Thread.gsInterrupts.load(std::memory_order_acquire) & VU_Thread::InterruptFlagSignal)
+		if (vu1Thread.mtvuInterrupts.load(std::memory_order_acquire) & VU_Thread::InterruptFlagSignal)
 			Console.Error("GIF Handler MTVU - Double SIGNAL Not Handled");
 		vu1Thread.gsSignal.store(((u64)data[1] << 32) | data[0], std::memory_order_relaxed);
-		vu1Thread.gsInterrupts.fetch_or(VU_Thread::InterruptFlagSignal, std::memory_order_release);
+		vu1Thread.mtvuInterrupts.fetch_or(VU_Thread::InterruptFlagSignal, std::memory_order_release);
 	}
 	else if (reg == 0x61)
 	{ // FINISH
 		GUNIT_WARN("GIF Handler - FINISH");
-		u32 old = vu1Thread.gsInterrupts.fetch_or(VU_Thread::InterruptFlagFinish, std::memory_order_relaxed);
+		u32 old = vu1Thread.mtvuInterrupts.fetch_or(VU_Thread::InterruptFlagFinish, std::memory_order_relaxed);
 		if (old & VU_Thread::InterruptFlagFinish)
 			Console.Error("GIF Handler MTVU - Double FINISH Not Handled");
 	}
@@ -155,7 +140,7 @@ bool Gif_HandlerAD_MTVU(u8* pMem)
 			u32 wantedMsk = existingMsk | labelMsk;
 			wanted = ((u64)wantedMsk << 32) | wantedData;
 		}
-		vu1Thread.gsInterrupts.fetch_or(VU_Thread::InterruptFlagLabel, std::memory_order_release);
+		vu1Thread.mtvuInterrupts.fetch_or(VU_Thread::InterruptFlagLabel, std::memory_order_release);
 	}
 	else if (reg >= 0x63 && reg != 0x7f)
 	{

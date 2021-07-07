@@ -27,6 +27,7 @@
 
 #include "Utilities/PersistentThread.h"
 #include "System/SysThreads.h"
+#include <string>
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <windows.h>
@@ -48,7 +49,7 @@ protected:
 	SOCKET m_msgsock = INVALID_SOCKET;
 #else
 	// absolute path of the socket. Stored in XDG_RUNTIME_DIR, if unset /tmp
-	char* m_socket_name;
+	std::string m_socket_name;
 	int m_sock = 0;
 	// the message socket used in thread's accept().
 	int m_msgsock = 0;
@@ -102,9 +103,21 @@ protected:
 		MsgTitle = 0xB,         /**< Returns the game title. */
 		MsgID = 0xC,            /**< Returns the game ID. */
 		MsgUUID = 0xD,          /**< Returns the game UUID. */
+		MsgGameVersion = 0xE,   /**< Returns the game verion. */
+		MsgStatus = 0xF,        /**< Returns the emulator status. */
 		MsgUnimplemented = 0xFF /**< Unimplemented IPC message. */
 	};
 
+	/**
+	 * Emulator status enum.
+	 * A list of possible emulator statuses.
+	 */
+	enum EmuStatus : uint32_t
+	{
+		Running = 0, /**< Game is running */
+		Paused = 1,  /**< Game is paused */
+		Shutdown = 2 /**< Game is shutdown */
+	};
 
 	/**
 	 * IPC message buffer. 
