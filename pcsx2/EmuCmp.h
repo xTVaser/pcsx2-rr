@@ -53,7 +53,7 @@ namespace Config {
 	// You may want to modify compare routines in EmuCmp.cpp as well to e.g. compare memory regions that are getting garbage written to them
 
 	/// Is EmuCmp enabled?  If false, EmuCmp will be completely disabled and nothing below matters
-	const bool enabled = false;
+	const bool enabled = true;
 	/// If EmuCmp discovers a desync, should it attempt to fix it?
 	const bool corrections = true;
 	/// When should EmuCmp synchronize?

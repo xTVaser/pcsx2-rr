@@ -23,25 +23,28 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
+#elif _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <WinSock2.h>
+#include <WS2tcpip.h>
 #endif
 
 using namespace EmuCmp;
 
-Config::Mode EmuCmp::mode = Config::Mode::Off;
-
-// TODO: Windows support
+Config::Mode EmuCmp::mode = Config::Mode::Server;
 
 // Note: communications are one-way so we can use buffered IO
-#ifdef __POSIX__
+
 static FILE *comms = nullptr;
-#endif
 
 void EmuCmp::init() {
-#ifdef __POSIX__
 	if (comms) { return; } // Already initted
-#endif
+
 	mode = Config::Mode::Off;
-	if (EmuConfig.Debugger.EmuCmpHost.IsEmpty()) { return; }
+	if (EmuConfig.Debugger.EmuCmpHost.IsEmpty()) { 
+		DevCon.Error("EmuCmp: EmuCmpHost in .ini file is blank!");
+		return; 
+	}
 	wxString host;
 	Config::Mode attemptMode;
 	auto port = EmuConfig.Debugger.EmuCmpHost.AfterLast(':');
@@ -53,9 +56,10 @@ void EmuCmp::init() {
 	}
 	long portnum;
 	if (!port.ToLong(&portnum) && portnum == (u16)portnum) {
-		Console.Error("EmuCmp: Invalid port %s", WX_STR(port));
+		DevCon.Error("EmuCmp: Invalid port %s", WX_STR(port));
 		return;
 	}
+	DevCon.WriteLn("EmuCmp: Port Selected: %d", portnum);
 
 #ifdef __POSIX__
 	if (attemptMode == Config::Mode::Server) {
@@ -66,7 +70,7 @@ void EmuCmp::init() {
 		((u8*)&addr.sin_port)[1] = portnum & 0xFF;
 		int fd = socket(PF_INET, SOCK_STREAM, 0);
 		if (fd >= 0 && bind(fd, (struct sockaddr *)&addr, sizeof(addr)) == 0 && listen(fd, 1) == 0) {
-			Console.WriteLn("EmuCmp: Awaiting client on port %s", WX_STR(port));
+			DevCon.WriteLn("EmuCmp: Awaiting client on port %s", WX_STR(port));
 			int newfd = accept(fd, nullptr, nullptr);
 			if (newfd >= 0) {
 				close(fd);
@@ -75,7 +79,7 @@ void EmuCmp::init() {
 				goto done;
 			}
 		}
-		Console.Error("EmuCmp: Failed to listen on %s: %s", WX_STR(port), strerror(errno));
+		DevCon.Error("EmuCmp: Failed to listen on %s: %s", WX_STR(port), strerror(errno));
 	} else {
 		struct addrinfo hints = {0};
 		hints.ai_socktype = SOCK_STREAM;
@@ -83,7 +87,7 @@ void EmuCmp::init() {
 
 		int error = getaddrinfo(host.IsEmpty() ? nullptr : WX_STR(host), port.c_str(), &hints, &res);
 		if (error) {
-			Console.Error("EmuCmp: Failed to resolve %s:%s: %s", WX_STR(host), WX_STR(port), gai_strerror(error));
+			DevCon.Error("EmuCmp: Failed to resolve %s:%s: %s", WX_STR(host), WX_STR(port), gai_strerror(error));
 			return;
 		}
 
@@ -97,7 +101,80 @@ void EmuCmp::init() {
 			}
 			close(fd);
 		}
-		Console.Error("EmuCmp: Failed to connect to %s:%s: %s", WX_STR(host), WX_STR(port), strerror(errno));
+		DevCon.Error("EmuCmp: Failed to connect to %s:%s: %s", WX_STR(host), WX_STR(port), strerror(errno));
+	cleanup:
+		freeaddrinfo(res);
+	}
+done:
+#elif _WIN32
+	if (attemptMode == Config::Mode::Server)
+	{
+		struct sockaddr_in addr = {0};
+		addr.sin_family = AF_INET;
+		((u8*)&addr.sin_port)[0] = portnum >> 8;
+		((u8*)&addr.sin_port)[1] = portnum & 0xFF;
+		WSADATA wsaData = {0};
+		int iResult = 0;
+		// Initialize Winsock
+		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		if (iResult != 0)
+		{
+			DevCon.Error("WSAStartup failed: %d\n", iResult);
+			return;
+		}
+		SOCKET fd = socket(AF_INET, SOCK_STREAM, 0);
+		if (fd >= 0 && bind(fd, (struct sockaddr*)&addr, sizeof(addr)) == 0 && listen(fd, 1) == 0)
+		{
+			DevCon.WriteLn("EmuCmp: Awaiting client on port %d", portnum);
+			SOCKET newfd = accept(fd, nullptr, nullptr);
+			if (newfd >= 0)
+			{
+				close(fd);
+				comms = fdopen(newfd, "w");
+				mode = Config::Mode::Server;
+				goto done;
+			}
+		}
+		DevCon.Error("EmuCmp: Failed to listen on %d: %s", portnum, strerror(errno));
+	}
+	else
+	{
+		struct addrinfo hints = {0};
+		hints.ai_socktype = SOCK_STREAM;
+		struct addrinfo* res;
+		WSADATA wsaData = {0};
+		int iResult = 0;
+		// Initialize Winsock
+		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		if (iResult != 0)
+		{
+			DevCon.Error("WSAStartup failed: %d\n", iResult);
+			return;
+		}
+
+		int error = getaddrinfo(host.c_str(), port.c_str(), &hints, &res);
+		if (error)
+		{
+			DevCon.Error("EmuCmp: Failed to resolve %s:%s: %s", host, port, gai_strerror(error));
+			return;
+		}
+
+		for (auto info = res; info; info = info->ai_next)
+		{
+			int fd = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
+			if (fd < 0)
+			{
+				continue;
+			}
+			if (connect(fd, info->ai_addr, info->ai_addrlen) == 0)
+			{
+				mode = Config::Mode::Client;
+				comms = fdopen(fd, "r");
+				goto cleanup;
+			}
+			close(fd);
+		}
+		DevCon.Error("EmuCmp: Failed to connect to %s:%s: %s", host, port, strerror(errno));
 	cleanup:
 		freeaddrinfo(res);
 	}
@@ -107,35 +184,29 @@ done:
 }
 
 void EmuCmp::shutdown() {
-#ifdef __POSIX__
 	if (comms) {
 		fclose(comms);
 		comms = nullptr;
 	}
-#endif
 	mode = Config::Mode::Off;
 }
 
 static void send(const void *buffer, std::size_t size) {
 	if (mode != Config::Mode::Server) { return; }
-#ifdef __POSIX__
 	if (fwrite(buffer, size, 1, comms) != 1) {
 		// Client quit
-		Console.Error("EmuCmp: Client quit!");
+		DevCon.Error("EmuCmp: Client quit!");
 		shutdown();
 	}
-#endif
 }
 
 static void receive(void *buffer, std::size_t size) {
 	if (mode != Config::Mode::Client) { return; }
-#ifdef __POSIX__
 	if (fread(buffer, size, 1, comms) != 1) {
 		// Server quit
-		Console.Error("EmuCmp: Server quit!");
+		DevCon.Error("EmuCmp: Server quit!");
 		shutdown();
 	}
-#endif
 }
 
 template <typename T, typename = typename std::enable_if<std::is_trivial<T>::value>::type>

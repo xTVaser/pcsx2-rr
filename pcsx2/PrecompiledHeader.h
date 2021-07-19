@@ -21,7 +21,7 @@
 #	pragma warning(disable:4250) //'class' inherits 'method' via dominance
 #	pragma warning(disable:4996) //ignore the stricmp deprecated warning
 #endif
-
+#define _WINSOCKAPI_
 #include "Utilities/Dependencies.h"
 
 #define NOMINMAX		// Disables other libs inclusion of their own min/max macros (we use std instead)
