@@ -16,7 +16,6 @@
 #include "PrecompiledHeader.h"
 #include "App.h"
 #include "MainFrame.h"
-#include "Plugins.h"
 
 #include "MemoryCardFile.h"
 
@@ -58,12 +57,6 @@ namespace PathDefs
 		const wxDirName& Settings()
 		{
 			static const wxDirName retval( L"inis" );
-			return retval;
-		}
-
-		const wxDirName& Plugins()
-		{
-			static const wxDirName retval( L"plugins" );
 			return retval;
 		}
 
@@ -114,7 +107,7 @@ namespace PathDefs
 	// (currently it's the CWD, but in the future I intend to move all binaries to a "bin"
 	// sub folder, in which case the approot will become "..") [- Air?]
 
-	//The installer installs the folders which are relative to AppRoot (that's plugins/langs)
+	//The installer installs the folders which are relative to AppRoot (that's langs)
 	//  relative to the exe folder, and not relative to cwd. So the exe should be default AppRoot. - avih
 	const wxDirName& AppRoot()
 	{
@@ -152,7 +145,7 @@ namespace PathDefs
 	{
 		switch( mode )
 		{
-#ifdef XDG_STD
+#if defined(XDG_STD) || defined(__APPLE__) // Expected location for this kind of stuff on macOS
 			// Move all user data file into central configuration directory (XDG_CONFIG_DIR)
 			case DocsFolder_User:	return GetUserLocalDataDir();
 #else
@@ -173,7 +166,9 @@ namespace PathDefs
 
 	wxDirName GetProgramDataDir()
 	{
-#ifndef GAMEINDEX_DIR_COMPILATION
+#ifdef __APPLE__
+		return wxDirName(wxStandardPaths::Get().GetResourcesDir());
+#elif !defined(GAMEINDEX_DIR_COMPILATION)
 		return AppRoot();
 #else
 		// Each linux distributions have his rules for path so we give them the possibility to
@@ -219,19 +214,6 @@ namespace PathDefs
 		return GetDocuments() + Base::MemoryCards();
 	}
 
-	wxDirName GetPlugins()
-	{
-		// Each linux distributions have his rules for path so we give them the possibility to
-		// change it with compilation flags. -- Gregory
-#ifndef PLUGIN_DIR_COMPILATION
-		return AppRoot() + Base::Plugins();
-#else
-#define xPLUGIN_DIR_str(s) PLUGIN_DIR_str(s)
-#define PLUGIN_DIR_str(s) #s
-		return wxDirName( xPLUGIN_DIR_str(PLUGIN_DIR_COMPILATION) );
-#endif
-	}
-
 	wxDirName GetSettings()
 	{
 		return GetDocuments() + Base::Settings();
@@ -244,14 +226,17 @@ namespace PathDefs
 
 	wxDirName GetLangs()
 	{
+#ifdef __APPLE__
+		return wxDirName(wxStandardPaths::Get().GetResourcesDir());
+#else
 		return AppRoot() + Base::Langs();
+#endif
 	}
 
 	wxDirName Get( FoldersEnum_t folderidx )
 	{
 		switch( folderidx )
 		{
-			case FolderId_Plugins:		return GetPlugins();
 			case FolderId_Settings:		return GetSettings();
 			case FolderId_Bios:			return GetBios();
 			case FolderId_Snapshots:	return GetSnapshots();
@@ -274,7 +259,6 @@ wxDirName& AppConfig::FolderOptions::operator[]( FoldersEnum_t folderidx )
 {
 	switch( folderidx )
 	{
-		case FolderId_Plugins:		return PluginsFolder;
 		case FolderId_Settings:		return SettingsFolder;
 		case FolderId_Bios:			return Bios;
 		case FolderId_Snapshots:	return Snapshots;
@@ -289,7 +273,7 @@ wxDirName& AppConfig::FolderOptions::operator[]( FoldersEnum_t folderidx )
 
 		jNO_DEFAULT
 	}
-	return PluginsFolder;		// unreachable, but suppresses warnings.
+	return SettingsFolder;		// unreachable, but suppresses warnings.
 }
 
 const wxDirName& AppConfig::FolderOptions::operator[]( FoldersEnum_t folderidx ) const
@@ -301,7 +285,6 @@ bool AppConfig::FolderOptions::IsDefault( FoldersEnum_t folderidx ) const
 {
 	switch( folderidx )
 	{
-		case FolderId_Plugins:		return UseDefaultPluginsFolder;
 		case FolderId_Settings:		return UseDefaultSettingsFolder;
 		case FolderId_Bios:			return UseDefaultBios;
 		case FolderId_Snapshots:	return UseDefaultSnapshots;
@@ -323,11 +306,6 @@ void AppConfig::FolderOptions::Set( FoldersEnum_t folderidx, const wxString& src
 {
 	switch( folderidx )
 	{
-		case FolderId_Plugins:
-			PluginsFolder = src;
-			UseDefaultPluginsFolder = useDefault;
-		break;
-
 		case FolderId_Settings:
 			SettingsFolder = src;
 			UseDefaultSettingsFolder = useDefault;
@@ -431,22 +409,6 @@ namespace FilenameDefs
 	}
 };
 
-wxString AppConfig::FullpathTo( PluginsEnum_t pluginidx ) const
-{
-	return Path::Combine( PluginsFolder, BaseFilenames[pluginidx] );
-}
-
-// returns true if the filenames are quite absolutely the equivalent.  Works for all
-// types of filenames, relative and absolute.  Very important that you use this function
-// rather than any other type of more direct string comparison!
-bool AppConfig::FullpathMatchTest( PluginsEnum_t pluginId, const wxString& cmpto ) const
-{
-	// Implementation note: wxFileName automatically normalizes things as needed in it's
-	// equality comparison implementations, so we can do a simple comparison as follows:
-
-	return wxFileName(cmpto).SameAs( FullpathTo(pluginId) );
-}
-
 static wxDirName GetResolvedFolder(FoldersEnum_t id)
 {
 	return g_Conf->Folders.IsDefault(id) ? PathDefs::Get(id) : g_Conf->Folders[id];
@@ -509,7 +471,6 @@ AppConfig::AppConfig()
 	: MainGuiPosition( wxDefaultPosition )
 	, SysSettingsTabName( L"Cpu" )
 	, McdSettingsTabName( L"none" )
-	, ComponentsTabName( L"Plugins" )
 	, AppSettingsTabName( L"none" )
 	, GameDatabaseTabName( L"none" )
 {
@@ -525,6 +486,7 @@ AppConfig::AppConfig()
 	#endif
 	EnableSpeedHacks	= true;
 	EnableGameFixes		= false;
+	EnableFastBoot		= true;
 
 	EnablePresets		= true;
 	PresetIndex			= 1;
@@ -573,12 +535,8 @@ void App_LoadSaveInstallSettings( IniInterface& ini )
 	ini.Entry( L"SettingsFolder",			SettingsFolder,				PathDefs::GetSettings() );
 
 	// "Install_Dir" conforms to the NSIS standard install directory key name.
-	// Attempt to load plugins based on the Install Folder.
-
 	ini.Entry( L"Install_Dir",				InstallFolder,				(wxDirName)(wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath()) );
 	SetFullBaseDir( InstallFolder );
-
-	//ini.Entry( L"PluginsFolder",			PluginsFolder,				InstallFolder + PathDefs::Base::Plugins() );
 
 	ini.Flush();
 }
@@ -646,6 +604,7 @@ void AppConfig::LoadSaveRootItems( IniInterface& ini )
 
 	IniEntry( EnableSpeedHacks );
 	IniEntry( EnableGameFixes );
+	IniEntry( EnableFastBoot );
 
 	IniEntry( EnablePresets );
 	IniEntry( PresetIndex );
@@ -671,6 +630,10 @@ void AppConfig::LoadSave( IniInterface& ini )
 	BaseFilenames	.LoadSave( ini );
 	GSWindow		.LoadSave( ini );
 	Framerate		.LoadSave( ini );
+#ifndef DISABLE_RECORDING
+	inputRecording.loadSave(ini);
+#endif
+	AudioCapture.LoadSave( ini );
 	Templates		.LoadSave( ini );
 
 	ini.Flush();
@@ -707,7 +670,6 @@ void AppConfig::FolderOptions::ApplyDefaults()
 	if( UseDefaultMemoryCards )	MemoryCards	  = PathDefs::GetMemoryCards();
 	if( UseDefaultLogs )		Logs		  = PathDefs::GetLogs();
 	if( UseDefaultLangs )		Langs		  = PathDefs::GetLangs();
-	if( UseDefaultPluginsFolder)PluginsFolder = PathDefs::GetPlugins();
 	if( UseDefaultCheats )      Cheats		  = PathDefs::GetCheats();
 	if( UseDefaultCheatsWS )    CheatsWS	  = PathDefs::GetCheatsWS();
 }
@@ -723,8 +685,9 @@ AppConfig::FolderOptions::FolderOptions()
 	, Cheats		( PathDefs::GetCheats() )
 	, CheatsWS      ( PathDefs::GetCheatsWS() )
 
-	, RunIso( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
-	, RunELF( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
+	, RunIso	( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
+	, RunELF	( PathDefs::GetDocuments() )			// raw default is always the Documents folder.
+	, RunDisc()
 {
 	bitset = 0xffffffff;
 }
@@ -744,7 +707,6 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	IniBitBool( UseDefaultMemoryCards );
 	IniBitBool( UseDefaultLogs );
 	IniBitBool( UseDefaultLangs );
-	IniBitBool( UseDefaultPluginsFolder );
 	IniBitBool( UseDefaultCheats );
 	IniBitBool( UseDefaultCheatsWS );
 
@@ -760,10 +722,10 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 	IniEntryDirFile( Langs,  rel );
 	IniEntryDirFile( Cheats, rel );
 	IniEntryDirFile( CheatsWS, rel );
-	ini.Entry( L"PluginsFolder", PluginsFolder, InstallFolder + PathDefs::Base::Plugins(), rel );
 
 	IniEntryDirFile( RunIso, rel );
 	IniEntryDirFile( RunELF, rel );
+	IniEntry(RunDisc);
 
 	if( ini.IsLoading() )
 	{
@@ -775,12 +737,6 @@ void AppConfig::FolderOptions::LoadSave( IniInterface& ini )
 }
 
 // ------------------------------------------------------------------------
-const wxFileName& AppConfig::FilenameOptions::operator[]( PluginsEnum_t pluginidx ) const
-{
-	IndexBoundsAssumeDev( L"Filename[Plugin]", pluginidx, PluginId_Count );
-	return Plugins[pluginidx];
-}
-
 void AppConfig::FilenameOptions::LoadSave( IniInterface& ini )
 {
 	ScopedIniGroup path( ini, L"Filenames" );
@@ -788,18 +744,9 @@ void AppConfig::FilenameOptions::LoadSave( IniInterface& ini )
 	static const wxFileName pc( L"Please Configure" );
 
 	//when saving in portable mode, we just save the non-full-path filename
- 	//  --> on load they'll be initialized with default (relative) paths (works both for plugins and bios)
+ 	//  --> on load they'll be initialized with default (relative) paths (works for bios)
 	//note: this will break if converting from install to portable, and custom folders are used. We can live with that.
 	bool needRelativeName = ini.IsSaving() && IsPortable();
-
-	for( int i=0; i<PluginId_Count; ++i )
-	{
-		if ( needRelativeName ) {
-			wxFileName plugin_filename = wxFileName( Plugins[i].GetFullName() );
-			ini.Entry( tbl_PluginInfo[i].GetShortname(), plugin_filename, pc );
-		} else
-			ini.Entry( tbl_PluginInfo[i].GetShortname(), Plugins[i], pc );
-	}
 
 	if( needRelativeName ) { 
 		wxFileName bios_filename = wxFileName( Bios.GetFullName() );
@@ -896,6 +843,22 @@ void AppConfig::GSWindowOptions::LoadSave( IniInterface& ini )
 	if( ini.IsLoading() ) SanityCheck();
 }
 
+#ifndef DISABLE_RECORDING
+AppConfig::InputRecordingOptions::InputRecordingOptions()
+	: VirtualPadPosition(wxDefaultPosition)
+	, m_frame_advance_amount(1)
+{
+}
+
+void AppConfig::InputRecordingOptions::loadSave(IniInterface& ini)
+{
+	ScopedIniGroup path(ini, L"InputRecording");
+
+	IniEntry(VirtualPadPosition);
+	IniEntry(m_frame_advance_amount);
+}
+#endif
+
 // ----------------------------------------------------------------------------
 AppConfig::FramerateOptions::FramerateOptions()
 {
@@ -926,6 +889,18 @@ void AppConfig::FramerateOptions::LoadSave( IniInterface& ini )
 
 	IniEntry( SkipOnLimit );
 	IniEntry( SkipOnTurbo );
+}
+
+AppConfig::CaptureOptions::CaptureOptions()
+{
+	EnableAudio = true;
+}
+
+void AppConfig::CaptureOptions::LoadSave(IniInterface& ini)
+{
+	ScopedIniGroup path(ini, L"Capture");
+
+	IniEntry( EnableAudio );
 }
 
 AppConfig::UiTemplateOptions::UiTemplateOptions()
@@ -1032,18 +1007,20 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 	Framerate.SlomoScalar = original_Framerate.SlomoScalar;
 	Framerate.TurboScalar = original_Framerate.TurboScalar;
 
-	EnableSpeedHacks	= false;
 	EnableGameFixes		= false;
 
 	EmuOptions.EnablePatches		= true;
 	EmuOptions.GS					= default_Pcsx2Config.GS;
 	EmuOptions.GS.FrameLimitEnable	= original_GS.FrameLimitEnable;	//Frame limiter is not modified by presets
-	
+	EmuOptions.GS.VsyncEnable		= original_GS.VsyncEnable;
+	EmuOptions.GS.VsyncQueueSize	= original_GS.VsyncQueueSize;
+
 	EmuOptions.Cpu					= default_Pcsx2Config.Cpu;
 	EmuOptions.Gamefixes			= default_Pcsx2Config.Gamefixes;
 	EmuOptions.Speedhacks			= default_Pcsx2Config.Speedhacks;
 	EmuOptions.Speedhacks.bitset	= 0; //Turn off individual hacks to make it visually clear they're not used.
 	EmuOptions.Speedhacks.vuThread	= original_SpeedHacks.vuThread;
+	EmuOptions.Speedhacks.vu1Instant= original_SpeedHacks.vu1Instant;
 	EnableSpeedHacks = true;
 
 	// Actual application of current preset over the base settings which all presets use (mostly pcsx2's default values).
@@ -1054,30 +1031,32 @@ bool AppConfig::IsOkApplyPreset(int n, bool ignoreMTVU)
 		case 5: // Mostly Harmful
 			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = 1); // +1 EE cyclerate
 			isSkipSet ? 0 : (isSkipSet = true, EmuOptions.Speedhacks.EECycleSkip = 1); // +1 EE cycle skip
-            // Fall through
+			[[fallthrough]];
 		
 		case 4: // Very Aggressive
 			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = -2); // -2 EE cyclerate
-            // Fall through
+			[[fallthrough]];
 
 		case 3: // Aggressive
 			isRateSet ? 0 : (isRateSet = true, EmuOptions.Speedhacks.EECycleRate = -1); // -1 EE cyclerate
-            // Fall through
+			[[fallthrough]];
 
 		case 2: // Balanced
 			isMTVUSet ? 0 : (isMTVUSet = true, EmuOptions.Speedhacks.vuThread = true); // Enable MTVU
-            // Fall through
+			[[fallthrough]];
 
 		case 1: // Safe (Default)
 			EmuOptions.Speedhacks.IntcStat = true;
 			EmuOptions.Speedhacks.WaitLoop = true;
 			EmuOptions.Speedhacks.vuFlagHack = true;
+			EmuOptions.Speedhacks.vu1Instant = true;
 			
 			// If waterfalling from > Safe, break to avoid MTVU disable.
 			if (n > 1) break;
-            // Fall through
+			[[fallthrough]];
 			
 		case 0: // Safest
+			if(n == 0) EmuOptions.Speedhacks.vu1Instant = false;
 			isMTVUSet ? 0 : (isMTVUSet = true, EmuOptions.Speedhacks.vuThread = false); // Disable MTVU
 			break;
 
@@ -1127,8 +1106,7 @@ void RelocateLogfile()
 //      that might be saved to the configured ini/settings folder.
 //
 // Notes:
-//   The overwrite option applies to PCSX2 options only.  Plugin option behavior will depend
-//   on the plugins.
+//   The overwrite option applies to PCSX2 options only.
 //
 void AppConfig_OnChangedSettingsFolder( bool overwrite )
 {
@@ -1253,7 +1231,9 @@ static void LoadUiSettings()
 	g_Conf->LoadSave( loader );
 
 	if( !wxFile::Exists( g_Conf->CurrentIso ) )
+	{
 		g_Conf->CurrentIso.clear();
+	}
 
 	sApp.DispatchUiSettingsEvent( loader );
 }
@@ -1286,7 +1266,9 @@ void AppLoadSettings()
 static void SaveUiSettings()
 {	
 	if( !wxFile::Exists( g_Conf->CurrentIso ) )
+	{
 		g_Conf->CurrentIso.clear();
+	}
 
 	sApp.GetRecentIsoManager().Add( g_Conf->CurrentIso );
 
@@ -1305,19 +1287,6 @@ static void SaveVmSettings()
 	g_Conf->EmuOptions.LoadSave( vmsaver );
 
 	sApp.DispatchVmSettingsEvent( vmsaver );
-}
-
-static void SaveRegSettings()
-{
-	std::unique_ptr<wxConfigBase> conf_install;
-
-	if (InstallationMode == InstallMode_Portable) return;
-
-	// sApp. macro cannot be use because you need the return value of OpenInstallSettingsFile method
-	if( Pcsx2App* __app_ = (Pcsx2App*)wxApp::GetInstance() ) conf_install = std::unique_ptr<wxConfigBase>((*__app_).OpenInstallSettingsFile());
-	conf_install->SetRecordDefaults(false);
-
-	App_SaveInstallSettings( conf_install.get() );
 }
 
 void AppSaveSettings()
@@ -1339,7 +1308,6 @@ void AppSaveSettings()
 
 	SaveUiSettings();
 	SaveVmSettings();
-	SaveRegSettings(); // save register because of PluginsFolder change
 
 	isPosted = false;
 }

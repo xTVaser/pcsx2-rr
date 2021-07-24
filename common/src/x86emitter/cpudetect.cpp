@@ -18,6 +18,28 @@
 #include "internal.h"
 #include "x86_intrin.h"
 
+// CPU information support
+#if defined(_WIN32)
+
+#define cpuid __cpuid
+#define cpuidex __cpuidex
+
+#else
+
+#include <cpuid.h>
+
+static __inline__ __attribute__((always_inline)) void cpuidex(int CPUInfo[], const int InfoType, const int count)
+{
+    __cpuid_count(InfoType, count, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
+}
+
+static __inline__ __attribute__((always_inline)) void cpuid(int CPUInfo[], const int InfoType)
+{
+    __cpuid(InfoType, CPUInfo[0], CPUInfo[1], CPUInfo[2], CPUInfo[3]);
+}
+
+#endif
+
 using namespace x86Emitter;
 
 __aligned16 x86capabilities x86caps;
@@ -193,12 +215,6 @@ void x86capabilities::Identify()
     s32 regs[4];
     u32 cmds;
 
-//AMD 64 STUFF
-#ifdef __M_X86_64
-    u32 x86_64_8BITBRANDID;
-    u32 x86_64_12BITBRANDID;
-#endif
-
     memzero(VendorName);
     cpuid(regs, 0);
 
@@ -227,7 +243,7 @@ void x86capabilities::Identify()
         FamilyID = (regs[0] >> 8) & 0xf;
         TypeID = (regs[0] >> 12) & 0x3;
 #ifdef __M_X86_64
-        x86_64_8BITBRANDID = regs[1] & 0xff;
+        //u32 x86_64_8BITBRANDID = regs[1] & 0xff;
 #endif
         Flags = regs[3];
         Flags2 = regs[2];
@@ -246,7 +262,7 @@ void x86capabilities::Identify()
         cpuid(regs, 0x80000001);
 
 #ifdef __M_X86_64
-        x86_64_12BITBRANDID = regs[1] & 0xfff;
+        //u32 x86_64_12BITBRANDID = regs[1] & 0xfff;
 #endif
         EFlags2 = regs[2];
         EFlags = regs[3];
@@ -297,12 +313,12 @@ void x86capabilities::Identify()
 
     if ((Flags2 >> 27) & 1) // OSXSAVE
     {
-        if ((xgetbv(0) & 6) == 6) // XFEATURE_ENABLED_MASK[2:1] = '11b' (XMM state and YMM state are enabled by OS).
-        {
-            hasAVX = (Flags2 >> 28) & 1; //avx
-            hasFMA = (Flags2 >> 12) & 1; //fma
-            hasAVX2 = (SEFlag >> 5) & 1; //avx2
-        }
+        // Note: In theory, we should use xgetbv to check OS support
+        // but all OSes we officially run under support it
+        // and its intrinsic requires extra compiler flags
+        hasAVX = (Flags2 >> 28) & 1; //avx
+        hasFMA = (Flags2 >> 12) & 1; //fma
+        hasAVX2 = (SEFlag >> 5) & 1; //avx2
     }
 
     hasBMI1 = (SEFlag >> 3) & 1;

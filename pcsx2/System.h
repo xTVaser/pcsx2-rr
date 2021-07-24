@@ -19,9 +19,10 @@
 
 #include "Utilities/SafeArray.h"
 #include "Utilities/Threading.h"		// to use threading stuff, include the Threading namespace in your file.
-#include "CDVD/CDVDaccess.h"
 
 #include "vtlb.h"
+
+#include "Config.h"
 
 typedef SafeArray<u8> VmStateBuffer;
 
@@ -214,3 +215,6 @@ namespace Msgbox
 	extern int	Assertion( const wxString& text, const wxString& stacktrace );
 }
 
+#ifdef _WIN32
+extern void CheckIsUserOnHighPerfPowerPlan();
+#endif

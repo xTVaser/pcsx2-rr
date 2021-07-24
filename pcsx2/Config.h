@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2010  PCSX2 Dev Team
+ *  Copyright (C) 2002-2021  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -17,37 +17,20 @@
 
 #include "x86emitter/tools.h"
 
+#include "Utilities/FixedPointTypes.h"
+#include "Utilities/General.h"
+#include <wx/filename.h>
+
 class IniInterface;
-
-enum PluginsEnum_t
-{
-	PluginId_GS = 0,
-	PluginId_PAD,
-	PluginId_SPU2,
-	PluginId_CDVD,
-	PluginId_USB,
-	PluginId_FW,
-	PluginId_DEV9,
-	PluginId_Count,
-
-	// Memorycard plugin support is preliminary, and is only hacked/hardcoded in at this
-	// time.  So it's placed afer PluginId_Count so that it doesn't show up in the conf
-	// screens or other plugin tables.
-
-	PluginId_Mcd,
-	PluginId_AllocCount // Extra value for correct array allocation
-};
 
 enum GamefixId
 {
 	GamefixId_FIRST = 0,
 
 	Fix_VuAddSub = GamefixId_FIRST,
-	Fix_FpuCompare,
 	Fix_FpuMultiply,
 	Fix_FpuNegDiv,
 	Fix_XGKick,
-	Fix_IpuWait,
 	Fix_EETiming,
 	Fix_SkipMpeg,
 	Fix_OPHFlag,
@@ -55,12 +38,24 @@ enum GamefixId
 	Fix_VIFFIFO,
 	Fix_VIF1Stall,
 	Fix_GIFFIFO,
-	Fix_FMVinSoftware,
 	Fix_GoemonTlbMiss,
-	Fix_ScarfaceIbit,
-	Fix_CrashTagTeamIbit,
+	Fix_Ibit,
+	Fix_VUKickstart,
 
 	GamefixId_COUNT
+};
+
+// TODO - config - not a fan of the excessive use of enums and macros to make them work
+// a proper object would likely make more sense (if possible).
+
+enum SpeedhackId
+{
+	SpeedhackId_FIRST = 0,
+
+	Speedhack_mvuFlag = SpeedhackId_FIRST,
+	Speedhack_InstantVU1,
+
+	SpeedhackId_COUNT
 };
 
 enum class VsyncMode
@@ -78,6 +73,7 @@ typename std::underlying_type<Enumeration>::type enum_cast(Enumeration E)
 }
 
 ImplementEnumOperators( GamefixId );
+ImplementEnumOperators( SpeedhackId );
 
 //------------ DEFAULT sseMXCSR VALUES ---------------
 #define DEFAULT_sseMXCSR	0xffc0 //FPU rounding > DaZ, FtZ, "chop"
@@ -179,8 +175,6 @@ struct TraceLogFilters
 //  Pcsx2Config class
 // --------------------------------------------------------------------------------------
 // This is intended to be a public class library between the core emulator and GUI only.
-// It is *not* meant to be shared data between core emulation and plugins, due to issues
-// with version incompatibilities if the structure formats are changed.
 //
 // When GUI code performs modifications of this class, it must be done with strict thread
 // safety, since the emu runs on a separate thread.  Additionally many components of the
@@ -225,10 +219,6 @@ struct Pcsx2Config
 				EnableIOP		:1,
 				EnableVU0		:1,
 				EnableVU1		:1;
-
-			bool
-				UseMicroVU0		:1,
-				UseMicroVU1		:1;
 
 			bool
 				vuOverflow		:1,
@@ -343,25 +333,22 @@ struct Pcsx2Config
 	// NOTE: The GUI's GameFixes panel is dependent on the order of bits in this structure.
 	struct GamefixOptions
 	{
-        BITFIELD32()
-        bool
-            VuAddSubHack : 1,           // Tri-ace games, they use an encryption algorithm that requires VU ADDI opcode to be bit-accurate.
-            FpuCompareHack : 1,         // Digimon Rumble Arena 2, fixes spinning/hanging on intro-menu.
-            FpuMulHack : 1,             // Tales of Destiny hangs.
-            FpuNegDivHack : 1,          // Gundam games messed up camera-view.
-            XgKickHack : 1,             // Erementar Gerad, adds more delay to VU XGkick instructions. Corrects the color of some graphics, but breaks Tri-ace games and others.
-            IPUWaitHack : 1,            // FFX FMV, makes GIF flush before doing IPU work. Fixes bad graphics overlay.
-            EETimingHack : 1,           // General purpose timing hack.
-            SkipMPEGHack : 1,           // Skips MPEG videos (Katamari and other games need this)
-            OPHFlagHack : 1,            // Bleach Blade Battlers
-            DMABusyHack : 1,            // Denies writes to the DMAC when it's busy. This is correct behaviour but bad timing can cause problems.
-            VIFFIFOHack : 1,            // Pretends to fill the non-existant VIF FIFO Buffer.
-            VIF1StallHack : 1,          // Like above, processes FIFO data before the stall is allowed (to make sure data goes over).
-            GIFFIFOHack : 1,            // Enabled the GIF FIFO (more correct but slower)
-            FMVinSoftwareHack : 1,      // Toggle in and out of software rendering when an FMV runs.
-            GoemonTlbHack : 1,          // Gomeon tlb miss hack. The game need to access unmapped virtual address. Instead to handle it as exception, tlb are preloaded at startup
-            ScarfaceIbit : 1,           // Scarface I bit hack. Needed to stop constant VU recompilation
-            CrashTagTeamRacingIbit : 1; // Crash Tag Team Racing I bit hack. Needed to stop constant VU recompilation
+		BITFIELD32()
+			bool
+			VuAddSubHack : 1,			// Tri-ace games, they use an encryption algorithm that requires VU ADDI opcode to be bit-accurate.
+			FpuMulHack : 1,				// Tales of Destiny hangs.
+			FpuNegDivHack : 1,			// Gundam games messed up camera-view.
+			XgKickHack : 1,				// Erementar Gerad, adds more delay to VU XGkick instructions. Corrects the color of some graphics, but breaks Tri-ace games and others.
+			EETimingHack : 1,			// General purpose timing hack.
+			SkipMPEGHack : 1,			// Skips MPEG videos (Katamari and other games need this)
+			OPHFlagHack : 1,			// Bleach Blade Battlers
+			DMABusyHack : 1,			// Denies writes to the DMAC when it's busy. This is correct behaviour but bad timing can cause problems.
+			VIFFIFOHack : 1,			// Pretends to fill the non-existant VIF FIFO Buffer.
+			VIF1StallHack : 1,			// Like above, processes FIFO data before the stall is allowed (to make sure data goes over).
+			GIFFIFOHack : 1,			// Enabled the GIF FIFO (more correct but slower)
+			GoemonTlbHack : 1,			// Gomeon tlb miss hack. The game need to access unmapped virtual address. Instead to handle it as exception, tlb are preloaded at startup
+			IbitHack : 1,				// I bit hack. Needed to stop constant VU recompilation in some games
+			VUKickstartHack : 1;		// Gives new VU programs a slight head start and runs VU's ahead of EE to avoid VU register reading/writing issues
 		BITFIELD_END
 
 		GamefixOptions();
@@ -395,15 +382,18 @@ struct Pcsx2Config
 				IntcStat		:1,		// tells Pcsx2 to fast-forward through intc_stat waits.
 				WaitLoop		:1,		// enables constant loop detection and fast-forwarding
 				vuFlagHack		:1,		// microVU specific flag hack
-				vuThread        :1;		// Enable Threaded VU1
+				vuThread		:1,		// Enable Threaded VU1
+				vu1Instant		:1;		// Enable Instant VU1 (Without MTVU only)
 		BITFIELD_END
 
 		s8	EECycleRate;		// EE cycle rate selector (1.0, 1.5, 2.0)
 		u8	EECycleSkip;		// EE Cycle skip factor (0, 1, 2, or 3)
 
 		SpeedhackOptions();
-		void LoadSave( IniInterface& conf );
+		void LoadSave(IniInterface& conf);
 		SpeedhackOptions& DisableAll();
+
+		void Set(SpeedhackId id, bool enabled = true);
 
 		bool operator ==( const SpeedhackOptions& right ) const
 		{
@@ -454,6 +444,7 @@ struct Pcsx2Config
 			CdvdShareWrite		:1,		// allows the iso to be modified while it's loaded
 			EnablePatches		:1,		// enables patch detection and application
 			EnableCheats		:1,		// enables cheat detection and application
+			EnableIPC		    :1,		// enables inter-process communication 
 			EnableWideScreenPatches		:1,
 #ifndef DISABLE_RECORDING
 			EnableRecordingTools :1,
@@ -469,7 +460,8 @@ struct Pcsx2Config
 			MultitapPort1_Enabled:1,
 
 			ConsoleToStdio		:1,
-			HostFs				:1;
+			HostFs				:1,
+			FullBootConfig		:1;
 	BITFIELD_END
 
 	CpuOptions			Cpu;
@@ -526,20 +518,17 @@ TraceLogFilters&				SetTraceConfig();
 
 // ------------ CPU / Recompiler Options ---------------
 
-#define THREAD_VU1					(EmuConfig.Cpu.Recompiler.UseMicroVU1 && EmuConfig.Speedhacks.vuThread)
-#define CHECK_MICROVU0				(EmuConfig.Cpu.Recompiler.UseMicroVU0)
-#define CHECK_MICROVU1				(EmuConfig.Cpu.Recompiler.UseMicroVU1)
+#define THREAD_VU1					(EmuConfig.Cpu.Recompiler.EnableVU1 && EmuConfig.Speedhacks.vuThread)
+#define INSTANT_VU1					(EmuConfig.Speedhacks.vu1Instant)
 #define CHECK_EEREC					(EmuConfig.Cpu.Recompiler.EnableEE && GetCpuProviders().IsRecAvailable_EE())
 #define CHECK_CACHE					(EmuConfig.Cpu.Recompiler.EnableEECache)
 #define CHECK_IOPREC				(EmuConfig.Cpu.Recompiler.EnableIOP && GetCpuProviders().IsRecAvailable_IOP())
 
 //------------ SPECIAL GAME FIXES!!! ---------------
 #define CHECK_VUADDSUBHACK			(EmuConfig.Gamefixes.VuAddSubHack)	 // Special Fix for Tri-ace games, they use an encryption algorithm that requires VU addi opcode to be bit-accurate.
-#define CHECK_FPUCOMPAREHACK		(EmuConfig.Gamefixes.FpuCompareHack) // Special Fix for Digimon Rumble Arena 2, fixes spinning/hanging on intro-menu.
 #define CHECK_FPUMULHACK			(EmuConfig.Gamefixes.FpuMulHack)	 // Special Fix for Tales of Destiny hangs.
 #define CHECK_FPUNEGDIVHACK			(EmuConfig.Gamefixes.FpuNegDivHack)	 // Special Fix for Gundam games messed up camera-view.
 #define CHECK_XGKICKHACK			(EmuConfig.Gamefixes.XgKickHack)	 // Special Fix for Erementar Gerad, adds more delay to VU XGkick instructions. Corrects the color of some graphics.
-#define CHECK_IPUWAITHACK			(EmuConfig.Gamefixes.IPUWaitHack)	 // Special Fix For FFX
 #define CHECK_EETIMINGHACK			(EmuConfig.Gamefixes.EETimingHack)	 // Fix all scheduled events to happen in 1 cycle.
 #define CHECK_SKIPMPEGHACK			(EmuConfig.Gamefixes.SkipMPEGHack)	 // Finds sceMpegIsEnd pattern to tell the game the mpeg is finished (Katamari and a lot of games need this)
 #define CHECK_OPHFLAGHACK			(EmuConfig.Gamefixes.OPHFlagHack)	 // Bleach Blade Battlers
@@ -547,7 +536,7 @@ TraceLogFilters&				SetTraceConfig();
 #define CHECK_VIFFIFOHACK			(EmuConfig.Gamefixes.VIFFIFOHack)    // Pretends to fill the non-existant VIF FIFO Buffer.
 #define CHECK_VIF1STALLHACK			(EmuConfig.Gamefixes.VIF1StallHack)  // Like above, processes FIFO data before the stall is allowed (to make sure data goes over).
 #define CHECK_GIFFIFOHACK			(EmuConfig.Gamefixes.GIFFIFOHack)	 // Enabled the GIF FIFO (more correct but slower)
-#define CHECK_FMVINSOFTWAREHACK	 	(EmuConfig.Gamefixes.FMVinSoftwareHack) // Toggle in and out of software rendering when an FMV runs.
+
 //------------ Advanced Options!!! ---------------
 #define CHECK_VU_OVERFLOW			(EmuConfig.Cpu.Recompiler.vuOverflow)
 #define CHECK_VU_EXTRA_OVERFLOW		(EmuConfig.Cpu.Recompiler.vuExtraOverflow) // If enabled, Operands are clamped before being used in the VU recs

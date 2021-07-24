@@ -32,7 +32,7 @@
 #include "CDVD/CDVD.h"
 #include "Elfheader.h"
 
-#include "../DebugTools/Breakpoints.h"
+#include "DebugTools/Breakpoints.h"
 #include "Patch.h"
 
 #if !PCSX2_SEH
@@ -80,7 +80,7 @@ static const size_t recLutSize = (Ps2MemSize::MainRam + Ps2MemSize::Rom + Ps2Mem
 
 static uptr m_ConfiguredCacheReserve = 64;
 
-static u32* recConstBuf = NULL;			// 64-bit pseudo-immediates
+alignas(16) static u32 recConstBuf[RECCONSTBUF_SIZE]; // 64-bit pseudo-immediates
 static BASEBLOCK *recRAM = NULL;		// and the ptr to the blocks here
 static BASEBLOCK *recROM = NULL;		// and here
 static BASEBLOCK *recROM1 = NULL;		// also here
@@ -114,6 +114,7 @@ static u32 dumplog = 0;
 static void iBranchTest(u32 newpc = 0xffffffff);
 static void ClearRecLUT(BASEBLOCK* base, int count);
 static u32 scaleblockcycles();
+static void recExitExecution();
 
 void _eeFlushAllUnused()
 {
@@ -338,6 +339,11 @@ static DynGenFunc* DispatchPageReset    = NULL;
 static void recEventTest()
 {
 	_cpuEventTest_Shared();
+
+	if (iopBreakpoint) {
+		iopBreakpoint = false;
+		recExitExecution();
+	}
 }
 
 // The address for all cleared blocks.  It recompiles the current pc and then
@@ -504,8 +510,8 @@ static void recReserve()
 {
 	// Hardware Requirements Check...
 
-	if ( !x86caps.hasStreamingSIMD2Extensions )
-		recThrowHardwareDeficiency( L"SSE2" );
+	if ( !x86caps.hasStreamingSIMD4Extensions )
+		recThrowHardwareDeficiency( L"SSE4" );
 
 	recReserveCache();
 }
@@ -563,12 +569,6 @@ static void recAlloc()
 		recLUT_SetPage(recLUT, hwLUT, recROM2, 0x8000, i, i - 0x1e40);
 		recLUT_SetPage(recLUT, hwLUT, recROM2, 0xa000, i, i - 0x1e40);
 	}
-
-    if( recConstBuf == NULL )
-		recConstBuf = (u32*) _aligned_malloc( RECCONSTBUF_SIZE * sizeof(*recConstBuf), 16 );
-
-	if( recConstBuf == NULL )
-		throw Exception::OutOfMemory( L"R5900-32 SIMD Constants Buffer" );
 
 	if( s_pInstCache == NULL )
 	{
@@ -641,7 +641,6 @@ static void recShutdown()
 
 	recRAM = recROM = recROM1 = recROM2 = NULL;
 
-	safe_aligned_free( recConstBuf );
 	safe_free( s_pInstCache );
 	s_nInstCacheSize = 0;
 
@@ -843,9 +842,9 @@ void recClear(u32 addr, u32 size)
 		if (pexblock->startpc >= addr && pexblock->startpc < addr + size * 4
 		 || pexblock->startpc < addr && blockend > addr) {
 			if( !IsDevBuild )
-				Console.Error( "Impossible block clearing failure" );
+				Console.Error( "[EE] Impossible block clearing failure" );
 			else
-				pxFailDev( "Impossible block clearing failure" );
+				pxFailDev( "[EE] Impossible block clearing failure" );
 		}
 	}
 
@@ -1029,6 +1028,31 @@ static u32 scaleblockcycles()
 
 	return scaled;
 }
+u32 scaleblockcycles_clear()
+{
+	u32 scaled = scaleblockcycles_calculation();
+
+#if 0 // Enable this to get some runtime statistics about the scaling result in practice
+	static u32 scaled_overall = 0, unscaled_overall = 0;
+	if (g_resetEeScalingStats)
+	{
+		scaled_overall = unscaled_overall = 0;
+		g_resetEeScalingStats = false;
+	}
+	u32 unscaled = DEFAULT_SCALED_BLOCKS();
+	if (!unscaled) unscaled = 1;
+
+	scaled_overall += scaled;
+	unscaled_overall += unscaled;
+	float ratio = static_cast<float>(unscaled_overall) / scaled_overall;
+
+	DevCon.WriteLn(L"Unscaled overall: %d,  scaled overall: %d,  relative EE clock speed: %d %%",
+		unscaled_overall, scaled_overall, static_cast<int>(100 * ratio));
+#endif
+	s_nBlockCycles &= 0x7;
+
+	return scaled;
+}
 
 // Generates dynarec code for Event tests followed by a block dispatch (branch).
 // Parameters:
@@ -1144,27 +1168,71 @@ int cop2flags(u32 code)
 	}
 	return 3;
 }
+
+int COP2DivUnitTimings(u32 code)
+{
+	// Note: Cycles are off by 1 since the check ignores the actual op, so they are off by 1
+	switch (code & 0x3FF)
+	{
+		case 0x3BC: // DIV
+		case 0x3BD: // SQRT
+			return 6;
+		case 0x3BE: // RSQRT
+			return 12;
+		default:
+			return 0; // Used mainly for WAITQ
+	}
+}
+
+bool COP2IsQOP(u32 code)
+{
+	if(_Opcode_ != 022) // Not COP2 operation
+		return false;
+
+	if ((code & 0x3f) == 0x20) // VADDq
+		return true;
+	if ((code & 0x3f) == 0x21) // VMADDq
+		return true;
+	if ((code & 0x3f) == 0x24) // VSUBq
+		return true;
+	if ((code & 0x3f) == 0x25) // VMSUBq
+		return true;
+	if ((code & 0x3f) == 0x1C) // VMULq
+		return true;
+	if ((code & 0x7FF) == 0x1FC) // VMULAq
+		return true;
+	if ((code & 0x7FF) == 0x23C) // VADDAq
+		return true;
+	if ((code & 0x7FF) == 0x23D) // VMADDAq
+		return true;
+	if ((code & 0x7FF) == 0x27C) // VSUBAq
+		return true;
+	if ((code & 0x7FF) == 0x27D) // VMSUBAq
+		return true;
+
+	return false;
+}
 #endif
 
 
 void dynarecCheckBreakpoint()
 {
 	u32 pc = cpuRegs.pc;
- 	if (CBreakPoints::CheckSkipFirst(pc) != 0)
+ 	if (CBreakPoints::CheckSkipFirst(BREAKPOINT_EE, pc) != 0)
 		return;
 
 	int bpFlags = isBreakpointNeeded(pc);
 	bool hit = false;
 	//check breakpoint at current pc
 	if (bpFlags & 1) {
-		auto cond = CBreakPoints::GetBreakPointCondition(pc);
+		auto cond = CBreakPoints::GetBreakPointCondition(BREAKPOINT_EE, pc);
 		if (cond == NULL || cond->Evaluate()) {
 			hit = true;
 		}
 	}
 	//check breakpoint in delay slot
 	if (bpFlags & 2) {
-		auto cond = CBreakPoints::GetBreakPointCondition(pc + 4);
+		auto cond = CBreakPoints::GetBreakPointCondition(BREAKPOINT_EE, pc + 4);
 		if (cond == NULL || cond->Evaluate())
 			hit = true;
 	}
@@ -1180,7 +1248,7 @@ void dynarecCheckBreakpoint()
 void dynarecMemcheck()
 {
 	u32 pc = cpuRegs.pc;
- 	if (CBreakPoints::CheckSkipFirst(pc) != 0)
+ 	if (CBreakPoints::CheckSkipFirst(BREAKPOINT_EE, pc) != 0)
 		return;
 
 	CBreakPoints::SetBreakpointTriggered(true);
@@ -1207,7 +1275,7 @@ void recMemcheck(u32 op, u32 bits, bool store)
 	if (bits == 128)
 		xAND(ecx, ~0x0F);
 
-	xFastCall((void*)standardizeBreakpointAddress, ecx);
+	xFastCall((void*)standardizeBreakpointAddressEE, ecx);
 	xMOV(ecx,eax);
 	xMOV(edx,eax);
 	xADD(edx,bits/8);
@@ -1218,6 +1286,8 @@ void recMemcheck(u32 op, u32 bits, bool store)
 	auto checks = CBreakPoints::GetMemChecks();
 	for (size_t i = 0; i < checks.size(); i++)
 	{
+		if (checks[i].cpu != BREAKPOINT_EE)
+			continue;
 		if (checks[i].result == 0)
 			continue;
 		if ((checks[i].cond & MEMCHECK_WRITE) == 0 && store)
@@ -1227,11 +1297,11 @@ void recMemcheck(u32 op, u32 bits, bool store)
 
 		// logic: memAddress < bpEnd && bpStart < memAddress+memSize
 
-		xMOV(eax,standardizeBreakpointAddress(checks[i].end));
+		xMOV(eax,standardizeBreakpointAddress(BREAKPOINT_EE, checks[i].end));
 		xCMP(ecx,eax);				// address < end
 		xForwardJGE8 next1;			// if address >= end then goto next1
 
-		xMOV(eax,standardizeBreakpointAddress(checks[i].start));
+		xMOV(eax,standardizeBreakpointAddress(BREAKPOINT_EE, checks[i].start));
 		xCMP(eax,edx);				// start < address+size
 		xForwardJGE8 next2;			// if start >= address+size then goto next2
 
@@ -1437,6 +1507,30 @@ void recompileNextInstruction(int delayslot)
 			; // TODO
 		else if (_Rs_ == 6) // CTC2
 			; // TODO
+		else if ((cpuRegs.code & 0x7FC) == 0x3BC) // DIV/RSQRT/SQRT/WAITQ
+		{
+			int cycles = COP2DivUnitTimings(cpuRegs.code);
+			for (u32 p = pc; cycles > 0 && p < s_nEndBlock; p += 4, cycles--)
+			{
+				cpuRegs.code = memRead32(p);
+
+				if((_Opcode_ == 022) && (cpuRegs.code & 0x7FC) == 0x3BC) // WaitQ or another DIV op hit (stalled), we're safe
+					break;
+
+				else if (COP2IsQOP(cpuRegs.code))
+				{
+					std::string disasm;
+					DevCon.Warning("Possible incorrect Q value used in COP2");
+					for (u32 i = s_pCurBlockEx->startpc; i < s_nEndBlock; i += 4)
+					{
+						disasm = "";
+						disR5900Fasm(disasm, memRead32(i), i, false);
+						DevCon.Warning("%x %s%08X %s", i, i == pc - 4 ? "*" : i == p ? "=" : " ", memRead32(i), disasm.c_str());
+					}
+					break;
+				}
+			}
+		}
 		else
 		{
 			int s = cop2flags(cpuRegs.code);
@@ -1832,7 +1926,7 @@ static void __fastcall recRecompile( const u32 startpc )
 
 			case 2: // J
 			case 3: // JAL
-				s_branchTo = _Target_ << 2 | (i + 4) & 0xf0000000;
+				s_branchTo = _InstrucTarget_ << 2 | (i + 4) & 0xf0000000;
 				s_nEndBlock = i + 8;
 				goto StartRecomp;
 

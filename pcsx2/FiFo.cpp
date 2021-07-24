@@ -52,11 +52,9 @@ void __fastcall ReadFIFO_VIF1(mem128_t* out)
 		}
 		if (vif1Regs.stat.FQC > 0) {
 			GetMTGS().WaitGS();
-			if (GSinitReadFIFO) {
-				GetMTGS().SendPointerPacket(GS_RINGTYPE_INIT_READ_FIFO1, 0, out);
-				GetMTGS().WaitGS(false); // wait without reg sync
-			}
-			GSreadFIFO((u64*)out);
+			GetMTGS().SendPointerPacket(GS_RINGTYPE_INIT_READ_FIFO1, 0, out);
+			GetMTGS().WaitGS(false); // wait without reg sync
+			GSreadFIFO((u8*)out);
 			vif1.GSLastDownloadSize--;
 			GUNIT_LOG("ReadFIFO_VIF1");
 			if (vif1.GSLastDownloadSize <= 16)
@@ -104,8 +102,6 @@ void __fastcall WriteFIFO_VIF1(const mem128_t *value)
 	if (vif1.irqoffset.value != 0 && vif1.vifstalled.enabled) {
 		DevCon.Warning("Offset on VIF1 FIFO start!");
 	}
-
-	vif1ch.qwc += 1;
 
 	bool ret = VIF1transfer((u32*)value, 4);
 

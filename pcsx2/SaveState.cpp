@@ -29,6 +29,8 @@
 #include "Counters.h"
 
 #include "Utilities/SafeArray.inl"
+#include "SPU2/spu2.h"
+#include "gui/ConsoleLogger.h"
 
 using namespace R5900;
 
@@ -40,7 +42,7 @@ static void PreLoadPrep()
 
 static void PostLoadPrep()
 {
-	memzero(pCache);
+	resetCache();
 //	WriteCP0Status(cpuRegs.CP0.n.Status.val);
 	for(int i=0; i<48; i++) MapTLB(i);
 	if (EmuConfig.Gamefixes.GoemonTlbHack) GoemonPreloadTlb();
@@ -213,6 +215,7 @@ SaveStateBase& SaveStateBase::FreezeInternals()
 	gifFreeze();
 	gifDmaFreeze();
 	sprFreeze();
+	mtvuFreeze();
 
 	// Fifth Block - iop-related systems
 	// ---------------------------------
@@ -224,6 +227,7 @@ SaveStateBase& SaveStateBase::FreezeInternals()
 	sio2Freeze();
 	cdrFreeze();
 	cdvdFreeze();
+
 	
 	// technically this is HLE BIOS territory, but we don't have enough such stuff
 	// to merit an HLE Bios sub-section... yet.
@@ -233,28 +237,7 @@ SaveStateBase& SaveStateBase::FreezeInternals()
 
 	if( IsLoading() )
 		PostLoadPrep();
-		
-	return *this;
-}
 
-SaveStateBase& SaveStateBase::FreezePlugins()
-{
-	for (uint i=0; i<PluginId_Count; ++i)
-	{
-		FreezeTag( FastFormatAscii().Write("Plugin:%s", tbl_PluginInfo[i].shortname) );
-		GetCorePlugins().Freeze( (PluginsEnum_t)i, *this );
-	}
-
-	return *this;
-}
-
-SaveStateBase& SaveStateBase::FreezeAll()
-{
-	FreezeMainMemory();
-	FreezeBios();
-	FreezeInternals();
-	FreezePlugins();
-	
 	return *this;
 }
 
@@ -292,14 +275,6 @@ void memSavingState::MakeRoomForData()
 	m_memory->MakeRoomFor( m_idx + MemoryBaseAllocSize );
 }
 
-// Saving of state data to a memory buffer
-memSavingState& memSavingState::FreezeAll()
-{
-	MakeRoomForData();
-	_parent::FreezeAll();
-	return *this;
-}
-
 // --------------------------------------------------------------------------------------
 //  memLoadingState  (implementations)
 // --------------------------------------------------------------------------------------
@@ -319,4 +294,23 @@ void memLoadingState::FreezeMem( void* data, int size )
 	const u8* const src = m_memory->GetPtr(m_idx);
 	m_idx += size;
 	memcpy( data, src, size );
+}
+
+wxString Exception::SaveStateLoadError::FormatDiagnosticMessage() const
+{
+	FastFormatUnicode retval;
+	retval.Write("Savestate is corrupt or incomplete!\n");
+	OSDlog(Color_Red, false, "Error: Savestate is corrupt or incomplete!");
+	_formatDiagMsg(retval);
+	return retval;
+}
+
+wxString Exception::SaveStateLoadError::FormatDisplayMessage() const
+{
+	FastFormatUnicode retval;
+	retval.Write(_("The savestate cannot be loaded, as it appears to be corrupt or incomplete."));
+	retval.Write("\n");
+	OSDlog(Color_Red, false, "Error: The savestate cannot be loaded, as it appears to be corrupt or incomplete.");
+	_formatUserMsg(retval);
+	return retval;
 }

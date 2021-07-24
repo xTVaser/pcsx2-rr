@@ -23,7 +23,7 @@ FunctionEnd
 ; =======================================================================
 ;                           Un.Installer Sections
 ; =======================================================================
-Section "Un.Program and Plugins ${APP_NAME}"
+Section "Un.Program ${APP_NAME}"
 SectionIn RO
 
   ; First thing, remove the registry entry in case uninstall doesn't complete successfully
@@ -41,12 +41,11 @@ SectionIn RO
   Delete "$DESKTOP\${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\${APP_NAME}.lnk"
 
-  Delete "$INSTDIR\GameIndex.dbf"
+  Delete "$INSTDIR\GameIndex.yaml"
   Delete "$INSTDIR\cheats_ws.zip"
   Delete "$INSTDIR\PCSX2_keys.ini.default"
   Delete "$INSTDIR\pcsx2.exe"
   RMDir /r "$INSTDIR\Langs"
-  RMDir /r "$INSTDIR\Plugins"
   RMDir /r "$INSTDIR\Docs"
   RMDir /r "$INSTDIR\Shaders"
 
@@ -60,7 +59,7 @@ SectionIn RO
 SectionEnd
 
 ; /o for optional and unticked by default
-Section /o "Un.Configuration files (Programs and Plugins)"
+Section /o "Un.Configuration files (Programs)"
   SetShellVarContext current
   RMDir /r "$DOCUMENTS\PCSX2\inis\"
 SectionEnd

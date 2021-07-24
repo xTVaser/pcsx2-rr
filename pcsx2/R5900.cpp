@@ -32,10 +32,11 @@
 
 #include "Elfheader.h"
 #include "CDVD/CDVD.h"
+#include "USB/USB.h"
 #include "Patch.h"
 #include "GameDatabase.h"
 
-#include "../DebugTools/Breakpoints.h"
+#include "DebugTools/Breakpoints.h"
 #include "R5900OpcodeTables.h"
 
 using namespace R5900;	// for R5900 disasm tools
@@ -109,8 +110,7 @@ void cpuReset()
 	ElfEntry = -1;
 
 	// Probably not the right place, but it has to be done when the ram is actually initialized
-	if(USBsetRAM != 0)
-		USBsetRAM(iopMem->Main);
+	USBsetRAM(iopMem->Main);
 
 	// FIXME: LastELF should be reset on media changes as well as on CPU resets, in
 	// the very unlikely case that a user swaps to another media source that "looks"
@@ -269,7 +269,7 @@ static __fi void TESTINT( u8 n, void (*callback)() )
 {
 	if( !(cpuRegs.interrupt & (1 << n)) ) return;
 
-	if( cpuTestCycle( cpuRegs.sCycle[n], cpuRegs.eCycle[n] ) )
+	if(!g_GameStarted || cpuTestCycle( cpuRegs.sCycle[n], cpuRegs.eCycle[n] ) )
 	{
 		cpuClearInt( n );
 		callback();
@@ -398,7 +398,17 @@ __fi void _cpuEventTest_Shared()
 	// These are basically just DMAC-related events, which also piggy-back the same bits as
 	// the PS2's own DMA channel IRQs and IRQ Masks.
 
-	_cpuTestInterrupts();
+	// This is a BIOS hack because the coding in the BIOS is terrible but the bug is masked by Data Cache
+	// where a DMA buffer is overwritten without waiting for the transfer to end, which causes the fonts to get all messed up
+	// so to fix it, we run all the DMA's instantly when in the BIOS.
+	// Only use the lower 17 bits of the cpuRegs.interrupt as the upper bits are for VU0/1 sync which can't be done in a tight loop
+	if (!g_GameStarted && dmacRegs.ctrl.DMAE && !(psHu8(DMAC_ENABLER + 2) & 1) && (cpuRegs.interrupt & 0x1FFFF))
+	{
+		while(cpuRegs.interrupt & 0x1FFFF)
+			_cpuTestInterrupts();
+	}
+	else
+		_cpuTestInterrupts();
 
 	// ---- IOP -------------
 	// * It's important to run a iopEventTest before calling ExecuteBlock. This
@@ -431,7 +441,7 @@ __fi void _cpuEventTest_Shared()
 	// We're in a EventTest.  All dynarec registers are flushed
 	// so there is no need to freeze registers here.
 	CpuVU0->ExecuteBlock();
-
+	CpuVU1->ExecuteBlock();
 	// Note:  We don't update the VU1 here because it runs it's micro-programs in
 	// one shot always.  That is, when a program is executed the VU1 doesn't even
 	// bother to return until the program is completely finished.
@@ -755,7 +765,12 @@ inline bool isBranchOrJump(u32 addr)
 {
 	u32 op = memRead32(addr);
 	const OPCODE& opcode = GetInstruction(op);
-
+	
+	// Return false for eret & syscall as they are branch type in pcsx2 debugging tools,
+	// but shouldn't have delay slot in isBreakpointNeeded/isMemcheckNeeded.
+	if ((opcode.flags == (IS_BRANCH | BRANCHTYPE_SYSCALL)) || (opcode.flags == (IS_BRANCH | BRANCHTYPE_ERET)))
+		return false;
+		
 	return (opcode.flags & IS_BRANCH) != 0;
 }
 
@@ -766,11 +781,11 @@ inline bool isBranchOrJump(u32 addr)
 int isBreakpointNeeded(u32 addr)
 {
 	int bpFlags = 0;
-	if (CBreakPoints::IsAddressBreakPoint(addr))
+	if (CBreakPoints::IsAddressBreakPoint(BREAKPOINT_EE, addr))
 		bpFlags += 1;
 
 	// there may be a breakpoint in the delay slot
-	if (isBranchOrJump(addr) && CBreakPoints::IsAddressBreakPoint(addr+4))
+	if (isBranchOrJump(addr) && CBreakPoints::IsAddressBreakPoint(BREAKPOINT_EE, addr+4))
 		bpFlags += 2;
 
 	return bpFlags;

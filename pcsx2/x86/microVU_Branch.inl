@@ -15,7 +15,6 @@
 
 #pragma once
 
-extern bool  doEarlyExit (microVU& mVU);
 extern void  mVUincCycles(microVU& mVU, int x);
 extern void* mVUcompile  (microVU& mVU, u32 startPC, uptr pState);
 extern void* mVUcompileSingleInstruction(microVU& mVU, u32 startPC, uptr pState, microFlagCycles& mFC);
@@ -56,34 +55,66 @@ void mVUDTendProgram(mV, microFlagCycles* mFC, int isEbit) {
 		if (mVUinfo.doXGKICK && xPC >= mVUinfo.XGKICKPC) {
 			mVU_XGKICK_DELAY(mVU);
 		}
-		if (doEarlyExit(mVU)) {
-			if (!isVU1) xFastCall((void*)mVU0clearlpStateJIT);
-			else		xFastCall((void*)mVU1clearlpStateJIT);
-		}
+		if (!isVU1) xFastCall((void*)mVU0clearlpStateJIT);
+		else		xFastCall((void*)mVU1clearlpStateJIT);
 	}
 
 	// Save P/Q Regs
-	if (qInst) { xPSHUF.D(xmmPQ, xmmPQ, 0xe5); }
+	if (qInst) { xPSHUF.D(xmmPQ, xmmPQ, 0xe1); }
 	xMOVSS(ptr32[&mVU.regs().VI[REG_Q].UL], xmmPQ);
+	xPSHUF.D(xmmPQ, xmmPQ, 0xe1);
+	xMOVSS(ptr32[&mVU.regs().pending_q], xmmPQ);
+	xPSHUF.D(xmmPQ, xmmPQ, 0xe1);
+
 	if (isVU1) {
-		xPSHUF.D(xmmPQ, xmmPQ, pInst ? 3 : 2);
+		if (pInst) { xPSHUF.D(xmmPQ, xmmPQ, 0xb4); } // Swap Pending/Active P
+		xPSHUF.D(xmmPQ, xmmPQ, 0xC6); // 3 0 1 2
 		xMOVSS(ptr32[&mVU.regs().VI[REG_P].UL], xmmPQ);
+		xPSHUF.D(xmmPQ, xmmPQ, 0x87); // 0 2 1 3
+		xMOVSS(ptr32[&mVU.regs().pending_p], xmmPQ);
+		xPSHUF.D(xmmPQ, xmmPQ, 0x27); // 3 2 1 0
 	}
 
-	// Save Flag Instances
-	xMOV(ptr32[&mVU.regs().VI[REG_STATUS_FLAG].UL],	getFlagReg(fStatus));
+	// Save MAC, Status and CLIP Flag Instances
+	mVUallocSFLAGc(gprT1, gprT2, fStatus);
+	xMOV(ptr32[&mVU.regs().VI[REG_STATUS_FLAG].UL], gprT1);
 	mVUallocMFLAGa(mVU, gprT1, fMac);
 	mVUallocCFLAGa(mVU, gprT2, fClip);
-	xMOV(ptr32[&mVU.regs().VI[REG_MAC_FLAG].UL],	gprT1);
-	xMOV(ptr32[&mVU.regs().VI[REG_CLIP_FLAG].UL],	gprT2);
+	xMOV(ptr32[&mVU.regs().VI[REG_MAC_FLAG].UL], gprT1);
+	xMOV(ptr32[&mVU.regs().VI[REG_CLIP_FLAG].UL], gprT2);
 
-	if (isEbit || isVU1) { // Clear 'is busy' Flags
-		if (!mVU.index || !THREAD_VU1) {
-			xAND(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? ~0x100 : ~0x001)); // VBS0/VBS1 flag
-			xAND(ptr32[&mVU.getVifRegs().stat], ~VIF1_STAT_VEW); // Clear VU 'is busy' signal for vif
-		}
+	if (!isEbit) { // Backup flag instances
+		xMOVAPS(xmmT1, ptr128[mVU.macFlag]);
+		xMOVAPS(ptr128[&mVU.regs().micro_macflags], xmmT1);
+		xMOVAPS(xmmT1, ptr128[mVU.clipFlag]);
+		xMOVAPS(ptr128[&mVU.regs().micro_clipflags], xmmT1);
+
+		xMOV(ptr32[&mVU.regs().micro_statusflags[0]], gprF0);
+		xMOV(ptr32[&mVU.regs().micro_statusflags[1]], gprF1);
+		xMOV(ptr32[&mVU.regs().micro_statusflags[2]], gprF2);
+		xMOV(ptr32[&mVU.regs().micro_statusflags[3]], gprF3);
+	} else { // Flush flag instances
+		xMOVDZX(xmmT1, ptr32[&mVU.regs().VI[REG_CLIP_FLAG].UL]);
+		xSHUF.PS(xmmT1, xmmT1, 0);
+		xMOVAPS(ptr128[&mVU.regs().micro_clipflags], xmmT1);
+
+		xMOVDZX(xmmT1, ptr32[&mVU.regs().VI[REG_MAC_FLAG].UL]);
+		xSHUF.PS(xmmT1, xmmT1, 0);
+		xMOVAPS(ptr128[&mVU.regs().micro_macflags], xmmT1);
+
+		xMOVDZX(xmmT1, getFlagReg(fStatus));
+		xSHUF.PS(xmmT1, xmmT1, 0);
+		xMOVAPS(ptr128[&mVU.regs().micro_statusflags], xmmT1);
 	}
 
+	if (isEbit) { // Clear 'is busy' Flags
+		if (!mVU.index || !THREAD_VU1) {
+			xAND(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? ~0x100 : ~0x001)); // VBS0/VBS1 flag
+		}
+		else
+			xFastCall((void*)mVUTBit);
+	}
+	
 	if (isEbit != 2) { // Save PC, and Jump to Exit Point
 		xMOV(ptr32[&mVU.regs().VI[REG_TPC].UL], xPC);
 		xJMP(mVU.exitFunct);
@@ -93,14 +124,19 @@ void mVUDTendProgram(mV, microFlagCycles* mFC, int isEbit) {
 
 void mVUendProgram(mV, microFlagCycles* mFC, int isEbit) {
 
-	int fStatus = getLastFlagInst(mVUpBlock->pState, mFC->xStatus, 0, isEbit);
-	int fMac	= getLastFlagInst(mVUpBlock->pState, mFC->xMac,    1, isEbit);
-	int fClip	= getLastFlagInst(mVUpBlock->pState, mFC->xClip,   2, isEbit);
+	int fStatus = getLastFlagInst(mVUpBlock->pState, mFC->xStatus, 0, isEbit && isEbit != 3);
+	int fMac	= getLastFlagInst(mVUpBlock->pState, mFC->xMac,    1, isEbit && isEbit != 3);
+	int fClip	= getLastFlagInst(mVUpBlock->pState, mFC->xClip,   2, isEbit && isEbit != 3);
 	int qInst	= 0;
 	int pInst	= 0;
-	mVU.regAlloc->flushAll();
+	microBlock stateBackup;
+	memcpy(&stateBackup, &mVUregs, sizeof(mVUregs)); //backup the state, it's about to get screwed with.
+	if(!isEbit || isEbit == 3)
+		mVU.regAlloc->TDwritebackAll(); //Writing back ok, invalidating early kills the rec, so don't do it :P
+	else
+		mVU.regAlloc->flushAll();
 
-	if (isEbit) {
+	if (isEbit && isEbit != 3) {
 		memzero(mVUinfo);
 		memzero(mVUregsTemp);
 		mVUincCycles(mVU, 100); // Ensures Valid P/Q instances (And sets all cycle data to 0)
@@ -115,40 +151,75 @@ void mVUendProgram(mV, microFlagCycles* mFC, int isEbit) {
 		if (mVUinfo.doXGKICK) {
 			mVU_XGKICK_DELAY(mVU);
 		}
-		if (doEarlyExit(mVU)) {
-			if (!isVU1)
-				xFastCall((void*)mVU0clearlpStateJIT);
-			else
-				xFastCall((void*)mVU1clearlpStateJIT);
-		}
+		if (!isVU1)
+			xFastCall((void*)mVU0clearlpStateJIT);
+		else
+			xFastCall((void*)mVU1clearlpStateJIT);
 	}
 
 	// Save P/Q Regs
-	if (qInst) { xPSHUF.D(xmmPQ, xmmPQ, 0xe5); }
+	if (qInst) { xPSHUF.D(xmmPQ, xmmPQ, 0xe1); }
 	xMOVSS(ptr32[&mVU.regs().VI[REG_Q].UL], xmmPQ);
+	xPSHUF.D(xmmPQ, xmmPQ, 0xe1);
+	xMOVSS(ptr32[&mVU.regs().pending_q], xmmPQ);
+	xPSHUF.D(xmmPQ, xmmPQ, 0xe1);
+
 	if (isVU1) {
-		xPSHUF.D(xmmPQ, xmmPQ, pInst ? 3 : 2);
+		if (pInst) { xPSHUF.D(xmmPQ, xmmPQ, 0xb4); } // Swap Pending/Active P
+		xPSHUF.D(xmmPQ, xmmPQ, 0xC6); // 3 0 1 2
 		xMOVSS(ptr32[&mVU.regs().VI[REG_P].UL], xmmPQ);
+		xPSHUF.D(xmmPQ, xmmPQ, 0x87); // 0 2 1 3
+		xMOVSS(ptr32[&mVU.regs().pending_p], xmmPQ);
+		xPSHUF.D(xmmPQ, xmmPQ, 0x27); // 3 2 1 0
 	}
 
-	// Save Flag Instances
-	xMOV(ptr32[&mVU.regs().VI[REG_STATUS_FLAG].UL],	getFlagReg(fStatus));
+	// Save MAC, Status and CLIP Flag Instances
+	mVUallocSFLAGc(gprT1, gprT2, fStatus);
+	xMOV(ptr32[&mVU.regs().VI[REG_STATUS_FLAG].UL], gprT1);
 	mVUallocMFLAGa(mVU, gprT1, fMac);
 	mVUallocCFLAGa(mVU, gprT2, fClip);
 	xMOV(ptr32[&mVU.regs().VI[REG_MAC_FLAG].UL],	gprT1);
 	xMOV(ptr32[&mVU.regs().VI[REG_CLIP_FLAG].UL],	gprT2);
 
-	if (isEbit || isVU1) { // Clear 'is busy' Flags
-		if (!mVU.index || !THREAD_VU1) {
-			xAND(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? ~0x100 : ~0x001)); // VBS0/VBS1 flag
-			//xAND(ptr32[&mVU.getVifRegs().stat], ~VIF1_STAT_VEW); // Clear VU 'is busy' signal for vif
-		}
+	if (!isEbit || isEbit == 3) { // Backup flag instances
+		xMOVAPS(xmmT1, ptr128[mVU.macFlag]);
+		xMOVAPS(ptr128[&mVU.regs().micro_macflags], xmmT1);
+		xMOVAPS(xmmT1, ptr128[mVU.clipFlag]);
+		xMOVAPS(ptr128[&mVU.regs().micro_clipflags], xmmT1);
+
+		xMOV(ptr32[&mVU.regs().micro_statusflags[0]], gprF0);
+		xMOV(ptr32[&mVU.regs().micro_statusflags[1]], gprF1);
+		xMOV(ptr32[&mVU.regs().micro_statusflags[2]], gprF2);
+		xMOV(ptr32[&mVU.regs().micro_statusflags[3]], gprF3);
+	}
+	else { // Flush flag instances
+		xMOVDZX(xmmT1, ptr32[&mVU.regs().VI[REG_CLIP_FLAG].UL]);
+		xSHUF.PS(xmmT1, xmmT1, 0);
+		xMOVAPS(ptr128[&mVU.regs().micro_clipflags], xmmT1);
+
+		xMOVDZX(xmmT1, ptr32[&mVU.regs().VI[REG_MAC_FLAG].UL]);
+		xSHUF.PS(xmmT1, xmmT1, 0);
+		xMOVAPS(ptr128[&mVU.regs().micro_macflags], xmmT1);
+
+		xMOVDZX(xmmT1, getFlagReg(fStatus));
+		xSHUF.PS(xmmT1, xmmT1, 0);
+		xMOVAPS(ptr128[&mVU.regs().micro_statusflags], xmmT1);
 	}
 
-	if (isEbit != 2) { // Save PC, and Jump to Exit Point
+
+	if ((isEbit && isEbit != 3)) { // Clear 'is busy' Flags
+		if (!mVU.index || !THREAD_VU1) {
+			xAND(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? ~0x100 : ~0x001)); // VBS0/VBS1 flag
+		}
+		else
+			xFastCall((void*)mVUEBit);
+	}
+
+	if (isEbit != 2 && isEbit != 3) { // Save PC, and Jump to Exit Point
 		xMOV(ptr32[&mVU.regs().VI[REG_TPC].UL], xPC);
 		xJMP(mVU.exitFunct);
 	}
+	memcpy(&mVUregs, &stateBackup, sizeof(mVUregs)); //Restore the state for the rest of the recompile
 }
 
 // Recompiles Code for Proper Flags and Q/P regs on Block Linkings
@@ -159,6 +230,7 @@ void mVUsetupBranch(mV, microFlagCycles& mFC) {
 
 	// Shuffle P/Q regs since every block starts at instance #0
 	if (mVU.p || mVU.q) { xPSHUF.D(xmmPQ, xmmPQ, shufflePQ); }
+	mVU.p = 0, mVU.q = 0;
 }
 
 void normBranchCompile(microVU& mVU, u32 branchPC) {
@@ -207,8 +279,10 @@ void normBranch(mV, microFlagCycles& mFC) {
 		u32 tempPC = iPC;
 		xTEST(ptr32[&VU0.VI[REG_FBRST].UL], (isVU1 ? 0x400 : 0x4));
 		xForwardJump32 eJMP(Jcc_Zero);
-		xOR(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? 0x200 : 0x2));
-		xOR(ptr32[&mVU.regs().flags], VUFLAG_INTCINTERRUPT);
+		if (!mVU.index || !THREAD_VU1) {
+			xOR(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? 0x200 : 0x2));
+			xOR(ptr32[&mVU.regs().flags], VUFLAG_INTCINTERRUPT);
+		}
 		iPC = branchAddr(mVU)/4;
 		mVUDTendProgram(mVU, &mFC, 1);
 		eJMP.SetTarget();
@@ -219,12 +293,30 @@ void normBranch(mV, microFlagCycles& mFC) {
 		u32 tempPC = iPC;
 		xTEST(ptr32[&VU0.VI[REG_FBRST].UL], (isVU1 ? 0x800 : 0x8));
 		xForwardJump32 eJMP(Jcc_Zero);
-		xOR(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? 0x400 : 0x4));
-		xOR(ptr32[&mVU.regs().flags], VUFLAG_INTCINTERRUPT);
+		if (!mVU.index || !THREAD_VU1) {
+			xOR(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? 0x400 : 0x4));
+			xOR(ptr32[&mVU.regs().flags], VUFLAG_INTCINTERRUPT);
+		}
 		iPC = branchAddr(mVU)/4;
 		mVUDTendProgram(mVU, &mFC, 1);
 		eJMP.SetTarget();
 		iPC = tempPC;	
+	}
+	if (mVUup.mBit)
+	{
+		DevCon.Warning("M-Bit on normal branch, report if broken");
+		u32 tempPC = iPC;
+		u32* cpS = (u32*)&mVUregs;
+		u32* lpS = (u32*)&mVU.prog.lpState;
+		for (size_t i = 0; i < (sizeof(microRegInfo) - 4) / 4; i++, lpS++, cpS++) {
+			xMOV(ptr32[lpS], cpS[0]);
+		}
+		mVUsetupBranch(mVU, mFC);
+		mVUendProgram(mVU, &mFC, 3);
+		iPC = branchAddr(mVU) / 4;
+		xMOV(ptr32[&mVU.regs().VI[REG_TPC].UL], xPC);
+		xJMP(mVU.exitFunct);
+		iPC = tempPC;
 	}
 	if (mVUup.eBit) { 
 		if(mVUlow.badBranch) 
@@ -300,11 +392,14 @@ void condBranch(mV, microFlagCycles& mFC, int JMPcc) {
 	
 	if (mVUup.tBit)
 	{
+		DevCon.Warning("T-Bit on branch, please report if broken");
 		u32 tempPC = iPC;
 		xTEST(ptr32[&VU0.VI[REG_FBRST].UL], (isVU1 ? 0x800 : 0x8));
 		xForwardJump32 eJMP(Jcc_Zero);
-		xOR(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? 0x400 : 0x4));
-		xOR(ptr32[&mVU.regs().flags], VUFLAG_INTCINTERRUPT);
+		if (!mVU.index || !THREAD_VU1) {
+			xOR(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? 0x400 : 0x4));
+			xOR(ptr32[&mVU.regs().flags], VUFLAG_INTCINTERRUPT);
+		}
 		mVUDTendProgram(mVU, &mFC, 2);
 		xCMP(ptr16[&mVU.branch], 0);
 		xForwardJump32 tJMP(xInvertCond((JccComparisonType)JMPcc));
@@ -324,8 +419,10 @@ void condBranch(mV, microFlagCycles& mFC, int JMPcc) {
 		u32 tempPC = iPC;
 		xTEST(ptr32[&VU0.VI[REG_FBRST].UL], (isVU1 ? 0x400 : 0x4));
 		xForwardJump32 eJMP(Jcc_Zero);
-		xOR(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? 0x200 : 0x2));
-		xOR(ptr32[&mVU.regs().flags], VUFLAG_INTCINTERRUPT);
+		if (!mVU.index || !THREAD_VU1) {
+			xOR(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? 0x200 : 0x2));
+			xOR(ptr32[&mVU.regs().flags], VUFLAG_INTCINTERRUPT);
+		}
 		mVUDTendProgram(mVU, &mFC, 2);
 		xCMP(ptr16[&mVU.branch], 0);
 		xForwardJump32 dJMP(xInvertCond((JccComparisonType)JMPcc));
@@ -338,28 +435,52 @@ void condBranch(mV, microFlagCycles& mFC, int JMPcc) {
 		xMOV(ptr32[&mVU.regs().VI[REG_TPC].UL], xPC);
 		xJMP(mVU.exitFunct);
 		eJMP.SetTarget();
-		iPC = tempPC;		
+		iPC = tempPC;
 	}
-	xCMP(ptr16[&mVU.branch], 0);
-
+	if (mVUup.mBit)
+	{
+		u32 tempPC = iPC;
+		u32* cpS = (u32*)&mVUregs;
+		u32* lpS = (u32*)&mVU.prog.lpState;
+		for (size_t i = 0; i < (sizeof(microRegInfo) - 4) / 4; i++, lpS++, cpS++) {
+			xMOV(ptr32[lpS], cpS[0]);
+		}
+		mVUendProgram(mVU, &mFC, 3);
+		xCMP(ptr16[&mVU.branch], 0);
+		xForwardJump32 dJMP((JccComparisonType)JMPcc);
+		incPC(4); // Set PC to First instruction of Non-Taken Side
+		xMOV(ptr32[&mVU.regs().VI[REG_TPC].UL], xPC);
+		xJMP(mVU.exitFunct);
+		dJMP.SetTarget();
+		incPC(-4); // Go Back to Branch Opcode to get branchAddr
+		iPC = branchAddr(mVU) / 4;
+		xMOV(ptr32[&mVU.regs().VI[REG_TPC].UL], xPC);
+		xJMP(mVU.exitFunct);
+		iPC = tempPC;
+	}
 	if (mVUup.eBit) { // Conditional Branch With E-Bit Set
 		if(mVUlow.evilBranch) 
 			DevCon.Warning("End on evil branch! - Not implemented! - If game broken report to PCSX2 Team");
-		
-		incPC(3);
+
 		mVUendProgram(mVU, &mFC, 2);
-		xForwardJump32 eJMP(xInvertCond((JccComparisonType)JMPcc));
+		xCMP(ptr16[&mVU.branch], 0);
+
+		incPC(3);
+		xForwardJump32 eJMP(((JccComparisonType)JMPcc));
 			incPC(1); // Set PC to First instruction of Non-Taken Side
 			xMOV(ptr32[&mVU.regs().VI[REG_TPC].UL], xPC);
 			xJMP(mVU.exitFunct);
-			eJMP.SetTarget();
+		eJMP.SetTarget();
 		incPC(-4); // Go Back to Branch Opcode to get branchAddr
+
 		iPC = branchAddr(mVU)/4;
 		xMOV(ptr32[&mVU.regs().VI[REG_TPC].UL], xPC);
 		xJMP(mVU.exitFunct);
 		return;
 	}
 	else { // Normal Conditional Branch
+		xCMP(ptr16[&mVU.branch], 0);
+
 		incPC(3);
 		if(mVUlow.evilBranch) //We are dealing with an evil evil block, so we need to process this slightly differently
 		{
@@ -399,6 +520,10 @@ void condBranch(mV, microFlagCycles& mFC, int JMPcc) {
 }
 
 void normJump(mV, microFlagCycles& mFC) {
+	if (mVUup.mBit)
+	{
+		DevCon.Warning("M-Bit on Jump! Please report if broken");
+	}
 	if (mVUlow.constJump.isValid) { // Jump Address is Constant
 		if (mVUup.eBit) { // E-bit Jump
 			iPC = (mVUlow.constJump.regValue*2) & (mVU.progMemMask);
@@ -430,8 +555,10 @@ void normJump(mV, microFlagCycles& mFC) {
 	{
 		xTEST(ptr32[&VU0.VI[REG_FBRST].UL], (isVU1 ? 0x400 : 0x4));
 		xForwardJump32 eJMP(Jcc_Zero);
-		xOR(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? 0x200 : 0x2));
-		xOR(ptr32[&mVU.regs().flags], VUFLAG_INTCINTERRUPT);
+		if (!mVU.index || !THREAD_VU1) {
+			xOR(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? 0x200 : 0x2));
+			xOR(ptr32[&mVU.regs().flags], VUFLAG_INTCINTERRUPT);
+		}
 		mVUDTendProgram(mVU, &mFC, 2);
 		xMOV(gprT1, ptr32[&mVU.branch]);
 		xMOV(ptr32[&mVU.regs().VI[REG_TPC].UL], gprT1);
@@ -442,8 +569,10 @@ void normJump(mV, microFlagCycles& mFC) {
 	{
 		xTEST(ptr32[&VU0.VI[REG_FBRST].UL], (isVU1 ? 0x800 : 0x8));
 		xForwardJump32 eJMP(Jcc_Zero);
-		xOR(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? 0x400 : 0x4));
-		xOR(ptr32[&mVU.regs().flags], VUFLAG_INTCINTERRUPT);
+		if (!mVU.index || !THREAD_VU1) {
+			xOR(ptr32[&VU0.VI[REG_VPU_STAT].UL], (isVU1 ? 0x400 : 0x4));
+			xOR(ptr32[&mVU.regs().flags], VUFLAG_INTCINTERRUPT);
+		}
 		mVUDTendProgram(mVU, &mFC, 2);
 		xMOV(gprT1, ptr32[&mVU.branch]);
 		xMOV(ptr32[&mVU.regs().VI[REG_TPC].UL], gprT1);

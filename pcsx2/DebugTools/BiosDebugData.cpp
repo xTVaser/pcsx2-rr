@@ -15,21 +15,22 @@
 
 #include "PrecompiledHeader.h"
 #include "BiosDebugData.h"
-#include "../Memory.h"
+#include "Memory.h"
 
 std::vector<EEThread> getEEThreads()
 {
 	std::vector<EEThread> threads;
 
-	if (CurrentBiosInformation == NULL)
+	if (CurrentBiosInformation.threadListAddr <= 0)
 		return threads;
 
-	u32 start = CurrentBiosInformation->threadListAddr & 0x3fffff;
+	const u32 start = CurrentBiosInformation.threadListAddr & 0x3fffff;
+
 	for (int tid = 0; tid < 256; tid++)
 	{
 		EEThread thread;
 
-		EEInternalThread* internal = (EEInternalThread*) PSM(start+tid*sizeof(EEInternalThread));
+		EEInternalThread* internal = static_cast<EEInternalThread*>(PSM(start + tid * sizeof(EEInternalThread)));
 		if (internal->status != THS_BAD)
 		{
 			thread.tid = tid;
@@ -40,4 +41,3 @@ std::vector<EEThread> getEEThreads()
 
 	return threads;
 }
-

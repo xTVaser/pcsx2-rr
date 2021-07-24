@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2010  PCSX2 Dev Team
+ *  Copyright (C) 2002-2021  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -21,9 +21,6 @@
 #include "yuv2rgb.h"
 #include "mpeg2lib/Mpeg.h"
 
-#include "Vif.h"
-#include "Gif.h"
-#include "Vif_Dma.h"
 #include <limits.h>
 #include "AppConfig.h"
 
@@ -44,7 +41,7 @@ void IPUWorker();
 
 // Quantization matrix
 static rgb16_t vqclut[16];			//clut conversion table
-static u8 s_thresh[2];				//thresholds for color conversions
+static u16 s_thresh[2];				//thresholds for color conversions
 int coded_block_pattern = 0;
 
 alignas(16) static u8 indx4[16*16/2];
@@ -204,6 +201,16 @@ __fi u32 ipuRead32(u32 mem)
 
 	switch (mem)
 	{
+		ipucase(IPU_CMD) : // IPU_CMD
+		{
+			if (ipu_cmd.CMD != SCE_IPU_FDEC && ipu_cmd.CMD != SCE_IPU_VDEC)
+			{
+				if (getBits32((u8*)&ipuRegs.cmd.DATA, 0))
+					ipuRegs.cmd.DATA = BigEndian(ipuRegs.cmd.DATA);
+			}
+			return ipuRegs.cmd.DATA;
+		}
+
 		ipucase(IPU_CTRL): // IPU_CTRL
 		{
 			ipuRegs.ctrl.IFC = g_BP.IFC;
@@ -247,9 +254,17 @@ __fi u64 ipuRead64(u32 mem)
 	switch (mem)
 	{
 		ipucase(IPU_CMD): // IPU_CMD
+		{
+			if (ipu_cmd.CMD != SCE_IPU_FDEC && ipu_cmd.CMD != SCE_IPU_VDEC)
+			{
+				if (getBits32((u8*)&ipuRegs.cmd.DATA, 0))
+					ipuRegs.cmd.DATA = BigEndian(ipuRegs.cmd.DATA);
+			}
+			
 			if (ipuRegs.cmd.DATA & 0xffffff)
 				IPU_LOG("read64: IPU_CMD=BUSY=%x, DATA=%08X", ipuRegs.cmd.BUSY ? 1 : 0, ipuRegs.cmd.DATA);
-			break;
+			return ipuRegs.cmd._u64;
+		}
 
 		ipucase(IPU_CTRL):
 			DevCon.Warning("reading 64bit IPU ctrl");
@@ -348,6 +363,14 @@ __fi bool ipuWrite64(u32 mem, u64 value)
 
 static void ipuBCLR(u32 val)
 {
+	// The Input FIFO shouldn't be cleared when the DMA is running, however if it is the DMA should drain
+	// as it is constantly fighting it....
+	while(ipu1ch.chcr.STR)
+	{
+		ipu_fifo.in.clear();
+		ipu1Interrupt();
+	}
+	
 	ipu_fifo.in.clear();
 
 	memzero(g_BP);
@@ -409,7 +432,7 @@ static __ri void ipuBDEC(tIPU_CMD_BDEC bdec)
 
 static __fi bool ipuVDEC(u32 val)
 {
-	if (EmuConfig.Gamefixes.FMVinSoftwareHack || g_Conf->GSWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
+	if (g_Conf->GSWindow.FMVAspectRatioSwitch != FMV_AspectRatio_Switch_Off) {
 		static int count = 0;
 		if (count++ > 5) {
 			if (!FMVstarted) {
@@ -434,7 +457,7 @@ static __fi bool ipuVDEC(u32 val)
 
 				case 1://Macroblock Type
 					decoder.frame_pred_frame_dct = 1;
-					decoder.coding_type = ipuRegs.ctrl.PCT;
+					decoder.coding_type = ipuRegs.ctrl.PCT > 0 ? ipuRegs.ctrl.PCT : 1; // Kaiketsu Zorro Mezase doesn't set a Picture type, seems happy with I
 					ipuRegs.cmd.DATA = get_macroblock_modes();
 					break;
 
@@ -461,6 +484,7 @@ static __fi bool ipuVDEC(u32 val)
 			// This is due to differences with IPU and the MPEG standard. See get_macroblock_address_increment().
 
 			ipuRegs.ctrl.ECD = (ipuRegs.cmd.DATA == 0);
+			[[fallthrough]];
 
 		case 1:
 			if (!getBits32((u8*)&ipuRegs.top, 0))
@@ -635,9 +659,9 @@ static __ri bool ipuPACK(tIPU_CMD_CSC csc)
 
 static void ipuSETTH(u32 val)
 {
-	s_thresh[0] = (val & 0xff);
-	s_thresh[1] = ((val >> 16) & 0xff);
-	IPU_LOG("SETTH (Set threshold value)command %x.", val&0xff00ff);
+	s_thresh[0] = (val & 0x1ff);
+	s_thresh[1] = ((val >> 16) & 0x1ff);
+	IPU_LOG("SETTH (Set threshold value)command %x.", val&0x1ff01ff);
 }
 
 // --------------------------------------------------------------------------------------
@@ -979,6 +1003,12 @@ __noinline void IPUWorker()
 
 	// success
 	ipuRegs.ctrl.BUSY = 0;
-	ipu_cmd.current = 0xffffffff;
+	//ipu_cmd.current = 0xffffffff;
 	hwIntcIrq(INTC_IPU);
+
+	// Fill the FIFO ready for the next command
+	if (ipu1ch.chcr.STR && cpuRegs.eCycle[4] == 0x9999)
+	{
+		CPU_INT(DMAC_TO_IPU, 32);
+	}
 }

@@ -101,15 +101,7 @@ Dialogs::CreateMemoryCardDialog::CreateMemoryCardDialog( wxWindow* parent, const
 	m_text_filenameInput->SetFocus();
 	m_text_filenameInput->SelectAll();
 }
-/*
-wxDirName Dialogs::CreateMemoryCardDialog::GetPathToMcds() const
-{
-	return m_filepicker ? (wxDirName)m_filepicker->GetPath() : m_mcdpath;
-}
-*/
-// When this GUI is moved into the FileMemoryCard plugin (where it eventually belongs),
-// this function will be removed and the MemoryCardFile::Create() function will be used
-// instead.
+
 bool Dialogs::CreateMemoryCardDialog::CreateIt( const wxString& mcdFile, uint sizeInMB, bool isPSX )
 {
 	//int enc[16] = {0x77,0x7f,0x7f,0x77,0x7f,0x7f,0x77,0x7f,0x7f,0x77,0x7f,0x7f,0,0,0,0};
@@ -252,12 +244,17 @@ void Dialogs::CreateMemoryCardDialog::CreateControls()
 		.	SetToolTip(_t("Use at your own risk.  Erratic memory card behavior is possible (though unlikely)."))
 		.	SetInt(64),
 
-		RadioPanelItem(_("Folder [experimental]"), _("Store memory card contents in the host filesystem instead of a file."))
-		.	SetToolTip(_t("Automatically manages memory card contents so that the console only sees files related to the currently running software. Allows you to drag-and-drop files in and out of the memory card with your standard file explorer. This is still experimental, so use at your own risk!"))
+		RadioPanelItem(_("Folder [Recommended]"), _("Store memory card contents in the host filesystem instead of a file."))
+		.	SetToolTip(_t("Dynamically allocate and store memory card contents in a folder.\n" 
+						  "Only exposes the save files for the running game, rather than the whole memory card.\n"
+						  "You can see the structure and the saves with your File Explorer.\n"
+						  "Can be used to back-up individual saves instead of all saves on a memcard.\n" 
+						  "Incompatible with PS2 memory card editing tools or savegame managers (such as MyMC, MyMCPlus).\n"
+						  "You can always convert back between folder type and single memcard file.\n"))
 		.	SetInt(0),
 
-		RadioPanelItem(_("128 KiB (PSX)"), _("This is the standard Sony-provisioned size PSX memory card, only compatible with PSX games."))
-		.	SetToolTip(_t("This memory card is required by PSX games. It is not compatible with PS2 games."))
+		RadioPanelItem(_("128 KiB (PS1)"), _("This is the standard Sony-provisioned size PS1 memory card, only compatible with PS1 games."))
+		.	SetToolTip(_t("This memory card is required by PS1 games. It is not compatible with PS2 games."))
 		.	SetInt(1)
 	};
 

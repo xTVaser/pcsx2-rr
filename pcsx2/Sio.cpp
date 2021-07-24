@@ -21,11 +21,14 @@
 #include "Sio.h"
 #include "sio_internal.h"
 #include "EmuCmp.h"
+#ifdef _WIN32
+#include "PAD/Windows/PAD.h"
+#else
+#include "PAD/Linux/PAD.h"
+#endif
 
 #ifndef DISABLE_RECORDING
 #	include "Recording/InputRecording.h"
-#	include "Recording/PadData.h"
-#	include "Recording/RecordingInputManager.h"
 #endif
 
 _sio sio;
@@ -45,9 +48,8 @@ static const u8 memcard_psx[] = {0x5A, 0x5D, 0x5C, 0x5D, 0x04, 0x00, 0x00, 0x80}
 // FIXME variable commented out since it's not used atm.
 // static const mc_command_0x26_tag mc_sizeinfo_8mb= {'+', 512, 16, 0x4000, 0x52, 0x5A};
 
-// Ejection timeout management belongs in the MemoryCardFile plugin, except the plugin
-// interface is not yet complete.
-
+// Ejection timeout management belongs in MemoryCardFile
+//
 //Reinsert the card after auto-eject: after max tries or after min tries + XXX milliseconds, whichever comes first.
 //E.g. if the game polls the card 100 times/sec and max tries=100, then after 1 second it will see the card as inserted (ms timeout not reached).
 //E.g. if the game polls the card 1 time/sec, then it will see the card ejected 4 times, and on the 5th it will see it as inserted (4 secs from the initial access).
@@ -96,7 +98,6 @@ void ClearMcdEjectTimeoutNow()
 static bool IsMtapPresent( uint port )
 {
 	return EmuConfig.MultitapEnabled( port );
-	//return (0 != PADqueryMtap(port+1));
 }
 
 void sioInit()
@@ -215,17 +216,14 @@ SIO_WRITE sioWriteController(u8 data)
 
 	default:
 		sio.buf[sio.bufCount] = PADpoll(data);
-
 #ifndef DISABLE_RECORDING
 		if (g_Conf->EmuOptions.EnableRecordingTools)
 		{
-			g_InputRecording.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
-			if (g_InputRecording.IsInterruptFrame())
+			// Only examine controllers 1 / 2
+			if (sio.slot[sio.port] == 0)
 			{
-				g_RecordingInput.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+				g_InputRecording.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
 			}
-
-			PadData::LogPadData(sio.port, sio.bufCount, sio.buf);
 		}
 #endif
 		break;
@@ -446,6 +444,7 @@ SIO_WRITE memcardWrite(u8 data)
 					once = false;
 					break;
 				}
+				[[fallthrough]];
 
 			default:
 				DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
@@ -536,6 +535,7 @@ SIO_WRITE memcardRead(u8 data)
 					once = false;
 					break;
 				}
+				[[fallthrough]];
 
 			default:
 				DevCon.Warning("%s cmd: %02X??", __FUNCTION__, data);
@@ -606,8 +606,7 @@ SIO_WRITE memcardInit()
 {
 	mcd = &mcds[sio.GetPort()][sio.GetSlot()];
 
-	// forced ejection logic.  Technically belongs in the McdIsPresent handler for
-	// the plugin, once the memorycard plugin system is completed.
+	// forced ejection logic.  Technically belongs in the McdIsPresent handler.
 
 	bool forceEject = false;
 
@@ -680,7 +679,7 @@ SIO_WRITE sioWriteMemcard(u8 data)
 				sio2.packet.recvVal3 = 0x83;
 
 				mc_command_0x26_tag cmd;
-				PS2E_McdSizeInfo info;
+				McdSizeInfo info;
 
 				mcd->GetSizeInfo(info);
 
@@ -721,7 +720,7 @@ SIO_WRITE sioWriteMemcard(u8 data)
 		case 0x11: // On Boot/Probe
 		case 0x12: // On Write/Delete/Recheck?
 			sio2.packet.recvVal3 = 0x8C;
-			// Fall through
+			[[fallthrough]];
 
 		case 0x81: // Checked right after copy/delete
 		case 0xBF: // Wtf?? On game booting?
@@ -1037,10 +1036,6 @@ void SaveStateBase::sioFreeze()
 
 	FreezeTag( "sio" );
 	Freeze( sio );
-
-	// TODO : This stuff should all be moved to the memorycard plugin eventually,
-	// but that requires adding memorycard plugin to the savestate, and I'm not in
-	// the mood to do that (let's plan it for 0.9.8) --air
 
 	if( IsSaving() )
 	{

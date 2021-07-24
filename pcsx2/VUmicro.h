@@ -29,8 +29,6 @@ static const uint VU0_PROGMASK	= VU0_PROGSIZE-1;
 static const uint VU1_MEMMASK	= VU1_MEMSIZE-1;
 static const uint VU1_PROGMASK	= VU1_PROGSIZE-1;
 
-#define vuRunCycles  (512*12)  // Cycles to run ExecuteBlockJIT() for (called from within recs)
-#define vu0RunCycles (512*12)  // Cycles to run vu0 for whenever ExecuteBlock() is called
 #define vu1RunCycles (3000000) // mVU1 uses this for inf loop detection on dev builds
 
 // --------------------------------------------------------------------------------------
@@ -87,6 +85,7 @@ public:
 	virtual void Reserve()=0;
 	virtual void Shutdown()=0;
 	virtual void Reset()=0;
+	virtual void SetStartPC(u32 startPC)=0;
 	virtual void Execute(u32 cycles)=0;
 	virtual void ExecuteBlock(bool startUp)=0;
 
@@ -120,11 +119,9 @@ public:
 class BaseVUmicroCPU : public BaseCpuProvider {
 public:
 	int m_Idx;
-	u32 m_lastEEcycles;
 
 	BaseVUmicroCPU() {
 		m_Idx		   = 0;
-		m_lastEEcycles = 0;
 	}
 	virtual ~BaseVUmicroCPU() = default;
 
@@ -147,10 +144,6 @@ public:
 		// clamping in recs and ints, it's not really worth bothering with yet.
 	}
 
-	// Execute VU for the number of VU cycles (recs might go over 0~30 cycles)
-	// virtual void Execute(u32 cycles)=0;
-
-	// Executes a Block based on static preset cycles OR
 	// Executes a Block based on EE delta time (see VUmicro.cpp)
 	virtual void ExecuteBlock(bool startUp=0);
 
@@ -180,6 +173,7 @@ public:
 	void Reset() { }
 
 	void Step();
+	void SetStartPC(u32 startPC);
 	void Execute(u32 cycles);
 	void Clear(u32 addr, u32 size) {}
 
@@ -200,6 +194,7 @@ public:
 	void Shutdown() noexcept;
 	void Reset();
 
+	void SetStartPC(u32 startPC);
 	void Step();
 	void Execute(u32 cycles);
 	void Clear(u32 addr, u32 size) {}
@@ -225,6 +220,7 @@ public:
 	void Shutdown() noexcept;
 
 	void Reset();
+	void SetStartPC(u32 startPC);
 	void Execute(u32 cycles);
 	void Clear(u32 addr, u32 size);
 	void Vsync() noexcept;
@@ -245,6 +241,7 @@ public:
 	void Reserve();
 	void Shutdown() noexcept;
 	void Reset();
+	void SetStartPC(u32 startPC);
 	void Execute(u32 cycles);
 	void Clear(u32 addr, u32 size);
 	void Vsync() noexcept;
@@ -262,11 +259,12 @@ extern BaseVUmicroCPU* CpuVU1;
 extern void vu0ResetRegs();
 extern void __fastcall vu0ExecMicro(u32 addr);
 extern void vu0Exec(VURegs* VU);
+extern void _vu0FinishMicro();
 extern void vu0Finish();
 extern void iDumpVU0Registers();
 
 // VU1
-extern void vu1Finish();
+extern void vu1Finish(bool add_cycles);
 extern void vu1ResetRegs();
 extern void __fastcall vu1ExecMicro(u32 addr);
 extern void vu1Exec(VURegs* VU);

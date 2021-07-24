@@ -13,12 +13,7 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __PSXDMA_H__
-#define __PSXDMA_H__
-
-#include "PS2Edefs.h"
-
-// defined in PS2Edefs.h
+#pragma once 
 
 extern void psxDma2(u32 madr, u32 bcr, u32 chcr);
 extern void psxDma3(u32 madr, u32 bcr, u32 chcr);
@@ -37,11 +32,8 @@ extern void usbInterrupt();
 extern void usbIrq(int cycles);
 extern void fwIrq();
 extern void spu2Irq();
+extern void spu2DMA4Irq();
+extern void spu2DMA7Irq();
 
 extern void iopIntcIrq( uint irqType );
 extern void iopTestIntc();
-
-extern DEV9handler dev9Handler;
-extern USBhandler usbHandler;
-
-#endif /* __PSXDMA_H__ */

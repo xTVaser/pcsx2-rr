@@ -17,7 +17,11 @@
 #include "IopHw_Internal.h"
 #include "Sif.h"
 #include "Sio.h"
+#include "FW.h"
 #include "CDVD/CdRom.h"
+#include "SPU2/spu2.h"
+#include "DEV9/DEV9.h"
+#include "USB/USB.h"
 
 #include "ps2/pgif.h"
 #include "Mdec.h"
@@ -340,20 +344,6 @@ static __fi void _HwWrite_16or32_Page1( u32 addr, T val )
 			mcase(HW_ICTRL+2):
 				psxHu(addr) = val;
 				iopTestIntc();
-			break;
-
-			// ------------------------------------------------------------------------
-			// Soon-to-be outdated SPU2 DMA hack (spu2 manages its own DMA MADR currently,
-			// as asinine as that may seem).
-			//
-			mcase(0x1f8010C0):
-				SPU2WriteMemAddr( 0, val );
-				HW_DMA4_MADR = val;
-			break;
-
-			mcase(0x1f801500):
-				SPU2WriteMemAddr( 1, val );
-				HW_DMA7_MADR = val;
 			break;
 
 			// ------------------------------------------------------------------------

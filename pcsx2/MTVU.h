@@ -44,9 +44,21 @@ class VU_Thread : public pxThread {
 public:
 	__aligned16  vifStruct        vif;
 	__aligned16  VIFregisters     vifRegs;
-	__aligned(4) Semaphore semaXGkick;
-	__aligned(4) std::atomic<unsigned int> vuCycles[4]; // Used for VU cycle stealing hack
-	__aligned(4) u32 vuCycleIdx;  // Used for VU cycle stealing hack
+	Semaphore semaXGkick;
+	std::atomic<unsigned int> vuCycles[4]; // Used for VU cycle stealing hack
+	u32 vuCycleIdx;  // Used for VU cycle stealing hack
+
+	enum InterruptFlag {
+		InterruptFlagFinish = 1 << 0,
+		InterruptFlagSignal = 1 << 1,
+		InterruptFlagLabel  = 1 << 2,
+		InterruptFlagVUEBit = 1 << 3,
+		InterruptFlagVUTBit = 1 << 4,
+	};
+
+	std::atomic<u32> mtvuInterrupts; // Used for GS Signal, Finish etc, plus VU End/T-Bit
+	std::atomic<u64> gsLabel; // Used for GS Label command
+	std::atomic<u64> gsSignal; // Used for GS Signal command
 
 	VU_Thread(BaseVUmicroCPU*& _vuCPU, VURegs& _vuRegs);
 	virtual ~VU_Thread();
@@ -61,6 +73,8 @@ public:
 
 	// Waits till MTVU is done processing
 	void WaitVU();
+
+	void Get_MTVUChanges();
 
 	void ExecuteVU(u32 vu_addr, u32 vif_top, u32 vif_itop);
 

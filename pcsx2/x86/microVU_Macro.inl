@@ -51,8 +51,10 @@ void setupMacroOp(int mode, const char* opName) {
 		microVU0.prog.IRinfo.info[0].sFlag.lastWrite   = 0;
 		microVU0.prog.IRinfo.info[0].mFlag.doFlag      = true;
 		microVU0.prog.IRinfo.info[0].mFlag.write       = 0xff;
-		
-		xMOV(gprF0, ptr32[&vu0Regs.VI[REG_STATUS_FLAG].UL]);
+		//Denormalize
+		mVUallocSFLAGd(&vu0Regs.VI[REG_STATUS_FLAG].UL);
+
+		xMOV(gprF0, eax);
 	}
 }
 
@@ -61,9 +63,22 @@ void endMacroOp(int mode) {
 		xMOVSS(ptr32[&vu0Regs.VI[REG_Q].UL], xmmPQ);
 	}
 	if (mode & 0x10) { // Status/Mac Flags were Updated
-		xMOV(ptr32[&vu0Regs.VI[REG_STATUS_FLAG].UL], gprF0);
+		// Normalize
+		mVUallocSFLAGc(eax, gprF0, 0);
+		xMOV(ptr32[&vu0Regs.VI[REG_STATUS_FLAG].UL], eax);
 	}
 	microVU0.regAlloc->flushAll();
+
+	if (mode & 0x10) { // Update VU0 Status/Mac instances after flush to avoid corrupting anything
+		mVUallocSFLAGd(&vu0Regs.VI[REG_STATUS_FLAG].UL);
+		xMOVDZX(xmmT1, eax);
+		xSHUF.PS(xmmT1, xmmT1, 0);
+		xMOVAPS(ptr128[&microVU0.regs().micro_statusflags], xmmT1);
+
+		xMOVDZX(xmmT1, ptr32[&vu0Regs.VI[REG_MAC_FLAG].UL]);
+		xSHUF.PS(xmmT1, xmmT1, 0);
+		xMOVAPS(ptr128[&microVU0.regs().micro_macflags], xmmT1);
+	}
 	microVU0.cop2 = 0;
 }
 
@@ -193,9 +208,9 @@ REC_COP2_mVU0(CLIP,		"CLIP",		0x08);
 // Macro VU - Redirect Lower Instructions
 //------------------------------------------------------------------
 
-REC_COP2_mVU0(DIV,		"DIV",		0x02);
-REC_COP2_mVU0(SQRT,		"SQRT",		0x02);
-REC_COP2_mVU0(RSQRT,	"RSQRT",	0x02);
+REC_COP2_mVU0(DIV,		"DIV",		0x12);
+REC_COP2_mVU0(SQRT,		"SQRT",		0x12);
+REC_COP2_mVU0(RSQRT,	"RSQRT",	0x12);
 REC_COP2_mVU0(IADD,		"IADD",		0x04);
 REC_COP2_mVU0(IADDI,	"IADDI",	0x04);
 REC_COP2_mVU0(IAND,		"IAND",		0x04);
@@ -232,8 +247,8 @@ INTERPRETATE_COP2_FUNC(CALLMSR);
 void _setupBranchTest(u32*(jmpType)(u32), bool isLikely) {
 	printCOP2("COP2 Branch");
 	_eeFlushAllUnused();
-	xTEST(ptr32[&vif1Regs.stat._u32], 0x4);
-	//TEST32ItoM((uptr)&VU0.VI[REG_VPU_STAT].UL, 0x100);
+	//xTEST(ptr32[&vif1Regs.stat._u32], 0x4);
+	xTEST(ptr32[&VU0.VI[REG_VPU_STAT].UL], 0x100);
 	recDoBranchImm(jmpType(0), isLikely);
 }
 
@@ -247,10 +262,19 @@ void recBC2TL() { _setupBranchTest(JZ32,  true);  }
 //------------------------------------------------------------------
 
 void COP2_Interlock(bool mBitSync) {
+
 	if (cpuRegs.code & 1) {
-		iFlushCall(FLUSH_EVERYTHING | FLUSH_PC);
+		iFlushCall(FLUSH_EVERYTHING);
+		xTEST(ptr32[&VU0.VI[REG_VPU_STAT].UL], 0x1);
+		xForwardJZ32 skipvuidle;
+		xMOV(eax, ptr[&cpuRegs.cycle]);
+		xADD(eax, scaleblockcycles_clear());
+		xMOV(ptr[&cpuRegs.cycle], eax); // update cycles
+		xLoadFarAddr(arg1reg, CpuVU0);
+		xFastCall((void*)BaseVUmicroCPU::ExecuteBlockJIT, arg1reg);
 		if (mBitSync) xFastCall((void*)_vu0WaitMicro);
 		else		  xFastCall((void*)_vu0FinishMicro);
+		skipvuidle.SetTarget();
 	}
 }
 
@@ -268,11 +292,26 @@ static void recCFC2() {
 
 	COP2_Interlock(false);
 	if (!_Rt_) return;
+
 	iFlushCall(FLUSH_EVERYTHING);
 
+	if (!(cpuRegs.code & 1)) {
+		xTEST(ptr32[&VU0.VI[REG_VPU_STAT].UL], 0x1);
+		xForwardJZ32 skipvuidle;
+		xMOV(eax, ptr32[&cpuRegs.cycle]);
+		xADD(eax, scaleblockcycles_clear());
+		xMOV(ptr32[&cpuRegs.cycle], eax); // update cycles
+		xSUB(eax, ptr32[&vu0Regs.cycle]);
+		xCMP(eax, 8);
+		xForwardJL32 skip;
+		xLoadFarAddr(arg1reg, CpuVU0);
+		xFastCall((void*)BaseVUmicroCPU::ExecuteBlockJIT, arg1reg);
+		skip.SetTarget();
+		skipvuidle.SetTarget();
+	}
+
 	if (_Rd_ == REG_STATUS_FLAG) { // Normalize Status Flag
-		xMOV(gprF0, ptr32[&vu0Regs.VI[REG_STATUS_FLAG].UL]);
-		mVUallocSFLAGc(eax, gprF0, 0);
+		xMOV(eax, ptr32[&vu0Regs.VI[REG_STATUS_FLAG].UL]);
 	}
 	else xMOV(eax, ptr32[&vu0Regs.VI[_Rd_].UL]);
 
@@ -331,7 +370,23 @@ static void recCTC2() {
 	printCOP2("CTC2");
 	COP2_Interlock(1);
 	if (!_Rd_) return;
+
 	iFlushCall(FLUSH_EVERYTHING);
+
+	if (!(cpuRegs.code & 1)) {;
+		xTEST(ptr32[&VU0.VI[REG_VPU_STAT].UL], 0x1);
+		xForwardJZ32 skipvuidle;
+		xMOV(eax, ptr32[&cpuRegs.cycle]);
+		xADD(eax, scaleblockcycles_clear());
+		xMOV(ptr32[&cpuRegs.cycle], eax); // update cycles
+		xSUB(eax, ptr32[&vu0Regs.cycle]);
+		xCMP(eax, 8);
+		xForwardJL32 skip;
+		xLoadFarAddr(arg1reg, CpuVU0);
+		xFastCall((void*)BaseVUmicroCPU::ExecuteBlockJIT, arg1reg);
+		skip.SetTarget();
+		skipvuidle.SetTarget();
+	}
 
 	switch(_Rd_) {
 		case REG_MAC_FLAG: case REG_TPC:
@@ -342,23 +397,36 @@ static void recCTC2() {
 			xMOV(ptr32[&vu0Regs.VI[REG_R].UL], eax);
 			break;
 		case REG_STATUS_FLAG:
-			if (_Rt_) { // Denormalizes flag into eax (gprT1)
-				mVUallocSFLAGd(&cpuRegs.GPR.r[_Rt_].UL[0]);
-				xMOV(ptr32[&vu0Regs.VI[_Rd_].UL], eax);
+		{
+			if (_Rt_) {
+				xMOV(eax, ptr32[&cpuRegs.GPR.r[_Rt_].UL[0]]);
+				xAND(eax, 0xFC0);
+				xAND(ptr32[&vu0Regs.VI[REG_STATUS_FLAG].UL], 0x3F);
+				xOR(ptr32[&vu0Regs.VI[REG_STATUS_FLAG].UL], eax);
+				
 			}
-			else xMOV(ptr32[&vu0Regs.VI[_Rd_].UL], 0);
+			else xAND(ptr32[&vu0Regs.VI[REG_STATUS_FLAG].UL], 0x3F);
+
+			//Need to update the sticky flags for microVU
+			mVUallocSFLAGd(&vu0Regs.VI[REG_STATUS_FLAG].UL);
+			xMOVDZX(xmmT1, eax);
+			xSHUF.PS(xmmT1, xmmT1, 0);
+			// Make sure the values are everywhere the need to be
+			xMOVAPS(ptr128[&vu0Regs.micro_statusflags], xmmT1);
 			break;
+		}
 		case REG_CMSAR1:	// Execute VU1 Micro SubRoutine
+			xMOV(ecx, 1);
+			xFastCall((void*)vu1Finish, ecx);
 			if (_Rt_) {
 				xMOV(ecx, ptr32[&cpuRegs.GPR.r[_Rt_].UL[0]]);
 			}
 			else xXOR(ecx, ecx);
 			xFastCall((void*)vu1ExecMicro, ecx);
-			xFastCall((void*)vif1VUFinish);
 			break;
 		case REG_FBRST:
-			if (!_Rt_) { 
-				xMOV(ptr32[&vu0Regs.VI[REG_FBRST].UL], 0); 
+			if (!_Rt_) {
+				xMOV(ptr32[&vu0Regs.VI[REG_FBRST].UL], 0);
 				return;
 			}
 			else xMOV(eax, ptr32[&cpuRegs.GPR.r[_Rt_].UL[0]]);
@@ -373,8 +441,8 @@ static void recCTC2() {
 			// Executing vu0 block here fixes the intro of Ratchet and Clank
 			// sVU's COP2 has a comment that "Donald Duck" needs this too...
 			if (_Rd_) _eeMoveGPRtoM((uptr)&vu0Regs.VI[_Rd_].UL, _Rt_);
-			xLoadFarAddr(arg1reg, CpuVU0);
-			xFastCall((void*)BaseVUmicroCPU::ExecuteBlockJIT, arg1reg);
+			// jit64 xLoadFarAddr(arg1reg, CpuVU0);
+			// jit64 xFastCall((void*)BaseVUmicroCPU::ExecuteBlockJIT, arg1reg);
 			break;
 	}
 }
@@ -384,7 +452,23 @@ static void recQMFC2() {
 	printCOP2("QMFC2");
 	COP2_Interlock(false);
 	if (!_Rt_) return;
+
 	iFlushCall(FLUSH_EVERYTHING);
+
+	if (!(cpuRegs.code & 1)) {
+		xTEST(ptr32[&VU0.VI[REG_VPU_STAT].UL], 0x1);
+		xForwardJZ32 skipvuidle;
+		xMOV(eax, ptr32[&cpuRegs.cycle]);
+		xADD(eax, scaleblockcycles_clear());
+		xMOV(ptr32[&cpuRegs.cycle], eax); // update cycles
+		xSUB(eax, ptr32[&vu0Regs.cycle]);
+		xCMP(eax, 8);
+		xForwardJL32 skip;
+		xLoadFarAddr(arg1reg, CpuVU0);
+		xFastCall((void*)BaseVUmicroCPU::ExecuteBlockJIT, arg1reg);
+		skip.SetTarget();
+		skipvuidle.SetTarget();
+	}
 
 	// FixMe: For some reason this line is needed or else games break:
 	_eeOnWriteReg(_Rt_, 0);
@@ -398,7 +482,23 @@ static void recQMTC2() {
 	printCOP2("QMTC2");
 	COP2_Interlock(true);
 	if (!_Rd_) return;
+
 	iFlushCall(FLUSH_EVERYTHING);
+
+	if (!(cpuRegs.code & 1)) {
+		xTEST(ptr32[&VU0.VI[REG_VPU_STAT].UL], 0x1);
+		xForwardJZ32 skipvuidle;
+		xMOV(eax, ptr32[&cpuRegs.cycle]);
+		xADD(eax, scaleblockcycles_clear());
+		xMOV(ptr32[&cpuRegs.cycle], eax); // update cycles
+		xSUB(eax, ptr32[&vu0Regs.cycle]);
+		xCMP(eax, 8);
+		xForwardJL32 skip;
+		xLoadFarAddr(arg1reg, CpuVU0);
+		xFastCall((void*)BaseVUmicroCPU::ExecuteBlockJIT, arg1reg);
+		skip.SetTarget();
+		skipvuidle.SetTarget();
+	}
 
 	xMOVAPS(xmmT1, ptr128[&cpuRegs.GPR.r[_Rt_]]);
 	xMOVAPS(ptr128[&vu0Regs.VF[_Rd_]], xmmT1);
@@ -468,5 +568,13 @@ namespace R5900 {
 namespace Dynarec {
 namespace OpcodeImpl { void recCOP2() { recCOP2t[_Rs_](); }}}}
 void recCOP2_BC2  () { recCOP2_BC2t[_Rt_](); }
-void recCOP2_SPEC1() { recCOP2SPECIAL1t[_Funct_](); }
+void recCOP2_SPEC1() {
+	iFlushCall(FLUSH_EVERYTHING);
+	xTEST(ptr32[&VU0.VI[REG_VPU_STAT].UL], 0x1);
+	xForwardJZ32 skipvuidle;
+	xFastCall((void*)_vu0FinishMicro);
+	skipvuidle.SetTarget();
+
+	recCOP2SPECIAL1t[_Funct_]();
+}
 void recCOP2_SPEC2() { recCOP2SPECIAL2t[(cpuRegs.code&3)|((cpuRegs.code>>4)&0x7c)](); }

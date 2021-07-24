@@ -19,6 +19,10 @@
 #include "Sif.h"
 #include "Sio.h"
 #include "CDVD/CdRom.h"
+#include "FW.h"
+#include "SPU2/spu2.h"
+#include "DEV9/DEV9.h"
+#include "USB/USB.h"
 
 #include "ps2/pgif.h"
 #include "Mdec.h"
@@ -294,17 +298,6 @@ static __fi T _HwRead_16or32_Page1( u32 addr )
 			mcase(HW_ICTRL+2):
 				ret = psxHu16(0x107a);
 				psxHu32(0x1078) = 0;	// most likely should clear all 32 bits here.
-			break;
-
-			// ------------------------------------------------------------------------
-			// Soon-to-be outdated SPU2 DMA hack (spu2 manages its own DMA MADR).
-			//
-			mcase(0x1f8010C0):
-				ret = SPU2ReadMemAddr(0);
-			break;
-
-			mcase(0x1f801500):
-				ret = SPU2ReadMemAddr(1);
 			break;
 
 			// ------------------------------------------------------------------------

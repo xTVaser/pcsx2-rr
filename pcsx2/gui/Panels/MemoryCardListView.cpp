@@ -96,14 +96,14 @@ const ListViewColumnInfo& MemoryCardListView_Simple::GetDefaultColumnInfo( uint 
 {
 	static const ListViewColumnInfo columns[] =
 	{
-		{ _("PS2 Port")		, 170 , wxLIST_FORMAT_LEFT	},
+		{ _("PS2 Port")		, 160 , wxLIST_FORMAT_LEFT	},
 		//{ _("Port status")	, 80  , wxLIST_FORMAT_LEFT	},
-		{ _("Card (file) name")	, 145 , wxLIST_FORMAT_LEFT	},
-		{ _("Card size")	, 65  , wxLIST_FORMAT_LEFT	},
-		{ _("Formatted")	, 80  , wxLIST_FORMAT_LEFT	},
-		{ _("Type")			  , 60  , wxLIST_FORMAT_LEFT	},
+		{ _("Memory card")	, 145 , wxLIST_FORMAT_LEFT	},
+		{ _("Card size")	, 60  , wxLIST_FORMAT_LEFT	},
+		{ _("Usable / Formatted")	, 115  , wxLIST_FORMAT_LEFT	},
+		{ _("Type")			  , 45  , wxLIST_FORMAT_LEFT	},
 		{ _("Last Modified"), 90 , wxLIST_FORMAT_LEFT	},
-		{ _("Created on")	, 90 , wxLIST_FORMAT_LEFT	},
+		{ _("Created on")	, 80 , wxLIST_FORMAT_LEFT	},
 	};
 
 	pxAssertDev( idx < ArraySize(columns), "ListView column index is out of bounds." );
@@ -149,7 +149,7 @@ wxString MemoryCardListView_Simple::OnGetItemText(long item, long column) const
 */		
 		case McdColS_Size:			return prefix + ( !it.IsPresent ? L"" : (it.IsPSX? pxsFmt( L"%u MBit", it.SizeInMB ) : ( it.SizeInMB > 0 ? pxsFmt( L"%u MiB", it.SizeInMB ) : L"Auto" ) ) );
 		case McdColS_Formatted:		return prefix + ( !it.IsPresent ? L"" : ( it.IsFormatted ? _("Yes") : _("No")) );
-		case McdColS_Type:			return prefix + ( !it.IsPresent ? L"" : ( it.IsPSX? _("PSX") : _("PS2")) );
+		case McdColS_Type:			return prefix + ( !it.IsPresent ? L"" : ( it.IsPSX? _("PS1") : _("PS2")) );
 		case McdColS_DateModified:	return prefix + ( !it.IsPresent || !it.DateModified.IsValid() ? L"" : it.DateModified.FormatDate() );
 		case McdColS_DateCreated:	return prefix + ( !it.IsPresent || !it.DateCreated.IsValid() ? L"" : it.DateCreated.FormatDate() );
 
@@ -162,9 +162,9 @@ wxString MemoryCardListView_Simple::OnGetItemText(long item, long column) const
 				//  it cannot access GetMcdProvider() which isn't (and shouldn't be) const.
 				//so.. a plain old cast does the trick. Hope it's not too bad. - avih.
 				if (((MemoryCardListView_Simple*)this)->GetMcdProvider().IsNonEmptyFilesystemCards())
-					return _("[-- Unused cards --]");
+					return _("[-- Disabled cards --]");
 				else
-					return _("[-- No unused cards --]");
+					return _("[-- No cards --]");
 			}
 
 			wxDirName filepath( it.Filename.GetPath() );

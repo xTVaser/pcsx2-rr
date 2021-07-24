@@ -392,28 +392,18 @@ u32 immRespHndl(u32 cmd, u32 data)
         case 0x01:
             break;  //Returns Nothing (old value in GPUREAD remains unchanged)
         case 0x02:
-            data = pgif1reg & 0x001FFFFF;
+            data = pgif1reg & 0x000FFFFF;
             break;  //Read Texture Window setting  ;GP0(E2h) ;20bit/MSBs=Nothing
         case 0x03:
-            data = pgif2reg & 0x001FFFFF;
+            data = pgif2reg & 0x000FFFFF;
             break;  //Read Draw area top left      ;GP0(E3h) ;20bit/MSBs=Nothing
         case 0x04:
-            data = pgif3reg & 0x001FFFFF;
+            data = pgif3reg & 0x000FFFFF;
             break;  //Read Draw area bottom right  ;GP0(E4h) ;20bit/MSBs=Nothing
         case 0x05:
             data = pgif4reg & 0x003FFFFF;
             break;  //Read Draw offset             ;GP0(E5h) ;22bit
-        case 0x06:
-            break;  //Returns Nothing (old value in GPUREAD remains unchanged)
-        case 0x07:
-            data = 0x2;
-            break;  //Read GPU Type (usually 2) See "GPU Versions" notes below
-        case 0x08:
-            data = 0;
-            break;  //Unknown (Returns 00000000h)
-                    //default: //Returns Nothing (old value in GPUREAD remains unchanged)
     }
-    //TODO: Is the PS2 "PS1 GPU" really a "version 2"-GPU???
     return data;
 }
 
@@ -478,7 +468,6 @@ u32 getUpdPgpuStatReg()
         PGpuStatReg |= 0x20000000;
 #endif
         //Or maybe bit 29 of the GPU STATUS reg, should copy the state of bit 4 of the PGIF_CTRL reg?
-        PGpuStatReg &= ~0x10000000;     //If a read (GPI->CPU) is to be done, then obviously, the GPU can't receive data.
         PGpuStatReg &= ~0x04000000;     //Same with receiving GP0() commands.
         if (pgifDatRbC.count > 0)       //Data FIFO has data.
             PGpuStatReg |= 0x08000000;  //Could skip the second check, but that could cause buffer underflow on direct read.
@@ -627,7 +616,7 @@ void PGIFw(int addr, u32 data)
     } else if (addr == PGPU_DAT_FIFO) {  //reverse write - mind the direction set by reg f380
         //PGpuDataReg = data;
         ringBufPut(&pgifDatRbC, &data);
-        //	Console.WriteLn( "\n\r PGIF REVERSE !!! DATA write 0x%08X = 0x%08X  IF_CTRL= %08X   PGPU_STAT= %08X  CmdCnt 0x%X \n\r",  addr, data,  getUpdPgifCtrlReg(),  getUpdPgpuStatReg(), pgifCmdRbC.count);
+		// 	Console.WriteLn( "\n\r PGIF REVERSE !!! DATA write 0x%08X = 0x%08X  IF_CTRL= %08X   PGPU_STAT= %08X  CmdCnt 0x%X \n\r",  addr, data,  getUpdPgifCtrlReg(),  getUpdPgpuStatReg(), pgifCmdRbC.count);
         drainPgpuDmaNrToIop();
     } else if (addr == PGPU_STAT) {
         PGpuStatReg = data;          //Should all bits be writable?

@@ -104,7 +104,16 @@ int  _SPR0chain()
 
 	if(spr0ch.madr >= dmacRegs.rbor.ADDR && spr0ch.madr < (dmacRegs.rbor.ADDR + dmacRegs.rbsr.RMSK + 16u))
 	{
-			partialqwc = spr0ch.qwc;
+		if (dmacRegs.rbsr.RMSK == 0) // Shortcut when MFIFO isn't set up with a size (Hitman series)
+		{
+			spr0ch.madr += spr0ch.qwc << 4;
+			spr0ch.sadr += spr0ch.qwc << 4;
+			spr0ch.sadr &= 0x3FFF; // Limited to 16K
+			spr0ch.qwc = 0;
+		}
+		else
+		{
+			partialqwc = std::min(spr0ch.qwc, 0x400 - ((spr0ch.sadr & 0x3fff) >> 4));
 
 			if ((spr0ch.madr & ~dmacRegs.rbsr.RMSK) != dmacRegs.rbor.ADDR)
 				Console.WriteLn("SPR MFIFO Write outside MFIFO area");
@@ -117,28 +126,35 @@ int  _SPR0chain()
 			spr0ch.sadr += partialqwc << 4;
 			spr0ch.sadr &= 0x3FFF; // Limited to 16K
 			spr0ch.qwc -= partialqwc;
-
-			spr0finished = true;
+		}
+		spr0finished = true;
 	}
 	else
 	{
 
-			// Taking an arbitary small value for games which like to check the QWC/MADR instead of STR, so get most of
-			// the cycle delay out of the way before the end.
-			partialqwc = spr0ch.qwc;
-			memcpy_from_spr((u8*)pMem, spr0ch.sadr, partialqwc*16);
+		// Taking an arbitary small value for games which like to check the QWC/MADR instead of STR, so get most of
+		// the cycle delay out of the way before the end.
+		partialqwc = std::min(spr0ch.qwc, 0x400 - ((spr0ch.sadr & 0x3fff) >> 4));
+		memcpy_from_spr((u8*)pMem, spr0ch.sadr, partialqwc*16);
 
-			// Clear VU mem also!
-			TestClearVUs(spr0ch.madr, partialqwc, true);
+		// Clear VU mem also!
+		TestClearVUs(spr0ch.madr, partialqwc, true);
 
-			spr0ch.madr += partialqwc << 4;
-			spr0ch.sadr += partialqwc << 4;
-			spr0ch.sadr &= 0x3FFF; // Limited to 16K
-			spr0ch.qwc -= partialqwc;
+		spr0ch.madr += partialqwc << 4;
+		spr0ch.sadr += partialqwc << 4;
+		spr0ch.sadr &= 0x3FFF; // Limited to 16K
+		spr0ch.qwc -= partialqwc;
 
 	}
 
-
+	if (spr0ch.qwc == 0 && dmacRegs.ctrl.STS == STS_fromSPR)
+	{
+		if (spr0ch.chcr.MOD == NORMAL_MODE || ((spr0ch.chcr.TAG >> 28) & 0x7) == TAG_CNTS)
+		{
+			//DevCon.Warning("SPR0 %s Stall Control", spr0ch.chcr.MOD == NORMAL_MODE ? "Normal" : "Chain");
+			dmacRegs.stadr.ADDR = spr0ch.madr; // Copy MADR to DMAC_STADR stall addr register
+		}
+	}
 
 	return (partialqwc); // Bus is 1/2 the ee speed
 }
@@ -169,6 +185,9 @@ void _SPR0interleave()
 		qwc -= spr0ch.qwc;
 		pMem = SPRdmaGetAddr(spr0ch.madr, true);
 
+		if(spr0ch.qwc > (0x400 - ((spr0ch.sadr & 0x3fff) >> 4)))
+			DevCon.Warning("Warning! Interleave on SPR0 going outside of SPR memory!");
+
 		switch (dmacRegs.ctrl.MFD)
  		{
 			case MFD_VIF1:
@@ -188,17 +207,16 @@ void _SPR0interleave()
 		spr0ch.sadr &= 0x3FFF; // Limited to 16K
 		spr0ch.madr += (sqwc + spr0ch.qwc) * 16;
 	}
-
+	if (dmacRegs.ctrl.STS == STS_fromSPR)
+	{
+		//DevCon.Warning("SPR0 Interleave Stall Control");
+		dmacRegs.stadr.ADDR = spr0ch.madr; // Copy MADR to DMAC_STADR stall addr register
+	}
 	spr0ch.qwc = 0;
 }
 
 static __fi void _dmaSPR0()
 {
-	if (dmacRegs.ctrl.STS == STS_fromSPR)
-	{
-		DevCon.Warning("SPR0 stall %d", dmacRegs.ctrl.STS);
-	}
-
 	// Transfer Dn_QWC from SPR to Dn_MADR
 	switch(spr0ch.chcr.MOD)
 	{
@@ -206,7 +224,7 @@ static __fi void _dmaSPR0()
 		{
 			if (dmacRegs.ctrl.STS == STS_fromSPR) // STS == fromSPR
 			{
-				DevCon.Warning("SPR stall control Normal not implemented");
+				dmacRegs.stadr.ADDR = spr0ch.madr;
 			}
 			SPR0chain();
 			spr0finished = true;
@@ -234,15 +252,13 @@ static __fi void _dmaSPR0()
 			SPR_LOG("spr0 dmaChain %8.8x_%8.8x size=%d, id=%d, addr=%lx spr=%lx",
 				ptag[1]._u32, ptag[0]._u32, spr0ch.qwc, ptag->ID, spr0ch.madr, spr0ch.sadr);
 
-			if (dmacRegs.ctrl.STS == STS_fromSPR) // STS == fromSPR
-			{
-				Console.WriteLn("SPR stall control");
-			}
-
 			switch (ptag->ID)
 			{
 				case TAG_CNTS: // CNTS - Transfer QWC following the tag (Stall Control)
-					if (dmacRegs.ctrl.STS == STS_fromSPR) dmacRegs.stadr.ADDR = spr0ch.madr + (spr0ch.qwc * 16); // Copy MADR to DMAC_STADR stall addr register
+					if (dmacRegs.ctrl.STS == STS_fromSPR) // STS == fromSPR - Initial Value
+					{
+						dmacRegs.stadr.ADDR = spr0ch.madr;
+					}
 					break;
 
 				case TAG_CNT: // CNT - Transfer QWC following the tag.
@@ -270,10 +286,6 @@ static __fi void _dmaSPR0()
 		//case INTERLEAVE_MODE:
 		default:
 		{
-			if (dmacRegs.ctrl.STS == STS_fromSPR)   // STS == fromSPR
-			{
-				Console.WriteLn("SPR stall control interleave not implemented");
-			}
 			_SPR0interleave();
 			spr0finished = true;
 			break;
@@ -364,7 +376,7 @@ int  _SPR1chain()
 	int partialqwc = 0;
 	// Taking an arbitary small value for games which like to check the QWC/MADR instead of STR, so get most of
 	// the cycle delay out of the way before the end.
-	partialqwc = spr1ch.qwc;
+	partialqwc = std::min(spr1ch.qwc, 0x400u);
 
 	SPR1transfer(pMem, partialqwc);
 	spr1ch.madr += partialqwc * 16;
@@ -378,16 +390,8 @@ int  _SPR1chain()
 __fi void SPR1chain()
 {
 	int cycles = 0;
-	if(!CHECK_IPUWAITHACK)
-	{
-		cycles =  _SPR1chain() * BIAS;
-		CPU_INT(DMAC_TO_SPR, cycles);
-	}
-	else
-	{
-		 _SPR1chain();
-		CPU_INT(DMAC_TO_SPR, 8);
-	}
+	cycles =  _SPR1chain() * BIAS;
+	CPU_INT(DMAC_TO_SPR, cycles);
 }
 
 void _SPR1interleave()

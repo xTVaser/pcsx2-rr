@@ -29,11 +29,15 @@
 #include "VUmicro.h"
 
 #include "ps2/HwInternal.h"
-
+#ifdef _WIN32
+#include "PAD/Windows/PAD.h"
+#else
+#include "PAD/Linux/PAD.h"
+#endif
 #include "Sio.h"
 
 #ifndef DISABLE_RECORDING
-#	include "Recording/RecordingControls.h"
+#	include "Recording/InputRecordingControls.h"
 #endif
 
 using namespace Threading;
@@ -103,7 +107,7 @@ static __fi void _rcntSet( int cntidx )
 	if (c < nextCounter)
 	{
 		nextCounter = c;
-		cpuSetNextEvent( nextsCounter, nextCounter );	//Need to update on counter resets/target changes
+		cpuSetNextEvent( nextsCounter, nextCounter ); // Need to update on counter resets/target changes
 	}
 
 	// Ignore target diff if target is currently disabled.
@@ -121,7 +125,7 @@ static __fi void _rcntSet( int cntidx )
 		if (c < nextCounter)
 		{
 			nextCounter = c;
-			cpuSetNextEvent( nextsCounter, nextCounter );	//Need to update on counter resets/target changes
+			cpuSetNextEvent(nextsCounter, nextCounter); // Need to update on counter resets/target changes
 		}
 	}
 }
@@ -139,6 +143,7 @@ static __fi void cpuRcntSet()
 
 	// sanity check!
 	if( nextCounter < 0 ) nextCounter = 0;
+	cpuSetNextEvent(nextsCounter, nextCounter); // Need to update on counter resets/target changes
 }
 
 void rcntInit()
@@ -182,6 +187,8 @@ struct vSyncTimingInfo
 	u32 Render;				// time from vblank end to vblank start (cycles)
 	u32 Blank;				// time from vblank start to vblank end (cycles)
 
+	u32 GSBlank;			// GS CSR is swapped roughly 3.5 hblank's after vblank start
+
 	u32 hSyncError;			// rounding error after the duration of a rendered frame (cycles)
 	u32 hRender;			// time from hblank end to hblank start (cycles)
 	u32 hBlank;				// time from hblank start to hblank end (cycles)
@@ -208,8 +215,9 @@ static void vSyncInfoCalc(vSyncTimingInfo* info, Fixed100 framesPerSecond, u32 s
 	// Jak II - random speedups
 	// Shadow of Rome - FMV audio issues
 	const u64 HalfFrame = Frame / 2;
-	const u64 Blank = Scanline * (gsVideoMode == GS_VideoMode::NTSC ? 26 : 22);
+	const u64 Blank = Scanline * (gsVideoMode == GS_VideoMode::NTSC ? 22 : 26);
 	const u64 Render = HalfFrame - Blank;
+	const u64 GSBlank = Scanline * 3.5; // GS VBlank/CSR Swap happens roughly 3.5 Scanlines after VBlank Start
 
 	// Important!  The hRender/hBlank timers should be 50/50 for best results.
 	//  (this appears to be what the real EE's timing crystal does anyway)
@@ -226,6 +234,7 @@ static void vSyncInfoCalc(vSyncTimingInfo* info, Fixed100 framesPerSecond, u32 s
 	//TODO: Carry fixed-point math all the way through the entire vsync and hsync counting processes, and continually apply rounding
 	//as needed for each scheduled v/hsync related event. Much better to handle than this messed state.
 	info->Framerate = framesPerSecond;
+	info->GSBlank = (u32)(GSBlank / 10000);
 	info->Render = (u32)(Render / 10000);
 	info->Blank = (u32)(Blank / 10000);
 
@@ -273,16 +282,37 @@ const char* ReportVideoMode()
 
 Fixed100 GetVerticalFrequency()
 {
+	// Note about NTSC/PAL "double strike" modes:
+	// NTSC and PAL can be configured in such a way to produce a non-interlaced signal.
+	// This involves modifying the signal slightly by either adding or subtracting a line (526/524 instead of 525)
+	// which has the function of causing the odd and even fields to strike the same lines.
+	// Doing this modifies the vertical refresh rate slightly. Beatmania is sensitive to this and
+	// not accounting for it will cause the audio and video to become desynced.
+	//
+	// In the case of the GS, I believe it adds a halfline to the vertical back porch but more research is needed.
+	// For now I'm just going to subtract off the config setting.
+	//
+	// According to the GS:
+	// NTSC (interlaced): 59.94
+	// NTSC (non-interlaced): 59.82
+	// PAL (interlaced): 50.00
+	// PAL (non-interlaced): 49.76
+	//
+	// More Information:
+	// https://web.archive.org/web/20201031235528/https://wiki.nesdev.com/w/index.php/NTSC_video
+	// https://web.archive.org/web/20201102100937/http://forums.nesdev.com/viewtopic.php?t=7909
+	// https://web.archive.org/web/20120629231826fw_/http://ntsc-tv.com/index.html
+	// https://web.archive.org/web/20200831051302/https://www.hdretrovision.com/240p/
 	switch (gsVideoMode)
 	{
 	case GS_VideoMode::Uninitialized: // SetGsCrt hasn't executed yet, give some temporary values.
 		return 60;
 	case GS_VideoMode::PAL:
 	case GS_VideoMode::DVD_PAL:
-		return EmuConfig.GS.FrameratePAL;
+		return gsIsInterlaced ? EmuConfig.GS.FrameratePAL : EmuConfig.GS.FrameratePAL - 0.24f;
 	case GS_VideoMode::NTSC:
 	case GS_VideoMode::DVD_NTSC:
-		return EmuConfig.GS.FramerateNTSC;
+		return gsIsInterlaced ? EmuConfig.GS.FramerateNTSC : EmuConfig.GS.FramerateNTSC - 0.11f;
 	case GS_VideoMode::SDTV_480P:
 		return 59.94;
 	case GS_VideoMode::HDTV_1080P:
@@ -390,58 +420,74 @@ void frameLimitReset()
 	m_iStart = GetCPUTicks();
 }
 
+// Convenience function to update UI thread and set patches. 
+static __fi void frameLimitUpdateCore()
+{
+	GetCoreThread().VsyncInThread();
+	Cpu->CheckExecutionState();
+}
+
 // Framelimiter - Measures the delta time between calls and stalls until a
 // certain amount of time passes if such time hasn't passed yet.
 // See the GS FrameSkip function for details on why this is here and not in the GS.
 static __fi void frameLimit()
 {
-	// 999 means the user would rather just have framelimiting turned off...
-	if( !EmuConfig.GS.FrameLimitEnable ) return;
-
-	u64 uExpectedEnd	= m_iStart + m_iTicks;
-	u64 iEnd			= GetCPUTicks();
-	s64 sDeltaTime		= iEnd - uExpectedEnd;
-
-	// If the framerate drops too low, reset the expected value.  This avoids
-	// excessive amounts of "fast forward" syndrome which would occur if we
-	// tried to catch up too much.
-
-	if( sDeltaTime > m_iTicks*8 )
+	// Framelimiter off in settings? Framelimiter go brrr.
+	if (!EmuConfig.GS.FrameLimitEnable)
 	{
-		m_iStart = iEnd - m_iTicks;
+		frameLimitUpdateCore();
 		return;
 	}
 
-	// use the expected frame completion time as our starting point.
-	// improves smoothness by making the framelimiter more adaptive to the
-	// imperfect TIMESLICE() wait, and allows it to speed up a wee bit after
-	// slow frames to "catch up."
+	u64 uExpectedEnd	= m_iStart + m_iTicks;	// Compute when we would expect this frame to end, assuming everything goes perfectly perfect. 
+	u64 iEnd			= GetCPUTicks();		// The current tick we actually stopped on.
+	s64 sDeltaTime		= iEnd - uExpectedEnd;	// The diff between when we stopped and when we expected to.
 
+	// If frame ran too long...
+	if (sDeltaTime >= m_iTicks)
+	{
+		// ... Fudge the next frame start over a bit. Prevents fast forward zoomies.
+		m_iStart += (sDeltaTime / m_iTicks) * m_iTicks;
+		frameLimitUpdateCore();
+		return;
+	}
+
+	// Conversion of delta from CPU ticks (microseconds) to milliseconds
+	s32 msec = (int) ((sDeltaTime * -1000) / (s64) GetTickFrequency());
+	
+	// If any integer value of milliseconds exists, sleep it off.
+	// Prior comments suggested that 1-2 ms sleeps were inaccurate on some OSes;
+	// further testing suggests instead that this was utter bullshit. 
+	if (msec > 1)
+	{
+		Threading::Sleep(msec - 1);
+	}
+	
+	// Conversion to milliseconds loses some precision; after sleeping off whole milliseconds,
+	// spin the thread without sleeping until we finally reach our expected end time.
+	while (GetCPUTicks() < uExpectedEnd)
+	{
+		// SKREEEEEEEE
+	}
+
+	// Finally, set our next frame start to when this one ends
 	m_iStart = uExpectedEnd;
-
-	// Shortcut for cases where no waiting is needed (they're running slow already,
-	// so don't bog 'em down with extra math...)
-	if( sDeltaTime >= 0 ) return;
-
-	// If we're way ahead then we can afford to sleep the thread a bit.
-	// (note, on Windows sleep(1) thru sleep(2) tend to be the least accurate sleeps,
-	// and longer sleeps tend to be pretty reliable, so that's why the convoluted if/
-	// else below.  The same generally isn't true for Linux, but no harm either way
-	// really.)
-
-	s32 msec = (int)((sDeltaTime*-1000) / (s64)GetTickFrequency());
-	if( msec > 4 ) Threading::Sleep( msec );
-	else if( msec > 2 ) Threading::Sleep( 1 );
-
-	// Sleep is not picture-perfect accurate, but it's actually not necessary to
-	// maintain a "perfect" lock to uExpectedEnd anyway.  if we're a little ahead
-	// starting this frame, it'll just sleep longer the next to make up for it. :)
+	frameLimitUpdateCore();
 }
 
 static __fi void VSyncStart(u32 sCycle)
 {
-	GetCoreThread().VsyncInThread();
-	Cpu->CheckExecutionState();
+#ifndef DISABLE_RECORDING
+	if (g_Conf->EmuOptions.EnableRecordingTools)
+	{
+		// It is imperative that any frame locking that must happen occurs before Vsync is started
+		// Not doing so would sacrifice a frame of a savestate-based recording when loading any savestate
+		g_InputRecordingControls.HandlePausingAndLocking();
+	}
+#endif
+
+	frameLimit(); // limit FPS
+	gsPostVsyncStart(); // MUST be after framelimit; doing so before causes funk with frame times!
 
 	if(EmuConfig.Trace.Enabled && EmuConfig.Trace.EE.m_EnableAll)
 		SysTrace.EE.Counters.Write( "    ================  EE COUNTER VSYNC START (frame: %d)  ================", g_FrameCount );
@@ -454,16 +500,9 @@ static __fi void VSyncStart(u32 sCycle)
 	CpuVU0->Vsync();
 	CpuVU1->Vsync();
 
-	if (!CSRreg.VSINT)
-	{
-		CSRreg.VSINT = true;
-		if (!GSIMR.VSMSK)
-			gsIrq();
-	}
-
 	hwIntcIrq(INTC_VBLANK_S);
 	psxVBlankStart();
-	gsPostVsyncStart();
+	
 	if (gates) rcntStartGate(true, sCycle); // Counters Start Gate code
 
 	// INTC - VB Blank Start Hack --
@@ -486,14 +525,32 @@ static __fi void VSyncStart(u32 sCycle)
 	// Should no longer be required (Refraction)
 }
 
+static __fi void GSVSync()
+{
+	// CSR is swapped and GS vBlank IRQ is triggered roughly 3.5 hblanks after VSync Start
+	CSRreg.SwapField();
+
+	if (!CSRreg.VSINT)
+	{
+		CSRreg.VSINT = true;
+		if (!GSIMR.VSMSK)
+			gsIrq();
+	}
+}
+
 static __fi void VSyncEnd(u32 sCycle)
 {
+#ifndef DISABLE_RECORDING
+	if (g_Conf->EmuOptions.EnableRecordingTools)
+	{
+		g_InputRecordingControls.CheckPauseStatus();
+	}
+#endif
+
 	if(EmuConfig.Trace.Enabled && EmuConfig.Trace.EE.m_EnableAll)
 		SysTrace.EE.Counters.Write( "    ================  EE COUNTER VSYNC END (frame: %d)  ================", g_FrameCount );
 
 	g_FrameCount++;
-
-
 
 	hwIntcIrq(INTC_VBLANK_E);  // HW Irq
 	psxVBlankEnd(); // psxCounters vBlank End
@@ -504,10 +561,6 @@ static __fi void VSyncEnd(u32 sCycle)
 	if (!(g_FrameCount % 60))
 		sioNextFrame();
 
-	frameLimit(); // limit FPS
-
-	//Do this here, breaks Dynasty Warriors otherwise.
-	CSRreg.SwapField();
 	// This doesn't seem to be needed here.  Games only seem to break with regard to the
 	// vsyncstart irq.
 	//cpuRegs.eCycle[30] = 2;
@@ -567,22 +620,21 @@ __fi void rcntUpdate_vSync()
 		vsyncCounter.CycleT = vSyncInfo.Render;
 		vsyncCounter.Mode = MODE_VRENDER;
 	}
+	else if (vsyncCounter.Mode == MODE_GSBLANK) // GS CSR Swap and interrupt
+	{
+		GSVSync();
+
+		vsyncCounter.Mode = MODE_VSYNC;
+		// Don't set the start cycle, makes it easier to calculate the correct Vsync End time
+		vsyncCounter.CycleT = vSyncInfo.Blank;
+	}
 	else	// VSYNC end / VRENDER begin
 	{
-
-#ifndef DISABLE_RECORDING
-		if (g_Conf->EmuOptions.EnableRecordingTools)
-		{
-			g_RecordingControls.HandleFrameAdvanceAndStop();
-		}
-#endif
-
 		VSyncStart(vsyncCounter.sCycle);
 
-
 		vsyncCounter.sCycle += vSyncInfo.Render;
-		vsyncCounter.CycleT = vSyncInfo.Blank;
-		vsyncCounter.Mode = MODE_VSYNC;
+		vsyncCounter.CycleT = vSyncInfo.GSBlank;
+		vsyncCounter.Mode = MODE_GSBLANK;
 
 		// Accumulate hsync rounding errors:
 		hsyncCounter.sCycle += vSyncInfo.hSyncError;
@@ -999,6 +1051,9 @@ void SaveStateBase::rcntFreeze()
 	Freeze( vsyncCounter );
 	Freeze( nextCounter );
 	Freeze( nextsCounter );
+	Freeze( vSyncInfo );
+	Freeze( gsVideoMode );
+	Freeze( gsIsInterlaced );
 
 	if( IsLoading() )
 	{

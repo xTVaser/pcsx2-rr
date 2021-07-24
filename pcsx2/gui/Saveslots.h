@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "PS2Edefs.h"
 #include "System.h"
 #include "Elfheader.h"
 #include "App.h"
@@ -132,6 +131,6 @@ extern void States_DefrostCurrentSlot();
 extern void States_FreezeCurrentSlot();
 extern void States_CycleSlotForward();
 extern void States_CycleSlotBackward();
-extern void States_SetCurrentSlot(int slot);
+extern void States_SetCurrentSlot(int slot_num);
 extern int States_GetCurrentSlot();
-extern void Sstates_updateLoadBackupMenuItem(bool isBeforeSave);
+extern void States_updateLoadBackupMenuItem();

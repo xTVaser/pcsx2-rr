@@ -229,7 +229,6 @@ typedef u32 (__fastcall *mVUCall)(void*, void*);
 #define setCode()	 { mVU.code = curI; }
 #define bSaveAddr	 (((xPC + 16) & (mVU.microMemSize-8)) / 8)
 #define shufflePQ	 (((mVU.p) ? 0xb0 : 0xe0) | ((mVU.q) ? 0x01 : 0x04))
-#define cmpOffset(x) ((u8*)&(((u8*)x)[it[0].start]))
 #define Rmem		 &mVU.regs().VI[REG_R].UL
 #define aWrap(x, m)	 ((x > m) ? 0 : x)
 #define shuffleSS(x) ((x==1)?(0x27):((x==2)?(0xc6):((x==4)?(0xe1):(0xe4))))
@@ -303,14 +302,6 @@ static const bool doCFlagInsts = true; // Set to true to enable multiple clip   
 // for the 3 different types of flags: Status, Mac, Clip flags.
 // Setting one of these to 0 acts as if there is only 1 instance of the
 // corresponding flag, which may be useful when debugging flag pipeline bugs.
-
-static const int doFullFlagOpt = false; // Set above to false to enable full flag optimization
-// This attempts to eliminate some flag shuffling at the end of blocks, but
-// can end up creating more recompiled code. The max amount of times this optimization
-// is performed per block can be set by changing the doFullFlagOpt value to be that limit.
-// i.e. setting doFullFlagOpt to 2 will recompile the current block at-most 2 times with
-// the full flag optimization.
-// Note: This optimization doesn't really seem to be benefitial and is buggy...
 
 // Branch in Branch Delay Slots
 static const bool doBranchInDelaySlot = true; // Set to true to enable evil-branches

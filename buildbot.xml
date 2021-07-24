@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="ReleaseAll" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <!-- Add all the projects that use the non-standard configurations here. -->
-  <ItemGroup>
-    <TargetsSetCPU Include="plugins\GSdx"/>
-  </ItemGroup>
   <!-- Add all the solutions here. -->
   <ItemGroup>
     <SolutionSet Include="$(MSBuildProjectDirectory)\PCSX2_suite.sln" />
@@ -20,8 +16,11 @@
       CreateHardLinksForPublishFilesIfPossible=$(CreateHardLinksIfPossible);
     </CompileFastPlz>
   </PropertyGroup>
+  <PropertyGroup>
+    <RetainDebuggingArtifacts Condition="'$(RetainDebuggingArtifacts)' == ''">false</RetainDebuggingArtifacts>
+  </PropertyGroup>
   <!-- Add all the custom targets here. -->
-  <Target Name="CleanBloat" AfterTargets="InternalBuild">
+  <Target Name="CleanBloat" AfterTargets="InternalBuild" Condition="'$(RetainDebuggingArtifacts)' == 'false'">
     <ItemGroup>
       <BloatToDelete Include="$(MSBuildProjectDirectory)\bin\**\*.bsc"/>
       <BloatToDelete Include="$(MSBuildProjectDirectory)\bin\**\*.exp"/>
@@ -40,7 +39,7 @@
     </ItemGroup>
     <Delete Files="@(CruftToDelete)" />
   </Target>
-  <Target Name="InternalBuild" AfterTargets="DebugAll;DevelAll;ReleaseAll;AppVeyor">
+  <Target Name="InternalBuild" AfterTargets="DebugAll;DevelAll;ReleaseAll">
     <MSBuild Projects="@(SolutionSet)" BuildInParallel="false" Properties="Configuration=$(BaseConfiguration)" Targets="Clean" />
     <MSBuild Projects="@(ProjectSetCPU)" BuildInParallel="false" Properties="Configuration=%(ConfigCPU.Identity)" Targets="Clean" />
     <CallTarget Targets="CleanCruft" />
@@ -52,8 +51,7 @@
       <BaseConfiguration>Debug</BaseConfiguration>
     </PropertyGroup>
     <ItemGroup>
-      <ConfigCPU Include="Debug"/>
-      <!--ConfigCPU Include="Debug AVX2;Debug SSE4"/-->
+      <ConfigCPU Include="Debug AVX2;Debug"/>
     </ItemGroup>
   </Target>
   <Target Name="DevelAll">
@@ -61,8 +59,7 @@
       <BaseConfiguration>Devel</BaseConfiguration>
     </PropertyGroup>
     <ItemGroup>
-      <ConfigCPU Include="Devel"/>
-      <!--ConfigCPU Include="Devel AVX2;Devel SSE4"/-->
+      <ConfigCPU Include="Devel AVX2;Devel"/>
     </ItemGroup>
   </Target>
   <Target Name="ReleaseAll">
@@ -70,15 +67,7 @@
       <BaseConfiguration>Release</BaseConfiguration>
     </PropertyGroup>
     <ItemGroup>
-      <ConfigCPU Include="Release AVX2;Release SSE4"/>
-    </ItemGroup>
-  </Target>
-  <Target Name="AppVeyor">
-    <PropertyGroup>
-      <BaseConfiguration>Release</BaseConfiguration>
-    </PropertyGroup>
-    <ItemGroup>
-      <ConfigCPU Include="Release AVX2"/>
+      <ConfigCPU Include="Release AVX2;Release"/>
     </ItemGroup>
   </Target>
 </Project>

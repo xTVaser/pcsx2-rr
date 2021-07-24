@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2010  PCSX2 Dev Team
+ *  Copyright (C) 2002-2021  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -190,7 +190,7 @@ void SysLogMachineCaps()
 {
 	if ( !PCSX2_isReleaseVersion )
 	{
-		Console.WriteLn(Color_StrongGreen, "PCSX2 %u.%u.%u-%lld %s"
+		Console.WriteLn(Color_StrongGreen, "\nPCSX2 %u.%u.%u-%lld %s"
 #ifndef DISABLE_BUILD_DATE
 			"- compiled on " __DATE__
 #endif
@@ -262,10 +262,14 @@ void SysLogMachineCaps()
 	Console.WriteLn( Color_StrongBlack,	L"x86 Features Detected:" );
     Console.Indent().WriteLn(result[0] + (result[1].IsEmpty() ? L"" : (L"\n" + result[1])));
 #ifdef __M_X86_64
-    Console.Indent().WriteLn("Pcsx2 was compiled as 64-bits, which is unsupported and breaks all recompilers.");
+    Console.Indent().WriteLn("Pcsx2 was compiled as 64-bits.");
 #endif
 
 	Console.Newline();
+
+#ifdef _WIN32
+	CheckIsUserOnHighPerfPowerPlan();
+#endif
 }
 
 template< typename CpuType >

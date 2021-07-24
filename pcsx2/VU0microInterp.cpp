@@ -157,12 +157,12 @@ static void _vu0Exec(VURegs* VU)
 
 			if(VU->takedelaybranch)
 			{				
-				VU->branch = 2;
-				DevCon.Warning("VU0 - Branch/Jump in Delay Slot");			
+				VU->branch = 1;
+				DevCon.Warning("VU0 - Branch/Jump in Delay Slot");
 				VU->branchpc = VU->delaybranchpc;
 				VU->delaybranchpc = 0;
 				VU->takedelaybranch = false;
-			}			
+			}
 		}
 	}
 
@@ -198,6 +198,11 @@ InterpVU0::InterpVU0()
 	IsInterpreter = true;
 }
 
+void InterpVU0::SetStartPC(u32 startPC)
+{
+	VU0.start_pc = startPC;
+}
+
 void InterpVU0::Step()
 {
 	vu0Exec( &VU0 );
@@ -206,8 +211,9 @@ void InterpVU0::Step()
 void InterpVU0::Execute(u32 cycles)
 {
 	VU0.VI[REG_TPC].UL <<= 3;
-	for (int i = (int)cycles; i > 0 ; i--) {
-		if (!(VU0.VI[REG_VPU_STAT].UL & 0x1)) {
+	VU0.flags &= ~VUFLAG_MFLAGSET;
+	for (int i = (int)cycles; i > 0; i--) {
+		if (!(VU0.VI[REG_VPU_STAT].UL & 0x1) || (VU0.flags & VUFLAG_MFLAGSET)) {
 			if (VU0.branch || VU0.ebit) {
 				vu0Exec(&VU0); // run branch delay slot?
 			}
@@ -217,4 +223,3 @@ void InterpVU0::Execute(u32 cycles)
 	}
 	VU0.VI[REG_TPC].UL >>= 3;
 }
-

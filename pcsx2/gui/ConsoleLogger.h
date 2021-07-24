@@ -130,6 +130,10 @@ protected:
 		ColorSection( ConsoleColors _color, int msgptr ) : color(_color), startpoint(msgptr) { }
 	};
 
+private:
+	wxColor lightThemeBgColor = wxColor(230, 235, 242);
+	wxColor darkThemeBgColor = wxColor(38, 41, 48);
+
 protected:
 	ConLogConfig&	m_conf;
 	wxTextCtrl&		m_TextCtrl;
@@ -199,6 +203,7 @@ protected:
 	void OnClose(wxCommandEvent& event);
 	void OnSave (wxCommandEvent& event);
 	void OnClear(wxCommandEvent& event);
+	void OnLogSettings(wxCommandEvent& event);
 
 	void OnEnableAllLogging(wxCommandEvent& event);
 	void OnDisableAllLogging(wxCommandEvent& event);
@@ -230,7 +235,7 @@ void OSDlog(ConsoleColors color, bool console, const std::string& str);
 
 template<typename ... Args>
 void OSDlog(ConsoleColors color, bool console, const std::string& format, Args ... args) {
-	if (!GSosdLog && !console) return;
+	if (!console) return;
 
 	size_t size = snprintf( nullptr, 0, format.c_str(), args ... ) + 1; // Extra space for '\0'
 	std::vector<char> buf(size);

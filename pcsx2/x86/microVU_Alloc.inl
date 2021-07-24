@@ -109,6 +109,14 @@ __fi void mVUallocCFLAGb(mV, const x32& reg, int fInstance)
 {
 	if (fInstance < 4) xMOV(ptr32[&mVU.clipFlag[fInstance]], reg);			// microVU
 	else			   xMOV(ptr32[&mVU.regs().VI[REG_CLIP_FLAG].UL], reg);	// macroVU
+
+	// On COP2 modifying the CLIP flag we need to update the microVU version for when it's restored on new program
+	if (fInstance == 0xff)
+	{
+		xMOVDZX(xmmT1, reg);
+		xSHUF.PS(xmmT1, xmmT1, 0);
+		xMOVAPS(ptr128[&mVU.regs().micro_clipflags], xmmT1);
+	}
 }
 
 //------------------------------------------------------------------
@@ -158,13 +166,7 @@ __fi void getQreg(const xmm& reg, int qInstance)
 
 __ri void writeQreg(const xmm& reg, int qInstance)
 {
-	if (qInstance) {
-		if (!x86caps.hasStreamingSIMD4Extensions) {
-			xPSHUF.D(xmmPQ, xmmPQ, 0xe1);
-			xMOVSS(xmmPQ, reg);
-			xPSHUF.D(xmmPQ, xmmPQ, 0xe1);
-		}
-		else xINSERTPS(xmmPQ, reg, _MM_MK_INSERTPS_NDX(0, 1, 0));
-	}
+	if (qInstance)
+		xINSERTPS(xmmPQ, reg, _MM_MK_INSERTPS_NDX(0, 1, 0));
 	else xMOVSS(xmmPQ, reg);
 }
