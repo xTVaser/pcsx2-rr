@@ -25,7 +25,6 @@
 #include <netinet/tcp.h>
 #include <unistd.h>
 #elif _WIN32
-#define WIN32_LEAN_AND_MEAN
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #endif
@@ -132,11 +131,11 @@ Config::Mode EmuCmp::mode = Config::Mode::Server;
 
 // Note: communications are one-way so we can use buffered IO
 
-static FILE* comms = nullptr;
+static int cmp_socket = -1;
 
 void EmuCmp::init()
 {
-	if (comms)
+	if (cmp_socket != -1)
 	{
 		return;
 	} // Already initted
@@ -204,15 +203,17 @@ void EmuCmp::init()
 
 		if (bind(cmp_socket, (sockaddr*)&server_address, sizeof(server_address)) < 0)
 		{
-			printf("[EmuCmp] Failed to bind\n");
+			DevCon.WriteLn("[EmuCmp] Failed to bind");
 			return;
 		}
 
 		if (listen(cmp_socket, 0) < 0)
 		{
-			printf("[EmuCmp] Failed to listen\n");
+			DevCon.WriteLn("[EmuCmp] Failed to listen");
 			return;
 		}
+
+		DevCon.WriteLn("[EmuCmp] Listening!");
 	}
 	else
 	{
@@ -273,21 +274,17 @@ void EmuCmp::init()
 
 void EmuCmp::shutdown()
 {
-	if (comms)
-	{
-		fclose(comms);
-		comms = nullptr;
-	}
+	// TODO - proper cleanup
 	mode = Config::Mode::Off;
 }
 
-static void send(void* buffer, std::size_t size)
+static void send(const void* buffer, std::size_t size)
 {
 	if (mode != Config::Mode::Server)
 	{
 		return;
 	}
-	write_to_socket(cmp_socket, static_cast<char*>(buffer), size);
+	write_to_socket(cmp_socket, reinterpret_cast<const char*>(buffer), size);
 }
 
 static void receive(void* buffer, std::size_t size)

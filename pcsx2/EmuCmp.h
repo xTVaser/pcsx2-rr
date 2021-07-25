@@ -31,8 +31,6 @@ namespace detail {
 	void verifySync(u16 syncID);
 }
 
-int cmp_socket = -1;
-
 namespace Config {
 	enum class Mode {
 		/// EmuCmp is disabled
