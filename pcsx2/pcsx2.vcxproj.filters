@@ -825,7 +825,7 @@
       <Filter>AppHost\Win32</Filter>
     </ClCompile>
     <ClCompile Include="windows\WinPowerProfile.cpp">
-	  <Filter>AppHost\Win32</Filter>
+      <Filter>AppHost\Win32</Filter>
     </ClCompile>
     <ClCompile Include="Linux\LnxKeyCodes.cpp">
       <Filter>AppHost\Linux</Filter>
@@ -1602,6 +1602,7 @@
     <ClCompile Include="Recording\Utilities\InputRecordingLogger.cpp">
       <Filter>Recording\Utilities</Filter>
     </ClCompile>
+    <ClCompile Include="EmuCmp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Patch.h">
@@ -2618,6 +2619,7 @@
     <ClInclude Include="GS.h">
       <Filter>System\Ps2</Filter>
     </ClInclude>
+    <ClInclude Include="EmuCmp.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="windows\wxResources.rc">

@@ -296,6 +296,7 @@
     <ClCompile Include="DEV9\net.cpp" />
     <ClCompile Include="DEV9\Win32\tap-win32.cpp" />
     <ClCompile Include="DEV9\Win32\Win32.cpp" />
+    <ClCompile Include="EmuCmp.cpp" />
     <ClCompile Include="GameDatabase.cpp" />
     <ClCompile Include="Gif_Logger.cpp" />
     <ClCompile Include="Gif_Unit.cpp" />
@@ -736,6 +737,7 @@
     <ClInclude Include="DEV9\Win32\pcap_io_win32_funcs.h" />
     <ClInclude Include="DEV9\Win32\resource.h" />
     <ClInclude Include="DEV9\Win32\tap.h" />
+    <ClInclude Include="EmuCmp.h" />
     <ClInclude Include="GameDatabase.h" />
     <ClInclude Include="Gif_Unit.h" />
     <ClInclude Include="gui\AppGameDatabase.h" />
