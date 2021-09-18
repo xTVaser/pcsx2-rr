@@ -15,7 +15,7 @@
 
 #include "PrecompiledHeader.h"
 
-#include "App.h"
+#include "gui/App.h"
 #include "GS.h"
 #include "GSCaptureDlg.h"
 
