@@ -726,7 +726,7 @@ set(pcsx2GSHeaders
 	GS/Renderers/OpenGL/GSTextureOGL.h
 	GS/Renderers/OpenGL/GSUniformBufferOGL.h
 	GS/Renderers/OpenGL/GSVertexArrayOGL.h
-	GS/Window/GSCaptureDlg.h
+	GS/Window/wx/GSCaptureDlg.h
 	GS/Window/GSDialog.h
 	GS/Window/GSSetting.h
 	GS/Window/GSSettingsDlg.h
@@ -800,7 +800,7 @@ if(WIN32)
 		GS/Renderers/DX11/GSTexture11.cpp
 		GS/Renderers/DX11/GSTextureCache11.cpp
 		GS/Renderers/DX11/GSTextureFX11.cpp
-		GS/Window/GSCaptureDlg.cpp
+		GS/Window/wx/GSCaptureDlg.cpp
 		GS/Window/GSDialog.cpp
 		GS/Window/GSSettingsDlg.cpp
 		GS/Window/GSWndDX.cpp
