@@ -17,7 +17,7 @@
 #include "SPU2/Global.h"
 #include "Dialogs.h"
 #include "Config.h"
-#include "SPU2/wx/wxConfig.h"
+#include "SPU2/wx/SPU2ConfigDialog.h"
 
 #if defined(__unix__) || defined(__APPLE__)
 #include <SDL.h>
@@ -185,7 +185,7 @@ void WriteSettings()
 
 void configure()
 {
-	auto* dialog = new Dialog;
+	auto* dialog = new SPU2ConfigDialog;
 
 	initIni();
 	ReadSettings();

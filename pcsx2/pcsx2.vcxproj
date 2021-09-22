@@ -385,7 +385,8 @@
     <ClCompile Include="Recording\InputRecordingFile.cpp" />
     <ClCompile Include="Recording\PadData.cpp" />
     <ClCompile Include="SPU2\wx\Dialogs.cpp" />
-    <ClCompile Include="SPU2\wx\wxConfig.cpp" />
+    <ClCompile Include="SPU2\wx\PortAudioSettingsDialog.cpp" />
+    <ClCompile Include="SPU2\wx\SPU2ConfigDialog.cpp" />
     <ClCompile Include="USB\configuration.cpp" />
     <ClCompile Include="USB\deviceproxy.cpp" />
     <ClCompile Include="USB\device_init.cpp" />
@@ -881,7 +882,8 @@
     <ClInclude Include="Recording\VirtualPad\VirtualPadData.h" />
     <ClInclude Include="Recording\VirtualPad\VirtualPadResources.h" />
     <ClInclude Include="Recording\Utilities\InputRecordingLogger.h" />
-    <ClInclude Include="SPU2\wx\wxConfig.h" />
+    <ClInclude Include="SPU2\wx\PortAudioSettingsDialog.h" />
+    <ClInclude Include="SPU2\wx\SPU2ConfigDialog.h" />
     <ClInclude Include="USB\configuration.h" />
     <ClInclude Include="USB\deviceproxy.h" />
     <ClInclude Include="USB\helpers.h" />

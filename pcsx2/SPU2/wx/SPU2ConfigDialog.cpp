@@ -14,9 +14,13 @@
  */
 
 #include "PrecompiledHeader.h"
+
+#include "SPU2ConfigDialog.h"
+
+#include "PortAudioSettingsDialog.h"
+
 #include "../Config.h"
 #include "../wx/Config.h"
-#include "wxConfig.h"
 
 MixerTab::MixerTab(wxWindow* parent)
 	: wxPanel(parent, wxID_ANY)
@@ -112,10 +116,10 @@ SyncTab::SyncTab(wxWindow* parent)
 	auto* adv_box = new wxStaticBoxSizer(wxVERTICAL, this, "Advanced");
 
 	auto* babble_label = new wxStaticText(this, wxID_ANY,
-										  "For fine-tuning time stretching.\n"
-										  "Larger is better for slowdown, && smaller for speedup (60+ fps).\n"
-										  "All options in microseconds.",
-										  wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE_HORIZONTAL);
+		"For fine-tuning time stretching.\n"
+		"Larger is better for slowdown, && smaller for speedup (60+ fps).\n"
+		"All options in microseconds.",
+		wxDefaultPosition, wxDefaultSize, wxALIGN_CENTRE_HORIZONTAL);
 	babble_label->Wrap(300);
 
 	adv_box->Add(babble_label, wxSizerFlags().Centre());
@@ -338,39 +342,31 @@ void DebugTab::CallUpdate(wxCommandEvent& /*event*/)
 	Update();
 }
 
-void Dialog::handleModuleConfig(wxCommandEvent& event)
+void SPU2ConfigDialog::handleModuleConfig(wxCommandEvent& event)
 {
 	auto mod = m_module_select->GetSelection();
-	printf("configuring module %d \n", mod);
 
-    wxDialog *dialog = nullptr;
+	wxDialog* dialog = nullptr;
 
 	if (mods[mod] != nullptr)
 	{
 		auto ident = mods[mod]->GetIdent();
 
-        if (ident == "nullout")
-			printf("penis0\n");
-        else if (ident == "SDLAudio")
-            printf("penis3\n");
-        else if (ident == "xaudio2")
-			printf("penis2\n");
-        else if (ident == "portaudio")
-            dialog = new PortAudioConfig(this);
+		if (ident == "portaudio")
+		{
+			dialog = new PortAudioSettingsDialog(this);
+			dialog->ShowModal();
+			dialog->Destroy();
+		}
 
-		dialog->ShowModal();
-		dialog->Destroy();
+		// TODO:
+		// - SDLAudio
+		// - nullout ??
+		// - xaudio2 ??
 	}
 }
 
-PortAudioConfig::PortAudioConfig(wxDialog* parent)
-    : wxDialog(parent, wxID_ANY, "PortAudio Settings", wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
-{
-    auto top_box = new wxBoxSizer(wxVERTICAL);
-    top_box->Add(CreateStdDialogButtonSizer(wxOK | wxCANCEL), wxSizerFlags().Right());
-}
-
-Dialog::Dialog()
+SPU2ConfigDialog::SPU2ConfigDialog()
 	: wxDialog(nullptr, wxID_ANY, "Audio Settings", wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
 {
 	m_top_box = new wxBoxSizer(wxVERTICAL);
@@ -381,16 +377,16 @@ Dialog::Dialog()
 
 	wxArrayString module_entries;
 
-    for (auto i = 0; mods[i] != nullptr; i++)
-    {
+	for (auto i = 0; mods[i] != nullptr; i++)
+	{
 		module_entries.Add(mods[i]->GetLongName());
-    }
+	}
 
-    auto* module_contents = new wxBoxSizer(wxHORIZONTAL);
+	auto* module_contents = new wxBoxSizer(wxHORIZONTAL);
 	module_box->Add(module_contents);
 	m_module_select = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, module_entries);
 	m_backend_config = new wxButton(this, wxID_PREFERENCES);
-	m_backend_config->Bind(wxEVT_BUTTON, &Dialog::handleModuleConfig, this);
+	m_backend_config->Bind(wxEVT_BUTTON, &SPU2ConfigDialog::handleModuleConfig, this);
 	module_contents->Add(m_module_select, wxSizerFlags().Centre());
 	module_contents->Add(m_backend_config);
 
@@ -410,26 +406,22 @@ Dialog::Dialog()
 
 	SetSizerAndFit(m_top_box);
 
-	Bind(wxEVT_CHOICE, &Dialog::CallReconfigure, this);
-	Bind(wxEVT_CHECKBOX, &Dialog::CallReconfigure, this);
+	Bind(wxEVT_CHOICE, &SPU2ConfigDialog::CallReconfigure, this);
+	Bind(wxEVT_CHECKBOX, &SPU2ConfigDialog::CallReconfigure, this);
 }
 
-Dialog::~Dialog()
-{
-}
-
-void Dialog::Reconfigure()
+void SPU2ConfigDialog::Reconfigure()
 {
 	m_top_box->Layout();
 	SetSizerAndFit(m_top_box);
 }
 
-void Dialog::CallReconfigure(wxCommandEvent& event)
+void SPU2ConfigDialog::CallReconfigure(wxCommandEvent& event)
 {
 	Reconfigure();
 }
 
-void Dialog::Load()
+void SPU2ConfigDialog::Load()
 {
 	m_module_select->SetSelection(OutputModule);
 	m_mixer_panel->Load();
@@ -439,7 +431,7 @@ void Dialog::Load()
 	Reconfigure();
 }
 
-void Dialog::Save()
+void SPU2ConfigDialog::Save()
 {
 	OutputModule = m_module_select->GetSelection();
 
@@ -449,7 +441,7 @@ void Dialog::Save()
 }
 
 // Main
-void Dialog::Display()
+void SPU2ConfigDialog::Display()
 {
 	Load();
 	if (ShowModal() == wxID_OK)

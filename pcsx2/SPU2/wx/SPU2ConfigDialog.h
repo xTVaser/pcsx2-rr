@@ -46,7 +46,7 @@ class SyncTab : public wxPanel
 {
 public:
 	wxChoice* m_sync_select;
-	wxButton *reset_button;
+	wxButton* reset_button;
 	wxSpinCtrl *seq_spin, *seek_spin, *overlap_spin;
 
 	SyncTab(wxWindow* parent);
@@ -75,29 +75,22 @@ public:
 	void CallUpdate(wxCommandEvent& event);
 };
 
-class PortAudioConfig : public wxDialog
+class SPU2ConfigDialog : public wxDialog
 {
-public:
-	PortAudioConfig(wxDialog* parent);
-};
-
-class Dialog : public wxDialog
-{
-	wxBoxSizer *m_top_box;
-	wxChoice *m_module_select;
-	wxButton *m_backend_config;
+	wxBoxSizer* m_top_box;
+	wxChoice* m_module_select;
+	wxButton* m_backend_config;
 
 	MixerTab* m_mixer_panel;
 	SyncTab* m_sync_panel;
 	DebugTab* m_debug_panel;
 
 public:
-	Dialog();
-	~Dialog();
+	SPU2ConfigDialog();
 	void Display();
 	void Load();
 	void Save();
 	void Reconfigure();
 	void CallReconfigure(wxCommandEvent& event);
-    void handleModuleConfig(wxCommandEvent& event);
+	void handleModuleConfig(wxCommandEvent& event);
 };

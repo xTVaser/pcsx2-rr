@@ -268,6 +268,9 @@
     <Filter Include="System\Ps2\GS\Window">
       <UniqueIdentifier>{eaa22029-6839-4c09-93e1-faea8d8c0d7c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="System\Ps2\SPU2\wx">
+      <UniqueIdentifier>{0de3748d-5b4d-42e2-a50d-b2f7e91833a0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="Utilities\folderdesc.txt">
@@ -359,6 +362,9 @@
     </None>
     <None Include="GS\res\tfx.fx">
       <Filter>System\Ps2\GS\Shaders</Filter>
+    </None>
+    <None Include="SPU2\wx\PortAudioSettingsDialog.cpp">
+      <Filter>System\Ps2\SPU2\wx</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -1079,9 +1085,6 @@
     <ClCompile Include="SPU2\Mixer.cpp">
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
-    <ClCompile Include="SPU2\Lowpass.cpp">
-      <Filter>System\Ps2\SPU2</Filter>
-    </ClCompile>
     <ClCompile Include="SPU2\ADSR.cpp">
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
@@ -1631,9 +1634,6 @@
     <ClCompile Include="SPU2\SndOut_XAudio2.cpp">
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
-    <ClCompile Include="SPU2\wx\CfgHelpers.cpp">
-      <Filter>System\Ps2\SPU2</Filter>
-    </ClCompile>
     <ClCompile Include="SPU2\wx\Config.cpp">
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
@@ -1644,10 +1644,13 @@
       <Filter>System\Ps2\SPU2</Filter>
     </ClCompile>
     <ClCompile Include="SPU2\wx\Dialogs.cpp">
-      <Filter>System\Ps2\SPU2</Filter>
+      <Filter>System\Ps2\SPU2\wx</Filter>
     </ClCompile>
-    <ClCompile Include="SPU2\wx\wxConfig.cpp">
-      <Filter>System\Ps2\SPU2</Filter>
+    <ClCompile Include="SPU2\wx\CfgHelpers.cpp">
+      <Filter>System\Ps2\SPU2\wx</Filter>
+    </ClCompile>
+    <ClCompile Include="SPU2\wx\SPU2ConfigDialog.cpp">
+      <Filter>System\Ps2\SPU2\wx</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -2722,12 +2725,17 @@
     <ClInclude Include="gui\pxEvents.h">
       <Filter>AppHost</Filter>
     </ClInclude>
-    <ClInclude Include="SPU2\wx\Dialogs.h" />
-    <ClInclude Include="SPU2\wx\Config.h">
-      <Filter>System\Ps2\SPU2</Filter>
+    <ClInclude Include="SPU2\wx\Dialogs.h">
+      <Filter>System\Ps2\SPU2\wx</Filter>
     </ClInclude>
-    <ClInclude Include="SPU2\wx\wxConfig.h">
-      <Filter>System\Ps2\SPU2</Filter>
+    <ClInclude Include="SPU2\wx\PortAudioSettingsDialog.h">
+      <Filter>System\Ps2\SPU2\wx</Filter>
+    </ClInclude>
+    <ClInclude Include="SPU2\wx\Config.h">
+      <Filter>System\Ps2\SPU2\wx</Filter>
+    </ClInclude>
+    <ClInclude Include="SPU2\wx\SPU2ConfigDialog.h">
+      <Filter>System\Ps2\SPU2\wx</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
