@@ -56,7 +56,7 @@
     <ClCompile Include="src\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\pcsx2-arm\3rdparty\glad\glad.vcxproj">
+    <ProjectReference Include="..\glad\glad.vcxproj">
       <Project>{c0293b32-5acf-40f0-aa6c-e6da6f3bf33a}</Project>
     </ProjectReference>
   </ItemGroup>
