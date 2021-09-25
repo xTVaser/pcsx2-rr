@@ -147,11 +147,8 @@ SaveStateBase& SaveStateBase::FreezeBios()
 	
 	u32 bioscheck = BiosChecksum;
 	char biosdesc[256];
-
-	pxToUTF8 utf8(BiosDescription);
-
 	memzero( biosdesc );
-	memcpy( biosdesc, utf8, std::min( sizeof(biosdesc), utf8.Length() ) );
+	memcpy( biosdesc, BiosDescription.c_str(), std::min( sizeof(biosdesc), BiosDescription.length() ) );
 	
 	Freeze( bioscheck );
 	Freeze( biosdesc );
@@ -161,9 +158,9 @@ SaveStateBase& SaveStateBase::FreezeBios()
 		Console.Newline();
 		Console.Indent(1).Error( "Warning: BIOS Version Mismatch, savestate may be unstable!" );
 		Console.Indent(2).Error(
-			"Current BIOS:   %ls (crc=0x%08x)\n"
+			"Current BIOS:   %s (crc=0x%08x)\n"
 			"Savestate BIOS: %s (crc=0x%08x)\n",
-			BiosDescription.wx_str(), BiosChecksum,
+			BiosDescription.c_str(), BiosChecksum,
 			biosdesc, bioscheck
 		);
 	}

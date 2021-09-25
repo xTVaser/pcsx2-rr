@@ -170,12 +170,13 @@ bool Panels::BiosSelectorPanel::ValidateEnumerationStatus()
 
 void Panels::BiosSelectorPanel::EnumThread::ExecuteTaskInThread()
 {
+	u32 region, version;
+	std::string description, zone;
 	for (size_t i = 0; i < m_parent.m_BiosList->GetCount(); ++i)
 	{
-		wxString description;
-		if (!IsBIOS((*m_parent.m_BiosList)[i], description))
+		if (!IsBIOS((*m_parent.m_BiosList)[i].ToUTF8().data(), version, description, region, zone))
 			continue;
-		Result.emplace_back(std::move(description), i);
+		Result.emplace_back(wxString(description), i);
 	}
 
 	wxCommandEvent done(pxEvt_BiosEnumerationFinished);
