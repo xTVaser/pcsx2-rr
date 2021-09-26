@@ -19,7 +19,9 @@
 #include "Common.h"
 #include "Sio.h"
 #include "sio_internal.h"
-#ifdef _WIN32
+#if defined(PCSX2_CORE)
+#include "PAD/Host/PAD.h"
+#elif defined(_WIN32)
 #include "PAD/Windows/PAD.h"
 #else
 #include "PAD/Linux/PAD.h"

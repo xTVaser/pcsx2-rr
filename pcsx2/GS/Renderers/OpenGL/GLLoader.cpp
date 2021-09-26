@@ -16,6 +16,7 @@
 #include "PrecompiledHeader.h"
 #include "GLLoader.h"
 #include "GS.h"
+#include "Host.h"
 
 namespace GLExtension
 {
@@ -265,7 +266,7 @@ namespace GLLoader
 		}
 
 		// Only for HW renderer
-		if (theApp.GetCurrentRendererType() == GSRendererType::OGL_HW)
+		if (GSConfig.UseHardwareRenderer())
 		{
 			mandatory("GL_ARB_copy_image");
 			mandatory("GL_ARB_clip_control");

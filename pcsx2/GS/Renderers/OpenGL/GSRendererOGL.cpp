@@ -17,8 +17,8 @@
 #include "GSRendererOGL.h"
 
 
-GSRendererOGL::GSRendererOGL()
-	: GSRendererHW(new GSTextureCacheOGL(this))
+GSRendererOGL::GSRendererOGL(std::unique_ptr<GSDevice> dev)
+	: GSRendererHW(std::move(dev), new GSTextureCacheOGL(this))
 {
 	m_sw_blending = theApp.GetConfigI("accurate_blending_unit");
 	if (theApp.GetConfigB("UserHacks"))
@@ -37,7 +37,7 @@ void GSRendererOGL::SetupIA(const float& sx, const float& sy)
 {
 	GL_PUSH("IA");
 
-	GSDeviceOGL* dev = (GSDeviceOGL*)m_dev;
+	GSDeviceOGL* dev = GetGLDevice();
 
 
 	if (m_userhacks_wildhack && !m_isPackedUV_HackFlag && PRIM->TME && PRIM->FST)
@@ -302,7 +302,7 @@ void GSRendererOGL::EmulateTextureShuffleAndFbmask()
 
 void GSRendererOGL::EmulateChannelShuffle(GSTexture** rt, const GSTextureCache::Source* tex)
 {
-	GSDeviceOGL* dev = (GSDeviceOGL*)m_dev;
+	GSDeviceOGL* dev = GetGLDevice();
 
 	// Uncomment to disable HLE emulation (allow to trace the draw call)
 	// m_channel_shuffle = false;
@@ -461,7 +461,7 @@ void GSRendererOGL::EmulateChannelShuffle(GSTexture** rt, const GSTextureCache::
 
 void GSRendererOGL::EmulateBlending(bool& DATE_GL42, bool& DATE_GL45)
 {
-	GSDeviceOGL* dev = (GSDeviceOGL*)m_dev;
+	GSDeviceOGL* dev = GetGLDevice();
 	const GIFRegALPHA& ALPHA = m_context->ALPHA;
 	bool sw_blending = false;
 
@@ -639,7 +639,7 @@ void GSRendererOGL::EmulateBlending(bool& DATE_GL42, bool& DATE_GL45)
 
 void GSRendererOGL::EmulateTextureSampler(const GSTextureCache::Source* tex)
 {
-	GSDeviceOGL* dev = (GSDeviceOGL*)m_dev;
+	GSDeviceOGL* dev = GetGLDevice();
 
 	// Warning fetch the texture PSM format rather than the context format. The latter could have been corrected in the texture cache for depth.
 	//const GSLocalMemory::psm_t &psm = GSLocalMemory::m_psm[m_context->TEX0.PSM];
@@ -986,7 +986,7 @@ GSRendererOGL::PRIM_OVERLAP GSRendererOGL::PrimitiveOverlap()
 
 void GSRendererOGL::SendDraw()
 {
-	GSDeviceOGL* dev = (GSDeviceOGL*)m_dev;
+	GSDeviceOGL* dev = GetGLDevice();
 
 	if (!m_require_full_barrier && m_require_one_barrier)
 	{
@@ -1064,6 +1064,11 @@ void GSRendererOGL::ResetStates()
 	m_om_dssel.key = 0;
 }
 
+const char* GSRendererOGL::GetName() const
+{
+	return "OpenGL";
+}
+
 void GSRendererOGL::DrawPrims(GSTexture* rt, GSTexture* ds, GSTextureCache::Source* tex)
 {
 #ifdef ENABLE_OGL_DEBUG
@@ -1094,7 +1099,7 @@ void GSRendererOGL::DrawPrims(GSTexture* rt, GSTexture* ds, GSTextureCache::Sour
 	vs_cb.TextureOffset = GSVector4(0.0f);
 
 	ASSERT(m_dev != NULL);
-	GSDeviceOGL* dev = (GSDeviceOGL*)m_dev;
+	GSDeviceOGL* dev = GetGLDevice();
 
 	// HLE implementation of the channel selection effect
 	//

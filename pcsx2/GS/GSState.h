@@ -259,6 +259,9 @@ public:
 	int Freeze(freezeData* fd, bool sizeonly);
 	int Defrost(const freezeData* fd);
 	virtual void SetGameCRC(uint32 crc, int options);
+
+	uint8* GetRegsMem() const { return reinterpret_cast<uint8*>(m_regs); }
+	void SetRegsMem(uint8* basemem) { m_regs = reinterpret_cast<GSPrivRegSet*>(basemem); }
+
 	void SetFrameSkip(int skip);
-	void SetRegsMem(uint8* basemem);
 };

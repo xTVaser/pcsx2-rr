@@ -106,6 +106,7 @@ void MainEmuFrame::Menu_GSSettings_Click(wxCommandEvent& event)
 		GetMTGS().Suspend(true);
 	}
 	GSconfigure();
+	GSLoadConfigFromApp(&g_Conf->EmuOptions.GS);
 	if (is_frame_init)
 	{
 		GetMTGS().Freeze(FreezeAction::Load, sstate);
@@ -113,6 +114,9 @@ void MainEmuFrame::Menu_GSSettings_Click(wxCommandEvent& event)
 	}
 	if (need_shutdown)
 		GetMTGS().Suspend(true);
+	else
+		wxGetApp().SysApplySettings();
+
 	init_gspanel = true;
 	paused_core.AllowResume();
 }

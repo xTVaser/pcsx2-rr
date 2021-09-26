@@ -295,6 +295,11 @@ enum MTGS_RingCommand
 	GS_RINGTYPE_MTVU_GSPACKET,
 	GS_RINGTYPE_INIT_READ_FIFO1,
 	GS_RINGTYPE_INIT_READ_FIFO2,
+	GS_RINGTYPE_SWITCH_RENDERER,
+	GS_RINGTYPE_APPLY_SETTINGS,
+	GS_RINGTYPE_RESIZE_WINDOW,
+	GS_RINGTYPE_UPDATE_WINDOW,
+	GS_RINGTYPE_UPDATE_HOST_VSYNC,
 };
 
 
@@ -377,6 +382,14 @@ public:
 
 	bool IsGSOpened() const { return m_Opened; }
 
+	void ApplySettings();
+	void ResizeDisplayWindow(int width, int height, float scale);
+	void UpdateDisplayWindow();
+	void SetVSync(VsyncMode mode, float present_fps_limit);
+	void SwitchRenderer(GSRendererType renderer);
+	void SetSoftwareRendering(bool software);
+	void ToggleSoftwareRendering();
+
 protected:
 	void OpenGS();
 	void CloseGS();
@@ -413,6 +426,7 @@ extern void gsSetVideoMode(GS_VideoMode mode);
 extern void gsResetFrameSkip();
 extern void gsPostVsyncStart();
 extern void gsFrameSkip();
+extern bool gsIsSkippingCurrentFrame();
 extern void gsUpdateFrequency(Pcsx2Config& config);
 
 // Some functions shared by both the GS and MTGS

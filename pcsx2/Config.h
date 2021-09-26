@@ -97,6 +97,62 @@ enum class LimiterModeType : u8
 	Nominal,
 	Turbo,
 	Slomo,
+	Unlimited,
+};
+
+enum class GSRendererType : s8
+{
+	Auto = -1,
+	DX11 = 3,
+	Null = 11,
+	OGL = 12,
+	SW = 13,
+};
+
+enum class GSInterlaceMode : u8
+{
+	None,
+	WeaveTFF,
+	WeaveBFF,
+	BobTFF,
+	BobBFF,
+	BlendTFF,
+	BlendBFF,
+	Automatic
+};
+
+// Ordering was done to keep compatibility with older ini file.
+enum class BiFiltering : u8
+{
+	Nearest,
+	Forced,
+	PS2,
+	Forced_But_Sprite,
+};
+
+enum class TriFiltering : u8
+{
+	None,
+	PS2,
+	Forced,
+};
+
+enum class HWMipmapLevel : s8
+{
+	Automatic = -1,
+	Off,
+	Basic,
+	Full
+};
+
+enum class CRCHackLevel : s8
+{
+	Automatic = -1,
+	None,
+	Minimum,
+	Partial,
+	Full,
+	Aggressive
 };
 
 // Template function for casting enumerations to their underlying type
@@ -318,6 +374,43 @@ struct Pcsx2Config
 	// ------------------------------------------------------------------------
 	struct GSOptions
 	{
+		static const char* AspectRatioNames[];
+		static const char* FMVAspectRatioSwitchNames[];
+		
+		static const char* GetRendererName(GSRendererType type);
+
+		BITFIELD32()
+		bool
+			IntegerScaling : 1,
+			LinearPresent : 1,
+			UseDebugDevice : 1,
+			UseBlitSwapChain : 1,
+			ThrottlePresentRate : 1,
+			OsdShowMessages : 1,
+			OsdShowSpeed : 1,
+			OsdShowFPS : 1,
+			OsdShowCPU : 1,
+			OsdShowResolution : 1,
+			OsdShowGSStats : 1;
+
+		bool
+			AccurateDATE : 1,
+			GPUPaletteConversion : 1,
+			ConservativeFramebuffer : 1,
+			AutoFlushSW : 1,
+			PreloadFrameWithGSData : 1,
+			WrapGSMem : 1,
+			UserHacks : 1,
+			UserHacks_AlignSpriteX : 1,
+			UserHacks_AutoFlush : 1,
+			UserHacks_CPUFBConversion : 1,
+			UserHacks_DisableDepthSupport : 1,
+			UserHacks_DisablePartialInvalidation : 1,
+			UserHacks_DisableSafeFeatures : 1,
+			UserHacks_MergePPSprite : 1,
+			UserHacks_WildHack : 1;
+		BITFIELD_END
+
 		int VsyncQueueSize{2};
 
 		// forces the MTGS to execute tags/tasks in fully blocking/synchronous
@@ -337,19 +430,35 @@ struct Pcsx2Config
 
 		AspectRatioType AspectRatio{AspectRatioType::R4_3};
 		FMVAspectRatioSwitchType FMVAspectRatioSwitch{FMVAspectRatioSwitchType::Off};
+		GSInterlaceMode InterlaceMode{GSInterlaceMode::None};
 
 		double Zoom{100.0};
 		double StretchY{100.0};
 		double OffsetX{0.0};
 		double OffsetY{0.0};
 
+		double OsdScale{100.0};
+
+		GSRendererType Renderer{GSRendererType::Auto};
+		uint UpscaleMultiplier{1};
+
+		HWMipmapLevel HWMipmap{HWMipmapLevel::Automatic};
+		int SWBlending{1};
+		int SWExtraThreads{2};
+		int SWExtraThreadsHeight{4};
+
+		GSOptions();
+
 		void LoadSave(SettingsWrapper& wrap);
 
-		int GetVsync() const;
+		bool UseHardwareRenderer() const;
+		float GetAspectRatioFloat() const;
 
 		bool operator==(const GSOptions& right) const
 		{
-			return OpEqu(SynchronousMTGS) &&
+			return OpEqu(bitset) &&
+
+				   OpEqu(SynchronousMTGS) &&
 				   OpEqu(VsyncQueueSize) &&
 
 				   OpEqu(FrameSkipEnable) &&
@@ -369,7 +478,14 @@ struct Pcsx2Config
 				   OpEqu(Zoom) &&
 				   OpEqu(StretchY) &&
 				   OpEqu(OffsetX) &&
-				   OpEqu(OffsetY);
+				   OpEqu(OffsetY) &&
+				   OpEqu(OsdScale) &&
+
+				   OpEqu(Renderer) &&
+				   OpEqu(UpscaleMultiplier) &&
+				   OpEqu(HWMipmap) &&
+				   OpEqu(SWBlending) &&
+				   OpEqu(SWExtraThreads);
 		}
 
 		bool operator!=(const GSOptions& right) const
@@ -603,6 +719,9 @@ struct Pcsx2Config
 
 	bool MultitapEnabled(uint port) const;
 
+	VsyncMode GetEffectiveVsyncMode() const;
+	float GetPresentFPSLimit() const;
+
 	bool operator==(const Pcsx2Config& right) const;
 	bool operator!=(const Pcsx2Config& right) const
 	{
@@ -618,6 +737,8 @@ extern Pcsx2Config EmuConfig;
 
 namespace EmuFolders
 {
+	extern wxDirName AppRoot;
+	extern wxDirName DataRoot;
 	extern wxDirName Settings;
 	extern wxDirName Bios;
 	extern wxDirName Snapshots;
@@ -629,6 +750,13 @@ namespace EmuFolders
 	extern wxDirName CheatsWS;
 	extern wxDirName Resources;
 	extern wxDirName Cache;
+	extern wxDirName Covers;
+
+	// Assumes that AppRoot and DataRoot have been initialized.
+	void SetDefaults();
+	bool EnsureFoldersExist();
+	void LoadConfig(SettingsInterface& si);
+	void Save(SettingsInterface& si);
 } // namespace EmuFolders
 
 /////////////////////////////////////////////////////////////////////////////////////////

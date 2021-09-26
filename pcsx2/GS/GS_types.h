@@ -46,6 +46,7 @@ typedef signed long long sint64;
 #endif
 
 #ifdef _WIN32
+#include "common/RedtapeWindows.h"
 inline std::string convert_utf16_to_utf8(const std::wstring& utf16_string)
 {
 	const int size = WideCharToMultiByte(CP_UTF8, 0, utf16_string.c_str(), utf16_string.size(), nullptr, 0, nullptr, nullptr);

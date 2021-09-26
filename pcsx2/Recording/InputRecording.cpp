@@ -15,13 +15,15 @@
 
 #include "PrecompiledHeader.h"
 
-#include "gui/AppSaveStates.h"
+#include "SaveState.h"
 #include "Counters.h"
 
 #ifndef DISABLE_RECORDING
 
-#include "GameDatabase.h"
+#include "gui/App.h"
+#include "gui/AppSaveStates.h"
 #include "DebugTools/Debug.h"
+#include "GameDatabase.h"
 
 #include "InputRecording.h"
 #include "InputRecordingControls.h"

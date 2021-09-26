@@ -19,15 +19,21 @@
 #include <list>
 #include <wx/datetime.h>
 
+#include "common/StringUtil.h"
+
 #include "GS.h"
 #include "Gif_Unit.h"
 #include "MTVU.h"
 #include "Elfheader.h"
 #include "PerformanceMetrics.h"
-#include "gui/Dialogs/ModalPopups.h"
 
-#include "common/WindowInfo.h"
-extern WindowInfo g_gs_window_info;
+#include "Host.h"
+#include "HostDisplay.h"
+#include "PerformanceMetrics.h"
+
+#ifndef PCSX2_CORE
+#include "gui/Dialogs/ModalPopups.h"
+#endif
 
 // Uncomment this to enable profiling of the GS RingBufferCopy function.
 //#define PCSX2_GSRING_SAMPLING_STATS
@@ -48,8 +54,6 @@ using namespace Threading;
 // =====================================================================================================
 
 __aligned(32) MTGS_BufferedData RingBuffer;
-extern bool renderswitch;
-std::atomic_bool init_gspanel = true;
 
 
 #ifdef RINGBUF_DEBUG_STACK
@@ -67,42 +71,6 @@ SysMtgsThread::SysMtgsThread()
 
 	// All other state vars are initialized by OnStart().
 }
-
-typedef void (SysMtgsThread::*FnPtr_MtgsThreadMethod)();
-
-class SysExecEvent_InvokeMtgsThreadMethod : public SysExecEvent
-{
-protected:
-	FnPtr_MtgsThreadMethod m_method;
-	bool m_IsCritical;
-
-public:
-	wxString GetEventName() const { return L"MtgsThreadMethod"; }
-	virtual ~SysExecEvent_InvokeMtgsThreadMethod() = default;
-	SysExecEvent_InvokeMtgsThreadMethod* Clone() const { return new SysExecEvent_InvokeMtgsThreadMethod(*this); }
-
-	bool AllowCancelOnExit() const { return false; }
-	bool IsCriticalEvent() const { return m_IsCritical; }
-
-	SysExecEvent_InvokeMtgsThreadMethod(FnPtr_MtgsThreadMethod method, bool critical = false)
-	{
-		m_method = method;
-		m_IsCritical = critical;
-	}
-
-	SysExecEvent_InvokeMtgsThreadMethod& Critical()
-	{
-		m_IsCritical = true;
-		return *this;
-	}
-
-protected:
-	void InvokeEvent()
-	{
-		if (m_method)
-			(mtgsThread.*m_method)();
-	}
-};
 
 void SysMtgsThread::OnStart()
 {
@@ -235,20 +203,17 @@ void SysMtgsThread::OpenGS()
 	if (m_Opened)
 		return;
 
-	if (init_gspanel)
-		sApp.OpenGsPanel();
-
 	memcpy(RingBuffer.Regs, PS2MEM_GS, sizeof(PS2MEM_GS));
-	GSsetBaseMem(RingBuffer.Regs);
 
-	pxAssertMsg((GSopen2(g_gs_window_info, 1 | (renderswitch ? 4 : 0)) == 0), "GS failed to open!");
-
-	GSsetVsync(EmuConfig.GS.GetVsync());
+	if (!GSopen(EmuConfig.GS, EmuConfig.GS.Renderer, RingBuffer.Regs))
+		pxFailRel("GS failed to open");
 
 	m_Opened = true;
 	m_sem_OpenDone.Post();
 
 	GSsetGameCRC(ElfCRC, 0);
+
+	Host::BeginFrame();
 }
 
 class RingBufferLock
@@ -310,7 +275,7 @@ void SysMtgsThread::ExecuteTaskInThread()
 		// is very optimized (only 1 instruction test in most cases), so no point in trying
 		// to avoid it.
 
-		m_sem_event.WaitWithoutYield();
+		m_sem_event.Wait();
 		StateCheckInThread();
 		busy.Acquire();
 
@@ -481,12 +446,42 @@ void SysMtgsThread::ExecuteTaskInThread()
 								m_sem_Vsync.Post();
 
 							PerformanceMetrics::Update();
+							Host::BeginFrame();
 
 							// Do not StateCheckInThread() here
 							// Otherwise we could pause while there's still data in the queue
 							// Which could make the MTVU thread wait forever for it to empty
 						}
 						break;
+
+						case GS_RINGTYPE_SWITCH_RENDERER:
+							GSSwitchRenderer(static_cast<GSRendererType>(tag.data[0]));
+							break;
+
+						case GS_RINGTYPE_APPLY_SETTINGS:
+							{
+								Pcsx2Config::GSOptions* new_options = (Pcsx2Config::GSOptions*)tag.pointer;
+								GSUpdateConfig(*new_options);
+								delete new_options;
+							}
+							break;
+
+						case GS_RINGTYPE_RESIZE_WINDOW:
+							GSResetAPIState();
+							Host::ResizeHostDisplay(tag.data[0], tag.data[1], *reinterpret_cast<const float*>(&tag.data[2]));
+							GSRestoreAPIState();
+							break;
+
+						case GS_RINGTYPE_UPDATE_WINDOW:
+							GSResetAPIState();
+							Host::UpdateHostDisplay();
+							GSRestoreAPIState();
+							break;
+
+						case GS_RINGTYPE_UPDATE_HOST_VSYNC:
+							Host::GetHostDisplay()->SetVSync(static_cast<VsyncMode>(tag.data[0]));
+							Host::GetHostDisplay()->SetDisplayMaxFPS(*reinterpret_cast<const float*>(&tag.data[1]));
+							break;
 
 						case GS_RINGTYPE_FRAMESKIP:
 							MTGS_LOG("(MTGS Packet Read) ringtype=Frameskip");
@@ -586,12 +581,14 @@ void SysMtgsThread::ExecuteTaskInThread()
 
 void SysMtgsThread::CloseGS()
 {
-	if (!m_Opened || GSDump::isRunning)
+	if (!m_Opened)
 		return;
+#ifndef PCSX2_CORE
+	if (GSDump::isRunning)
+		return;
+#endif
 	m_Opened = false;
 	GSclose();
-	if (init_gspanel)
-		sApp.CloseGsPanel();
 }
 
 void SysMtgsThread::OnSuspendInThread()
@@ -931,4 +928,51 @@ void SysMtgsThread::Freeze(FreezeAction mode, MTGS_FreezeData& data)
 	// thread. Obviously this ends up in a deadlock. -- govanify
 	WaitForOpen();
 	WaitGS();
+}
+
+void SysMtgsThread::ApplySettings()
+{
+	pxAssertRel(IsOpen(), "MTGS is running");
+	SendPointerPacket(GS_RINGTYPE_APPLY_SETTINGS, 0, new Pcsx2Config::GSOptions(EmuConfig.GS));
+}
+
+void SysMtgsThread::ResizeDisplayWindow(int width, int height, float scale)
+{
+	pxAssertRel(IsOpen(), "MTGS is running");
+	SendSimplePacket(GS_RINGTYPE_RESIZE_WINDOW, width, height, *reinterpret_cast<const int*>(&scale));
+}
+
+void SysMtgsThread::UpdateDisplayWindow()
+{
+	pxAssertRel(IsOpen(), "MTGS is running");
+	SendSimplePacket(GS_RINGTYPE_UPDATE_WINDOW, 0, 0, 0);
+}
+
+void SysMtgsThread::SetVSync(VsyncMode mode, float present_fps_limit)
+{
+	SendSimplePacket(GS_RINGTYPE_UPDATE_HOST_VSYNC, static_cast<int>(mode), *reinterpret_cast<const int*>(&present_fps_limit), 0);
+}
+
+void SysMtgsThread::SwitchRenderer(GSRendererType renderer)
+{
+	Host::AddOSDMessage(StringUtil::StdStringFromFormat("Switching to %s renderer...", Pcsx2Config::GSOptions::GetRendererName(renderer)), 10.0f);
+	SendSimplePacket(GS_RINGTYPE_SWITCH_RENDERER, static_cast<int>(renderer), 0, 0);
+}
+
+void SysMtgsThread::SetSoftwareRendering(bool software)
+{
+	// for hardware, use the chosen api in the base config, or auto if base is set to sw
+	GSRendererType new_renderer;
+	if (!software)
+		new_renderer = EmuConfig.GS.UseHardwareRenderer() ? EmuConfig.GS.Renderer : GSRendererType::Auto;
+	else
+		new_renderer = GSRendererType::SW;
+		
+	SwitchRenderer(new_renderer);
+}
+
+void SysMtgsThread::ToggleSoftwareRendering()
+{
+	// tsk tsk, reading from the GS thread.. but should be okay here
+	SetSoftwareRendering(GSConfig.Renderer != GSRendererType::SW);
 }
