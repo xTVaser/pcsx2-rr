@@ -1,4 +1,4 @@
-# PCSX2-RR
+# PCSX2-RR test
 
 ## Future of this repository
 
