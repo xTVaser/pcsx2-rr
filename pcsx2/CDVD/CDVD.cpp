@@ -195,10 +195,9 @@ static void cdvdNVM(u8* buffer, int offset, size_t bytes, bool read)
 		u8 zero[16] = {0};
 		NVMLayout* nvmLayout = getNvmLayout();
 
-		std::fseek(fp.get(), *(s32*)(((u8*)nvmLayout) + offsetof(NVMLayout, config1)) + 0x10, SEEK_SET);
-		std::fread(LanguageParams, 16, 1, fp.get());
-
-		if (memcmp(LanguageParams, zero, sizeof(LanguageParams)) == 0)
+		if (std::fseek(fp.get(), *(s32*)(((u8*)nvmLayout) + offsetof(NVMLayout, config1)) + 0x10, SEEK_SET) != 0 ||
+			std::fread(LanguageParams, 16, 1, fp.get()) != 1 ||
+			std::memcmp(LanguageParams, zero, sizeof(LanguageParams)) == 0)
 		{
 			Console.Warning("Language Parameters missing, filling in defaults");
 
