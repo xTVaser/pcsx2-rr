@@ -86,12 +86,6 @@ jobs:
       BUILDCACHE_LOG_FILE: ${{ github.workspace }}\buildcache.log
 
     steps:
-      # NOTE - useful for debugging
-      # - name: Dump GitHub context
-      #   env:
-      #     GITHUB_CONTEXT: ${{ toJson(github) }}
-      #   run: echo "$GITHUB_CONTEXT"
-
       - name: Checkout Repository
         uses: actions/checkout@v2
 
