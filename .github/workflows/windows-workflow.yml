@@ -193,7 +193,7 @@ jobs:
       - name: Generate Build Metadata
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash
-        run: "echo \"taggedVersion: ${GITHUB_REF/refs\/tags\//}\" > bin/build-metadata.yaml"
+        run: "echo \"taggedVersion: ${GITHUB_REF#refs/tags/}\" > bin/build-metadata.yaml"
 
       # Docs - https://github.com/svenstaro/upload-release-action
       - name: Upload Release Artifact
