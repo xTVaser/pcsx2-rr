@@ -1,5 +1,6 @@
 from discord import Webhook, AsyncWebhookAdapter
 import aiohttp
+import asyncio
 import os
 
 async def send_webhook():
@@ -25,4 +26,4 @@ async def send_webhook():
 
         await webhook.send(embed=embed)
 
-send_webhook()
+asyncio.get_event_loop().run_until_complete(send_webhook())
