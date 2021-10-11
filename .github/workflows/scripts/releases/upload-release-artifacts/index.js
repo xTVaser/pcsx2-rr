@@ -34,6 +34,7 @@ const octokit = new Octokit({
 });
 
 let assetDir = process.env.ASSET_DIR;
+console.log(process.env.TAG_TO_SEARCH_FOR);
 let tagToSearchFor = process.env.TAG_TO_SEARCH_FOR.split("refs/tags/")[1];
 
 console.log(`Searching in - ${assetDir}`);
