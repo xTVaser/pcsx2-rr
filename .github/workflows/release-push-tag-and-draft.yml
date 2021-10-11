@@ -45,7 +45,7 @@ jobs:
           cd ./.github/workflows/scripts/releases/generate-release-notes
           npm ci
           node index.js $GITHUB_SHA
-          mv ./release-notes.md ${{ env.GITHUB_WORKSPACE }}/release-notes.md
+          mv ./release-notes.md ${GITHUB_WORKSPACE}/release-notes.md
 
       # Docs - https://github.com/softprops/action-gh-release
       - name: Create a GitHub Release
