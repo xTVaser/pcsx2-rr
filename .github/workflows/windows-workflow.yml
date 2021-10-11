@@ -4,8 +4,6 @@ name: 🖥️ Windows Builds
 # events but only for the master branch
 on:
   push:
-    branches:
-      - master
     tags:
       - v*
     paths-ignore:
