@@ -168,13 +168,10 @@ jobs:
         run: choco install 7zip.install --pre
 
       - name: Prepare Build Artifacts
-        shell: bash
-        working-directory: bin
         run: |
-          rm -f *.bsc *.exp *.ilk *.iobj *.ipdb *.lib
-          mkdir -p $GITHUB_WORKSPACE/ci-artifacts
-          7z -x \*.pdb -r ${{ env.GITHUB_WORKSPACE }}/ci-artifacts/${{ steps.artifact-metadata.outputs.name }}.7z .
-          7z -i ${{ env.GITHUB_WORKSPACE }}/ci-artifacts/${{ steps.artifact-metadata.outputs.name }}-symbols.7z .
+          mkdir -p ./ci-artifacts
+          7z a ./ci-artifacts/${{ steps.artifact-metadata.outputs.name }}.7z ./bin/* '-xr!*bsc' '-xr!*.exp' '-xr!*.ilk' '-xr!*.iobj' '-xr!*.ipdb' '-xr!*.pdb' '-xr!*.lib'
+          7z a ./ci-artifacts/${{ steps.artifact-metadata.outputs.name }}-symbols.7z ./bin/* '-xr!*bsc' '-xr!*.exp' '-xr!*.ilk' '-xr!*.iobj' '-xr!*.ipdb' '-xr!*.lib'
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
