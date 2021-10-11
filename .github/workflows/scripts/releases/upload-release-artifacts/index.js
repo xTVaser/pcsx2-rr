@@ -101,12 +101,23 @@ let expectedAssetNames = {
   // "linux-appimage-64bit": false
 }
 
+let windowsAssetLinks = "";
+let linuxAssetLinks = "";
+
 for (var i = 0; i < releaseAssets.length; i++) {
   let asset = releaseAssets[i];
   for (var j = 0; j < Object.keys(expectedAssetNames); j++) {
     let expectedNamePrefix = Object.keys(expectedAssetNames)[j];
     if (asset.name.toLowerCase().startsWith(expectedNamePrefix)) {
       expectedNamePrefix[expectedNamePrefix] = true;
+      if ("symbols" in asset.name) {
+        break;
+      }
+      if (expectedNamePrefix.startsWith("windows")) {
+        windowsAssetLinks += `- [${expectedNamePrefix}](${asset.browser_download_url})\n`
+      } else {
+        linuxAssetLinks += `- [${expectedNamePrefix}](${asset.browser_download_url})\n`
+      }
       break;
     }
   }
@@ -130,8 +141,8 @@ if (Object.values(expectedNamePrefix).every(Boolean)) {
       { name: 'Version', value: release.tag_name, inline: true},
       { name: 'Release Link', value: `[Github Release](${release.html_url})`, inline: true },
       { name: 'Installation Steps', value: '[See Here](https://www.google.com)', inline: true },
-      { name: 'Windows Downloads', value: '- one\n- two' },
-      { name: 'Linux Downloads', value: '- one\n- two' },
+      { name: 'Windows Downloads', value: windowsAssetLinks },
+      { name: 'Linux Downloads', value: linuxAssetLinks },
     );
   const webhookParts = process.env.DISCORD_BUILD_WEBHOOK.split("/");
   const webhookClient = new WebhookClient({ id: webhookParts[5], token: webhookParts[6] });
