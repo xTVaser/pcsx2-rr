@@ -112,6 +112,8 @@ for (var i = 0; i < releaseAssets.length; i++) {
   }
 }
 
+import { MessageEmbed, WebhookClient } from "discord.js";
+
 if (Object.values(expectedNamePrefix).every(Boolean)) {
   await octokit.rest.repos.updateRelease({
     owner: "xTVaser", // TODO - change
@@ -121,7 +123,6 @@ if (Object.values(expectedNamePrefix).every(Boolean)) {
   });
 
   // Publish Webhook
-  import { MessageEmbed, WebhookClient } from "discord.js";
   const embed = new MessageEmbed()
     .setColor('#FF8000')
     .setTitle('New PCSX2 Nightly Build Available!')
