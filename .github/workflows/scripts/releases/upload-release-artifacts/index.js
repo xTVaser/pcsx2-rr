@@ -125,7 +125,7 @@ for (var i = 0; i < releaseAssets.length; i++) {
 
 import { MessageEmbed, WebhookClient } from "discord.js";
 
-if (Object.values(expectedNamePrefix).every(Boolean)) {
+if (Object.values(expectedAssetNames).every(Boolean)) {
   await octokit.rest.repos.updateRelease({
     owner: "xTVaser", // TODO - change
     repo: "pcsx2-rr", // TODO - change
