@@ -166,7 +166,7 @@ jobs:
         uses: actions/upload-artifact@v2
         continue-on-error: true
         with:
-          name: ${{ steps.artifact-metadata.outputs.name }}
+          name: ${{ steps.artifact-metadata.outputs.name }}-symbols
           path: |
             ./bin/**/*.pdb
           retention-days: 30 # https://docs.github.com/en/free-pro-team@latest/actions/reference/usage-limits-billing-and-administration#artifact-and-log-retention-policy

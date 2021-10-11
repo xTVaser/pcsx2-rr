@@ -80,7 +80,7 @@ glob(assetDir + '/**/*.7z', {}, async (err, files) => {
 // for the API to become consistent
 // TODO - future work - we could check previous draft releases to become eventually consistent as well
 // - draft releases should only be a temporary state, so anything that remains a draft had a problem
-// await new Promise(resolve => setTimeout(resolve, 10 * 1000));
+await new Promise(resolve => setTimeout(resolve, 10 * 1000));
 
 // Poll the release, and check to see if it's ready to be published
 const { data: releaseAssets } = await octokit.rest.repos.listReleaseAssets({
