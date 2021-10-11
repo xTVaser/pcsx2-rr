@@ -46,13 +46,14 @@ jobs:
           npm ci
           node index.js $GITHUB_SHA
           mv ./release-notes.md ${GITHUB_WORKSPACE}/release-notes.md
+          ls
 
       # Docs - https://github.com/softprops/action-gh-release
       - name: Create a GitHub Release
         uses: softprops/action-gh-release@v1
         if: steps.tag_version.outputs.new_tag
         with:
-          body_path: ${{ github.GITHUB_WORKSPACE }}/release-notes.md
+          body_path: ./release-notes.md
           draft: true
           prerelease: true
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
