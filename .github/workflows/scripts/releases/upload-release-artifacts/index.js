@@ -93,7 +93,7 @@ const { data: releaseAssets } = await octokit.rest.repos.listReleaseAssets({
 
 // Expected Assets, if we have all of them, we will publish it
 let expectedAssetNames = {
-  "windows-32bit-": false,
+  "windows-32bit-sse4": false,
   "windows-32bit-avx2": false
   // "windows-64bit": false,
   // "windows-64bit-avx2": false,
@@ -119,5 +119,22 @@ if (Object.values(expectedNamePrefix).every(Boolean)) {
     release_id: release.id,
     draft: false
   });
-  // TODO Publish webhook
+
+  // Publish Webhook
+  import { MessageEmbed, WebhookClient } from "discord.js";
+  const embed = new MessageEmbed()
+    .setColor('#FF8000')
+    .setTitle('New PCSX2 Nightly Build Available!')
+    .addFields(
+      { name: 'Version', value: release.tag_name, inline: true},
+      { name: 'Release Link', value: `[Github Release](${release.html_url})`, inline: true },
+      { name: 'Installation Steps', value: '[See Here](https://www.google.com)', inline: true },
+      { name: 'Windows Downloads', value: '- one\n- two' },
+      { name: 'Linux Downloads', value: '- one\n- two' },
+    );
+  const webhookParts = process.env.DISCORD_BUILD_WEBHOOK.split("/");
+  const webhookClient = new WebhookClient({ id: webhookParts[5], token: webhookParts[6] });
+  webhookClient.send({
+    embeds: [embed],
+  });
 }
