@@ -164,21 +164,24 @@ jobs:
           echo "name=$TRIMMED_ARTIFACT_NAME"
           echo "##[set-output name=name;]${TRIMMED_ARTIFACT_NAME}"
 
+      - name: Install Dependencies
+        run: choco install 7zip.install --pre
+
       - name: Prepare Build Artifacts
         shell: bash
         working-directory: bin
         run: |
           rm -f *.bsc *.exp *.ilk *.iobj *.ipdb *.lib
-          mkdir -p ../ci-artifacts
-          zip --exclude \*.pdb -r ../ci-artifacts/${{ steps.artifact-metadata.outputs.name }}.zip .
-          zip --include ../ci-artifacts/${{ steps.artifact-metadata.outputs.name }}-symbols.zip .
+          mkdir -p ${GITHUB_WORKSPACE}/ci-artifacts
+          7z -x \*.pdb -r ${GITHUB_WORKSPACE}/ci-artifacts/${{ steps.artifact-metadata.outputs.name }}.7z .
+          7z -i ${GITHUB_WORKSPACE}/ci-artifacts/${{ steps.artifact-metadata.outputs.name }}-symbols.7z .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         continue-on-error: true
         with:
           name: ${{ steps.artifact-metadata.outputs.name }}
-          path: ./ci-artifacts/${{ steps.artifact-metadata.outputs.name }}.zip
+          path: ./ci-artifacts/${{ steps.artifact-metadata.outputs.name }}.7z
           retention-days: 30 # https://docs.github.com/en/free-pro-team@latest/actions/reference/usage-limits-billing-and-administration#artifact-and-log-retention-policy
 
       - name: Upload artifact - with symbols
@@ -186,7 +189,7 @@ jobs:
         continue-on-error: true
         with:
           name: ${{ steps.artifact-metadata.outputs.name }}
-          path: ./ci-artifacts/${{ steps.artifact-metadata.outputs.name }}-symbols.zip
+          path: ./ci-artifacts/${{ steps.artifact-metadata.outputs.name }}-symbols.7z
           retention-days: 30 # https://docs.github.com/en/free-pro-team@latest/actions/reference/usage-limits-billing-and-administration#artifact-and-log-retention-policy
 
       # ---- Release / Tagging related steps ----
