@@ -92,7 +92,7 @@ const { data: releaseAssets } = await octokit.rest.repos.listReleaseAssets({
 });
 
 // Expected Assets, if we have all of them, we will publish it
-let expectedAssetNames = {
+let expectedAssets = {
   "windows-32bit-sse4": false,
   "windows-32bit-avx2": false
   // "windows-64bit": false,
@@ -106,11 +106,11 @@ let linuxAssetLinks = "";
 
 for (var i = 0; i < releaseAssets.length; i++) {
   let asset = releaseAssets[i];
-  for (var j = 0; j < Object.keys(expectedAssetNames); j++) {
-    let expectedNamePrefix = Object.keys(expectedAssetNames)[j];
+  for (var j = 0; j < Object.keys(expectedAssets).length; j++) {
+    let expectedNamePrefix = Object.keys(expectedAssets)[j];
     if (asset.name.toLowerCase().startsWith(expectedNamePrefix)) {
-      expectedNamePrefix[expectedNamePrefix] = true;
-      if ("symbols" in asset.name) {
+      expectedAssets[expectedNamePrefix] = true;
+      if (asset.name.includes("symbols")) {
         break;
       }
       if (expectedNamePrefix.startsWith("windows")) {
@@ -123,9 +123,11 @@ for (var i = 0; i < releaseAssets.length; i++) {
   }
 }
 
+console.log(expectedAssets);
+
 import { MessageEmbed, WebhookClient } from "discord.js";
 
-if (Object.values(expectedAssetNames).every(Boolean)) {
+if (Object.values(expectedAssets).every(Boolean)) {
   await octokit.rest.repos.updateRelease({
     owner: "xTVaser", // TODO - change
     repo: "pcsx2-rr", // TODO - change
