@@ -152,9 +152,8 @@ if (Object.values(expectedAssets).every(Boolean)) {
     embed.addField('Linux Downloads', linuxAssetLinks, false);
   }
 
-  const webhookParts = process.env.DISCORD_BUILD_WEBHOOK.split("/");
-  const webhookClient = new WebhookClient({ id: webhookParts[5], token: webhookParts[6] });
-  webhookClient.send({
+  const webhookClient = new WebhookClient({ url: process.env.DISCORD_BUILD_WEBHOOK });
+  await webhookClient.send({
     embeds: [embed],
   });
 }

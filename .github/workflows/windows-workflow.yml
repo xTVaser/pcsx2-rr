@@ -199,5 +199,7 @@ jobs:
           DISCORD_BUILD_WEBHOOK: ${{ secrets.DISCORD_BUILD_WEBHOOK }}
         run: |
           cd ./.github/workflows/scripts/releases/upload-release-artifacts
+          nvm install 16
+          nvm use 16
           npm ci
           node index.js
