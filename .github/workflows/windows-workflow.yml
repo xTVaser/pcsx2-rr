@@ -6,28 +6,6 @@ on:
   push:
     tags:
       - v*
-    paths-ignore:
-      - '**/*.md'
-      - '.clang-format'
-      - '.codacy.yaml'
-      - '.github/*'
-      - '.github/workflows/lint-gamedb.yml'
-      - '.github/workflows/linux-workflow.yml'
-      - '.github/workflows/macos-workflow.yml'
-      - '.github/workflows/scripts/linux/**'
-      - '.github/workflows/scripts/validation/**'
-      - '.gitignore'
-      - 'bin/PCSX2_keys.ini.default'
-      - 'build.sh'
-      - 'buildbot.xml'
-      - 'linux_various/**'
-      - 'mscompile.cmd'
-      - 'pcsx2/CDVD/Linux/**'
-      - 'pcsx2/DEV9/Linux/**'
-      - 'pcsx2/Linux/**'
-      - 'pcsx2/PAD/Linux/**'
-      - 'pcsx2/SPU2/Linux/**'
-      - 'pcsx2/USB/linux/**'
   pull_request:
     branches:
       - master
