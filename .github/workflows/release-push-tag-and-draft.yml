@@ -47,7 +47,6 @@ jobs:
       - name: Create a GitHub Release
         uses: softprops/action-gh-release@v1
         if: steps.tag_version.outputs.new_tag
-        # if: startsWith(github.ref, 'refs/tags/')
         with:
           body_path: ${{ env.GITHUB_WORKSPACE }}/release-notes.md
           draft: true

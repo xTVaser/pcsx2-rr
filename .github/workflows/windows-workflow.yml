@@ -53,12 +53,6 @@ on:
       - 'pcsx2/PAD/Linux/**'
       - 'pcsx2/SPU2/Linux/**'
       - 'pcsx2/USB/linux/**'
-  workflow_dispatch:
-    inputs:
-      retainDebugArtifacts:
-        description: 'Retain debug artifacts (.pdb/.exp/.lib) for an easier debugging experience. (true|false)'
-        required: true
-        default: 'false'
 
 jobs:
   build:
@@ -170,24 +164,56 @@ jobs:
           echo "name=$TRIMMED_ARTIFACT_NAME"
           echo "##[set-output name=name;]${TRIMMED_ARTIFACT_NAME}"
 
-      - name: Prepare Artifact Folder
+      - name: Prepare Build Artifacts
         shell: bash
         working-directory: bin
         run: |
-          retainDebugArtifacts=$([ "${{ github.event.inputs.retainDebugArtifacts }}" == "true" ] && echo "true" || echo "false")
-          if [ "${retainDebugArtifacts}" == "false" ]; then
-            ls ./
-            rm -f *.bsc *.exp *.ilk *.iobj *.ipdb *.lib *.pdb
-          fi
-          shopt -s extglob dotglob
-          mkdir -p "${{ steps.artifact-metadata.outputs.name }}"
-          mv !("${{ steps.artifact-metadata.outputs.name }}") "${{ steps.artifact-metadata.outputs.name }}"
-          shopt -u dotglob
+          rm -f *.bsc *.exp *.ilk *.iobj *.ipdb *.lib
+          mkdir -p ../ci-artifacts
+          zip --exclude \*.pdb -r ../ci-artifacts/${{ steps.artifact-metadata.outputs.name }}.zip .
+          zip --include ../ci-artifacts/${{ steps.artifact-metadata.outputs.name }}-symbols.zip .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         continue-on-error: true
         with:
           name: ${{ steps.artifact-metadata.outputs.name }}
-          path: bin
+          path: ./ci-artifacts/${{ steps.artifact-metadata.outputs.name }}.zip
           retention-days: 30 # https://docs.github.com/en/free-pro-team@latest/actions/reference/usage-limits-billing-and-administration#artifact-and-log-retention-policy
+
+      - name: Upload artifact - with symbols
+        uses: actions/upload-artifact@v2
+        continue-on-error: true
+        with:
+          name: ${{ steps.artifact-metadata.outputs.name }}
+          path: ./ci-artifacts/${{ steps.artifact-metadata.outputs.name }}-symbols.zip
+          retention-days: 30 # https://docs.github.com/en/free-pro-team@latest/actions/reference/usage-limits-billing-and-administration#artifact-and-log-retention-policy
+
+      # ---- Release / Tagging related steps ----
+      - name: Generate Build Metadata
+        if: startsWith(github.ref, 'refs/tags/')
+        run: "echo \"taggedVersion: ${GITHUB_REF/refs\/tags\//}\" > bin/build-metadata.yaml"
+
+      # Docs - https://github.com/svenstaro/upload-release-action
+      - name: Upload Release Artifact
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./ci-artifacts/${{ steps.artifact-metadata.outputs.name }}.zip
+          asset_name: ${{ steps.artifact-metadata.outputs.name }} # TODO - fix
+          tag: ${{ github.ref }}
+          overwrite: true
+
+      # Docs - https://github.com/svenstaro/upload-release-action
+      - name: Upload Release Artifact
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./ci-artifacts/${{ steps.artifact-metadata.outputs.name }}-symbols.zip
+          asset_name: ${{ steps.artifact-metadata.outputs.name }}-symbols # TODO - fix
+          tag: ${{ github.ref }}
+          overwrite: true
+
+      # TODO - check the release to see if it has all artifacts we expect (common script) if so, PUBLISH THE RELEASE
