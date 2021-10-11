@@ -140,12 +140,18 @@ if (Object.values(expectedAssets).every(Boolean)) {
     .setColor('#FF8000')
     .setTitle('New PCSX2 Nightly Build Available!')
     .addFields(
-      { name: 'Version', value: release.tag_name, inline: true},
+      { name: 'Version', value: release.tag_name, inline: true },
       { name: 'Release Link', value: `[Github Release](${release.html_url})`, inline: true },
-      { name: 'Installation Steps', value: '[See Here](https://www.google.com)', inline: true },
-      { name: 'Windows Downloads', value: windowsAssetLinks },
-      { name: 'Linux Downloads', value: linuxAssetLinks },
+      { name: 'Installation Steps', value: '[See Here](https://www.google.com)', inline: true }
     );
+
+  if (windowsAssetLinks != "") {
+    embed.addField('Windows Downloads', windowsAssetLinks, false);
+  }
+  if (linuxAssetLinks != "") {
+    embed.addField('Linux Downloads', linuxAssetLinks, false);
+  }
+
   const webhookParts = process.env.DISCORD_BUILD_WEBHOOK.split("/");
   const webhookClient = new WebhookClient({ id: webhookParts[5], token: webhookParts[6] });
   webhookClient.send({
