@@ -26,6 +26,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        # Workflows cannot trigger other workflows implicitly
+        # - https://github.community/t/github-actions-workflow-not-triggering-with-tag-push/17053/7
+        # - https://medium.com/prompt/trigger-another-github-workflow-without-using-a-personal-access-token-f594c21373ef
+        with:
+          ssh-key: "${{ secrets.DEPLOY_KEY }}"
 
       # Docs - https://github.com/mathieudutour/github-tag-action
       - name: Bump SemVer and Push Tag
