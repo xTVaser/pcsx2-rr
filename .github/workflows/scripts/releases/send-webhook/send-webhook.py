@@ -2,9 +2,7 @@ from discord import Webhook, AsyncWebhookAdapter
 import aiohttp
 import os
 
-
-@client.command()
-async def send_webhook(ctx):
+async def send_webhook():
     async with aiohttp.ClientSession() as session:
         webhook = Webhook.from_url(
             os.environ["DISCORD_BUILD_WEBHOOK"], adapter=AsyncWebhookAdapter(session)
@@ -26,3 +24,5 @@ async def send_webhook(ctx):
         embed.add_field(name="Linux Downloads", value="- Something", inline=True)
 
         await webhook.send(embed=embed)
+
+send_webhook()
