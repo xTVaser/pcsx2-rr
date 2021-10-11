@@ -114,3 +114,4 @@ oprofile_data/
 
 /out/build/x64-Debug (default)
 CMakeSettings.json
+/ci-artifacts/
