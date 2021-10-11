@@ -4,7 +4,7 @@ import { retry } from "@octokit/plugin-retry";
 Octokit.plugin(throttling);
 Octokit.plugin(retry);
 const octokit = new Octokit({
-  // NOTE - excluding auth, becasue it shouldn't be required UNLESS we run into rate-limiting issues
+  auth: process.env.GITHUB_TOKEN,
   userAgent: 'PCSX2/pcsx2',
   log: {
     debug: () => { },

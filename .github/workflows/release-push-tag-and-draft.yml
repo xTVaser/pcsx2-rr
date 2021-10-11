@@ -38,9 +38,12 @@ jobs:
 
       # Generate the Release Notes
       - name: Generate Release Notes
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: |
           cd ./.github/workflows/scripts/releases/generate-release-notes
           npm ci
+          node index.js
           mv ./release-notes.md ${{ env.GITHUB_WORKSPACE }}/release-notes.md
 
       # Docs - https://github.com/softprops/action-gh-release
