@@ -195,7 +195,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ASSET_DIR: ${{ github.WORKSPACE }}/ci-artifacts
-          TAG_TO_SEARCH_FOR: ${{ github.GITHUB_REF }}
+          TAG_TO_SEARCH_FOR: ${{ github.REF }}
           DISCORD_BUILD_WEBHOOK: ${{ secrets.DISCORD_BUILD_WEBHOOK }}
         run: |
           cd ./.github/workflows/scripts/releases/upload-release-artifacts
