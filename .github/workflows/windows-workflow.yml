@@ -172,9 +172,9 @@ jobs:
         working-directory: bin
         run: |
           rm -f *.bsc *.exp *.ilk *.iobj *.ipdb *.lib
-          mkdir -p ${GITHUB_WORKSPACE}/ci-artifacts
-          7z -x \*.pdb -r ${GITHUB_WORKSPACE}/ci-artifacts/${{ steps.artifact-metadata.outputs.name }}.7z .
-          7z -i ${GITHUB_WORKSPACE}/ci-artifacts/${{ steps.artifact-metadata.outputs.name }}-symbols.7z .
+          mkdir -p $GITHUB_WORKSPACE/ci-artifacts
+          7z -x \*.pdb -r $GITHUB_WORKSPACE/ci-artifacts/${{ steps.artifact-metadata.outputs.name }}.7z .
+          7z -i $GITHUB_WORKSPACE/ci-artifacts/${{ steps.artifact-metadata.outputs.name }}-symbols.7z .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
