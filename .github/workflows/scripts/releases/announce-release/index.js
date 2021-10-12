@@ -11,9 +11,9 @@ for (var i = 0; i < assets.length; i++) {
     continue;
   }
   if (asset.name.startsWith("windows")) {
-    windowsAssetLinks += `- [${expectedNamePrefix}](${asset.browser_download_url})\n`
+    windowsAssetLinks += `- [${asset.name}](${asset.browser_download_url})\n`
   } else if (asset.name.startsWith("linux")) {
-    linuxAssetLinks += `- [${expectedNamePrefix}](${asset.browser_download_url})\n`
+    linuxAssetLinks += `- [${asset.name}](${asset.browser_download_url})\n`
   }
 }
 
