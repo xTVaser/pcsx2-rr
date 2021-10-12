@@ -174,7 +174,7 @@ jobs:
       # ---- Release / Tagging related steps ----
       - name: Install Dependencies
         if: startsWith(github.ref, 'refs/tags/') && matrix.configuration != 'CMake'
-        run: choco install nvm 7zip.install
+        run: choco install nvm.portable 7zip.install
 
       - name: Generate Build Metadata
         if: startsWith(github.ref, 'refs/tags/') && matrix.configuration != 'CMake'
