@@ -96,7 +96,7 @@ const { data: releaseAssets } = await octokit.rest.repos.listReleaseAssets({
 let expectedAssets = {
   "windows-32bit-sse4": false,
   "windows-32bit-avx2": false,
-  "windows-64bit": false,
+  "windows-64bit-sse4": false,
   "windows-64bit-avx2": false,
   "linux-appimage-32bit": false,
   "linux-appimage-64bit": false
@@ -116,7 +116,7 @@ for (var i = 0; i < releaseAssets.length; i++) {
       }
       if (expectedNamePrefix.startsWith("windows")) {
         windowsAssetLinks += `- [${expectedNamePrefix}](${asset.browser_download_url})\n`
-      } else {
+      } else if (expectedNamePrefix.startsWith("linux")) {
         linuxAssetLinks += `- [${expectedNamePrefix}](${asset.browser_download_url})\n`
       }
       break;

@@ -186,17 +186,18 @@ jobs:
 
       # ---- Release / Tagging related steps ----
       - name: Prepare Build Artifacts
-        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }} == 'true'
+        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }}
         run: |
           mv ./ci-artifacts/*.AppImage ./ci-artifacts/linux-AppImage-${{ steps.artifact-metadata.outputs.arch }}.AppImage
           ls ./ci-artifacts/
 
       - uses: actions/setup-node@v2
+        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }}
         with:
           node-version: "16"
 
       - name: Upload Assets and Potential Publish Release
-        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }} == 'true'
+        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ASSET_DIR: ${{ github.WORKSPACE }}/ci-artifacts
