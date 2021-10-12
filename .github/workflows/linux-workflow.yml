@@ -63,18 +63,21 @@ jobs:
             # (PCH conflicts with ccache, fixed by https://gitlab.kitware.com/cmake/cmake/-/merge_requests/4400)
             cmakeflags: -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
             detail: " nopch"
+            appimage: false
             experimental: false
           - os: ubuntu-18.04
             platform: x86
             compiler: gcc
             cmakeflags: -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
             detail: " nopch"
+            appimage: false
             experimental: false
           - os: ubuntu-18.04
             platform: x86
             compiler: gcc
             cmakeflags: -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON -DARCH_FLAG=-march=haswell
             detail: " avx2 nopch"
+            appimage: false
             experimental: false
 
     name: ${{ matrix.platform }} | ${{ matrix.compiler }}${{ matrix.detail }}
@@ -170,34 +173,34 @@ jobs:
         run: ninja unittests
 
       - name: Package AppImage
+        if: ${{ matrix.appimage }} == 'true'
         env:
           PLATFORM: ${{ matrix.platform }}
           COMPILER: ${{ matrix.compiler }}
           name: ${{ steps.artifact-metadata.outputs.name }}
         run: .github/workflows/scripts/linux/appimage.sh
-        if: ${{ matrix.appimage }}
 
       - name: Upload artifact
+        if: ${{ matrix.appimage }} == 'true'
         uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.artifact-metadata.outputs.name }}
           path: ci-artifacts
-        if: ${{ matrix.appimage }}
 
       # ---- Release / Tagging related steps ----
       - name: Prepare Build Artifacts
-        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }}
+        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }} == 'true'
         run: |
           mv ./ci-artifacts/*.AppImage ./ci-artifacts/linux-AppImage-${{ steps.artifact-metadata.outputs.arch }}.AppImage
           ls ./ci-artifacts/
 
       - uses: actions/setup-node@v2
-        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }}
+        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }} == 'true'
         with:
           node-version: "16"
 
       - name: Upload Assets and Potential Publish Release
-        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }}
+        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }} == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ASSET_DIR: ${{ github.WORKSPACE }}/ci-artifacts
