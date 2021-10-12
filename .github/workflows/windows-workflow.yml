@@ -177,11 +177,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') && matrix.configuration != 'CMake'
         run: choco install 7zip.install
 
-      - uses: actions/setup-node@v2
-        if: startsWith(github.ref, 'refs/tags/') && matrix.configuration != 'CMake'
-        with:
-          node-version: '16'
-
       - name: Prepare Build Artifacts
         if: startsWith(github.ref, 'refs/tags/') && matrix.configuration != 'CMake'
         run: |
@@ -197,7 +192,6 @@ jobs:
           ASSET_DIR: ${{ github.WORKSPACE }}/ci-artifacts
           ASSET_EXTENSION: "7z"
           TAG_TO_SEARCH_FOR: ${{ github.REF }}
-          DISCORD_BUILD_WEBHOOK: ${{ secrets.DISCORD_BUILD_WEBHOOK }}
         run: |
           cd ./.github/workflows/scripts/releases/upload-release-artifacts
           npm ci

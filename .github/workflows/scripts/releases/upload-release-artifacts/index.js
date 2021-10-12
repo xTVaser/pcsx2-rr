@@ -102,23 +102,15 @@ let expectedAssets = {
   "linux-appimage-64bit": false
 }
 
-let windowsAssetLinks = "";
-let linuxAssetLinks = "";
-
 for (var i = 0; i < releaseAssets.length; i++) {
   let asset = releaseAssets[i];
+  if (asset.name.includes("symbols")) {
+    continue;
+  }
   for (var j = 0; j < Object.keys(expectedAssets).length; j++) {
     let expectedNamePrefix = Object.keys(expectedAssets)[j];
     if (asset.name.toLowerCase().startsWith(expectedNamePrefix)) {
       expectedAssets[expectedNamePrefix] = true;
-      if (asset.name.includes("symbols")) {
-        break;
-      }
-      if (expectedNamePrefix.startsWith("windows")) {
-        windowsAssetLinks += `- [${expectedNamePrefix}](${asset.browser_download_url})\n`
-      } else if (expectedNamePrefix.startsWith("linux")) {
-        linuxAssetLinks += `- [${expectedNamePrefix}](${asset.browser_download_url})\n`
-      }
       break;
     }
   }
@@ -126,37 +118,11 @@ for (var i = 0; i < releaseAssets.length; i++) {
 
 console.log(expectedAssets);
 
-import { MessageEmbed, WebhookClient } from "discord.js";
-
 if (Object.values(expectedAssets).every(Boolean)) {
   await octokit.rest.repos.updateRelease({
     owner: "xTVaser", // TODO - change
     repo: "pcsx2-rr", // TODO - change
     release_id: release.id,
     draft: false
-  });
-
-  // Publish Webhook
-  const embed = new MessageEmbed()
-    .setColor('#FF8000')
-    .setTitle('New PCSX2 Nightly Build Available!')
-    .addFields(
-      { name: 'Version', value: release.tag_name, inline: true },
-      { name: 'Release Link', value: `[Github Release](${release.html_url})`, inline: true },
-      { name: 'Installation Steps', value: '[See Here](https://github.com/PCSX2/pcsx2/wiki/Nightly-Build-Usage-Guide)', inline: true }
-    );
-
-  // TODO - add footer link to build page
-
-  if (windowsAssetLinks != "") {
-    embed.addField('Windows Downloads', windowsAssetLinks, false);
-  }
-  if (linuxAssetLinks != "") {
-    embed.addField('Linux Downloads', linuxAssetLinks, false);
-  }
-
-  const webhookClient = new WebhookClient({ url: process.env.DISCORD_BUILD_WEBHOOK });
-  await webhookClient.send({
-    embeds: [embed],
   });
 }
