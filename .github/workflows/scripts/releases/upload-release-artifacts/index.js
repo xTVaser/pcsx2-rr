@@ -143,8 +143,10 @@ if (Object.values(expectedAssets).every(Boolean)) {
     .addFields(
       { name: 'Version', value: release.tag_name, inline: true },
       { name: 'Release Link', value: `[Github Release](${release.html_url})`, inline: true },
-      { name: 'Installation Steps', value: '[See Here](https://www.google.com)', inline: true }
+      { name: 'Installation Steps', value: '[See Here](https://github.com/PCSX2/pcsx2/wiki/Nightly-Build-Usage-Guide)', inline: true }
     );
+
+  // TODO - add footer link to build page
 
   if (windowsAssetLinks != "") {
     embed.addField('Windows Downloads', windowsAssetLinks, false);
