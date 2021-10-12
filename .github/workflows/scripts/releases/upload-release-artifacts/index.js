@@ -66,6 +66,7 @@ import * as path from 'path';
 glob(assetDir + '/**/*.7z', {}, async (err, files) => {
   for (var i = 0; i < files.length; i++) {
     var assetBytes = fs.readFileSync(files[i], null);
+    // TODO - check the assets first, skip any that are already present (or delete them)
     const { data: uploadAsset } = await octokit.rest.repos.uploadReleaseAsset({
       owner: "xTVaser", // TODO - change
       repo: "pcsx2-rr", // TODO - change
