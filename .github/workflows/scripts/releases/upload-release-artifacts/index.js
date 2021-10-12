@@ -63,7 +63,7 @@ if (release == undefined) {
 import glob from 'glob';
 import * as fs from 'fs';
 import * as path from 'path';
-glob(assetDir + '/**/*.7z', {}, async (err, files) => {
+glob(assetDir + `/**/*${process.env.ASSET_EXTENSION}`, {}, async (err, files) => {
   for (var i = 0; i < files.length; i++) {
     var assetBytes = fs.readFileSync(files[i], null);
     // TODO - check the assets first, skip any that are already present (or delete them)
@@ -95,11 +95,11 @@ const { data: releaseAssets } = await octokit.rest.repos.listReleaseAssets({
 // Expected Assets, if we have all of them, we will publish it
 let expectedAssets = {
   "windows-32bit-sse4": false,
-  "windows-32bit-avx2": false
-  // "windows-64bit": false,
-  // "windows-64bit-avx2": false,
-  // "linux-appimage-32bit": false,
-  // "linux-appimage-64bit": false
+  "windows-32bit-avx2": false,
+  "windows-64bit": false,
+  "windows-64bit-avx2": false,
+  "linux-appimage-32bit": false,
+  "linux-appimage-64bit": false
 }
 
 let windowsAssetLinks = "";

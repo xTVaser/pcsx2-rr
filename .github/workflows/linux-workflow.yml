@@ -6,59 +6,36 @@ on:
   push:
     branches:
       - master
-    paths-ignore:
-      - '**/*.md'
-      - '**/*.bat'
-      - '**/*.cmd'
-      - '**/*.props'
-      - '**/*.sln'
-      - '.clang-format'
-      - '.codacy.yaml'
-      - '.github/*'
-      - '.github/workflows/lint-gamedb.yml'
-      - '.github/workflows/macos-workflow.yml'
-      - '.github/workflows/pr-triage.yml'
-      - '.github/workflows/scripts/windows/**'
-      - '.github/workflows/scripts/validation/**'
-      - '.github/workflows/windows-workflow.yml'
-      - '.gitignore'
-      - 'bin/PCSX2_keys.ini.default'
-      - 'build.sh'
-      - 'buildbot.xml'
-      - 'pcsx2/CDVD/Windows/**'
-      - 'pcsx2/DEV9/Win32/**'
-      - 'pcsx2/PAD/Windows/**'
-      - 'pcsx2/SPU2/Windows/**'
-      - 'pcsx2/USB/Win32/**'
-      - 'pcsx2/windows/**'
+    tags:
+      - v*
   pull_request:
     branches:
       - master
     paths-ignore:
-      - '**/*.md'
-      - '**/*.bat'
-      - '**/*.cmd'
-      - '**/*.props'
-      - '**/*.sln'
-      - '.clang-format'
-      - '.codacy.yaml'
-      - '.github/*'
-      - '.github/workflows/lint-gamedb.yml'
-      - '.github/workflows/macos-workflow.yml'
-      - '.github/workflows/pr-triage.yml'
-      - '.github/workflows/scripts/windows/**'
-      - '.github/workflows/scripts/validation/**'
-      - '.github/workflows/windows-workflow.yml'
-      - '.gitignore'
-      - 'bin/PCSX2_keys.ini.default'
-      - 'build.sh'
-      - 'buildbot.xml'
-      - 'pcsx2/CDVD/Windows/**'
-      - 'pcsx2/DEV9/Win32/**'
-      - 'pcsx2/PAD/Windows/**'
-      - 'pcsx2/SPU2/Windows/**'
-      - 'pcsx2/USB/Win32/**'
-      - 'pcsx2/windows/**'
+      - "**/*.md"
+      - "**/*.bat"
+      - "**/*.cmd"
+      - "**/*.props"
+      - "**/*.sln"
+      - ".clang-format"
+      - ".codacy.yaml"
+      - ".github/*"
+      - ".github/workflows/lint-gamedb.yml"
+      - ".github/workflows/macos-workflow.yml"
+      - ".github/workflows/pr-triage.yml"
+      - ".github/workflows/scripts/windows/**"
+      - ".github/workflows/scripts/validation/**"
+      - ".github/workflows/windows-workflow.yml"
+      - ".gitignore"
+      - "bin/PCSX2_keys.ini.default"
+      - "build.sh"
+      - "buildbot.xml"
+      - "pcsx2/CDVD/Windows/**"
+      - "pcsx2/DEV9/Win32/**"
+      - "pcsx2/PAD/Windows/**"
+      - "pcsx2/SPU2/Windows/**"
+      - "pcsx2/USB/Win32/**"
+      - "pcsx2/windows/**"
 
 jobs:
   build:
@@ -169,7 +146,8 @@ jobs:
           TRIMMED_ARTIFACT_NAME=$(printf "%.199s]" "$ARTIFACT_NAME")
           echo "name=$TRIMMED_ARTIFACT_NAME"
           echo "##[set-output name=name;]${TRIMMED_ARTIFACT_NAME}"
-          
+          echo "##[set-output name=arch;]${ARCH}"
+
       - name: Install Packages
         env:
           PLATFORM: ${{ matrix.platform }}
@@ -190,7 +168,7 @@ jobs:
       - name: Run Tests
         working-directory: ./build
         run: ninja unittests
-        
+
       - name: Package AppImage
         env:
           PLATFORM: ${{ matrix.platform }}
@@ -203,5 +181,29 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.artifact-metadata.outputs.name }}
-          path: artifacts
+          path: ci-artifacts
         if: ${{ matrix.appimage }}
+
+      # ---- Release / Tagging related steps ----
+      - name: Prepare Build Artifacts
+        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }} == 'true'
+        run: |
+          mv ./ci-artifacts/*.AppImage ./ci-artifacts/linux-AppImage-${{ steps.artifact-metadata.outputs.arch }}.AppImage
+          ls ./ci-artifacts/
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: Upload Assets and Potential Publish Release
+        if: startsWith(github.ref, 'refs/tags/') && ${{ matrix.appimage }} == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ASSET_DIR: ${{ github.WORKSPACE }}/ci-artifacts
+          ASSET_EXTENSION: "AppImage"
+          TAG_TO_SEARCH_FOR: ${{ github.REF }}
+          DISCORD_BUILD_WEBHOOK: ${{ secrets.DISCORD_BUILD_WEBHOOK }}
+        run: |
+          cd ./.github/workflows/scripts/releases/upload-release-artifacts
+          npm ci
+          node index.js
