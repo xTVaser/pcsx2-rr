@@ -173,7 +173,7 @@ jobs:
         run: ninja unittests
 
       - name: Package AppImage
-        if: matrix.appimage == 'true'
+        if: matrix.appimage == true
         env:
           PLATFORM: ${{ matrix.platform }}
           COMPILER: ${{ matrix.compiler }}
@@ -181,7 +181,7 @@ jobs:
         run: .github/workflows/scripts/linux/appimage.sh
 
       - name: Upload artifact
-        if: matrix.appimage == 'true'
+        if: matrix.appimage == true
         uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.artifact-metadata.outputs.name }}
@@ -189,13 +189,13 @@ jobs:
 
       # ---- Release / Tagging related steps ----
       - name: Prepare Build Artifacts
-        if: startsWith(github.ref, 'refs/tags/') == 'true' && matrix.appimage == 'true'
+        if: startsWith(github.ref, 'refs/tags/') && matrix.appimage == true
         run: |
           mv ./ci-artifacts/*.AppImage ./ci-artifacts/linux-AppImage-${{ steps.artifact-metadata.outputs.arch }}.AppImage
           ls ./ci-artifacts/
 
       - name: Upload Assets and Potential Publish Release
-        if: startsWith(github.ref, 'refs/tags/') == 'true' && matrix.appimage == 'true'
+        if: startsWith(github.ref, 'refs/tags/') && matrix.appimage == true
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_PAT }}
           ASSET_DIR: ${{ github.WORKSPACE }}/ci-artifacts
