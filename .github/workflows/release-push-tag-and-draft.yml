@@ -40,13 +40,13 @@ jobs:
 
       # Generate the Release Notes
       - name: Generate Release Notes
-        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_SHA: ${{ github.SHA }}
         run: |
           cd ./.github/workflows/scripts/releases/generate-release-notes
           npm ci
-          node index.js $GITHUB_SHA
+          node index.js
           mv ./release-notes.md ${GITHUB_WORKSPACE}/release-notes.md
           ls
 

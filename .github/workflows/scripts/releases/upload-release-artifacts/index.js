@@ -60,7 +60,7 @@ if (release == undefined) {
 }
 
 // Upload any assets we need to, don't upload assets that are already there!
-const { data: releaseAssets } = await octokit.rest.repos.listReleaseAssets({
+const { data: releaseAssetsPre } = await octokit.rest.repos.listReleaseAssets({
   owner: "xTVaser", // TODO - change
   repo: "pcsx2-rr", // TODO - change
   release_id: release.id,
@@ -73,8 +73,8 @@ import * as path from 'path';
 glob(assetDir + `/**/*${process.env.ASSET_EXTENSION}`, {}, async (err, files) => {
   for (var i = 0; i < files.length; i++) {
     let foundDuplicate = false;
-    for (var j = 0; j < releaseAssets.length; j++) {
-      let existingAsset = releaseAssets[j];
+    for (var j = 0; j < releaseAssetsPre.length; j++) {
+      let existingAsset = releaseAssetsPre[j];
       if (existingAsset.name == `pcsx2-${release.tag_name}-${path.basename(files[i])}`) {
         foundDuplicate = true;
         break;
@@ -103,7 +103,7 @@ glob(assetDir + `/**/*${process.env.ASSET_EXTENSION}`, {}, async (err, files) =>
 await new Promise(resolve => setTimeout(resolve, 10 * 1000));
 
 // Poll the release, and check to see if it's ready to be published
-const { data: releaseAssets } = await octokit.rest.repos.listReleaseAssets({
+const { data: releaseAssetsPost } = await octokit.rest.repos.listReleaseAssets({
   owner: "xTVaser", // TODO - change
   repo: "pcsx2-rr", // TODO - change
   release_id: release.id,
@@ -120,8 +120,8 @@ let expectedAssets = {
   "linux-appimage-64bit": false
 }
 
-for (var i = 0; i < releaseAssets.length; i++) {
-  let asset = releaseAssets[i];
+for (var i = 0; i < releaseAssetsPost.length; i++) {
+  let asset = releaseAssetsPost[i];
   if (asset.name.includes("symbols")) {
     continue;
   }

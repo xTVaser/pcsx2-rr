@@ -34,7 +34,9 @@ const octokit = new Octokit({
 });
 
 var args = process.argv.slice(2);
-let commitSha = args[0];
+let commitSha = process.env.COMMIT_SHA;
+
+console.log(`Searching for Commit - ${commitSha}`);
 
 const { data: commit } = await octokit.rest.repos.getCommit({
   owner: "xTVaser", // TODO - change
@@ -44,7 +46,7 @@ const { data: commit } = await octokit.rest.repos.getCommit({
 
 const { data: associatedPulls } = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
   owner: "xTVaser", // TODO - change
-  repo: "pcsx2",
+  repo: "pcsx2-rr",
   commit_sha: commit.sha,
 });
 
