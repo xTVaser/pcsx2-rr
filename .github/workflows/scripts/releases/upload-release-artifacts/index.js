@@ -59,19 +59,37 @@ if (release == undefined) {
   process.exit(1);
 }
 
-// Upload any assets we have
+// Upload any assets we need to, don't upload assets that are already there!
+const { data: releaseAssets } = await octokit.rest.repos.listReleaseAssets({
+  owner: "xTVaser", // TODO - change
+  repo: "pcsx2-rr", // TODO - change
+  release_id: release.id,
+  per_page: 100
+});
+
 import glob from 'glob';
 import * as fs from 'fs';
 import * as path from 'path';
 glob(assetDir + `/**/*${process.env.ASSET_EXTENSION}`, {}, async (err, files) => {
   for (var i = 0; i < files.length; i++) {
+    let foundDuplicate = false;
+    for (var j = 0; j < releaseAssets.length; j++) {
+      let existingAsset = releaseAssets[j];
+      if (existingAsset.name == `pcsx2-${release.tag_name}-${path.basename(files[i])}`) {
+        foundDuplicate = true;
+        break;
+      }
+    }
+    if (foundDuplicate) {
+      continue;
+    }
+
     var assetBytes = fs.readFileSync(files[i], null);
-    // TODO - check the assets first, skip any that are already present (or delete them)
     const { data: uploadAsset } = await octokit.rest.repos.uploadReleaseAsset({
       owner: "xTVaser", // TODO - change
       repo: "pcsx2-rr", // TODO - change
       release_id: release.id,
-      name: path.basename(files[i]),
+      name: `pcsx2-${release.tag_name}-${path.basename(files[i])}`,
       data: assetBytes,
     });
   }
@@ -109,7 +127,7 @@ for (var i = 0; i < releaseAssets.length; i++) {
   }
   for (var j = 0; j < Object.keys(expectedAssets).length; j++) {
     let expectedNamePrefix = Object.keys(expectedAssets)[j];
-    if (asset.name.toLowerCase().startsWith(expectedNamePrefix)) {
+    if (asset.name.toLowerCase().includes(expectedNamePrefix)) {
       expectedAssets[expectedNamePrefix] = true;
       break;
     }

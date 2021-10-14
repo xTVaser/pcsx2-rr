@@ -48,10 +48,10 @@ const { data: associatedPulls } = await octokit.rest.repos.listPullRequestsAssoc
   commit_sha: commit.sha,
 });
 
-let releaseNotes = `### Included in This Release\n\n`;
+let releaseNotes = ``;
 
 if (associatedPulls.length == 0) {
-  releaseNotes += `- No Pull Requests Associated with this Release\n`;
+  releaseNotes += `- ${commit.message}\n`;
 } else {
   for (var j = 0; j < associatedPulls.length; j++) {
     releaseNotes += `- [${associatedPulls[j].title}](${associatedPulls[j].html_url})\n`;
