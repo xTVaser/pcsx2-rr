@@ -10,9 +10,9 @@ for (var i = 0; i < assets.length; i++) {
   if (asset.name.includes("symbols")) {
     continue;
   }
-  if (asset.name.startsWith("windows")) {
+  if (asset.name.includes("windows")) {
     windowsAssetLinks += `- [${asset.name}](${asset.browser_download_url})\n`
-  } else if (asset.name.startsWith("linux")) {
+  } else if (asset.name.includes("linux")) {
     linuxAssetLinks += `- [${asset.name}](${asset.browser_download_url})\n`
   }
 }
