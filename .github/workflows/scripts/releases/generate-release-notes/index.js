@@ -53,7 +53,7 @@ const { data: associatedPulls } = await octokit.rest.repos.listPullRequestsAssoc
 let releaseNotes = ``;
 
 if (associatedPulls.length == 0) {
-  releaseNotes += `- ${commit.message}\n`;
+  releaseNotes += `- ${commit.commit.message}\n`;
 } else {
   for (var j = 0; j < associatedPulls.length; j++) {
     releaseNotes += `- [${associatedPulls[j].title}](${associatedPulls[j].html_url})\n`;
