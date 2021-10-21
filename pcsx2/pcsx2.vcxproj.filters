@@ -1652,6 +1652,12 @@
     <ClCompile Include="Frontend\ImGuiManager.cpp">
       <Filter>Host</Filter>
     </ClCompile>
+    <ClCompile Include="Frontend\VulkanHostDisplay.cpp">
+      <Filter>Host</Filter>
+    </ClCompile>
+    <ClCompile Include="Frontend\imgui_impl_vulkan.cpp">
+      <Filter>Host</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Patch.h">
@@ -2767,6 +2773,9 @@
     </ClInclude>
     <ClInclude Include="VMManager.h">
       <Filter>System\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\VulkanHostDisplay.h">
+      <Filter>Host</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
