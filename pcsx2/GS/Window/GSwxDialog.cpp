@@ -765,7 +765,7 @@ void Dialog::Update()
 	else
 	{
 		// cross-tab dependencies yay
-		bool is_hw = renderer == GSRendererType::OGL || renderer == GSRendererType::DX11;
+		bool is_hw = renderer == GSRendererType::OGL || renderer == GSRendererType::DX11 || renderer == GSRendererType::VK;
 		bool is_upscale = m_renderer_panel->m_internal_resolution->GetSelection() != 0;
 		m_hacks_panel->m_is_native_res = !is_hw || !is_upscale;
 		m_renderer_panel->m_is_hardware = is_hw;

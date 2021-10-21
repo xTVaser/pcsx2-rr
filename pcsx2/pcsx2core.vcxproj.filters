@@ -223,6 +223,9 @@
     <Filter Include="System\Ps2\SPU2\Host">
       <UniqueIdentifier>{59999c63-fe25-43d4-9637-672f52067167}</UniqueIdentifier>
     </Filter>
+    <Filter Include="System\Ps2\GS\Renderers\Vulkan">
+      <UniqueIdentifier>{6696e2ba-abf1-439c-9547-12cb255eeed9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="Utilities\folderdesc.txt">
@@ -1173,6 +1176,22 @@
     <ClCompile Include="GS\Renderers\DX11\D3D.cpp">
       <Filter>System\Ps2\GS\Renderers\Direct3D</Filter>
     </ClCompile>
+    <ClCompile Include="Frontend\VulkanHostDisplay.cpp" />
+    <ClCompile Include="Frontend\imgui_impl_vulkan.cpp">
+      <Filter>Frontend</Filter>
+    </ClCompile>
+    <ClCompile Include="GS\Renderers\Vulkan\GSRendererVK.cpp">
+      <Filter>System\Ps2\GS\Renderers\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="GS\Renderers\Vulkan\GSTextureCacheVK.cpp">
+      <Filter>System\Ps2\GS\Renderers\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="GS\Renderers\Vulkan\GSTextureVK.cpp">
+      <Filter>System\Ps2\GS\Renderers\Vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="GS\Renderers\Vulkan\GSDeviceVK.cpp">
+      <Filter>System\Ps2\GS\Renderers\Vulkan</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Patch.h">
@@ -1934,6 +1953,22 @@
     <ClInclude Include="DEV9\InternalServers\DNS_Server.h" />
     <ClInclude Include="GS\Renderers\DX11\D3D.h">
       <Filter>System\Ps2\GS\Renderers\Direct3D</Filter>
+    </ClInclude>
+    <ClInclude Include="Frontend\VulkanHostDisplay.h" />
+    <ClInclude Include="Frontend\imgui_impl_vulkan.h">
+      <Filter>Frontend</Filter>
+    </ClInclude>
+    <ClInclude Include="GS\Renderers\Vulkan\GSRendererVK.h">
+      <Filter>System\Ps2\GS\Renderers\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="GS\Renderers\Vulkan\GSTextureCacheVK.h">
+      <Filter>System\Ps2\GS\Renderers\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="GS\Renderers\Vulkan\GSTextureVK.h">
+      <Filter>System\Ps2\GS\Renderers\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="GS\Renderers\Vulkan\GSDeviceVK.h">
+      <Filter>System\Ps2\GS\Renderers\Vulkan</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
