@@ -334,7 +334,7 @@ GSTexture* GSRendererHW::GetOutput(int i, int& y_offset)
 		{
 			if (s_savef && s_n >= s_saven)
 			{
-				t->Save(m_dump_root + format("%05d_f%lld_fr%d_%05x_%s.bmp", s_n, m_perfmon.GetFrame(), i, (int)TEX0.TBP0, psm_str(TEX0.PSM)));
+				t->Save(m_dump_root + format("%05d_f%lld_fr%d_%05x_%s.bmp", s_n, g_perfmon.GetFrame(), i, (int)TEX0.TBP0, psm_str(TEX0.PSM)));
 			}
 		}
 #endif
@@ -357,7 +357,7 @@ GSTexture* GSRendererHW::GetFeedbackOutput()
 
 #ifdef ENABLE_OGL_DEBUG
 	if (s_dump && s_savef && s_n >= s_saven)
-		t->Save(m_dump_root + format("%05d_f%lld_fr%d_%05x_%s.bmp", s_n, m_perfmon.GetFrame(), 3, (int)TEX0.TBP0, psm_str(TEX0.PSM)));
+		t->Save(m_dump_root + format("%05d_f%lld_fr%d_%05x_%s.bmp", s_n, g_perfmon.GetFrame(), 3, (int)TEX0.TBP0, psm_str(TEX0.PSM)));
 #endif
 
 	return t;
@@ -1463,7 +1463,7 @@ void GSRendererHW::Draw()
 
 	if (s_dump)
 	{
-		const uint64 frame = m_perfmon.GetFrame();
+		const uint64 frame = g_perfmon.GetFrame();
 
 		std::string s;
 
@@ -1645,7 +1645,7 @@ void GSRendererHW::Draw()
 
 	if (s_dump)
 	{
-		const uint64 frame = m_perfmon.GetFrame();
+		const uint64 frame = g_perfmon.GetFrame();
 
 		std::string s;
 

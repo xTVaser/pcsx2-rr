@@ -17,6 +17,7 @@
 #include <limits.h>
 #include "GSTextureOGL.h"
 #include "GLState.h"
+#include "GS/GSPerfMon.h"
 #include "GS/GSPng.h"
 
 #ifdef ENABLE_OGL_DEBUG_MEM_BW
@@ -468,6 +469,8 @@ bool GSTextureOGL::Map(GSMap& m, const GSVector4i* _r, int layer)
 
 	if (m_type == GSTexture::Offscreen)
 	{
+		g_perfmon.Put(GSPerfMon::Readbacks, 1);
+
 		// The fastest way will be to use a PBO to read the data asynchronously. Unfortunately GS
 		// architecture is waiting the data right now.
 

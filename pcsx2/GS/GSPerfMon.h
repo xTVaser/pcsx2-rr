@@ -34,6 +34,8 @@ public:
 		Frame,
 		Prim,
 		Draw,
+		DrawCalls,
+		Readbacks,
 		Swizzle,
 		Unswizzle,
 		Fillrate,
@@ -45,6 +47,7 @@ public:
 protected:
 	double m_counters[CounterLast];
 	double m_stats[CounterLast];
+	float m_timer_stats[TimerLast];
 	uint64 m_begin[TimerLast], m_total[TimerLast], m_start[TimerLast];
 	uint64 m_frame;
 	clock_t m_lastframe;
@@ -60,11 +63,11 @@ public:
 
 	void Put(counter_t c, double val = 0);
 	double Get(counter_t c) { return m_stats[c]; }
+	float GetTimer(timer_t t) { return m_timer_stats[t]; }
 	void Update();
 
 	void Start(int timer = Main);
 	void Stop(int timer = Main);
-	int CPU(int timer = Main, bool reset = true);
 };
 
 class GSPerfMonAutoTimer
@@ -80,3 +83,5 @@ public:
 	}
 	~GSPerfMonAutoTimer() { m_pm->Stop(m_timer); }
 };
+
+extern GSPerfMon g_perfmon;

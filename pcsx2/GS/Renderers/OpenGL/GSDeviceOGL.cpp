@@ -747,6 +747,7 @@ void GSDeviceOGL::RestoreAPIState()
 
 void GSDeviceOGL::DrawPrimitive()
 {
+	g_perfmon.Put(GSPerfMon::DrawCalls, 1);
 	glDrawArrays(m_draw_topology, m_vertex.start, m_vertex.count);
 }
 
@@ -754,6 +755,7 @@ void GSDeviceOGL::DrawIndexedPrimitive()
 {
 	if (!m_disable_hw_gl_draw)
 	{
+		g_perfmon.Put(GSPerfMon::DrawCalls, 1);
 		glDrawElementsBaseVertex(m_draw_topology, static_cast<u32>(m_index.count), GL_UNSIGNED_INT,
 			reinterpret_cast<void*>(static_cast<u32>(m_index.start) * sizeof(u32)), static_cast<GLint>(m_vertex.start));
 	}
@@ -765,6 +767,7 @@ void GSDeviceOGL::DrawIndexedPrimitive(int offset, int count)
 
 	if (!m_disable_hw_gl_draw)
 	{
+		g_perfmon.Put(GSPerfMon::DrawCalls, 1);
 		glDrawElementsBaseVertex(m_draw_topology, count, GL_UNSIGNED_INT,
 			reinterpret_cast<void*>((static_cast<u32>(m_index.start) + static_cast<u32>(offset)) * sizeof(u32)),
 			static_cast<GLint>(m_vertex.start));

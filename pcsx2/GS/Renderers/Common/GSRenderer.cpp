@@ -310,21 +310,21 @@ static GSVector4 CalculateDrawRect(s32 window_width, s32 window_height, s32 text
 
 void GSRenderer::VSync(int field)
 {
-	GSPerfMonAutoTimer pmat(&m_perfmon);
+	GSPerfMonAutoTimer pmat(&g_perfmon);
 
-	m_perfmon.Put(GSPerfMon::Frame);
+	g_perfmon.Put(GSPerfMon::Frame);
 
 	Flush();
 
 	if (s_dump && s_n >= s_saven)
 	{
-		m_regs->Dump(root_sw + format("%05d_f%lld_gs_reg.txt", s_n, m_perfmon.GetFrame()));
+		m_regs->Dump(root_sw + format("%05d_f%lld_gs_reg.txt", s_n, g_perfmon.GetFrame()));
 	}
 
 	m_dev->AgePool();
 
-	if ((m_perfmon.GetFrame() & 0x1f) == 0)
-		m_perfmon.Update();
+	if ((g_perfmon.GetFrame() & 0x1f) == 0)
+		g_perfmon.Update();
 
 	if (!Merge(field ? 1 : 0) || m_frameskip)
 	{
