@@ -342,7 +342,7 @@ void DebugTab::CallUpdate(wxCommandEvent& /*event*/)
 	Update();
 }
 
-void SPU2ConfigDialog::handleModuleConfig(wxCommandEvent& event)
+void SPU2ConfigDialog::onModuleConfig(wxCommandEvent& event)
 {
 	auto mod = m_module_select->GetSelection();
 
@@ -360,16 +360,33 @@ void SPU2ConfigDialog::handleModuleConfig(wxCommandEvent& event)
 		}
 
 		// TODO:
-		// - SDLAudio
-		// - nullout ??
-		// - xaudio2 ??
+		// - SDLAudio - linux only
 	}
+}
+
+bool SPU2ConfigDialog::moduleHasPreferences()
+{
+	auto mod = m_module_select->GetSelection();
+	if (mods[mod] != nullptr)
+	{
+		auto ident = mods[mod]->GetIdent();
+
+		return ident == "portaudio" || ident == "SDLAudio";
+	}
+	return false;
+}
+
+void SPU2ConfigDialog::onModuleSelect(wxCommandEvent& event)
+{
+	m_backend_config->Enable(moduleHasPreferences());
 }
 
 SPU2ConfigDialog::SPU2ConfigDialog()
 	: wxDialog(nullptr, wxID_ANY, "Audio Settings", wxDefaultPosition, wxDefaultSize, wxCAPTION | wxCLOSE_BOX)
 {
+	wxBoxSizer* sizerWrapper = new wxBoxSizer(wxVERTICAL);
 	m_top_box = new wxBoxSizer(wxVERTICAL);
+	sizerWrapper->Add(m_top_box, 0, wxALL, 10);
 	auto* module_box = new wxBoxSizer(wxVERTICAL);
 
 	// Module
@@ -386,7 +403,7 @@ SPU2ConfigDialog::SPU2ConfigDialog()
 	module_box->Add(module_contents);
 	m_module_select = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, module_entries);
 	m_backend_config = new wxButton(this, wxID_PREFERENCES);
-	m_backend_config->Bind(wxEVT_BUTTON, &SPU2ConfigDialog::handleModuleConfig, this);
+
 	module_contents->Add(m_module_select, wxSizerFlags().Centre());
 	module_contents->Add(m_backend_config);
 
@@ -404,16 +421,23 @@ SPU2ConfigDialog::SPU2ConfigDialog()
 	m_top_box->Add(book, wxSizerFlags().Centre());
 	m_top_box->Add(CreateStdDialogButtonSizer(wxOK | wxCANCEL), wxSizerFlags().Right());
 
-	SetSizerAndFit(m_top_box);
-
+	// Bindings
+	m_backend_config->Bind(wxEVT_BUTTON, &SPU2ConfigDialog::onModuleConfig, this);
+	m_module_select->Bind(wxEVT_CHOICE, &SPU2ConfigDialog::onModuleSelect, this);
 	Bind(wxEVT_CHOICE, &SPU2ConfigDialog::CallReconfigure, this);
 	Bind(wxEVT_CHECKBOX, &SPU2ConfigDialog::CallReconfigure, this);
+
+	// Init Dialog
+	m_backend_config->Enable(moduleHasPreferences());
+
+	SetSizer(sizerWrapper);
+	sizerWrapper->Fit(this);
+	Layout();
 }
 
 void SPU2ConfigDialog::Reconfigure()
 {
-	m_top_box->Layout();
-	SetSizerAndFit(m_top_box);
+	Layout();
 }
 
 void SPU2ConfigDialog::CallReconfigure(wxCommandEvent& event)

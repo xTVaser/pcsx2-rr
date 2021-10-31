@@ -91,6 +91,12 @@ public:
 	void Load();
 	void Save();
 	void Reconfigure();
+
+protected:
 	void CallReconfigure(wxCommandEvent& event);
-	void handleModuleConfig(wxCommandEvent& event);
+	void onModuleConfig(wxCommandEvent& event);
+	void onModuleSelect(wxCommandEvent& event);
+
+private:
+	bool moduleHasPreferences();
 };
