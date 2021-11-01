@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include "SPU2/SndOut_Portaudio.h"
+
 #include <wx/wx.h>
 
 class PortAudioSettingsDialog : public wxDialog
@@ -23,6 +25,7 @@ public:
 	PortAudioSettingsDialog(wxDialog* parent);
 
 private:
+	PortaudioOutModule* m_portAudio;
 protected:
 	wxComboBox* m_hostApiSelect;
 	wxComboBox* m_deviceNameSelect;
@@ -32,4 +35,6 @@ protected:
 	wxSlider* m_latencyManualSelect;
 	wxButton* m_confirmBtn;
 	wxButton* m_cancelBtn;
+
+	void ConfirmDialog(wxCommandEvent& event);
 };

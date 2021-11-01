@@ -19,6 +19,8 @@
 #include <wx/datetime.h>
 #include <algorithm>
 
+#include "SndOutModule.h"
+
 //Uncomment the next line to use the old time stretcher
 //#define SPU2X_USE_OLD_STRETCHER
 

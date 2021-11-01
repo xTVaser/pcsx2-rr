@@ -32,8 +32,6 @@ static const int SndOutVolumeShift32 = 16 - SndOutVolumeShift; // shift up, not 
 // is too problematic. :)
 extern int SampleRate;
 
-extern int FindOutputModuleById(const std::string omodid);
-
 // Implemented in Config.cpp
 extern float VolumeAdjustFL;
 extern float VolumeAdjustC;
@@ -627,48 +625,6 @@ public:
 	template <typename T>
 	static void ReadSamples(T* bData);
 };
-
-class SndOutModule
-{
-public:
-	// Virtual destructor, because it helps fight C+++ funny-business.
-	virtual ~SndOutModule() {}
-
-	// Returns a unique identification string for this driver.
-	// (usually just matches the driver's cpp filename)
-	virtual const std::string GetIdent() const = 0;
-
-	// Returns the long name / description for this driver.
-	// (for use in configuration screen)
-	virtual const std::string GetLongName() const = 0;
-
-	virtual s32 Init() = 0;
-	virtual void Close() = 0;
-	virtual s32 Test() const = 0;
-
-	// Loads settings from the INI file for this driver
-	virtual void ReadSettings() = 0;
-
-	// Set output API for this driver
-	virtual void SetApiSettings(wxString api) = 0;
-
-	// Saves settings to the INI file for this driver
-	virtual void WriteSettings() const = 0;
-
-	// Returns the number of empty samples in the output buffer.
-	// (which is effectively the amount of data played since the last update)
-	virtual int GetEmptySampleCount() = 0;
-};
-
-#ifdef _MSC_VER
-//internal
-extern SndOutModule* XAudio2Out;
-#endif
-#if defined(SPU2X_PORTAUDIO)
-extern SndOutModule* PortaudioOut;
-#endif
-extern SndOutModule* const SDLOut;
-extern SndOutModule* mods[];
 
 // =====================================================================================================
 

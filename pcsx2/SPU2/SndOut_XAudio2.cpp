@@ -15,7 +15,9 @@
 
 #include "PrecompiledHeader.h"
 #include "SPU2/Global.h"
-#include "wx/Dialogs.h"
+#include "SPU2/wx/CfgHelpers.h"
+
+#include "SndOutModule.h"
 
 #include <xaudio2.h>
 #include <cguid.h>

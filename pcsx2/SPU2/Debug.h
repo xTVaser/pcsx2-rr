@@ -13,8 +13,9 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DEBUG_H_INCLUDED
-#define DEBUG_H_INCLUDED
+#pragma once
+
+#include "Global.h"
 
 extern FILE* spu2Log;
 
@@ -66,4 +67,3 @@ using WaveDump::CoreSrc_PostReverb;
 using WaveDump::CoreSrc_PreReverb;
 using WaveDump::CoreSrc_WetVoiceMix;
 
-#endif // DEBUG_H_INCLUDED //

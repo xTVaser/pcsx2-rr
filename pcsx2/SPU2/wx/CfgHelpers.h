@@ -1,5 +1,5 @@
-/*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2020  PCSX2 Dev Team
+﻿/*  PCSX2 - PS2 Emulator for PCs
+ *  Copyright (C) 2002-2021  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -13,8 +13,7 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DIALOG_H_INCLUDED
-#define DIALOG_H_INCLUDED
+#pragma once
 
 #include "SPU2/Global.h"
 #include "SPU2/Config.h"
@@ -38,5 +37,3 @@ extern void CfgReadStr(const wchar_t* Section, const wchar_t* Name, wxString& Da
 //extern void		CfgReadStr(const wchar_t* Section, const wchar_t* Name, wchar_t* Data, int DataSize, const wchar_t* Default);
 extern int CfgReadInt(const wchar_t* Section, const wchar_t* Name, int Default);
 extern float CfgReadFloat(const wchar_t* Section, const wchar_t* Name, float Default);
-
-#endif

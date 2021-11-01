@@ -19,6 +19,8 @@
 
 #include "PortAudioSettingsDialog.h"
 
+#include "SPU2/SndOutModule.h"
+
 #include "../Config.h"
 #include "../wx/Config.h"
 

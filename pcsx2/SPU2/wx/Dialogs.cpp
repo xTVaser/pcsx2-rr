@@ -13,10 +13,8 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// To be continued...
-
 #include "PrecompiledHeader.h"
-#include "Dialogs.h"
+
 #include <cstring>
 #include <wx/wx.h>
 

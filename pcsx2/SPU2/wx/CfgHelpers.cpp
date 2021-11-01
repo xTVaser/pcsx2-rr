@@ -15,8 +15,8 @@
 
 #include "PrecompiledHeader.h"
 #include "gui/AppConfig.h"
-#include "Dialogs.h"
 #include <wx/fileconf.h>
+#include "SPU2/Debug.h"
 
 wxFileConfig* spuConfig = nullptr;
 wxString path(L"SPU2.ini");

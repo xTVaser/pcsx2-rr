@@ -82,6 +82,7 @@
     <None Include="GS\res\shadeboost.fx" />
     <None Include="GS\res\tfx.fx" />
     <None Include="PAD\Windows\Default.ini" />
+    <None Include="SPU2\SndOut_Null.h" />
     <None Include="Utilities\folderdesc.txt" />
     <None Include="Docs\License.txt" />
     <None Include="x86\microVU_Alloc.inl" />
@@ -341,6 +342,7 @@
     <ClCompile Include="SPU2\DplIIdecoder.cpp" />
     <ClCompile Include="SPU2\debug.cpp" />
     <ClCompile Include="SPU2\RegLog.cpp" />
+    <ClCompile Include="SPU2\SndOutModule.cpp" />
     <ClCompile Include="SPU2\SndOut_Portaudio.cpp" />
     <ClCompile Include="SPU2\wavedump_wav.cpp" />
     <ClCompile Include="SPU2\SndOut.cpp" />
@@ -785,13 +787,15 @@
     <ClInclude Include="SPU2\Global.h" />
     <ClInclude Include="SPU2\interpolate_table.h" />
     <ClInclude Include="SPU2\SndOut.h" />
+    <ClInclude Include="SPU2\SndOutModule.h" />
+    <ClInclude Include="SPU2\SndOut_Portaudio.h" />
     <ClInclude Include="SPU2\spdif.h" />
     <ClInclude Include="SPU2\defs.h" />
     <ClInclude Include="SPU2\Dma.h" />
     <ClInclude Include="SPU2\regs.h" />
     <ClInclude Include="SPU2\Mixer.h" />
+    <ClInclude Include="SPU2\wx\CfgHelpers.h" />
     <ClInclude Include="SPU2\wx\Config.h" />
-    <ClInclude Include="SPU2\wx\Dialogs.h" />
     <ClInclude Include="SPU2\spu2.h" />
     <ClInclude Include="GS\config.h" />
     <ClInclude Include="GS\Renderers\OpenGL\GLLoader.h" />

@@ -15,7 +15,7 @@
 
 #include "PrecompiledHeader.h"
 #include "SPU2/Global.h"
-#include "Dialogs.h"
+#include "SPU2/wx/CfgHelpers.h"
 #include "Config.h"
 #include "SoundTouch.h"
 

@@ -15,9 +15,11 @@
 
 #include "PrecompiledHeader.h"
 #include "SPU2/Global.h"
-#include "Dialogs.h"
+#include "SPU2/wx/CfgHelpers.h"
 #include "Config.h"
 #include "SPU2/wx/SPU2ConfigDialog.h"
+
+#include "SPU2/SndOutModule.h"
 
 #if defined(__unix__) || defined(__APPLE__)
 #include <SDL.h>

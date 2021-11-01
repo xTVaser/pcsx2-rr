@@ -14,7 +14,10 @@
  */
 
 #include "PrecompiledHeader.h"
+
 #include "Global.h"
+
+#include "SndOutModule.h"
 
 
 StereoOut32 StereoOut32::Empty(0, 0);
@@ -43,66 +46,6 @@ StereoOut32 StereoOut16::UpSample() const
 	return StereoOut32(
 		Left << SndOutVolumeShift,
 		Right << SndOutVolumeShift);
-}
-
-
-class NullOutModule : public SndOutModule
-{
-public:
-	s32 Init() { return 0; }
-	void Close() {}
-	s32 Test() const { return 0; }
-	int GetEmptySampleCount() { return 0; }
-
-	const std::string GetIdent() const
-	{
-		return "nullout";
-	}
-
-	const std::string GetLongName() const
-	{
-		return "No Sound (Emulate SPU2 only)";
-	}
-
-	void ReadSettings()
-	{
-	}
-
-	void SetApiSettings(wxString api)
-	{
-	}
-
-	void WriteSettings() const
-	{
-	}
-
-} NullOut;
-
-SndOutModule* mods[] =
-	{
-		&NullOut,
-#ifdef _MSC_VER
-		XAudio2Out,
-#endif
-#if defined(SPU2X_PORTAUDIO)
-		PortaudioOut,
-#endif
-#if defined(__linux__) || defined(__APPLE__)
-		SDLOut,
-#endif
-		nullptr // signals the end of our list
-};
-
-int FindOutputModuleById(const std::string omodid)
-{
-	int modcnt = 0;
-	while (mods[modcnt] != nullptr)
-	{
-		if (mods[modcnt]->GetIdent() == omodid)
-			break;
-		++modcnt;
-	}
-	return modcnt;
 }
 
 StereoOut32* SndBuffer::m_buffer;
@@ -164,8 +107,7 @@ void SndBuffer::_InitFail()
 {
 	// If a failure occurs, just initialize the NoSound driver.  This'll allow
 	// the game to emulate properly (hopefully), albeit without sound.
-	OutputModule = FindOutputModuleById(NullOut.GetIdent());
-	mods[OutputModule]->Init();
+	NullOut->Init();
 }
 
 int SndBuffer::_GetApproximateDataInBuffer()
@@ -441,7 +383,7 @@ void SndBuffer::Write(const StereoOut32& Sample)
 	if (WavRecordEnabled)
 		RecordWrite(Sample.DownSample());
 
-	if (mods[OutputModule] == &NullOut) // null output doesn't need buffering or stretching! :p
+	if (mods[OutputModule] == NullOut) // null output doesn't need buffering or stretching! :p
 		return;
 
 	sndTempBuffer[sndTempProgress++] = Sample;
