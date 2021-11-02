@@ -9,7 +9,7 @@ on:
 
 jobs:
   update-controller-db:
-    if: github.repository == 'PCSX2/pcsx2'
+    # if: github.repository == 'PCSX2/pcsx2'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
