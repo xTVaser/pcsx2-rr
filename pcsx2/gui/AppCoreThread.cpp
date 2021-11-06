@@ -16,9 +16,10 @@
 #include "PrecompiledHeader.h"
 #include "App.h"
 #include "AppSaveStates.h"
-#include "AppGameDatabase.h"
+#include "GameDatabase.h"
 
 #include <wx/stdpaths.h>
+#include <wx/wfstream.h>
 #include "fmt/core.h"
 
 #include "common/StringUtil.h"
@@ -264,9 +265,6 @@ void AppCoreThread::OnPauseDebug()
 // Returns number of gamefixes set
 static int loadGameSettings(Pcsx2Config& dest, const GameDatabaseSchema::GameEntry& game)
 {
-	if (!game.isValid)
-		return 0;
-
 	int gf = 0;
 
 	if (game.eeRoundMode != GameDatabaseSchema::RoundMode::Undefined)
@@ -450,25 +448,21 @@ static void _ApplySettings(const Pcsx2Config& src, Pcsx2Config& fixup)
 
 	if (!curGameKey.IsEmpty())
 	{
-		if (IGameDatabase* GameDB = AppHost_GetGameDatabase())
+		const GameDatabaseSchema::GameEntry* game = GameDatabase::FindGame(std::string(curGameKey));
+		if (game)
 		{
-			GameDatabaseSchema::GameEntry game = GameDB->findGame(std::string(curGameKey));
-			if (game.isValid)
-			{
-				GameInfo::gameName = game.name;
-				GameInfo::gameName += L" (" + game.region + L")";
-				gameCompat = L" [Status = " + compatToStringWX(game.compat) + L"]";
-				gameMemCardFilter = game.memcardFiltersAsString();
-			}
+			GameInfo::gameName = wxString::Format("%s (%s)", game->name, game->region);
+			gameCompat.Printf(" [Status = %s]", GameDatabaseSchema::compatToString(game->compat));
+			gameMemCardFilter = game->MemcardFiltersAsString();
 
 			if (fixup.EnablePatches)
 			{
-				if (int patches = LoadPatchesFromGamesDB(GameInfo::gameCRC, game))
+				if (int patches = LoadPatchesFromGamesDB(GameInfo::gameCRC.ToStdString(), *game))
 				{
 					gamePatch.Printf(L" [%d Patches]", patches);
 					PatchesCon->WriteLn(Color_Green, "(GameDB) Patches Loaded: %d", patches);
 				}
-				if (int fixes = loadGameSettings(fixup, game))
+				if (int fixes = loadGameSettings(fixup, *game))
 					gameFixes.Printf(L" [%d Fixes]", fixes);
 			}
 		}
@@ -511,9 +505,12 @@ static void _ApplySettings(const Pcsx2Config& src, Pcsx2Config& fixup)
 		{
 			// No ws cheat files found at the cheats_ws folder, try the ws cheats zip file.
 			wxString cheats_ws_archive = Path::Combine(PathDefs::GetProgramDataDir(), wxFileName(L"cheats_ws.zip"));
-			int numberDbfCheatsLoaded = LoadPatchesFromZip(GameInfo::gameCRC, cheats_ws_archive);
-			PatchesCon->WriteLn(Color_Green, "(Wide Screen Cheats DB) Patches Loaded: %d", numberDbfCheatsLoaded);
-			gameWsHacks.Printf(L" [%d widescreen hacks]", numberDbfCheatsLoaded);
+			if (wxFile::Exists(cheats_ws_archive))
+			{
+				int numberDbfCheatsLoaded = LoadPatchesFromZip(GameInfo::gameCRC, cheats_ws_archive, new wxFFileInputStream(cheats_ws_archive));
+				PatchesCon->WriteLn(Color_Green, "(Wide Screen Cheats DB) Patches Loaded: %d", numberDbfCheatsLoaded);
+				gameWsHacks.Printf(L" [%d widescreen hacks]", numberDbfCheatsLoaded);
+			}
 		}
 	}
 

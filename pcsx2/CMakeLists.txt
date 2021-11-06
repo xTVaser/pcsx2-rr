@@ -901,7 +901,6 @@ set(pcsx2GuiSources
 	gui/AppConfig.cpp
 	gui/AppCoreThread.cpp
 	gui/AppEventSources.cpp
-	gui/AppGameDatabase.cpp
 	gui/AppHost.cpp
 	gui/AppUserMode.cpp
 	gui/AppInit.cpp
@@ -978,7 +977,6 @@ set(pcsx2GuiHeaders
 	gui/AppCoreThread.h
 	gui/AppEventListeners.h
 	gui/AppForwardDefs.h
-	gui/AppGameDatabase.h
 	gui/App.h
 	gui/ApplyState.h
 	gui/AppSaveStates.h
@@ -1493,9 +1491,7 @@ if (APPLE)
 	)
 
 	target_sources(PCSX2 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/gui/Resources/PCSX2.icns")
-	target_sources(PCSX2 PRIVATE "${CMAKE_SOURCE_DIR}/bin/GameIndex.yaml")
 	set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/gui/Resources/PCSX2.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-	set_source_files_properties("${CMAKE_SOURCE_DIR}/bin/GameIndex.yaml" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
 	# Add in shaders and other resources.
 	file(GLOB resource_files "${CMAKE_SOURCE_DIR}/bin/resources/*")
@@ -1547,5 +1543,5 @@ source_group(System/Ps2/USB REGULAR_EXPRESSION USB/*)
 source_group(Resources/GUI FILES ${pcsx2GuiResources})
 source_group(Resources/PAD FILES ${pcsx2PADResources})
 source_group(Resources/Recording FILES ${pcsx2RecordingVirtualPadResources})
-source_group(Resources FILES ../bin/GameIndex.yaml gui/Resources/PCSX2.icns)
+source_group(Resources FILES gui/Resources/PCSX2.icns)
 source_group(Resources REGULAR_EXPRESSION ${CMAKE_CURRENT_BINARY_DIR}/*)

@@ -20,7 +20,7 @@
 
 #ifndef DISABLE_RECORDING
 
-#include "gui/AppGameDatabase.h"
+#include "GameDatabase.h"
 #include "DebugTools/Debug.h"
 
 #include "InputRecording.h"
@@ -452,14 +452,11 @@ wxString InputRecording::resolveGameName()
 	const wxString gameKey(SysGetDiscID());
 	if (!gameKey.IsEmpty())
 	{
-		if (IGameDatabase* gameDB = AppHost_GetGameDatabase())
+		const GameDatabaseSchema::GameEntry* game = GameDatabase::FindGame(std::string(gameKey));
+		if (game)
 		{
-			GameDatabaseSchema::GameEntry game = gameDB->findGame(std::string(gameKey));
-			if (game.isValid)
-			{
-				gameName = game.name;
-				gameName += L" (" + game.region + L")";
-			}
+			gameName = game->name;
+			gameName += L" (" + game->region + L")";
 		}
 	}
 	return !gameName.IsEmpty() ? gameName : (wxString)Path::GetFilename(g_Conf->CurrentIso);
