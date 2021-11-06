@@ -19,6 +19,7 @@
 #include "IopBios.h"
 #include "R5900.h"
 
+#include "common/Timer.h"
 #include "common/WindowInfo.h"
 extern WindowInfo g_gs_window_info;
 
@@ -34,6 +35,7 @@ extern WindowInfo g_gs_window_info;
 #include "DEV9/DEV9.h"
 #include "USB/USB.h"
 #include "MemoryCardFile.h"
+#include "PerformanceMetrics.h"
 #ifdef _WIN32
 #include "PAD/Windows/PAD.h"
 #else
@@ -321,10 +323,14 @@ void SysCoreThread::TearDownSystems(SystemsMask systemsToTearDown)
 	if (systemsToTearDown & System_PAD) PADclose();
 	if (systemsToTearDown & System_SPU2) SPU2close();
 	if (systemsToTearDown & System_MCD) FileMcd_EmuClose();
+
+	PerformanceMetrics::SetCPUThreadTimer(Common::ThreadCPUTimer());
 }
 
 void SysCoreThread::OnResumeInThread(SystemsMask systemsToReinstate)
 {
+	PerformanceMetrics::SetCPUThreadTimer(Common::ThreadCPUTimer::GetForCallingThread());
+
 	GetMTGS().WaitForOpen();
 	if (systemsToReinstate & System_DEV9) DEV9open();
 	if (systemsToReinstate & System_USB) USBopen(g_gs_window_info);

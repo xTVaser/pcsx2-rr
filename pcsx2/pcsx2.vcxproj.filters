@@ -740,9 +740,6 @@
     <ClCompile Include="gui\ConsoleLogger.cpp">
       <Filter>AppHost</Filter>
     </ClCompile>
-    <ClCompile Include="gui\CpuUsageProvider.cpp">
-      <Filter>AppHost</Filter>
-    </ClCompile>
     <ClCompile Include="gui\FrameForGS.cpp">
       <Filter>AppHost</Filter>
     </ClCompile>
@@ -1636,6 +1633,10 @@
     <ClCompile Include="gui\AppHost.cpp">
       <Filter>AppHost</Filter>
     </ClCompile>
+    <ClCompile Include="GS\Renderers\SW\GSSetupPrimCodeGenerator.all.cpp" />
+    <ClCompile Include="PerformanceMetrics.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Patch.h">
@@ -1951,9 +1952,6 @@
       <Filter>AppHost\Include</Filter>
     </ClInclude>
     <ClInclude Include="gui\ConsoleLogger.h">
-      <Filter>AppHost\Include</Filter>
-    </ClInclude>
-    <ClInclude Include="gui\CpuUsageProvider.h">
       <Filter>AppHost\Include</Filter>
     </ClInclude>
     <ClInclude Include="gui\IsoDropTarget.h">
@@ -2734,6 +2732,9 @@
     <ClInclude Include="gui\pxStaticText.h">
       <Filter>AppHost</Filter>
     </ClInclude>
+    <ClInclude Include="PerformanceMetrics.h">
+      <Filter>System</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="windows\wxResources.rc">
@@ -2897,3 +2898,4 @@
     </Manifest>
   </ItemGroup>
 </Project>
+
