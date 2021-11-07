@@ -364,7 +364,7 @@ static MutexRecursive Mutex_NewDiskCB;
 static __fi ElfObject* loadElf(const wxString filename)
 {
 	if (filename.StartsWith(L"host"))
-		return new ElfObject(filename.After(':'), Path::GetFileSize(filename.After(':')));
+		return new ElfObject(filename.After(':'), FileSystem::GetPathFileSize(filename.After(':').ToUTF8()));
 
 	// Mimic PS2 behavior!
 	// Much trial-and-error with changing the ISOFS and BOOT2 contents of an image have shown that
