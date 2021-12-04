@@ -881,9 +881,6 @@
     <ClCompile Include="gui\AppUserMode.cpp">
       <Filter>AppHost</Filter>
     </ClCompile>
-    <ClCompile Include="gui\AppGameDatabase.cpp">
-      <Filter>AppHost</Filter>
-    </ClCompile>
     <ClCompile Include="gui\Dialogs\McdConfigDialog.cpp">
       <Filter>AppHost\Dialogs</Filter>
     </ClCompile>
@@ -1642,6 +1639,7 @@
     <ClCompile Include="gui\pxWindowTextWriter.cpp">
       <Filter>AppHost</Filter>
     </ClCompile>
+    <ClCompile Include="GS\Renderers\SW\GSSetupPrimCodeGenerator.all.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Patch.h">
@@ -2000,9 +1998,6 @@
     </ClInclude>
     <ClInclude Include="IPU\IPUdma.h">
       <Filter>System\Ps2\IPU</Filter>
-    </ClInclude>
-    <ClInclude Include="gui\AppGameDatabase.h">
-      <Filter>AppHost</Filter>
     </ClInclude>
     <ClInclude Include="gui\i18n.h">
       <Filter>AppHost</Filter>
@@ -2571,9 +2566,6 @@
     <ClInclude Include="GS\Renderers\Common\GSFastList.h">
       <Filter>System\Ps2\GS</Filter>
     </ClInclude>
-    <ClInclude Include="GS.h">
-      <Filter>System\Ps2\GIF</Filter>
-    </ClInclude>
     <ClInclude Include="GS\Renderers\DX11\GSDevice11.h">
       <Filter>System\Ps2\GS\Renderers\Direct3D</Filter>
     </ClInclude>
@@ -2755,6 +2747,7 @@
     <ClInclude Include="PAD\Gamepad.h">
       <Filter>System\Ps2\PAD</Filter>
     </ClInclude>
+    <ClInclude Include="GS.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="windows\wxResources.rc">
