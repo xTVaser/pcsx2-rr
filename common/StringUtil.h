@@ -184,6 +184,9 @@ namespace StringUtil
 		return 0;
 	}
 
+	extern std::string toLower(const std::string& str);
+	extern bool compareNoCase(const std::string& str1, const std::string& str2);
+
 	/// Converts a wxString to a UTF-8 std::string.
 	static std::string wxStringToUTF8String(const wxString& str)
 	{

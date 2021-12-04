@@ -19,6 +19,7 @@
 #include <codecvt>
 #include <cstdio>
 #include <sstream>
+#include <algorithm>
 
 #ifdef _WIN32
 #include "RedtapeWindows.h"
@@ -204,6 +205,22 @@ namespace StringUtil
 			ss << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(data[i]);
 
 		return ss.str();
+	}
+
+	std::string toLower(const std::string& input)
+	{
+		std::string newStr;
+		std::transform(input.begin(), input.end(), std::back_inserter(newStr),
+			[](unsigned char c) { return std::tolower(c); });
+		return newStr;
+	}
+
+	bool compareNoCase(const std::string& str1, const std::string& str2)
+	{
+		return std::equal(str1.begin(), str1.end(), str2.begin(),
+			[](char a, char b) {
+				return tolower(a) == tolower(b);
+			});
 	}
 
 #ifdef _WIN32
