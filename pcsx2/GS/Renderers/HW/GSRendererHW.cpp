@@ -916,14 +916,14 @@ void GSRendererHW::SwSpriteRender()
 		for (int x = 0; x < w; x += 2)
 		{
 			u32* di = dpa.value(x);
-			ASSERT(*di + 1 == *dpa.value(x + 1)); // Destination pixel pair is adjacent in memory
+			ASSERT(di + 1 == dpa.value(x + 1)); // Destination pixel pair is adjacent in memory
 
 			GSVector4i sc;
 			if (texture_mapping_enabled)
 			{
 				u32* si = spa.value(x);
 				// Read 2 source pixel colors
-				ASSERT((*si + 1) == *spa.value(x + 1)); // Source pixel pair is adjacent in memory
+				ASSERT(si + 1 == spa.value(x + 1)); // Source pixel pair is adjacent in memory
 				sc = GSVector4i::loadl(si).u8to16(); // 0x00AA00BB00GG00RR00aa00bb00gg00rr
 
 				// Apply TFX
