@@ -941,7 +941,6 @@ set(pcsx2GuiSources
 	gui/AppConfig.cpp
 	gui/AppCoreThread.cpp
 	gui/AppEventSources.cpp
-	gui/AppGameDatabase.cpp
 	gui/AppUserMode.cpp
 	gui/AppInit.cpp
 	gui/AppMain.cpp
@@ -1017,7 +1016,6 @@ set(pcsx2GuiHeaders
 	gui/AppCoreThread.h
 	gui/AppEventListeners.h
 	gui/AppForwardDefs.h
-	gui/AppGameDatabase.h
 	gui/App.h
 	gui/ApplyState.h
 	gui/AppSaveStates.h
@@ -1435,7 +1433,7 @@ target_link_libraries(PCSX2_FLAGS INTERFACE
 	common
 	glad
 	fmt::fmt
-	yaml-cpp
+	ryml
 	chdr-static
 	wxWidgets::all
 	ZLIB::ZLIB
