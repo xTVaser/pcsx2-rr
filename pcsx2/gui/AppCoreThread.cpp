@@ -16,7 +16,6 @@
 #include "PrecompiledHeader.h"
 #include "App.h"
 #include "AppSaveStates.h"
-#include "AppGameDatabase.h"
 
 #include <wx/stdpaths.h>
 #include "fmt/core.h"
@@ -262,16 +261,16 @@ void AppCoreThread::OnPauseDebug()
 // Load Game Settings found in database
 // (game fixes, round modes, clamp modes, etc...)
 // Returns number of gamefixes set
-static int loadGameSettings(Pcsx2Config& dest, const GameDatabaseSchema::GameEntry& game)
+static int loadGameSettings(Pcsx2Config& dest, const GameDatabaseSchema::GameEntry* game)
 {
-	if (!game.isValid)
+	if (!game)
 		return 0;
 
 	int gf = 0;
 
-	if (game.eeRoundMode != GameDatabaseSchema::RoundMode::Undefined)
+	if (game->eeRoundMode != GameDatabaseSchema::RoundMode::Undefined)
 	{
-		SSE_RoundMode eeRM = (SSE_RoundMode)enum_cast(game.eeRoundMode);
+		const SSE_RoundMode eeRM = (SSE_RoundMode)enum_cast(game->eeRoundMode);
 		if (EnumIsValid(eeRM))
 		{
 			PatchesCon->WriteLn(L"(GameDB) Changing EE/FPU roundmode to %d [%s]", eeRM, EnumToString(eeRM));
@@ -280,9 +279,9 @@ static int loadGameSettings(Pcsx2Config& dest, const GameDatabaseSchema::GameEnt
 		}
 	}
 
-	if (game.vuRoundMode != GameDatabaseSchema::RoundMode::Undefined)
+	if (game->vuRoundMode != GameDatabaseSchema::RoundMode::Undefined)
 	{
-		SSE_RoundMode vuRM = (SSE_RoundMode)enum_cast(game.vuRoundMode);
+		const SSE_RoundMode vuRM = (SSE_RoundMode)enum_cast(game->vuRoundMode);
 		if (EnumIsValid(vuRM))
 		{
 			PatchesCon->WriteLn(L"(GameDB) Changing VU0/VU1 roundmode to %d [%s]", vuRM, EnumToString(vuRM));
@@ -291,9 +290,9 @@ static int loadGameSettings(Pcsx2Config& dest, const GameDatabaseSchema::GameEnt
 		}
 	}
 
-	if (game.eeClampMode != GameDatabaseSchema::ClampMode::Undefined)
+	if (game->eeClampMode != GameDatabaseSchema::ClampMode::Undefined)
 	{
-		int clampMode = enum_cast(game.eeClampMode);
+		const int clampMode = enum_cast(game->eeClampMode);
 		PatchesCon->WriteLn(L"(GameDB) Changing EE/FPU clamp mode [mode=%d]", clampMode);
 		dest.Cpu.Recompiler.fpuOverflow = (clampMode >= 1);
 		dest.Cpu.Recompiler.fpuExtraOverflow = (clampMode >= 2);
@@ -301,9 +300,9 @@ static int loadGameSettings(Pcsx2Config& dest, const GameDatabaseSchema::GameEnt
 		gf++;
 	}
 
-	if (game.vuClampMode != GameDatabaseSchema::ClampMode::Undefined)
+	if (game->vuClampMode != GameDatabaseSchema::ClampMode::Undefined)
 	{
-		int clampMode = enum_cast(game.vuClampMode);
+		const int clampMode = enum_cast(game->vuClampMode);
 		PatchesCon->WriteLn("(GameDB) Changing VU0/VU1 clamp mode [mode=%d]", clampMode);
 		dest.Cpu.Recompiler.vuOverflow = (clampMode >= 1);
 		dest.Cpu.Recompiler.vuExtraOverflow = (clampMode >= 2);
@@ -311,30 +310,28 @@ static int loadGameSettings(Pcsx2Config& dest, const GameDatabaseSchema::GameEnt
 		gf++;
 	}
 
-	// TODO - config - this could be simplified with maps instead of bitfields and enums
 	for (SpeedhackId id = SpeedhackId_FIRST; id < pxEnumEnd; id++)
 	{
 		std::string key = fmt::format("{}SpeedHack", wxString(EnumToString(id)).ToUTF8());
 
 		// Gamefixes are already guaranteed to be valid, any invalid ones are dropped
-		if (game.speedHacks.count(key) == 1)
+		if (game->speedHacks.count(key) == 1)
 		{
 			// Legacy note - speedhacks are setup in the GameDB as integer values, but
 			// are effectively booleans like the gamefixes
-			bool mode = game.speedHacks.at(key) ? 1 : 0;
+			const bool mode = game->speedHacks.at(key) ? 1 : 0;
 			dest.Speedhacks.Set(id, mode);
 			PatchesCon->WriteLn(fmt::format("(GameDB) Setting Speedhack '{}' to [mode={}]", key, (int)mode));
 			gf++;
 		}
 	}
 
-	// TODO - config - this could be simplified with maps instead of bitfields and enums
 	for (GamefixId id = GamefixId_FIRST; id < pxEnumEnd; id++)
 	{
 		std::string key = fmt::format("{}Hack", wxString(EnumToString(id)).ToUTF8());
 
 		// Gamefixes are already guaranteed to be valid, any invalid ones are dropped
-		if (std::find(game.gameFixes.begin(), game.gameFixes.end(), key) != game.gameFixes.end())
+		if (std::find(game->gameFixes.begin(), game->gameFixes.end(), key) != game->gameFixes.end())
 		{
 			// if the fix is present, it is said to be enabled
 			dest.Gamefixes.Set(id, true);
@@ -450,32 +447,29 @@ static void _ApplySettings(const Pcsx2Config& src, Pcsx2Config& fixup)
 
 	if (!curGameKey.IsEmpty())
 	{
-		if (IGameDatabase* GameDB = AppHost_GetGameDatabase())
+		auto game = g_gameDB.findGame(std::string(curGameKey.ToUTF8()));
+		if (game)
 		{
-			GameDatabaseSchema::GameEntry game = GameDB->findGame(std::string(curGameKey.ToUTF8()));
-			if (game.isValid)
-			{
-				GameInfo::gameName = fromUTF8(game.name);
-				GameInfo::gameName += L" (" + fromUTF8(game.region) + L")";
-				gameCompat = L" [Status = " + compatToStringWX(game.compat) + L"]";
-				gameMemCardFilter = fromUTF8(game.memcardFiltersAsString());
-			}
-			else
-			{
-				// Set correct title for loading standalone/homebrew ELFs
-				GameInfo::gameName = LastELF.AfterLast('\\');
-			}
+			GameInfo::gameName = fromUTF8(game->name);
+			GameInfo::gameName += L" (" + fromUTF8(game->region) + L")";
+			gameCompat = wxString::Format("[Status = %s]", game->compatAsString());
+			gameMemCardFilter = fromUTF8(game->memcardFiltersAsString());
+		}
+		else
+		{
+			// Set correct title for loading standalone/homebrew ELFs
+			GameInfo::gameName = LastELF.AfterLast('\\');
+		}
 
-			if (fixup.EnablePatches)
+		if (fixup.EnablePatches)
+		{
+			if (int patches = LoadPatchesFromGamesDB(GameInfo::gameCRC, game))
 			{
-				if (int patches = LoadPatchesFromGamesDB(GameInfo::gameCRC, game))
-				{
-					gamePatch.Printf(L" [%d Patches]", patches);
-					PatchesCon->WriteLn(Color_Green, "(GameDB) Patches Loaded: %d", patches);
-				}
-				if (int fixes = loadGameSettings(fixup, game))
-					gameFixes.Printf(L" [%d Fixes]", fixes);
+				gamePatch.Printf(L" [%d Patches]", patches);
+				PatchesCon->WriteLn(Color_Green, "(GameDB) Patches Loaded: %d", patches);
 			}
+			if (int fixes = loadGameSettings(fixup, game))
+				gameFixes.Printf(L" [%d Fixes]", fixes);
 		}
 	}
 

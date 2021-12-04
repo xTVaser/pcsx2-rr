@@ -129,15 +129,14 @@ static void inifile_command(const wxString& cmd)
 
 // This routine loads patches from the game database (but not the config/game fixes/hacks)
 // Returns number of patches loaded
-int LoadPatchesFromGamesDB(const wxString& crc, const GameDatabaseSchema::GameEntry& game)
+int LoadPatchesFromGamesDB(const wxString& crc, const GameDatabaseSchema::GameEntry* game)
 {
-	if (game.isValid)
+	if (game)
 	{
-		GameDatabaseSchema::Patch patch;
-		bool patchFound = game.findPatch(std::string(crc.ToUTF8()), patch);
-		if (patchFound && patch.patchLines.size() > 0)
+		auto patch = game->findPatch(std::string(crc.ToUTF8()));
+		if (patch && patch->patchLines.size() > 0)
 		{
-			for (auto line : patch.patchLines)
+			for (auto &line : patch->patchLines)
 			{
 				inifile_command(fromUTF8(line));
 			}

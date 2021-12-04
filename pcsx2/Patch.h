@@ -37,7 +37,7 @@
 
 #include "common/Pcsx2Defs.h"
 #include "SysForwardDefs.h"
-#include "gui/AppGameDatabase.h"
+#include "GameDatabase.h"
 
 enum patch_cpu_type {
 	NO_CPU,
@@ -106,7 +106,7 @@ namespace PatchFunc
 // The following LoadPatchesFrom* functions:
 // - do not reset/unload previously loaded patches (use ForgetLoadedPatches() for that)
 // - do not actually patch the emulation memory (that happens at ApplyLoadedPatches(...) )
-extern int  LoadPatchesFromGamesDB(const wxString& crc, const GameDatabaseSchema::GameEntry& game);
+extern int  LoadPatchesFromGamesDB(const wxString& crc, const GameDatabaseSchema::GameEntry* game);
 extern int  LoadPatchesFromDir(wxString name, const wxDirName& folderName, const wxString& friendlyName);
 extern int  LoadPatchesFromZip(wxString gameCRC, const wxString& cheatsArchiveFilename);
 
