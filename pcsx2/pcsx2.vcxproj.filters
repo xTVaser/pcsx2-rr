@@ -1639,7 +1639,6 @@
     <ClCompile Include="gui\pxWindowTextWriter.cpp">
       <Filter>AppHost</Filter>
     </ClCompile>
-    <ClCompile Include="GS\Renderers\SW\GSSetupPrimCodeGenerator.all.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Patch.h">
@@ -2747,7 +2746,6 @@
     <ClInclude Include="PAD\Gamepad.h">
       <Filter>System\Ps2\PAD</Filter>
     </ClInclude>
-    <ClInclude Include="GS.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="windows\wxResources.rc">

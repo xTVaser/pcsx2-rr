@@ -81,7 +81,7 @@ public:
 
 		// Returns the list of memory card serials as a `/` delimited string
 		std::string memcardFiltersAsString() const;
-		const Patch* findPatch(const std::string crc) const;
+		const Patch* findPatch(const std::string_view& crc) const;
 		std::string compatAsString() const;
 	};
 };
@@ -90,7 +90,7 @@ class IGameDatabase
 {
 public:
 	virtual void initDatabase() = 0;
-	virtual const GameDatabaseSchema::GameEntry* findGame(const std::string& serial) = 0;
+	virtual const GameDatabaseSchema::GameEntry* findGame(const std::string_view& serial) = 0;
 
 protected:
 	std::once_flag db_loaded;
@@ -100,11 +100,11 @@ class YamlGameDatabaseImpl : public IGameDatabase
 {
 public:
 	void initDatabase() override;
-	const GameDatabaseSchema::GameEntry* findGame(const std::string& serial) override;
+	const GameDatabaseSchema::GameEntry* findGame(const std::string_view& serial) override;
 
 private:
 	std::unordered_map<std::string, GameDatabaseSchema::GameEntry> gameDb;
-	GameDatabaseSchema::GameEntry entryFromYaml(const std::string serial, const c4::yml::NodeRef& node);
+	GameDatabaseSchema::GameEntry entryFromYaml(const std::string_view& serial, const c4::yml::NodeRef& node);
 
 	std::vector<std::string> convertMultiLineStringToVector(const std::string& multiLineString);
 };

@@ -34,7 +34,7 @@ std::string GameDatabaseSchema::GameEntry::memcardFiltersAsString() const
 	return fmt::to_string(fmt::join(memcardFilters, "/"));
 }
 
-const GameDatabaseSchema::Patch* GameDatabaseSchema::GameEntry::findPatch(const std::string crc) const
+const GameDatabaseSchema::Patch* GameDatabaseSchema::GameEntry::findPatch(const std::string_view& crc) const
 {
 	std::string crcLower = StringUtil::toLower(crc);
 	Console.WriteLn(fmt::format("[GameDB] Searching for patch with CRC '{}'", crc));
@@ -85,7 +85,7 @@ std::vector<std::string> YamlGameDatabaseImpl::convertMultiLineStringToVector(co
 	return lines;
 }
 
-GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::entryFromYaml(const std::string serial, const c4::yml::NodeRef& node)
+GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::entryFromYaml(const std::string_view& serial, const c4::yml::NodeRef& node)
 {
 	GameDatabaseSchema::GameEntry gameEntry;
 	try
@@ -153,7 +153,7 @@ GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::entryFromYaml(const std::str
 				}
 				if (fixValidated)
 				{
-					gameEntry.gameFixes.push_back(fix);
+					gameEntry.gameFixes.emplace_back(std::move(fix));
 				}
 				else
 				{
@@ -196,7 +196,7 @@ GameDatabaseSchema::GameEntry YamlGameDatabaseImpl::entryFromYaml(const std::str
 			for (const ryml::NodeRef& n : node["memcardFilters"].children())
 			{
 				auto memcardFilter = std::string(n.val().str, n.val().len);
-				gameEntry.memcardFilters.push_back(memcardFilter);
+				gameEntry.memcardFilters.emplace_back(std::move(memcardFilter));
 			}
 		}
 
@@ -338,24 +338,25 @@ void YamlGameDatabaseImpl::initDatabase()
 	c4::set_error_callback(preserve_c4_callback);
 }
 
-const GameDatabaseSchema::GameEntry* YamlGameDatabaseImpl::findGame(const std::string& serial)
+const GameDatabaseSchema::GameEntry* YamlGameDatabaseImpl::findGame(const std::string_view& serial)
 {
 	// Lazy load the database if it hasn't been already
 	std::call_once(db_loaded, [this]() {
-		auto begin = std::chrono::steady_clock::now();
+		const auto begin = std::chrono::steady_clock::now();
 		Console.WriteLn(fmt::format("[GameDB] Has not been initialized yet, initializing..."));
 		initDatabase();
-		auto end = std::chrono::steady_clock::now();
+		const auto end = std::chrono::steady_clock::now();
 		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
 		Console.WriteLn(fmt::format("[GameDB] Initialized in {}ms! {} games on record.", duration, gameDb.size()));
 	});
 
 	std::string serialLower = StringUtil::toLower(serial);
 	Console.WriteLn(fmt::format("[GameDB] Searching for '{}' in GameDB", serialLower));
-	if (gameDb.count(serialLower) == 1)
+	const auto gameEntry = gameDb.find(serialLower);
+	if (gameEntry != gameDb.end())
 	{
 		Console.WriteLn(fmt::format("[GameDB] Found '{}' in GameDB", serialLower));
-		return &gameDb[serialLower];
+		return &gameEntry->second;
 	}
 
 	Console.Error(fmt::format("[GameDB] Could not find '{}' in GameDB", serialLower));
