@@ -21,11 +21,10 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
-#include <mutex>
 
-// Since this is kinda yaml specific, might be a good idea to
-// relocate this into the yaml class
-// or put the serialization methods inside the yaml
+enum GamefixId;
+enum SpeedhackId;
+
 class GameDatabaseSchema
 {
 public:
@@ -58,15 +57,10 @@ public:
 		Full
 	};
 
-	struct Patch
-	{
-		std::string author;
-		std::vector<std::string> patchLines;
-	};
+	using Patch = std::vector<std::string>;
 
 	struct GameEntry
 	{
-		bool isValid = true;
 		std::string name = "";
 		std::string region = "";
 		Compatibility compat = Compatibility::Unknown;
@@ -74,39 +68,20 @@ public:
 		RoundMode vuRoundMode = RoundMode::Undefined;
 		ClampMode eeClampMode = ClampMode::Undefined;
 		ClampMode vuClampMode = ClampMode::Undefined;
-		std::vector<std::string> gameFixes = {};
-		std::unordered_map<std::string, int> speedHacks = {};
+		std::vector<GamefixId> gameFixes = {};
+		std::vector<std::pair<SpeedhackId, int>> speedHacks;
 		std::vector<std::string> memcardFilters = {};
 		std::unordered_map<std::string, Patch> patches = {};
 
 		// Returns the list of memory card serials as a `/` delimited string
 		std::string memcardFiltersAsString() const;
 		const Patch* findPatch(const std::string_view& crc) const;
-		std::string compatAsString() const;
+		const char* compatAsString() const;
 	};
 };
 
-class IGameDatabase
+namespace GameDatabase
 {
-public:
-	virtual void initDatabase() = 0;
-	virtual const GameDatabaseSchema::GameEntry* findGame(const std::string_view& serial) = 0;
-
-protected:
-	std::once_flag db_loaded;
-};
-
-class YamlGameDatabaseImpl : public IGameDatabase
-{
-public:
-	void initDatabase() override;
-	const GameDatabaseSchema::GameEntry* findGame(const std::string_view& serial) override;
-
-private:
-	std::unordered_map<std::string, GameDatabaseSchema::GameEntry> gameDb;
-	GameDatabaseSchema::GameEntry entryFromYaml(const std::string_view& serial, const c4::yml::NodeRef& node);
-
-	std::vector<std::string> convertMultiLineStringToVector(const std::string& multiLineString);
-};
-
-extern YamlGameDatabaseImpl g_gameDB;
+	void ensureLoaded();
+	const GameDatabaseSchema::GameEntry* findGame(const std::string_view& serial);
+}; // namespace GameDatabase

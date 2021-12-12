@@ -186,6 +186,7 @@ namespace StringUtil
 
 	std::string toLower(const std::string_view& str);
 	bool compareNoCase(const std::string_view& str1, const std::string_view& str2);
+	std::vector<std::string> convertMultiLineStringToVector(const std::string& multiLineString);
 
 	/// Converts a wxString to a UTF-8 std::string.
 	static std::string wxStringToUTF8String(const wxString& str)

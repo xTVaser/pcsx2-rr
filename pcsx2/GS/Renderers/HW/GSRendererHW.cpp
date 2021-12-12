@@ -19,14 +19,14 @@
 
 const float GSRendererHW::SSR_UV_TOLERANCE = 1e-3f;
 
-GSRendererHW::GSRendererHW(GSTextureCache* tc)
+GSRendererHW::GSRendererHW()
 	: m_width(default_rt_size.x)
 	, m_height(default_rt_size.y)
 	, m_custom_width(1024)
 	, m_custom_height(1024)
 	, m_reset(false)
 	, m_userhacks_ts_half_bottom(-1)
-	, m_tc(tc)
+	, m_tc(new GSTextureCache(this))
 	, m_src(nullptr)
 	, m_userhacks_tcoffset(false)
 	, m_userhacks_tcoffset_x(0)
@@ -1905,7 +1905,7 @@ bool GSRendererHW::OI_BlitFMV(GSTextureCache::Target* _rt, GSTextureCache::Sourc
 		// Do the blit. With a Copy mess to avoid issue with limited API (dx)
 		// m_dev->StretchRect(tex->m_texture, sRect, tex->m_texture, dRect);
 		const GSVector4i r_full(0, 0, tw, th);
-		if (GSTexture* rt = m_dev->CreateRenderTarget(tw, th))
+		if (GSTexture* rt = m_dev->CreateRenderTarget(tw, th, GSTexture::Format::Color))
 		{
 			m_dev->CopyRect(tex->m_texture, rt, r_full);
 
@@ -2032,7 +2032,7 @@ bool GSRendererHW::OI_FFXII(GSTexture* rt, GSTexture* ds, GSTextureCache::Source
 
 				m_dev->Recycle(t->m_texture);
 
-				t->m_texture = m_dev->CreateTexture(512, 512);
+				t->m_texture = m_dev->CreateTexture(512, 512, GSTexture::Format::Color);
 
 				t->m_texture->Update(GSVector4i(0, 0, 448, lines), video, 448 * 4);
 

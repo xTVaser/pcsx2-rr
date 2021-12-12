@@ -598,7 +598,7 @@ struct Pcsx2Config
 	void LoadSaveMemcards(SettingsWrapper& wrap);
 
 	// TODO: Make these std::string when we remove wxFile...
-	wxString FullpathToBios() const;
+	std::string FullpathToBios() const;
 	wxString FullpathToMcd(uint slot) const;
 
 	bool MultitapEnabled(uint port) const;
@@ -627,6 +627,8 @@ namespace EmuFolders
 	extern wxDirName Logs;
 	extern wxDirName Cheats;
 	extern wxDirName CheatsWS;
+	extern wxDirName Resources;
+	extern wxDirName Cache;
 } // namespace EmuFolders
 
 /////////////////////////////////////////////////////////////////////////////////////////

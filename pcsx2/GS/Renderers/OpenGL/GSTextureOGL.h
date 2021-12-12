@@ -17,6 +17,7 @@
 
 #include "GS/Renderers/Common/GSTexture.h"
 #include "GS/GSGL.h"
+#include "common/AlignedMalloc.h"
 
 namespace PboPool
 {
@@ -41,7 +42,6 @@ private:
 	bool m_clean;
 	bool m_generate_mipmap;
 
-	u8* m_local_buffer;
 	// Avoid alignment constrain
 	//GSVector4i m_r;
 	int m_r_x;
@@ -60,7 +60,7 @@ private:
 	u32 m_mem_usage;
 
 public:
-	explicit GSTextureOGL(int type, int w, int h, int format, GLuint fbo_read, bool mipmap);
+	explicit GSTextureOGL(Type type, int w, int h, Format format, GLuint fbo_read, bool mipmap);
 	virtual ~GSTextureOGL();
 
 	bool Update(const GSVector4i& r, const void* data, int pitch, int layer = 0) final;
@@ -69,8 +69,9 @@ public:
 	void GenerateMipmap() final;
 	bool Save(const std::string& fn) final;
 
-	bool IsBackbuffer() { return (m_type == GSTexture::Backbuffer); }
-	bool IsDss() { return (m_type == GSTexture::DepthStencil || m_type == GSTexture::SparseDepthStencil); }
+	GSMap Read(const GSVector4i& r, AlignedBuffer<u8, 32>& buffer);
+	bool IsBackbuffer() { return (m_type == Type::Backbuffer); }
+	bool IsDss() { return (m_type == Type::DepthStencil || m_type == Type::SparseDepthStencil); }
 
 	u32 GetID() final { return m_texture_id; }
 	bool HasBeenCleaned() { return m_clean; }

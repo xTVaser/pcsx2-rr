@@ -22,6 +22,7 @@
 #include "GSUniformBufferOGL.h"
 #include "GSShaderOGL.h"
 #include "GLState.h"
+#include "GS/GS.h"
 
 #ifdef ENABLE_OGL_DEBUG_MEM_BW
 extern u64 g_real_texture_upload_byte;
@@ -126,17 +127,17 @@ public:
 	{
 		GSVector4 Vertex_Scale_Offset;
 
-		GSVector4 TextureOffset;
+		GSVector4 Texture_Scale_Offset;
 
 		GSVector2 PointSize;
 		GSVector2i MaxDepth;
 
 		VSConstantBuffer()
 		{
-			Vertex_Scale_Offset = GSVector4::zero();
-			TextureOffset       = GSVector4::zero();
-			PointSize           = GSVector2(0);
-			MaxDepth            = GSVector2i(0);
+			Vertex_Scale_Offset  = GSVector4::zero();
+			Texture_Scale_Offset = GSVector4::zero();
+			PointSize            = GSVector2(0);
+			MaxDepth             = GSVector2i(0);
 		}
 
 		__forceinline bool Update(const VSConstantBuffer* cb)
@@ -214,28 +215,26 @@ public:
 	{
 		GSVector4 FogColor_AREF;
 		GSVector4 WH;
-		GSVector4 TA_Af;
+		GSVector4 TA_MaxDepth_Af;
 		GSVector4i MskFix;
 		GSVector4i FbMask;
 
 		GSVector4 HalfTexel;
 		GSVector4 MinMax;
-		GSVector4 TC_OH_TS;
-		GSVector4 MaxDepth;
+		GSVector4 TC_OH;
 
 		GSVector4 DitherMatrix[4];
 
 		PSConstantBuffer()
 		{
-			FogColor_AREF = GSVector4::zero();
-			HalfTexel     = GSVector4::zero();
-			WH            = GSVector4::zero();
-			TA_Af         = GSVector4::zero();
-			MinMax        = GSVector4::zero();
-			MskFix        = GSVector4i::zero();
-			TC_OH_TS      = GSVector4::zero();
-			FbMask        = GSVector4i::zero();
-			MaxDepth      = GSVector4::zero();
+			FogColor_AREF  = GSVector4::zero();
+			HalfTexel      = GSVector4::zero();
+			WH             = GSVector4::zero();
+			TA_MaxDepth_Af = GSVector4::zero();
+			MinMax         = GSVector4::zero();
+			MskFix         = GSVector4i::zero();
+			TC_OH          = GSVector4::zero();
+			FbMask         = GSVector4i::zero();
 
 			DitherMatrix[0] = GSVector4::zero();
 			DitherMatrix[1] = GSVector4::zero();
@@ -250,7 +249,7 @@ public:
 
 			// if WH matches both HalfTexel and TC_OH_TS do too
 			if (!((a[0] == b[0]) & (a[1] == b[1]) & (a[2] == b[2]) & (a[3] == b[3]) & (a[4] == b[4]) & (a[6] == b[6])
-				& (a[8] == b[8]) & (a[9] == b[9]) & (a[10] == b[10]) & (a[11] == b[11]) & (a[12] == b[12])).alltrue())
+				& (a[8] == b[8]) & (a[9] == b[9]) & (a[10] == b[10]) & (a[11] == b[11])).alltrue())
 			{
 				// Note previous check uses SSE already, a plain copy will be faster than any memcpy
 				a[0] = b[0];
@@ -262,11 +261,9 @@ public:
 				a[6] = b[6];
 
 				a[8] = b[8];
-
 				a[9] = b[9];
 				a[10] = b[10];
 				a[11] = b[11];
-				a[12] = b[12];
 
 				return true;
 			}
@@ -475,8 +472,9 @@ private:
 	bool m_disable_hw_gl_draw;
 
 	// Place holder for the GLSL shader code (to avoid useless reload)
-	std::vector<char> m_shader_tfx_vgs;
-	std::vector<char> m_shader_tfx_fs;
+	std::string m_shader_common_header;
+	std::string m_shader_tfx_vgs;
+	std::string m_shader_tfx_fs;
 
 	GLuint m_fbo; // frame buffer container
 	GLuint m_fbo_read; // frame buffer container only for reading
@@ -505,7 +503,7 @@ private:
 	struct
 	{
 		GLuint vs; // program object
-		GLuint ps[ShaderConvert_Count]; // program object
+		GLuint ps[(int)ShaderConvert::Count]; // program object
 		GLuint ln; // sampler object
 		GLuint pt; // sampler object
 		GSDepthStencilOGL* dss;
@@ -558,9 +556,10 @@ private:
 	MiscConstantBuffer m_misc_cb_cache;
 
 	std::unique_ptr<GSTexture> m_font;
+	AlignedBuffer<u8, 32> m_download_buffer;
 
-	GSTexture* CreateSurface(int type, int w, int h, int format) final;
-	GSTexture* FetchSurface(int type, int w, int h, int format) final;
+	GSTexture* CreateSurface(GSTexture::Type type, int w, int h, GSTexture::Format format) final;
+	GSTexture* FetchSurface(GSTexture::Type type, int w, int h, GSTexture::Format format) final;
 
 	void DoMerge(GSTexture* sTex[3], GSVector4* sRect, GSTexture* dTex, GSVector4* dRect, const GSRegPMODE& PMODE, const GSRegEXTBUF& EXTBUF, const GSVector4& c) final;
 	void DoInterlace(GSTexture* sTex, GSTexture* dTex, int shader, bool linear, float yoffset = 0) final;
@@ -593,9 +592,9 @@ public:
 	void Flip() override;
 	void SetVSync(int vsync) override;
 
-	void DrawPrimitive() final;
-	void DrawIndexedPrimitive() final;
-	void DrawIndexedPrimitive(int offset, int count) final;
+	void DrawPrimitive();
+	void DrawIndexedPrimitive();
+	void DrawIndexedPrimitive(int offset, int count);
 
 	void ClearRenderTarget(GSTexture* t, const GSVector4& c) final;
 	void ClearRenderTarget(GSTexture* t, u32 c) final;
@@ -605,14 +604,14 @@ public:
 	void InitPrimDateTexture(GSTexture* rt, const GSVector4i& area);
 	void RecycleDateTexture();
 
-	GSTexture* CopyOffscreen(GSTexture* src, const GSVector4& sRect, int w, int h, int format = 0, int ps_shader = 0) final;
+	bool DownloadTexture(GSTexture* src, const GSVector4i& rect, GSTexture::GSMap& out_map) final;
 
 	void CopyRect(GSTexture* sTex, GSTexture* dTex, const GSVector4i& r) final;
 
 	// BlitRect *does* mess with GL state, be sure to re-bind.
 	void BlitRect(GSTexture* sTex, const GSVector4i& r, const GSVector2i& dsize, bool at_origin, bool linear);
 
-	void StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, int shader = 0, bool linear = true) final;
+	void StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, ShaderConvert shader = ShaderConvert::COPY, bool linear = true) final;
 	void StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, GLuint ps, bool linear = true);
 	void StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, bool red, bool green, bool blue, bool alpha) final;
 	void StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, GLuint ps, int bs, OMColorMaskSelector cms, bool linear = true);
@@ -623,19 +622,19 @@ public:
 	void IASetVertexBuffer(const void* vertices, size_t count);
 	void IASetIndexBuffer(const void* index, size_t count);
 
-	void PSSetShaderResource(int i, GSTexture* sr) final;
-	void PSSetShaderResources(GSTexture* sr0, GSTexture* sr1) final;
+	void PSSetShaderResource(int i, GSTexture* sr);
+	void PSSetShaderResources(GSTexture* sr0, GSTexture* sr1);
 	void PSSetSamplerState(GLuint ss);
 
 	void OMSetDepthStencilState(GSDepthStencilOGL* dss);
-	void OMSetBlendState(u8 blend_index = 0, u8 blend_factor = 0, bool is_blend_constant = false, bool accumulation_blend = false);
-	void OMSetRenderTargets(GSTexture* rt, GSTexture* ds, const GSVector4i* scissor = NULL) final;
+	void OMSetBlendState(u8 blend_index = 0, u8 blend_factor = 0, bool is_blend_constant = false, bool accumulation_blend = false, bool blend_mix = false);
+	void OMSetRenderTargets(GSTexture* rt, GSTexture* ds, const GSVector4i* scissor = NULL);
 	void OMSetColorMaskState(OMColorMaskSelector sel = OMColorMaskSelector());
 
 	bool HasColorSparse() final { return GLLoader::found_compatible_GL_ARB_sparse_texture2; }
 	bool HasDepthSparse() final { return GLLoader::found_compatible_sparse_depth; }
 
-	void CreateTextureFX();
+	bool CreateTextureFX();
 	GLuint CompileVS(VSSelector sel);
 	GLuint CompileGS(GSSelector sel);
 	GLuint CompilePS(PSSelector sel);

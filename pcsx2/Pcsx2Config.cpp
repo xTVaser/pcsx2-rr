@@ -40,6 +40,8 @@ namespace EmuFolders
 	wxDirName Logs;
 	wxDirName Cheats;
 	wxDirName CheatsWS;
+	wxDirName Resources;
+	wxDirName Cache;
 } // namespace EmuFolders
 
 void TraceLogFilters::LoadSave(SettingsWrapper& wrap)
@@ -55,12 +57,12 @@ void TraceLogFilters::LoadSave(SettingsWrapper& wrap)
 	SettingsWrapEntry(IOP.bitset);
 }
 
-const wxChar* const tbl_SpeedhackNames[] =
+const char* const tbl_SpeedhackNames[] =
 	{
-		L"mvuFlag",
-		L"InstantVU1"};
+		"mvuFlag",
+		"InstantVU1"};
 
-const __fi wxChar* EnumToString(SpeedhackId id)
+const char* EnumToString(SpeedhackId id)
 {
 	return tbl_SpeedhackNames[id];
 }
@@ -304,25 +306,25 @@ int Pcsx2Config::GSOptions::GetVsync() const
 	}
 }
 
-const wxChar* const tbl_GamefixNames[] =
+const char* const tbl_GamefixNames[] =
 	{
-		L"FpuMul",
-		L"FpuNegDiv",
-		L"GoemonTlb",
-		L"SkipMPEG",
-		L"OPHFlag",
-		L"EETiming",
-		L"DMABusy",
-		L"GIFFIFO",
-		L"VIFFIFO",
-		L"VIF1Stall",
-		L"VuAddSub",
-		L"Ibit",
-		L"VUKickstart",
-		L"VUOverflow",
-		L"XGKick"};
+		"FpuMul",
+		"FpuNegDiv",
+		"GoemonTlb",
+		"SkipMPEG",
+		"OPHFlag",
+		"EETiming",
+		"DMABusy",
+		"GIFFIFO",
+		"VIFFIFO",
+		"VIF1Stall",
+		"VuAddSub",
+		"Ibit",
+		"VUKickstart",
+		"VUOverflow",
+		"XGKick"};
 
-const __fi wxChar* EnumToString(GamefixId id)
+const char* EnumToString(GamefixId id)
 {
 	return tbl_GamefixNames[id];
 }
@@ -644,9 +646,12 @@ bool Pcsx2Config::MultitapEnabled(uint port) const
 	return (port == 0) ? MultitapPort0_Enabled : MultitapPort1_Enabled;
 }
 
-wxString Pcsx2Config::FullpathToBios() const
+std::string Pcsx2Config::FullpathToBios() const
 {
-	return Path::Combine(EmuFolders::Bios, StringUtil::UTF8StringToWxString(BaseFilenames.Bios));
+	std::string ret;
+	if (!BaseFilenames.Bios.empty())
+		ret = Path::CombineStdString(EmuFolders::Bios, BaseFilenames.Bios);
+	return ret;
 }
 
 wxString Pcsx2Config::FullpathToMcd(uint slot) const

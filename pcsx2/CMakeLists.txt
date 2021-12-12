@@ -139,10 +139,10 @@ set(pcsx2Sources
 	MTGS.cpp
 	MTVU.cpp
 	MultipartFileReader.cpp
-	OutputIsoFile.cpp
 	Patch.cpp
 	Patch_Memory.cpp
 	Pcsx2Config.cpp
+	PerformanceMetrics.cpp
 	PrecompiledHeader.cpp
 	R3000A.cpp
 	R3000AInterpreter.cpp
@@ -195,6 +195,7 @@ set(pcsx2Headers
 	Gif_Unit.h
 	GS.h
 	Hardware.h
+	Host.h
 	Hw.h
 	IopBios.h
 	IopCommon.h
@@ -214,6 +215,7 @@ set(pcsx2Headers
 	Patch.h
 	PathDefs.h
 	PCSX2Base.h
+	PerformanceMetrics.h
 	PrecompiledHeader.h
 	R3000A.h
 	R5900Exceptions.h
@@ -268,7 +270,6 @@ set(pcsx2CDVDHeaders
 	CDVD/CDVDisoReader.h
 	CDVD/ChunksCache.h
 	CDVD/CompressedFileReader.h
-	CDVD/CompressedFileReaderUtils.h
 	CDVD/ChdFileReader.h
 	CDVD/CsoFileReader.h
 	CDVD/GzippedFileReader.h
@@ -531,18 +532,6 @@ else(WIN32)
 			COMMAND ${BIN2CPP} "${PADImg}/${result_file}.png" "${PADImgHeader}/${result_file}" )
 	endforeach()
 
-	add_custom_command(
-		OUTPUT ${CMAKE_BINARY_DIR}/pcsx2/PAD/Linux/resources_pad.h
-		COMMAND glib-compile-resources --sourcedir "${CMAKE_SOURCE_DIR}/pcsx2/PAD/Linux/res" --generate-header
-		--c-name PAD_res "${CMAKE_SOURCE_DIR}/pcsx2/PAD/Linux/res/PAD-res.xml" --target=${CMAKE_BINARY_DIR}/pcsx2/PAD/Linux/resources_pad.h
-		DEPENDS ${CMAKE_SOURCE_DIR}/pcsx2/PAD/Linux/res/PAD-res.xml ${CMAKE_SOURCE_DIR}/pcsx2/PAD/Linux/res/game_controller_db.txt)
-
-	add_custom_command(
-		OUTPUT ${CMAKE_BINARY_DIR}/pcsx2/PAD/Linux/resources_pad.cpp
-		COMMAND glib-compile-resources --sourcedir "${CMAKE_SOURCE_DIR}/pcsx2/PAD/Linux/res" --generate-source
-		--c-name PAD_res "${CMAKE_SOURCE_DIR}/pcsx2/PAD/Linux/res/PAD-res.xml" --target=${CMAKE_BINARY_DIR}/pcsx2/PAD/Linux/resources_pad.cpp
-		DEPENDS ${CMAKE_SOURCE_DIR}/pcsx2/PAD/Linux/res/PAD-res.xml ${CMAKE_SOURCE_DIR}/pcsx2/PAD/Linux/res/game_controller_db.txt)
-
 	# PAD/Linux sources
 	set(pcsx2PADSources
 		PAD/Linux/Device.cpp
@@ -557,7 +546,6 @@ else(WIN32)
 		PAD/Linux/wx_dialog/GamepadConfiguration.cpp
 		PAD/Linux/wx_dialog/JoystickConfiguration.cpp
 		PAD/Linux/Config.cpp
-		${CMAKE_BINARY_DIR}/pcsx2/PAD/Linux/resources_pad.cpp
 	)
 
 	# PAD/Linux headers
@@ -575,7 +563,6 @@ else(WIN32)
 		PAD/Linux/wx_dialog/opPanel.h
 		PAD/Linux/wx_dialog/GamepadConfiguration.h
 		PAD/Linux/wx_dialog/JoystickConfiguration.h
-		${CMAKE_BINARY_DIR}/pcsx2/PAD/Linux/resources_pad.h
 		# images
 		${PADImgHeader}/analog.h
 		${PADImgHeader}/circle.h
@@ -651,7 +638,6 @@ set(pcsx2GSSources
 	GS/Renderers/OpenGL/GSDeviceOGL.cpp
 	GS/Renderers/OpenGL/GSRendererOGL.cpp
 	GS/Renderers/OpenGL/GSShaderOGL.cpp
-	GS/Renderers/OpenGL/GSTextureCacheOGL.cpp
 	GS/Renderers/OpenGL/GSTextureOGL.cpp
 	GS/Window/GSSetting.cpp
 	GS/Window/GSwxDialog.cpp
@@ -722,7 +708,6 @@ set(pcsx2GSHeaders
 	GS/Renderers/OpenGL/GSDeviceOGL.h
 	GS/Renderers/OpenGL/GSRendererOGL.h
 	GS/Renderers/OpenGL/GSShaderOGL.h
-	GS/Renderers/OpenGL/GSTextureCacheOGL.h
 	GS/Renderers/OpenGL/GSTextureOGL.h
 	GS/Renderers/OpenGL/GSUniformBufferOGL.h
 	GS/Window/GSCaptureDlg.h
@@ -797,7 +782,6 @@ if(WIN32)
 		GS/Renderers/DX11/GSDevice11.cpp
 		GS/Renderers/DX11/GSRendererDX11.cpp
 		GS/Renderers/DX11/GSTexture11.cpp
-		GS/Renderers/DX11/GSTextureCache11.cpp
 		GS/Renderers/DX11/GSTextureFX11.cpp
 		GS/Window/GSCaptureDlg.cpp
 		GS/Window/GSDialog.cpp
@@ -807,7 +791,6 @@ if(WIN32)
 		GS/Renderers/DX11/GSDevice11.h
 		GS/Renderers/DX11/GSRendererDX11.h
 		GS/Renderers/DX11/GSTexture11.h
-		GS/Renderers/DX11/GSTextureCache11.h
 	)
 else(WIN32)
 	list(APPEND pcsx2SPU2Sources
@@ -862,42 +845,6 @@ else(WIN32)
 		USB/usb-pad/evdev/evdev.h
 		USB/usb-pad/evdev/shared.h
 	)
-
-
-	# GS resources
-	set(pcsx2GSResources
-		GS/res/fxaa.fx
-		GS/res/glsl/common_header.glsl
-		GS/res/glsl/convert.glsl
-		GS/res/glsl/interlace.glsl
-		GS/res/glsl/merge.glsl
-		GS/res/glsl/shadeboost.glsl
-		GS/res/glsl/tfx_fs.glsl
-		GS/res/glsl/tfx_vgs.glsl)
-
-	set(GSBin "${CMAKE_BINARY_DIR}/pcsx2/GS")
-	target_include_directories(PCSX2_FLAGS INTERFACE "${GSBin}")
-	file(MAKE_DIRECTORY "${GSBin}")
-
-	add_custom_command(
-		OUTPUT ${CMAKE_BINARY_DIR}/pcsx2/GS/GS_res.h
-		COMMAND glib-compile-resources --sourcedir "${CMAKE_SOURCE_DIR}/pcsx2/GS/res" --generate-header
-		--c-name GS_res "${CMAKE_SOURCE_DIR}/pcsx2/GS/res/GS-res.xml" --target=${CMAKE_BINARY_DIR}/pcsx2/GS/GS_res.h
-		DEPENDS ${pcsx2GSResources})
-
-	add_custom_command(
-		OUTPUT ${CMAKE_BINARY_DIR}/pcsx2/GS/GS_res.cpp
-		COMMAND glib-compile-resources --sourcedir "${CMAKE_SOURCE_DIR}/pcsx2/GS/res" --generate-source
-		--c-name GS_res "${CMAKE_SOURCE_DIR}/pcsx2/GS/res/GS-res.xml" --target=${CMAKE_BINARY_DIR}/pcsx2/GS/GS_res.cpp
-		DEPENDS ${pcsx2GSResources})
-
-	list(APPEND pcsx2GSSources
-		GS/GS_res.cpp
-	)
-
-	list(APPEND pcsx2GSHeaders
-		GS/GS_res.h
-	)
 endif(WIN32)
 
 
@@ -941,13 +888,13 @@ set(pcsx2GuiSources
 	gui/AppConfig.cpp
 	gui/AppCoreThread.cpp
 	gui/AppEventSources.cpp
+	gui/AppHost.cpp
 	gui/AppUserMode.cpp
 	gui/AppInit.cpp
 	gui/AppMain.cpp
 	gui/AppRes.cpp
 	gui/CheckedStaticBox.cpp
 	gui/ConsoleLogger.cpp
-	gui/CpuUsageProvider.cpp
 	gui/Dialogs/AboutBoxDialog.cpp
 	gui/Dialogs/GSDumpDialog.cpp
 	gui/Dialogs/AssertionDialog.cpp
@@ -1021,7 +968,6 @@ set(pcsx2GuiHeaders
 	gui/AppSaveStates.h
 	gui/CheckedStaticBox.h
 	gui/ConsoleLogger.h
-	gui/CpuUsageProvider.h
 	gui/Debugger/BreakpointWindow.h
 	gui/Debugger/CtrlDisassemblyView.h
 	gui/Debugger/CtrlMemView.h
@@ -1536,9 +1482,21 @@ if (APPLE)
 	)
 
 	target_sources(PCSX2 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/gui/Resources/PCSX2.icns")
-	target_sources(PCSX2 PRIVATE "${CMAKE_SOURCE_DIR}/bin/GameIndex.yaml")
 	set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/gui/Resources/PCSX2.icns" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-	set_source_files_properties("${CMAKE_SOURCE_DIR}/bin/GameIndex.yaml" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+
+	# Add in shaders and other resources.
+	file(GLOB resource_files "${CMAKE_SOURCE_DIR}/bin/resources/*")
+	foreach(file ${resource_files})
+		target_sources(PCSX2 PRIVATE "${file}")
+		set_source_files_properties("${file}" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+	endforeach()
+
+	# Add in shaders and other resources.
+	file(GLOB resource_files "${CMAKE_SOURCE_DIR}/bin/resources/*")
+	foreach(file ${resource_files})
+		target_sources(PCSX2 PRIVATE "${file}")
+		set_source_files_properties("${file}" PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+	endforeach()
 
 	# If they say to skip postprocess bundle, leave the target in but make it so they have
 	# to manually run it
@@ -1583,5 +1541,5 @@ source_group(System/Ps2/USB REGULAR_EXPRESSION USB/*)
 source_group(Resources/GUI FILES ${pcsx2GuiResources})
 source_group(Resources/PAD FILES ${pcsx2PADResources})
 source_group(Resources/Recording FILES ${pcsx2RecordingVirtualPadResources})
-source_group(Resources FILES ../bin/GameIndex.yaml gui/Resources/PCSX2.icns)
+source_group(Resources FILES gui/Resources/PCSX2.icns)
 source_group(Resources REGULAR_EXPRESSION ${CMAKE_CURRENT_BINARY_DIR}/*)

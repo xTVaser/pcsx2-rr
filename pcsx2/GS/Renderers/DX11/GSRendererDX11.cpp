@@ -17,7 +17,6 @@
 #include "GSRendererDX11.h"
 
 GSRendererDX11::GSRendererDX11()
-	: GSRendererHW(new GSTextureCache11(this))
 {
 	m_sw_blending = theApp.GetConfigI("accurate_blending_unit_d3d11");
 
@@ -317,7 +316,7 @@ void GSRendererDX11::EmulateChannelShuffle(GSTexture** rt, const GSTextureCache:
 				m_channel_shuffle = false;
 			}
 		}
-		else if ((tex->m_texture->GetType() == GSTexture::DepthStencil) && !(tex->m_32_bits_fmt))
+		else if ((tex->m_texture->GetType() == GSTexture::Type::DepthStencil) && !(tex->m_32_bits_fmt))
 		{
 			// So far 2 games hit this code path. Urban Chaos and Tales of Abyss
 			// UC: will copy depth to green channel
@@ -361,11 +360,10 @@ void GSRendererDX11::EmulateChannelShuffle(GSTexture** rt, const GSTextureCache:
 			{
 				// Typically used in Terminator 3
 				const int blue_mask = m_context->FRAME.FBMSK >> 24;
-				const int green_mask = ~blue_mask & 0xFF;
 				int blue_shift = -1;
 
 				// Note: potentially we could also check the value of the clut
-				switch (m_context->FRAME.FBMSK >> 24)
+				switch (blue_mask)
 				{
 					case 0xFF: ASSERT(0);      break;
 					case 0xFE: blue_shift = 1; break;
@@ -375,21 +373,22 @@ void GSRendererDX11::EmulateChannelShuffle(GSTexture** rt, const GSTextureCache:
 					case 0xE0: blue_shift = 5; break;
 					case 0xC0: blue_shift = 6; break;
 					case 0x80: blue_shift = 7; break;
-					default:   ASSERT(0);      break;
+					default:                   break;
 				}
-
-				const int green_shift = 8 - blue_shift;
-				ps_cb.ChannelShuffle = GSVector4i(blue_mask, blue_shift, green_mask, green_shift);
 
 				if (blue_shift >= 0)
 				{
+					const int green_mask = ~blue_mask & 0xFF;
+					const int green_shift = 8 - blue_shift;
+
 					// fprintf(stderr, "%d: Green/Blue channel (%d, %d)\n", s_n, blue_shift, green_shift);
+					ps_cb.ChannelShuffle = GSVector4i(blue_mask, blue_shift, green_mask, green_shift);
 					m_ps_sel.channel = ChannelFetch_GXBY;
 					m_context->FRAME.FBMSK = 0x00FFFFFF;
 				}
 				else
 				{
-					// fprintf(stderr, "%d: Green channel (wrong mask) (fbmask %x)\n", s_n, m_context->FRAME.FBMSK >> 24);
+					// fprintf(stderr, "%d: Green channel (wrong mask) (fbmask %x)\n", s_n, blue_mask);
 					m_ps_sel.channel = ChannelFetch_GREEN;
 				}
 			}
@@ -461,6 +460,16 @@ void GSRendererDX11::EmulateBlending(u8& afix)
 	// Blending doesn't require sampling of the rt
 	const bool blend_non_recursive = !!(blend_flag & BLEND_NO_REC);
 
+	// BLEND MIX selection, use a mix of hw/sw blending
+	if (!m_vt.m_alpha.valid && (ALPHA.C == 0))
+		GetAlphaMinMax();
+	const bool blend_mix1 = !!(blend_flag & BLEND_MIX1);
+	const bool blend_mix2 = !!(blend_flag & BLEND_MIX2);
+	const bool blend_mix3 = !!(blend_flag & BLEND_MIX3);
+	bool blend_mix = (blend_mix1 || blend_mix2 || blend_mix3)
+		// Do not enable if As > 128 or F > 128, hw blend clamps to 1
+		&& !((ALPHA.C == 0 && m_vt.m_alpha.max > 128) || (ALPHA.C == 2 && ALPHA.FIX > 128u));
+
 	bool sw_blending = false;
 	switch (m_sw_blending)
 	{
@@ -471,6 +480,13 @@ void GSRendererDX11::EmulateBlending(u8& afix)
 			[[fallthrough]];
 		default:
 			break;
+	}
+
+	// Do not run BLEND MIX if sw blending is already present, it's less accurate
+	if (m_sw_blending)
+	{
+		blend_mix &= !sw_blending;
+		sw_blending |= blend_mix;
 	}
 
 	// Color clip
@@ -484,7 +500,7 @@ void GSRendererDX11::EmulateBlending(u8& afix)
 			m_ps_sel.colclip = 1;
 			sw_blending = true;
 		}
-		else if (accumulation_blend)
+		else if (accumulation_blend || blend_mix)
 		{
 			// fprintf(stderr, "%d: COLCLIP Fast HDR mode ENABLED\n", s_n);
 			sw_blending = true;
@@ -514,6 +530,7 @@ void GSRendererDX11::EmulateBlending(u8& afix)
 		{
 			// fprintf(stderr, "%d: PABE mode ENABLED\n", s_n);
 			m_ps_sel.pabe = 1;
+			sw_blending = blend_non_recursive;
 		}
 	}
 
@@ -542,6 +559,30 @@ void GSRendererDX11::EmulateBlending(u8& afix)
 			}
 			// Remove the addition/substraction from the SW blending
 			m_ps_sel.blend_d = 2;
+		}
+		else if (blend_mix)
+		{
+			afix = (ALPHA.C == 2) ? ALPHA.FIX : 0;
+			m_om_bsel.blend_mix = 1;
+
+			if (blend_mix1)
+			{
+				m_ps_sel.blend_a = 0;
+				m_ps_sel.blend_b = 2;
+				m_ps_sel.blend_d = 2;
+			}
+			else if (blend_mix2)
+			{
+				m_ps_sel.blend_a = 0;
+				m_ps_sel.blend_b = 2;
+				m_ps_sel.blend_d = 0;
+			}
+			else if (blend_mix3)
+			{
+				m_ps_sel.blend_a = 2;
+				m_ps_sel.blend_b = 0;
+				m_ps_sel.blend_d = 0;
+			}
 		}
 		else
 		{
@@ -611,7 +652,7 @@ void GSRendererDX11::EmulateTextureSampler(const GSTextureCache::Source* tex)
 		// Require a float conversion if the texure is a depth otherwise uses Integral scaling
 		if (psm.depth)
 		{
-			m_ps_sel.depth_fmt = (tex->m_texture->GetType() != GSTexture::DepthStencil) ? 3 : 1;
+			m_ps_sel.depth_fmt = (tex->m_texture->GetType() != GSTexture::Type::DepthStencil) ? 3 : 1;
 		}
 
 		// Shuffle is a 16 bits format, so aem is always required
@@ -658,7 +699,7 @@ void GSRendererDX11::EmulateTextureSampler(const GSTextureCache::Source* tex)
 		}
 
 		// Depth format
-		if (tex->m_texture->GetType() == GSTexture::DepthStencil)
+		if (tex->m_texture->GetType() == GSTexture::Type::DepthStencil)
 		{
 			// Require a float conversion if the texure is a depth format
 			m_ps_sel.depth_fmt = (psm.bpp == 16) ? 2 : 1;
@@ -848,10 +889,10 @@ void GSRendererDX11::DrawPrims(GSTexture* rt, GSTexture* ds, GSTextureCache::Sou
 	{
 		const GSVector4 dRect(ComputeBoundingBox(rtscale, rtsize));
 		const GSVector4 sRect = dRect / GSVector4(rtsize.x, rtsize.y).xyxy();
-		hdr_rt = dev->CreateRenderTarget(rtsize.x, rtsize.y, DXGI_FORMAT_R32G32B32A32_FLOAT);
+		hdr_rt = dev->CreateRenderTarget(rtsize.x, rtsize.y, GSTexture::Format::FloatColor);
 		// Warning: StretchRect must be called before BeginScene otherwise
 		// vertices will be overwritten. Trust me you don't want to do that.
-		dev->StretchRect(rt, sRect, hdr_rt, dRect, ShaderConvert_COPY, false);
+		dev->StretchRect(rt, sRect, hdr_rt, dRect, ShaderConvert::COPY, false);
 	}
 
 	if (m_ps_sel.dfmt == 1)
@@ -1138,7 +1179,7 @@ void GSRendererDX11::DrawPrims(GSTexture* rt, GSTexture* ds, GSTextureCache::Sou
 	{
 		const GSVector4 dRect(ComputeBoundingBox(rtscale, rtsize));
 		const GSVector4 sRect = dRect / GSVector4(rtsize.x, rtsize.y).xyxy();
-		dev->StretchRect(hdr_rt, sRect, rt, dRect, ShaderConvert_MOD_256, false);
+		dev->StretchRect(hdr_rt, sRect, rt, dRect, ShaderConvert::MOD_256, false);
 
 		dev->Recycle(hdr_rt);
 	}

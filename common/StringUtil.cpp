@@ -221,10 +221,19 @@ namespace StringUtil
 		{
 			return false;
 		}
-		return std::equal(str1.begin(), str1.end(), str2.begin(),
-			[](char a, char b) {
-				return tolower(a) == tolower(b);
-			});
+		return Strncasecmp(str1.data(), str2.data(), str1.length()) == 0;
+	}
+
+	std::vector<std::string> convertMultiLineStringToVector(const std::string& multiLineString)
+	{
+		std::vector<std::string> lines;
+		std::istringstream stream(multiLineString);
+		std::string line;
+		while (std::getline(stream, line))
+		{
+			lines.push_back(line);
+		}
+		return lines;
 	}
 
 #ifdef _WIN32

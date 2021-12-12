@@ -102,7 +102,7 @@
 		pxAssert(EnumIsValid(id)); \
 	} \
 \
-	extern const wxChar* EnumToString(enumName id)
+	extern const char* EnumToString(enumName id)
 
 class pxEnumEnd_t
 {
@@ -277,4 +277,4 @@ extern wxString fromAscii(const char* src);
 
 #include "common/Assertions.h"
 #include "common/Exceptions.h"
-#include "common/ScopedAlloc.h"
+#include "common/AlignedMalloc.h"

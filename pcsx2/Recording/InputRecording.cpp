@@ -15,8 +15,9 @@
 
 #include "PrecompiledHeader.h"
 
-#include "gui/AppSaveStates.h"
+#include "common/StringUtil.h"
 #include "Counters.h"
+#include "SaveState.h"
 
 #ifndef DISABLE_RECORDING
 
@@ -26,6 +27,8 @@
 #include "InputRecording.h"
 #include "InputRecordingControls.h"
 #include "Utilities/InputRecordingLogger.h"
+
+#include "gui/AppSaveStates.h"
 
 #include <fmt/format.h>
 
@@ -447,18 +450,18 @@ void InputRecording::GoToFirstFrame(wxWindow* parent)
 
 wxString InputRecording::resolveGameName()
 {
-	wxString gameName;
-	const wxString gameKey(SysGetDiscID());
-	if (!gameKey.IsEmpty())
+	std::string gameName;
+	const std::string gameKey(StringUtil::wxStringToUTF8String(SysGetDiscID()));
+	if (!gameKey.empty())
 	{
-		auto game = g_gameDB.findGame(std::string(gameKey.ToUTF8()));
+		auto game = GameDatabase::findGame(gameKey);
 		if (game)
 		{
-			gameName = fromUTF8(game->name);
-			gameName += L" (" + fromUTF8(game->region) + L")";
+			gameName = game->name;
+			gameName += " (" + game->region + ")";
 		}
 	}
-	return !gameName.IsEmpty() ? gameName : (wxString)Path::GetFilename(g_Conf->CurrentIso);
+	return !gameName.empty() ? StringUtil::UTF8StringToWxString(gameName) : Path::GetFilename(g_Conf->CurrentIso);
 }
 
 #endif

@@ -127,7 +127,8 @@ public:
 				UseDefaultLogs:1,
 				UseDefaultLangs:1,
 				UseDefaultCheats:1,
-				UseDefaultCheatsWS:1;
+				UseDefaultCheatsWS:1,
+				UseDefaultCache:1;
 		BITFIELD_END
 
 		wxDirName
@@ -138,7 +139,9 @@ public:
 			Langs,
 			Logs,
 			Cheats,
-			CheatsWS;
+			CheatsWS,
+			Resources,
+			Cache;
 
 		wxDirName RunIso; // last used location for Iso loading.
 		wxDirName RunELF; // last used location for ELF loading.

@@ -588,17 +588,17 @@ GSTextureCache::Target* GSTextureCache::LookupTarget(const GIFRegTEX0& TEX0, int
 			dst = CreateTarget(TEX0, w, h, type);
 			dst->m_32_bits_fmt = dst_match->m_32_bits_fmt;
 
-			int shader;
+			ShaderConvert shader;
 			bool fmt_16_bits = (psm_s.bpp == 16 && GSLocalMemory::m_psm[dst_match->m_TEX0.PSM].bpp == 16);
 			if (type == DepthStencil)
 			{
 				GL_CACHE("TC: Lookup Target(Depth) %dx%d, hit Color (0x%x, %s was %s)", w, h, bp, psm_str(TEX0.PSM), psm_str(dst_match->m_TEX0.PSM));
-				shader = (fmt_16_bits) ? ShaderConvert_RGB5A1_TO_FLOAT16 : ShaderConvert_RGBA8_TO_FLOAT32 + psm_s.fmt;
+				shader = (fmt_16_bits) ? ShaderConvert::RGB5A1_TO_FLOAT16 : (ShaderConvert)((int)ShaderConvert::RGBA8_TO_FLOAT32 + psm_s.fmt);
 			}
 			else
 			{
 				GL_CACHE("TC: Lookup Target(Color) %dx%d, hit Depth (0x%x, %s was %s)", w, h, bp, psm_str(TEX0.PSM), psm_str(dst_match->m_TEX0.PSM));
-				shader = (fmt_16_bits) ? ShaderConvert_FLOAT16_TO_RGB5A1 : ShaderConvert_FLOAT32_TO_RGBA8;
+				shader = (fmt_16_bits) ? ShaderConvert::FLOAT16_TO_RGB5A1 : ShaderConvert::FLOAT32_TO_RGBA8;
 			}
 			m_renderer->m_dev->StretchRect(dst_match->m_texture, sRect, dst->m_texture, dRect, shader, false);
 		}
@@ -1301,7 +1301,7 @@ GSTextureCache::Source* GSTextureCache::CreateSource(const GIFRegTEX0& TEX0, con
 		int h = (int)(scale.y * th);
 
 		GSTexture* sTex = dst->m_texture;
-		GSTexture* dTex = m_renderer->m_dev->CreateRenderTarget(w, h);
+		GSTexture* dTex = m_renderer->m_dev->CreateRenderTarget(w, h, GSTexture::Format::Color);
 
 		GSVector4i area(x, y, x + w, y + h);
 		m_renderer->m_dev->CopyRect(sTex, dTex, area);
@@ -1333,7 +1333,7 @@ GSTextureCache::Source* GSTextureCache::CreateSource(const GIFRegTEX0& TEX0, con
 		// So it could be tricky to put in the middle of the DrawPrims
 
 		// Texture is created to keep code compatibility
-		GSTexture* dTex = m_renderer->m_dev->CreateRenderTarget(tw, th);
+		GSTexture* dTex = m_renderer->m_dev->CreateRenderTarget(tw, th, GSTexture::Format::Color);
 
 		// Keep a trace of origin of the texture
 		src->m_texture = dTex;
@@ -1351,13 +1351,13 @@ GSTextureCache::Source* GSTextureCache::CreateSource(const GIFRegTEX0& TEX0, con
 	{
 		// TODO: clean up this mess
 
-		int shader = dst->m_type != RenderTarget ? ShaderConvert_FLOAT32_TO_RGBA8 : ShaderConvert_COPY;
+		ShaderConvert shader = dst->m_type != RenderTarget ? ShaderConvert::FLOAT32_TO_RGBA8 : ShaderConvert::COPY;
 		bool is_8bits = TEX0.PSM == PSM_PSMT8;
 
 		if (is_8bits)
 		{
 			GL_INS("Reading RT as a packed-indexed 8 bits format");
-			shader = ShaderConvert_RGBA_TO_8I;
+			shader = ShaderConvert::RGBA_TO_8I;
 		}
 
 #ifdef ENABLE_OGL_DEBUG
@@ -1504,7 +1504,7 @@ GSTextureCache::Source* GSTextureCache::CreateSource(const GIFRegTEX0& TEX0, con
 		// Don't be fooled by the name. 'dst' is the old target (hence the input)
 		// 'src' is the new texture cache entry (hence the output)
 		GSTexture* sTex = dst->m_texture;
-		GSTexture* dTex = m_renderer->m_dev->CreateRenderTarget(w, h);
+		GSTexture* dTex = m_renderer->m_dev->CreateRenderTarget(w, h, GSTexture::Format::Color);
 		src->m_texture = dTex;
 
 		// GH: by default (m_paltex == 0) GS converts texture to the 32 bit format
@@ -1540,7 +1540,7 @@ GSTextureCache::Source* GSTextureCache::CreateSource(const GIFRegTEX0& TEX0, con
 		// copy. Likely a speed boost and memory usage reduction.
 		bool linear = (TEX0.PSM == PSM_PSMCT32 || TEX0.PSM == PSM_PSMCT24);
 
-		if ((sRect == dRect).alltrue() && !shader)
+		if ((sRect == dRect).alltrue() && shader == ShaderConvert::COPY)
 		{
 			if (half_right)
 			{
@@ -1609,12 +1609,12 @@ GSTextureCache::Source* GSTextureCache::CreateSource(const GIFRegTEX0& TEX0, con
 	{
 		if (m_paltex && psm.pal > 0)
 		{
-			src->m_texture = m_renderer->m_dev->CreateTexture(tw, th, Get8bitFormat());
+			src->m_texture = m_renderer->m_dev->CreateTexture(tw, th, GSTexture::Format::UNorm8);
 			AttachPaletteToSource(src, psm.pal, true);
 		}
 		else
 		{
-			src->m_texture = m_renderer->m_dev->CreateTexture(tw, th);
+			src->m_texture = m_renderer->m_dev->CreateTexture(tw, th, GSTexture::Format::Color);
 			if (psm.pal > 0)
 			{
 				AttachPaletteToSource(src, psm.pal, false);
@@ -1641,18 +1641,115 @@ GSTextureCache::Target* GSTextureCache::CreateTarget(const GIFRegTEX0& TEX0, int
 
 	if (type == RenderTarget)
 	{
-		t->m_texture = m_renderer->m_dev->CreateSparseRenderTarget(w, h);
+		t->m_texture = m_renderer->m_dev->CreateSparseRenderTarget(w, h, GSTexture::Format::Color);
 
 		t->m_used = true; // FIXME
 	}
 	else if (type == DepthStencil)
 	{
-		t->m_texture = m_renderer->m_dev->CreateSparseDepthStencil(w, h);
+		t->m_texture = m_renderer->m_dev->CreateSparseDepthStencil(w, h, GSTexture::Format::DepthStencil);
 	}
 
 	m_dst[type].push_front(t);
 
 	return t;
+}
+
+void GSTextureCache::Read(Target* t, const GSVector4i& r)
+{
+	if (!t->m_dirty.empty() || r.width() == 0 || r.height() == 0)
+		return;
+
+	const GIFRegTEX0& TEX0 = t->m_TEX0;
+
+	GSTexture::Format fmt;
+	ShaderConvert ps_shader;
+	switch (TEX0.PSM)
+	{
+		case PSM_PSMCT32:
+		case PSM_PSMCT24:
+			fmt = GSTexture::Format::Color;
+			ps_shader = ShaderConvert::COPY;
+			break;
+
+		case PSM_PSMCT16:
+		case PSM_PSMCT16S:
+			fmt = GSTexture::Format::UInt16;
+			ps_shader = ShaderConvert::RGBA8_TO_16_BITS;
+			break;
+
+		case PSM_PSMZ32:
+		case PSM_PSMZ24:
+			fmt = GSTexture::Format::UInt32;
+			ps_shader = ShaderConvert::FLOAT32_TO_32_BITS;
+			break;
+
+		case PSM_PSMZ16:
+		case PSM_PSMZ16S:
+			fmt = GSTexture::Format::UInt16;
+			ps_shader = ShaderConvert::FLOAT32_TO_32_BITS;
+			break;
+
+		default:
+			return;
+	}
+
+	// Yes lots of logging, but I'm not confident with this code
+	GL_PUSH("Texture Cache Read. Format(0x%x)", TEX0.PSM);
+
+	GL_PERF("TC: Read Back Target: %d (0x%x)[fmt: 0x%x]. Size %dx%d",
+	        t->m_texture->GetID(), TEX0.TBP0, TEX0.PSM, r.width(), r.height());
+
+	GSVector4 src = GSVector4(r) * GSVector4(t->m_texture->GetScale()).xyxy() / GSVector4(t->m_texture->GetSize()).xyxy();
+
+	bool res;
+	GSTexture::GSMap m;
+
+	if (t->m_texture->GetScale() == GSVector2(1, 1) && ps_shader == ShaderConvert::COPY)
+		res = m_renderer->m_dev->DownloadTexture(t->m_texture, r, m);
+	else
+		res = m_renderer->m_dev->DownloadTextureConvert(t->m_texture, src, GSVector2i(r.width(), r.height()), fmt, ps_shader, m);
+
+	if (res)
+	{
+		GSOffset off = m_renderer->m_mem.GetOffset(TEX0.TBP0, TEX0.TBW, TEX0.PSM);
+
+		switch (TEX0.PSM)
+		{
+			case PSM_PSMCT32:
+			case PSM_PSMZ32:
+				m_renderer->m_mem.WritePixel32(m.bits, m.pitch, off, r);
+				break;
+			case PSM_PSMCT24:
+			case PSM_PSMZ24:
+				m_renderer->m_mem.WritePixel24(m.bits, m.pitch, off, r);
+				break;
+			case PSM_PSMCT16:
+			case PSM_PSMCT16S:
+			case PSM_PSMZ16:
+			case PSM_PSMZ16S:
+				m_renderer->m_mem.WritePixel16(m.bits, m.pitch, off, r);
+				break;
+
+			default:
+				ASSERT(0);
+		}
+
+		m_renderer->m_dev->DownloadTextureComplete();
+	}
+}
+
+void GSTextureCache::Read(Source* t, const GSVector4i& r)
+{
+	const GIFRegTEX0& TEX0 = t->m_TEX0;
+
+	GSTexture::GSMap m;
+	if (m_renderer->m_dev->DownloadTexture(t->m_texture, r, m))
+	{
+		GSOffset off = m_renderer->m_mem.GetOffset(TEX0.TBP0, TEX0.TBW, TEX0.PSM);
+		m_renderer->m_mem.WritePixel32(m.bits, m.pitch, off, r);
+		m_renderer->m_dev->DownloadTextureComplete();
+	}
 }
 
 void GSTextureCache::PrintMemoryUsage()
@@ -2067,7 +2164,7 @@ void GSTextureCache::Target::Update()
 	TEXA.TA0 = 0;
 	TEXA.TA1 = 0x80;
 
-	GSTexture* t = m_renderer->m_dev->CreateTexture(w, h);
+	GSTexture* t = m_renderer->m_dev->CreateTexture(w, h, GSTexture::Format::Color);
 
 	GSOffset off = m_renderer->m_mem.GetOffset(m_TEX0.TBP0, m_TEX0.TBW, m_TEX0.PSM);
 
@@ -2102,7 +2199,7 @@ void GSTextureCache::Target::Update()
 		GL_INS("ERROR: Update DepthStencil 0x%x", m_TEX0.TBP0);
 
 		// FIXME linear or not?
-		m_renderer->m_dev->StretchRect(t, m_texture, GSVector4(r) * GSVector4(m_texture->GetScale()).xyxy(), ShaderConvert_RGBA8_TO_FLOAT32);
+		m_renderer->m_dev->StretchRect(t, m_texture, GSVector4(r) * GSVector4(m_texture->GetScale()).xyxy(), ShaderConvert::RGBA8_TO_FLOAT32);
 	}
 
 	m_renderer->m_dev->Recycle(t);
@@ -2227,7 +2324,7 @@ void GSTextureCache::Palette::InitializeTexture()
 		// sampling such texture are always normalized by 255.
 		// This is because indexes are stored as normalized values of an RGBA texture (e.g. index 15 will be read as (15/255),
 		// and therefore will read texel 15/255 * texture size).
-		m_tex_palette = m_renderer->m_dev->CreateTexture(256, 1);
+		m_tex_palette = m_renderer->m_dev->CreateTexture(256, 1, GSTexture::Format::Color);
 		m_tex_palette->Update(GSVector4i(0, 0, m_pal, 1), m_clut, m_pal * sizeof(m_clut[0]));
 	}
 }

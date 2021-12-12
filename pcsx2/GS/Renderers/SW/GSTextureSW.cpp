@@ -17,12 +17,12 @@
 #include "GSTextureSW.h"
 #include "GS/GSPng.h"
 
-GSTextureSW::GSTextureSW(int type, int width, int height)
+GSTextureSW::GSTextureSW(Type type, int width, int height)
 {
 	m_mapped.clear(std::memory_order_release);
 	m_size = GSVector2i(width, height);
 	m_type = type;
-	m_format = 0;
+	m_format = Format::Invalid;
 	m_pitch = ((width << 2) + 31) & ~31;
 	m_data = _aligned_malloc(m_pitch * height, 32);
 }

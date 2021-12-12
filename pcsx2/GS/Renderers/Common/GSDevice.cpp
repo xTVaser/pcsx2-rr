@@ -18,6 +18,36 @@
 #include "GS/GSGL.h"
 #include "GS/GS.h"
 
+const char* shaderName(ShaderConvert value)
+{
+	switch (value)
+	{
+		case ShaderConvert::COPY:                return "ps_copy";
+		case ShaderConvert::RGBA8_TO_16_BITS:    return "ps_convert_rgba8_16bits";
+		case ShaderConvert::DATM_1:              return "ps_datm1";
+		case ShaderConvert::DATM_0:              return "ps_datm0";
+		case ShaderConvert::MOD_256:             return "ps_mod256";
+		case ShaderConvert::SCANLINE:            return "ps_filter_scanlines";
+		case ShaderConvert::DIAGONAL_FILTER:     return "ps_filter_diagonal";
+		case ShaderConvert::TRANSPARENCY_FILTER: return "ps_filter_transparency";
+		case ShaderConvert::TRIANGULAR_FILTER:   return "ps_filter_triangular";
+		case ShaderConvert::COMPLEX_FILTER:      return "ps_filter_complex";
+		case ShaderConvert::FLOAT32_TO_32_BITS:  return "ps_convert_float32_32bits";
+		case ShaderConvert::FLOAT32_TO_RGBA8:    return "ps_convert_float32_rgba8";
+		case ShaderConvert::FLOAT16_TO_RGB5A1:   return "ps_convert_float16_rgb5a1";
+		case ShaderConvert::RGBA8_TO_FLOAT32:    return "ps_convert_rgba8_float32";
+		case ShaderConvert::RGBA8_TO_FLOAT24:    return "ps_convert_rgba8_float24";
+		case ShaderConvert::RGBA8_TO_FLOAT16:    return "ps_convert_rgba8_float16";
+		case ShaderConvert::RGB5A1_TO_FLOAT16:   return "ps_convert_rgb5a1_float16";
+		case ShaderConvert::RGBA_TO_8I:          return "ps_convert_rgba_8i";
+		case ShaderConvert::YUV:                 return "ps_yuv";
+		case ShaderConvert::OSD:                 return "ps_osd";
+		default:
+			ASSERT(0);
+			return "ShaderConvertUnknownShader";
+	}
+}
+
 GSDevice::GSDevice()
 	: m_vsync(false)
 	, m_rbswapped(false)
@@ -89,9 +119,9 @@ void GSDevice::Present(const GSVector4i& r, int shader)
 
 	if (m_current)
 	{
-		static int s_shader[5] = {ShaderConvert_COPY, ShaderConvert_SCANLINE,
-			ShaderConvert_DIAGONAL_FILTER, ShaderConvert_TRIANGULAR_FILTER,
-			ShaderConvert_COMPLEX_FILTER}; // FIXME
+		static constexpr ShaderConvert s_shader[5] = {ShaderConvert::COPY, ShaderConvert::SCANLINE,
+			ShaderConvert::DIAGONAL_FILTER, ShaderConvert::TRIANGULAR_FILTER,
+			ShaderConvert::COMPLEX_FILTER}; // FIXME
 
 		Present(m_current, m_backbuffer, GSVector4(r), s_shader[shader]);
 		RenderOsd(m_backbuffer);
@@ -100,12 +130,12 @@ void GSDevice::Present(const GSVector4i& r, int shader)
 	Flip();
 }
 
-void GSDevice::Present(GSTexture* sTex, GSTexture* dTex, const GSVector4& dRect, int shader)
+void GSDevice::Present(GSTexture* sTex, GSTexture* dTex, const GSVector4& dRect, ShaderConvert shader)
 {
 	StretchRect(sTex, dTex, dRect, shader, m_linear_present);
 }
 
-GSTexture* GSDevice::FetchSurface(int type, int w, int h, int format)
+GSTexture* GSDevice::FetchSurface(GSTexture::Type type, int w, int h, GSTexture::Format format)
 {
 	const GSVector2i size(w, h);
 
@@ -193,37 +223,62 @@ void GSDevice::PurgePool()
 	}
 }
 
-GSTexture* GSDevice::CreateSparseRenderTarget(int w, int h, int format)
+GSTexture* GSDevice::CreateSparseRenderTarget(int w, int h, GSTexture::Format format)
 {
-	return FetchSurface(HasColorSparse() ? GSTexture::SparseRenderTarget : GSTexture::RenderTarget, w, h, format);
+	return FetchSurface(HasColorSparse() ? GSTexture::Type::SparseRenderTarget : GSTexture::Type::RenderTarget, w, h, format);
 }
 
-GSTexture* GSDevice::CreateSparseDepthStencil(int w, int h, int format)
+GSTexture* GSDevice::CreateSparseDepthStencil(int w, int h, GSTexture::Format format)
 {
-	return FetchSurface(HasDepthSparse() ? GSTexture::SparseDepthStencil : GSTexture::DepthStencil, w, h, format);
+	return FetchSurface(HasDepthSparse() ? GSTexture::Type::SparseDepthStencil : GSTexture::Type::DepthStencil, w, h, format);
 }
 
-GSTexture* GSDevice::CreateRenderTarget(int w, int h, int format)
+GSTexture* GSDevice::CreateRenderTarget(int w, int h, GSTexture::Format format)
 {
-	return FetchSurface(GSTexture::RenderTarget, w, h, format);
+	return FetchSurface(GSTexture::Type::RenderTarget, w, h, format);
 }
 
-GSTexture* GSDevice::CreateDepthStencil(int w, int h, int format)
+GSTexture* GSDevice::CreateDepthStencil(int w, int h, GSTexture::Format format)
 {
-	return FetchSurface(GSTexture::DepthStencil, w, h, format);
+	return FetchSurface(GSTexture::Type::DepthStencil, w, h, format);
 }
 
-GSTexture* GSDevice::CreateTexture(int w, int h, int format)
+GSTexture* GSDevice::CreateTexture(int w, int h, GSTexture::Format format)
 {
-	return FetchSurface(GSTexture::Texture, w, h, format);
+	return FetchSurface(GSTexture::Type::Texture, w, h, format);
 }
 
-GSTexture* GSDevice::CreateOffscreen(int w, int h, int format)
+GSTexture* GSDevice::CreateOffscreen(int w, int h, GSTexture::Format format)
 {
-	return FetchSurface(GSTexture::Offscreen, w, h, format);
+	return FetchSurface(GSTexture::Type::Offscreen, w, h, format);
 }
 
-void GSDevice::StretchRect(GSTexture* sTex, GSTexture* dTex, const GSVector4& dRect, int shader, bool linear)
+GSTexture::Format GSDevice::GetDefaultTextureFormat(GSTexture::Type type)
+{
+	if (type == GSTexture::Type::DepthStencil || type == GSTexture::Type::SparseDepthStencil)
+		return GSTexture::Format::DepthStencil;
+	else
+		return GSTexture::Format::Color;
+}
+
+bool GSDevice::DownloadTextureConvert(GSTexture* src, const GSVector4& sRect, const GSVector2i& dSize, GSTexture::Format format, ShaderConvert ps_shader, GSTexture::GSMap& out_map)
+{
+	ASSERT(src);
+	ASSERT(format == GSTexture::Format::Color || format == GSTexture::Format::UInt16 || format == GSTexture::Format::UInt32);
+
+	GSTexture* dst = CreateRenderTarget(dSize.x, dSize.y, format);
+	if (!dst)
+		return false;
+
+	GSVector4i dRect(0, 0, dSize.x, dSize.y);
+	StretchRect(src, sRect, dst, GSVector4(dRect), ps_shader);
+
+	bool ret = DownloadTexture(dst, dRect, out_map);
+	Recycle(dst);
+	return ret;
+}
+
+void GSDevice::StretchRect(GSTexture* sTex, GSTexture* dTex, const GSVector4& dRect, ShaderConvert shader, bool linear)
 {
 	StretchRect(sTex, GSVector4(0, 0, 1, 1), dTex, dRect, shader, linear);
 }
@@ -315,7 +370,7 @@ void GSDevice::ExternalFX()
 		const GSVector4 sRect(0, 0, 1, 1);
 		const GSVector4 dRect(0, 0, s.x, s.y);
 
-		StretchRect(m_current, sRect, m_target_tmp, dRect, ShaderConvert_TRANSPARENCY_FILTER, false);
+		StretchRect(m_current, sRect, m_target_tmp, dRect, ShaderConvert::TRANSPARENCY_FILTER, false);
 		DoExternalFX(m_target_tmp, m_current);
 	}
 }
@@ -329,7 +384,7 @@ void GSDevice::FXAA()
 		const GSVector4 sRect(0, 0, 1, 1);
 		const GSVector4 dRect(0, 0, s.x, s.y);
 
-		StretchRect(m_current, sRect, m_target_tmp, dRect, ShaderConvert_TRANSPARENCY_FILTER, false);
+		StretchRect(m_current, sRect, m_target_tmp, dRect, ShaderConvert::TRANSPARENCY_FILTER, false);
 		DoFXAA(m_target_tmp, m_current);
 	}
 }
@@ -343,12 +398,12 @@ void GSDevice::ShadeBoost()
 		const GSVector4 sRect(0, 0, 1, 1);
 		const GSVector4 dRect(0, 0, s.x, s.y);
 
-		StretchRect(m_current, sRect, m_target_tmp, dRect, ShaderConvert_COPY, false);
+		StretchRect(m_current, sRect, m_target_tmp, dRect, ShaderConvert::COPY, false);
 		DoShadeBoost(m_target_tmp, m_current);
 	}
 }
 
-bool GSDevice::ResizeTexture(GSTexture** t, int type, int w, int h)
+bool GSDevice::ResizeTexture(GSTexture** t, GSTexture::Type type, int w, int h)
 {
 	if (t == NULL)
 	{
@@ -360,9 +415,10 @@ bool GSDevice::ResizeTexture(GSTexture** t, int type, int w, int h)
 
 	if (t2 == NULL || t2->GetWidth() != w || t2->GetHeight() != h)
 	{
+		GSTexture::Format fmt = t2 ? t2->GetFormat() : GetDefaultTextureFormat(type);
 		delete t2;
 
-		t2 = FetchSurface(type, w, h, 0);
+		t2 = FetchSurface(type, w, h, fmt);
 
 		*t = t2;
 	}
@@ -372,18 +428,18 @@ bool GSDevice::ResizeTexture(GSTexture** t, int type, int w, int h)
 
 bool GSDevice::ResizeTexture(GSTexture** t, int w, int h)
 {
-	return ResizeTexture(t, GSTexture::Texture, w, h);
+	return ResizeTexture(t, GSTexture::Type::Texture, w, h);
 }
 
 bool GSDevice::ResizeTarget(GSTexture** t, int w, int h)
 {
-	return ResizeTexture(t, GSTexture::RenderTarget, w, h);
+	return ResizeTexture(t, GSTexture::Type::RenderTarget, w, h);
 }
 
 bool GSDevice::ResizeTarget(GSTexture** t)
 {
 	GSVector2i s = m_current->GetSize();
-	return ResizeTexture(t, GSTexture::RenderTarget, s.x, s.y);
+	return ResizeTexture(t, GSTexture::Type::RenderTarget, s.x, s.y);
 }
 
 GSAdapter::operator std::string() const
@@ -438,15 +494,15 @@ std::array<HWBlend, 3*3*3*3 + 1> GSDevice::m_blendMap =
 	{ BLEND_NO_REC               , OP_ADD          , CONST_ONE       , CONST_ZERO}      , // 0020: (Cs - Cs)*F  + Cs ==> Cs
 	{ 0                          , OP_ADD          , CONST_ZERO      , CONST_ONE}       , // 0021: (Cs - Cs)*F  + Cd ==> Cd
 	{ BLEND_NO_REC               , OP_ADD          , CONST_ZERO      , CONST_ZERO}      , // 0022: (Cs - Cs)*F  +  0 ==> 0
-	{ BLEND_A_MAX                , OP_SUBTRACT     , CONST_ONE       , SRC1_ALPHA}      , //*0100: (Cs - Cd)*As + Cs ==> Cs*(As + 1) - Cd*As
-	{ 0                          , OP_ADD          , SRC1_ALPHA      , INV_SRC1_ALPHA}  , // 0101: (Cs - Cd)*As + Cd ==> Cs*As + Cd*(1 - As)
-	{ 0                          , OP_SUBTRACT     , SRC1_ALPHA      , SRC1_ALPHA}      , // 0102: (Cs - Cd)*As +  0 ==> Cs*As - Cd*As
+	{ BLEND_A_MAX | BLEND_MIX2   , OP_SUBTRACT     , CONST_ONE       , SRC1_ALPHA}      , //*0100: (Cs - Cd)*As + Cs ==> Cs*(As + 1) - Cd*As
+	{ BLEND_MIX1                 , OP_ADD          , SRC1_ALPHA      , INV_SRC1_ALPHA}  , // 0101: (Cs - Cd)*As + Cd ==> Cs*As + Cd*(1 - As)
+	{ BLEND_MIX1                 , OP_SUBTRACT     , SRC1_ALPHA      , SRC1_ALPHA}      , // 0102: (Cs - Cd)*As +  0 ==> Cs*As - Cd*As
 	{ BLEND_A_MAX                , OP_SUBTRACT     , CONST_ONE       , DST_ALPHA}       , //*0110: (Cs - Cd)*Ad + Cs ==> Cs*(Ad + 1) - Cd*Ad
 	{ 0                          , OP_ADD          , DST_ALPHA       , INV_DST_ALPHA}   , // 0111: (Cs - Cd)*Ad + Cd ==> Cs*Ad + Cd*(1 - Ad)
 	{ 0                          , OP_SUBTRACT     , DST_ALPHA       , DST_ALPHA}       , // 0112: (Cs - Cd)*Ad +  0 ==> Cs*Ad - Cd*Ad
-	{ BLEND_A_MAX                , OP_SUBTRACT     , CONST_ONE       , CONST_COLOR}     , //*0120: (Cs - Cd)*F  + Cs ==> Cs*(F + 1) - Cd*F
-	{ 0                          , OP_ADD          , CONST_COLOR     , INV_CONST_COLOR} , // 0121: (Cs - Cd)*F  + Cd ==> Cs*F + Cd*(1 - F)
-	{ 0                          , OP_SUBTRACT     , CONST_COLOR     , CONST_COLOR}     , // 0122: (Cs - Cd)*F  +  0 ==> Cs*F - Cd*F
+	{ BLEND_A_MAX | BLEND_MIX2   , OP_SUBTRACT     , CONST_ONE       , CONST_COLOR}     , //*0120: (Cs - Cd)*F  + Cs ==> Cs*(F + 1) - Cd*F
+	{ BLEND_MIX1                 , OP_ADD          , CONST_COLOR     , INV_CONST_COLOR} , // 0121: (Cs - Cd)*F  + Cd ==> Cs*F + Cd*(1 - F)
+	{ BLEND_MIX1                 , OP_SUBTRACT     , CONST_COLOR     , CONST_COLOR}     , // 0122: (Cs - Cd)*F  +  0 ==> Cs*F - Cd*F
 	{ BLEND_NO_REC | BLEND_A_MAX , OP_ADD          , CONST_ONE       , CONST_ZERO}      , //*0200: (Cs -  0)*As + Cs ==> Cs*(As + 1)
 	{ BLEND_ACCU                 , OP_ADD          , SRC1_ALPHA      , CONST_ONE}       , //?0201: (Cs -  0)*As + Cd ==> Cs*As + Cd
 	{ BLEND_NO_REC               , OP_ADD          , SRC1_ALPHA      , CONST_ZERO}      , // 0202: (Cs -  0)*As +  0 ==> Cs*As
@@ -456,15 +512,15 @@ std::array<HWBlend, 3*3*3*3 + 1> GSDevice::m_blendMap =
 	{ BLEND_NO_REC | BLEND_A_MAX , OP_ADD          , CONST_ONE       , CONST_ZERO}      , //*0220: (Cs -  0)*F  + Cs ==> Cs*(F + 1)
 	{ BLEND_ACCU                 , OP_ADD          , CONST_COLOR     , CONST_ONE}       , //?0221: (Cs -  0)*F  + Cd ==> Cs*F + Cd
 	{ BLEND_NO_REC               , OP_ADD          , CONST_COLOR     , CONST_ZERO}      , // 0222: (Cs -  0)*F  +  0 ==> Cs*F
-	{ 0                          , OP_ADD          , INV_SRC1_ALPHA  , SRC1_ALPHA}      , // 1000: (Cd - Cs)*As + Cs ==> Cd*As + Cs*(1 - As)
-	{ BLEND_A_MAX                , OP_REV_SUBTRACT , SRC1_ALPHA      , CONST_ONE}       , //*1001: (Cd - Cs)*As + Cd ==> Cd*(As + 1) - Cs*As
-	{ 0                          , OP_REV_SUBTRACT , SRC1_ALPHA      , SRC1_ALPHA}      , // 1002: (Cd - Cs)*As +  0 ==> Cd*As - Cs*As
+	{ BLEND_MIX3                 , OP_ADD          , INV_SRC1_ALPHA  , SRC1_ALPHA}      , // 1000: (Cd - Cs)*As + Cs ==> Cd*As + Cs*(1 - As)
+	{ BLEND_A_MAX | BLEND_MIX1   , OP_REV_SUBTRACT , SRC1_ALPHA      , CONST_ONE}       , //*1001: (Cd - Cs)*As + Cd ==> Cd*(As + 1) - Cs*As
+	{ BLEND_MIX1                 , OP_REV_SUBTRACT , SRC1_ALPHA      , SRC1_ALPHA}      , // 1002: (Cd - Cs)*As +  0 ==> Cd*As - Cs*As
 	{ 0                          , OP_ADD          , INV_DST_ALPHA   , DST_ALPHA}       , // 1010: (Cd - Cs)*Ad + Cs ==> Cd*Ad + Cs*(1 - Ad)
 	{ BLEND_A_MAX                , OP_REV_SUBTRACT , DST_ALPHA       , CONST_ONE}       , //*1011: (Cd - Cs)*Ad + Cd ==> Cd*(Ad + 1) - Cs*Ad
 	{ 0                          , OP_REV_SUBTRACT , DST_ALPHA       , DST_ALPHA}       , // 1012: (Cd - Cs)*Ad +  0 ==> Cd*Ad - Cs*Ad
-	{ 0                          , OP_ADD          , INV_CONST_COLOR , CONST_COLOR}     , // 1020: (Cd - Cs)*F  + Cs ==> Cd*F + Cs*(1 - F)
-	{ BLEND_A_MAX                , OP_REV_SUBTRACT , CONST_COLOR     , CONST_ONE}       , //*1021: (Cd - Cs)*F  + Cd ==> Cd*(F + 1) - Cs*F
-	{ 0                          , OP_REV_SUBTRACT , CONST_COLOR     , CONST_COLOR}     , // 1022: (Cd - Cs)*F  +  0 ==> Cd*F - Cs*F
+	{ BLEND_MIX3                 , OP_ADD          , INV_CONST_COLOR , CONST_COLOR}     , // 1020: (Cd - Cs)*F  + Cs ==> Cd*F + Cs*(1 - F)
+	{ BLEND_A_MAX | BLEND_MIX1   , OP_REV_SUBTRACT , CONST_COLOR     , CONST_ONE}       , //*1021: (Cd - Cs)*F  + Cd ==> Cd*(F + 1) - Cs*F
+	{ BLEND_MIX1                 , OP_REV_SUBTRACT , CONST_COLOR     , CONST_COLOR}     , // 1022: (Cd - Cs)*F  +  0 ==> Cd*F - Cs*F
 	{ BLEND_NO_REC               , OP_ADD          , CONST_ONE       , CONST_ZERO}      , // 1100: (Cd - Cd)*As + Cs ==> Cs
 	{ 0                          , OP_ADD          , CONST_ZERO      , CONST_ONE}       , // 1101: (Cd - Cd)*As + Cd ==> Cd
 	{ BLEND_NO_REC               , OP_ADD          , CONST_ZERO      , CONST_ZERO}      , // 1102: (Cd - Cd)*As +  0 ==> 0

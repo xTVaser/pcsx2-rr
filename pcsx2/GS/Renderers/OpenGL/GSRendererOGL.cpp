@@ -18,7 +18,6 @@
 
 
 GSRendererOGL::GSRendererOGL()
-	: GSRendererHW(new GSTextureCacheOGL(this))
 {
 	m_sw_blending = theApp.GetConfigI("accurate_blending_unit");
 	if (theApp.GetConfigB("UserHacks"))
@@ -136,7 +135,7 @@ void GSRendererOGL::EmulateZbuffer()
 	const bool clamp_z = (u32)(GSVector4i(m_vt.m_max.p).z) > max_z;
 
 	vs_cb.MaxDepth = GSVector2i(0xFFFFFFFF);
-	//ps_cb.MaxDepth = GSVector4(0.0f, 0.0f, 0.0f, 1.0f);
+	//ps_cb.TA_MaxDepth_Af.z = 1.0f;
 	m_ps_sel.zclamp = 0;
 
 	if (clamp_z)
@@ -147,7 +146,7 @@ void GSRendererOGL::EmulateZbuffer()
 		}
 		else if (!m_context->ZBUF.ZMSK)
 		{
-			ps_cb.MaxDepth = GSVector4(0.0f, 0.0f, 0.0f, max_z * ldexpf(1, -32));
+			ps_cb.TA_MaxDepth_Af.z = max_z * ldexpf(1, -32);
 			m_ps_sel.zclamp = 1;
 		}
 	}
@@ -337,7 +336,7 @@ void GSRendererOGL::EmulateChannelShuffle(GSTexture** rt, const GSTextureCache::
 				m_channel_shuffle = false;
 			}
 		}
-		else if ((tex->m_texture->GetType() == GSTexture::DepthStencil) && !(tex->m_32_bits_fmt))
+		else if ((tex->m_texture->GetType() == GSTexture::Type::DepthStencil) && !(tex->m_32_bits_fmt))
 		{
 			// So far 2 games hit this code path. Urban Chaos and Tales of Abyss
 			// UC: will copy depth to green channel
@@ -381,11 +380,10 @@ void GSRendererOGL::EmulateChannelShuffle(GSTexture** rt, const GSTextureCache::
 			{
 				// Typically used in Terminator 3
 				const int blue_mask = m_context->FRAME.FBMSK >> 24;
-				const int green_mask = ~blue_mask & 0xFF;
 				int blue_shift = -1;
 
 				// Note: potentially we could also check the value of the clut
-				switch (m_context->FRAME.FBMSK >> 24)
+				switch (blue_mask)
 				{
 					case 0xFF: ASSERT(0);      break;
 					case 0xFE: blue_shift = 1; break;
@@ -395,21 +393,22 @@ void GSRendererOGL::EmulateChannelShuffle(GSTexture** rt, const GSTextureCache::
 					case 0xE0: blue_shift = 5; break;
 					case 0xC0: blue_shift = 6; break;
 					case 0x80: blue_shift = 7; break;
-					default:   ASSERT(0);      break;
+					default:                   break;
 				}
-
-				const int green_shift = 8 - blue_shift;
-				dev->SetupCBMisc(GSVector4i(blue_mask, blue_shift, green_mask, green_shift));
 
 				if (blue_shift >= 0)
 				{
+					const int green_mask = ~blue_mask & 0xFF;
+					const int green_shift = 8 - blue_shift;
+
 					GL_INS("Green/Blue channel (%d, %d)", blue_shift, green_shift);
+					dev->SetupCBMisc(GSVector4i(blue_mask, blue_shift, green_mask, green_shift));
 					m_ps_sel.channel = ChannelFetch_GXBY;
 					m_context->FRAME.FBMSK = 0x00FFFFFF;
 				}
 				else
 				{
-					GL_INS("Green channel (wrong mask) (fbmask %x)", m_context->FRAME.FBMSK >> 24);
+					GL_INS("Green channel (wrong mask) (fbmask %x)", blue_mask);
 					m_ps_sel.channel = ChannelFetch_GREEN;
 				}
 			}
@@ -480,16 +479,28 @@ void GSRendererOGL::EmulateBlending(bool& DATE_GL42, bool& DATE_GL45)
 	const u8 blend_index = u8(((ALPHA.A * 3 + ALPHA.B) * 3 + ALPHA.C) * 3 + ALPHA.D);
 	const int blend_flag = m_dev->GetBlendFlags(blend_index);
 
-	// SW Blend is (nearly) free. Let's use it.
-	const bool impossible_or_free_blend = (blend_flag & (BLEND_NO_REC|BLEND_A_MAX|BLEND_ACCU)) // Blend doesn't requires the costly barrier
-		|| (m_prim_overlap == PRIM_OVERLAP_NO) // Blend can be done in a single draw
-		|| (m_require_full_barrier);           // Another effect (for example fbmask) already requires a full barrier
-
 	// Do the multiplication in shader for blending accumulation: Cs*As + Cd or Cs*Af + Cd
 	bool accumulation_blend = !!(blend_flag & BLEND_ACCU);
 
 	// Blending doesn't require barrier, or sampling of the rt
 	const bool blend_non_recursive = !!(blend_flag & BLEND_NO_REC);
+
+	// BLEND MIX selection, use a mix of hw/sw blending
+	if (!m_vt.m_alpha.valid && (ALPHA.C == 0))
+		GetAlphaMinMax();
+	const bool blend_mix1 = !!(blend_flag & BLEND_MIX1);
+	const bool blend_mix2 = !!(blend_flag & BLEND_MIX2);
+	const bool blend_mix3 = !!(blend_flag & BLEND_MIX3);
+	bool blend_mix = (blend_mix1 || blend_mix2 || blend_mix3)
+		// Do not enable if As > 128 or F > 128, hw blend clamps to 1
+		&& !((ALPHA.C == 0 && m_vt.m_alpha.max > 128) || (ALPHA.C == 2 && ALPHA.FIX > 128u));
+
+	// SW Blend is (nearly) free. Let's use it.
+	const bool impossible_or_free_blend = (blend_flag & BLEND_A_MAX) // Impossible blending
+		|| blend_non_recursive                 // Free sw blending, doesn't require barriers or reading fb
+		|| accumulation_blend                  // Mix of hw/sw blending
+		|| (m_prim_overlap == PRIM_OVERLAP_NO) // Blend can be done in a single draw
+		|| (m_require_full_barrier);           // Another effect (for example fbmask) already requires a full barrier
 
 	// Warning no break on purpose
 	// Note: the [[fallthrough]] attribute tell compilers not to complain about not having breaks.
@@ -500,8 +511,6 @@ void GSRendererOGL::EmulateBlending(bool& DATE_GL42, bool& DATE_GL45)
 			sw_blending |= true;
 			[[fallthrough]];
 		case ACC_BLEND_FULL:
-			if (!m_vt.m_alpha.valid && (ALPHA.C == 0))
-				GetAlphaMinMax();
 			sw_blending |= (ALPHA.A != ALPHA.B) && ((ALPHA.C == 0 && m_vt.m_alpha.max > 128) || (ALPHA.C == 2 && ALPHA.FIX > 128u));
 			[[fallthrough]];
 		case ACC_BLEND_HIGH:
@@ -520,6 +529,13 @@ void GSRendererOGL::EmulateBlending(bool& DATE_GL42, bool& DATE_GL45)
 			/*sw_blending |= accumulation_blend*/;
 	}
 
+	// Do not run BLEND MIX if sw blending is already present, it's less accurate
+	if (m_sw_blending)
+	{
+		blend_mix &= !sw_blending;
+		sw_blending |= blend_mix;
+	}
+
 	// Color clip
 	if (m_env.COLCLAMP.CLAMP == 0)
 	{
@@ -536,8 +552,9 @@ void GSRendererOGL::EmulateBlending(bool& DATE_GL42, bool& DATE_GL45)
 			m_ps_sel.colclip = 1;
 			sw_blending = true;
 			accumulation_blend = false; // disable the HDR algo
+			blend_mix = false;
 		}
-		else if (accumulation_blend)
+		else if (accumulation_blend || blend_mix)
 		{
 			// A fast algo that requires 2 passes
 			GL_INS("COLCLIP Fast HDR mode ENABLED");
@@ -566,6 +583,8 @@ void GSRendererOGL::EmulateBlending(bool& DATE_GL42, bool& DATE_GL45)
 		{
 			GL_INS("PABE mode ENABLED");
 			m_ps_sel.pabe = 1;
+			accumulation_blend = false;
+			blend_mix = false;
 		}
 	}
 
@@ -612,6 +631,29 @@ void GSRendererOGL::EmulateBlending(bool& DATE_GL42, bool& DATE_GL45)
 
 			// Note accumulation_blend doesn't require a barrier
 		}
+		else if (blend_mix)
+		{
+			dev->OMSetBlendState(blend_index, ALPHA.FIX, ALPHA.C == 2, false, true);
+
+			if (blend_mix1)
+			{
+				m_ps_sel.blend_a = 0;
+				m_ps_sel.blend_b = 2;
+				m_ps_sel.blend_d = 2;
+			}
+			else if (blend_mix2)
+			{
+				m_ps_sel.blend_a = 0;
+				m_ps_sel.blend_b = 2;
+				m_ps_sel.blend_d = 0;
+			}
+			else if (blend_mix3)
+			{
+				m_ps_sel.blend_a = 2;
+				m_ps_sel.blend_b = 0;
+				m_ps_sel.blend_d = 0;
+			}
+		}
 		else
 		{
 			// Disable HW blending
@@ -623,7 +665,7 @@ void GSRendererOGL::EmulateBlending(bool& DATE_GL42, bool& DATE_GL45)
 		// Require the fix alpha vlaue
 		if (ALPHA.C == 2)
 		{
-			ps_cb.TA_Af.a = (float)ALPHA.FIX / 128.0f;
+			ps_cb.TA_MaxDepth_Af.a = (float)ALPHA.FIX / 128.0f;
 		}
 	}
 	else
@@ -703,7 +745,7 @@ void GSRendererOGL::EmulateTextureSampler(const GSTextureCache::Source* tex)
 		// Require a float conversion if the texure is a depth otherwise uses Integral scaling
 		if (psm.depth)
 		{
-			m_ps_sel.depth_fmt = (tex->m_texture->GetType() != GSTexture::DepthStencil) ? 3 : 1;
+			m_ps_sel.depth_fmt = (tex->m_texture->GetType() != GSTexture::Type::DepthStencil) ? 3 : 1;
 			m_vs_sel.int_fst = !PRIM->FST; // select float/int coordinate
 		}
 
@@ -711,13 +753,15 @@ void GSRendererOGL::EmulateTextureSampler(const GSTextureCache::Source* tex)
 		GSVector4 ta(m_env.TEXA & GSVector4i::x000000ff());
 		ta /= 255.0f;
 		// FIXME rely on compiler for the optimization
-		ps_cb.TA_Af.x = ta.x;
-		ps_cb.TA_Af.y = ta.y;
+		ps_cb.TA_MaxDepth_Af.x = ta.x;
+		ps_cb.TA_MaxDepth_Af.y = ta.y;
 
 		// The purpose of texture shuffle is to move color channel. Extra interpolation is likely a bad idea.
 		bilinear &= m_vt.IsLinear();
 
-		vs_cb.TextureOffset = RealignTargetTextureCoordinate(tex);
+		GSVector4 half_offset = RealignTargetTextureCoordinate(tex);
+		vs_cb.Texture_Scale_Offset.z = half_offset.x;
+		vs_cb.Texture_Scale_Offset.w = half_offset.y;
 	}
 	else if (tex->m_target)
 	{
@@ -734,8 +778,8 @@ void GSRendererOGL::EmulateTextureSampler(const GSTextureCache::Source* tex)
 			GSVector4 ta(m_env.TEXA & GSVector4i::x000000ff());
 			ta /= 255.0f;
 			// FIXME rely on compiler for the optimization
-			ps_cb.TA_Af.x = ta.x;
-			ps_cb.TA_Af.y = ta.y;
+			ps_cb.TA_MaxDepth_Af.x = ta.x;
+			ps_cb.TA_MaxDepth_Af.y = ta.y;
 		}
 
 		// Select the index format
@@ -756,7 +800,7 @@ void GSRendererOGL::EmulateTextureSampler(const GSTextureCache::Source* tex)
 		}
 
 		// Depth format
-		if (tex->m_texture->GetType() == GSTexture::DepthStencil)
+		if (tex->m_texture->GetType() == GSTexture::Type::DepthStencil)
 		{
 			// Require a float conversion if the texure is a depth format
 			m_ps_sel.depth_fmt = (psm.bpp == 16) ? 2 : 1;
@@ -775,7 +819,9 @@ void GSRendererOGL::EmulateTextureSampler(const GSTextureCache::Source* tex)
 			bilinear &= m_vt.IsLinear();
 		}
 
-		vs_cb.TextureOffset = RealignTargetTextureCoordinate(tex);
+		GSVector4 half_offset = RealignTargetTextureCoordinate(tex);
+		vs_cb.Texture_Scale_Offset.z = half_offset.x;
+		vs_cb.Texture_Scale_Offset.w = half_offset.y;
 	}
 	else if (tex->m_palette)
 	{
@@ -840,7 +886,10 @@ void GSRendererOGL::EmulateTextureSampler(const GSTextureCache::Source* tex)
 
 	// TC Offset Hack
 	m_ps_sel.tcoffsethack = m_userhacks_tcoffset;
-	ps_cb.TC_OH_TS = GSVector4(1 / 16.0f, 1 / 16.0f, m_userhacks_tcoffset_x, m_userhacks_tcoffset_y) / WH.xyxy();
+	GSVector4 tc_oh_ts = GSVector4(1 / 16.0f, 1 / 16.0f, m_userhacks_tcoffset_x, m_userhacks_tcoffset_y) / WH.xyxy();
+	ps_cb.TC_OH = tc_oh_ts.zwzw();
+	vs_cb.Texture_Scale_Offset.x = tc_oh_ts.x;
+	vs_cb.Texture_Scale_Offset.y = tc_oh_ts.y;
 
 	// Must be done after all coordinates math
 	if (m_context->HasFixedTEX0() && !PRIM->FST)
@@ -1096,7 +1145,7 @@ void GSRendererOGL::DrawPrims(GSTexture* rt, GSTexture* ds, GSTextureCache::Sour
 	const bool ate_second_pass = m_context->TEST.DoSecondPass();
 
 	ResetStates();
-	vs_cb.TextureOffset = GSVector4(0.0f);
+	vs_cb.Texture_Scale_Offset = GSVector4(0.0f);
 
 	ASSERT(m_dev != NULL);
 	GSDeviceOGL* dev = (GSDeviceOGL*)m_dev;
@@ -1381,7 +1430,7 @@ void GSRendererOGL::DrawPrims(GSTexture* rt, GSTexture* ds, GSTextureCache::Sour
 
 	if (m_ps_sel.hdr)
 	{
-		hdr_rt = dev->CreateRenderTarget(rtsize.x, rtsize.y, GL_RGBA32F);
+		hdr_rt = dev->CreateRenderTarget(rtsize.x, rtsize.y, GSTexture::Format::FloatColor);
 		dev->OMSetRenderTargets(hdr_rt, ds, &scissor);
 
 		// save blend state, since BlitRect destroys it
@@ -1571,7 +1620,7 @@ void GSRendererOGL::DrawPrims(GSTexture* rt, GSTexture* ds, GSTextureCache::Sour
 	if (hdr_rt)
 	{
 		const GSVector4 sRect = GSVector4(commitRect) / GSVector4(rtsize.x, rtsize.y).xyxy();
-		dev->StretchRect(hdr_rt, sRect, rt, GSVector4(commitRect), ShaderConvert_MOD_256, false);
+		dev->StretchRect(hdr_rt, sRect, rt, GSVector4(commitRect), ShaderConvert::MOD_256, false);
 
 		dev->Recycle(hdr_rt);
 	}
