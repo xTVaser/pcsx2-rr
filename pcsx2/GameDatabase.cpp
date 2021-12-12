@@ -154,6 +154,7 @@ void parseAndInsert(const std::string_view& serial, const c4::yml::NodeRef& node
 					}
 				}
 			}
+
 			if (!fixValidated)
 			{
 				Console.Error(fmt::format("[GameDB] Invalid gamefix: '{}', specified for serial: '{}'. Dropping!", fix, serial));
