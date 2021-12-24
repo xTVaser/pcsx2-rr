@@ -220,7 +220,7 @@ void parseAndInsert(const std::string_view& serial, const c4::yml::NodeRef& node
 			{
 				std::string patchLines;
 				n["content"] >> patchLines;
-				patch = StringUtil::convertMultiLineStringToVector(patchLines);
+				patch = StringUtil::splitOnNewLine(patchLines);
 			}
 			gameEntry.patches[crc] = patch;
 		}

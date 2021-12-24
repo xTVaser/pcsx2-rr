@@ -224,10 +224,10 @@ namespace StringUtil
 		return Strncasecmp(str1.data(), str2.data(), str1.length()) == 0;
 	}
 
-	std::vector<std::string> convertMultiLineStringToVector(const std::string& multiLineString)
+	std::vector<std::string> splitOnNewLine(const std::string& str)
 	{
 		std::vector<std::string> lines;
-		std::istringstream stream(multiLineString);
+		std::istringstream stream(str);
 		std::string line;
 		while (std::getline(stream, line))
 		{

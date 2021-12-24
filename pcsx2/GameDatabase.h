@@ -61,17 +61,17 @@ public:
 
 	struct GameEntry
 	{
-		std::string name = "";
-		std::string region = "";
+		std::string name;
+		std::string region;
 		Compatibility compat = Compatibility::Unknown;
 		RoundMode eeRoundMode = RoundMode::Undefined;
 		RoundMode vuRoundMode = RoundMode::Undefined;
 		ClampMode eeClampMode = ClampMode::Undefined;
 		ClampMode vuClampMode = ClampMode::Undefined;
-		std::vector<GamefixId> gameFixes = {};
+		std::vector<GamefixId> gameFixes;
 		std::vector<std::pair<SpeedhackId, int>> speedHacks;
-		std::vector<std::string> memcardFilters = {};
-		std::unordered_map<std::string, Patch> patches = {};
+		std::vector<std::string> memcardFilters;
+		std::unordered_map<std::string, Patch> patches;
 
 		// Returns the list of memory card serials as a `/` delimited string
 		std::string memcardFiltersAsString() const;
