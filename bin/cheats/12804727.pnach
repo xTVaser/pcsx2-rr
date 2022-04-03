@@ -2,6 +2,11 @@ gametitle=Jak 3 - (PAL-M7)(SCES-52460)
 comment=Enables Developer/Debug Mode - Credit to water111 for discovering / documenting the required ELF edits in Jak 1/2.  ELF edits for Jak 3 figured out by xTVaser.
 comment=Credits to Luminar Light for making the patch for this game build.
 
+// nop sceResetttyinit call
+patch=0,EE,00125F10,word,00000000
+// nop InitGoalProto call
+patch=0,EE,00103808,word,00000000
+
 // NOP Disabling MasterDebug
 patch=0,EE,00100404,word,00000000
 // NOP Disabling DebugSegment

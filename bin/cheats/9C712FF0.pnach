@@ -6,3 +6,9 @@ comment=Credits to Luminar Light for making the patch for this game build.
 patch=0,EE,00100290,word,00000000
 // NOP Disabling MasterDebug
 patch=0,EE,0010029c,word,00000000
+
+// NOP InitGoalProto & sceResetttyinit calls
+patch=0,EE,0012ac70,word,00000000
+patch=0,EE,00103e74,word,00000000
+// redirect format output: #t to 0
+patch=0,EE,00102db4,word,10000013
