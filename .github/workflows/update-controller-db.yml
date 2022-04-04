@@ -19,7 +19,7 @@ jobs:
           mv ./game_controller_db.txt ${{github.workspace}}/pcsx2/PAD/Linux/res/game_controller_db.txt
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v4.0.1
         with:
           title: "pad-linux: Update to latest controller database"
           commit-message: "pad-linux: Update to latest controller database."
