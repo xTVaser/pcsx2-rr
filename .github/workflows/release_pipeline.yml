@@ -9,7 +9,7 @@ jobs:
   # Build Everything
   # Linux
   build_gcc_lto:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     name: "Linux - AppImage"
     uses: ./.github/workflows/linux_build.yml
     with:
@@ -21,7 +21,7 @@ jobs:
 
   # Windows
   build_wx_sse4:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     name: "Windows - SSE4"
     uses: ./.github/workflows/windows_build_wx.yml
     with:
@@ -31,7 +31,7 @@ jobs:
     secrets: inherit
 
   build_wx_avx2:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     name: "Windows - AVX2"
     uses: ./.github/workflows/windows_build_wx.yml
     with:
@@ -40,7 +40,7 @@ jobs:
     secrets: inherit
 
   build_qt_sse4:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     name: "Windows - SSE4"
     uses: ./.github/workflows/windows_build_qt.yml
     with:
@@ -50,7 +50,7 @@ jobs:
     secrets: inherit
 
   build_qt_avx2:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     name: "Windows - AVX2"
     uses: ./.github/workflows/windows_build_qt.yml
     with:
@@ -60,7 +60,7 @@ jobs:
 
   # MacOS
   build_macos_default:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     name: "MacOS - Defaults"
     uses: ./.github/workflows/macos_build.yml
     with:
@@ -69,7 +69,7 @@ jobs:
 
   # Upload the Artifacts
   upload_artifacts:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     needs:
       - build_gcc_lto
       - build_wx_sse4
@@ -108,17 +108,17 @@ jobs:
           SCAN_DIR: ${{ github.WORKSPACE }}/ci-artifacts
           OUT_DIR: ${{ github.WORKSPACE }}/ci-artifacts/out
         run: |
-          gh release list --repo PCSX2/pcsx2
+          gh release list --repo xTVaser/pcsx2-rr
           mkdir -p ${{ github.WORKSPACE }}/ci-artifacts/out
           python ./.github/workflows/scripts/releases/rename-release-assets.py
           ls ${{ github.WORKSPACE }}/ci-artifacts/out
           TAG_VAL=$(echo ${{ github.REF }} | awk -F'refs/tags/' '{print $2}')
-          gh release upload "${TAG_VAL}" ${{ github.WORKSPACE }}/ci-artifacts/out/*  --repo PCSX2/pcsx2 --clobber
+          gh release upload "${TAG_VAL}" ${{ github.WORKSPACE }}/ci-artifacts/out/*  --repo xTVaser/pcsx2-rr --clobber
 
       - name: Publish Release
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_PAT }}
         run: |
           TAG_VAL=$(echo ${{ github.REF }} | awk -F'refs/tags/' '{print $2}')
-          gh release edit ${TAG_VAL} --draft=false --repo PCSX2/pcsx2
+          gh release edit ${TAG_VAL} --draft=false --repo xTVaser/pcsx2-rr
 
