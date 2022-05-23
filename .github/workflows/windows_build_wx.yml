@@ -81,6 +81,7 @@ jobs:
       - name: Build PCSX2
         shell: cmd
         run: |
+          dir ./bin
           if "${{ inputs.configuration }}"=="CMake" (
             call "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\${{ steps.cmake.outputs.vcvars }}"
             cmake --build build --config ${{ steps.cmake.outputs.buildtype }}
@@ -88,6 +89,7 @@ jobs:
           ) else (
             msbuild "PCSX2_suite.sln" /m /v:m /p:Configuration="${{ inputs.configuration }}" /p:Platform="${{ inputs.platform }}"
           )
+          dir ./bin
 
       - name: Run Tests
         if: inputs.configuration == 'CMake'
