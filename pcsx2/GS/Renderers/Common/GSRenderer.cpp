@@ -315,6 +315,9 @@ bool GSRenderer::Merge(int field)
 
 		g_gs_device->Merge(tex, src_gs_read, dst, fs, m_regs->PMODE, m_regs->EXTBUF, c);
 
+		// Offset is not compatible with scanmsk, as scanmsk renders every other line, but at x7 the interlace offset will be 7 lines
+		const int offset = (m_scanmask_used || !m_regs->SMODE2.FFMD) ? 0 : (int)(tex[1] ? tex[1]->GetScale().y : tex[0]->GetScale().y);
+
 		if (m_regs->SMODE2.INT && GSConfig.InterlaceMode != GSInterlaceMode::Off)
 		{
 			const bool scanmask = m_scanmask_used && scanmask_frame && GSConfig.InterlaceMode == GSInterlaceMode::Automatic;
@@ -323,12 +326,12 @@ bool GSRenderer::Merge(int field)
 			{
 				constexpr int field2 = 1;
 				constexpr int mode = 2;
-				g_gs_device->Interlace(ds, field ^ field2, mode, tex[1] ? tex[1]->GetScale().y : tex[0]->GetScale().y);
+
+				g_gs_device->Interlace(ds, field ^ field2, mode, offset);
 			}
 			else
 			{
 				const int field2 = scanmask ? 0 : 1 - ((static_cast<int>(GSConfig.InterlaceMode) - 1) & 1);
-				const int offset = tex[1] ? tex[1]->GetScale().y : tex[0]->GetScale().y;
 				const int mode = scanmask ? 2 : ((static_cast<int>(GSConfig.InterlaceMode) - 1) >> 1);
 
 				g_gs_device->Interlace(ds, field ^ field2, mode, offset);
@@ -492,19 +495,46 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 	const bool fb_sprite_frame = (fb_sprite_blits > 0);
 	PerformanceMetrics::Update(registers_written, fb_sprite_frame);
 
-	g_gs_device->AgePool();
+	bool skip_frame = m_frameskip;
+	if (GSConfig.SkipDuplicateFrames)
+	{
+		bool is_unique_frame;
+		switch (PerformanceMetrics::GetInternalFPSMethod())
+		{
+		case PerformanceMetrics::InternalFPSMethod::GSPrivilegedRegister:
+			is_unique_frame = registers_written;
+			break;
+		case PerformanceMetrics::InternalFPSMethod::DISPFBBlit:
+			is_unique_frame = fb_sprite_frame;
+			break;
+		default:
+			is_unique_frame = true;
+			break;
+		}
+
+		if (!is_unique_frame && m_skipped_duplicate_frames < MAX_SKIPPED_DUPLICATE_FRAMES)
+		{
+			m_skipped_duplicate_frames++;
+			skip_frame = true;
+		}
+		else
+		{
+			m_skipped_duplicate_frames = 0;
+		}
+	}
 
 	const bool blank_frame = !Merge(field);
-	const bool skip_frame = m_frameskip;
 
-	if (blank_frame || skip_frame)
+	if (skip_frame)
 	{
 		g_gs_device->ResetAPIState();
-		if (Host::BeginPresentFrame(skip_frame))
+		if (Host::BeginPresentFrame(true))
 			Host::EndPresentFrame();
 		g_gs_device->RestoreAPIState();
 		return;
 	}
+
+	g_gs_device->AgePool();
 
 	g_perfmon.EndFrame();
 	if ((g_perfmon.GetFrame() & 0x1f) == 0)
@@ -514,7 +544,7 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 	if (Host::BeginPresentFrame(false))
 	{
 		GSTexture* current = g_gs_device->GetCurrent();
-		if (current)
+		if (current && !blank_frame)
 		{
 			HostDisplay* const display = g_gs_device->GetDisplay();
 			const GSVector4 draw_rect(CalculateDrawRect(display->GetWindowWidth(), display->GetWindowHeight(),
@@ -591,7 +621,6 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 		if (GSTexture* t = g_gs_device->GetCurrent())
 		{
 			const std::string path(m_snapshot + ".png");
-			const std::string_view filename(Path::GetFileName(path));
 			if (t->Save(path))
 			{
 				Host::AddKeyedOSDMessage("GSScreenshot",

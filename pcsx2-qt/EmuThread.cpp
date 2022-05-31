@@ -33,8 +33,10 @@
 #include "pcsx2/GS/GS.h"
 #include "pcsx2/GSDumpReplayer.h"
 #include "pcsx2/HostDisplay.h"
+#include "pcsx2/HostSettings.h"
 #include "pcsx2/PAD/Host/PAD.h"
 #include "pcsx2/PerformanceMetrics.h"
+#include "pcsx2/Recording/InputRecordingControls.h"
 #include "pcsx2/VMManager.h"
 
 #include "DisplayWidget.h"
@@ -69,7 +71,6 @@ void EmuThread::start()
 	g_emu_thread->QThread::start();
 	g_emu_thread->m_started_semaphore.acquire();
 	g_emu_thread->moveToThread(g_emu_thread);
-	g_main_window->connectVMThreadSignals(g_emu_thread);
 }
 
 void EmuThread::stop()
@@ -106,8 +107,8 @@ void EmuThread::startVM(std::shared_ptr<VMBootParameters> boot_params)
 	emit onVMStarting();
 
 	// create the display, this may take a while...
-	m_is_fullscreen = boot_params->fullscreen.value_or(QtHost::GetBaseBoolSettingValue("UI", "StartFullscreen", false));
-	m_is_rendering_to_main = QtHost::GetBaseBoolSettingValue("UI", "RenderToMainWindow", true);
+	m_is_fullscreen = boot_params->fullscreen.value_or(Host::GetBaseBoolSettingValue("UI", "StartFullscreen", false));
+	m_is_rendering_to_main = Host::GetBaseBoolSettingValue("UI", "RenderToMainWindow", true);
 	m_is_surfaceless = false;
 	m_save_state_on_shutdown = false;
 	if (!VMManager::Initialize(*boot_params))
@@ -227,7 +228,8 @@ void EmuThread::run()
 	m_event_loop = new QEventLoop();
 	m_started_semaphore.release();
 
-	if (!VMManager::Internal::InitializeMemory())
+	// neither of these should ever fail.
+	if (!VMManager::Internal::InitializeGlobals() || !VMManager::Internal::InitializeMemory())
 		pxFailRel("Failed to allocate memory map");
 
 	// we need input sources ready for binding
@@ -251,6 +253,7 @@ void EmuThread::run()
 	InputManager::CloseSources();
 	VMManager::WaitForSaveStateFlush();
 	VMManager::Internal::ReleaseMemory();
+	VMManager::Internal::ReleaseGlobals();
 	PerformanceMetrics::SetCPUThread(Threading::ThreadHandle());
 	moveToThread(m_ui_thread);
 	deleteLater();
@@ -407,14 +410,14 @@ void EmuThread::reloadGameSettings()
 
 void EmuThread::loadOurSettings()
 {
-	m_verbose_status = QtHost::GetBaseBoolSettingValue("UI", "VerboseStatusBar", false);
+	m_verbose_status = Host::GetBaseBoolSettingValue("UI", "VerboseStatusBar", false);
 }
 
 void EmuThread::checkForSettingChanges()
 {
 	if (VMManager::HasValidVM())
 	{
-		const bool render_to_main = QtHost::GetBaseBoolSettingValue("UI", "RenderToMainWindow", true);
+		const bool render_to_main = Host::GetBaseBoolSettingValue("UI", "RenderToMainWindow", true);
 		if (!m_is_fullscreen && m_is_rendering_to_main != render_to_main)
 		{
 			m_is_rendering_to_main = render_to_main;
@@ -484,7 +487,7 @@ void EmuThread::reloadPatches()
 	if (!VMManager::HasValidVM())
 		return;
 
-	VMManager::ReloadPatches(true);
+	VMManager::ReloadPatches(true, true);
 }
 
 void EmuThread::reloadInputSources()
@@ -495,9 +498,9 @@ void EmuThread::reloadInputSources()
 		return;
 	}
 
-	auto lock = Host::GetSettingsLock();
+	std::unique_lock<std::mutex> lock = Host::GetSettingsLock();
 	SettingsInterface* si = Host::GetSettingsInterface();
-	InputManager::ReloadSources(*si);
+	InputManager::ReloadSources(*si, lock);
 
 	// skip loading bindings if we're not running, since it'll get done on startup anyway
 	if (VMManager::HasValidVM())
@@ -905,6 +908,41 @@ void Host::RunOnCPUThread(std::function<void()> function, bool block /* = false 
 		Q_ARG(const std::function<void()>&, std::move(function)));
 }
 
+void Host::RefreshGameListAsync(bool invalidate_cache)
+{
+	QMetaObject::invokeMethod(g_main_window, "refreshGameList", Qt::QueuedConnection,
+		Q_ARG(bool, invalidate_cache));
+}
+
+void Host::CancelGameListRefresh()
+{
+	QMetaObject::invokeMethod(g_main_window, "cancelGameListRefresh", Qt::BlockingQueuedConnection);
+}
+
+void Host::RequestExit(bool save_state_if_running)
+{
+	if (VMManager::HasValidVM())
+		g_emu_thread->shutdownVM(save_state_if_running);
+
+	QMetaObject::invokeMethod(g_main_window, "requestExit", Qt::QueuedConnection);
+}
+
+void Host::RequestVMShutdown(bool save_state)
+{
+	if (VMManager::HasValidVM())
+		g_emu_thread->shutdownVM(save_state);
+}
+
+bool Host::IsFullscreen()
+{
+	return g_emu_thread->isFullscreen();
+}
+
+void Host::SetFullscreen(bool enabled)
+{
+	g_emu_thread->setFullscreen(enabled);
+}
+
 alignas(16) static SysMtgsThread s_mtgs_thread;
 
 SysMtgsThread& GetMTGS()
@@ -932,5 +970,12 @@ DEFINE_HOTKEY("TogglePause", "System", "Toggle Pause", [](bool pressed) {
 DEFINE_HOTKEY("ToggleFullscreen", "General", "Toggle Fullscreen", [](bool pressed) {
 	if (!pressed)
 		g_emu_thread->toggleFullscreen();
+})
+// Input Recording Hot Keys
+DEFINE_HOTKEY("InputRecToggleMode", "Input Recording", "Toggle Recording Mode", [](bool pressed) {
+	if (!pressed) // ?? - not pressed so it is on key up?
+	{
+		g_InputRecordingControls.RecordModeToggle();
+	}
 })
 END_HOTKEY_LIST()

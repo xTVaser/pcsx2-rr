@@ -20,6 +20,7 @@
 #include "QtHost.h"
 #include "QtUtils.h"
 
+#include "pcsx2/HostSettings.h"
 #include "pcsx2/SysForwardDefs.h"
 #include "svnrev.h"
 
@@ -132,7 +133,7 @@ QString AutoUpdaterDialog::getCurrentVersionDate()
 QString AutoUpdaterDialog::getCurrentUpdateTag() const
 {
 #ifdef AUTO_UPDATER_SUPPORTED
-	return QString::fromStdString(QtHost::GetBaseStringSettingValue("AutoUpdater", "UpdateTag", THIS_RELEASE_TAG));
+	return QString::fromStdString(Host::GetBaseStringSettingValue("AutoUpdater", "UpdateTag", THIS_RELEASE_TAG));
 #else
 	return QString();
 #endif
@@ -145,7 +146,9 @@ void AutoUpdaterDialog::reportError(const char* msg, ...)
 	std::string full_msg = StringUtil::StdStringFromFormatV(msg, ap);
 	va_end(ap);
 
-	QMessageBox::critical(this, tr("Updater Error"), QString::fromStdString(full_msg));
+	// don't display errors when we're doing an automatic background check, it's just annoying
+	if (m_display_messages)
+		QMessageBox::critical(this, tr("Updater Error"), QString::fromStdString(full_msg));
 }
 
 void AutoUpdaterDialog::queueUpdateCheck(bool display_message)
@@ -344,9 +347,6 @@ void AutoUpdaterDialog::getChangesComplete(QNetworkReply* reply)
 					   "that you will have to reconfigure your settings after this update.</p>"));
 			}
 
-			changes_html += tr("<h4>Installing this update will download %1 MB through your internet connection.</h4>")
-								.arg(static_cast<double>(m_download_size) / 1000000.0, 0, 'f', 2);
-
 			m_ui.updateNotes->setText(changes_html);
 		}
 		else
@@ -425,7 +425,7 @@ void AutoUpdaterDialog::downloadUpdateClicked()
 void AutoUpdaterDialog::checkIfUpdateNeeded()
 {
 	const QString last_checked_version(
-		QString::fromStdString(QtHost::GetBaseStringSettingValue("AutoUpdater", "LastVersion")));
+		QString::fromStdString(Host::GetBaseStringSettingValue("AutoUpdater", "LastVersion")));
 
 	Console.WriteLn(Color_StrongGreen, "Current version: %s", GIT_TAG);
 	Console.WriteLn(Color_StrongYellow, "Latest SHA: %s", m_latest_version.toUtf8().constData());

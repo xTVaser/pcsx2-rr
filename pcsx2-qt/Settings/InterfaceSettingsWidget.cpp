@@ -21,17 +21,29 @@
 #include "SettingWidgetBinder.h"
 #include "SettingsDialog.h"
 
-static const char* THEME_NAMES[] = {QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Native [Light]"),
+static const char* THEME_NAMES[] = {
+	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Native"),
 	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Fusion [Light]"),
 	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Dark Fusion (Gray) [Dark]"),
 	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Dark Fusion (Blue) [Dark]"),
 	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Untouched Lagoon (Grayish Green/-Blue ) [Light]"),
 	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Baby Pastel (Pink) [Light]"),
 	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "PCSX2 (White/Blue) [Light]"),
-	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Scarlet Devil (Red/Purple) [Dark]"), nullptr};
+	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Scarlet Devil (Red/Purple) [Dark]"),
+	nullptr
+};
 
-static const char* THEME_VALUES[] = {"", "fusion", "darkfusion", "darkfusionblue", 
-	"UntouchedLagoon", "BabyPastel", "PCSX2Blue", "ScarletDevilRed", nullptr};
+static const char* THEME_VALUES[] = {
+	"",
+	"fusion",
+	"darkfusion",
+	"darkfusionblue",
+	"UntouchedLagoon",
+	"BabyPastel",
+	"PCSX2Blue",
+	"ScarletDevilRed",
+	nullptr
+};
 
 InterfaceSettingsWidget::InterfaceSettingsWidget(SettingsDialog* dialog, QWidget* parent)
 	: QWidget(parent)
@@ -41,7 +53,6 @@ InterfaceSettingsWidget::InterfaceSettingsWidget(SettingsDialog* dialog, QWidget
 	m_ui.setupUi(this);
 
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.inhibitScreensaver, "UI", "InhibitScreensaver", true);
-	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.discordPresence, "UI", "DiscordPresence", false);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.confirmShutdown, "UI", "ConfirmShutdown", true);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.saveStateOnShutdown, "EmuCore", "SaveStateOnShutdown", false);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.pauseOnStart, "UI", "StartPaused", false);
@@ -61,8 +72,6 @@ InterfaceSettingsWidget::InterfaceSettingsWidget(SettingsDialog* dialog, QWidget
 		m_ui.inhibitScreensaver, tr("Inhibit Screensaver"), tr("Checked"),
 		tr("Prevents the screen saver from activating and the host from sleeping while emulation is running."));
 
-	dialog->registerWidgetHelp(m_ui.discordPresence, tr("Enable Discord Presence"), tr("Unchecked"),
-		tr("Shows the game you are currently playing as part of your profile in Discord."));
 	if (AutoUpdaterDialog::isSupported())
 	{
 		SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.autoUpdateEnabled, "AutoUpdater", "CheckAtStartup", true);
@@ -103,6 +112,13 @@ InterfaceSettingsWidget::InterfaceSettingsWidget(SettingsDialog* dialog, QWidget
 		m_ui.renderToMainWindow, tr("Render To Main Window"), tr("Checked"),
 		tr("Renders the display of the simulated console to the main window of the application, over "
 		   "the game list. If unchecked, the display will render in a separate window."));
+	
+	// Not yet used, disable the options
+	m_ui.pauseOnStart->setDisabled(true);
+	m_ui.pauseOnFocusLoss->setDisabled(true);
+	m_ui.disableWindowResizing->setDisabled(true);
+	m_ui.hideMouseCursor->setDisabled(true);
+	m_ui.language->setDisabled(true);
 }
 
 InterfaceSettingsWidget::~InterfaceSettingsWidget() = default;

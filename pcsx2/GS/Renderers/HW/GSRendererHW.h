@@ -22,6 +22,9 @@
 
 class GSRendererHW : public GSRenderer
 {
+public:
+	static constexpr int MAX_FRAMEBUFFER_HEIGHT = 1280;
+
 private:
 	int m_width;
 	int m_height;
@@ -53,8 +56,6 @@ private:
 	bool OI_BurnoutGames(GSTexture* rt, GSTexture* ds, GSTextureCache::Source* t);
 
 	void OO_BurnoutGames();
-
-	bool CU_TalesOfAbyss();
 
 	class Hacks
 	{

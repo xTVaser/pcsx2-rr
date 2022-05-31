@@ -322,6 +322,7 @@ RendererTab::RendererTab(wxWindow* parent)
 	auto* pcrtc_checks_box = new wxWrapSizer(wxHORIZONTAL);
 
 	m_ui.addCheckBox(pcrtc_checks_box, "Screen Offsets", "pcrtc_offsets", IDC_PCRTC_OFFSETS);
+	m_ui.addCheckBox(pcrtc_checks_box, "Disable Interlace Offset", "disable_interlace_offset", IDC_DISABLE_INTERLACE_OFFSETS);
 
 	general_box->Add(pcrtc_checks_box, wxSizerFlags().Center());
 
@@ -341,6 +342,8 @@ HacksTab::HacksTab(wxWindow* parent)
 
 	auto hw_prereq = [this]{ return m_is_hardware; };
 	auto* hacks_check_box = m_ui.addCheckBox(tab_box.inner, "Manual HW Hacks (Disables automatic settings if checked)", "UserHacks", -1, hw_prereq);
+	m_ui.addCheckBox(tab_box.inner, "Skip Presenting Duplicate Frames", "skip_duplicate_frames", -1);
+
 	auto hacks_prereq = [this, hacks_check_box]{ return m_is_hardware && hacks_check_box->GetValue(); };
 	auto upscale_hacks_prereq = [this, hacks_check_box]{ return !m_is_native_res && hacks_check_box->GetValue(); };
 

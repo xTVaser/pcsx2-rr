@@ -19,6 +19,7 @@ target_sources(pcsx2-qt PRIVATE
 	AutoUpdaterDialog.ui
 	DisplayWidget.cpp
 	DisplayWidget.h
+	EarlyHardwareCheck.cpp
 	EmuThread.cpp
 	EmuThread.h
 	Main.cpp
@@ -101,6 +102,9 @@ target_sources(pcsx2-qt PRIVATE
 	Settings/SystemSettingsWidget.cpp
 	Settings/SystemSettingsWidget.h
 	Settings/SystemSettingsWidget.ui
+	Tools/InputRecording/NewInputRecordingDlg.cpp
+	Tools/InputRecording/NewInputRecordingDlg.h
+	Tools/InputRecording/NewInputRecordingDlg.ui
 	resources/resources.qrc
 )
 
@@ -129,3 +133,4 @@ if(WIN32)
 	)
 endif()
 
+setup_main_executable(pcsx2-qt)

@@ -86,6 +86,13 @@ const char* GameList::EntryTypeToString(EntryType type)
 	return names[static_cast<int>(type)];
 }
 
+const char* GameList::RegionToString(Region region)
+{
+	static std::array<const char*, static_cast<int>(Region::Count)> names = {
+		{"NTSC-U/C", "NTSC-J", "PAL", "Other"}};
+	return names[static_cast<int>(region)];
+}
+
 const char* GameList::EntryCompatibilityRatingToString(CompatibilityRating rating)
 {
 	// clang-format off
@@ -103,17 +110,13 @@ const char* GameList::EntryCompatibilityRatingToString(CompatibilityRating ratin
 	// clang-format on
 }
 
-bool GameList::IsScannableFilename(const std::string& path)
+bool GameList::IsScannableFilename(const std::string_view& path)
 {
 	static const char* extensions[] = {".iso", ".mdf", ".nrg", ".bin", ".img", ".gz", ".cso", ".chd", ".elf", ".irx"};
 
-	const std::string::size_type pos = path.rfind('.');
-	if (pos == std::string::npos)
-		return false;
-
 	for (const char* test_extension : extensions)
 	{
-		if (StringUtil::Strcasecmp(&path[pos], test_extension) == 0)
+		if (StringUtil::EndsWithNoCase(path, test_extension))
 			return true;
 	}
 
@@ -497,11 +500,11 @@ void GameList::ScanDirectory(const char* path, bool recursive, const std::vector
 
 		{
 			std::unique_lock lock(s_mutex);
-			if (GetEntryForPath(ffd.FileName.c_str()))
+			if (GetEntryForPath(ffd.FileName.c_str()) || AddFileFromCache(ffd.FileName, ffd.ModificationTime))
+			{
+				progress->IncrementProgressValue();
 				continue;
-
-			if (AddFileFromCache(ffd.FileName, ffd.ModificationTime))
-				continue;
+			}
 		}
 
 		// ownership of fp is transferred
@@ -680,7 +683,17 @@ std::string GameList::GetCoverImagePath(const std::string& path, const std::stri
 	std::string cover_path;
 	for (const char* extension : extensions)
 	{
-		// use the file title if it differs (e.g. modded games)
+
+		// Prioritize lookup by serial (Most specific)
+		if (!serial.empty())
+		{
+			const std::string cover_filename(serial + extension);
+			cover_path = Path::Combine(EmuFolders::Covers, cover_filename);
+			if (FileSystem::FileExists(cover_path.c_str()))
+				return cover_path;
+		}
+
+		// Try file title (for modded games or specific like above)
 		const std::string_view file_title(Path::GetFileTitle(path));
 		if (!file_title.empty() && title != file_title)
 		{
@@ -692,19 +705,10 @@ std::string GameList::GetCoverImagePath(const std::string& path, const std::stri
 				return cover_path;
 		}
 
-		// try the title
+		// Last resort, check the game title
 		if (!title.empty())
 		{
 			const std::string cover_filename(title + extension);
-			cover_path = Path::Combine(EmuFolders::Covers, cover_filename);
-			if (FileSystem::FileExists(cover_path.c_str()))
-				return cover_path;
-		}
-
-		// then the code
-		if (!serial.empty())
-		{
-			const std::string cover_filename(serial + extension);
 			cover_path = Path::Combine(EmuFolders::Covers, cover_filename);
 			if (FileSystem::FileExists(cover_path.c_str()))
 				return cover_path;

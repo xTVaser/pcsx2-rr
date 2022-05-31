@@ -106,15 +106,11 @@ static const TraceLogDescriptor
 
 	TLD_sysoutConsole = {"SYSout", "System Out", "Shows strings printed to the system output stream."},
 
-	TLD_Pgif = {"PGIFout", "&PGIF Console", "Shows output from pgif the emulated ps1 gpu"}
-
-#ifndef DISABLE_RECORDING
-	,
+	TLD_Pgif = {"PGIFout", "&PGIF Console", "Shows output from pgif the emulated ps1 gpu"},
 
 	TLD_recordingConsole = {"Input Recording", "Input Recording Console", "Shows recording related logs and information."},
 
 	TLD_controlInfo = {"Controller Info", "Controller Info", "Shows detailed controller input values for port 1, every frame."}
-#endif
 ; // End init of TraceLogDescriptors
 
 SysConsoleLogPack::SysConsoleLogPack()
@@ -125,10 +121,8 @@ SysConsoleLogPack::SysConsoleLogPack()
 	, eeConsole(&TLD_eeConsole)
 	, iopConsole(&TLD_iopConsole)
 	, deci2(&TLD_deci2)
-#ifndef DISABLE_RECORDING
 	, recordingConsole(&TLD_recordingConsole)
 	, controlInfo(&TLD_controlInfo)
-#endif
 {
 }
 

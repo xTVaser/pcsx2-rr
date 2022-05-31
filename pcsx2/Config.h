@@ -431,6 +431,7 @@ struct Pcsx2Config
 			struct
 			{
 				bool
+					DisableInterlaceOffset: 1,
 					PCRTCOffsets : 1,
 					IntegerScaling : 1,
 					LinearPresent : 1,
@@ -440,6 +441,7 @@ struct Pcsx2Config
 					DisableDualSourceBlend : 1,
 					DisableFramebufferFetch : 1,
 					ThreadedPresentation : 1,
+					SkipDuplicateFrames : 1,
 					OsdShowMessages : 1,
 					OsdShowSpeed : 1,
 					OsdShowFPS : 1,
@@ -940,9 +942,9 @@ struct Pcsx2Config
 		EnableCheats : 1, // enables cheat detection and application
 		EnablePINE : 1, // enables inter-process communication
 		EnableWideScreenPatches : 1,
-#ifndef DISABLE_RECORDING
+		EnableNoInterlacingPatches : 1,
+		// TODO - Vaser - where are these settings exposed in the Qt UI?
 		EnableRecordingTools : 1,
-#endif
 #ifdef PCSX2_CORE
 		EnableGameFixes : 1, // enables automatic game fixes
 		SaveStateOnShutdown : 1, // default value for saving state on shutdown
@@ -1033,6 +1035,7 @@ namespace EmuFolders
 	extern std::string Logs;
 	extern std::string Cheats;
 	extern std::string CheatsWS;
+	extern std::string CheatsNI;
 	extern std::string Resources;
 	extern std::string Cache;
 	extern std::string Covers;

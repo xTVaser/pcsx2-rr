@@ -21,6 +21,7 @@
 #include "SettingsDialog.h"
 #include <QtWidgets/QMessageBox>
 
+#include "pcsx2/HostSettings.h"
 #include "pcsx2/GS/GS.h"
 #include "pcsx2/GS/GSUtil.h"
 
@@ -31,6 +32,9 @@
 #ifdef _WIN32
 #include "Frontend/D3D11HostDisplay.h"
 #include "Frontend/D3D12HostDisplay.h"
+#endif
+#ifdef __APPLE__
+#include "GS/Renderers/Metal/GSMetalCPPAccessible.h"
 #endif
 
 struct RendererInfo
@@ -99,6 +103,7 @@ GraphicsSettingsWidget::GraphicsSettingsWidget(SettingsDialog* dialog, QWidget* 
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.bilinearFiltering, "EmuCore/GS", "linear_present", true);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.integerScaling, "EmuCore/GS", "IntegerScaling", false);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.PCRTCOffsets, "EmuCore/GS", "pcrtc_offsets", false);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.DisableInterlaceOffset, "EmuCore/GS", "disable_interlace_offset", false);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.internalResolutionScreenshots, "EmuCore/GS", "InternalResolutionScreenshots", false);
 	SettingWidgetBinder::BindWidgetToFloatSetting(sif, m_ui.zoom, "EmuCore/GS", "Zoom", 100.0f);
 	SettingWidgetBinder::BindWidgetToFloatSetting(sif, m_ui.stretchY, "EmuCore/GS", "StretchY", 100.0f);
@@ -206,11 +211,13 @@ GraphicsSettingsWidget::GraphicsSettingsWidget(SettingsDialog* dialog, QWidget* 
 	//////////////////////////////////////////////////////////////////////////
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.useBlitSwapChain, "EmuCore/GS", "UseBlitSwapChain", false);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.useDebugDevice, "EmuCore/GS", "UseDebugDevice", false);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.skipPresentingDuplicateFrames, "EmuCore/GS", "SkipDuplicateFrames", false);
 	SettingWidgetBinder::BindWidgetToIntSetting(sif, m_ui.overrideTextureBarriers, "EmuCore/GS", "OverrideTextureBarriers", -1, -1);
 	SettingWidgetBinder::BindWidgetToIntSetting(sif, m_ui.overrideGeometryShader, "EmuCore/GS", "OverrideGeometryShaders", -1, -1);
 	SettingWidgetBinder::BindWidgetToIntSetting(sif, m_ui.gsDumpCompression, "EmuCore/GS", "GSDumpCompression", static_cast<int>(GSDumpCompressionMethod::Uncompressed));
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.disableFramebufferFetch, "EmuCore/GS", "DisableFramebufferFetch", false);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.disableDualSource, "EmuCore/GS", "DisableDualSourceBlend", false);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.disableHardwareReadbacks, "EmuCore/GS", "HWDisableReadbacks", false);
 
 	//////////////////////////////////////////////////////////////////////////
 	// SW Settings
@@ -234,7 +241,7 @@ GraphicsSettingsWidget::GraphicsSettingsWidget(SettingsDialog* dialog, QWidget* 
 	// per-game override for renderer is slightly annoying, since we need to populate the global setting field
 	if (sif)
 	{
-		const int global_renderer = QtHost::GetBaseIntSettingValue("EmuCore/GS", "Renderer", static_cast<int>(GSRendererType::Auto));
+		const int global_renderer = Host::GetBaseIntSettingValue("EmuCore/GS", "Renderer", static_cast<int>(GSRendererType::Auto));
 		QString global_renderer_name;
 		for (const RendererInfo& ri : s_renderer_info)
 		{
@@ -262,6 +269,11 @@ GraphicsSettingsWidget::GraphicsSettingsWidget(SettingsDialog* dialog, QWidget* 
 		tr("Uses a blit presentation model instead of flipping when using the Direct3D 11 "
 		   "renderer. This usually results in slower performance, but may be required for some "
 		   "streaming applications, or to uncap framerates on some systems."));
+
+	dialog->registerWidgetHelp(m_ui.skipPresentingDuplicateFrames, tr("Skip Presenting Duplicate Frames"), tr("Unchecked"),
+		tr("Detects when idle frames are being presented in 25/30fps games, and skips presenting those frames. The frame is still rendered, it just means "
+		   "the GPU has more time to complete it (this is NOT frame skipping). Can smooth our frame time fluctuations when the CPU/GPU are near maximum "
+		   "utilization, but makes frame pacing more inconsistent and can increase input lag."));
 }
 
 GraphicsSettingsWidget::~GraphicsSettingsWidget() = default;
@@ -335,7 +347,7 @@ void GraphicsSettingsWidget::onShadeBoostChanged()
 
 void GraphicsSettingsWidget::onGpuPaletteConversionChanged(int state)
 {
-	const bool enabled = state == Qt::CheckState::PartiallyChecked ? QtHost::GetBaseBoolSettingValue("EmuCore/GS", "paltex", false) : state;
+	const bool enabled = state == Qt::CheckState::PartiallyChecked ? Host::GetBaseBoolSettingValue("EmuCore/GS", "paltex", false) : state;
 
 	m_ui.anisotropicFiltering->setEnabled(!enabled);
 }
@@ -366,7 +378,7 @@ void GraphicsSettingsWidget::updateRendererDependentOptions()
 	const bool is_sw_dx = false;
 #endif
 
-	const bool is_hardware = (type == GSRendererType::DX11 || type == GSRendererType::DX12 || type == GSRendererType::OGL || type == GSRendererType::VK);
+	const bool is_hardware = (type == GSRendererType::DX11 || type == GSRendererType::DX12 || type == GSRendererType::OGL || type == GSRendererType::VK || type == GSRendererType::Metal);
 	const bool is_software = (type == GSRendererType::SW);
 	const int current_tab = m_hardware_renderer_visible ? m_ui.hardwareRendererGroup->currentIndex() : m_ui.softwareRendererGroup->currentIndex();
 
@@ -445,6 +457,12 @@ void GraphicsSettingsWidget::updateRendererDependentOptions()
 			break;
 #endif
 
+#ifdef __APPLE__
+		case GSRendererType::Metal:
+			modes = GetMetalAdapterAndModeList();
+			break;
+#endif
+
 		case GSRendererType::OGL:
 		case GSRendererType::SW:
 		case GSRendererType::Null:
@@ -457,7 +475,7 @@ void GraphicsSettingsWidget::updateRendererDependentOptions()
 	{
 		QSignalBlocker sb(m_ui.adapter);
 
-		std::string current_adapter = QtHost::GetBaseStringSettingValue("EmuCore/GS", "Adapter", "");
+		std::string current_adapter = Host::GetBaseStringSettingValue("EmuCore/GS", "Adapter", "");
 		m_ui.adapter->clear();
 		m_ui.adapter->setEnabled(!modes.adapter_names.empty());
 		m_ui.adapter->addItem(tr("(Default)"));
@@ -487,7 +505,7 @@ void GraphicsSettingsWidget::updateRendererDependentOptions()
 	{
 		QSignalBlocker sb(m_ui.fullscreenModes);
 
-		std::string current_mode(QtHost::GetBaseStringSettingValue("EmuCore/GS", "FullscreenMode", ""));
+		std::string current_mode(Host::GetBaseStringSettingValue("EmuCore/GS", "FullscreenMode", ""));
 		m_ui.fullscreenModes->clear();
 		m_ui.fullscreenModes->addItem(tr("Borderless Fullscreen"));
 		m_ui.fullscreenModes->setCurrentIndex(0);

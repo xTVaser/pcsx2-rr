@@ -18,6 +18,8 @@
 #include "common/FileSystem.h"
 #include "common/Path.h"
 #include "common/StringUtil.h"
+
+#include "pcsx2/HostSettings.h"
 #include "pcsx2/Frontend/GameList.h"
 #include "pcsx2/Frontend/INISettingsInterface.h"
 
@@ -91,9 +93,7 @@ void SettingsDialog::setupUi(const GameList::Entry* game)
 				tr("<strong>Summary</strong><hr>Eventually this will be where we can see patches and compute hashes/verify dumps/etc."));
 		}
 
-		// remove the preset buttons. but we might want to enable these in the future.
 		m_ui.restoreDefaultsButton->setVisible(false);
-		m_ui.settingsPreset->setVisible(false);
 	}
 
 	// Common to both per-game and global settings.
@@ -140,6 +140,9 @@ void SettingsDialog::setupUi(const GameList::Entry* game)
 	connect(m_ui.settingsCategory, &QListWidget::currentRowChanged, this, &SettingsDialog::onCategoryCurrentRowChanged);
 	connect(m_ui.closeButton, &QPushButton::clicked, this, &SettingsDialog::accept);
 	connect(m_ui.restoreDefaultsButton, &QPushButton::clicked, this, &SettingsDialog::onRestoreDefaultsClicked);
+
+	// TODO: Remove this once they're implemented.
+	m_ui.restoreDefaultsButton->setVisible(false);
 }
 
 SettingsDialog::~SettingsDialog()
@@ -249,7 +252,7 @@ bool SettingsDialog::getEffectiveBoolValue(const char* section, const char* key,
 	if (m_sif && m_sif->GetBoolValue(section, key, &value))
 		return value;
 	else
-		return QtHost::GetBaseBoolSettingValue(section, key, default_value);
+		return Host::GetBaseBoolSettingValue(section, key, default_value);
 }
 
 int SettingsDialog::getEffectiveIntValue(const char* section, const char* key, int default_value) const
@@ -258,7 +261,7 @@ int SettingsDialog::getEffectiveIntValue(const char* section, const char* key, i
 	if (m_sif && m_sif->GetIntValue(section, key, &value))
 		return value;
 	else
-		return QtHost::GetBaseIntSettingValue(section, key, default_value);
+		return Host::GetBaseIntSettingValue(section, key, default_value);
 }
 
 float SettingsDialog::getEffectiveFloatValue(const char* section, const char* key, float default_value) const
@@ -267,14 +270,14 @@ float SettingsDialog::getEffectiveFloatValue(const char* section, const char* ke
 	if (m_sif && m_sif->GetFloatValue(section, key, &value))
 		return value;
 	else
-		return QtHost::GetBaseFloatSettingValue(section, key, default_value);
+		return Host::GetBaseFloatSettingValue(section, key, default_value);
 }
 
 std::string SettingsDialog::getEffectiveStringValue(const char* section, const char* key, const char* default_value) const
 {
 	std::string value;
 	if (!m_sif || !m_sif->GetStringValue(section, key, &value))
-		value = QtHost::GetBaseStringSettingValue(section, key, default_value);
+		value = Host::GetBaseStringSettingValue(section, key, default_value);
 	return value;
 }
 
@@ -291,7 +294,7 @@ std::optional<bool> SettingsDialog::getBoolValue(const char* section, const char
 	}
 	else
 	{
-		value = QtHost::GetBaseBoolSettingValue(section, key, default_value.value_or(false));
+		value = Host::GetBaseBoolSettingValue(section, key, default_value.value_or(false));
 	}
 
 	return value;
@@ -310,7 +313,7 @@ std::optional<int> SettingsDialog::getIntValue(const char* section, const char* 
 	}
 	else
 	{
-		value = QtHost::GetBaseIntSettingValue(section, key, default_value.value_or(0));
+		value = Host::GetBaseIntSettingValue(section, key, default_value.value_or(0));
 	}
 
 	return value;
@@ -329,7 +332,7 @@ std::optional<float> SettingsDialog::getFloatValue(const char* section, const ch
 	}
 	else
 	{
-		value = QtHost::GetBaseFloatSettingValue(section, key, default_value.value_or(0.0f));
+		value = Host::GetBaseFloatSettingValue(section, key, default_value.value_or(0.0f));
 	}
 
 	return value;
@@ -348,7 +351,7 @@ std::optional<std::string> SettingsDialog::getStringValue(const char* section, c
 	}
 	else
 	{
-		value = QtHost::GetBaseStringSettingValue(section, key, default_value.value_or(""));
+		value = Host::GetBaseStringSettingValue(section, key, default_value.value_or(""));
 	}
 
 	return value;
@@ -414,7 +417,7 @@ void SettingsDialog::setStringSettingValue(const char* section, const char* key,
 	g_emu_thread->applySettings();
 }
 
-void SettingsDialog::openGamePropertiesDialog(const GameList::Entry* game, u32 crc)
+void SettingsDialog::openGamePropertiesDialog(const GameList::Entry* game, const std::string_view& serial, u32 crc)
 {
 	// check for an existing dialog with this crc
 	for (SettingsDialog* dialog : s_open_game_properties_dialogs)
@@ -427,8 +430,8 @@ void SettingsDialog::openGamePropertiesDialog(const GameList::Entry* game, u32 c
 		}
 	}
 
-	std::unique_ptr<INISettingsInterface> sif =
-		std::make_unique<INISettingsInterface>(Path::Combine(EmuFolders::GameSettings, StringUtil::StdStringFromFormat("%08X.ini", crc)));
+	std::string filename(VMManager::GetGameSettingsPath(serial, crc));
+	std::unique_ptr<INISettingsInterface> sif = std::make_unique<INISettingsInterface>(std::move(filename));
 	if (FileSystem::FileExists(sif->GetFileName().c_str()))
 		sif->Load();
 

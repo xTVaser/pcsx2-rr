@@ -19,6 +19,7 @@
 #include "common/StringUtil.h"
 
 #include "pcsx2/Frontend/GameList.h"
+#include "pcsx2/HostSettings.h"
 
 #include <QtCore/QSortFilterProxyModel>
 #include <QtGui/QPixmap>
@@ -73,10 +74,8 @@ GameListWidget::~GameListWidget() = default;
 void GameListWidget::initialize()
 {
 	m_model = new GameListModel(this);
-	m_model->setCoverScale(QtHost::GetBaseFloatSettingValue("UI", "GameListCoverArtScale", 0.45f));
-	m_model->setShowCoverTitles(QtHost::GetBaseBoolSettingValue("UI", "GameListShowCoverTitles", true));
-	m_model->setCoverScale(0.45f);
-	m_model->setShowCoverTitles(true);
+	m_model->setCoverScale(Host::GetBaseFloatSettingValue("UI", "GameListCoverArtScale", 0.45f));
+	m_model->setShowCoverTitles(Host::GetBaseBoolSettingValue("UI", "GameListShowCoverTitles", true));
 
 	m_sort_model = new GameListSortModel(m_model);
 	m_sort_model->setSourceModel(m_model);
@@ -138,7 +137,7 @@ void GameListWidget::initialize()
 	connect(m_empty_ui.scanForNewGames, &QPushButton::clicked, this, [this]() { refresh(false); });
 	insertWidget(2, m_empty_widget);
 
-	if (QtHost::GetBaseBoolSettingValue("UI", "GameListGridView", false))
+	if (Host::GetBaseBoolSettingValue("UI", "GameListGridView", false))
 		setCurrentIndex(1);
 	else
 		setCurrentIndex(0);
@@ -163,13 +162,7 @@ bool GameListWidget::getShowGridCoverTitles() const
 
 void GameListWidget::refresh(bool invalidate_cache)
 {
-	if (m_refresh_thread)
-	{
-		m_refresh_thread->cancel();
-		m_refresh_thread->wait();
-		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-		pxAssertRel(!m_refresh_thread, "Game list thread should be unreferenced by now");
-	}
+	cancelRefresh();
 
 	m_refresh_thread = new GameListRefreshThread(invalidate_cache);
 	connect(m_refresh_thread, &GameListRefreshThread::refreshProgress, this, &GameListWidget::onRefreshProgress,
@@ -179,11 +172,22 @@ void GameListWidget::refresh(bool invalidate_cache)
 	m_refresh_thread->start();
 }
 
+void GameListWidget::cancelRefresh()
+{
+	if (!m_refresh_thread)
+		return;
+
+	m_refresh_thread->cancel();
+	m_refresh_thread->wait();
+	QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+	pxAssertRel(!m_refresh_thread, "Game list thread should be unreferenced by now");
+}
+
 void GameListWidget::onRefreshProgress(const QString& status, int current, int total)
 {
 	// switch away from the placeholder while we scan, in case we find anything
 	if (currentIndex() == 2)
-		setCurrentIndex(QtHost::GetBaseBoolSettingValue("UI", "GameListGridView", false) ? 1 : 0);
+		setCurrentIndex(Host::GetBaseBoolSettingValue("UI", "GameListGridView", false) ? 1 : 0);
 
 	m_model->refresh();
 	emit refreshProgress(status, current, total);
@@ -374,7 +378,7 @@ void GameListWidget::loadTableViewColumnVisibilitySettings()
 
 	for (int column = 0; column < GameListModel::Column_Count; column++)
 	{
-		const bool visible = QtHost::GetBaseBoolSettingValue(
+		const bool visible = Host::GetBaseBoolSettingValue(
 			"GameListTableView", getColumnVisibilitySettingsKeyName(column).c_str(), DEFAULT_VISIBILITY[column]);
 		m_table_view->setColumnHidden(column, !visible);
 	}
@@ -401,10 +405,10 @@ void GameListWidget::loadTableViewColumnSortSettings()
 	const bool DEFAULT_SORT_DESCENDING = false;
 
 	const GameListModel::Column sort_column =
-		GameListModel::getColumnIdForName(QtHost::GetBaseStringSettingValue("GameListTableView", "SortColumn"))
+		GameListModel::getColumnIdForName(Host::GetBaseStringSettingValue("GameListTableView", "SortColumn"))
 			.value_or(DEFAULT_SORT_COLUMN);
 	const bool sort_descending =
-		QtHost::GetBaseBoolSettingValue("GameListTableView", "SortDescending", DEFAULT_SORT_DESCENDING);
+		Host::GetBaseBoolSettingValue("GameListTableView", "SortDescending", DEFAULT_SORT_DESCENDING);
 	m_table_view->sortByColumn(sort_column, sort_descending ? Qt::DescendingOrder : Qt::AscendingOrder);
 }
 

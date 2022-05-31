@@ -172,15 +172,15 @@ struct alignas(32) GSScanlineLocalData // per prim variables, each thread has it
 #if _M_SSE >= 0x501
 
 	struct skip { GSVector8 z, s, t, q; GSVector8i rb, ga, f, _pad; } d[8];
-	struct step { GSVector4 stq; struct { u32 rb, ga; } c; struct { u32 z, f; } p; } d8;
-	struct { GSVector8i rb, ga; } c;
+	struct step { GSVector4 stq; struct { u32 rb, ga; } c; struct { u64 z; u32 f; } p; } d8;
 	struct { u32 z, f; } p;
+	struct { GSVector8i rb, ga; } c;
 
 	// these should be stored on stack as normal local variables (no free regs to use, esp cannot be saved to anywhere, and we need an aligned stack)
 
 	struct
 	{
-		GSVector8 z, zo;
+		GSVector8 z0, z1;
 		GSVector8i f;
 		GSVector8 s, t, q;
 		GSVector8i rb, ga;
@@ -208,7 +208,7 @@ struct alignas(32) GSScanlineLocalData // per prim variables, each thread has it
 
 	struct
 	{
-		GSVector4 z, zo;
+		GSVector4 z0, z1;
 		GSVector4i f;
 		GSVector4 s, t, q;
 		GSVector4i rb, ga;

@@ -125,7 +125,7 @@ void GSRendererHW::SetScaling()
 	// Until performance issue is properly fixed, let's keep an option to reduce the framebuffer size.
 	//
 	// m_large_framebuffer has been inverted to m_conservative_framebuffer, it isn't an option that benefits being enabled all the time for everyone.
-	int fb_height = 1280;
+	int fb_height = MAX_FRAMEBUFFER_HEIGHT;
 	if (GSConfig.ConservativeFramebuffer)
 	{
 		fb_height = fb_width < 1024 ? std::max(512, crtc_size.y) : 1024;
@@ -1626,6 +1626,12 @@ void GSRendererHW::Draw()
 		}
 	}
 
+	if (m_src && m_src->m_shared_texture && m_src->m_texture != *m_src->m_from_target)
+	{
+		// Target texture changed, update reference.
+		m_src->m_texture = *m_src->m_from_target;
+	}
+
 	if (s_dump)
 	{
 		const u64 frame = g_perfmon.GetFrame();
@@ -2160,7 +2166,7 @@ void GSRendererHW::EmulateChannelShuffle(const GSTextureCache::Source* tex)
 			GL_INS("Gran Turismo RGB Channel");
 			m_conf.ps.channel = ChannelFetch_RGB;
 			m_context->TEX0.TFX = TFX_DECAL;
-			m_conf.rt = tex->m_from_target;
+			m_conf.rt = *tex->m_from_target;
 		}
 		else if (m_game.title == CRC::Tekken5)
 		{
@@ -2173,7 +2179,7 @@ void GSRendererHW::EmulateChannelShuffle(const GSTextureCache::Source* tex)
 				// 12 pages: 2 calls by channel, 3 channels, 1 blit
 				// Minus current draw call
 				m_skip = 12 * (3 + 3 + 1) - 1;
-				m_conf.rt = tex->m_from_target;
+				m_conf.rt = *tex->m_from_target;
 			}
 			else
 			{
@@ -2279,7 +2285,7 @@ void GSRendererHW::EmulateChannelShuffle(const GSTextureCache::Source* tex)
 	// Effect is really a channel shuffle effect so let's cheat a little
 	if (m_channel_shuffle)
 	{
-		m_conf.tex = tex->m_from_target;
+		m_conf.tex = *tex->m_from_target;
 		if (m_conf.tex)
 		{
 			if (m_conf.tex == m_conf.rt)
@@ -3691,8 +3697,6 @@ GSRendererHW::Hacks::Hacks()
 	m_oi_list.push_back(HackEntry<OI_Ptr>(CRC::BurnoutGames, CRC::RegionCount, &GSRendererHW::OI_BurnoutGames));
 
 	m_oo_list.push_back(HackEntry<OO_Ptr>(CRC::BurnoutGames, CRC::RegionCount, &GSRendererHW::OO_BurnoutGames));
-
-	m_cu_list.push_back(HackEntry<CU_Ptr>(CRC::TalesOfAbyss, CRC::RegionCount, &GSRendererHW::CU_TalesOfAbyss));
 }
 
 void GSRendererHW::Hacks::SetGameCRC(const CRC::Game& game)
@@ -4383,11 +4387,4 @@ void GSRendererHW::OO_BurnoutGames()
 
 // Can Upscale hacks: disable upscaling for some draw calls
 
-bool GSRendererHW::CU_TalesOfAbyss()
-{
-	// full image blur and brightening
-
-	const u32 FBP = m_context->FRAME.Block();
-
-	return FBP != 0x036e0 && FBP != 0x03560 && FBP != 0x038e0;
-}
+// None required.

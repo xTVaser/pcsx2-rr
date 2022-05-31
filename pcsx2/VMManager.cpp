@@ -62,6 +62,10 @@
 #include "common/emitter/x86_intrin.h"
 #endif
 
+#ifdef _WIN32
+#include "common/RedtapeWindows.h"
+#endif
+
 namespace VMManager
 {
 	static void LoadSettings();
@@ -79,7 +83,9 @@ namespace VMManager
 	static bool AutoDetectSource(const std::string& filename);
 	static bool ApplyBootParameters(const VMBootParameters& params, std::string* state_to_load);
 	static bool CheckBIOSAvailability();
-	static void UpdateRunningGame(bool force);
+	static void LoadPatches(const std::string& serial, u32 crc,
+		bool show_messages, bool show_messages_when_disabled);
+	static void UpdateRunningGame(bool resetting, bool game_starting);
 
 	static std::string GetCurrentSaveStateFileName(s32 slot);
 	static bool DoLoadState(const char* filename);
@@ -98,7 +104,6 @@ namespace VMManager
 static std::unique_ptr<SysMainMemory> s_vm_memory;
 static std::unique_ptr<SysCpuProviderPack> s_cpu_provider_pack;
 static std::unique_ptr<INISettingsInterface> s_game_settings_interface;
-static u64 s_emu_thread_affinity;
 
 static std::atomic<VMState> s_state{VMState::Shutdown};
 static std::atomic_bool s_cpu_implementation_changed{false};
@@ -109,15 +114,51 @@ static std::mutex s_save_state_threads_mutex;
 static std::mutex s_info_mutex;
 static std::string s_disc_path;
 static u32 s_game_crc;
+static u32 s_patches_crc;
 static std::string s_game_serial;
 static std::string s_game_name;
 static std::string s_elf_override;
 static u32 s_active_game_fixes = 0;
 static std::vector<u8> s_widescreen_cheats_data;
 static bool s_widescreen_cheats_loaded = false;
+static std::vector<u8> s_no_interlacing_cheats_data;
+static bool s_no_interlacing_cheats_loaded = false;
+static u32 s_active_no_interlacing_patches = 0;
 static s32 s_current_save_slot = 1;
 static u32 s_frame_advance_count = 0;
 static u32 s_mxcsr_saved;
+
+bool VMManager::PerformEarlyHardwareChecks(const char** error)
+{
+#define COMMON_DOWNLOAD_MESSAGE \
+	"PCSX2 builds can be downloaded from https://pcsx2.net/downloads/"
+
+#if defined(_M_X86)
+	// On Windows, this gets called as a global object constructor, before any of our objects are constructed.
+	// So, we have to put it on the stack instead.
+	x86capabilities temp_x86_caps;
+	temp_x86_caps.Identify();
+
+	if (!temp_x86_caps.hasStreamingSIMD4Extensions)
+	{
+		*error = "PCSX2 requires the Streaming SIMD 4 Extensions instruction set, which your CPU does not support.\n\n"
+				 "SSE4 is now a minimum requirement for PCSX2. You should either upgrade your CPU, or use an older build such as 1.6.0.\n\n" COMMON_DOWNLOAD_MESSAGE;
+		return false;
+	}
+
+#if _M_SSE >= 0x0501
+	if (!temp_x86_caps.hasAVX || !temp_x86_caps.hasAVX2)
+	{
+		*error = "This build of PCSX2 requires the Advanced Vector Extensions 2 instruction set, which your CPU does not support.\n\n"
+				 "You should download and run the SSE4 build of PCSX2 instead, or upgrade to a CPU that supports AVX2 to use this build.\n\n" COMMON_DOWNLOAD_MESSAGE;
+		return false;
+	}
+#endif
+#endif
+
+#undef COMMON_DOWNLOAD_MESSAGE
+	return true;
+}
 
 VMState VMManager::GetState()
 {
@@ -187,6 +228,18 @@ std::string VMManager::GetGameName()
 
 bool VMManager::Internal::InitializeGlobals()
 {
+	// On Win32, we have a bunch of things which use COM (e.g. SDL, XAudio2, etc).
+	// We need to initialize COM first, before anything else does, because otherwise they might
+	// initialize it in single-threaded/apartment mode, which can't be changed to multithreaded.
+#ifdef _WIN32
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+	if (FAILED(hr))
+	{
+		Host::ReportErrorAsync("Error", fmt::format("CoInitializeEx() failed: {:08X}", hr));
+		return false;
+	}
+#endif
+
 	x86caps.Identify();
 	x86caps.CountCores();
 	x86caps.SIMD_EstablishMXCSRmask();
@@ -194,6 +247,13 @@ bool VMManager::Internal::InitializeGlobals()
 	SysLogMachineCaps();
 
 	return true;
+}
+
+void VMManager::Internal::ReleaseGlobals()
+{
+#ifdef _WIN32
+	CoUninitialize();
+#endif
 }
 
 bool VMManager::Internal::InitializeMemory()
@@ -211,6 +271,8 @@ void VMManager::Internal::ReleaseMemory()
 {
 	std::vector<u8>().swap(s_widescreen_cheats_data);
 	s_widescreen_cheats_loaded = false;
+	std::vector<u8>().swap(s_no_interlacing_cheats_data);
+	s_no_interlacing_cheats_loaded = false;
 
 	s_vm_memory->DecommitAll();
 	s_vm_memory->ReleaseAll();
@@ -230,17 +292,21 @@ SysCpuProviderPack& GetCpuProviders()
 
 void VMManager::LoadSettings()
 {
-	auto lock = Host::GetSettingsLock();
+	std::unique_lock<std::mutex> lock = Host::GetSettingsLock();
 	SettingsInterface* si = Host::GetSettingsInterface();
 	SettingsLoadWrapper slw(*si);
 	EmuConfig.LoadSave(slw);
 	PAD::LoadConfig(*si);
-	InputManager::ReloadSources(*si);
+	InputManager::ReloadSources(*si, lock);
 	InputManager::ReloadBindings(*si);
 
 	// Remove any user-specified hacks in the config (we don't want stale/conflicting values when it's globally disabled).
 	EmuConfig.GS.MaskUserHacks();
 	EmuConfig.GS.MaskUpscalingHacks();
+
+	// Disable interlacing if we have no-interlacing patches active.
+	if (s_active_no_interlacing_patches > 0 && EmuConfig.GS.InterlaceMode == GSInterlaceMode::Automatic)
+		EmuConfig.GS.InterlaceMode = GSInterlaceMode::Off;
 
 	// Force MTVU off when playing back GS dumps, it doesn't get used.
 	if (GSDumpReplayer::IsReplayingDump())
@@ -262,9 +328,14 @@ void VMManager::ApplyGameFixes()
 	s_active_game_fixes += game->applyGSHardwareFixes(EmuConfig.GS);
 }
 
-std::string VMManager::GetGameSettingsPath(u32 game_crc)
+std::string VMManager::GetGameSettingsPath(const std::string_view& game_serial, u32 game_crc)
 {
-	return Path::Combine(EmuFolders::GameSettings, StringUtil::StdStringFromFormat("%08X.ini", game_crc));
+	std::string sanitized_serial(game_serial);
+	Path::SanitizeFileName(sanitized_serial);
+
+	return game_serial.empty() ?
+			   Path::Combine(EmuFolders::GameSettings, fmt::format("{:08X}.ini", game_crc)) :
+               Path::Combine(EmuFolders::GameSettings, fmt::format("{}_{:08X}.ini", sanitized_serial, game_crc));
 }
 
 void VMManager::RequestDisplaySize(float scale /*= 0.0f*/)
@@ -318,7 +389,13 @@ bool VMManager::UpdateGameSettingsLayer()
 	std::unique_ptr<INISettingsInterface> new_interface;
 	if (s_game_crc != 0)
 	{
-		const std::string filename(GetGameSettingsPath(s_game_crc));
+		std::string filename(GetGameSettingsPath(s_game_serial.c_str(), s_game_crc));
+		if (!FileSystem::FileExists(filename.c_str()))
+		{
+			// try the legacy format (crc.ini)
+			filename = GetGameSettingsPath({}, s_game_crc);
+		}
+
 		if (FileSystem::FileExists(filename.c_str()))
 		{
 			Console.WriteLn("Loading game settings from '%s'...", filename.c_str());
@@ -343,15 +420,19 @@ bool VMManager::UpdateGameSettingsLayer()
 	return true;
 }
 
-static void LoadPatches(const std::string& crc_string, bool show_messages, bool show_messages_when_disabled)
+void VMManager::LoadPatches(const std::string& serial, u32 crc, bool show_messages, bool show_messages_when_disabled)
 {
+	const std::string crc_string(fmt::format("{:08X}", crc));
+	s_patches_crc = crc;
+	ForgetLoadedPatches();
+
 	std::string message;
 
 	int patch_count = 0;
 	if (EmuConfig.EnablePatches)
 	{
-		const GameDatabaseSchema::GameEntry* game = GameDatabase::findGame(s_game_serial);
-		const std::string* patches = game ? game->findPatch(s_game_crc) : nullptr;
+		const GameDatabaseSchema::GameEntry* game = GameDatabase::findGame(serial);
+		const std::string* patches = game ? game->findPatch(crc) : nullptr;
 		if (patches && (patch_count = LoadPatchesFromString(*patches)) > 0)
 		{
 			PatchesCon->WriteLn(Color_Green, "(GameDB) Patches Loaded: %d", patch_count);
@@ -373,7 +454,7 @@ static void LoadPatches(const std::string& crc_string, bool show_messages, bool 
 
 	// wide screen patches
 	int ws_patch_count = 0;
-	if (EmuConfig.EnableWideScreenPatches && s_game_crc != 0)
+	if (EmuConfig.EnableWideScreenPatches && crc != 0)
 	{
 		if (ws_patch_count = LoadPatchesFromDir(crc_string, EmuFolders::CheatsWS, "Widescreen hacks", false))
 		{
@@ -402,9 +483,52 @@ static void LoadPatches(const std::string& crc_string, bool show_messages, bool 
 			fmt::format_to(std::back_inserter(message), "{}{} widescreen patches", (patch_count > 0 || cheat_count > 0) ? " and " : "", ws_patch_count);
 	}
 
+	// no-interlacing patches
+	if (EmuConfig.EnableNoInterlacingPatches && crc != 0)
+	{
+		if (s_active_no_interlacing_patches = LoadPatchesFromDir(crc_string, EmuFolders::CheatsNI, "No-interlacing patches", false))
+		{
+			Console.WriteLn(Color_Gray, "Found no-interlacing patches in the cheats_ni folder --> skipping cheats_ni.zip");
+		}
+		else
+		{
+			// No ws cheat files found at the cheats_ws folder, try the ws cheats zip file.
+			if (!s_no_interlacing_cheats_loaded)
+			{
+				s_no_interlacing_cheats_loaded = true;
+
+				std::optional<std::vector<u8>> data = Host::ReadResourceFile("cheats_ni.zip");
+				if (data.has_value())
+					s_no_interlacing_cheats_data = std::move(data.value());
+			}
+
+			if (!s_no_interlacing_cheats_data.empty())
+			{
+				s_active_no_interlacing_patches = LoadPatchesFromZip(crc_string, s_no_interlacing_cheats_data.data(), s_no_interlacing_cheats_data.size());
+				PatchesCon->WriteLn(Color_Green, "(No-Interlacing Cheats DB) Patches Loaded: %u", s_active_no_interlacing_patches);
+			}
+		}
+
+		if (s_active_no_interlacing_patches > 0)
+		{
+			fmt::format_to(std::back_inserter(message), "{}{} no-interlacing patches", (patch_count > 0 || cheat_count > 0 || ws_patch_count > 0) ? " and " : "", s_active_no_interlacing_patches);
+
+			// Disable interlacing in GS if active.
+			if (EmuConfig.GS.InterlaceMode == GSInterlaceMode::Automatic)
+			{
+				EmuConfig.GS.InterlaceMode = GSInterlaceMode::Off;
+				GetMTGS().ApplySettings();
+			}
+		}
+	}
+	else
+	{
+		s_active_no_interlacing_patches = 0;
+	}
+
 	if (show_messages)
 	{
-		if (cheat_count > 0 || ws_patch_count > 0)
+		if (cheat_count > 0 || ws_patch_count > 0 || s_active_no_interlacing_patches > 0)
 		{
 			message += " are active.";
 			Host::AddKeyedOSDMessage("LoadPatches", std::move(message), 5.0f);
@@ -416,7 +540,7 @@ static void LoadPatches(const std::string& crc_string, bool show_messages, bool 
 	}
 }
 
-void VMManager::UpdateRunningGame(bool force)
+void VMManager::UpdateRunningGame(bool resetting, bool game_starting)
 {
 	// The CRC can be known before the game actually starts (at the bios), so when
 	// we have the CRC but we're still at the bios and the settings are changed
@@ -436,7 +560,7 @@ void VMManager::UpdateRunningGame(bool force)
 		new_serial = GSDumpReplayer::GetDumpSerial();
 	}
 
-	if (!force && s_game_crc == new_crc && s_game_serial == new_serial)
+	if (!resetting && s_game_crc == new_crc && s_game_serial == new_serial)
 		return;
 
 	{
@@ -459,22 +583,36 @@ void VMManager::UpdateRunningGame(bool force)
 		}
 
 		sioSetGameSerial(memcardFilters.empty() ? s_game_serial : memcardFilters);
+
+		// If we don't reset the timer here, when using folder memcards the reindex will cause an eject,
+		// which a bunch of games don't like since they access the memory card on boot.
+		if (game_starting || resetting)
+			ClearMcdEjectTimeoutNow();
 	}
 
 	UpdateGameSettingsLayer();
 	ApplySettings();
 
-	ForgetLoadedPatches();
-	LoadPatches(StringUtil::StdStringFromFormat("%08X", new_crc), true, false);
+	// check this here, for two cases: dynarec on, and when enable cheats is set per-game.
+	if (s_patches_crc != s_game_crc)
+		ReloadPatches(game_starting, false);
+
 	GetMTGS().SendGameCRC(new_crc);
 
 	Host::OnGameChanged(s_disc_path, s_game_serial, s_game_name, s_game_crc);
+
+#if 0
+	// TODO: Enable this when the debugger is added to Qt, and it's active. Otherwise, this is just a waste of time.
+	// In other words, it should be lazily initialized.
+	MIPSAnalyst::ScanForFunctions(R5900SymbolMap, ElfTextRange.first, ElfTextRange.first + ElfTextRange.second, true);
+	R5900SymbolMap.UpdateActiveSymbols();
+	R3000SymbolMap.UpdateActiveSymbols();
+#endif
 }
 
-void VMManager::ReloadPatches(bool verbose)
+void VMManager::ReloadPatches(bool verbose, bool show_messages_when_disabled)
 {
-	ForgetLoadedPatches();
-	LoadPatches(StringUtil::StdStringFromFormat("%08X", s_game_crc), verbose, verbose);
+	LoadPatches(s_game_serial, s_game_crc, verbose, show_messages_when_disabled);
 }
 
 static LimiterModeType GetInitialLimiterMode()
@@ -606,6 +744,12 @@ bool VMManager::Initialize(const VMBootParameters& boot_params)
 {
 	const Common::Timer init_timer;
 	pxAssertRel(s_state.load() == VMState::Shutdown, "VM is shutdown");
+
+	// cancel any game list scanning, we need to use CDVD!
+	// TODO: we can get rid of this once, we make CDVD not use globals...
+	// (or make it thread-local, but that seems silly.)
+	Host::CancelGameListRefresh();
+
 	s_state.store(VMState::Initializing);
 	Host::OnVMStarting();
 
@@ -641,19 +785,6 @@ bool VMManager::Initialize(const VMBootParameters& boot_params)
 	ScopedGuard close_cdvd = [] { DoCDVDclose(); };
 
 	Console.WriteLn("Opening GS...");
-
-	// TODO: Get rid of thread state nonsense and just make it a "normal" thread.
-	static bool gs_initialized = false;
-	if (!gs_initialized)
-	{
-		if (GSinit() != 0)
-		{
-			Console.WriteLn("Failed to initialize GS.");
-			return false;
-		}
-
-		gs_initialized = true;
-	}
 	if (!GetMTGS().WaitForOpen())
 	{
 		// we assume GS is going to report its own error
@@ -749,7 +880,7 @@ bool VMManager::Initialize(const VMBootParameters& boot_params)
 	s_state.store(VMState::Paused);
 	Host::OnVMStarted();
 
-	UpdateRunningGame(true);
+	UpdateRunningGame(true, false);
 
 	SetEmuThreadAffinities(true);
 
@@ -792,10 +923,13 @@ void VMManager::Shutdown(bool save_resume_state)
 		std::unique_lock lock(s_info_mutex);
 		s_disc_path.clear();
 		s_game_crc = 0;
+		s_patches_crc = 0;
 		s_game_serial.clear();
 		s_game_name.clear();
 		Host::OnGameChanged(s_disc_path, s_game_serial, s_game_name, 0);
 	}
+	s_active_game_fixes = 0;
+	s_active_no_interlacing_patches = 0;
 	UpdateGameSettingsLayer();
 
 	std::string().swap(s_elf_override);
@@ -832,6 +966,9 @@ void VMManager::Reset()
 {
 	const bool game_was_started = g_GameStarted;
 
+	s_active_game_fixes = 0;
+	s_active_no_interlacing_patches = 0;
+
 	SysClearExecutionCache();
 	memBindConditionalHandlers();
 	UpdateVSyncRate();
@@ -840,7 +977,7 @@ void VMManager::Reset()
 
 	// gameid change, so apply settings
 	if (game_was_started)
-		UpdateRunningGame(true);
+		UpdateRunningGame(true, false);
 }
 
 std::string VMManager::GetSaveStateFileName(const char* game_serial, u32 game_crc, s32 slot)
@@ -905,7 +1042,7 @@ bool VMManager::DoLoadState(const char* filename)
 	{
 		Host::OnSaveStateLoading(filename);
 		SaveState_UnzipFromDisk(filename);
-		UpdateRunningGame(false);
+		UpdateRunningGame(false, false);
 		Host::OnSaveStateLoaded(filename, true);
 		return true;
 	}
@@ -1103,16 +1240,26 @@ bool VMManager::ChangeDisc(std::string path)
 	return result;
 }
 
-bool VMManager::IsElfFileName(const std::string& path)
+bool VMManager::IsElfFileName(const std::string_view& path)
 {
 	return StringUtil::EndsWithNoCase(path, ".elf");
 }
 
-bool VMManager::IsGSDumpFileName(const std::string& path)
+bool VMManager::IsGSDumpFileName(const std::string_view& path)
 {
 	return (StringUtil::EndsWithNoCase(path, ".gs") ||
 			StringUtil::EndsWithNoCase(path, ".gs.xz") ||
 			StringUtil::EndsWithNoCase(path, ".gs.zst"));
+}
+
+bool VMManager::IsSaveStateFileName(const std::string_view& path)
+{
+	return StringUtil::EndsWithNoCase(path, ".p2s");
+}
+
+bool VMManager::IsLoadableFileName(const std::string_view& path)
+{
+	return IsElfFileName(path) || IsGSDumpFileName(path) || GameList::IsScannableFilename(path);
 }
 
 void VMManager::Execute()
@@ -1148,15 +1295,19 @@ bool VMManager::Internal::IsExecutionInterrupted()
 	return s_state.load() != VMState::Running || s_cpu_implementation_changed.load();
 }
 
+void VMManager::Internal::EntryPointCompilingOnCPUThread()
+{
+	// Classic chicken and egg problem here. We don't want to update the running game
+	// until the game entry point actually runs, because that can update settings, which
+	// can flush the JIT, etc. But we need to apply patches for games where the entry
+	// point is in the patch (e.g. WRC 4). So. Gross, but the only way to handle it really.
+	LoadPatches(SysGetDiscID(), ElfCRC, true, false);
+	ApplyLoadedPatches(PPT_ONCE_ON_LOAD);
+}
+
 void VMManager::Internal::GameStartingOnCPUThread()
 {
-	GetMTGS().SendGameCRC(ElfCRC);
-
-	MIPSAnalyst::ScanForFunctions(R5900SymbolMap, ElfTextRange.first, ElfTextRange.first + ElfTextRange.second, true);
-	R5900SymbolMap.UpdateActiveSymbols();
-	R3000SymbolMap.UpdateActiveSymbols();
-
-	UpdateRunningGame(false);
+	UpdateRunningGame(false, true);
 	ApplyLoadedPatches(PPT_ONCE_ON_LOAD);
 	ApplyLoadedPatches(PPT_COMBINED_0_1);
 }
@@ -1246,7 +1397,7 @@ void VMManager::CheckForPatchConfigChanges(const Pcsx2Config& old_config)
 		return;
 	}
 
-	ReloadPatches(true);
+	ReloadPatches(true, true);
 }
 
 void VMManager::CheckForSPU2ConfigChanges(const Pcsx2Config& old_config)
@@ -1344,8 +1495,12 @@ void VMManager::CheckForConfigChanges(const Pcsx2Config& old_config)
 	CheckForDEV9ConfigChanges(old_config);
 	CheckForMemoryCardConfigChanges(old_config);
 
-	if (EmuConfig.EnableCheats != old_config.EnableCheats || EmuConfig.EnableWideScreenPatches != old_config.EnableWideScreenPatches)
-		VMManager::ReloadPatches(true);
+	if (EmuConfig.EnableCheats != old_config.EnableCheats ||
+		EmuConfig.EnableWideScreenPatches != old_config.EnableWideScreenPatches ||
+		EmuConfig.EnableNoInterlacingPatches != old_config.EnableNoInterlacingPatches)
+	{
+		VMManager::ReloadPatches(true, true);
+	}
 }
 
 void VMManager::ApplySettings()
