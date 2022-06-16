@@ -48,6 +48,7 @@
 #include "Frontend/InputManager.h"
 #include "VMManager.h"
 #endif
+#include <pcsx2/Recording/InputRecording.h>
 
 namespace ImGuiManager
 {
@@ -62,7 +63,7 @@ namespace ImGuiManager
 	static void AcquirePendingOSDMessages();
 	static void DrawOSDMessages();
 	static void FormatProcessorStat(std::string& text, double usage, double time);
-	static void DrawPerformanceOverlay();
+	static void DrawStatusAndPerformanceOverlay();
 } // namespace ImGuiManager
 
 static float s_global_scale = 1.0f;
@@ -674,7 +675,7 @@ void ImGuiManager::FormatProcessorStat(std::string& text, double usage, double t
 		fmt::format_to(std::back_inserter(text), "{:.1f}% ({:.2f}ms)", usage, time);
 }
 
-void ImGuiManager::DrawPerformanceOverlay()
+void ImGuiManager::DrawStatusAndPerformanceOverlay()
 {
 	const float scale = s_global_scale;
 	const float shadow_offset = std::ceil(1.0f * scale);
@@ -704,6 +705,29 @@ void ImGuiManager::DrawPerformanceOverlay()
 	const bool paused = (VMManager::GetState() == VMState::Paused);
 #else
 	constexpr bool paused = false;
+#endif
+
+#ifdef PCSX2_CORE
+	// TODO - is there a way to forcibly update the imgui frame without requiring to wait until the next vsync?
+	// TODO - icon list that would be nice to add
+	// - 'video' when screen capturing
+	if (g_InputRecording.isActive())
+	{
+		// Status Indicators
+		if (g_InputRecording.getControls().isRecording())
+		{
+			DRAW_LINE(s_standard_font, fmt::format("{} Recording", ICON_FA_CIRCLE).c_str(), IM_COL32(255, 0, 0, 255));
+		}
+		else
+		{
+			DRAW_LINE(s_standard_font, fmt::format("{} Replaying", ICON_FA_PLAY).c_str(), IM_COL32(97, 240, 84, 255));
+		}
+
+		// Input Recording Metadata
+		DRAW_LINE(s_fixed_font, fmt::format("Input Recording Active: {}", g_InputRecording.getData().getFilename()).c_str(), IM_COL32(117, 255, 241, 255));
+		DRAW_LINE(s_fixed_font, fmt::format("Frame: {}/{} ({})", g_InputRecording.getFrameCounter() + 1, g_InputRecording.getData().getTotalFrames(), g_FrameCount).c_str(), IM_COL32(117, 255, 241, 255));
+		DRAW_LINE(s_fixed_font, fmt::format("Undo Count: {}", g_InputRecording.getData().getUndoCount()).c_str(), IM_COL32(117, 255, 241, 255));
+	}
 #endif
 
 	if (!paused)
@@ -842,9 +866,9 @@ void ImGuiManager::RenderOSD()
 #ifdef PCSX2_CORE
 	// Don't draw OSD when we're just running big picture.
 	if (VMManager::HasValidVM())
-		DrawPerformanceOverlay();
+		DrawStatusAndPerformanceOverlay();
 #else
-	DrawPerformanceOverlay();
+	DrawStatusAndPerformanceOverlay();
 #endif
 
 	AcquirePendingOSDMessages();
