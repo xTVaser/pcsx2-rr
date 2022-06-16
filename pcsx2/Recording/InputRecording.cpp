@@ -706,11 +706,6 @@ u64 InputRecording::getFrameCounter() const
 	return m_frameCounter;
 }
 
-bool InputRecording::isInitialSavestateLoadComplete() const
-{
-	return m_initialSavestateLoadComplete;
-}
-
 bool InputRecording::isActive() const
 {
 	return m_isActive;
@@ -721,7 +716,7 @@ void InputRecording::handleExceededFrameCounter()
 	// if we go past the end, switch to recording mode so nothing is lost
 	if (m_frameCounter >= m_file.getTotalFrames() && m_controls.isReplaying())
 	{
-		m_controls.setRecordMode();
+		m_controls.setRecordMode(false);
 	}
 }
 
@@ -734,15 +729,15 @@ void InputRecording::handleLoadingSavestate()
 	// Why?
 	// - When you re-record you load another save-state which has it's own frame counter
 	//   stored within, we use this to adjust the frame we are replaying/recording to
-	if (isTypeSavestate() && !isInitialSavestateLoadComplete())
+	if (isTypeSavestate() && !m_initialSavestateLoadComplete)
 	{
 		setStartingFrame(g_FrameCount);
-		setInitialSavestateLoaded();
+		m_initialSavestateLoadComplete = true;
 	}
 	else
 	{
 		adjustFrameCounterOnReRecord(g_FrameCount);
-		watchForRerecords();
+		m_watchingForRerecords = true;
 	}
 }
 
@@ -759,11 +754,6 @@ void InputRecording::setStartingFrame(u64 startingFrame)
 	}
 	InputRec::consoleLog(fmt::format("Internal Starting Frame: {}", startingFrame));
 	m_startingFrame = startingFrame;
-}
-
-void InputRecording::setInitialSavestateLoaded()
-{
-	m_initialSavestateLoadComplete = true;
 }
 
 void InputRecording::adjustFrameCounterOnReRecord(u64 newFrameCounter)
@@ -795,11 +785,6 @@ void InputRecording::adjustFrameCounterOnReRecord(u64 newFrameCounter)
 		getControls().setReplayMode();
 	}
 	m_frameCounter = newFrameCounter - m_startingFrame;
-}
-
-void InputRecording::watchForRerecords()
-{
-	m_watchingForRerecords = true;
 }
 
 InputRecordingControls& InputRecording::getControls()
