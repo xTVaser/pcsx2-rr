@@ -186,6 +186,7 @@
      <addaction name="actionInputRecPlay"/>
      <addaction name="actionInputRecStop"/>
      <addaction name="separator"/>
+     <addaction name="actionInputRecOpenViewer"/>
      <addaction name="actionInputRecOpenSettings"/>
      <addaction name="separator"/>
      <addaction name="actionInputRecConsoleLogs"/>
@@ -853,6 +854,11 @@
   <action name="actionCoverDownloader">
    <property name="text">
     <string>Cover Downloader...</string>
+   </property>
+  </action>
+  <action name="actionInputRecOpenViewer">
+   <property name="text">
+    <string>Recording Viewer</string>
    </property>
   </action>
  </widget>
