@@ -210,7 +210,11 @@ SIO_WRITE sioWriteController(u8 data)
 			// Only examine controllers 1 / 2
 			if (sio.slot[sio.port] == 0 || sio.slot[sio.port] == 1)
 			{
+#ifdef PCSX2_CORE
 				g_InputRecording.controllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+#else
+				g_InputRecording.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+#endif
 			}
 		}
 		break;
