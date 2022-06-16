@@ -23,7 +23,7 @@
 #include "GS.h"
 #include "Host.h"
 #include "IconsFontAwesome5.h"
-#include "Recording/InputRecordingControls.h"
+#include "Recording/InputRecording.h"
 #include "VMManager.h"
 
 static s32 s_current_save_slot = 1;
@@ -185,7 +185,7 @@ DEFINE_HOTKEY("ResetVM", "System", "Reset Virtual Machine", [](s32 pressed) {
 })
 DEFINE_HOTKEY("InputRecToggleMode", "System", "Toggle Input Recording Mode", [](s32 pressed) {
 	if (!pressed && VMManager::HasValidVM())
-		g_InputRecordingControls.RecordModeToggle();
+		g_InputRecording.getControls().toggleRecordMode();
 })
 
 DEFINE_HOTKEY("PreviousSaveStateSlot", "Save States", "Select Previous Save Slot", [](s32 pressed) {

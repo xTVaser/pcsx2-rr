@@ -59,6 +59,8 @@
 
 #include "IconsFontAwesome5.h"
 
+#include "Recording/InputRecording.h"
+
 #include "common/emitter/tools.h"
 #ifdef _M_X86
 #include "common/emitter/x86_intrin.h"
@@ -1156,6 +1158,10 @@ bool VMManager::DoLoadState(const char* filename)
 
 		UpdateRunningGame(false, false);
 		Host::OnSaveStateLoaded(filename, true);
+		if (g_InputRecording.isActive())
+		{
+			g_InputRecording.handleLoadingSavestate();
+		}
 		return true;
 	}
 	catch (Exception::BaseException& e)

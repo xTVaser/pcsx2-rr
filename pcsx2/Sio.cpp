@@ -210,7 +210,7 @@ SIO_WRITE sioWriteController(u8 data)
 			// Only examine controllers 1 / 2
 			if (sio.slot[sio.port] == 0 || sio.slot[sio.port] == 1)
 			{
-				g_InputRecording.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
+				g_InputRecording.controllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
 			}
 		}
 		break;
