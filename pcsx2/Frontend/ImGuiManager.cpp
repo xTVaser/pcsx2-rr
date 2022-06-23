@@ -708,7 +708,6 @@ void ImGuiManager::DrawStatusAndPerformanceOverlay()
 #endif
 
 #ifdef PCSX2_CORE
-	// TODO - is there a way to forcibly update the imgui frame without requiring to wait until the next vsync?
 	// TODO - icon list that would be nice to add
 	// - 'video' when screen capturing
 	if (g_InputRecording.isActive())
