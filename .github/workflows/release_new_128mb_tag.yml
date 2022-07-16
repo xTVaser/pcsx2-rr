@@ -36,4 +36,4 @@ jobs:
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_PAT }}
-        run: gh release create ${{ steps.tag_version.outputs.new_tag }} --generate-notes --draft --repo xTVaser/pcsx2-rr
+        run: gh release create ${{ steps.tag_version.outputs.new_tag }} --generate-notes --draft --repo xTVaser/pcsx2-rr --title "128MB Build - ${{ steps.tag_version.outputs.new_tag }}"
