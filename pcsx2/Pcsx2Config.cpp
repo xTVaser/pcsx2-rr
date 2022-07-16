@@ -1017,6 +1017,7 @@ Pcsx2Config::Pcsx2Config()
 	// Set defaults for fresh installs / reset settings
 	McdEnableEjection = true;
 	McdFolderAutoManage = true;
+	EnableCheats = true;
 	EnablePatches = true;
 	EnableRecordingTools = true;
 #ifdef PCSX2_CORE
