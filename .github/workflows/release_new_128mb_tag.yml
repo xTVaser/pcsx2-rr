@@ -1,17 +1,6 @@
 name: 🏭 Create 128mb Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      bump:
-        description: 'Semver Bump Type'
-        required: true
-        default: 'patch'
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
   push:
     branches:
       - 128mb-build
@@ -31,7 +20,7 @@ jobs:
           github_token: ${{ secrets.BOT_PAT }}
           release_branches: 128mb-build
           tag_prefix: 128mb/v
-          default_bump: ${{ github.event.inputs.bump }}
+          default_bump: patch
 
       - name: Create Release
         env:
