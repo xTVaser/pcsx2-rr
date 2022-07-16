@@ -17,6 +17,10 @@
 #include "AsyncFileReader.h"
 #include "common/FileSystem.h"
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <fcntl.h>
+
 FlatFileReader::FlatFileReader(bool shareWrite)
 	: shareWrite(shareWrite)
 {
@@ -65,15 +69,13 @@ void FlatFileReader::BeginRead(void* pBuffer, uint sector, uint count)
 
 int FlatFileReader::FinishRead(void)
 {
-	int min_nr = 1;
-	int max_nr = 1;
-	struct io_event events[max_nr];
+	struct io_event event;
 
-	int event = io_getevents(m_aio_context, min_nr, max_nr, events, NULL);
-	if (event < 1)
+	int nevents = io_getevents(m_aio_context, 1, 1, &event, NULL);
+	if (nevents < 1)
 		return -1;
 
-	return 1;
+	return event.res;
 }
 
 void FlatFileReader::CancelRead(void)

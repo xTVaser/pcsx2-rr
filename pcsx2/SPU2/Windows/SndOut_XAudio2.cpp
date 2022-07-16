@@ -15,10 +15,11 @@
 
 #include "PrecompiledHeader.h"
 #include "SPU2/Global.h"
+#ifndef PCSX2_CORE
 #include "Dialogs.h"
+#endif
 #include "common/Console.h"
 
-#include <xaudio2.h>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -27,6 +28,17 @@
 #include <wil/com.h>
 #include <wil/resource.h>
 #include <wil/win32_helpers.h>
+
+// We set _WIN32_WINNT to Win10, which means that xaudio2.h tries to use
+// the Windows 10 version. For wx, we still need to support Win8, so we
+// cheekily redefine _WIN32_WINNT before xaudio2.h is included, so that
+// it uses the older DLL.
+#ifndef PCSX2_CORE
+#undef _WIN32_WINNT
+#define _WIN32_WINNT _WIN32_WINNT_WIN8
+#endif
+
+#include <xaudio2.h>
 
 //#define XAUDIO2_DEBUG
 
@@ -358,14 +370,14 @@ public:
 		m_paused = paused;
 	}
 
-	const wchar_t* GetIdent() const override
+	const char* GetIdent() const override
 	{
-		return L"xaudio2";
+		return "xaudio2";
 	}
 
-	const wchar_t* GetLongName() const override
+	const char* GetLongName() const override
 	{
-		return L"XAudio 2 (Recommended)";
+		return "XAudio 2 (Recommended)";
 	}
 
 } static XA2;

@@ -13,8 +13,7 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __PSXBIOS_H__
-#define __PSXBIOS_H__
+#pragma once
 
 #define IOP_ENOENT 2
 #define IOP_EIO 5
@@ -77,7 +76,7 @@ namespace R3000A
 	irxHLE irxImportHLE(const std::string& libnam, u16 index);
 	irxDEBUG irxImportDebug(const std::string& libname, u16 index);
 	void irxImportLog(const std::string& libnameptr, u16 index, const char* funcname);
-	void __fastcall irxImportLog_rec(u32 import_table, u16 index, const char* funcname);
+	void irxImportLog_rec(u32 import_table, u16 index, const char* funcname);
 	int irxImportExec(u32 import_table, u16 index);
 
 	namespace ioman
@@ -87,5 +86,3 @@ namespace R3000A
 } // namespace R3000A
 
 extern void Hle_SetElfPath(const char* elfFileName);
-
-#endif /* __PSXBIOS_H__ */

@@ -20,6 +20,7 @@
 #include "common/Assertions.h"
 #include "common/Console.h"
 #include "common/FileSystem.h"
+#include "common/Path.h"
 #include "common/ProgressCallback.h"
 #include "common/StringUtil.h"
 #include <algorithm>
@@ -38,7 +39,7 @@
 enum : u32
 {
 	GAME_LIST_CACHE_SIGNATURE = 0x45434C47,
-	GAME_LIST_CACHE_VERSION = 31
+	GAME_LIST_CACHE_VERSION = 32
 };
 
 namespace GameList
@@ -48,7 +49,7 @@ namespace GameList
 	static Entry* GetMutableEntryForPath(const char* path);
 
 	static bool GetElfListEntry(const std::string& path, GameList::Entry* entry);
-	static bool GetGameListEntry(const std::string& path, GameList::Entry* entry);
+	static bool GetIsoListEntry(const std::string& path, GameList::Entry* entry);
 
 	static bool GetGameListEntryFromCache(const std::string& path, GameList::Entry* entry);
 	static void ScanDirectory(const char* path, bool recursive, const std::vector<std::string>& excluded_paths,
@@ -85,6 +86,16 @@ const char* GameList::EntryTypeToString(EntryType type)
 	return names[static_cast<int>(type)];
 }
 
+const char* GameList::RegionToString(Region region)
+{
+	static std::array<const char*, static_cast<int>(Region::Count)> names = {
+		{"NTSC-B", "NTSC-C", "NTSC-HK", "NTSC-J", "NTSC-K", "NTSC-T", "NTSC-U",
+		 "Other",
+		 "PAL-A", "PAL-AF", "PAL-AU", "PAL-BE", "PAL-E", "PAL-F", "PAL-FI", "PAL-G", "PAL-GR", "PAL-I", "PAL-IN", "PAL-M", "PAL-NL", "PAL-NO", "PAL-P", "PAL-R", "PAL-S", "PAL-SC", "PAL-SW", "PAL-SWI", "PAL-UK"}};
+		
+	return names[static_cast<int>(region)];
+}
+
 const char* GameList::EntryCompatibilityRatingToString(CompatibilityRating rating)
 {
 	// clang-format off
@@ -102,17 +113,13 @@ const char* GameList::EntryCompatibilityRatingToString(CompatibilityRating ratin
 	// clang-format on
 }
 
-bool GameList::IsScannableFilename(const std::string& path)
+bool GameList::IsScannableFilename(const std::string_view& path)
 {
 	static const char* extensions[] = {".iso", ".mdf", ".nrg", ".bin", ".img", ".gz", ".cso", ".chd", ".elf", ".irx"};
 
-	const std::string::size_type pos = path.rfind('.');
-	if (pos == std::string::npos)
-		return false;
-
 	for (const char* test_extension : extensions)
 	{
-		if (StringUtil::Strcasecmp(&path[pos], test_extension) == 0)
+		if (StringUtil::EndsWithNoCase(path, test_extension))
 			return true;
 	}
 
@@ -149,7 +156,7 @@ bool GameList::GetElfListEntry(const std::string& path, GameList::Entry* entry)
 
 	try
 	{
-		ElfObject eo(StringUtil::UTF8StringToWxString(path), static_cast<uint>(file_size), false);
+		ElfObject eo(path, static_cast<uint>(file_size), false);
 		entry->crc = eo.getCRC();
 	}
 	catch (...)
@@ -161,19 +168,16 @@ bool GameList::GetElfListEntry(const std::string& path, GameList::Entry* entry)
 	const std::string display_name(FileSystem::GetDisplayNameFromPath(path));
 	entry->path = path;
 	entry->serial.clear();
-	entry->title = FileSystem::StripExtension(display_name);
+	entry->title = Path::StripExtension(display_name);
 	entry->region = Region::Other;
 	entry->total_size = static_cast<u64>(file_size);
 	entry->type = EntryType::ELF;
 	entry->compatibility_rating = CompatibilityRating::Unknown;
 	return true;
 }
-
-bool GameList::GetGameListEntry(const std::string& path, GameList::Entry* entry)
+// clang-format off
+bool GameList::GetIsoListEntry(const std::string& path, GameList::Entry* entry)
 {
-	if (VMManager::IsElfFileName(path.c_str()))
-		return GetElfListEntry(path.c_str(), entry);
-
 	FILESYSTEM_STAT_DATA sd;
 	if (!FileSystem::StatFile(path.c_str(), &sd))
 		return false;
@@ -203,10 +207,10 @@ bool GameList::GetGameListEntry(const std::string& path, GameList::Entry* entry)
 			return false;
 	}
 
-	cdvdReloadElfInfo(wxEmptyString);
+	cdvdReloadElfInfo();
 
 	entry->path = path;
-	entry->serial = StringUtil::wxStringToUTF8String(DiscSerial);
+	entry->serial = DiscSerial;
 	entry->crc = ElfCRC;
 	entry->total_size = sd.Size;
 	entry->compatibility_rating = CompatibilityRating::Unknown;
@@ -223,22 +227,84 @@ bool GameList::GetGameListEntry(const std::string& path, GameList::Entry* entry)
 	{
 		entry->title = std::move(db_entry->name);
 		entry->compatibility_rating = db_entry->compat;
-		if (StringUtil::StartsWith(db_entry->region, "NTSC-J"))
+							////// NTSC //////
+							//////////////////
+		if (StringUtil::StartsWith(db_entry->region, "NTSC-B"))
+			entry->region = Region::NTSC_B;
+		else if (StringUtil::StartsWith(db_entry->region, "NTSC-C"))
+			entry->region = Region::NTSC_C;
+		else if (StringUtil::StartsWith(db_entry->region, "NTSC-HK"))
+			entry->region = Region::NTSC_HK;
+		else if (StringUtil::StartsWith(db_entry->region, "NTSC-J"))
 			entry->region = Region::NTSC_J;
-		else if (StringUtil::StartsWith(db_entry->region, "NTSC"))
-			entry->region = Region::NTSC_UC;
-		else if (StringUtil::StartsWith(db_entry->region, "PAL"))
-			entry->region = Region::PAL;
+		else if (StringUtil::StartsWith(db_entry->region, "NTSC-K"))
+			entry->region = Region::NTSC_K;
+		else if (StringUtil::StartsWith(db_entry->region, "NTSC-T"))
+			entry->region = Region::NTSC_T;
+		else if (StringUtil::StartsWith(db_entry->region, "NTSC-U"))
+			entry->region = Region::NTSC_U;
+							////// PAL //////
+							//////////////////
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-AF"))
+			entry->region = Region::PAL_AF;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-AU"))
+			entry->region = Region::PAL_AU;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-A"))
+			entry->region = Region::PAL_A;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-BE"))
+			entry->region = Region::PAL_BE;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-E"))
+			entry->region = Region::PAL_E;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-FI"))
+			entry->region = Region::PAL_FI;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-F"))
+			entry->region = Region::PAL_F;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-GR"))
+			entry->region = Region::PAL_GR;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-G"))
+			entry->region = Region::PAL_G;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-IN"))
+			entry->region = Region::PAL_IN;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-I"))
+			entry->region = Region::PAL_I;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-M"))
+			entry->region = Region::PAL_M;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-NL"))
+			entry->region = Region::PAL_NL;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-NO"))
+			entry->region = Region::PAL_NO;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-P"))
+			entry->region = Region::PAL_P;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-R"))
+			entry->region = Region::PAL_R;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-SC"))
+			entry->region = Region::PAL_SC;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-SWI"))
+			entry->region = Region::PAL_SWI;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-SW"))
+			entry->region = Region::PAL_SW;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-S"))
+			entry->region = Region::PAL_S;
+		else if (StringUtil::StartsWith(db_entry->region, "PAL-UK"))
+			entry->region = Region::PAL_UK;
 		else
 			entry->region = Region::Other;
 	}
 	else
 	{
-		entry->title = FileSystem::GetFileTitleFromPath(path);
+		entry->title = Path::GetFileTitle(path);
 		entry->region = Region::Other;
 	}
 
 	return true;
+}
+// clang-format off
+bool GameList::PopulateEntryFromPath(const std::string& path, GameList::Entry* entry)
+{
+	if (VMManager::IsElfFileName(path.c_str()))
+		return GetElfListEntry(path, entry);
+	else
+		return GetIsoListEntry(path, entry);
 }
 
 bool GameList::GetGameListEntryFromCache(const std::string& path, GameList::Entry* entry)
@@ -353,7 +419,7 @@ bool GameList::LoadEntriesFromCache(std::FILE* stream)
 
 static std::string GetCacheFilename()
 {
-	return Path::CombineStdString(EmuFolders::Cache, "gamelist.cache");
+	return Path::Combine(EmuFolders::Cache, "gamelist.cache");
 }
 
 void GameList::LoadCache()
@@ -491,11 +557,11 @@ void GameList::ScanDirectory(const char* path, bool recursive, const std::vector
 
 		{
 			std::unique_lock lock(s_mutex);
-			if (GetEntryForPath(ffd.FileName.c_str()))
+			if (GetEntryForPath(ffd.FileName.c_str()) || AddFileFromCache(ffd.FileName, ffd.ModificationTime))
+			{
+				progress->IncrementProgressValue();
 				continue;
-
-			if (AddFileFromCache(ffd.FileName, ffd.ModificationTime))
-				continue;
+			}
 		}
 
 		// ownership of fp is transferred
@@ -529,7 +595,7 @@ bool GameList::ScanFile(std::string path, std::time_t timestamp)
 	DevCon.WriteLn("Scanning '%s'...", path.c_str());
 
 	Entry entry;
-	if (!GetGameListEntry(path, &entry))
+	if (!PopulateEntryFromPath(path, &entry))
 		return false;
 
 	entry.path = std::move(path);
@@ -674,32 +740,33 @@ std::string GameList::GetCoverImagePath(const std::string& path, const std::stri
 	std::string cover_path;
 	for (const char* extension : extensions)
 	{
-		// use the file title if it differs (e.g. modded games)
-		const std::string_view file_title(FileSystem::GetFileTitleFromPath(path));
+
+		// Prioritize lookup by serial (Most specific)
+		if (!serial.empty())
+		{
+			const std::string cover_filename(serial + extension);
+			cover_path = Path::Combine(EmuFolders::Covers, cover_filename);
+			if (FileSystem::FileExists(cover_path.c_str()))
+				return cover_path;
+		}
+
+		// Try file title (for modded games or specific like above)
+		const std::string_view file_title(Path::GetFileTitle(path));
 		if (!file_title.empty() && title != file_title)
 		{
 			std::string cover_filename(file_title);
 			cover_filename += extension;
 
-			cover_path = Path::CombineStdString(EmuFolders::Covers, cover_filename);
+			cover_path = Path::Combine(EmuFolders::Covers, cover_filename);
 			if (FileSystem::FileExists(cover_path.c_str()))
 				return cover_path;
 		}
 
-		// try the title
+		// Last resort, check the game title
 		if (!title.empty())
 		{
 			const std::string cover_filename(title + extension);
-			cover_path = Path::CombineStdString(EmuFolders::Covers, cover_filename);
-			if (FileSystem::FileExists(cover_path.c_str()))
-				return cover_path;
-		}
-
-		// then the code
-		if (!serial.empty())
-		{
-			const std::string cover_filename(serial + extension);
-			cover_path = Path::CombineStdString(EmuFolders::Covers, cover_filename);
+			cover_path = Path::Combine(EmuFolders::Covers, cover_filename);
 			if (FileSystem::FileExists(cover_path.c_str()))
 				return cover_path;
 		}
@@ -724,5 +791,5 @@ std::string GameList::GetNewCoverImagePathForEntry(const Entry* entry, const cha
 	}
 
 	const std::string cover_filename(entry->title + extension);
-	return Path::CombineStdString(EmuFolders::Covers, cover_filename);
+	return Path::Combine(EmuFolders::Covers, cover_filename);
 }

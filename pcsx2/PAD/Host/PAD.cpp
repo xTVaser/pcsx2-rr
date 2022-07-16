@@ -15,6 +15,8 @@
 
 #include "PrecompiledHeader.h"
 
+#include "common/FileSystem.h"
+#include "common/Path.h"
 #include "common/StringUtil.h"
 #include "common/SettingsInterface.h"
 
@@ -26,11 +28,13 @@
 #include "PAD/Host/KeyStatus.h"
 #include "PAD/Host/StateManagement.h"
 
+#include <array>
+
 const u32 revision = 3;
 const u32 build = 0; // increase that with each version
 #define PAD_SAVE_STATE_VERSION ((revision << 8) | (build << 0))
 
-KeyStatus g_key_status;
+PAD::KeyStatus g_key_status;
 
 namespace PAD
 {
@@ -43,12 +47,12 @@ namespace PAD
 		bool trigger_state; ///< Whether the macro button is active.
 	};
 
-	static const char* GetDefaultPadType(u32 pad);
+	static std::string GetConfigSection(u32 pad_index);
 	static void LoadMacroButtonConfig(const SettingsInterface& si, u32 pad, const std::string_view& type, const std::string& section);
 	static void ApplyMacroButton(u32 pad, const MacroButton& mb);
 	static void UpdateMacroButtons();
 
-	static std::array<std::array<MacroButton, NUM_MACRO_BUTTONS_PER_CONTROLLER>, GAMEPAD_NUMBER> s_macro_buttons;
+	static std::array<std::array<MacroButton, NUM_MACRO_BUTTONS_PER_CONTROLLER>, NUM_CONTROLLER_PORTS> s_macro_buttons;
 } // namespace PAD
 
 s32 PADinit()
@@ -179,22 +183,47 @@ u8 PADpoll(u8 value)
 	return pad_poll(value);
 }
 
+std::string PAD::GetConfigSection(u32 pad_index)
+{
+	return fmt::format("Pad{}", pad_index + 1);
+}
+
 void PAD::LoadConfig(const SettingsInterface& si)
 {
 	PAD::s_macro_buttons = {};
 
-	// This is where we would load controller types, if onepad supported them.
-	for (u32 i = 0; i < GAMEPAD_NUMBER; i++)
-	{
-		const std::string section(StringUtil::StdStringFromFormat("Pad%u", i + 1u));
-		const std::string type(si.GetStringValue(section.c_str(), "Type", GetDefaultPadType(i)));
-		const float axis_scale = si.GetFloatValue(section.c_str(), "AxisScale", 1.0f);
-		const float large_motor_scale = si.GetFloatValue(section.c_str(), "LargeMotorScale", 1.0f);
-		const float small_motor_scale = si.GetFloatValue(section.c_str(), "SmallMotorScale", 1.0f);
+	EmuConfig.MultitapPort0_Enabled = si.GetBoolValue("Pad", "MultitapPort1", false);
+	EmuConfig.MultitapPort1_Enabled = si.GetBoolValue("Pad", "MultitapPort2", false);
 
-		g_key_status.SetAxisScale(i, axis_scale);
-		g_key_status.SetVibrationScale(i, 0, large_motor_scale);
-		g_key_status.SetVibrationScale(i, 1, small_motor_scale);
+	// This is where we would load controller types, if onepad supported them.
+	for (u32 i = 0; i < NUM_CONTROLLER_PORTS; i++)
+	{
+		const std::string section(GetConfigSection(i));
+		const std::string type(si.GetStringValue(section.c_str(), "Type", GetDefaultPadType(i)));
+
+		const ControllerInfo* ci = GetControllerInfo(type);
+		if (!ci)
+		{
+			g_key_status.SetType(i, ControllerType::NotConnected);
+			continue;
+		}
+
+		g_key_status.SetType(i, ci->type);
+
+		const float axis_deadzone = si.GetFloatValue(section.c_str(), "Deadzone", DEFAULT_STICK_DEADZONE);
+		const float axis_scale = si.GetFloatValue(section.c_str(), "AxisScale", DEFAULT_STICK_SCALE);
+		g_key_status.SetAxisScale(i, axis_deadzone, axis_scale);
+
+		if (ci->vibration_caps != VibrationCapabilities::NoVibration)
+		{
+			const float large_motor_scale = si.GetFloatValue(section.c_str(), "LargeMotorScale", DEFAULT_MOTOR_SCALE);
+			const float small_motor_scale = si.GetFloatValue(section.c_str(), "SmallMotorScale", DEFAULT_MOTOR_SCALE);
+			g_key_status.SetVibrationScale(i, 0, large_motor_scale);
+			g_key_status.SetVibrationScale(i, 1, small_motor_scale);
+		}
+
+		const float pressure_modifier = si.GetFloatValue(section.c_str(), "PressureModifier", 1.0f);
+		g_key_status.SetPressureModifier(i, pressure_modifier);
 
 		LoadMacroButtonConfig(si, i, type, section);
 	}
@@ -208,38 +237,62 @@ const char* PAD::GetDefaultPadType(u32 pad)
 void PAD::SetDefaultConfig(SettingsInterface& si)
 {
 	si.ClearSection("InputSources");
-
-	for (u32 i = 0; i < GAMEPAD_NUMBER; i++)
-		si.ClearSection(StringUtil::StdStringFromFormat("Pad%u", i + 1).c_str());
-
 	si.ClearSection("Hotkeys");
+	si.ClearSection("Pad");
 
 	// PCSX2 Controller Settings - Global Settings
 	si.SetBoolValue("InputSources", "SDL", true);
 	si.SetBoolValue("InputSources", "SDLControllerEnhancedMode", false);
 	si.SetBoolValue("InputSources", "XInput", false);
+	si.SetBoolValue("InputSources", "RawInput", false);
+	si.SetBoolValue("Pad", "MultitapPort1", false);
+	si.SetBoolValue("Pad", "MultitapPort2", false);
+	si.SetFloatValue("Pad", "PointerXScale", 8.0f);
+	si.SetFloatValue("Pad", "PointerYScale", 8.0f);
+	si.SetBoolValue("Pad", "PointerXInvert", false);
+	si.SetBoolValue("Pad", "PointerYInvert", false);
+
+	// PCSX2 Controller Settings - Default pad types and parameters.
+	for (u32 i = 0; i < NUM_CONTROLLER_PORTS; i++)
+	{
+		const std::string section(GetConfigSection(i));
+		si.ClearSection(section.c_str());
+		si.SetStringValue(section.c_str(), "Type", GetDefaultPadType(i));
+		si.SetFloatValue(section.c_str(), "Deadzone", DEFAULT_STICK_DEADZONE);
+		si.SetFloatValue(section.c_str(), "AxisScale", DEFAULT_STICK_SCALE);
+		si.SetFloatValue(section.c_str(), "LargeMotorScale", DEFAULT_MOTOR_SCALE);
+		si.SetFloatValue(section.c_str(), "SmallMotorScale", DEFAULT_MOTOR_SCALE);
+		si.SetFloatValue(section.c_str(), "PressureModifier", DEFAULT_PRESSURE_MODIFIER);
+	}
 
 	// PCSX2 Controller Settings - Controller 1 / Controller 2 / ...
 	// Use the automapper to set this up.
-	si.SetStringValue("Pad1", "Type", GetDefaultPadType(0));
 	MapController(si, 0, InputManager::GetGenericBindingMapping("Keyboard"));
 
 	// PCSX2 Controller Settings - Hotkeys
 
 	// PCSX2 Controller Settings - Hotkeys - General
-	si.SetStringValue("Hotkeys", "Screenshot", "Keyboard/F8");
 	si.SetStringValue("Hotkeys", "ToggleFullscreen", "Keyboard/Alt & Keyboard/Return");
 
 	// PCSX2 Controller Settings - Hotkeys - Graphics
 	si.SetStringValue("Hotkeys", "CycleAspectRatio", "Keyboard/F6");
-	si.SetStringValue("Hotkeys", "CycleMipmapMode", "Keyboard/Insert");
 	si.SetStringValue("Hotkeys", "CycleInterlaceMode", "Keyboard/F5");
+	si.SetStringValue("Hotkeys", "CycleMipmapMode", "Keyboard/Insert");
 	//	si.SetStringValue("Hotkeys", "DecreaseUpscaleMultiplier", "Keyboard"); TBD
 	//	si.SetStringValue("Hotkeys", "IncreaseUpscaleMultiplier", "Keyboard"); TBD
+	//  si.SetStringValue("Hotkeys", "ReloadTextureReplacements", "Keyboard"); TBD
+	si.SetStringValue("Hotkeys", "GSDumpMultiFrame", "Keyboard/Control & Keyboard/Shift & Keyboard/F8");
+	si.SetStringValue("Hotkeys", "Screenshot", "Keyboard/F8");
+	si.SetStringValue("Hotkeys", "GSDumpSingleFrame", "Keyboard/Shift & Keyboard/F8");
 	si.SetStringValue("Hotkeys", "ToggleSoftwareRendering", "Keyboard/F9");
+	//  si.SetStringValue("Hotkeys", "ToggleTextureDumping", "Keyboard"); TBD
+	//  si.SetStringValue("Hotkeys", "ToggleTextureReplacements", "Keyboard"); TBD
 	si.SetStringValue("Hotkeys", "ZoomIn", "Keyboard/Control & Keyboard/Plus");
 	si.SetStringValue("Hotkeys", "ZoomOut", "Keyboard/Control & Keyboard/Minus");
 	// Missing hotkey for resetting zoom back to 100 with Keyboard/Control & Keyboard/Asterisk
+
+	// PCSX2 Controller Settings - Hotkeys - Input Recording
+	si.SetStringValue("Hotkeys", "InputRecToggleMode", "Keyboard/Shift & Keyboard/R");
 
 	// PCSX2 Controller Settings - Hotkeys - Save States
 	si.SetStringValue("Hotkeys", "LoadStateFromSlot", "Keyboard/F3");
@@ -249,12 +302,15 @@ void PAD::SetDefaultConfig(SettingsInterface& si)
 
 	// PCSX2 Controller Settings - Hotkeys - System
 	//	si.SetStringValue("Hotkeys", "DecreaseSpeed", "Keyboard"); TBD
+	//  si.SetStringValue("Hotkeys", "FrameAdvance", "Keyboard"); TBD
 	//	si.SetStringValue("Hotkeys", "IncreaseSpeed", "Keyboard"); TBD
+	//  si.SetStringValue("Hotkeys", "ResetVM", "Keyboard"); TBD
+	si.SetStringValue("Hotkeys", "ShutdownVM", "Keyboard/Escape");
 	si.SetStringValue("Hotkeys", "ToggleFrameLimit", "Keyboard/F4");
 	si.SetStringValue("Hotkeys", "TogglePause", "Keyboard/Space");
 	si.SetStringValue("Hotkeys", "ToggleSlowMotion", "Keyboard/Shift & Keyboard/Backtab");
 	si.SetStringValue("Hotkeys", "ToggleTurbo", "Keyboard/Tab");
-	si.SetStringValue("Hotkeys", "ShutdownVM", "Keyboard/Escape");
+	si.SetStringValue("Hotkeys", "HoldTurbo", "Keyboard/Period");
 }
 
 void PAD::Update()
@@ -263,51 +319,54 @@ void PAD::Update()
 	UpdateMacroButtons();
 }
 
-struct ControllerBindingInfo
+static const PAD::ControllerBindingInfo s_dualshock2_binds[] = {
+	{"Up", "D-Pad Up", PAD::ControllerBindingType::Button, GenericInputBinding::DPadUp},
+	{"Right", "D-Pad Right", PAD::ControllerBindingType::Button, GenericInputBinding::DPadRight},
+	{"Down", "D-Pad Down", PAD::ControllerBindingType::Button, GenericInputBinding::DPadDown},
+	{"Left", "D-Pad Left", PAD::ControllerBindingType::Button, GenericInputBinding::DPadLeft},
+	{"Triangle", "Triangle", PAD::ControllerBindingType::Button, GenericInputBinding::Triangle},
+	{"Circle", "Circle", PAD::ControllerBindingType::Button, GenericInputBinding::Circle},
+	{"Cross", "Cross", PAD::ControllerBindingType::Button, GenericInputBinding::Cross},
+	{"Square", "Square", PAD::ControllerBindingType::Button, GenericInputBinding::Square},
+	{"Select", "Select", PAD::ControllerBindingType::Button, GenericInputBinding::Select},
+	{"Start", "Start", PAD::ControllerBindingType::Button, GenericInputBinding::Start},
+	{"L1", "L1 (Left Bumper)", PAD::ControllerBindingType::Button, GenericInputBinding::L1},
+	{"L2", "L2 (Left Trigger)", PAD::ControllerBindingType::HalfAxis, GenericInputBinding::L2},
+	{"R1", "R1 (Right Bumper)", PAD::ControllerBindingType::Button, GenericInputBinding::R1},
+	{"R2", "R2 (Right Trigger)", PAD::ControllerBindingType::HalfAxis, GenericInputBinding::R2},
+	{"L3", "L3 (Left Stick Button)", PAD::ControllerBindingType::Button, GenericInputBinding::L3},
+	{"R3", "R3 (Right Stick Button)", PAD::ControllerBindingType::Button, GenericInputBinding::R3},
+	{"Analog", "Analog Toggle", PAD::ControllerBindingType::Button, GenericInputBinding::System},
+	{"Pressure", "Apply Pressure", PAD::ControllerBindingType::Button, GenericInputBinding::Unknown},
+	{"LUp", "Left Stick Up", PAD::ControllerBindingType::HalfAxis, GenericInputBinding::LeftStickUp},
+	{"LRight", "Left Stick Right", PAD::ControllerBindingType::HalfAxis, GenericInputBinding::LeftStickRight},
+	{"LDown", "Left Stick Down", PAD::ControllerBindingType::HalfAxis, GenericInputBinding::LeftStickDown},
+	{"LLeft", "Left Stick Left", PAD::ControllerBindingType::HalfAxis, GenericInputBinding::LeftStickLeft},
+	{"RUp", "Right Stick Up", PAD::ControllerBindingType::HalfAxis, GenericInputBinding::RightStickUp},
+	{"RRight", "Right Stick Right", PAD::ControllerBindingType::HalfAxis, GenericInputBinding::RightStickRight},
+	{"RDown", "Right Stick Down", PAD::ControllerBindingType::HalfAxis, GenericInputBinding::RightStickDown},
+	{"RLeft", "Right Stick Left", PAD::ControllerBindingType::HalfAxis, GenericInputBinding::RightStickLeft},
+	{"LargeMotor", "Large (Low Frequency) Motor", PAD::ControllerBindingType::Motor, GenericInputBinding::LargeMotor},
+	{"SmallMotor", "Small (High Frequency) Motor", PAD::ControllerBindingType::Motor, GenericInputBinding::SmallMotor},
+};
+
+static const PAD::ControllerInfo s_controller_info[] = {
+	{"None", "Not Connected", nullptr, 0, PAD::ControllerType::NotConnected, PAD::VibrationCapabilities::NoVibration},
+	{"DualShock2", "DualShock 2", s_dualshock2_binds, std::size(s_dualshock2_binds), PAD::ControllerType::DualShock2, PAD::VibrationCapabilities::LargeSmallMotors},
+};
+
+const PAD::ControllerInfo* PAD::GetControllerInfo(ControllerType type)
 {
-	const char* name;
-	GenericInputBinding generic_mapping;
-};
-struct ControllerInfo
-{
-	const char* name;
-	const ControllerBindingInfo* bindings;
-	u32 num_bindings;
-	PAD::VibrationCapabilities vibration_caps;
-};
+	for (const ControllerInfo& info : s_controller_info)
+	{
+		if (type == info.type)
+			return &info;
+	}
 
-static const ControllerBindingInfo s_dualshock2_binds[] = {
-	{"Up", GenericInputBinding::DPadUp },
-	{"Right",GenericInputBinding::DPadRight },
-	{"Down", GenericInputBinding::DPadDown },
-	{"Left", GenericInputBinding::DPadLeft },
-	{"Triangle", GenericInputBinding::Triangle },
-	{"Circle", GenericInputBinding::Circle },
-	{"Cross", GenericInputBinding::Cross },
-	{"Square", GenericInputBinding::Square },
-	{"Select", GenericInputBinding::Select },
-	{"Start", GenericInputBinding::Start },
-	{"L1", GenericInputBinding::L1 },
-	{"L2", GenericInputBinding::L2 },
-	{"R1", GenericInputBinding::R1 },
-	{"R2", GenericInputBinding::R2 },
-	{"L3", GenericInputBinding::L3 },
-	{"R3", GenericInputBinding::R3 },
-	{"LUp", GenericInputBinding::LeftStickUp },
-	{"LRight", GenericInputBinding::LeftStickRight },
-	{"LDown", GenericInputBinding::LeftStickDown },
-	{"LLeft", GenericInputBinding::LeftStickLeft },
-	{"RUp", GenericInputBinding::RightStickUp },
-	{"RRight", GenericInputBinding::RightStickRight },
-	{"RDown", GenericInputBinding::RightStickDown },
-	{"RLeft", GenericInputBinding::RightStickLeft },
-};
+	return nullptr;
+}
 
-static const ControllerInfo s_controller_info[] = {
-	{ "DualShock2", s_dualshock2_binds, std::size(s_dualshock2_binds), PAD::VibrationCapabilities::LargeSmallMotors },
-};
-
-static const ControllerInfo* GetControllerInfo(const std::string_view& name)
+const PAD::ControllerInfo* PAD::GetControllerInfo(const std::string_view& name)
 {
 	for (const ControllerInfo& info : s_controller_info)
 	{
@@ -318,12 +377,11 @@ static const ControllerInfo* GetControllerInfo(const std::string_view& name)
 	return nullptr;
 }
 
-std::vector<std::string> PAD::GetControllerTypeNames()
+std::vector<std::pair<std::string, std::string>> PAD::GetControllerTypeNames()
 {
-	std::vector<std::string> ret;
-
+	std::vector<std::pair<std::string, std::string>> ret;
 	for (const ControllerInfo& info : s_controller_info)
-		ret.emplace_back(info.name);
+		ret.emplace_back(info.name, info.display_name);
 
 	return ret;
 }
@@ -336,10 +394,85 @@ std::vector<std::string> PAD::GetControllerBinds(const std::string_view& type)
 	if (info)
 	{
 		for (u32 i = 0; i < info->num_bindings; i++)
+		{
+			const ControllerBindingInfo& bi = info->bindings[i];
+			if (bi.type == ControllerBindingType::Unknown || bi.type == ControllerBindingType::Motor)
+				continue;
+
 			ret.emplace_back(info->bindings[i].name);
+		}
 	}
 
 	return ret;
+}
+
+void PAD::ClearPortBindings(SettingsInterface& si, u32 port)
+{
+	const std::string section(StringUtil::StdStringFromFormat("Pad%u", port + 1));
+	const std::string type(si.GetStringValue(section.c_str(), "Type", GetDefaultPadType(port)));
+
+	const ControllerInfo* info = GetControllerInfo(type);
+	if (!info)
+		return;
+
+	for (u32 i = 0; i < info->num_bindings; i++)
+		si.DeleteValue(section.c_str(), info->bindings[i].name);
+}
+
+void PAD::CopyConfiguration(SettingsInterface* dest_si, const SettingsInterface& src_si,
+	bool copy_pad_config, bool copy_pad_bindings, bool copy_hotkey_bindings)
+{
+	if (copy_pad_config)
+	{
+		dest_si->CopyBoolValue(src_si, "Pad", "MultitapPort1");
+		dest_si->CopyBoolValue(src_si, "Pad", "MultitapPort2");
+	}
+
+	for (u32 port = 0; port < NUM_CONTROLLER_PORTS; port++)
+	{
+		const std::string section(fmt::format("Pad{}", port + 1));
+		const std::string type(src_si.GetStringValue(section.c_str(), "Type", GetDefaultPadType(port)));
+		if (copy_pad_config)
+			dest_si->SetStringValue(section.c_str(), "Type", type.c_str());
+
+		const ControllerInfo* info = GetControllerInfo(type);
+		if (!info)
+			return;
+
+		if (copy_pad_bindings)
+		{
+			for (u32 i = 0; i < info->num_bindings; i++)
+			{
+				const ControllerBindingInfo& bi = info->bindings[i];
+				dest_si->CopyStringListValue(src_si, section.c_str(), bi.name);
+			}
+
+			for (u32 i = 0; i < NUM_MACRO_BUTTONS_PER_CONTROLLER; i++)
+			{
+				dest_si->CopyStringListValue(src_si, section.c_str(), fmt::format("Macro{}", i + 1).c_str());
+				dest_si->CopyStringValue(src_si, section.c_str(), fmt::format("Macro{}Binds", i + 1).c_str());
+				dest_si->CopyUIntValue(src_si, section.c_str(), fmt::format("Macro{}Frequency", i + 1).c_str());
+			}
+		}
+
+		if (copy_pad_config)
+		{
+			dest_si->CopyFloatValue(src_si, section.c_str(), "AxisScale");
+
+			if (info->vibration_caps != VibrationCapabilities::NoVibration)
+			{
+				dest_si->CopyFloatValue(src_si, section.c_str(), "LargeMotorScale");
+				dest_si->CopyFloatValue(src_si, section.c_str(), "SmallMotorScale");
+			}
+		}
+	}
+
+	if (copy_hotkey_bindings)
+	{
+		std::vector<const HotkeyInfo*> hotkeys(InputManager::GetHotkeyList());
+		for (const HotkeyInfo* hki : hotkeys)
+			dest_si->CopyStringListValue(src_si, "Hotkeys", hki->name);
+	}
 }
 
 PAD::VibrationCapabilities PAD::GetControllerVibrationCapabilities(const std::string_view& type)
@@ -413,7 +546,7 @@ bool PAD::MapController(SettingsInterface& si, u32 controller,
 
 void PAD::SetControllerState(u32 controller, u32 bind, float value)
 {
-	if (controller >= GAMEPAD_NUMBER || bind >= MAX_KEYS)
+	if (controller >= NUM_CONTROLLER_PORTS || bind > MAX_KEYS)
 		return;
 
 	g_key_status.Set(controller, bind, value);
@@ -460,7 +593,7 @@ void PAD::LoadMacroButtonConfig(const SettingsInterface& si, u32 pad, const std:
 
 void PAD::SetMacroButtonState(u32 pad, u32 index, bool state)
 {
-	if (pad >= GAMEPAD_NUMBER || index >= NUM_MACRO_BUTTONS_PER_CONTROLLER)
+	if (pad >= NUM_CONTROLLER_PORTS || index >= NUM_MACRO_BUTTONS_PER_CONTROLLER)
 		return;
 
 	MacroButton& mb = s_macro_buttons[pad][index];
@@ -476,6 +609,20 @@ void PAD::SetMacroButtonState(u32 pad, u32 index, bool state)
 	}
 }
 
+std::vector<std::string> PAD::GetInputProfileNames()
+{
+	FileSystem::FindResultsArray results;
+	FileSystem::FindFiles(EmuFolders::InputProfiles.c_str(), "*.ini",
+		FILESYSTEM_FIND_FILES | FILESYSTEM_FIND_HIDDEN_FILES | FILESYSTEM_FIND_RELATIVE_PATHS,
+		&results);
+
+	std::vector<std::string> ret;
+	ret.reserve(results.size());
+	for (FILESYSTEM_FIND_DATA& fd : results)
+		ret.emplace_back(Path::GetFileTitle(fd.FileName));
+	return ret;
+}
+
 void PAD::ApplyMacroButton(u32 pad, const MacroButton& mb)
 {
 	const float value = mb.toggle_state ? 1.0f : 0.0f;
@@ -485,7 +632,7 @@ void PAD::ApplyMacroButton(u32 pad, const MacroButton& mb)
 
 void PAD::UpdateMacroButtons()
 {
-	for (u32 pad = 0; pad < GAMEPAD_NUMBER; pad++)
+	for (u32 pad = 0; pad < NUM_CONTROLLER_PORTS; pad++)
 	{
 		for (u32 index = 0; index < NUM_MACRO_BUTTONS_PER_CONTROLLER; index++)
 		{

@@ -15,13 +15,20 @@
 
 #if defined(_WIN32)
 
-#include "common/RedtapeWindows.h"
-#include "common/PersistentThread.h"
+#include "common/Threading.h"
+#include "common/Assertions.h"
 #include "common/emitter/tools.h"
+#include "common/RedtapeWindows.h"
+#include <process.h>
 
 __fi void Threading::Sleep(int ms)
 {
 	::Sleep(ms);
+}
+
+__fi void Threading::Timeslice()
+{
+	::Sleep(0);
 }
 
 // For use in spin/wait loops,  Acts as a hint to Intel CPUs and should, in theory
@@ -47,55 +54,174 @@ __fi void Threading::DisableHiresScheduler()
 	timeEndPeriod(1);
 }
 
-// This hacky union would probably fail on some cpu platforms if the contents of FILETIME aren't
-// packed (but for any x86 CPU and microsoft compiler, they will be).
-union FileTimeSucks
+Threading::ThreadHandle::ThreadHandle() = default;
+
+Threading::ThreadHandle::ThreadHandle(const ThreadHandle& handle)
 {
-	FILETIME filetime;
-	u64 u64time;
-};
+	if (handle.m_native_handle)
+	{
+		HANDLE new_handle;
+		if (DuplicateHandle(GetCurrentProcess(), (HANDLE)handle.m_native_handle,
+				GetCurrentProcess(), &new_handle, THREAD_QUERY_INFORMATION | THREAD_SET_LIMITED_INFORMATION, FALSE, 0))
+		{
+			m_native_handle = (void*)new_handle;
+		}
+	}
+}
+
+Threading::ThreadHandle::ThreadHandle(ThreadHandle&& handle)
+	: m_native_handle(handle.m_native_handle)
+{
+	handle.m_native_handle = nullptr;
+}
+
+
+Threading::ThreadHandle::~ThreadHandle()
+{
+	if (m_native_handle)
+		CloseHandle(m_native_handle);
+}
+
+Threading::ThreadHandle Threading::ThreadHandle::GetForCallingThread()
+{
+	ThreadHandle ret;
+	ret.m_native_handle = (void*)OpenThread(THREAD_QUERY_INFORMATION | THREAD_SET_LIMITED_INFORMATION, FALSE, GetCurrentThreadId());
+	return ret;
+}
+
+Threading::ThreadHandle& Threading::ThreadHandle::operator=(ThreadHandle&& handle)
+{
+	if (m_native_handle)
+		CloseHandle((HANDLE)m_native_handle);
+	m_native_handle = handle.m_native_handle;
+	handle.m_native_handle = nullptr;
+	return *this;
+}
+
+Threading::ThreadHandle& Threading::ThreadHandle::operator=(const ThreadHandle& handle)
+{
+	if (m_native_handle)
+	{
+		CloseHandle((HANDLE)m_native_handle);
+		m_native_handle = nullptr;
+	}
+
+	HANDLE new_handle;
+	if (DuplicateHandle(GetCurrentProcess(), (HANDLE)handle.m_native_handle,
+			GetCurrentProcess(), &new_handle, THREAD_QUERY_INFORMATION | THREAD_SET_LIMITED_INFORMATION, FALSE, 0))
+	{
+		m_native_handle = (void*)new_handle;
+	}
+
+	return *this;
+}
+
+u64 Threading::ThreadHandle::GetCPUTime() const
+{
+	u64 ret = 0;
+	if (m_native_handle)
+		QueryThreadCycleTime((HANDLE)m_native_handle, &ret);
+	return ret;
+}
+
+bool Threading::ThreadHandle::SetAffinity(u64 processor_mask) const
+{
+	if (processor_mask == 0)
+		processor_mask = ~processor_mask;
+
+	return (SetThreadAffinityMask(GetCurrentThread(), (DWORD_PTR)processor_mask) != 0 || GetLastError() != ERROR_SUCCESS);
+}
+
+Threading::Thread::Thread() = default;
+
+Threading::Thread::Thread(Thread&& thread)
+	: ThreadHandle(thread)
+	, m_stack_size(thread.m_stack_size)
+{
+	thread.m_stack_size = 0;
+}
+
+Threading::Thread::Thread(EntryPoint func)
+	: ThreadHandle()
+{
+	if (!Start(std::move(func)))
+		pxFailRel("Failed to start implicitly started thread.");
+}
+
+Threading::Thread::~Thread()
+{
+	pxAssertRel(!m_native_handle, "Thread should be detached or joined at destruction");
+}
+
+void Threading::Thread::SetStackSize(u32 size)
+{
+	pxAssertRel(!m_native_handle, "Can't change the stack size on a started thread");
+	m_stack_size = size;
+}
+
+unsigned Threading::Thread::ThreadProc(void* param)
+{
+	std::unique_ptr<EntryPoint> entry(static_cast<EntryPoint*>(param));
+	(*entry.get())();
+	return 0;
+}
+
+bool Threading::Thread::Start(EntryPoint func)
+{
+	pxAssertRel(!m_native_handle, "Can't start an already-started thread");
+	
+	std::unique_ptr<EntryPoint> func_clone(std::make_unique<EntryPoint>(std::move(func)));
+	unsigned thread_id;
+	m_native_handle = reinterpret_cast<void*>(_beginthreadex(nullptr, m_stack_size, ThreadProc, func_clone.get(), 0, &thread_id));
+	if (!m_native_handle)
+		return false;
+
+	// thread started, it'll release the memory
+	func_clone.release();
+	return true;
+}
+
+void Threading::Thread::Detach()
+{
+	pxAssertRel(m_native_handle, "Can't detach without a thread");
+	CloseHandle((HANDLE)m_native_handle);
+	m_native_handle = nullptr;
+}
+
+void Threading::Thread::Join()
+{
+	pxAssertRel(m_native_handle, "Can't join without a thread");
+	const DWORD res = WaitForSingleObject((HANDLE)m_native_handle, INFINITE);
+	if (res != WAIT_OBJECT_0)
+		pxFailRel("WaitForSingleObject() for thread join failed");
+
+	CloseHandle((HANDLE)m_native_handle);
+	m_native_handle = nullptr;
+}
+
+Threading::ThreadHandle& Threading::Thread::operator=(Thread&& thread)
+{
+	ThreadHandle::operator=(thread);
+	m_stack_size = thread.m_stack_size;
+	thread.m_stack_size = 0;
+	return *this;
+}
 
 u64 Threading::GetThreadCpuTime()
 {
-	FileTimeSucks user, kernel;
-	FILETIME dummy;
-	GetThreadTimes(GetCurrentThread(), &dummy, &dummy, &kernel.filetime, &user.filetime);
-	return user.u64time + kernel.u64time;
+	u64 ret = 0;
+	QueryThreadCycleTime(GetCurrentThread(), &ret);
+	return ret;
 }
 
 u64 Threading::GetThreadTicksPerSecond()
 {
-	return 10000000;
-}
-
-u64 Threading::pxThread::GetCpuTime() const
-{
-	if (!m_native_handle)
-		return 0;
-
-	FileTimeSucks user, kernel;
-	FILETIME dummy;
-
-	if (GetThreadTimes((HANDLE)m_native_handle, &dummy, &dummy, &kernel.filetime, &user.filetime))
-		return user.u64time + kernel.u64time;
-
-	return 0; // thread prolly doesn't exist anymore.
-}
-
-void Threading::pxThread::_platform_specific_OnStartInThread()
-{
-	// OpenThread Note: Vista and Win7 need only THREAD_QUERY_LIMITED_INFORMATION (XP and 2k need more),
-	// however we own our process threads, so shouldn't matter in any case...
-
-	m_native_id = (uptr)GetCurrentThreadId();
-	m_native_handle = (uptr)OpenThread(THREAD_QUERY_INFORMATION, false, (DWORD)m_native_id);
-
-	pxAssertDev(m_native_handle, wxNullChar);
-}
-
-void Threading::pxThread::_platform_specific_OnCleanupInThread()
-{
-	CloseHandle((HANDLE)m_native_handle);
+	// On x86, despite what the MS documentation says, this basically appears to be rdtsc.
+	// So, the frequency is our base clock speed (and stable regardless of power management).
+	static u64 frequency = 0;
+	if (unlikely(frequency == 0))
+		frequency = x86caps.CachedMHz() * u64(1000000);
+	return frequency;
 }
 
 void Threading::SetNameOfCurrentThread(const char* name)

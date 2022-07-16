@@ -32,10 +32,8 @@
 
 #include "ConsoleLogger.h"
 
-#ifndef DISABLE_RECORDING
-#	include "Recording/InputRecording.h"
-#	include "Recording/Utilities/InputRecordingLogger.h"
-#endif
+#include "Recording/InputRecording.h"
+#include "Recording/Utilities/InputRecordingLogger.h"
 
 #include <wx/utils.h>
 #include <wx/graphics.h>
@@ -79,7 +77,6 @@ void GSPanel::InitDefaultAccelerators()
 	m_Accels->Map( AAC( WXK_F2 ).Shift(),		"States_CycleSlotBackward" );
 
 	m_Accels->Map( AAC( WXK_F4 ),				"Framelimiter_MasterToggle");
-	m_Accels->Map( AAC( WXK_F4 ).Shift(),		"Frameskip_Toggle");
 	m_Accels->Map( AAC( WXK_TAB ),				"Framelimiter_TurboToggle" );
 	m_Accels->Map( AAC( WXK_TAB ).Shift(),		"Framelimiter_SlomoToggle" );
 
@@ -110,7 +107,6 @@ void GSPanel::InitDefaultAccelerators()
 	m_Accels->Map( FULLSCREEN_TOGGLE_ACCELERATOR_GSPANEL,		"FullscreenToggle" );
 }
 
-#ifndef DISABLE_RECORDING
 void GSPanel::InitRecordingAccelerators()
 {
 	// Note: these override GlobalAccels ( Pcsx2App::InitDefaultGlobalAccelerators() )
@@ -178,9 +174,8 @@ void GSPanel::RemoveRecordingAccelerators()
 {
 	m_Accels.reset(new AcceleratorDictionary);
 	InitDefaultAccelerators();
-	recordingConLog(L"Disabled Input Recording Key Bindings\n");
+	recordingConLog("Disabled Input Recording Key Bindings\n");
 }
-#endif
 
 GSPanel::GSPanel( wxWindow* parent )
 	: wxWindow()
@@ -191,18 +186,16 @@ GSPanel::GSPanel( wxWindow* parent )
 	m_HasFocus		= false;
 
 	if ( !wxWindow::Create(parent, wxID_ANY) )
-		throw Exception::RuntimeError().SetDiagMsg( L"GSPanel constructor explode!!" );
+		throw Exception::RuntimeError().SetDiagMsg( "GSPanel constructor explode!!" );
 
 	SetName( L"GSPanel" );
 
 	InitDefaultAccelerators();
 
-#ifndef DISABLE_RECORDING
 	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
 		InitRecordingAccelerators();
 	}
-#endif
 
 	SetBackgroundColour(wxColour((unsigned long)0));
 	if( g_Conf->GSWindow.AlwaysHideMouse )
@@ -363,7 +356,11 @@ void GSPanel::OnResize(wxEvent& event)
 		return;
 
 	const wxSize gs_vp_size(GetClientSize());
+#ifdef _WIN32
+	const float scale = GetDpiScaleForWxWindow(this);
+#else
 	const float scale = GetContentScaleFactor();
+#endif
 	int width = gs_vp_size.GetWidth();
 	int height = gs_vp_size.GetHeight();
 
@@ -397,24 +394,24 @@ void GSPanel::OnMouseEvent( wxMouseEvent& evt )
 		DoShowMouse();
 	}
 
-#if defined(__unix__)
+#if defined(__unix__) || defined(__APPLE__)
 	// HACK2: In gsopen2 there is one event buffer read by both wx/gui and pad. Wx deletes
 	// the event before the pad see it. So you send key event directly to the pad.
 	HostKeyEvent event;
 	// FIXME how to handle double click ???
 	if (evt.ButtonDown())
 	{
-		event.type = static_cast<HostKeyEvent::Type>(4); // X equivalent of ButtonPress
-		event.key = evt.GetButton();
+		event.type = HostKeyEvent::Type::MousePressed;
+		event.key = evt.GetButton() | 0x10000;
 	}
 	else if (evt.ButtonUp())
 	{
-		event.type = static_cast<HostKeyEvent::Type>(5); // X equivalent of ButtonRelease
-		event.key = evt.GetButton();
+		event.type = HostKeyEvent::Type::MouseReleased;
+		event.key = evt.GetButton() | 0x10000;
 	}
 	else if (evt.Moving() || evt.Dragging())
 	{
-		event.type = static_cast<HostKeyEvent::Type>(6); // X equivalent of MotionNotify
+		event.type = HostKeyEvent::Type::MouseMove;
 		long x, y;
 		evt.GetPosition(&x, &y);
 
@@ -464,15 +461,15 @@ void GSPanel::OnKeyDownOrUp( wxKeyEvent& evt )
 	// to the APP level message handler, which in turn routes them right back here -- yes it's
 	// silly, but oh well).
 
-#if defined(__unix__)
+#if defined(__unix__) || defined(__APPLE__)
 	// HACK2: In gsopen2 there is one event buffer read by both wx/gui and pad. Wx deletes
 	// the event before the pad see it. So you send key event directly to the pad.
 	HostKeyEvent event;
 	event.key = evt.GetRawKeyCode();
 	if (evt.GetEventType() == wxEVT_KEY_UP)
-		event.type = static_cast<HostKeyEvent::Type>(3); // X equivalent of KEYRELEASE;
+		event.type = HostKeyEvent::Type::KeyReleased;
 	else if (evt.GetEventType() == wxEVT_KEY_DOWN)
-		event.type = static_cast<HostKeyEvent::Type>(2); // X equivalent of KEYPRESS;
+		event.type = HostKeyEvent::Type::KeyPressed;
 	else
 		event.type = HostKeyEvent::Type::NoEvent;
 
@@ -547,10 +544,10 @@ void GSPanel::OnFocus( wxFocusEvent& evt )
 	else
 		DoShowMouse();
 
-#if defined(__unix__)
+#if defined(__unix__) || defined(__APPLE__)
 	// HACK2: In gsopen2 there is one event buffer read by both wx/gui and pad. Wx deletes
 	// the event before the pad see it. So you send key event directly to the pad.
-	HostKeyEvent event = {static_cast<HostKeyEvent::Type>(9), 0}; // X equivalent of FocusIn;
+	HostKeyEvent event = {HostKeyEvent::Type::FocusGained, 0};
 	PADWriteEvent(event);
 #endif
 	//Console.Warning("GS frame > focus set");
@@ -563,10 +560,10 @@ void GSPanel::OnFocusLost( wxFocusEvent& evt )
 	evt.Skip();
 	m_HasFocus = false;
 	DoShowMouse();
-#if defined(__unix__)
+#if defined(__unix__) || defined(__APPLE__)
 	// HACK2: In gsopen2 there is one event buffer read by both wx/gui and pad. Wx deletes
 	// the event before the pad see it. So you send key event directly to the pad.
-	HostKeyEvent event = {static_cast<HostKeyEvent::Type>(9), 0}; // X equivalent of FocusOut
+	HostKeyEvent event = {HostKeyEvent::Type::FocustLost, 0};
 	PADWriteEvent(event);
 #endif
 	//Console.Warning("GS frame > focus lost");
@@ -701,9 +698,7 @@ void GSPanel::WaylandDestroySubsurface()
 // --------------------------------------------------------------------------------------
 
 static const uint TitleBarUpdateMs = 333;
-#ifndef DISABLE_RECORDING
 static const uint TitleBarUpdateMsWhenRecording = 50;
-#endif
 
 GSFrame::GSFrame( const wxString& title)
 	: wxFrame(NULL, wxID_ANY, title, g_Conf->GSWindow.WindowPos)
@@ -782,7 +777,6 @@ bool GSFrame::ShowFullScreen(bool show, bool updateConfig)
 
 void GSFrame::UpdateTitleUpdateFreq()
 {
-#ifndef DISABLE_RECORDING
 	if (g_Conf->EmuOptions.EnableRecordingTools)
 	{
 		m_timer_UpdateTitle.Start(TitleBarUpdateMsWhenRecording);
@@ -791,9 +785,6 @@ void GSFrame::UpdateTitleUpdateFreq()
 	{
 		m_timer_UpdateTitle.Start(TitleBarUpdateMs);
 	}
-#else
-	m_timer_UpdateTitle.Start(TitleBarUpdateMs);
-#endif
 }
 
 void GSFrame::CoreThread_OnResumed()
@@ -832,7 +823,6 @@ bool GSFrame::Show( bool shown )
 
 		if (!m_timer_UpdateTitle.IsRunning())
 		{
-#ifndef DISABLE_RECORDING
 			if (g_Conf->EmuOptions.EnableRecordingTools)
 			{
 				m_timer_UpdateTitle.Start(TitleBarUpdateMsWhenRecording);
@@ -841,9 +831,6 @@ bool GSFrame::Show( bool shown )
 			{
 				m_timer_UpdateTitle.Start(TitleBarUpdateMs);
 			}
-#else
-			m_timer_UpdateTitle.Start(TitleBarUpdateMs);
-#endif
 		}
 	}
 	else
@@ -912,10 +899,9 @@ void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 	const u64& smode2 = *(u64*)PS2GS_BASE(GS_SMODE2);
 	wxString omodef = (smode2 & 2) ? templates.OutputFrame : templates.OutputField;
 	wxString omodei = (smode2 & 1) ? templates.OutputInterlaced : templates.OutputProgressive;
-#ifndef DISABLE_RECORDING
 	wxString title;
 	wxString movieMode;
-	if (g_InputRecording.IsActive()) 
+	if (g_InputRecording.IsActive())
 	{
 		title = templates.RecordingTemplate;
 		title.Replace(L"${frame}", pxsFmt(L"%d", g_InputRecording.GetFrameCounter()));
@@ -924,10 +910,7 @@ void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 	} else {
 		title = templates.TitleTemplate;
 	}
-#else
-	wxString title = templates.TitleTemplate;
-#endif
-	
+
 	std::string gsStats;
 	GSgetTitleStats(gsStats);
 
@@ -938,7 +921,7 @@ void GSFrame::OnUpdateTitle( wxTimerEvent& evt )
 	title.Replace(L"${cpuusage}",	cpuUsage);
 	title.Replace(L"${omodef}",		omodef);
 	title.Replace(L"${omodei}",		omodei);
-	title.Replace(L"${gsdx}", StringUtil::UTF8StringToWxString(gsStats));
+	title.Replace(L"${gs}", StringUtil::UTF8StringToWxString(gsStats));
 	title.Replace(L"${videomode}",	ReportVideoMode());
 	if (CoreThread.IsPaused() && !GSDump::isRunning)
 		title = templates.Paused + title;

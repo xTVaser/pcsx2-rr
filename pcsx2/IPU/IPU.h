@@ -17,6 +17,7 @@
 
 #include "IPU_Fifo.h"
 #include "IPUdma.h"
+#include "Common.h"
 
 #define ipumsk( src ) ( (src) & 0xff )
 #define ipucase( src ) case ipumsk(src)
@@ -90,6 +91,8 @@ struct alignas(16) tIPU_BP {
 
 	__fi void Advance(uint bits)
 	{
+		FillBuffer(bits);
+
 		BP += bits;
 		pxAssume( BP <= 256 );
 
@@ -111,10 +114,10 @@ struct alignas(16) tIPU_BP {
 				// if FP == 0 then an already-drained buffer is being advanced, and we need to drop a
 				// quadword from the IPU FIFO.
 
-				if (!FP)
-					ipu_fifo.in.read(&internal_qwc[0]);
-
-				FP = 0;
+				if (ipu_fifo.in.read(&internal_qwc[0]))
+					FP = 1;
+				else
+					FP = 0;
 			}
 		}
 	}
@@ -139,9 +142,9 @@ struct alignas(16) tIPU_BP {
 		return true;
 	}
 
-	wxString desc() const
+	std::string desc() const
 	{
-		return wxsFormat(L"Ipu BP: bp = 0x%x, IFC = 0x%x, FP = 0x%x.", BP, IFC, FP);
+		return StringUtil::StdStringFromFormat("Ipu BP: bp = 0x%x, IFC = 0x%x, FP = 0x%x.", BP, IFC, FP);
 	}
 };
 
@@ -276,9 +279,9 @@ union tIPU_cmd
 	u128 _u128[2];
 
 	void clear();
-	wxString desc() const
+	std::string desc() const
 	{
-		return pxsFmt(L"Ipu cmd: index = 0x%x, current = 0x%x, pos[0] = 0x%x, pos[1] = 0x%x",
+		return StringUtil::StdStringFromFormat("Ipu cmd: index = 0x%x, current = 0x%x, pos[0] = 0x%x, pos[1] = 0x%x",
 			index, current, pos[0], pos[1]);
 	}
 };
@@ -287,6 +290,7 @@ static IPUregisters& ipuRegs = (IPUregisters&)eeHw[0x2000];
 
 alignas(16) extern tIPU_cmd ipu_cmd;
 extern int coded_block_pattern;
+extern bool CommandExecuteQueued;
 
 extern void ipuReset();
 

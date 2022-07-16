@@ -16,6 +16,7 @@
 #pragma once
 
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -37,7 +38,24 @@ u8 PADpoll(u8 value);
 
 namespace PAD
 {
-	enum class VibrationCapabilities
+	enum class ControllerType: u8
+	{
+		NotConnected,
+		DualShock2,
+		Count
+	};
+
+	enum class ControllerBindingType : u8
+	{
+		Unknown,
+		Button,
+		Axis,
+		HalfAxis,
+		Motor,
+		Macro
+	};
+
+	enum class VibrationCapabilities : u8
 	{
 		NoVibration,
 		LargeSmallMotors,
@@ -45,8 +63,38 @@ namespace PAD
 		Count
 	};
 
+	struct ControllerBindingInfo
+	{
+		const char* name;
+		const char* display_name;
+		ControllerBindingType type;
+		GenericInputBinding generic_mapping;
+	};
+
+	struct ControllerInfo
+	{
+		const char* name;
+		const char* display_name;
+		const ControllerBindingInfo* bindings;
+		u32 num_bindings;
+		ControllerType type;
+		PAD::VibrationCapabilities vibration_caps;
+	};
+
+	/// Total number of pad ports, across both multitaps.
+	static constexpr u32 NUM_CONTROLLER_PORTS = 8;
+
 	/// Number of macro buttons per controller.
 	static constexpr u32 NUM_MACRO_BUTTONS_PER_CONTROLLER = 4;
+
+	/// Default stick deadzone/sensitivity.
+	static constexpr float DEFAULT_STICK_DEADZONE = 0.0f;
+	static constexpr float DEFAULT_STICK_SCALE = 1.33f;
+	static constexpr float DEFAULT_MOTOR_SCALE = 1.0f;
+	static constexpr float DEFAULT_PRESSURE_MODIFIER = 0.5f;
+
+	/// Returns the default type for the specified port.
+	const char* GetDefaultPadType(u32 pad);
 
 	/// Reloads configuration.
 	void LoadConfig(const SettingsInterface& si);
@@ -54,17 +102,28 @@ namespace PAD
 	/// Restores default configuration.
 	void SetDefaultConfig(SettingsInterface& si);
 
+	/// Clears all bindings for a given port.
+	void ClearPortBindings(SettingsInterface& si, u32 port);
+
+	/// Copies pad configuration from one interface (ini) to another.
+	void CopyConfiguration(SettingsInterface* dest_si, const SettingsInterface& src_si,
+		bool copy_pad_config = true, bool copy_pad_bindings = true, bool copy_hotkey_bindings = true);
+
 	/// Updates vibration and other internal state. Called at the *end* of a frame.
 	void Update();
 
-	/// Returns a list of controller type names.
-	std::vector<std::string> GetControllerTypeNames();
+	/// Returns a list of controller type names. Pair of [name, display name].
+	std::vector<std::pair<std::string, std::string>> GetControllerTypeNames();
 
 	/// Returns the list of binds for the specified controller type.
 	std::vector<std::string> GetControllerBinds(const std::string_view& type);
 
 	/// Returns the vibration configuration for the specified controller type.
 	VibrationCapabilities GetControllerVibrationCapabilities(const std::string_view& type);
+
+	/// Returns general information for the specified controller type.
+	const ControllerInfo* GetControllerInfo(ControllerType type);
+	const ControllerInfo* GetControllerInfo(const std::string_view& name);
 
 	/// Performs automatic controller mapping with the provided list of generic mappings.
 	bool MapController(SettingsInterface& si, u32 controller,
@@ -75,4 +134,7 @@ namespace PAD
 
 	/// Sets the state of the specified macro button.
 	void SetMacroButtonState(u32 pad, u32 index, bool state);
+
+	/// Returns a list of input profiles available.
+	std::vector<std::string> GetInputProfileNames();
 } // namespace PAD

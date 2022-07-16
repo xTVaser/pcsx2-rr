@@ -16,6 +16,9 @@
 #include "PrecompiledHeader.h"
 #include "Global.h"
 
+#include "common/Path.h"
+#include "common/StringUtil.h"
+
 #include "resource_pad.h"
 #include "InputManager.h"
 #include "PADConfig.h"
@@ -335,8 +338,7 @@ void PADsetSettingsDir(const char* dir)
 	//swprintf_s( iniFileUSB, L"%S", (dir==NULL) ? "inis" : dir );
 
 	//uint targlen = MultiByteToWideChar(CP_ACP, 0, dir, -1, NULL, 0);
-	wxString iniName = "PAD.ini";
-	StrCpyNW(iniFileUSB, EmuFolders::Settings.Combine(iniName).GetFullPath(), std::size(iniFileUSB));
+	StrCpyNW(iniFileUSB, StringUtil::UTF8StringToWideString(Path::Combine(EmuFolders::Settings, "PAD.ini")).c_str(), std::size(iniFileUSB));
 
 	createIniDir = false;
 
@@ -376,7 +378,7 @@ void SelChanged(int port, int slot)
 	if (!hWnd)
 		return;
 	HWND hWndTemp, hWndList = GetDlgItem(hWnd, IDC_BINDINGS_LIST);
-	int j, i = ListView_GetSelectedCount(hWndList);
+	int i = ListView_GetSelectedCount(hWndList);
 	wchar_t* devName = L"N/A";
 	wchar_t* key = L"N/A";
 	wchar_t* command = L"N/A";
@@ -385,20 +387,20 @@ void SelChanged(int port, int slot)
 	int sensitivity = 0;
 	int deadZone = 0;
 	int skipDeadZone = 0;
-	int nonButtons = 0;
 	// Set if sensitivity != 0, but need to disable flip anyways.
 	// Only used to relative axes.
 	int disableFlip = 0;
 	wchar_t temp[4][1000];
 	Device* dev;
 	int bFound = 0;
-	int ffbFound = 0;
 	ForceFeedbackBinding* ffb = 0;
 	Binding* b = 0;
 	if (i >= 1)
 	{
 		int index = -1;
 		int flipped = 0;
+		int nonButtons = 0;
+		int ffbFound = 0;
 		while (1)
 		{
 			if (!(config.bind && (!config.configureOnBind || quickSetup)))
@@ -409,7 +411,8 @@ void SelChanged(int port, int slot)
 			item.iItem = index;
 			item.mask = LVIF_TEXT;
 			item.pszText = temp[3];
-			for (j = 0; j < 3; j++)
+			int j = 0;
+			for (; j < 3; j++)
 			{
 				item.iSubItem = j;
 				item.cchTextMax = sizeof(temp[0]) / sizeof(temp[3][0]);

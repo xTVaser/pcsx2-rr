@@ -20,9 +20,10 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <mach/mach_time.h>
-#include <wx/string.h>
+#include <IOKit/pwr_mgt/IOPMLib.h>
 
 #include "common/Pcsx2Types.h"
+#include "common/General.h"
 
 // Darwin (OSX) is a bit different from Linux when requesting properties of
 // the OS because of its BSD/Mach heritage. Helpfully, most of this code
@@ -85,7 +86,7 @@ static std::string sysctl_str(int category, int name)
 	return std::string(buf, len > 0 ? len - 1 : 0);
 }
 
-wxString GetOSVersionString()
+std::string GetOSVersionString()
 {
 	std::string type    = sysctl_str(CTL_KERN, KERN_OSTYPE);
 	std::string release = sysctl_str(CTL_KERN, KERN_OSRELEASE);
@@ -93,8 +94,17 @@ wxString GetOSVersionString()
 	return type + " " + release + " " + arch;
 }
 
+static IOPMAssertionID s_pm_assertion;
+
 void ScreensaverAllow(bool allow)
 {
-	// no-op
+	if (s_pm_assertion)
+	{
+		IOPMAssertionRelease(s_pm_assertion);
+		s_pm_assertion = 0;
+	}
+
+	if (!allow)
+		IOPMAssertionCreateWithName(kIOPMAssertionTypePreventUserIdleDisplaySleep, kIOPMAssertionLevelOn, CFSTR("Playing a game"), &s_pm_assertion);
 }
 #endif

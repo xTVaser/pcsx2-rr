@@ -15,8 +15,8 @@
 
 #include "PrecompiledHeader.h"
 
-#include <wx/fileconf.h>
-
+#include "common/FileSystem.h"
+#include "common/Path.h"
 #include "common/SettingsInterface.h"
 #include "common/SettingsWrapper.h"
 #include "common/StringUtil.h"
@@ -33,22 +33,24 @@
 
 namespace EmuFolders
 {
-	wxDirName AppRoot;
-	wxDirName DataRoot;
-	wxDirName Settings;
-	wxDirName Bios;
-	wxDirName Snapshots;
-	wxDirName Savestates;
-	wxDirName MemoryCards;
-	wxDirName Langs;
-	wxDirName Logs;
-	wxDirName Cheats;
-	wxDirName CheatsWS;
-	wxDirName Resources;
-	wxDirName Cache;
-	wxDirName Covers;
-	wxDirName GameSettings;
-	wxDirName Textures;
+	std::string AppRoot;
+	std::string DataRoot;
+	std::string Settings;
+	std::string Bios;
+	std::string Snapshots;
+	std::string Savestates;
+	std::string MemoryCards;
+	std::string Langs;
+	std::string Logs;
+	std::string Cheats;
+	std::string CheatsWS;
+	std::string CheatsNI;
+	std::string Resources;
+	std::string Cache;
+	std::string Covers;
+	std::string GameSettings;
+	std::string Textures;
+	std::string InputProfiles;
 } // namespace EmuFolders
 
 void TraceLogFilters::LoadSave(SettingsWrapper& wrap)
@@ -78,7 +80,7 @@ const char* EnumToString(SpeedhackId id)
 
 void Pcsx2Config::SpeedhackOptions::Set(SpeedhackId id, bool enabled)
 {
-	EnumAssert(id);
+	pxAssert(EnumIsValid(id));
 	switch (id)
 	{
 		case Speedhack_mvuFlag:
@@ -224,16 +226,26 @@ void Pcsx2Config::RecompilerOptions::LoadSave(SettingsWrapper& wrap)
 	SettingsWrapBitBool(PreBlockCheckIOP);
 }
 
+bool Pcsx2Config::CpuOptions::CpusChanged(const CpuOptions& right) const
+{
+	return (Recompiler.EnableEE != right.Recompiler.EnableEE ||
+			Recompiler.EnableIOP != right.Recompiler.EnableIOP ||
+			Recompiler.EnableVU0 != right.Recompiler.EnableVU0 ||
+			Recompiler.EnableVU1 != right.Recompiler.EnableVU1);
+}
+
 Pcsx2Config::CpuOptions::CpuOptions()
 {
 	sseMXCSR.bitmask = DEFAULT_sseMXCSR;
 	sseVUMXCSR.bitmask = DEFAULT_sseVUMXCSR;
+	AffinityControlMode = 0;
 }
 
 void Pcsx2Config::CpuOptions::ApplySanityCheck()
 {
 	sseMXCSR.ClearExceptionFlags().DisableExceptions();
 	sseVUMXCSR.ClearExceptionFlags().DisableExceptions();
+	AffinityControlMode = std::min<u32>(AffinityControlMode, 6);
 
 	Recompiler.ApplySanityCheck();
 }
@@ -245,6 +257,7 @@ void Pcsx2Config::CpuOptions::LoadSave(SettingsWrapper& wrap)
 	SettingsWrapBitBoolEx(sseMXCSR.DenormalsAreZero, "FPU.DenormalsAreZero");
 	SettingsWrapBitBoolEx(sseMXCSR.FlushToZero, "FPU.FlushToZero");
 	SettingsWrapBitfieldEx(sseMXCSR.RoundingControl, "FPU.Roundmode");
+	SettingsWrapEntry(AffinityControlMode);
 
 	SettingsWrapBitBoolEx(sseVUMXCSR.DenormalsAreZero, "VU.DenormalsAreZero");
 	SettingsWrapBitBoolEx(sseVUMXCSR.FlushToZero, "VU.FlushToZero");
@@ -255,12 +268,14 @@ void Pcsx2Config::CpuOptions::LoadSave(SettingsWrapper& wrap)
 
 const char* Pcsx2Config::GSOptions::AspectRatioNames[] = {
 	"Stretch",
+	"Auto 4:3/3:2",
 	"4:3",
 	"16:9",
 	nullptr};
 
 const char* Pcsx2Config::GSOptions::FMVAspectRatioSwitchNames[] = {
 	"Off",
+	"Auto 4:3/3:2",
 	"4:3",
 	"16:9",
 	nullptr};
@@ -271,6 +286,7 @@ const char* Pcsx2Config::GSOptions::GetRendererName(GSRendererType type)
 	{
 		case GSRendererType::Auto:  return "Auto";
 		case GSRendererType::DX11:  return "Direct3D 11";
+		case GSRendererType::DX12:  return "Direct3D 12";
 		case GSRendererType::Metal: return "Metal";
 		case GSRendererType::OGL:   return "OpenGL";
 		case GSRendererType::VK:    return "Vulkan";
@@ -284,13 +300,19 @@ Pcsx2Config::GSOptions::GSOptions()
 {
 	bitset = 0;
 
+	PCRTCAntiBlur = true;
+	DisableInterlaceOffset = false;
+	PCRTCOffsets = false;
+	PCRTCOverscan = false;
 	IntegerScaling = false;
 	LinearPresent = true;
+	SyncToHostRefreshRate = false;
 	UseDebugDevice = false;
 	UseBlitSwapChain = false;
 	DisableShaderCache = false;
 	DisableFramebufferFetch = false;
 	ThreadedPresentation = false;
+	SkipDuplicateFrames = false;
 	OsdShowMessages = true;
 	OsdShowSpeed = false;
 	OsdShowFPS = false;
@@ -324,6 +346,8 @@ Pcsx2Config::GSOptions::GSOptions()
 	DumpReplaceableTextures = false;
 	DumpReplaceableMipmaps = false;
 	DumpTexturesWithFMVActive = false;
+	DumpDirectTextures = true;
+	DumpPaletteTextures = true;
 	LoadTextureReplacements = false;
 	LoadTextureReplacementsAsync = true;
 	PrecacheTextureReplacements = false;
@@ -338,11 +362,7 @@ bool Pcsx2Config::GSOptions::operator==(const GSOptions& right) const
 		OpEqu(SynchronousMTGS) &&
 		OpEqu(VsyncQueueSize) &&
 
-		OpEqu(FrameSkipEnable) &&
 		OpEqu(FrameLimitEnable) &&
-
-		OpEqu(FramesToDraw) &&
-		OpEqu(FramesToSkip) &&
 
 		OpEqu(LimitScalar) &&
 		OpEqu(FramerateNTSC) &&
@@ -377,6 +397,7 @@ bool Pcsx2Config::GSOptions::OptionsAreEqual(const GSOptions& right) const
 		OpEqu(CRCHack) &&
 		OpEqu(TextureFiltering) &&
 		OpEqu(TexturePreloading) &&
+		OpEqu(GSDumpCompression) &&
 		OpEqu(Dithering) &&
 		OpEqu(MaxAnisotropy) &&
 		OpEqu(SWExtraThreads) &&
@@ -390,6 +411,7 @@ bool Pcsx2Config::GSOptions::OptionsAreEqual(const GSOptions& right) const
 		OpEqu(UserHacks_RoundSprite) &&
 		OpEqu(UserHacks_TCOffsetX) &&
 		OpEqu(UserHacks_TCOffsetY) &&
+		OpEqu(UserHacks_CPUSpriteRenderBW) &&
 		OpEqu(UserHacks_TriFilter) &&
 		OpEqu(OverrideTextureBarriers) &&
 		OpEqu(OverrideGeometryShaders) &&
@@ -433,18 +455,15 @@ void Pcsx2Config::GSOptions::LoadSave(SettingsWrapper& wrap)
 	SettingsWrapEntry(VsyncQueueSize);
 
 	SettingsWrapEntry(FrameLimitEnable);
-	SettingsWrapEntry(FrameSkipEnable);
 	wrap.EnumEntry(CURRENT_SETTINGS_SECTION, "VsyncEnable", VsyncEnable, NULL, VsyncEnable);
 
 	// LimitScalar is set at runtime.
 	SettingsWrapEntry(FramerateNTSC);
 	SettingsWrapEntry(FrameratePAL);
 
-	SettingsWrapEntry(FramesToDraw);
-	SettingsWrapEntry(FramesToSkip);
-
 #ifdef PCSX2_CORE
 	// These are loaded from GSWindow in wx.
+	SettingsWrapBitBool(SyncToHostRefreshRate);
 	SettingsWrapEnumEx(AspectRatio, "AspectRatio", AspectRatioNames);
 	SettingsWrapEnumEx(FMVAspectRatioSwitch, "FMVAspectRatioSwitch", FMVAspectRatioSwitchNames);
 
@@ -493,6 +512,10 @@ void Pcsx2Config::GSOptions::ReloadIniSettings()
 
 	// Unfortunately, because code in the GS still reads the setting by key instead of
 	// using these variables, we need to use the old names. Maybe post 2.0 we can change this.
+	GSSettingBoolEx(PCRTCAntiBlur, "pcrtc_antiblur");
+	GSSettingBoolEx(DisableInterlaceOffset, "disable_interlace_offset");
+	GSSettingBoolEx(PCRTCOffsets, "pcrtc_offsets");
+	GSSettingBoolEx(PCRTCOverscan, "pcrtc_overscan");
 	GSSettingBool(IntegerScaling);
 	GSSettingBoolEx(LinearPresent, "linear_present");
 	GSSettingBool(UseDebugDevice);
@@ -501,6 +524,7 @@ void Pcsx2Config::GSOptions::ReloadIniSettings()
 	GSSettingBool(DisableDualSourceBlend);
 	GSSettingBool(DisableFramebufferFetch);
 	GSSettingBool(ThreadedPresentation);
+	GSSettingBool(SkipDuplicateFrames);
 	GSSettingBool(OsdShowMessages);
 	GSSettingBool(OsdShowSpeed);
 	GSSettingBool(OsdShowFPS);
@@ -537,25 +561,29 @@ void Pcsx2Config::GSOptions::ReloadIniSettings()
 	GSSettingBoolEx(SaveFrame, "savef");
 	GSSettingBoolEx(SaveTexture, "savet");
 	GSSettingBoolEx(SaveDepth, "savez");
-	GSSettingBoolEx(DumpReplaceableTextures, "DumpReplaceableTextures");
-	GSSettingBoolEx(DumpReplaceableMipmaps, "DumpReplaceableMipmaps");
-	GSSettingBoolEx(DumpTexturesWithFMVActive, "DumpTexturesWithFMVActive");
-	GSSettingBoolEx(LoadTextureReplacements, "LoadTextureReplacements");
-	GSSettingBoolEx(LoadTextureReplacementsAsync, "LoadTextureReplacementsAsync");
-	GSSettingBoolEx(PrecacheTextureReplacements, "PrecacheTextureReplacements");
+	GSSettingBool(DumpReplaceableTextures);
+	GSSettingBool(DumpReplaceableMipmaps);
+	GSSettingBool(DumpTexturesWithFMVActive);
+	GSSettingBool(DumpDirectTextures);
+	GSSettingBool(DumpPaletteTextures);
+	GSSettingBool(LoadTextureReplacements);
+	GSSettingBool(LoadTextureReplacementsAsync);
+	GSSettingBool(PrecacheTextureReplacements);
 
-	GSSettingIntEnumEx(InterlaceMode, "interlace");
+	GSSettingIntEnumEx(InterlaceMode, "deinterlace");
 
 	GSSettingFloat(OsdScale);
 
 	GSSettingIntEnumEx(Renderer, "Renderer");
 	GSSettingIntEx(UpscaleMultiplier, "upscale_multiplier");
+	UpscaleMultiplier = std::clamp(UpscaleMultiplier, 1u, 8u);
 
 	GSSettingIntEnumEx(HWMipmap, "mipmap_hw");
 	GSSettingIntEnumEx(AccurateBlendingUnit, "accurate_blending_unit");
 	GSSettingIntEnumEx(CRCHack, "crc_hack_level");
 	GSSettingIntEnumEx(TextureFiltering, "filter");
 	GSSettingIntEnumEx(TexturePreloading, "texture_preloading");
+	GSSettingIntEnumEx(GSDumpCompression, "GSDumpCompression");
 	GSSettingIntEx(Dithering, "dithering_ps2");
 	GSSettingIntEx(MaxAnisotropy, "MaxAnisotropy");
 	GSSettingIntEx(SWExtraThreads, "extrathreads");
@@ -570,6 +598,7 @@ void Pcsx2Config::GSOptions::ReloadIniSettings()
 	GSSettingIntEx(UserHacks_RoundSprite, "UserHacks_round_sprite_offset");
 	GSSettingIntEx(UserHacks_TCOffsetX, "UserHacks_TCOffsetX");
 	GSSettingIntEx(UserHacks_TCOffsetY, "UserHacks_TCOffsetY");
+	GSSettingIntEx(UserHacks_CPUSpriteRenderBW, "UserHacks_CPUSpriteRenderBW");
 	GSSettingIntEnumEx(UserHacks_TriFilter, "UserHacks_TriFilter");
 	GSSettingIntEx(OverrideTextureBarriers, "OverrideTextureBarriers");
 	GSSettingIntEx(OverrideGeometryShaders, "OverrideGeometryShaders");
@@ -616,29 +645,33 @@ void Pcsx2Config::GSOptions::MaskUserHacks()
 	UserHacks_TextureInsideRt = false;
 	UserHacks_TCOffsetX = 0;
 	UserHacks_TCOffsetY = 0;
+	UserHacks_CPUSpriteRenderBW = 0;
 	SkipDrawStart = 0;
 	SkipDrawEnd = 0;
 
 	// in wx, we put trilinear filtering behind user hacks, but not in qt.
 #ifndef PCSX2_CORE
-	UserHacks_TriFilter = TriFiltering::Off;
+	UserHacks_TriFilter = TriFiltering::Automatic;
 #endif
 }
 
 void Pcsx2Config::GSOptions::MaskUpscalingHacks()
 {
-	if (UpscaleMultiplier == 1 || ManualUserHacks)
+	if (UpscaleMultiplier != 1 && ManualUserHacks)
 		return;
 
 	UserHacks_AlignSpriteX = false;
 	UserHacks_MergePPSprite = false;
+	UserHacks_WildHack = false;
 	UserHacks_HalfPixelOffset = 0;
 	UserHacks_RoundSprite = 0;
+	UserHacks_TCOffsetX = 0;
+	UserHacks_TCOffsetY = 0;
 }
 
 bool Pcsx2Config::GSOptions::UseHardwareRenderer() const
 {
-	return (Renderer == GSRendererType::DX11 || Renderer == GSRendererType::OGL || Renderer == GSRendererType::VK || Renderer == GSRendererType::Metal);
+	return (Renderer != GSRendererType::Null && Renderer != GSRendererType::SW);
 }
 
 VsyncMode Pcsx2Config::GetEffectiveVsyncMode() const
@@ -759,7 +792,7 @@ void Pcsx2Config::DEV9Options::LoadSave(SettingsWrapper& wrap)
 		SettingsWrapEntryEx(hostCount, "Count");
 	}
 
-	for (size_t i = 0; i < hostCount; i++)
+	for (int i = 0; i < hostCount; i++)
 	{
 		std::string section = "DEV9/Eth/Hosts/Host" + std::to_string(i);
 		SettingsWrapSection(section.c_str());
@@ -827,7 +860,8 @@ static const char* const tbl_GamefixNames[] =
 	"Ibit",
 	"VUSync",
 	"VUOverflow",
-	"XGKick"
+	"XGKick",
+	"BlitInternalFPS"
 };
 
 const char* EnumToString(GamefixId id)
@@ -847,33 +881,9 @@ Pcsx2Config::GamefixOptions& Pcsx2Config::GamefixOptions::DisableAll()
 	return *this;
 }
 
-// Enables a full list of gamefixes.  The list can be either comma or pipe-delimited.
-//   Example:  "XGKick,IpuWait"  or  "EEtiming,FpuCompare"
-// If an unrecognized tag is encountered, a warning is printed to the console, but no error
-// is generated.  This allows the system to function in the event that future versions of
-// PCSX2 remove old hacks once they become obsolete.
-void Pcsx2Config::GamefixOptions::Set(const wxString& list, bool enabled)
-{
-	wxStringTokenizer izer(list, L",|", wxTOKEN_STRTOK);
-
-	while (izer.HasMoreTokens())
-	{
-		wxString token(izer.GetNextToken());
-
-		GamefixId i;
-		for (i = GamefixId_FIRST; i < pxEnumEnd; ++i)
-		{
-			if (token.CmpNoCase(EnumToString(i)) == 0)
-				break;
-		}
-		if (i < pxEnumEnd)
-			Set(i);
-	}
-}
-
 void Pcsx2Config::GamefixOptions::Set(GamefixId id, bool enabled)
 {
-	EnumAssert(id);
+	pxAssert(EnumIsValid(id));
 	switch (id)
 	{
 		case Fix_VuAddSub:            VuAddSubHack            = enabled; break;
@@ -892,13 +902,14 @@ void Pcsx2Config::GamefixOptions::Set(GamefixId id, bool enabled)
 		case Fix_Ibit:                IbitHack                = enabled; break;
 		case Fix_VUSync:              VUSyncHack              = enabled; break;
 		case Fix_VUOverflow:          VUOverflowHack          = enabled; break;
+		case Fix_BlitInternalFPS:     BlitInternalFPSHack     = enabled; break;
 		jNO_DEFAULT;
 	}
 }
 
 bool Pcsx2Config::GamefixOptions::Get(GamefixId id) const
 {
-	EnumAssert(id);
+	pxAssert(EnumIsValid(id));
 	switch (id)
 	{
 		case Fix_VuAddSub:            return VuAddSubHack;
@@ -917,6 +928,7 @@ bool Pcsx2Config::GamefixOptions::Get(GamefixId id) const
 		case Fix_Ibit:                return IbitHack;
 		case Fix_VUSync:              return VUSyncHack;
 		case Fix_VUOverflow:          return VUOverflowHack;
+		case Fix_BlitInternalFPS:     return BlitInternalFPSHack;
 		jNO_DEFAULT;
 	}
 	return false; // unreachable, but we still need to suppress warnings >_<
@@ -942,6 +954,7 @@ void Pcsx2Config::GamefixOptions::LoadSave(SettingsWrapper& wrap)
 	SettingsWrapBitBool(IbitHack);
 	SettingsWrapBitBool(VUSyncHack);
 	SettingsWrapBitBool(VUOverflowHack);
+	SettingsWrapBitBool(BlitInternalFPSHack);
 }
 
 
@@ -996,9 +1009,6 @@ void Pcsx2Config::FramerateOptions::LoadSave(SettingsWrapper& wrap)
 	SettingsWrapEntry(NominalScalar);
 	SettingsWrapEntry(TurboScalar);
 	SettingsWrapEntry(SlomoScalar);
-
-	SettingsWrapEntry(SkipOnLimit);
-	SettingsWrapEntry(SkipOnTurbo);
 }
 
 Pcsx2Config::Pcsx2Config()
@@ -1008,7 +1018,12 @@ Pcsx2Config::Pcsx2Config()
 	McdEnableEjection = true;
 	McdFolderAutoManage = true;
 	EnablePatches = true;
+	EnableRecordingTools = true;
+#ifdef PCSX2_CORE
+	EnableGameFixes = true;
+#endif
 	BackupSavestate = true;
+	SavestateZstdCompression = true;
 
 #ifdef __WXMSW__
 	McdCompressNTFS = true;
@@ -1038,17 +1053,26 @@ void Pcsx2Config::LoadSave(SettingsWrapper& wrap)
 	SettingsWrapBitBool(EnableCheats);
 	SettingsWrapBitBool(EnablePINE);
 	SettingsWrapBitBool(EnableWideScreenPatches);
-#ifndef DISABLE_RECORDING
+	SettingsWrapBitBool(EnableNoInterlacingPatches);
 	SettingsWrapBitBool(EnableRecordingTools);
+#ifdef PCSX2_CORE
+	SettingsWrapBitBool(EnableGameFixes);
+	SettingsWrapBitBool(SaveStateOnShutdown);
 #endif
 	SettingsWrapBitBool(ConsoleToStdio);
 	SettingsWrapBitBool(HostFs);
+	SettingsWrapBitBool(PatchBios);
+	SettingsWrapEntry(PatchRegion);
 
 	SettingsWrapBitBool(BackupSavestate);
+	SettingsWrapBitBool(SavestateZstdCompression);
 	SettingsWrapBitBool(McdEnableEjection);
 	SettingsWrapBitBool(McdFolderAutoManage);
+#ifndef PCSX2_CORE
+	// We put mtap in the Pad section for Qt to make it easier to manually edit input profiles.
 	SettingsWrapBitBool(MultitapPort0_Enabled);
 	SettingsWrapBitBool(MultitapPort1_Enabled);
+#endif
 
 	// Process various sub-components:
 
@@ -1070,11 +1094,11 @@ void Pcsx2Config::LoadSave(SettingsWrapper& wrap)
 
 	// For now, this in the derived config for backwards ini compatibility.
 #ifdef PCSX2_CORE
+	SettingsWrapEntryEx(CurrentBlockdump, "BlockDumpSaveDirectory");
+
 	BaseFilenames.LoadSave(wrap);
 	Framerate.LoadSave(wrap);
 	LoadSaveMemcards(wrap);
-
-	SettingsWrapEntry(GzipIsoIndexTemplate);
 
 #ifdef __WXMSW__
 	SettingsWrapEntry(McdCompressNTFS);
@@ -1119,13 +1143,13 @@ std::string Pcsx2Config::FullpathToBios() const
 {
 	std::string ret;
 	if (!BaseFilenames.Bios.empty())
-		ret = Path::CombineStdString(EmuFolders::Bios, BaseFilenames.Bios);
+		ret = Path::Combine(EmuFolders::Bios, BaseFilenames.Bios);
 	return ret;
 }
 
-wxString Pcsx2Config::FullpathToMcd(uint slot) const
+std::string Pcsx2Config::FullpathToMcd(uint slot) const
 {
-	return Path::Combine(EmuFolders::MemoryCards, StringUtil::UTF8StringToWxString(Mcd[slot].Filename));
+	return Path::Combine(EmuFolders::MemoryCards, Mcd[slot].Filename);
 }
 
 bool Pcsx2Config::operator==(const Pcsx2Config& right) const
@@ -1164,6 +1188,7 @@ void Pcsx2Config::CopyConfig(const Pcsx2Config& cfg)
 	Trace = cfg.Trace;
 	BaseFilenames = cfg.BaseFilenames;
 	Framerate = cfg.Framerate;
+
 	for (u32 i = 0; i < sizeof(Mcd) / sizeof(Mcd[0]); i++)
 	{
 		// Type will be File here, even if it's a folder, so we preserve the old value.
@@ -1181,11 +1206,13 @@ void Pcsx2Config::CopyConfig(const Pcsx2Config& cfg)
 	EnableCheats = cfg.EnableCheats;
 	EnablePINE = cfg.EnablePINE;
 	EnableWideScreenPatches = cfg.EnableWideScreenPatches;
-#ifndef DISABLE_RECORDING
+	EnableNoInterlacingPatches = cfg.EnableNoInterlacingPatches;
 	EnableRecordingTools = cfg.EnableRecordingTools;
-#endif
 	UseBOOT2Injection = cfg.UseBOOT2Injection;
+	PatchBios = cfg.PatchBios;
+	PatchRegion = cfg.PatchRegion;
 	BackupSavestate = cfg.BackupSavestate;
+	SavestateZstdCompression = cfg.SavestateZstdCompression;
 	McdEnableEjection = cfg.McdEnableEjection;
 	McdFolderAutoManage = cfg.McdFolderAutoManage;
 	MultitapPort0_Enabled = cfg.MultitapPort0_Enabled;
@@ -1201,27 +1228,27 @@ void Pcsx2Config::CopyConfig(const Pcsx2Config& cfg)
 
 void EmuFolders::SetDefaults()
 {
-	Bios = DataRoot.Combine(wxDirName("bios"));
-	Snapshots = DataRoot.Combine(wxDirName("snaps"));
-	Savestates = DataRoot.Combine(wxDirName("sstates"));
-	MemoryCards = DataRoot.Combine(wxDirName("memcards"));
-	Logs = DataRoot.Combine(wxDirName("logs"));
-	Cheats = DataRoot.Combine(wxDirName("cheats"));
-	CheatsWS = DataRoot.Combine(wxDirName("cheats_ws"));
-	Covers = DataRoot.Combine(wxDirName("covers"));
-	GameSettings = DataRoot.Combine(wxDirName("gamesettings"));
-	Cache = DataRoot.Combine(wxDirName("cache"));
-	Resources = AppRoot.Combine(wxDirName("resources"));
-	Textures = AppRoot.Combine(wxDirName("textures"));
+	Bios = Path::Combine(DataRoot, "bios");
+	Snapshots = Path::Combine(DataRoot, "snaps");
+	Savestates = Path::Combine(DataRoot, "sstates");
+	MemoryCards = Path::Combine(DataRoot, "memcards");
+	Logs = Path::Combine(DataRoot, "logs");
+	Cheats = Path::Combine(DataRoot, "cheats");
+	CheatsWS = Path::Combine(DataRoot, "cheats_ws");
+	CheatsNI = Path::Combine(DataRoot, "cheats_ni");
+	Covers = Path::Combine(DataRoot, "covers");
+	GameSettings = Path::Combine(DataRoot, "gamesettings");
+	Cache = Path::Combine(DataRoot, "cache");
+	Textures = Path::Combine(DataRoot, "textures");
+	InputProfiles = Path::Combine(DataRoot, "inputprofiles");
 }
 
-static wxDirName LoadPathFromSettings(SettingsInterface& si, const wxDirName& root, const char* name, const char* def)
+static std::string LoadPathFromSettings(SettingsInterface& si, const std::string& root, const char* name, const char* def)
 {
 	std::string value = si.GetStringValue("Folders", name, def);
-	wxDirName ret(StringUtil::UTF8StringToWxString(value));
-	if (!ret.IsAbsolute())
-		ret = root.Combine(ret);
-	return ret;
+	if (!Path::IsAbsolute(value))
+		value = Path::Combine(root, value);
+	return value;
 }
 
 void EmuFolders::LoadConfig(SettingsInterface& si)
@@ -1233,52 +1260,59 @@ void EmuFolders::LoadConfig(SettingsInterface& si)
 	Logs = LoadPathFromSettings(si, DataRoot, "Logs", "logs");
 	Cheats = LoadPathFromSettings(si, DataRoot, "Cheats", "cheats");
 	CheatsWS = LoadPathFromSettings(si, DataRoot, "CheatsWS", "cheats_ws");
+	CheatsNI = LoadPathFromSettings(si, DataRoot, "CheatsNI", "cheats_ni");
 	Covers = LoadPathFromSettings(si, DataRoot, "Covers", "covers");
 	GameSettings = LoadPathFromSettings(si, DataRoot, "GameSettings", "gamesettings");
 	Cache = LoadPathFromSettings(si, DataRoot, "Cache", "cache");
 	Textures = LoadPathFromSettings(si, DataRoot, "Textures", "textures");
+	InputProfiles = LoadPathFromSettings(si, DataRoot, "InputProfiles", "inputprofiles");
 
-	Console.WriteLn("BIOS Directory: %s", Bios.ToString().c_str().AsChar());
-	Console.WriteLn("Snapshots Directory: %s", Snapshots.ToString().c_str().AsChar());
-	Console.WriteLn("Savestates Directory: %s", Savestates.ToString().c_str().AsChar());
-	Console.WriteLn("MemoryCards Directory: %s", MemoryCards.ToString().c_str().AsChar());
-	Console.WriteLn("Logs Directory: %s", Logs.ToString().c_str().AsChar());
-	Console.WriteLn("Cheats Directory: %s", Cheats.ToString().c_str().AsChar());
-	Console.WriteLn("CheatsWS Directory: %s", CheatsWS.ToString().c_str().AsChar());
-	Console.WriteLn("Covers Directory: %s", Covers.ToString().c_str().AsChar());
-	Console.WriteLn("Game Settings Directory: %s", GameSettings.ToString().c_str().AsChar());
-	Console.WriteLn("Cache Directory: %s", Cache.ToString().c_str().AsChar());
-	Console.WriteLn("Textures Directory: %s", Textures.ToString().c_str().AsChar());
+	Console.WriteLn("BIOS Directory: %s", Bios.c_str());
+	Console.WriteLn("Snapshots Directory: %s", Snapshots.c_str());
+	Console.WriteLn("Savestates Directory: %s", Savestates.c_str());
+	Console.WriteLn("MemoryCards Directory: %s", MemoryCards.c_str());
+	Console.WriteLn("Logs Directory: %s", Logs.c_str());
+	Console.WriteLn("Cheats Directory: %s", Cheats.c_str());
+	Console.WriteLn("CheatsWS Directory: %s", CheatsWS.c_str());
+	Console.WriteLn("CheatsNI Directory: %s", CheatsNI.c_str());
+	Console.WriteLn("Covers Directory: %s", Covers.c_str());
+	Console.WriteLn("Game Settings Directory: %s", GameSettings.c_str());
+	Console.WriteLn("Cache Directory: %s", Cache.c_str());
+	Console.WriteLn("Textures Directory: %s", Textures.c_str());
+	Console.WriteLn("Input Profile Directory: %s", InputProfiles.c_str());
 }
 
 void EmuFolders::Save(SettingsInterface& si)
 {
 	// convert back to relative
-	const wxString datarel(DataRoot.ToString());
-	si.SetStringValue("Folders", "Bios", wxDirName::MakeAutoRelativeTo(Bios, datarel).c_str());
-	si.SetStringValue("Folders", "Snapshots", wxDirName::MakeAutoRelativeTo(Snapshots, datarel).c_str());
-	si.SetStringValue("Folders", "Savestates", wxDirName::MakeAutoRelativeTo(Savestates, datarel).c_str());
-	si.SetStringValue("Folders", "MemoryCards", wxDirName::MakeAutoRelativeTo(MemoryCards, datarel).c_str());
-	si.SetStringValue("Folders", "Logs", wxDirName::MakeAutoRelativeTo(Logs, datarel).c_str());
-	si.SetStringValue("Folders", "Cheats", wxDirName::MakeAutoRelativeTo(Cheats, datarel).c_str());
-	si.SetStringValue("Folders", "CheatsWS", wxDirName::MakeAutoRelativeTo(CheatsWS, datarel).c_str());
-	si.SetStringValue("Folders", "Cache", wxDirName::MakeAutoRelativeTo(Cache, datarel).c_str());
-	si.SetStringValue("Folders", "Textures", wxDirName::MakeAutoRelativeTo(Textures, datarel).c_str());
+	si.SetStringValue("Folders", "Bios", Path::MakeRelative(Bios, DataRoot).c_str());
+	si.SetStringValue("Folders", "Snapshots", Path::MakeRelative(Snapshots, DataRoot).c_str());
+	si.SetStringValue("Folders", "Savestates", Path::MakeRelative(Savestates, DataRoot).c_str());
+	si.SetStringValue("Folders", "MemoryCards", Path::MakeRelative(MemoryCards, DataRoot).c_str());
+	si.SetStringValue("Folders", "Logs", Path::MakeRelative(Logs, DataRoot).c_str());
+	si.SetStringValue("Folders", "Cheats", Path::MakeRelative(Cheats, DataRoot).c_str());
+	si.SetStringValue("Folders", "CheatsWS", Path::MakeRelative(CheatsWS, DataRoot).c_str());
+	si.SetStringValue("Folders", "CheatsNI", Path::MakeRelative(CheatsNI, DataRoot).c_str());
+	si.SetStringValue("Folders", "Cache", Path::MakeRelative(Cache, DataRoot).c_str());
+	si.SetStringValue("Folders", "Textures", Path::MakeRelative(Textures, DataRoot).c_str());
+	si.SetStringValue("Folders", "InputProfiles", Path::MakeRelative(InputProfiles, DataRoot).c_str());
 }
 
 bool EmuFolders::EnsureFoldersExist()
 {
-	bool result = Bios.Mkdir();
-	result = Settings.Mkdir() && result;
-	result = Snapshots.Mkdir() && result;
-	result = Savestates.Mkdir() && result;
-	result = MemoryCards.Mkdir() && result;
-	result = Logs.Mkdir() && result;
-	result = Cheats.Mkdir() && result;
-	result = CheatsWS.Mkdir() && result;
-	result = Covers.Mkdir() && result;
-	result = GameSettings.Mkdir() && result;
-	result = Cache.Mkdir() && result;
-	result = Textures.Mkdir() && result;
+	bool result = FileSystem::CreateDirectoryPath(Bios.c_str(), false);
+	result = FileSystem::CreateDirectoryPath(Settings.c_str(), false) && result;
+	result = FileSystem::CreateDirectoryPath(Snapshots.c_str(), false) && result;
+	result = FileSystem::CreateDirectoryPath(Savestates.c_str(), false) && result;
+	result = FileSystem::CreateDirectoryPath(MemoryCards.c_str(), false) && result;
+	result = FileSystem::CreateDirectoryPath(Logs.c_str(), false) && result;
+	result = FileSystem::CreateDirectoryPath(Cheats.c_str(), false) && result;
+	result = FileSystem::CreateDirectoryPath(CheatsWS.c_str(), false) && result;
+	result = FileSystem::CreateDirectoryPath(CheatsNI.c_str(), false) && result;
+	result = FileSystem::CreateDirectoryPath(Covers.c_str(), false) && result;
+	result = FileSystem::CreateDirectoryPath(GameSettings.c_str(), false) && result;
+	result = FileSystem::CreateDirectoryPath(Cache.c_str(), false) && result;
+	result = FileSystem::CreateDirectoryPath(Textures.c_str(), false) && result;
+	result = FileSystem::CreateDirectoryPath(InputProfiles.c_str(), false) && result;
 	return result;
 }

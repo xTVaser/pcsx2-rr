@@ -19,12 +19,18 @@
 #include <QtWidgets/QFileDialog>
 #include <algorithm>
 
+#include "common/FileSystem.h"
+#include "common/Path.h"
 #include "common/StringUtil.h"
+
+#include "pcsx2/HostSettings.h"
+
 #include "DEV9SettingsWidget.h"
 #include "EmuThread.h"
 #include "QtUtils.h"
 #include "SettingWidgetBinder.h"
 #include "SettingsDialog.h"
+#include "Frontend/INISettingsInterface.h"
 
 #include "HddCreateQt.h"
 
@@ -51,71 +57,6 @@ static const char* s_dns_name[] = {
 };
 
 using PacketReader::IP::IP_Address;
-
-#define IP_RANGE_INTER "([0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5]|)"
-#define IP_RANGE_FINAL "([0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])"
-
-// clang-format off
-const QRegularExpression IPValidator::intermediateRegex{QStringLiteral("^" IP_RANGE_INTER "\\." IP_RANGE_INTER "\\." IP_RANGE_INTER "\\." IP_RANGE_INTER "$")};
-const QRegularExpression IPValidator::finalRegex       {QStringLiteral("^" IP_RANGE_FINAL "\\." IP_RANGE_FINAL "\\." IP_RANGE_FINAL "\\." IP_RANGE_FINAL "$")};
-// clang-format on
-
-IPValidator::IPValidator(QObject* parent, bool allowEmpty)
-	: QValidator(parent)
-	, m_allowEmpty{allowEmpty}
-{
-}
-
-QValidator::State IPValidator::validate(QString& input, int& pos) const
-{
-	if (input.isEmpty())
-		return m_allowEmpty ? Acceptable : Intermediate;
-
-	QRegularExpressionMatch m = finalRegex.match(input, 0, QRegularExpression::NormalMatch);
-	if (m.hasMatch())
-		return Acceptable;
-
-	m = intermediateRegex.match(input, 0, QRegularExpression::PartialPreferCompleteMatch);
-	if (m.hasMatch() || m.hasPartialMatch())
-		return Intermediate;
-	else
-	{
-		pos = input.size();
-		return Invalid;
-	}
-}
-
-IPItemDelegate::IPItemDelegate(QObject* parent)
-	: QItemDelegate(parent)
-{
-}
-
-QWidget* IPItemDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const
-{
-	QLineEdit* editor = new QLineEdit(parent);
-	editor->setValidator(new IPValidator());
-	return editor;
-}
-
-void IPItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
-{
-	QString value = index.model()->data(index, Qt::EditRole).toString();
-	QLineEdit* line = static_cast<QLineEdit*>(editor);
-	line->setText(value);
-}
-
-void IPItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const
-{
-	QLineEdit* line = static_cast<QLineEdit*>(editor);
-	QString value = line->text();
-	model->setData(index, value);
-}
-
-void IPItemDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
-{
-	editor->setGeometry(option.rect);
-}
-
 
 DEV9SettingsWidget::DEV9SettingsWidget(SettingsDialog* dialog, QWidget* parent)
 	: QWidget(parent)
@@ -148,7 +89,7 @@ DEV9SettingsWidget::DEV9SettingsWidget(SettingsDialog* dialog, QWidget* parent)
 		AddAdapter(adapter);
 #endif
 	for (const AdapterEntry& adapter : SocketAdapter::GetAdapters())
-		AddAdapter(adapter); 
+		AddAdapter(adapter);
 
 	std::sort(m_api_list.begin(), m_api_list.end());
 	for (auto& list : m_adapter_list)
@@ -166,7 +107,7 @@ DEV9SettingsWidget::DEV9SettingsWidget(SettingsDialog* dialog, QWidget* parent)
 	//We replace the blank entry with one for global settings
 	if (m_dialog->isPerGameSettings())
 	{
-		const std::string valueAPI = QtHost::GetBaseStringSettingValue("DEV9/Eth", "EthApi", Pcsx2Config::DEV9Options::NetApiNames[static_cast<int>(Pcsx2Config::DEV9Options::NetApi::Unset)]);
+		const std::string valueAPI = Host::GetBaseStringSettingValue("DEV9/Eth", "EthApi", Pcsx2Config::DEV9Options::NetApiNames[static_cast<int>(Pcsx2Config::DEV9Options::NetApi::Unset)]);
 		for (int i = 0; Pcsx2Config::DEV9Options::NetApiNames[i] != nullptr; i++)
 		{
 			if (valueAPI == Pcsx2Config::DEV9Options::NetApiNames[i])
@@ -179,7 +120,7 @@ DEV9SettingsWidget::DEV9SettingsWidget(SettingsDialog* dialog, QWidget* parent)
 		std::vector<AdapterEntry> baseList = m_adapter_list[static_cast<u32>(m_global_api)];
 
 		std::string baseAdapter = " ";
-		const std::string valueGUID = QtHost::GetBaseStringSettingValue("DEV9/Eth", "EthDevice", "");
+		const std::string valueGUID = Host::GetBaseStringSettingValue("DEV9/Eth", "EthDevice", "");
 		for (size_t i = 0; i < baseList.size(); i++)
 		{
 			if (baseList[i].guid == valueGUID)
@@ -239,11 +180,11 @@ DEV9SettingsWidget::DEV9SettingsWidget(SettingsDialog* dialog, QWidget* parent)
 		m_ui.ethDNS1Addr   ->setText(QString::fromUtf8(m_dialog->getStringValue("DEV9/Eth", "DNS1",    "").value().c_str()));
 		m_ui.ethDNS2Addr   ->setText(QString::fromUtf8(m_dialog->getStringValue("DEV9/Eth", "DNS2",    "").value().c_str()));
 
-		m_ui.ethPS2Addr    ->setPlaceholderText(QString::fromUtf8(QtHost::GetBaseStringSettingValue("DEV9/Eth", "PS2IP",   "0.0.0.0").c_str()));
-		m_ui.ethNetMask    ->setPlaceholderText(QString::fromUtf8(QtHost::GetBaseStringSettingValue("DEV9/Eth", "Mask",    "0.0.0.0").c_str()));
-		m_ui.ethGatewayAddr->setPlaceholderText(QString::fromUtf8(QtHost::GetBaseStringSettingValue("DEV9/Eth", "Gateway", "0.0.0.0").c_str()));
-		m_ui.ethDNS1Addr   ->setPlaceholderText(QString::fromUtf8(QtHost::GetBaseStringSettingValue("DEV9/Eth", "DNS1",    "0.0.0.0").c_str()));
-		m_ui.ethDNS2Addr   ->setPlaceholderText(QString::fromUtf8(QtHost::GetBaseStringSettingValue("DEV9/Eth", "DNS2",    "0.0.0.0").c_str()));
+		m_ui.ethPS2Addr    ->setPlaceholderText(QString::fromUtf8(Host::GetBaseStringSettingValue("DEV9/Eth", "PS2IP",   "0.0.0.0").c_str()));
+		m_ui.ethNetMask    ->setPlaceholderText(QString::fromUtf8(Host::GetBaseStringSettingValue("DEV9/Eth", "Mask",    "0.0.0.0").c_str()));
+		m_ui.ethGatewayAddr->setPlaceholderText(QString::fromUtf8(Host::GetBaseStringSettingValue("DEV9/Eth", "Gateway", "0.0.0.0").c_str()));
+		m_ui.ethDNS1Addr   ->setPlaceholderText(QString::fromUtf8(Host::GetBaseStringSettingValue("DEV9/Eth", "DNS1",    "0.0.0.0").c_str()));
+		m_ui.ethDNS2Addr   ->setPlaceholderText(QString::fromUtf8(Host::GetBaseStringSettingValue("DEV9/Eth", "DNS2",    "0.0.0.0").c_str()));
 	}
 	else
 	{
@@ -307,6 +248,9 @@ DEV9SettingsWidget::DEV9SettingsWidget(SettingsDialog* dialog, QWidget* parent)
 	connect(m_ui.ethHostAdd, &QPushButton::clicked, this, &DEV9SettingsWidget::onEthHostAdd);
 	connect(m_ui.ethHostDel, &QPushButton::clicked, this, &DEV9SettingsWidget::onEthHostDel);
 
+	connect(m_ui.ethHostExport, &QPushButton::clicked, this, &DEV9SettingsWidget::onEthHostExport);
+	connect(m_ui.ethHostImport, &QPushButton::clicked, this, &DEV9SettingsWidget::onEthHostImport);
+
 	if (m_dialog->isPerGameSettings())
 		m_ui.ethTabWidget->setTabEnabled(1, false);
 
@@ -319,7 +263,7 @@ DEV9SettingsWidget::DEV9SettingsWidget(SettingsDialog* dialog, QWidget* parent)
 	connect(m_ui.hddFile, &QLineEdit::editingFinished, this, &DEV9SettingsWidget::onHddFileEdit);
 	SettingWidgetBinder::BindWidgetToStringSetting(sif, m_ui.hddFile, "DEV9/Hdd", "HddFile", "DEV9hdd.raw");
 	if (m_dialog->isPerGameSettings())
-		m_ui.hddFile->setPlaceholderText(QString::fromUtf8(QtHost::GetBaseStringSettingValue("DEV9/Hdd", "HddFile", "DEV9hdd.raw")));
+		m_ui.hddFile->setPlaceholderText(QString::fromUtf8(Host::GetBaseStringSettingValue("DEV9/Hdd", "HddFile", "DEV9hdd.raw")));
 	connect(m_ui.hddBrowseFile, &QPushButton::clicked, this, &DEV9SettingsWidget::onHddBrowseFileClicked);
 
 	//TODO: need a getUintValue for if 48bit support occurs
@@ -327,7 +271,7 @@ DEV9SettingsWidget::DEV9SettingsWidget(SettingsDialog* dialog, QWidget* parent)
 
 	if (m_dialog->isPerGameSettings())
 	{
-		const int sizeGlobal = (u64)QtHost::GetBaseIntSettingValue("DEV9/Hdd", "HddSizeSectors", 0) * 512 / (1024 * 1024 * 1024);
+		const int sizeGlobal = (u64)Host::GetBaseIntSettingValue("DEV9/Hdd", "HddSizeSectors", 0) * 512 / (1024 * 1024 * 1024);
 		m_ui.hddSizeSpinBox->setMinimum(39);
 		m_ui.hddSizeSpinBox->setSpecialValueText(tr("Global [%1]").arg(sizeGlobal));
 	}
@@ -345,7 +289,7 @@ DEV9SettingsWidget::DEV9SettingsWidget(SettingsDialog* dialog, QWidget* parent)
 
 void DEV9SettingsWidget::onEthEnabledChanged(int state)
 {
-	const bool enabled = state == Qt::CheckState::PartiallyChecked ? QtHost::GetBaseBoolSettingValue("DEV9/Eth", "EthEnable", false) : state;
+	const bool enabled = state == Qt::CheckState::PartiallyChecked ? Host::GetBaseBoolSettingValue("DEV9/Eth", "EthEnable", false) : state;
 
 	m_ui.ethDevType->setEnabled(enabled);
 	m_ui.ethDevTypeLabel->setEnabled(enabled);
@@ -434,8 +378,8 @@ void DEV9SettingsWidget::onEthDeviceChanged(int index)
 
 void DEV9SettingsWidget::onEthDHCPInterceptChanged(int state)
 {
-	const bool enabled = (state == Qt::CheckState::PartiallyChecked ? QtHost::GetBaseBoolSettingValue("DEV9/Eth", "InterceptDHCP", false) : state) ||
-		((m_adapter_options & AdapterOptions::DHCP_ForcedOn) == AdapterOptions::DHCP_ForcedOn);
+	const bool enabled = (state == Qt::CheckState::PartiallyChecked ? Host::GetBaseBoolSettingValue("DEV9/Eth", "InterceptDHCP", false) : state) ||
+						 ((m_adapter_options & AdapterOptions::DHCP_ForcedOn) == AdapterOptions::DHCP_ForcedOn);
 
 	// clang-format off
 	const bool ipOverride = (m_adapter_options & AdapterOptions::DHCP_OverrideIP)     == AdapterOptions::DHCP_OverrideIP;
@@ -491,7 +435,7 @@ void DEV9SettingsWidget::onEthAutoChanged(QCheckBox* sender, int state, QLineEdi
 {
 	if (sender->isEnabled())
 	{
-		const bool manual = !(state == Qt::CheckState::PartiallyChecked ? QtHost::GetBaseBoolSettingValue(section, key, true) : state);
+		const bool manual = !(state == Qt::CheckState::PartiallyChecked ? Host::GetBaseBoolSettingValue(section, key, true) : state);
 		input->setEnabled(manual);
 	}
 	else
@@ -506,7 +450,7 @@ void DEV9SettingsWidget::onEthDNSModeChanged(QComboBox* sender, int index, QLine
 		{
 			if (index == 0)
 			{
-				const std::string value = QtHost::GetBaseStringSettingValue(section, key, Pcsx2Config::DEV9Options::DnsModeNames[static_cast<int>(Pcsx2Config::DEV9Options::DnsMode::Auto)]);
+				const std::string value = Host::GetBaseStringSettingValue(section, key, Pcsx2Config::DEV9Options::DnsModeNames[static_cast<int>(Pcsx2Config::DEV9Options::DnsMode::Auto)]);
 				for (int i = 0; Pcsx2Config::DEV9Options::DnsModeNames[i] != nullptr; i++)
 				{
 					if (value == Pcsx2Config::DEV9Options::DnsModeNames[i])
@@ -547,6 +491,122 @@ void DEV9SettingsWidget::onEthHostDel()
 		const int modelRow = m_ethHosts_proxy->mapToSource(selectedIndex).row();
 		DeleteHostConfig(modelRow);
 	}
+}
+
+void DEV9SettingsWidget::onEthHostExport()
+{
+	std::vector<HostEntryUi> hosts = ListHostsConfig();
+
+	DEV9DnsHostDialog exportDialog(hosts, this);
+
+	std::optional<std::vector<HostEntryUi>> selectedHosts = exportDialog.PromptList();
+
+	if (!selectedHosts.has_value())
+		return;
+
+	hosts = selectedHosts.value();
+
+	if (hosts.size() == 0)
+		return;
+
+	QString path =
+		QDir::toNativeSeparators(QFileDialog::getSaveFileName(QtUtils::GetRootWidget(this), tr("Hosts File"),
+			"hosts.ini", tr("ini (*.ini)"), nullptr));
+
+	if (path.isEmpty())
+		return;
+
+	std::unique_ptr<INISettingsInterface> exportFile = std::make_unique<INISettingsInterface>(path.toUtf8().constData());
+
+	//Count is not exported
+	for (size_t i = 0; i < hosts.size(); i++)
+	{
+		std::string section = "Host" + std::to_string(i);
+		HostEntryUi entry = hosts[i];
+
+		// clang-format off
+		exportFile->SetStringValue(section.c_str(), "Url", entry.Url.c_str());
+		exportFile->SetStringValue(section.c_str(), "Desc", entry.Desc.c_str());
+		exportFile->SetStringValue(section.c_str(), "Address", entry.Address.c_str());
+		exportFile->SetBoolValue(section.c_str(),   "Enabled", entry.Enabled);
+		// clang-format on
+	}
+
+	exportFile->Save();
+
+	QMessageBox::information(this, tr("DNS Hosts"),
+		tr("Exported Successfully"),
+		QMessageBox::StandardButton::Ok, QMessageBox::StandardButton::Ok);
+}
+
+void DEV9SettingsWidget::onEthHostImport()
+{
+	std::vector<HostEntryUi> hosts;
+
+	QString path =
+		QDir::toNativeSeparators(QFileDialog::getOpenFileName(QtUtils::GetRootWidget(this), tr("Hosts File"),
+			"hosts.ini", tr("ini (*.ini)"), nullptr));
+
+	if (path.isEmpty())
+		return;
+
+	std::unique_ptr<INISettingsInterface> importFile = std::make_unique<INISettingsInterface>(path.toUtf8().constData());
+
+	if (!importFile->Load())
+	{
+		QMessageBox::warning(this, tr("DNS Hosts"),
+			tr("Failed to open file"),
+			QMessageBox::StandardButton::Ok, QMessageBox::StandardButton::Ok);
+		return;
+	}
+
+	size_t count = 0;
+	while (true)
+	{
+		std::string section = "Host" + std::to_string(count);
+		HostEntryUi entry;
+
+		entry.Url = importFile->GetStringValue(section.c_str(), "Url");
+
+		if (entry.Url.empty())
+			break;
+
+		// clang-format off
+		entry.Desc    = importFile->GetStringValue(section.c_str(), "Desc");
+		entry.Address = importFile->GetStringValue(section.c_str(), "Address");
+		entry.Enabled = importFile->GetBoolValue  (section.c_str(), "Enabled");
+		// clang-format on
+
+		hosts.push_back(entry);
+		count++;
+	}
+
+	if (hosts.size() == 0)
+	{
+		QMessageBox::warning(this, tr("DNS Hosts"),
+			tr("No Hosts in file"),
+			QMessageBox::StandardButton::Ok, QMessageBox::StandardButton::Ok);
+		return;
+	}
+
+	DEV9DnsHostDialog exportDialog(hosts, this);
+
+	std::optional<std::vector<HostEntryUi>> selectedHosts = exportDialog.PromptList();
+
+	if (!selectedHosts.has_value())
+		return;
+
+	hosts = selectedHosts.value();
+
+	if (hosts.size() == 0)
+		return;
+
+	for (size_t i = 0; i < hosts.size(); i++)
+		AddNewHostConfig(hosts[i]);
+
+	QMessageBox::information(this, tr("DNS Hosts"),
+		tr("Imported Successfully"),
+		QMessageBox::StandardButton::Ok, QMessageBox::StandardButton::Ok);
 }
 
 void DEV9SettingsWidget::onEthHostEdit(QStandardItem* item)
@@ -604,24 +664,21 @@ void DEV9SettingsWidget::onHddBrowseFileClicked()
 void DEV9SettingsWidget::onHddFileEdit()
 {
 	//Check if file exists, if so set HddSize to correct value
-	//GHC uses UTF8 on all platforms
-	fs::path hddPath(m_ui.hddFile->text().toUtf8().constData());
-
+	std::string hddPath(m_ui.hddFile->text().toStdString());
 	if (hddPath.empty())
 		return;
 
-	if (hddPath.is_relative())
-	{
-		fs::path path(EmuFolders::Settings.ToString().wx_str());
-		hddPath = path / hddPath;
-	}
+	if (!Path::IsAbsolute(hddPath))
+		hddPath = Path::Combine(EmuFolders::Settings, hddPath);
 
-	if (!fs::exists(hddPath))
+	if (!FileSystem::FileExists(hddPath.c_str()))
 		return;
 
-	const uintmax_t size = fs::file_size(hddPath);
+	const s64 size = FileSystem::GetPathFileSize(hddPath.c_str());
+	if (size < 0)
+		return;
 
-	const u32 sizeSectors = (size / 512);
+	const u32 sizeSectors = static_cast<u32>(size / 512);
 	const int sizeGB = size / 1024 / 1024 / 1024;
 
 	QSignalBlocker sb1(m_ui.hddSizeSpinBox);
@@ -655,7 +712,7 @@ void DEV9SettingsWidget::onHddSizeSpin(int i)
 void DEV9SettingsWidget::onHddCreateClicked()
 {
 	//Do the thing
-	fs::path hddPath(m_ui.hddFile->text().toUtf8().constData());
+	std::string hddPath(m_ui.hddFile->text().toStdString());
 
 	u64 sizeBytes = (u64)m_dialog->getEffectiveIntValue("DEV9/Hdd", "HddSizeSectors", 0) * 512;
 	if (sizeBytes == 0 || hddPath.empty())
@@ -666,30 +723,26 @@ void DEV9SettingsWidget::onHddCreateClicked()
 		return;
 	}
 
-	if (hddPath.is_relative())
-	{
-		//Note, EmuFolders is still wx strings
-		fs::path path(EmuFolders::Settings.ToString().wx_str());
-		hddPath = path / hddPath;
-	}
+	if (!Path::IsAbsolute(hddPath))
+		hddPath = Path::Combine(EmuFolders::Settings, hddPath);
 
-	if (fs::exists(hddPath))
+	if (!FileSystem::FileExists(hddPath.c_str()))
 	{
 		//GHC uses UTF8 on all platforms
 		QMessageBox::StandardButton selection =
 			QMessageBox::question(this, tr("Overwrite File?"),
 				tr("HDD image \"%1\" already exists?\n\n"
 				   "Do you want to overwrite?")
-					.arg(QString::fromUtf8(hddPath.u8string().c_str())),
+					.arg(QString::fromStdString(hddPath)),
 				QMessageBox::Yes | QMessageBox::No);
 		if (selection == QMessageBox::No)
 			return;
 		else
-			fs::remove(hddPath);
+			FileSystem::DeleteFilePath(hddPath.c_str());
 	}
 
 	HddCreateQt hddCreator(this);
-	hddCreator.filePath = hddPath;
+	hddCreator.filePath = std::move(hddPath);
 	hddCreator.neededSize = sizeBytes;
 	hddCreator.Start();
 
@@ -773,22 +826,9 @@ void DEV9SettingsWidget::RefreshHostList()
 		m_ethHost_model->removeRow(0);
 
 	//Load list
-	std::vector<HostEntryUi> hosts;
+	std::vector<HostEntryUi> hosts = ListHostsConfig();
 
-	const int hostLength = CountHostsConfig();
-	for (int i = 0; i < hostLength; i++)
-	{
-		std::string section = "DEV9/Eth/Hosts/Host" + std::to_string(i);
-
-		HostEntryUi entry;
-		entry.Url = m_dialog->getStringValue(section.c_str(), "Url", "").value();
-		entry.Desc = m_dialog->getStringValue(section.c_str(), "Desc", "").value();
-		entry.Address = m_dialog->getStringValue(section.c_str(), "Address", "").value();
-		entry.Enabled = m_dialog->getBoolValue(section.c_str(), "Enabled", false).value();
-		hosts.push_back(entry);
-	}
-
-	for (int i = 0; i < hostLength; i++)
+	for (size_t i = 0; i < hosts.size(); i++)
 	{
 		HostEntryUi entry = hosts[i];
 		const int row = m_ethHost_model->rowCount();
@@ -821,6 +861,26 @@ void DEV9SettingsWidget::RefreshHostList()
 int DEV9SettingsWidget::CountHostsConfig()
 {
 	return m_dialog->getIntValue("DEV9/Eth/Hosts", "Count", 0).value();
+}
+
+std::vector<HostEntryUi> DEV9SettingsWidget::ListHostsConfig()
+{
+	std::vector<HostEntryUi> hosts;
+
+	const int hostLength = CountHostsConfig();
+	for (int i = 0; i < hostLength; i++)
+	{
+		std::string section = "DEV9/Eth/Hosts/Host" + std::to_string(i);
+
+		HostEntryUi entry;
+		entry.Url = m_dialog->getStringValue(section.c_str(), "Url", "").value();
+		entry.Desc = m_dialog->getStringValue(section.c_str(), "Desc", "").value();
+		entry.Address = m_dialog->getStringValue(section.c_str(), "Address", "").value();
+		entry.Enabled = m_dialog->getBoolValue(section.c_str(), "Enabled", false).value();
+		hosts.push_back(entry);
+	}
+
+	return hosts;
 }
 
 void DEV9SettingsWidget::AddNewHostConfig(const HostEntryUi& host)

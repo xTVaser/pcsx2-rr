@@ -13,8 +13,7 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __DECI2_H__
-#define __DECI2_H__
+#pragma once
 
 #include "Common.h"
 #include "deci2_dcmp.h"
@@ -54,12 +53,10 @@ extern DECI2_DBGP_BRK	ebrk[32], ibrk[32];
 extern s32 ebrk_count, ibrk_count;
 extern s32 runCode, runCount;
 
-extern Threading::Semaphore* runEvent;
+extern Threading::KernelSemaphore* runEvent;
 
 extern s32		connected;
 													//when add linux code this might change
 
 int	writeData(const u8 *result);
 void	exchangeSD(DECI2_HEADER *h);
-
-#endif//__DECI2_H__

@@ -255,6 +255,8 @@ private:
 		GSDepthStencilOGL* dss_write = nullptr;
 	} m_convert;
 
+	GL::Program m_present[static_cast<int>(PresentShader::Count)];
+
 	struct
 	{
 		GL::Program ps;
@@ -341,7 +343,7 @@ public:
 
 	bool DownloadTexture(GSTexture* src, const GSVector4i& rect, GSTexture::GSMap& out_map) final;
 
-	void CopyRect(GSTexture* sTex, GSTexture* dTex, const GSVector4i& r) final;
+	void CopyRect(GSTexture* sTex, GSTexture* dTex, const GSVector4i& r, u32 destX, u32 destY) final;
 
 	void PushDebugGroup(const char* fmt, ...) final;
 	void PopDebugGroup() final;
@@ -354,9 +356,10 @@ public:
 	void StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, const GL::Program& ps, bool linear = true);
 	void StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, bool red, bool green, bool blue, bool alpha) final;
 	void StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, const GL::Program& ps, bool alpha_blend, OMColorMaskSelector cms, bool linear = true);
+	void PresentRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, PresentShader shader, float shaderTime, bool linear) final;
 
 	void RenderHW(GSHWDrawConfig& config) final;
-	void SendHWDraw(const GSHWDrawConfig& config);
+	void SendHWDraw(const GSHWDrawConfig& config, bool needs_barrier);
 
 	void SetupDATE(GSTexture* rt, GSTexture* ds, const GSVertexPT1* vertices, bool datm);
 

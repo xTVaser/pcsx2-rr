@@ -20,17 +20,20 @@
 #include "mpeg2lib/Mpeg.h"
 
 IPUStatus IPU1Status;
+bool CommandExecuteQueued;
 
 void ipuDmaReset()
 {
 	IPU1Status.InProgress	= false;
 	IPU1Status.DMAFinished	= true;
+	CommandExecuteQueued	= false;
 }
 
 void SaveStateBase::ipuDmaFreeze()
 {
 	FreezeTag( "IPUdma" );
 	Freeze(IPU1Status);
+	Freeze(CommandExecuteQueued);
 }
 
 static __fi int IPU1chain() {
@@ -65,9 +68,6 @@ static __fi int IPU1chain() {
 
 void IPU1dma()
 {
-	int ipu1cycles = 0;
-	int totalqwc = 0;
-
 	if(!ipu1ch.chcr.STR || ipu1ch.chcr.MOD == 2)
 	{
 		//We MUST stop the IPU from trying to fill the FIFO with more data if the DMA has been suspended
@@ -84,6 +84,9 @@ void IPU1dma()
 		return;
 	}
 
+	int tagcycles = 0;
+	int totalqwc = 0;
+
 	IPU_LOG("IPU1 DMA Called QWC %x Finished %d In Progress %d tadr %x", ipu1ch.qwc, IPU1Status.DMAFinished, IPU1Status.InProgress, ipu1ch.tadr);
 	if (!IPU1Status.InProgress)
 	{
@@ -98,7 +101,7 @@ void IPU1dma()
 		}
 		ipu1ch.madr = ptag[1]._u32;
 
-		ipu1cycles += 1; // Add 1 cycles from the QW read for the tag
+		tagcycles += 1; // Add 1 cycles from the QW read for the tag
 
 		if (ipu1ch.chcr.TTE) DevCon.Warning("TTE?");
 
@@ -120,8 +123,8 @@ void IPU1dma()
 	//Do this here to prevent double settings on Chain DMA's
 	if(totalqwc == 0 || (IPU1Status.DMAFinished && !IPU1Status.InProgress))
 	{
-		totalqwc = std::max(4, totalqwc);
-		IPU_INT_TO(totalqwc);
+		totalqwc = std::max(4, totalqwc) + tagcycles;
+		IPU_INT_TO(totalqwc * BIAS);
 	}
 	else
 	{
@@ -133,20 +136,26 @@ void IPU1dma()
 		}
 		else
 		{
-			IPU_INT_TO(totalqwc*BIAS);
+			totalqwc = std::max(4, totalqwc) + tagcycles;
+			IPU_INT_TO(totalqwc * BIAS);
 		}
 	}
 
-	IPUProcessInterrupt();
+	if (ipuRegs.ctrl.BUSY && !CommandExecuteQueued)
+	{
+		CommandExecuteQueued = true;
+		CPU_INT(IPU_PROCESS, totalqwc * BIAS);
+	}
 
 	IPU_LOG("Completed Call IPU1 DMA QWC Remaining %x Finished %d In Progress %d tadr %x", ipu1ch.qwc, IPU1Status.DMAFinished, IPU1Status.InProgress, ipu1ch.tadr);
 }
 
 void IPU0dma()
 {
-	if(!ipuRegs.ctrl.OFC) 
+	if(!ipuRegs.ctrl.OFC)
 	{
-		IPUProcessInterrupt();
+		if(!CommandExecuteQueued)
+			IPUProcessInterrupt();
 		return;
 	}
 
@@ -181,6 +190,12 @@ void IPU0dma()
 	}
 
 	IPU_INT_FROM( readsize * BIAS );
+
+	if (ipuRegs.ctrl.BUSY && !CommandExecuteQueued)
+	{
+		CommandExecuteQueued = true;
+		CPU_INT(IPU_PROCESS, 4);
+	}
 }
 
 __fi void dmaIPU0() // fromIPU
@@ -254,6 +269,12 @@ __fi void dmaIPU1() // toIPU
 			else
 				cpuRegs.eCycle[4] = 0x9999;
 	}
+}
+
+void ipuCMDProcess()
+{
+	CommandExecuteQueued = false;
+	IPUProcessInterrupt();
 }
 
 void ipu0Interrupt()

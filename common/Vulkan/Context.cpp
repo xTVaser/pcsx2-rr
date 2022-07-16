@@ -14,6 +14,7 @@
  */
 
 #include "common/Vulkan/Context.h"
+#include "common/Align.h"
 #include "common/Assertions.h"
 #include "common/Console.h"
 #include "common/StringUtil.h"
@@ -46,15 +47,17 @@ namespace Vulkan
 		vkGetPhysicalDeviceProperties(physical_device, &m_device_properties);
 		vkGetPhysicalDeviceMemoryProperties(physical_device, &m_device_memory_properties);
 
-		// Would any drivers be this silly? I hope not...
+		// We need this to be at least 32 byte aligned for AVX2 stores.
 		m_device_properties.limits.minUniformBufferOffsetAlignment =
-			std::max(m_device_properties.limits.minUniformBufferOffsetAlignment, static_cast<VkDeviceSize>(1));
+			std::max(m_device_properties.limits.minUniformBufferOffsetAlignment, static_cast<VkDeviceSize>(32));
 		m_device_properties.limits.minTexelBufferOffsetAlignment =
-			std::max(m_device_properties.limits.minTexelBufferOffsetAlignment, static_cast<VkDeviceSize>(1));
+			std::max(m_device_properties.limits.minTexelBufferOffsetAlignment, static_cast<VkDeviceSize>(32));
 		m_device_properties.limits.optimalBufferCopyOffsetAlignment =
-			std::max(m_device_properties.limits.optimalBufferCopyOffsetAlignment, static_cast<VkDeviceSize>(1));
+			std::max(m_device_properties.limits.optimalBufferCopyOffsetAlignment, static_cast<VkDeviceSize>(32));
 		m_device_properties.limits.optimalBufferCopyRowPitchAlignment =
-			std::max(m_device_properties.limits.optimalBufferCopyRowPitchAlignment, static_cast<VkDeviceSize>(1));
+			Common::NextPow2(std::max(m_device_properties.limits.optimalBufferCopyRowPitchAlignment, static_cast<VkDeviceSize>(32)));
+		m_device_properties.limits.bufferImageGranularity =
+			std::max(m_device_properties.limits.bufferImageGranularity, static_cast<VkDeviceSize>(32));
 	}
 
 	Context::~Context() = default;
@@ -76,7 +79,7 @@ namespace Vulkan
 		app_info.applicationVersion = VK_MAKE_VERSION(1, 7, 0);
 		app_info.pEngineName = "PCSX2";
 		app_info.engineVersion = VK_MAKE_VERSION(1, 7, 0);
-		app_info.apiVersion = VK_MAKE_VERSION(1, 1, 0);
+		app_info.apiVersion = VK_API_VERSION_1_1;
 
 		VkInstanceCreateInfo instance_create_info = {};
 		instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -631,8 +634,14 @@ namespace Vulkan
 			vkGetDeviceQueue(m_device, m_present_queue_family_index, 0, &m_present_queue);
 		}
 
-		m_gpu_timing_supported = (queue_family_properties[m_graphics_queue_family_index].timestampValidBits > 0);
-		DevCon.WriteLn("GPU timing is %s", m_gpu_timing_supported ? "supported" : "not supported");
+		m_gpu_timing_supported = (m_device_properties.limits.timestampComputeAndGraphics != 0 &&
+								  queue_family_properties[m_graphics_queue_family_index].timestampValidBits > 0 &&
+								  m_device_properties.limits.timestampPeriod > 0);
+		DevCon.WriteLn("GPU timing is %s (TS=%u TS valid bits=%u, TS period=%f)",
+			m_gpu_timing_supported ? "supported" : "not supported",
+			static_cast<u32>(m_device_properties.limits.timestampComputeAndGraphics),
+			queue_family_properties[m_graphics_queue_family_index].timestampValidBits,
+			m_device_properties.limits.timestampPeriod);
 
 		ProcessDeviceExtensions();
 		return true;
@@ -641,43 +650,37 @@ namespace Vulkan
 	void Context::ProcessDeviceExtensions()
 	{
 		// advanced feature checks
-		if (vkGetPhysicalDeviceFeatures2)
+		VkPhysicalDeviceFeatures2 features2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+		VkPhysicalDeviceProvokingVertexFeaturesEXT provoking_vertex_features = {
+			VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_FEATURES_EXT};
+		VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesARM rasterization_order_access_feature = {
+			VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_FEATURES_ARM};
+
+		// add in optional feature structs
+		if (m_optional_extensions.vk_ext_provoking_vertex)
+			Util::AddPointerToChain(&features2, &provoking_vertex_features);
+		if (m_optional_extensions.vk_arm_rasterization_order_attachment_access)
+			Util::AddPointerToChain(&features2, &rasterization_order_access_feature);
+
+		// query
+		vkGetPhysicalDeviceFeatures2(m_physical_device, &features2);
+
+		// confirm we actually support it
+		m_optional_extensions.vk_ext_provoking_vertex &= (provoking_vertex_features.provokingVertexLast == VK_TRUE);
+		m_optional_extensions.vk_arm_rasterization_order_attachment_access &= (rasterization_order_access_feature.rasterizationOrderColorAttachmentAccess == VK_TRUE);
+
+		VkPhysicalDeviceProperties2 properties2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
+		void** pNext = &properties2.pNext;
+
+		if (m_optional_extensions.vk_khr_driver_properties)
 		{
-			VkPhysicalDeviceFeatures2 features2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
-			VkPhysicalDeviceProvokingVertexFeaturesEXT provoking_vertex_features = {
-				VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_FEATURES_EXT};
-			VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesARM rasterization_order_access_feature = {
-				VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_FEATURES_ARM};
-
-			// add in optional feature structs
-			if (m_optional_extensions.vk_ext_provoking_vertex)
-				Util::AddPointerToChain(&features2, &provoking_vertex_features);
-			if (m_optional_extensions.vk_arm_rasterization_order_attachment_access)
-				Util::AddPointerToChain(&features2, &rasterization_order_access_feature);
-
-			// query
-			vkGetPhysicalDeviceFeatures2(m_physical_device, &features2);
-
-			// confirm we actually support it
-			m_optional_extensions.vk_ext_provoking_vertex &= (provoking_vertex_features.provokingVertexLast == VK_TRUE);
-			m_optional_extensions.vk_arm_rasterization_order_attachment_access &= (rasterization_order_access_feature.rasterizationOrderColorAttachmentAccess == VK_TRUE);
+			m_device_driver_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
+			*pNext = &m_device_driver_properties;
+			pNext = &m_device_driver_properties.pNext;
 		}
 
-		if (vkGetPhysicalDeviceProperties2)
-		{
-			VkPhysicalDeviceProperties2 properties2 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
-			void** pNext = &properties2.pNext;
-
-			if (m_optional_extensions.vk_khr_driver_properties)
-			{
-				m_device_driver_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
-				*pNext = &m_device_driver_properties;
-				pNext = &m_device_driver_properties.pNext;
-			}
-
-			// query
-			vkGetPhysicalDeviceProperties2(m_physical_device, &properties2);
-		}
+		// query
+		vkGetPhysicalDeviceProperties2(m_physical_device, &properties2);
 
 		Console.WriteLn("VK_EXT_provoking_vertex is %s",
 			m_optional_extensions.vk_ext_provoking_vertex ? "supported" : "NOT supported");
@@ -848,6 +851,7 @@ namespace Vulkan
 			if (res != VK_SUCCESS)
 			{
 				LOG_VULKAN_ERROR(res, "vkCreateQueryPool failed: ");
+				m_gpu_timing_supported = false;
 				return false;
 			}
 		}
@@ -962,9 +966,10 @@ namespace Vulkan
 		return time;
 	}
 
-	void Context::SetEnableGPUTiming(bool enabled)
+	bool Context::SetEnableGPUTiming(bool enabled)
 	{
 		m_gpu_timing_enabled = enabled && m_gpu_timing_supported;
+		return (enabled == m_gpu_timing_enabled);
 	}
 
 	void Context::WaitForCommandBufferCompletion(u32 index)
@@ -1015,7 +1020,7 @@ namespace Vulkan
 			}
 		}
 
-		if (m_gpu_timing_enabled)
+		if (m_gpu_timing_enabled && resources.timestamp_written)
 		{
 			vkCmdWriteTimestamp(m_current_command_buffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_timestamp_query_pool, m_current_frame * 2 + 1);
 		}
@@ -1190,36 +1195,41 @@ namespace Vulkan
 		if (res != VK_SUCCESS)
 			LOG_VULKAN_ERROR(res, "vkResetDescriptorPool failed: ");
 
-		m_current_frame = index;
-		m_current_command_buffer = resources.command_buffers[1];
+		if (m_gpu_timing_enabled)
+		{
+			if (resources.timestamp_written)
+			{
+				std::array<u64, 2> timestamps;
+				res = vkGetQueryPoolResults(m_device, m_timestamp_query_pool, index * 2, static_cast<u32>(timestamps.size()),
+					sizeof(u64) * timestamps.size(), timestamps.data(), sizeof(u64), VK_QUERY_RESULT_64_BIT);
+				if (res == VK_SUCCESS)
+				{
+					// if we didn't write the timestamp at the start of the cmdbuffer (just enabled timing), the first TS will be zero
+					if (timestamps[0] > 0)
+					{
+						const double ns_diff = (timestamps[1] - timestamps[0]) * static_cast<double>(m_device_properties.limits.timestampPeriod);
+						m_accumulated_gpu_time += ns_diff / 1000000.0;
+					}
+				}
+				else
+				{
+					LOG_VULKAN_ERROR(res, "vkGetQueryPoolResults failed: ");
+				}
+			}
+
+			vkCmdResetQueryPool(resources.command_buffers[1], m_timestamp_query_pool, index * 2, 2);
+			vkCmdWriteTimestamp(resources.command_buffers[1], VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_timestamp_query_pool, index * 2);
+		}
+
 		resources.fence_counter = m_next_fence_counter++;
 		resources.init_buffer_used = false;
+		resources.timestamp_written = m_gpu_timing_enabled;
+
+		m_current_frame = index;
+		m_current_command_buffer = resources.command_buffers[1];
 
 		// using the lower 32 bits of the fence index should be sufficient here, I hope...
 		vmaSetCurrentFrameIndex(m_allocator, static_cast<u32>(m_next_fence_counter));
-
-		if (m_gpu_timing_enabled)
-		{
-			std::array<u64, 2> timestamps;
-			res = vkGetQueryPoolResults(m_device, m_timestamp_query_pool, index * 2, static_cast<u32>(timestamps.size()),
-				sizeof(u64) * timestamps.size(), timestamps.data(), sizeof(u64), VK_QUERY_RESULT_64_BIT);
-			if (res == VK_SUCCESS)
-			{
-				// if we didn't write the timestamp at the start of the cmdbuffer (just enabled timing), the first TS will be zero
-				if (timestamps[0] > 0)
-				{
-					const u64 ns_diff = (timestamps[1] - timestamps[0]) * static_cast<u64>(m_device_properties.limits.timestampPeriod);
-					m_accumulated_gpu_time += static_cast<double>(ns_diff) / 1000000.0;
-				}
-			}
-			else
-			{
-				LOG_VULKAN_ERROR(res, "vkGetQueryPoolResults failed: ");
-			}
-
-			vkCmdResetQueryPool(m_current_command_buffer, m_timestamp_query_pool, index * 2, 2);
-			vkCmdWriteTimestamp(m_current_command_buffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, m_timestamp_query_pool, index * 2);
-		}
 	}
 
 	void Context::ExecuteCommandBuffer(bool wait_for_completion)

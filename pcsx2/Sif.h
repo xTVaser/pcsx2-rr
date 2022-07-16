@@ -13,13 +13,9 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SIF_H__
-#define __SIF_H__
+#pragma once
 
 static const int FIFO_SIF_W = 128;
-
-// psxdev: was here on the initial psx merge
-//static u32 sif2fifostat = (u32&)eeHw[0xf380];
 
 // Despite its name, this is actually the IOP's DMAtag, which itself also contains
 // the EE's DMAtag in its upper 64 bits.  Note that only the lower 24 bits of 'data' is
@@ -185,5 +181,3 @@ extern bool WriteFifoSingleWord();
 #define sif0tag DMA_TAG(sif0data)
 #define sif1tag DMA_TAG(sif1data)
 #define sif2tag DMA_TAG(sif2data)
-
-#endif /* __SIF_H__ */

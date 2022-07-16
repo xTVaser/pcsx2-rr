@@ -18,6 +18,8 @@
 #include <QtWidgets/QMessageBox>
 #include <algorithm>
 
+#include "pcsx2/HostSettings.h"
+
 #include "EmuThread.h"
 #include "QtUtils.h"
 #include "SettingWidgetBinder.h"
@@ -38,6 +40,7 @@ SystemSettingsWidget::SystemSettingsWidget(SettingsDialog* dialog, QWidget* pare
 	m_ui.setupUi(this);
 
 	SettingWidgetBinder::BindWidgetToIntSetting(sif, m_ui.eeCycleSkipping, "EmuCore/Speedhacks", "EECycleSkip", DEFAULT_EE_CYCLE_SKIP);
+	SettingWidgetBinder::BindWidgetToIntSetting(sif, m_ui.affinityControl, "EmuCore/CPU", "AffinityControlMode", 0);
 
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.MTVU, "EmuCore/Speedhacks", "vuThread", false);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.instantVU1, "EmuCore/Speedhacks", "vu1Instant", true);
@@ -50,7 +53,7 @@ SystemSettingsWidget::SystemSettingsWidget(SettingsDialog* dialog, QWidget* pare
 		m_ui.eeCycleRate->insertItem(
 			0, tr("Use Global Setting [%1]")
 				   .arg(m_ui.eeCycleRate->itemText(
-					   std::clamp(QtHost::GetBaseIntSettingValue("EmuCore/Speedhacks", "EECycleRate", DEFAULT_EE_CYCLE_RATE) - MINIMUM_EE_CYCLE_RATE,
+					   std::clamp(Host::GetBaseIntSettingValue("EmuCore/Speedhacks", "EECycleRate", DEFAULT_EE_CYCLE_RATE) - MINIMUM_EE_CYCLE_RATE,
 						   0, MAXIMUM_EE_CYCLE_RATE - MINIMUM_EE_CYCLE_RATE))));
 		m_ui.eeClampMode->insertItem(0, tr("Use Global Setting [%1]").arg(m_ui.eeClampMode->itemText(getGlobalClampingModeIndex(false))));
 		m_ui.vuClampMode->insertItem(0, tr("Use Global Setting [%1]").arg(m_ui.vuClampMode->itemText(getGlobalClampingModeIndex(true))));
@@ -73,6 +76,25 @@ SystemSettingsWidget::SystemSettingsWidget(SettingsDialog* dialog, QWidget* pare
 	connect(m_ui.eeClampMode, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index) { setClampingMode(false, index); });
 	connect(m_ui.vuClampMode, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index) { setClampingMode(true, index); });
 
+	dialog->registerWidgetHelp(m_ui.eeCycleRate, tr("Cycle Rate"), tr("100% (Normal Speed)"),
+		tr("Higher values may increase internal framerate in games, but will increase CPU requirements substantially. "
+			"Lower values will reduce the CPU load allowing lightweight games to run full speed on weaker CPUs."));
+
+	dialog->registerWidgetHelp(m_ui.eeCycleSkipping, tr("Cycle Skip"), tr("Normal Speed"),
+		tr("Makes the emulated Emotion Engine skip cycles. "
+		   "Helps a small subset of games like SOTC. Most of the time it's harmful to performance."));
+
+	dialog->registerWidgetHelp(m_ui.MTVU, tr("MTVU (Multi-threaded VU1)"), tr("Unchecked"),
+		tr("Generally a speedup on CPUs with 3 or more threads. "
+		   "Safe for most games, but a few are incompatible and may hang."));
+
+	dialog->registerWidgetHelp(m_ui.instantVU1, tr("Instant VU1"), tr("Checked"),
+		tr("Runs VU1 instantly (when MTVU is disabled). Provides a modest speed improvement. "
+		   "Safe for most games, but a few games may exhibit graphical errors."));
+
+	dialog->registerWidgetHelp(m_ui.fastCDVD, tr("Enable Fast CDVD"), tr("Unchecked"),
+		tr("Fast disc access, less loading times. Check HDLoader compatibility lists for known games that have issues with this."));
+
 	updateVU1InstantState();
 	connect(m_ui.MTVU, &QCheckBox::stateChanged, this, &SystemSettingsWidget::updateVU1InstantState);
 }
@@ -86,13 +108,13 @@ void SystemSettingsWidget::updateVU1InstantState()
 
 int SystemSettingsWidget::getGlobalClampingModeIndex(bool vu) const
 {
-	if (QtHost::GetBaseBoolSettingValue("EmuCore/CPU/Recompiler", vu ? "vuSignOverflow" : "fpuFullMode", false))
+	if (Host::GetBaseBoolSettingValue("EmuCore/CPU/Recompiler", vu ? "vuSignOverflow" : "fpuFullMode", false))
 		return 3;
 
-	if (QtHost::GetBaseBoolSettingValue("EmuCore/CPU/Recompiler", vu ? "vuExtraOverflow" : "fpuExtraOverflow", false))
+	if (Host::GetBaseBoolSettingValue("EmuCore/CPU/Recompiler", vu ? "vuExtraOverflow" : "fpuExtraOverflow", false))
 		return 2;
 
-	if (QtHost::GetBaseBoolSettingValue("EmuCore/CPU/Recompiler", vu ? "vuOverflow" : "fpuOverflow", true))
+	if (Host::GetBaseBoolSettingValue("EmuCore/CPU/Recompiler", vu ? "vuOverflow" : "fpuOverflow", true))
 		return 1;
 
 	return 0;

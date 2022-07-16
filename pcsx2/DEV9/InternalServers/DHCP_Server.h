@@ -61,18 +61,9 @@ namespace InternalServers
 		PacketReader::IP::UDP::UDP_Packet* Recv();
 		bool Send(PacketReader::IP::UDP::UDP_Packet* payload);
 
-#ifdef __linux__
-		static std::vector<PacketReader::IP::IP_Address> GetGatewaysLinux(char* interfaceName);
-#endif
-
 		~DHCP_Server();
 
 	private:
-#ifdef __POSIX__
-		static std::vector<std::string> SplitString(std::string str, char delimiter);
-		static std::vector<PacketReader::IP::IP_Address> GetDNSUnix();
-#endif
-
 #ifdef _WIN32
 		void AutoNetmask(PIP_ADAPTER_ADDRESSES adapter);
 		void AutoGateway(PIP_ADAPTER_ADDRESSES adapter);

@@ -22,6 +22,7 @@
 class QTimer;
 
 class ControllerSettingsDialog;
+class SettingsInterface;
 
 class InputBindingWidget : public QPushButton
 {
@@ -29,10 +30,12 @@ class InputBindingWidget : public QPushButton
 
 public:
 	InputBindingWidget(QWidget* parent);
-	InputBindingWidget(QWidget* parent, std::string section_name, std::string key_name);
+	InputBindingWidget(QWidget* parent, SettingsInterface* sif, std::string section_name, std::string key_name);
 	~InputBindingWidget();
 
-	void setKey(std::string section_name, std::string key_name);
+	static bool isMouseMappingEnabled();
+
+	void initialize(SettingsInterface* sif, std::string section_name, std::string key_name);
 
 public Q_SLOTS:
 	void clearBinding();
@@ -65,12 +68,15 @@ protected:
 	void hookInputManager();
 	void unhookInputManager();
 
+	SettingsInterface* m_sif = nullptr;
 	std::string m_section_name;
 	std::string m_key_name;
 	std::vector<std::string> m_bindings;
 	std::vector<InputBindingKey> m_new_bindings;
 	QTimer* m_input_listen_timer = nullptr;
 	u32 m_input_listen_remaining_seconds = 0;
+	QPoint m_input_listen_start_position{};
+	bool m_mouse_mapping_enabled = false;
 };
 
 class InputVibrationBindingWidget : public QPushButton

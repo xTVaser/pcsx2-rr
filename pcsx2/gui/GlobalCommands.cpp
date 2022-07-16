@@ -23,10 +23,8 @@
 #include "AppAccelerators.h"
 #include "AppSaveStates.h"
 
-#ifndef DISABLE_RECORDING
 #include "Recording/InputRecordingControls.h"
 #include "Recording/InputRecording.h"
-#endif
 
 // Various includes needed for dumping...
 #include "GS.h"
@@ -67,21 +65,6 @@ wxString KeyAcceleratorCode::ToString() const
 
 namespace Implementations
 {
-	void Frameskip_Toggle()
-	{
-		g_Conf->EmuOptions.GS.FrameSkipEnable = !g_Conf->EmuOptions.GS.FrameSkipEnable;
-		EmuConfig.GS.FrameSkipEnable = g_Conf->EmuOptions.GS.FrameSkipEnable;
-
-		if (EmuConfig.GS.FrameSkipEnable)
-		{
-			Host::AddKeyedFormattedOSDMessage("FrameSkipping", 2.0f, "Frameskip ENABLED. FrameDraws=%d, FrameSkips=%d", g_Conf->EmuOptions.GS.FramesToDraw, g_Conf->EmuOptions.GS.FramesToSkip);
-		}
-		else
-		{
-			Host::AddKeyedOSDMessage("FrameSkipping", "Frameskip DISABLED.");
-		}
-	}
-
 	void Framelimiter_TurboToggle()
 	{
 		ScopedCoreThreadPause pauser;
@@ -91,39 +74,16 @@ namespace Implementations
 			g_Conf->EmuOptions.GS.FrameLimitEnable = true;
 			g_Conf->EmuOptions.LimiterMode = LimiterModeType::Turbo;
 			Host::AddKeyedOSDMessage("FrameLimiter", "Turbo + Frame limiter ENABLED.");
-			g_Conf->EmuOptions.GS.FrameSkipEnable = !!EmuConfig.Framerate.SkipOnTurbo;
 		}
 		else if (g_Conf->EmuOptions.LimiterMode == LimiterModeType::Turbo)
 		{
 			g_Conf->EmuOptions.LimiterMode = LimiterModeType::Nominal;
-
-			if (g_Conf->EmuOptions.Framerate.SkipOnLimit)
-			{
-				Host::AddKeyedOSDMessage("FrameLimiter", "Turbo DISABLED.");
-				Host::AddKeyedOSDMessage("FrameSkipping", "Frameskip ENABLED.");
-				g_Conf->EmuOptions.GS.FrameSkipEnable = true;
-			}
-			else
-			{
-				Host::AddKeyedOSDMessage("FrameLimiter", "Turbo DISABLED.");
-				g_Conf->EmuOptions.GS.FrameSkipEnable = false;
-			}
+			Host::AddKeyedOSDMessage("FrameLimiter", "Turbo DISABLED.");
 		}
 		else
 		{
 			g_Conf->EmuOptions.LimiterMode = LimiterModeType::Turbo;
-
-			if (g_Conf->EmuOptions.Framerate.SkipOnTurbo)
-			{
-				Host::AddKeyedOSDMessage("FrameLimiter", "Turbo ENABLED.");
-				Host::AddKeyedOSDMessage("FrameSkipping", "Frameskip ENABLED.");
-				g_Conf->EmuOptions.GS.FrameSkipEnable = true;
-			}
-			else
-			{
-				Host::AddKeyedOSDMessage("FrameLimiter", "Turbo ENABLED.");
-				g_Conf->EmuOptions.GS.FrameSkipEnable = false;
-			}
+			Host::AddKeyedOSDMessage("FrameLimiter", "Turbo ENABLED.");
 		}
 
 		pauser.AllowResume();
@@ -172,6 +132,10 @@ namespace Implementations
 		switch (art)
 		{
 			case AspectRatioType::Stretch:
+				art = AspectRatioType::RAuto4_3_3_2;
+				arts = "Auto 4:3/3:2";
+				break;
+			case AspectRatioType::RAuto4_3_3_2:
 				art = AspectRatioType::R4_3;
 				arts = "4:3";
 				break;
@@ -303,19 +267,9 @@ namespace Implementations
 
 	void Sys_Suspend()
 	{
-		GSFrame* gsframe = wxGetApp().GetGsFramePtr();
-		if (gsframe && gsframe->IsShown() && gsframe->IsFullScreen())
-		{
-			// On some cases, probably due to driver bugs, if we don't exit fullscreen then
-			// the content stays on screen. Try to prevent that by first exiting fullscreen,
-			// but don't update the internal PCSX2 state/config, and PCSX2 will restore
-			// fullscreen correctly when emulation resumes according to its state/config.
-			gsframe->ShowFullScreen(false, false);
-		}
-
 		CoreThread.Suspend();
 
-		gsframe = wxGetApp().GetGsFramePtr(); // just in case suspend removes this window
+		GSFrame* gsframe = wxGetApp().GetGsFramePtr();
 		if (gsframe && !wxGetApp().HasGUI() && g_Conf->GSWindow.CloseOnEsc)
 		{
 			// When we run with --nogui, PCSX2 only knows to exit when the gs window closes.
@@ -351,12 +305,10 @@ namespace Implementations
 		if (g_Conf->GSWindow.CloseOnEsc)
 		{
 			sMainFrame.SetFocus();
-#ifndef DISABLE_RECORDING
 			// Disable recording controls that only make sense if the game is running
 			sMainFrame.enableRecordingMenuItem(MenuId_Recording_FrameAdvance, false);
 			sMainFrame.enableRecordingMenuItem(MenuId_Recording_TogglePause, false);
 			sMainFrame.enableRecordingMenuItem(MenuId_Recording_ToggleRecordingMode, false);
-#endif
 		}
 	}
 
@@ -378,8 +330,7 @@ namespace Implementations
 
 	void Sys_TakeSnapshot()
 	{
-		if (GSmakeSnapshot(g_Conf->Folders.Snapshots.ToUTF8().data()))
-			OSDlog(ConsoleColors::Color_Black, true, "Snapshot taken");
+		GSQueueSnapshot(std::string(), 0);
 	}
 
 	void Sys_RenderToggle()
@@ -469,7 +420,6 @@ namespace Implementations
 		if (GSFrame* gsframe = wxGetApp().GetGsFramePtr())
 			gsframe->ShowFullScreen(!gsframe->IsFullScreen());
 	}
-#ifndef DISABLE_RECORDING
 	void FrameAdvance()
 	{
 		if (g_Conf->EmuOptions.EnableRecordingTools)
@@ -614,7 +564,6 @@ namespace Implementations
 	{
 		States_LoadSlot(9);
 	}
-#endif
 } // namespace Implementations
 
 // --------------------------------------------------------------------------------------
@@ -664,14 +613,6 @@ static const GlobalCommandDescriptor CommandDeclarations[] =
 			States_CycleSlotBackward,
 			pxL("Cycle to prev slot"),
 			pxL("Cycles the current save slot in -1 fashion!"),
-			false,
-		},
-
-		{
-			"Frameskip_Toggle",
-			Implementations::Frameskip_Toggle,
-			NULL,
-			NULL,
 			false,
 		},
 
@@ -789,7 +730,6 @@ static const GlobalCommandDescriptor CommandDeclarations[] =
 			false,
 		},
 
-#ifndef DISABLE_RECORDING
 		{"FrameAdvance", Implementations::FrameAdvance, NULL, NULL, false},
 		{"TogglePause", Implementations::TogglePause, NULL, NULL, false},
 		{"InputRecordingModeToggle", Implementations::InputRecordingModeToggle, NULL, NULL, false},
@@ -816,7 +756,6 @@ static const GlobalCommandDescriptor CommandDeclarations[] =
 		{"States_LoadSlot7", Implementations::States_LoadSlot7, NULL, NULL, false},
 		{"States_LoadSlot8", Implementations::States_LoadSlot8, NULL, NULL, false},
 		{"States_LoadSlot9", Implementations::States_LoadSlot9, NULL, NULL, false},
-#endif
 		// Command Declarations terminator:
 		// (must always be last in list!!)
 		{NULL}};
@@ -848,13 +787,13 @@ void AcceleratorDictionary::Map(const KeyAcceleratorCode& _acode, const char* se
 			}
 			if (_acode.ToString() != acode.ToString())
 			{
-				Console.WriteLn(Color_StrongGreen, L"Overriding '%s': assigning %s (instead of %s)",
+				Console.WriteLn(Color_StrongGreen, "Overriding '%ls': assigning %ls (instead of %ls)",
 								WX_STR(fromUTF8(searchfor)), WX_STR(acode.ToString()), WX_STR(_acode.ToString()));
 			}
 		}
 		else
 		{
-			Console.Error(L"Error overriding KB shortcut for '%s': can't understand '%s'",
+			Console.Error("Error overriding KB shortcut for '%ls': can't understand '%ls'",
 						  WX_STR(fromUTF8(searchfor)), WX_STR(overrideStr));
 		}
 	}
@@ -869,8 +808,8 @@ void AcceleratorDictionary::Map(const KeyAcceleratorCode& _acode, const char* se
 	if (result != NULL)
 	{
 		Console.Warning(
-			L"Kbd Accelerator '%s' is mapped multiple times.\n"
-			L"\t'Command %s' is being replaced by '%s'",
+			"Kbd Accelerator '%ls' is mapped multiple times.\n"
+			"\t'Command %ls' is being replaced by '%ls'",
 			WX_STR(acode.ToString()), WX_STR(fromUTF8(result->Id)), WX_STR(fromUTF8(searchfor)));
 	}
 
@@ -881,7 +820,7 @@ void AcceleratorDictionary::Map(const KeyAcceleratorCode& _acode, const char* se
 
 	if (result == NULL)
 	{
-		Console.Warning(L"Kbd Accelerator '%s' is mapped to unknown command '%s'",
+		Console.Warning("Kbd Accelerator '%ls' is mapped to unknown command '%ls'",
 						WX_STR(acode.ToString()), WX_STR(fromUTF8(searchfor)));
 	}
 	else
@@ -900,7 +839,7 @@ void AcceleratorDictionary::Map(const KeyAcceleratorCode& _acode, const char* se
 			// ctrl-shift to the base shortcut.
 			if (acode.cmd || acode.shift)
 			{
-				Console.Error(L"Cannot map %s to Sys_TakeSnapshot - must not include Shift or Ctrl - these modifiers will be added automatically.",
+				Console.Error("Cannot map %ls to Sys_TakeSnapshot - must not include Shift or Ctrl - these modifiers will be added automatically.",
 							  WX_STR(acode.ToString()));
 			}
 			else
@@ -915,7 +854,7 @@ void AcceleratorDictionary::Map(const KeyAcceleratorCode& _acode, const char* se
 
 				if (_acode.val32 != acode.val32)
 				{ // overriding default
-					Console.WriteLn(Color_Green, L"Sys_TakeSnapshot: automatically mapping also %s and %s",
+					Console.WriteLn(Color_Green, "Sys_TakeSnapshot: automatically mapping also %ls and %ls",
 									WX_STR(shifted.ToString()),
 									WX_STR(controlledShifted.ToString()));
 				}
@@ -972,7 +911,6 @@ void Pcsx2App::InitDefaultGlobalAccelerators()
 	GlobalAccels->Map(AAC(WXK_F2).Shift(), "States_CycleSlotBackward");
 
 	GlobalAccels->Map(AAC(WXK_F4), "Framelimiter_MasterToggle");
-	GlobalAccels->Map(AAC(WXK_F4).Shift(), "Frameskip_Toggle");
 
 	// At this early stage of startup, the application assumes installed mode, so portable mode custom keybindings may present issues.
 	// Relevant - https://github.com/PCSX2/pcsx2/blob/678829a5b2b8ca7a3e42d8edc9ab201bf00b0fe9/pcsx2/gui/AppInit.cpp#L479

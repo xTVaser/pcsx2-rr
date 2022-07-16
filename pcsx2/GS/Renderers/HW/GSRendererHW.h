@@ -18,15 +18,19 @@
 #include "GSTextureCache.h"
 #include "GS/Renderers/Common/GSFunctionMap.h"
 #include "GS/Renderers/Common/GSRenderer.h"
+#include "GS/Renderers/SW/GSTextureCacheSW.h"
 #include "GS/GSState.h"
+
+class GSRasterizer;
 
 class GSRendererHW : public GSRenderer
 {
+public:
+	static constexpr int MAX_FRAMEBUFFER_HEIGHT = 1280;
+
 private:
 	int m_width;
 	int m_height;
-	int m_custom_width;
-	int m_custom_height;
 
 	static constexpr float SSR_UV_TOLERANCE = 1.0f;
 
@@ -55,8 +59,6 @@ private:
 	bool OI_BurnoutGames(GSTexture* rt, GSTexture* ds, GSTextureCache::Source* t);
 
 	void OO_BurnoutGames();
-
-	bool CU_TalesOfAbyss();
 
 	class Hacks
 	{
@@ -131,32 +133,49 @@ private:
 	void SwSpriteRender();
 	bool CanUseSwSpriteRender();
 
+	bool CanUseSwPrimRender(bool no_rt, bool no_ds, bool draw_sprite_tex);
+	bool SwPrimRender();
+
 	template <bool linear>
 	void RoundSpriteOffset();
 
-protected:
+	void DrawPrims(GSTexture* rt, GSTexture* ds, GSTextureCache::Source* tex);
+
+	void ResetStates();
+	void SetupIA(const float& sx, const float& sy);
+	void EmulateTextureShuffleAndFbmask();
+	void EmulateChannelShuffle(const GSTextureCache::Source* tex);
+	void EmulateBlending(bool& DATE_PRIMID, bool& DATE_BARRIER, bool& blending_alpha_pass);
+	void EmulateTextureSampler(const GSTextureCache::Source* tex);
+	void EmulateZbuffer();
+	void EmulateATST(float& AREF, GSHWDrawConfig::PSSelector& ps, bool pass_2);
+
+	void SetTCOffset();
+
 	GSTextureCache* m_tc;
 	GSVector4i m_r;
 	GSTextureCache::Source* m_src;
 
-	virtual void DrawPrims(GSTexture* rt, GSTexture* ds, GSTextureCache::Source* tex) = 0;
-
-	void SetTCOffset();
-
+	bool m_reset;
+	bool m_channel_shuffle;
 	bool m_userhacks_tcoffset;
 	float m_userhacks_tcoffset_x;
 	float m_userhacks_tcoffset_y;
 
-	bool m_channel_shuffle;
-	bool m_reset;
-
 	GSVector2i m_lod; // Min & Max level of detail
-	void CustomResolutionScaling();
+
+	GSHWDrawConfig m_conf;
+
+	// software sprite renderer state
+	std::vector<GSVertexSW> m_sw_vertex_buffer;
+	std::unique_ptr<GSTextureCacheSW::Texture> m_sw_texture;
+	std::unique_ptr<GSRasterizer> m_sw_rasterizer;
 
 public:
 	GSRendererHW();
 	virtual ~GSRendererHW() override;
 
+	__fi static GSRendererHW* GetInstance() { return static_cast<GSRendererHW*>(g_gs_renderer.get()); }
 	__fi GSTextureCache* GetTextureCache() const { return m_tc; }
 
 	void Destroy() override;
@@ -164,7 +183,6 @@ public:
 	void SetGameCRC(u32 crc, int options) override;
 	bool CanUpscale() override;
 	int GetUpscaleMultiplier() override;
-	GSVector2i GetCustomResolution() override;
 	void SetScaling();
 	void Lines2Sprites();
 	void EmulateAtst(GSVector4& FogColor_AREF, u8& atst, const bool pass_2);
@@ -176,7 +194,7 @@ public:
 	GSVector2 GetTextureScaleFactor() override;
 	GSVector2i GetTargetSize();
 
-	void Reset() override;
+	void Reset(bool hardware_reset) override;
 	void UpdateSettings(const Pcsx2Config::GSOptions& old_config) override;
 	void VSync(u32 field, bool registers_written) override;
 
@@ -184,10 +202,14 @@ public:
 	GSTexture* GetFeedbackOutput() override;
 	void InvalidateVideoMem(const GIFRegBITBLTBUF& BITBLTBUF, const GSVector4i& r) override;
 	void InvalidateLocalMem(const GIFRegBITBLTBUF& BITBLTBUF, const GSVector4i& r, bool clut = false) override;
+	void Move() override;
 	void Draw() override;
 
 	void PurgeTextureCache() override;
 
 	// Called by the texture cache to know if current texture is useful
-	virtual bool IsDummyTexture() const { return false; }
+	bool IsDummyTexture() const;
+
+	// Called by the texture cache when optimizing the copy range for sources
+	bool IsPossibleTextureShuffle(GSTextureCache::Source* src) const;
 };

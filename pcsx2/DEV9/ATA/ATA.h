@@ -20,8 +20,8 @@
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
-#include <fstream>
 
+#include "common/Path.h"
 #include "DEV9/SimpleQueue.h"
 
 class ATA
@@ -34,7 +34,7 @@ public:
 private:
 	const bool lba48Supported = false;
 
-	std::fstream hddImage;
+	std::FILE* hddImage = nullptr;
 	u64 hddImageSize;
 
 	int pioMode;
@@ -152,8 +152,9 @@ private:
 
 public:
 	ATA();
+	~ATA();
 
-	int Open(fs::path hddPath);
+	int Open(const std::string& hddPath);
 	void Close();
 
 	void ATA_HardReset();

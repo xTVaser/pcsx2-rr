@@ -15,37 +15,53 @@
 
 #pragma once
 
-#include "PAD/Host/Global.h"
+#include "PAD/Host/PAD.h"
 
-class KeyStatus
+namespace PAD
 {
-private:
-	static constexpr u8 m_analog_released_val = 0x7F;
+	enum class ControllerType : u8;
 
-	struct PADAnalog
+	class KeyStatus
 	{
-		u8 lx, ly;
-		u8 rx, ry;
+	private:
+		static constexpr u8 m_analog_released_val = 0x7F;
+
+		struct PADAnalog
+		{
+			u8 lx, ly;
+			u8 rx, ry;
+		};
+
+		PAD::ControllerType m_type[NUM_CONTROLLER_PORTS] = {};
+		u32 m_button[NUM_CONTROLLER_PORTS];
+		u8 m_button_pressure[NUM_CONTROLLER_PORTS][MAX_KEYS];
+		PADAnalog m_analog[NUM_CONTROLLER_PORTS];
+		float m_axis_scale[NUM_CONTROLLER_PORTS][2];
+		float m_vibration_scale[NUM_CONTROLLER_PORTS][2];
+		float m_pressure_modifier[NUM_CONTROLLER_PORTS];
+
+	public:
+		KeyStatus();
+		void Init();
+
+		void Set(u32 pad, u32 index, float value);
+
+		__fi PAD::ControllerType GetType(u32 pad) { return m_type[pad]; }
+		__fi void SetType(u32 pad, PAD::ControllerType type) { m_type[pad] = type; }
+
+		__fi void SetAxisScale(u32 pad, float deadzone, float scale)
+		{
+			m_axis_scale[pad][0] = deadzone;
+			m_axis_scale[pad][1] = scale;
+		}
+		__fi float GetVibrationScale(u32 pad, u32 motor) const { return m_vibration_scale[pad][motor]; }
+		__fi void SetVibrationScale(u32 pad, u32 motor, float scale) { m_vibration_scale[pad][motor] = scale; }
+		__fi float GetPressureModifier(u32 pad) const { return m_pressure_modifier[pad]; }
+		__fi void SetPressureModifier(u32 pad, float mod) { m_pressure_modifier[pad] = mod; }
+
+		u32 GetButtons(u32 pad);
+		u8 GetPressure(u32 pad, u32 index);
 	};
+} // namespace PAD
 
-	u16 m_button[GAMEPAD_NUMBER];
-	u8 m_button_pressure[GAMEPAD_NUMBER][MAX_KEYS];
-	PADAnalog m_analog[GAMEPAD_NUMBER];
-	float m_axis_scale[GAMEPAD_NUMBER];
-	float m_vibration_scale[GAMEPAD_NUMBER][2];
-
-public:
-	KeyStatus();
-	void Init();
-
-	void Set(u32 pad, u32 index, float value);
-
-	__fi void SetAxisScale(u32 pad, float scale) { m_axis_scale[pad] = scale; }
-	__fi float GetVibrationScale(u32 pad, u32 motor) const { return m_vibration_scale[pad][motor]; }
-	__fi void SetVibrationScale(u32 pad, u32 motor, float scale) { m_vibration_scale[pad][motor] = scale; }
-
-	u16 GetButtons(u32 pad);
-	u8 GetPressure(u32 pad, u32 index);
-};
-
-extern KeyStatus g_key_status;
+extern PAD::KeyStatus g_key_status;

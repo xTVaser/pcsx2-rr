@@ -500,7 +500,6 @@ void GSDeviceMTL::DoInterlace(GSTexture* sTex, GSTexture* dTex, int shader, bool
 
 	GSMTLInterlacePSUniform cb = {};
 	cb.ZrH = {0, 1.f / s.y};
-	cb.hH = s.y / 2;
 
 	DoStretchRect(sTex, sRect, dTex, dRect, m_interlace_pipeline[shader], linear, shader > 1 ? LoadAction::DontCareIfFull : LoadAction::Load, &cb, sizeof(cb));
 }}
@@ -791,19 +790,11 @@ bool GSDeviceMTL::Create(HostDisplay* display)
 			NSString* name = [NSString stringWithCString:shaderName(conv) encoding:NSUTF8StringEncoding];
 			switch (conv)
 			{
+				case ShaderConvert::COPY:
 				case ShaderConvert::Count:
 				case ShaderConvert::DATM_0:
 				case ShaderConvert::DATM_1:
 				case ShaderConvert::MOD_256:
-					continue;
-				case ShaderConvert::COPY:
-				case ShaderConvert::SCANLINE:
-				case ShaderConvert::DIAGONAL_FILTER:
-				case ShaderConvert::TRIANGULAR_FILTER:
-				case ShaderConvert::COMPLEX_FILTER:
-					pdesc.colorAttachments[0].pixelFormat = layer_px_fmt;
-					pdesc.depthAttachmentPixelFormat = MTLPixelFormatInvalid;
-					m_present_pipeline[i] = MakePipeline(pdesc, vs_convert, LoadShader(name), [NSString stringWithFormat:@"present_%s", shaderName(conv) + 3]);
 					continue;
 				case ShaderConvert::FLOAT32_TO_32_BITS:
 					pdesc.colorAttachments[0].pixelFormat = ConvertPixelFormat(GSTexture::Format::UInt32);
@@ -834,6 +825,13 @@ bool GSDeviceMTL::Create(HostDisplay* display)
 			m_convert_pipeline[i] = MakePipeline(pdesc, vs_convert, LoadShader(name), name);
 		}
 		pdesc.depthAttachmentPixelFormat = MTLPixelFormatInvalid;
+		for (size_t i = 0; i < std::size(m_present_pipeline); i++)
+		{
+			PresentShader conv = static_cast<PresentShader>(i);
+			NSString* name = [NSString stringWithCString:shaderName(conv) encoding:NSUTF8StringEncoding];
+			pdesc.colorAttachments[0].pixelFormat = layer_px_fmt;
+			m_present_pipeline[i] = MakePipeline(pdesc, vs_convert, LoadShader(name), [NSString stringWithFormat:@"present_%s", shaderName(conv) + 3]);
+		}
 		pdesc.colorAttachments[0].pixelFormat = ConvertPixelFormat(GSTexture::Format::Color);
 		m_convert_pipeline_copy[0] = MakePipeline(pdesc, vs_convert, ps_copy, @"copy_color");
 		pdesc.colorAttachments[0].pixelFormat = ConvertPixelFormat(GSTexture::Format::FloatColor);
@@ -941,7 +939,7 @@ bool GSDeviceMTL::DownloadTexture(GSTexture* src, const GSVector4i& rect, GSText
 	return true;
 }}
 
-void GSDeviceMTL::CopyRect(GSTexture* sTex, GSTexture* dTex, const GSVector4i& r)
+void GSDeviceMTL::CopyRect(GSTexture* sTex, GSTexture* dTex, const GSVector4i& r, u32 destX, u32 destY)
 { @autoreleasepool {
 	g_perfmon.Put(GSPerfMon::TextureCopies, 1);
 
@@ -971,7 +969,7 @@ void GSDeviceMTL::CopyRect(GSTexture* sTex, GSTexture* dTex, const GSVector4i& r
 	               toTexture:dT->GetTexture()
 	        destinationSlice:0
 	        destinationLevel:0
-	       destinationOrigin:MTLOriginMake(0, 0, 0)];
+	       destinationOrigin:MTLOriginMake((int)destX, (int)destY, 0)];
 	[encoder endEncoding];
 }}
 
@@ -1053,16 +1051,6 @@ void GSDeviceMTL::RenderCopy(GSTexture* sTex, id<MTLRenderPipelineState> pipelin
 
 void GSDeviceMTL::StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, ShaderConvert shader, bool linear)
 { @autoreleasepool {
-	if (!dTex)
-	{
-		// !dTex → "Present with the current draw encoder"
-		[m_current_render.encoder setRenderPipelineState:m_present_pipeline[static_cast<int>(shader)]];
-		[m_current_render.encoder setFragmentSamplerState:m_sampler_hw[linear ? SamplerSelector::Linear().key : SamplerSelector::Point().key] atIndex:0];
-		[m_current_render.encoder setFragmentTexture:static_cast<GSTextureMTL*>(sTex)->GetTexture() atIndex:0];
-		DrawStretchRect(sRect, dRect, GSVector2i(m_display->GetWindowWidth(), m_display->GetWindowHeight()));
-		return;
-	}
-
 	id<MTLRenderPipelineState> pipeline;
 	if (shader == ShaderConvert::COPY)
 		pipeline = m_convert_pipeline_copy[dTex->GetFormat() == GSTexture::Format::Color ? 0 : 1];
@@ -1086,6 +1074,40 @@ void GSDeviceMTL::StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture
 	id<MTLRenderPipelineState> pipeline = m_convert_pipeline_copy_mask[sel];
 
 	DoStretchRect(sTex, sRect, dTex, dRect, pipeline, false, sel == 15 ? LoadAction::DontCareIfFull : LoadAction::Load, nullptr, 0);
+}}
+
+static_assert(sizeof(DisplayConstantBuffer) == sizeof(GSMTLPresentPSUniform));
+static_assert(offsetof(DisplayConstantBuffer, SourceRect)          == offsetof(GSMTLPresentPSUniform, source_rect));
+static_assert(offsetof(DisplayConstantBuffer, TargetRect)          == offsetof(GSMTLPresentPSUniform, target_rect));
+static_assert(offsetof(DisplayConstantBuffer, TargetSize)          == offsetof(GSMTLPresentPSUniform, target_size));
+static_assert(offsetof(DisplayConstantBuffer, TargetResolution)    == offsetof(GSMTLPresentPSUniform, target_resolution));
+static_assert(offsetof(DisplayConstantBuffer, RcpTargetResolution) == offsetof(GSMTLPresentPSUniform, rcp_target_resolution));
+static_assert(offsetof(DisplayConstantBuffer, SourceResolution)    == offsetof(GSMTLPresentPSUniform, source_resolution));
+static_assert(offsetof(DisplayConstantBuffer, RcpSourceResolution) == offsetof(GSMTLPresentPSUniform, rcp_source_resolution));
+static_assert(offsetof(DisplayConstantBuffer, TimeAndPad.x)        == offsetof(GSMTLPresentPSUniform, time));
+
+void GSDeviceMTL::PresentRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, PresentShader shader, float shaderTime, bool linear)
+{ @autoreleasepool {
+	GSVector2i ds = dTex ? dTex->GetSize() : GSVector2i(m_display->GetWindowWidth(), m_display->GetWindowHeight());
+	DisplayConstantBuffer cb;
+	cb.SetSource(sRect, sTex->GetSize());
+	cb.SetTarget(dRect, ds);
+	cb.SetTime(shaderTime);
+	id<MTLRenderPipelineState> pipe = m_present_pipeline[static_cast<int>(shader)];
+
+	if (dTex)
+	{
+		DoStretchRect(sTex, sRect, dTex, dRect, pipe, linear, LoadAction::DontCareIfFull, &cb, sizeof(cb));
+	}
+	else
+	{
+		// !dTex → Use current draw encoder
+		[m_current_render.encoder setRenderPipelineState:pipe];
+		[m_current_render.encoder setFragmentSamplerState:m_sampler_hw[linear ? SamplerSelector::Linear().key : SamplerSelector::Point().key] atIndex:0];
+		[m_current_render.encoder setFragmentTexture:static_cast<GSTextureMTL*>(sTex)->GetTexture() atIndex:0];
+		[m_current_render.encoder setFragmentBytes:&cb length:sizeof(cb) atIndex:GSMTLBufferIndexUniforms];
+		DrawStretchRect(sRect, dRect, ds);
+	}
 }}
 
 void GSDeviceMTL::FlushClears(GSTexture* tex)
@@ -1128,6 +1150,8 @@ static MTLBlendOperation ConvertBlendOp(GSDevice::BlendOp generic)
 		case GSDevice::OP_REV_SUBTRACT: return MTLBlendOperationReverseSubtract;
 	}
 }
+
+static constexpr MTLColorWriteMask MTLColorWriteMaskRGB = MTLColorWriteMaskRed | MTLColorWriteMaskGreen | MTLColorWriteMaskBlue;
 
 void GSDeviceMTL::MRESetHWPipelineState(GSHWDrawConfig::VSSelector vssel, GSHWDrawConfig::PSSelector pssel, GSHWDrawConfig::BlendState blend, GSHWDrawConfig::ColorMaskSelector cms)
 {
@@ -1224,7 +1248,7 @@ void GSDeviceMTL::MRESetHWPipelineState(GSHWDrawConfig::VSSelector vssel, GSHWDr
 		color.sourceRGBBlendFactor = MTLBlendFactorOne;
 		color.destinationRGBBlendFactor = MTLBlendFactorOne;
 	}
-	else if (extras.blend_enable)
+	else if (extras.blend_enable && (extras.writemask & MTLColorWriteMaskRGB))
 	{
 		color.blendingEnabled = YES;
 		color.rgbBlendOperation = ConvertBlendOp(extras.blend_op);
@@ -1729,7 +1753,7 @@ void GSDeviceMTL::RenderImGui(ImDrawData* data)
 	[enc setVertexBytes:&transform length:sizeof(transform) atIndex:GSMTLBufferIndexUniforms];
 
 	simd::uint4 last_scissor = simd::make_uint4(0, 0, m_display->GetWindowWidth(), m_display->GetWindowHeight());
-	simd::float2 fb_size = simd::float2(last_scissor.zw);
+	simd::float2 fb_size = simd_float(last_scissor.zw);
 	simd::float2 clip_off   = ToSimd(data->DisplayPos);       // (0,0) unless using multi-viewports
 	simd::float2 clip_scale = ToSimd(data->FramebufferScale); // (1,1) unless using retina display which are often (2,2)
 	ImTextureID last_tex = nullptr;
@@ -1755,7 +1779,7 @@ void GSDeviceMTL::RenderImGui(ImDrawData* data)
 			clip_max = simd::min(clip_max, fb_size);
 			if (simd::any(clip_min >= clip_max))
 				continue;
-			simd::uint4 scissor = simd::make_uint4(simd::uint2(clip_min), simd::uint2(clip_max - clip_min));
+			simd::uint4 scissor = simd::make_uint4(simd_uint(clip_min), simd_uint(clip_max - clip_min));
 			ImTextureID tex = cmd.GetTexID();
 			if (simd::any(scissor != last_scissor))
 			{

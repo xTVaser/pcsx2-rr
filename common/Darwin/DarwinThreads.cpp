@@ -15,13 +15,16 @@
 
 #if defined(__APPLE__)
 
+#include <sched.h>
+#include <pthread.h>
 #include <unistd.h>
 #include <mach/mach_init.h>
 #include <mach/thread_act.h>
 #include <mach/mach_port.h>
 
 #include "common/PrecompiledHeader.h"
-#include "common/PersistentThread.h"
+#include "common/Threading.h"
+#include "common/Assertions.h"
 
 // Note: assuming multicore is safer because it forces the interlocked routines to use
 // the LOCK prefix.  The prefix works on single core CPUs fine (but is slow), but not
@@ -30,6 +33,11 @@
 __forceinline void Threading::Sleep(int ms)
 {
 	usleep(1000 * ms);
+}
+
+__forceinline void Threading::Timeslice()
+{
+	sched_yield();
 }
 
 // For use in spin/wait loops, acts as a hint to Intel CPUs and should, in theory
@@ -94,30 +102,130 @@ u64 Threading::GetThreadCpuTime()
 	return us;
 }
 
-u64 Threading::pxThread::GetCpuTime() const
+Threading::ThreadHandle::ThreadHandle() = default;
+
+Threading::ThreadHandle::ThreadHandle(const ThreadHandle& handle)
+	: m_native_handle(handle.m_native_handle)
 {
-	// Get the cpu time for the thread belonging to this object.  Use m_native_id and/or
-	// m_native_handle to implement it. Return value should be a measure of total time the
-	// thread has used on the CPU (scaled by the value returned by GetThreadTicksPerSecond(),
-	// which typically would be an OS-provided scalar or some sort).
-	if (!m_native_id)
+}
+
+Threading::ThreadHandle::ThreadHandle(ThreadHandle&& handle)
+	: m_native_handle(handle.m_native_handle)
+{
+	handle.m_native_handle = nullptr;
+}
+
+Threading::ThreadHandle::~ThreadHandle() = default;
+
+Threading::ThreadHandle Threading::ThreadHandle::GetForCallingThread()
+{
+	ThreadHandle ret;
+	ret.m_native_handle = pthread_self();
+	return ret;
+}
+
+Threading::ThreadHandle& Threading::ThreadHandle::operator=(ThreadHandle&& handle)
+{
+	m_native_handle = handle.m_native_handle;
+	handle.m_native_handle = nullptr;
+	return *this;
+}
+
+Threading::ThreadHandle& Threading::ThreadHandle::operator=(const ThreadHandle& handle)
+{
+	m_native_handle = handle.m_native_handle;
+	return *this;
+}
+
+u64 Threading::ThreadHandle::GetCPUTime() const
+{
+	return getthreadtime(pthread_mach_thread_np((pthread_t)m_native_handle));
+}
+
+bool Threading::ThreadHandle::SetAffinity(u64 processor_mask) const
+{
+	// Doesn't appear to be possible to set affinity.
+	return false;
+}
+
+Threading::Thread::Thread() = default;
+
+Threading::Thread::Thread(Thread&& thread)
+	: ThreadHandle(thread)
+	, m_stack_size(thread.m_stack_size)
+{
+	thread.m_stack_size = 0;
+}
+
+Threading::Thread::Thread(EntryPoint func)
+	: ThreadHandle()
+{
+	if (!Start(std::move(func)))
+		pxFailRel("Failed to start implicitly started thread.");
+}
+
+Threading::Thread::~Thread()
+{
+	pxAssertRel(!m_native_handle, "Thread should be detached or joined at destruction");
+}
+
+void Threading::Thread::SetStackSize(u32 size)
+{
+	pxAssertRel(!m_native_handle, "Can't change the stack size on a started thread");
+	m_stack_size = size;
+}
+
+void* Threading::Thread::ThreadProc(void* param)
+{
+	std::unique_ptr<EntryPoint> entry(static_cast<EntryPoint*>(param));
+	(*entry.get())();
+	return nullptr;
+}
+
+bool Threading::Thread::Start(EntryPoint func)
+{
+	pxAssertRel(!m_native_handle, "Can't start an already-started thread");
+
+	std::unique_ptr<EntryPoint> func_clone(std::make_unique<EntryPoint>(std::move(func)));
+
+	pthread_attr_t attrs;
+	bool has_attributes = false;
+
+	if (m_stack_size != 0)
 	{
-		return 0;
+		has_attributes = true;
+		pthread_attr_init(&attrs);
 	}
+	if (m_stack_size != 0)
+		pthread_attr_setstacksize(&attrs, m_stack_size);
 
-	return getthreadtime((thread_port_t)m_native_id);
+	pthread_t handle;
+	const int res = pthread_create(&handle, has_attributes ? &attrs : nullptr, ThreadProc, func_clone.get());
+	if (res != 0)
+		return false;
+
+	// thread started, it'll release the memory
+	m_native_handle = (void*)handle;
+	func_clone.release();
+	return true;
 }
 
-void Threading::pxThread::_platform_specific_OnStartInThread()
+void Threading::Thread::Detach()
 {
-	m_native_id = (uptr)mach_thread_self();
+	pxAssertRel(m_native_handle, "Can't detach without a thread");
+	pthread_detach((pthread_t)m_native_handle);
+	m_native_handle = nullptr;
 }
 
-void Threading::pxThread::_platform_specific_OnCleanupInThread()
+void Threading::Thread::Join()
 {
-	// cleanup of handles that were upened in
-	// _platform_specific_OnStartInThread
-	mach_port_deallocate(mach_task_self(), (thread_port_t)m_native_id);
+	pxAssertRel(m_native_handle, "Can't join without a thread");
+	void* retval;
+	const int res = pthread_join((pthread_t)m_native_handle, &retval);
+	if (res != 0)
+		pxFailRel("pthread_join() for thread join failed");
+
+	m_native_handle = nullptr;
 }
 
 // name can be up to 16 bytes

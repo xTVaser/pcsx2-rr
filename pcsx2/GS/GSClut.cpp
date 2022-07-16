@@ -108,9 +108,18 @@ void GSClut::Invalidate()
 	m_write.dirty = true;
 }
 
+void GSClut::InvalidateRange(u32 start_block, u32 end_block)
+{
+	if (m_write.TEX0.CBP >= start_block && m_write.TEX0.CBP <= end_block)
+	{
+		m_write.dirty = true;
+	}
+}
+
+// Check the whole page, if the CLUT is slightly offset from a page boundary it could miss it.
 void GSClut::Invalidate(u32 block)
 {
-	if (block == m_write.TEX0.CBP)
+	if (!((block ^ m_write.TEX0.CBP) & ~0x1F))
 	{
 		m_write.dirty = true;
 	}
@@ -204,7 +213,7 @@ template <int n>
 void GSClut::WriteCLUT32_CSM2(const GIFRegTEX0& TEX0, const GIFRegTEXCLUT& TEXCLUT)
 {
 	GSOffset off = GSOffset::fromKnownPSM(TEX0.CBP, TEXCLUT.CBW, PSM_PSMCT32);
-	auto pa = off.paMulti(m_mem->m_vm32, TEXCLUT.COU << 4, TEXCLUT.COV);
+	auto pa = off.paMulti(m_mem->vm32(), TEXCLUT.COU << 4, TEXCLUT.COV);
 
 	u16* RESTRICT clut = m_clut + ((TEX0.CSA & 15) << 4);
 
@@ -221,7 +230,7 @@ template <int n>
 void GSClut::WriteCLUT16_CSM2(const GIFRegTEX0& TEX0, const GIFRegTEXCLUT& TEXCLUT)
 {
 	GSOffset off = GSOffset::fromKnownPSM(TEX0.CBP, TEXCLUT.CBW, PSM_PSMCT16);
-	auto pa = off.paMulti(m_mem->m_vm16, TEXCLUT.COU << 4, TEXCLUT.COV);
+	auto pa = off.paMulti(m_mem->vm16(), TEXCLUT.COU << 4, TEXCLUT.COV);
 
 	u16* RESTRICT clut = m_clut + (TEX0.CSA << 4);
 
@@ -235,7 +244,7 @@ template <int n>
 void GSClut::WriteCLUT16S_CSM2(const GIFRegTEX0& TEX0, const GIFRegTEXCLUT& TEXCLUT)
 {
 	GSOffset off = GSOffset::fromKnownPSM(TEX0.CBP, TEXCLUT.CBW, PSM_PSMCT16S);
-	auto pa = off.paMulti(m_mem->m_vm16, TEXCLUT.COU << 4, TEXCLUT.COV);
+	auto pa = off.paMulti(m_mem->vm16(), TEXCLUT.COU << 4, TEXCLUT.COV);
 
 	u16* RESTRICT clut = m_clut + (TEX0.CSA << 4);
 
@@ -752,19 +761,68 @@ void GSClut::Expand16(const u16* RESTRICT src, u32* RESTRICT dst, int w, const G
 	}
 }
 
-//
-
 bool GSClut::WriteState::IsDirty(const GIFRegTEX0& TEX0, const GIFRegTEXCLUT& TEXCLUT)
 {
-	return dirty || !GSVector4i::load<true>(this).eq(GSVector4i::load(&TEX0, &TEXCLUT));
+	constexpr u64 mask = 0x1FFFFFE000000000ull; // CSA CSM CPSM CBP
+
+	bool is_dirty = dirty;
+
+	if (((this->TEX0.U64 ^ TEX0.U64) & mask) || (GSLocalMemory::m_psm[this->TEX0.PSM].bpp != GSLocalMemory::m_psm[TEX0.PSM].bpp))
+		is_dirty |= true;
+	else if (TEX0.CSM == 1 && (TEXCLUT.U32[0] ^ this->TEXCLUT.U32[0]))
+		is_dirty |= true;
+
+	if (!is_dirty)
+	{
+		this->TEX0.U64 = TEX0.U64;
+		this->TEXCLUT.U64 = TEXCLUT.U64;
+	}
+
+	return is_dirty;
 }
 
 bool GSClut::ReadState::IsDirty(const GIFRegTEX0& TEX0)
 {
-	return dirty || !GSVector4i::load<true>(this).eq(GSVector4i::load(&TEX0, &this->TEXA));
+	constexpr u64 mask = 0x1FFFFFE000000000ull; // CSA CSM CPSM CBP
+
+	bool is_dirty = dirty;
+
+	if (((this->TEX0.U64 ^ TEX0.U64) & mask) || (GSLocalMemory::m_psm[this->TEX0.PSM].bpp != GSLocalMemory::m_psm[TEX0.PSM].bpp))
+		is_dirty |= true;
+
+	if (!is_dirty)
+	{
+		this->TEX0.U64 = TEX0.U64;
+	}
+
+	return is_dirty;
 }
 
 bool GSClut::ReadState::IsDirty(const GIFRegTEX0& TEX0, const GIFRegTEXA& TEXA)
 {
-	return dirty || !GSVector4i::load<true>(this).eq(GSVector4i::load(&TEX0, &TEXA));
+	constexpr u64 tex0_mask = 0x1FFFFFE000000000ull; // CSA CSM CPSM CBP
+	constexpr u64 texa24_mask = 0x80FFull; // AEM TA0
+	constexpr u64 texa16_mask = 0xFF000080FFull; // TA1 AEM TA0
+
+	bool is_dirty = dirty;
+
+	if (((this->TEX0.U64 ^ TEX0.U64) & tex0_mask) || (GSLocalMemory::m_psm[this->TEX0.PSM].bpp != GSLocalMemory::m_psm[TEX0.PSM].bpp))
+		is_dirty |= true;
+	else // Just to optimise the checks.
+	{
+		// Check TA0 and AEM in 24bit mode.
+		if (TEX0.CPSM == PSM_PSMCT24 && ((this->TEXA.U64 ^ TEXA.U64) & texa24_mask))
+			is_dirty |= true;
+		// Check all fields in 16bit mode.
+		else if (TEX0.CPSM >= PSM_PSMCT16 && ((this->TEXA.U64 ^ TEXA.U64) & texa16_mask))
+			is_dirty |= true;
+	}
+
+	if (!is_dirty)
+	{
+		this->TEX0.U64 = TEX0.U64;
+		this->TEXA.U64 = TEXA.U64;
+	}
+
+	return is_dirty;
 }

@@ -27,7 +27,7 @@
 #include "MTVU.h"
 
 #ifndef PCSX2_CORE
-#include "System/SysThreads.h"
+#include "gui/SysThreads.h"
 #else
 #include "VMManager.h"
 #endif
@@ -101,10 +101,10 @@ void cpuReset()
 	EEsCycle = 0;
 	EEoCycle = cpuRegs.cycle;
 
-	pgifInit();
-	hwReset();
-	rcntInit();
 	psxReset();
+	pgifInit();
+
+	hwReset();
 
 	extern void Deci2Reset();		// lazy, no good header for it yet.
 	Deci2Reset();
@@ -114,7 +114,7 @@ void cpuReset()
 	AllowParams2 = !g_SkipBiosHack;
 
 	ElfCRC = 0;
-	DiscSerial = L"";
+	DiscSerial.clear();
 	ElfEntry = -1;
 
 	// Probably not the right place, but it has to be done when the ram is actually initialized
@@ -125,14 +125,9 @@ void cpuReset()
 	// the same (identical ELF names) but is actually different (devs actually could
 	// run into this while testing minor binary hacked changes to ISO images, which
 	// is why I found out about this) --air
-	LastELF = L"";
+	LastELF.clear();
 
 	g_eeloadMain = 0, g_eeloadExec = 0, g_osdsys_str = 0;
-}
-
-void cpuShutdown()
-{
-	hwShutdown();
 }
 
 __ri void cpuException(u32 code, u32 bd)
@@ -146,7 +141,7 @@ __ri void cpuException(u32 code, u32 bd)
 	if(cpuRegs.CP0.n.Status.b.ERL == 0)
 	{
 		//Error Level 0-1
-		errLevel2 = FALSE;
+		errLevel2 = false;
 		checkStatus = (cpuRegs.CP0.n.Status.b.BEV == 0); //  for TLB/general exceptions
 
 		if (((code & 0x7C) >= 0x8) && ((code & 0x7C) <= 0xC))
@@ -159,7 +154,7 @@ __ri void cpuException(u32 code, u32 bd)
 	else
 	{
 		//Error Level 2
-		errLevel2 = TRUE;
+		errLevel2 = true;
 		checkStatus = (cpuRegs.CP0.n.Status.b.DEV == 0); // for perf/debug exceptions
 
 		Console.Error("*PCSX2* FIX ME: Level 2 cpuException");
@@ -286,7 +281,7 @@ static __fi void TESTINT( u8 n, void (*callback)() )
 		cpuSetNextEvent( cpuRegs.sCycle[n], cpuRegs.eCycle[n] );
 }
 
-// [TODO] move this function to LegacyDmac.cpp, and remove most of the DMAC-related headers from
+// [TODO] move this function to Dmac.cpp, and remove most of the DMAC-related headers from
 // being included into R5900.cpp.
 static __fi void _cpuTestInterrupts()
 {
@@ -298,23 +293,23 @@ static __fi void _cpuTestInterrupts()
 	/* These are 'pcsx2 interrupts', they handle asynchronous stuff
 	   that depends on the cycle timings */
 
-	TESTINT(DMAC_VIF1,		vif1Interrupt);	
+	TESTINT(DMAC_VIF1,		vif1Interrupt);
 	TESTINT(DMAC_GIF,		gifInterrupt);
 	TESTINT(DMAC_SIF0,		EEsif0Interrupt);
 	TESTINT(DMAC_SIF1,		EEsif1Interrupt);
-	
 	// Profile-guided Optimization (sorta)
 	// The following ints are rarely called.  Encasing them in a conditional
 	// as follows helps speed up most games.
 
 	if (cpuRegs.interrupt & ((1 << DMAC_VIF0) | (1 << DMAC_FROM_IPU) | (1 << DMAC_TO_IPU)
 		| (1 << DMAC_FROM_SPR) | (1 << DMAC_TO_SPR) | (1 << DMAC_MFIFO_VIF) | (1 << DMAC_MFIFO_GIF)
-		| (1 << VIF_VU0_FINISH) | (1 << VIF_VU1_FINISH)))
+		| (1 << VIF_VU0_FINISH) | (1 << VIF_VU1_FINISH) | (1 << IPU_PROCESS)))
 	{
 		TESTINT(DMAC_VIF0,		vif0Interrupt);
 
 		TESTINT(DMAC_FROM_IPU,	ipu0Interrupt);
 		TESTINT(DMAC_TO_IPU,	ipu1Interrupt);
+		TESTINT(IPU_PROCESS,	ipuCMDProcess);
 
 		TESTINT(DMAC_FROM_SPR,	SPRFROMinterrupt);
 		TESTINT(DMAC_TO_SPR,	SPRTOinterrupt);
@@ -370,14 +365,14 @@ static bool cpuIntsEnabled(int Interrupt)
 
 // if cpuRegs.cycle is greater than this cycle, should check cpuEventTest for updates
 u32 g_nextEventCycle = 0;
-
+u32 g_lastEventCycle = 0;
 // Shared portion of the branch test, called from both the Interpreter
 // and the recompiler.  (moved here to help alleviate redundant code)
 __fi void _cpuEventTest_Shared()
 {
 	eeEventTestIsActive = true;
 	g_nextEventCycle = cpuRegs.cycle + eeWaitCycles;
-
+	g_lastEventCycle = cpuRegs.cycle;
 	// ---- INTC / DMAC (CPU-level Exceptions) -----------------
 	// Done first because exceptions raised during event tests need to be postponed a few
 	// cycles (fixes Grandia II [PAL], which does a spin loop on a vsync and expects to
@@ -392,7 +387,7 @@ __fi void _cpuEventTest_Shared()
 	// escape/suspend hooks, and it's really a good idea to suspend/resume emulation before
 	// doing any actual meaningful branchtest logic.
 
-	if( cpuTestCycle( nextsCounter, nextCounter ) )
+	if ( cpuTestCycle( nextsCounter, nextCounter ) )
 	{
 		rcntUpdate();
 		_cpuTestPERF();
@@ -546,27 +541,28 @@ __fi void CPU_INT( EE_EventType n, s32 ecycle)
 	cpuSetNextEventDelta( cpuRegs.eCycle[n] );
 }
 
-// Called from recompilers; __fastcall define is mandatory.
-void __fastcall eeGameStarting()
+// Called from recompilers; define is mandatory.
+void eeGameStarting()
 {
 	if (!g_GameStarted)
 	{
 		//Console.WriteLn( Color_Green, "(R5900) ELF Entry point! [addr=0x%08X]", ElfEntry );
 		g_GameStarted = true;
 		g_GameLoading = false;
-#ifndef PCSX2_CORE
-		GetCoreThread().GameStartingInThread();
-#else
-		VMManager::Internal::GameStartingOnCPUThread();
-#endif
-
-
-		// we are using a retail BIOS, which will not map the upper memory, so we must do it manually
-		vtlb_VMap(0x02000000, 0x02000000, 0x06000000);
 
 		// GameStartingInThread may issue a reset of the cpu and/or recompilers.  Check for and
 		// handle such things here:
-		Cpu->CheckExecutionState();
+#ifndef PCSX2_CORE
+		GetCoreThread().GameStartingInThread();
+		if (GetCoreThread().HasPendingStateChangeRequest())
+			Cpu->ExitExecution();
+#else
+		VMManager::Internal::GameStartingOnCPUThread();
+		if (VMManager::Internal::IsExecutionInterrupted())
+			Cpu->ExitExecution();
+#endif
+		// we are using a retail BIOS, which will not map the upper memory, so we must do it manually
+		vtlb_VMap(0x02000000, 0x02000000, 0x06000000);
 	}
 	else
 	{
@@ -617,21 +613,21 @@ int ParseArgumentString(u32 arg_block)
 	return argc;
 }
 
-// Called from recompilers; __fastcall define is mandatory.
-void __fastcall eeloadHook()
+// Called from recompilers; define is mandatory.
+void eeloadHook()
 {
 #ifndef PCSX2_CORE
-	const wxString &elf_override = GetCoreThread().GetElfOverride();
+	const std::string elf_override(StringUtil::wxStringToUTF8String(GetCoreThread().GetElfOverride()));
 #else
-	const wxString elf_override(StringUtil::UTF8StringToWxString(VMManager::Internal::GetElfOverride()));
+	const std::string& elf_override(VMManager::Internal::GetElfOverride());
 #endif
 
-	if (!elf_override.IsEmpty())
-		cdvdReloadElfInfo(L"host:" + elf_override);
+	if (!elf_override.empty())
+		cdvdReloadElfInfo(StringUtil::StdStringFromFormat("host:%s", elf_override.c_str()));
 	else
 		cdvdReloadElfInfo();
 
-	wxString discelf;
+	std::string discelf;
 	int disctype = GetPS2ElfName(discelf);
 
 	std::string elfname;
@@ -703,15 +699,14 @@ void __fastcall eeloadHook()
 	if (g_SkipBiosHack && elfname.empty())
 	{
 		std::string elftoload;
-		if (!elf_override.IsEmpty())
+		if (!elf_override.empty())
 		{
-			elftoload = "host:";
-			elftoload += elf_override.ToUTF8();
+			elftoload = StringUtil::StdStringFromFormat("host:%s", elf_override.c_str());
 		}
 		else
 		{
 			if (disctype == 2)
-				elftoload = discelf.ToUTF8();
+				elftoload = discelf;
 			else
 				g_SkipBiosHack = false; // We're not fast booting, so disable it (Fixes some weirdness with the BIOS)
 		}
@@ -734,13 +729,13 @@ void __fastcall eeloadHook()
 		}
 	}
 
-	if (!g_GameStarted && ((disctype == 2 && elfname == discelf.ToStdString()) || disctype == 1))
+	if (!g_GameStarted && ((disctype == 2 && elfname == discelf) || disctype == 1))
 		g_GameLoading = true;
 }
 
-// Called from recompilers; __fastcall define is mandatory.
+// Called from recompilers; define is mandatory.
 // Only called if g_SkipBiosHack is true
-void __fastcall eeloadHook2()
+void eeloadHook2()
 {
 	if (EmuConfig.CurrentGameArgs.empty())
 		return;

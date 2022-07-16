@@ -220,6 +220,7 @@ int _signExtendXMMtoM(uptr to, x86SSERegType from, int candestroy); // returns t
 #define EEINST_COP2_STATUS_FLAG 0x400
 #define EEINST_COP2_MAC_FLAG 0x800
 #define EEINST_COP2_CLIP_FLAG 0x1000
+#define EEINST_COP2_FINISH_VU0_MICRO 0x2000
 
 struct EEINST
 {
@@ -256,8 +257,8 @@ extern u32 g_recWriteback; // used for jumps (VUrec mess!)
 
 extern _xmmregs xmmregs[iREGCNT_XMM], s_saveXMMregs[iREGCNT_XMM];
 
-extern __tls_emit u8* j8Ptr[32];   // depreciated item.  use local u8* vars instead.
-extern __tls_emit u32* j32Ptr[32]; // depreciated item.  use local u32* vars instead.
+extern thread_local u8* j8Ptr[32];   // depreciated item.  use local u8* vars instead.
+extern thread_local u32* j32Ptr[32]; // depreciated item.  use local u32* vars instead.
 
 extern u16 g_x86AllocCounter;
 extern u16 g_xmmAllocCounter;

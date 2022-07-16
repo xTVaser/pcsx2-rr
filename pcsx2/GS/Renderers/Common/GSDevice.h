@@ -36,11 +36,7 @@ enum class ShaderConvert
 	DATM_1,
 	DATM_0,
 	MOD_256,
-	SCANLINE,
-	DIAGONAL_FILTER,
 	TRANSPARENCY_FILTER,
-	TRIANGULAR_FILTER,
-	COMPLEX_FILTER,
 	FLOAT32_TO_16_BITS,
 	FLOAT32_TO_32_BITS,
 	FLOAT32_TO_RGBA8,
@@ -55,9 +51,21 @@ enum class ShaderConvert
 	Count
 };
 
+enum class PresentShader
+{
+	COPY = 0,
+	SCANLINE,
+	DIAGONAL_FILTER,
+	TRIANGULAR_FILTER,
+	COMPLEX_FILTER,
+	LOTTES_FILTER,
+	Count
+};
+
 /// Get the name of a shader
 /// (Can't put methods on an enum class)
 const char* shaderName(ShaderConvert value);
+const char* shaderName(PresentShader value);
 
 enum ChannelFetch
 {
@@ -72,6 +80,41 @@ enum ChannelFetch
 
 #pragma pack(push, 1)
 
+class DisplayConstantBuffer
+{
+public:
+	GSVector4 SourceRect; // +0,xyzw
+	GSVector4 TargetRect; // +16,xyzw
+	GSVector2 SourceSize; // +32,xy
+	GSVector2 TargetSize; // +40,zw
+	GSVector2 TargetResolution; // +48,xy
+	GSVector2 RcpTargetResolution; // +56,zw
+	GSVector2 SourceResolution; // +64,xy
+	GSVector2 RcpSourceResolution; // +72,zw
+	GSVector4 TimeAndPad; // seconds since GS init +76,xyzw
+	// +96
+
+	// assumes that sRect is normalized
+	void SetSource(const GSVector4& sRect, const GSVector2i& sSize)
+	{
+		SourceRect = sRect;
+		SourceResolution = GSVector2(static_cast<float>(sSize.x), static_cast<float>(sSize.y));
+		RcpSourceResolution = GSVector2(1.0f) / SourceResolution;
+		SourceSize = GSVector2((sRect.z - sRect.x) * SourceResolution.x, (sRect.w - sRect.y) * SourceResolution.y);
+	}
+	void SetTarget(const GSVector4& dRect, const GSVector2i& dSize)
+	{
+		TargetRect = dRect;
+		TargetResolution = GSVector2(static_cast<float>(dSize.x), static_cast<float>(dSize.y));
+		RcpTargetResolution = GSVector2(1.0f) / TargetResolution;
+		TargetSize = GSVector2(dRect.z - dRect.x, dRect.w - dRect.y);
+	}
+	void SetTime(float time)
+	{
+		TimeAndPad = GSVector4(time);
+	}
+};
+
 class MergeConstantBuffer
 {
 public:
@@ -79,16 +122,13 @@ public:
 	u32 EMODA;
 	u32 EMODC;
 	u32 pad[2];
-
-	MergeConstantBuffer() { memset(this, 0, sizeof(*this)); }
 };
 
 class InterlaceConstantBuffer
 {
 public:
 	GSVector2 ZrH;
-	float hH;
-	float _pad[1];
+	float _pad[2];
 
 	InterlaceConstantBuffer() { memset(this, 0, sizeof(*this)); }
 };
@@ -271,7 +311,9 @@ struct alignas(16) GSHWDrawConfig
 
 		__fi bool IsFeedbackLoop() const
 		{
-			return tex_is_fb || fbmask || date > 0 || blend_a == 1 || blend_b == 1 || blend_c == 1 || blend_d == 1;
+			const u32 sw_blend_bits = blend_a | blend_b | blend_d;
+			const bool sw_blend_needs_rt = sw_blend_bits != 0 && ((sw_blend_bits | blend_c) & 1u);
+			return tex_is_fb || fbmask || (date > 0 && date != 3) || sw_blend_needs_rt;
 		}
 
 		/// Disables color output from the pixel shader, this is done when all channels are masked.
@@ -353,6 +395,12 @@ struct alignas(16) GSHWDrawConfig
 		{
 			return (triln == static_cast<u8>(GS_MIN_FILTER::Nearest_Mipmap_Linear) ||
 					triln == static_cast<u8>(GS_MIN_FILTER::Linear_Mipmap_Linear));
+		}
+
+		/// Returns true if mipmaps should be used when filtering (i.e. LOD not clamped to zero).
+		__fi bool UseMipmapFiltering() const
+		{
+			return (triln >= static_cast<u8>(GS_MIN_FILTER::Nearest_Mipmap_Nearest));
 		}
 	};
 	struct DepthStencilSelector
@@ -551,6 +599,8 @@ struct alignas(16) GSHWDrawConfig
 	DestinationAlphaMode destination_alpha;
 	bool datm : 1;
 	bool line_expand : 1;
+	bool separate_alpha_pass : 1;
+	bool second_separate_alpha_pass : 1;
 
 	struct AlphaPass
 	{
@@ -563,7 +613,6 @@ struct alignas(16) GSHWDrawConfig
 	static_assert(sizeof(AlphaPass) == 24, "alpha pass is 24 bytes");
 
 	AlphaPass alpha_second_pass;
-	AlphaPass alpha_third_pass;
 
 	VSConstantBuffer cb_vs;
 	PSConstantBuffer cb_ps;
@@ -617,22 +666,23 @@ private:
 protected:
 	static constexpr u32 MAX_POOLED_TEXTURES = 300;
 
-	HostDisplay* m_display;
-	GSTexture* m_merge;
-	GSTexture* m_weavebob;
-	GSTexture* m_blend;
-	GSTexture* m_target_tmp;
-	GSTexture* m_current;
+	HostDisplay* m_display = nullptr;
+
+	GSTexture* m_merge = nullptr;
+	GSTexture* m_weavebob = nullptr;
+	GSTexture* m_blend = nullptr;
+	GSTexture* m_target_tmp = nullptr;
+	GSTexture* m_current = nullptr;
 	struct
 	{
 		size_t stride, start, count, limit;
-	} m_vertex;
+	} m_vertex = {};
 	struct
 	{
 		size_t start, count, limit;
-	} m_index;
-	unsigned int m_frame; // for ageing the pool
-	bool m_rbswapped;
+	} m_index = {};
+	unsigned int m_frame = 0; // for ageing the pool
+	bool m_rbswapped = false;
 	FeatureSupport m_features;
 
 	virtual GSTexture* CreateSurface(GSTexture::Type type, int width, int height, int levels, GSTexture::Format format) = 0;
@@ -710,17 +760,21 @@ public:
 	/// Must be called to free resources after calling `DownloadTexture` or `DownloadTextureConvert`
 	virtual void DownloadTextureComplete() {}
 
-	virtual void CopyRect(GSTexture* sTex, GSTexture* dTex, const GSVector4i& r) {}
+	virtual void CopyRect(GSTexture* sTex, GSTexture* dTex, const GSVector4i& r, u32 destX, u32 destY) {}
 	virtual void StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, ShaderConvert shader = ShaderConvert::COPY, bool linear = true) {}
 	virtual void StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, bool red, bool green, bool blue, bool alpha) {}
 
 	void StretchRect(GSTexture* sTex, GSTexture* dTex, const GSVector4& dRect, ShaderConvert shader = ShaderConvert::COPY, bool linear = true);
+
+	/// Performs a screen blit for display. If dTex is null, it assumes you are writing to the system framebuffer/swap chain.
+	virtual void PresentRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, PresentShader shader, float shaderTime, bool linear) {}
 
 	virtual void RenderHW(GSHWDrawConfig& config) {}
 
 	__fi FeatureSupport Features() const { return m_features; }
 	__fi GSTexture* GetCurrent() const { return m_current; }
 
+	void ClearCurrent();
 	void Merge(GSTexture* sTex[3], GSVector4* sRect, GSVector4* dRect, const GSVector2i& fs, const GSRegPMODE& PMODE, const GSRegEXTBUF& EXTBUF, const GSVector4& c);
 	void Interlace(const GSVector2i& ds, int field, int mode, float yoffset);
 	void FXAA();
@@ -769,6 +823,12 @@ public:
 		return (IsDualSourceBlendFactor(m_blendMap[index].src) ||
 				IsDualSourceBlendFactor(m_blendMap[index].dst));
 	}
+
+	/// Alters the pipeline configuration for drawing the separate alpha pass.
+	static void SetHWDrawConfigForAlphaPass(GSHWDrawConfig::PSSelector* ps,
+		GSHWDrawConfig::ColorMaskSelector* cms,
+		GSHWDrawConfig::BlendState* bs,
+		GSHWDrawConfig::DepthStencilSelector* dss);
 };
 
 struct GSAdapter

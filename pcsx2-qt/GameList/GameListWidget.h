@@ -15,6 +15,7 @@
 
 #pragma once
 #include "pcsx2/Frontend/GameList.h"
+#include "ui_EmptyGameListWidget.h"
 #include <QtWidgets/QListView>
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QTableView>
@@ -51,8 +52,10 @@ public:
 	__fi GameListModel* getModel() const { return m_model; }
 
 	void initialize();
+	void resizeTableViewColumnsToFit();
 
 	void refresh(bool invalidate_cache);
+	void cancelRefresh();
 
 	bool isShowingGameList() const;
 	bool isShowingGameGrid() const;
@@ -68,6 +71,8 @@ Q_SIGNALS:
 	void selectionChanged();
 	void entryActivated();
 	void entryContextMenuRequested(const QPoint& point);
+
+	void addGameDirectoryRequested();
 
 private Q_SLOTS:
 	void onRefreshProgress(const QString& status, int current, int total);
@@ -93,7 +98,6 @@ protected:
 	void resizeEvent(QResizeEvent* event);
 
 private:
-	void resizeTableViewColumnsToFit();
 	void loadTableViewColumnVisibilitySettings();
 	void saveTableViewColumnVisibilitySettings();
 	void saveTableViewColumnVisibilitySettings(int column);
@@ -106,6 +110,9 @@ private:
 	GameListSortModel* m_sort_model = nullptr;
 	QTableView* m_table_view = nullptr;
 	GameListGridListView* m_list_view = nullptr;
+
+	QWidget* m_empty_widget = nullptr;
+	Ui::EmptyGameListWidget m_empty_ui;
 
 	GameListRefreshThread* m_refresh_thread = nullptr;
 };

@@ -13,11 +13,9 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CONFIG_H_INCLUDED
-#define CONFIG_H_INCLUDED
+#pragma once
 
 #include <string>
-#include <wx/fileconf.h>
 
 extern bool DebugEnabled;
 
@@ -102,5 +100,3 @@ namespace SoundtouchCfg
 }; // namespace SoundtouchCfg
 
 void ReadSettings();
-
-#endif // CONFIG_H_INCLUDED

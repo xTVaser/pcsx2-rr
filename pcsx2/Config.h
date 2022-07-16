@@ -17,7 +17,6 @@
 
 #include "common/emitter/tools.h"
 #include "common/General.h"
-#include "common/Path.h"
 #include <string>
 
 class SettingsInterface;
@@ -45,6 +44,7 @@ enum GamefixId
 	Fix_VUSync,
 	Fix_VUOverflow,
 	Fix_XGKick,
+	Fix_BlitInternalFPS,
 
 	GamefixId_COUNT
 };
@@ -73,6 +73,7 @@ enum class VsyncMode
 enum class AspectRatioType : u8
 {
 	Stretch,
+	RAuto4_3_3_2,
 	R4_3,
 	R16_9,
 	MaxCount
@@ -81,6 +82,7 @@ enum class AspectRatioType : u8
 enum class FMVAspectRatioSwitchType : u8
 {
 	Off,
+	RAuto4_3_3_2,
 	R4_3,
 	R16_9,
 	MaxCount
@@ -122,6 +124,7 @@ enum class GSRendererType : s8
 	SW = 13,
 	VK = 14,
 	Metal = 17,
+	DX12 = 15,
 };
 
 enum class GSInterlaceMode : u8
@@ -146,8 +149,9 @@ enum class BiFiltering : u8
 	Forced_But_Sprite,
 };
 
-enum class TriFiltering : u8
+enum class TriFiltering : s8
 {
+	Automatic = -1,
 	Off,
 	PS2,
 	Forced,
@@ -178,7 +182,7 @@ enum class AccBlendLevel : u8
 	Medium,
 	High,
 	Full,
-	Ultra,
+	Maximum,
 };
 
 enum class TexturePreloadingLevel : u8
@@ -186,6 +190,13 @@ enum class TexturePreloadingLevel : u8
 	Off,
 	Partial,
 	Full,
+};
+
+enum class GSDumpCompressionMethod : u8
+{
+	Uncompressed,
+	LZMA,
+	Zstandard,
 };
 
 // Template function for casting enumerations to their underlying type
@@ -389,13 +400,17 @@ struct Pcsx2Config
 		SSE_MXCSR sseMXCSR;
 		SSE_MXCSR sseVUMXCSR;
 
+		u32 AffinityControlMode;
+
 		CpuOptions();
 		void LoadSave(SettingsWrapper& wrap);
 		void ApplySanityCheck();
 
+		bool CpusChanged(const CpuOptions& right) const;
+
 		bool operator==(const CpuOptions& right) const
 		{
-			return OpEqu(sseMXCSR) && OpEqu(sseVUMXCSR) && OpEqu(Recompiler);
+			return OpEqu(sseMXCSR) && OpEqu(sseVUMXCSR) && OpEqu(AffinityControlMode) && OpEqu(Recompiler);
 		}
 
 		bool operator!=(const CpuOptions& right) const
@@ -419,14 +434,20 @@ struct Pcsx2Config
 			struct
 			{
 				bool
+					PCRTCAntiBlur : 1,
+					DisableInterlaceOffset : 1,
+					PCRTCOffsets : 1,
+					PCRTCOverscan : 1,
 					IntegerScaling : 1,
 					LinearPresent : 1,
+					SyncToHostRefreshRate : 1,
 					UseDebugDevice : 1,
 					UseBlitSwapChain : 1,
 					DisableShaderCache : 1,
 					DisableDualSourceBlend : 1,
 					DisableFramebufferFetch : 1,
 					ThreadedPresentation : 1,
+					SkipDuplicateFrames : 1,
 					OsdShowMessages : 1,
 					OsdShowSpeed : 1,
 					OsdShowFPS : 1,
@@ -468,6 +489,8 @@ struct Pcsx2Config
 					DumpReplaceableTextures : 1,
 					DumpReplaceableMipmaps : 1,
 					DumpTexturesWithFMVActive : 1,
+					DumpDirectTextures : 1,
+					DumpPaletteTextures : 1,
 					LoadTextureReplacements : 1,
 					LoadTextureReplacementsAsync : 1,
 					PrecacheTextureReplacements : 1;
@@ -480,18 +503,14 @@ struct Pcsx2Config
 		// style. Useful for debugging potential bugs in the MTGS pipeline.
 		bool SynchronousMTGS{false};
 		bool FrameLimitEnable{true};
-		bool FrameSkipEnable{false};
 
 		VsyncMode VsyncEnable{VsyncMode::Off};
-
-		int FramesToDraw{2}; // number of consecutive frames (fields) to render
-		int FramesToSkip{2}; // number of consecutive frames (fields) to skip
 
 		double LimitScalar{1.0};
 		double FramerateNTSC{59.94};
 		double FrameratePAL{50.00};
 
-		AspectRatioType AspectRatio{AspectRatioType::R4_3};
+		AspectRatioType AspectRatio{AspectRatioType::RAuto4_3_3_2};
 		FMVAspectRatioSwitchType FMVAspectRatioSwitch{FMVAspectRatioSwitchType::Off};
 		GSInterlaceMode InterlaceMode{GSInterlaceMode::Automatic};
 
@@ -509,7 +528,8 @@ struct Pcsx2Config
 		AccBlendLevel AccurateBlendingUnit{AccBlendLevel::Basic};
 		CRCHackLevel CRCHack{CRCHackLevel::Automatic};
 		BiFiltering TextureFiltering{BiFiltering::PS2};
-		TexturePreloadingLevel TexturePreloading{TexturePreloadingLevel::Off};
+		TexturePreloadingLevel TexturePreloading{TexturePreloadingLevel::Full};
+		GSDumpCompressionMethod GSDumpCompression{GSDumpCompressionMethod::Uncompressed};
 		int Dithering{2};
 		int MaxAnisotropy{0};
 		int SWExtraThreads{2};
@@ -523,7 +543,8 @@ struct Pcsx2Config
 		int UserHacks_RoundSprite{0};
 		int UserHacks_TCOffsetX{0};
 		int UserHacks_TCOffsetY{0};
-		TriFiltering UserHacks_TriFilter{TriFiltering::Off};
+		int UserHacks_CPUSpriteRenderBW{0};
+		TriFiltering UserHacks_TriFilter{TriFiltering::Automatic};
 		int OverrideTextureBarriers{-1};
 		int OverrideGeometryShaders{-1};
 
@@ -778,15 +799,13 @@ struct Pcsx2Config
 			IbitHack : 1, // I bit hack. Needed to stop constant VU recompilation in some games
 			VUSyncHack : 1, // Makes microVU run behind the EE to avoid VU register reading/writing sync issues. Useful for M-Bit games
 			VUOverflowHack : 1, // Tries to simulate overflow flag checks (not really possible on x86 without soft floats)
-			XgKickHack : 1; // Erementar Gerad, adds more delay to VU XGkick instructions. Corrects the color of some graphics, but breaks Tri-ace games and others.
+			XgKickHack : 1, // Erementar Gerad, adds more delay to VU XGkick instructions. Corrects the color of some graphics, but breaks Tri-ace games and others.
+			BlitInternalFPSHack : 1; // Disables privileged register write-based FPS detection.
 		BITFIELD_END
 
 		GamefixOptions();
 		void LoadSave(SettingsWrapper& wrap);
 		GamefixOptions& DisableAll();
-
-		void Set(const wxString& list, bool enabled = true);
-		void Clear(const wxString& list) { Set(list, false); }
 
 		bool Get(GamefixId id) const;
 		void Set(GamefixId id, bool enabled = true);
@@ -868,9 +887,6 @@ struct Pcsx2Config
 	// ------------------------------------------------------------------------
 	struct FramerateOptions
 	{
-		bool SkipOnLimit{false};
-		bool SkipOnTurbo{false};
-
 		double NominalScalar{1.0};
 		double TurboScalar{2.0};
 		double SlomoScalar{0.5};
@@ -880,7 +896,7 @@ struct Pcsx2Config
 
 		bool operator==(const FramerateOptions& right) const
 		{
-			return OpEqu(SkipOnLimit) && OpEqu(SkipOnTurbo) && OpEqu(NominalScalar) && OpEqu(TurboScalar) && OpEqu(SlomoScalar);
+			return OpEqu(NominalScalar) && OpEqu(TurboScalar) && OpEqu(SlomoScalar);
 		}
 
 		bool operator!=(const FramerateOptions& right) const
@@ -927,12 +943,18 @@ struct Pcsx2Config
 		EnableCheats : 1, // enables cheat detection and application
 		EnablePINE : 1, // enables inter-process communication
 		EnableWideScreenPatches : 1,
-#ifndef DISABLE_RECORDING
+		EnableNoInterlacingPatches : 1,
+		// TODO - Vaser - where are these settings exposed in the Qt UI?
 		EnableRecordingTools : 1,
+#ifdef PCSX2_CORE
+		EnableGameFixes : 1, // enables automatic game fixes
+		SaveStateOnShutdown : 1, // default value for saving state on shutdown
 #endif
 		// when enabled uses BOOT2 injection, skipping sony bios splashes
 		UseBOOT2Injection : 1,
+		PatchBios : 1,
 		BackupSavestate : 1,
+		SavestateZstdCompression : 1,
 		// enables simulated ejection of memory cards when loading savestates
 		McdEnableEjection : 1,
 		McdFolderAutoManage : 1,
@@ -944,7 +966,7 @@ struct Pcsx2Config
 		HostFs : 1;
 
 	// uses automatic ntfs compression when creating new memory cards (Win32 only)
-#ifdef __WXMSW__
+#ifdef _WIN32
 	bool McdCompressNTFS;
 #endif
 	BITFIELD_END
@@ -963,6 +985,8 @@ struct Pcsx2Config
 
 	FilenameOptions BaseFilenames;
 
+	std::string PatchRegion;
+
 	// Memorycard options - first 2 are default slots, last 6 are multitap 1 and 2
 	// slots (3 each)
 	McdOptions Mcd[8];
@@ -972,16 +996,15 @@ struct Pcsx2Config
 	std::string CurrentBlockdump;
 	std::string CurrentIRX;
 	std::string CurrentGameArgs;
-	AspectRatioType CurrentAspectRatio = AspectRatioType::R4_3;
+	AspectRatioType CurrentAspectRatio = AspectRatioType::RAuto4_3_3_2;
 	LimiterModeType LimiterMode = LimiterModeType::Nominal;
 
 	Pcsx2Config();
 	void LoadSave(SettingsWrapper& wrap);
 	void LoadSaveMemcards(SettingsWrapper& wrap);
 
-	// TODO: Make these std::string when we remove wxFile...
 	std::string FullpathToBios() const;
-	wxString FullpathToMcd(uint slot) const;
+	std::string FullpathToMcd(uint slot) const;
 
 	bool MultitapEnabled(uint port) const;
 
@@ -1002,22 +1025,24 @@ extern Pcsx2Config EmuConfig;
 
 namespace EmuFolders
 {
-	extern wxDirName AppRoot;
-	extern wxDirName DataRoot;
-	extern wxDirName Settings;
-	extern wxDirName Bios;
-	extern wxDirName Snapshots;
-	extern wxDirName Savestates;
-	extern wxDirName MemoryCards;
-	extern wxDirName Langs;
-	extern wxDirName Logs;
-	extern wxDirName Cheats;
-	extern wxDirName CheatsWS;
-	extern wxDirName Resources;
-	extern wxDirName Cache;
-	extern wxDirName Covers;
-	extern wxDirName GameSettings;
-	extern wxDirName Textures;
+	extern std::string AppRoot;
+	extern std::string DataRoot;
+	extern std::string Settings;
+	extern std::string Bios;
+	extern std::string Snapshots;
+	extern std::string Savestates;
+	extern std::string MemoryCards;
+	extern std::string Langs;
+	extern std::string Logs;
+	extern std::string Cheats;
+	extern std::string CheatsWS;
+	extern std::string CheatsNI;
+	extern std::string Resources;
+	extern std::string Cache;
+	extern std::string Covers;
+	extern std::string GameSettings;
+	extern std::string Textures;
+	extern std::string InputProfiles;
 
 	// Assumes that AppRoot and DataRoot have been initialized.
 	void SetDefaults();
@@ -1057,7 +1082,6 @@ namespace EmuFolders
 #define CHECK_VU_EXTRA_OVERFLOW (EmuConfig.Cpu.Recompiler.vuExtraOverflow) // If enabled, Operands are clamped before being used in the VU recs
 #define CHECK_VU_SIGN_OVERFLOW (EmuConfig.Cpu.Recompiler.vuSignOverflow)
 #define CHECK_VU_UNDERFLOW (EmuConfig.Cpu.Recompiler.vuUnderflow)
-#define CHECK_VU_EXTRA_FLAGS 0 // Always disabled now // Sets correct flags in the sVU recs
 
 #define CHECK_FPU_OVERFLOW (EmuConfig.Cpu.Recompiler.fpuOverflow)
 #define CHECK_FPU_EXTRA_OVERFLOW (EmuConfig.Cpu.Recompiler.fpuExtraOverflow) // If enabled, Operands are checked for infinities before being used in the FPU recs

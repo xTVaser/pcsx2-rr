@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2021  PCSX2 Dev Team
+ *  Copyright (C) 2002-2022  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -58,7 +58,7 @@ void tIPU_cmd::clear()
 
 __fi void IPUProcessInterrupt()
 {
-	if (ipuRegs.ctrl.BUSY) // && (g_BP.FP || g_BP.IFC || (ipu1ch.chcr.STR && ipu1ch.qwc > 0)))
+	if (ipuRegs.ctrl.BUSY && !CommandExecuteQueued)
 		IPUWorker();
 }
 
@@ -75,6 +75,7 @@ void ipuReset()
 
 	ipu_fifo.init();
 	ipu_cmd.clear();
+	ipuDmaReset();
 }
 
 void ReportIPU()
@@ -190,8 +191,6 @@ __fi u32 ipuRead32(u32 mem)
 	pxAssert((mem & ~0xff) == 0x10002000);
 	mem &= 0xff;	// ipu repeats every 0x100
 
-	IPUProcessInterrupt();
-
 	switch (mem)
 	{
 		ipucase(IPU_CMD) : // IPU_CMD
@@ -242,8 +241,6 @@ __fi RETURNS_R64 ipuRead64(u32 mem)
 	pxAssert((mem & ~0xff) == 0x10002000);
 	mem &= 0xff;	// ipu repeats every 0x100
 
-	IPUProcessInterrupt();
-
 	switch (mem)
 	{
 		ipucase(IPU_CMD): // IPU_CMD
@@ -280,16 +277,6 @@ __fi RETURNS_R64 ipuRead64(u32 mem)
 
 void ipuSoftReset()
 {
-	if (ipu1ch.chcr.STR && g_BP.IFC < 8 && IPU1Status.DataRequested)
-	{
-		DevCon.Warning("Refill input fifo on reset");
-		ipu1Interrupt();
-	}
-
-	if (!ipu1ch.chcr.STR)
-		psHu32(DMAC_STAT) &= ~(1 << DMAC_TO_IPU);
-
-
 	ipu_fifo.clear();
 	memzero(g_BP);
 
@@ -317,12 +304,11 @@ __fi bool ipuWrite32(u32 mem, u32 value)
 		ipucase(IPU_CMD): // IPU_CMD
 			IPU_LOG("write32: IPU_CMD=0x%08X", value);
 			IPUCMD_WRITE(value);
-			IPUProcessInterrupt();
 		return false;
 
 		ipucase(IPU_CTRL): // IPU_CTRL
-            // CTRL = the first 16 bits of ctrl [0x8000ffff], + value for the next 16 bits,
-            // minus the reserved bits. (18-19; 27-29) [0x47f30000]
+			// CTRL = the first 16 bits of ctrl [0x8000ffff], + value for the next 16 bits,
+			// minus the reserved bits. (18-19; 27-29) [0x47f30000]
 			ipuRegs.ctrl.write(value);
 			if (ipuRegs.ctrl.IDP == 3)
 			{
@@ -353,7 +339,6 @@ __fi bool ipuWrite64(u32 mem, u64 value)
 		ipucase(IPU_CMD):
 			IPU_LOG("write64: IPU_CMD=0x%08X", value);
 			IPUCMD_WRITE((u32)value);
-			IPUProcessInterrupt();
 		return false;
 	}
 
@@ -366,12 +351,6 @@ __fi bool ipuWrite64(u32 mem, u64 value)
 
 static void ipuBCLR(u32 val)
 {
-	if (ipu1ch.chcr.STR && g_BP.IFC < 8 && IPU1Status.DataRequested)
-		ipu1Interrupt();
-
-	if(!ipu1ch.chcr.STR)
-		psHu32(DMAC_STAT) &= ~(1 << DMAC_TO_IPU);
-
 	ipu_fifo.in.clear();
 	memzero(g_BP);
 	g_BP.BP = val & 0x7F;
@@ -652,7 +631,7 @@ static __ri bool ipuPACK(tIPU_CMD_CSC csc)
 		ipu_cmd.pos[1] = 0;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static void ipuSETTH(u32 val)
@@ -927,7 +906,15 @@ __fi void IPUCMD_WRITE(u32 val)
 
 	ipuRegs.ctrl.BUSY = 1;
 
-	//if(!ipu1ch.chcr.STR) hwIntcIrq(INTC_IPU);
+	// Have a short delay immitating the time it takes to run IDEC/BDEC, other commands are near instant.
+	// Mana Khemia/Metal Saga start IDEC then change IPU0 expecting there to be a delay before IDEC sends data.
+	if (!CommandExecuteQueued && (ipu_cmd.CMD == SCE_IPU_IDEC || ipu_cmd.CMD == SCE_IPU_BDEC))
+	{
+		CommandExecuteQueued = true;
+		CPU_INT(IPU_PROCESS, 64);
+	}
+	else
+		IPUWorker();
 }
 
 __noinline void IPUWorker()
@@ -947,11 +934,6 @@ __noinline void IPUWorker()
 			//ipuRegs.ctrl.OFC = 0;
 			ipuRegs.topbusy = 0;
 			ipuRegs.cmd.BUSY = 0;
-
-			// CHECK!: IPU0dma remains when IDEC is done, so we need to clear it
-			// Check Mana Khemia 1 "off campus" to trigger a GUST IDEC messup.
-			// This hackfixes it :/
-			//if (ipu0ch.qwc > 0 && ipu0ch.chcr.STR) ipu0Interrupt();
 			break;
 
 		case SCE_IPU_BDEC:

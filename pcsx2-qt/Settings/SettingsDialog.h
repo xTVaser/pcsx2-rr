@@ -22,6 +22,7 @@
 #include <memory>
 
 class INISettingsInterface;
+class SettingsInterface;
 
 namespace GameList
 {
@@ -38,6 +39,7 @@ class GameFixSettingsWidget;
 class GraphicsSettingsWidget;
 class AudioSettingsWidget;
 class MemoryCardSettingsWidget;
+class FolderSettingsWidget;
 class DEV9SettingsWidget;
 
 class SettingsDialog final : public QDialog
@@ -46,10 +48,10 @@ class SettingsDialog final : public QDialog
 
 public:
 	explicit SettingsDialog(QWidget* parent);
-	SettingsDialog(std::unique_ptr<SettingsInterface> sif, const GameList::Entry* game, u32 game_crc);
+	SettingsDialog(QWidget* parent, std::unique_ptr<SettingsInterface> sif, const GameList::Entry* game, u32 game_crc);
 	~SettingsDialog();
 
-	static void openGamePropertiesDialog(const GameList::Entry* game, u32 crc);
+	static void openGamePropertiesDialog(const GameList::Entry* game, const std::string_view& serial, u32 crc);
 
 	__fi bool isPerGameSettings() const { return static_cast<bool>(m_sif); }
 	__fi SettingsInterface* getSettingsInterface() const { return m_sif.get(); }
@@ -64,6 +66,7 @@ public:
 	__fi GraphicsSettingsWidget* getGraphicsSettingsWidget() const { return m_graphics_settings; }
 	__fi AudioSettingsWidget* getAudioSettingsWidget() const { return m_audio_settings; }
 	__fi MemoryCardSettingsWidget* getMemoryCardSettingsWidget() const { return m_memory_card_settings; }
+	__fi FolderSettingsWidget* getFolderSettingsWidget() const { return m_folder_settings; }
 	__fi DEV9SettingsWidget* getDEV9SettingsWidget() const { return m_dev9_settings; }
 
 	void registerWidgetHelp(QObject* object, QString title, QString recommended_value, QString text);
@@ -121,6 +124,7 @@ private:
 	GraphicsSettingsWidget* m_graphics_settings = nullptr;
 	AudioSettingsWidget* m_audio_settings = nullptr;
 	MemoryCardSettingsWidget* m_memory_card_settings = nullptr;
+	FolderSettingsWidget* m_folder_settings = nullptr;
 	DEV9SettingsWidget* m_dev9_settings = nullptr;
 
 	std::array<QString, MAX_SETTINGS_WIDGETS> m_category_help_text;

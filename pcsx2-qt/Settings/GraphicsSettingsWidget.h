@@ -31,8 +31,6 @@ public:
 	GraphicsSettingsWidget(SettingsDialog* dialog, QWidget* parent);
 	~GraphicsSettingsWidget();
 
-	void updateRendererDependentOptions();
-
 Q_SIGNALS:
 	void fullscreenModesChanged(const QStringList& modes);
 
@@ -41,17 +39,19 @@ private Q_SLOTS:
 	void onAdapterChanged(int index);
 	void onEnableHardwareFixesChanged();
 	void onIntegerScalingChanged();
+	void onTrilinearFilteringChanged();
 	void onGpuPaletteConversionChanged(int state);
 	void onFullscreenModeChanged(int index);
 	void onShadeBoostChanged();
 
 private:
 	GSRendererType getEffectiveRenderer() const;
+	void updateRendererDependentOptions();
 
 	SettingsDialog* m_dialog;
 
 	Ui::GraphicsSettingsWidget m_ui;
 
-	bool m_hardware_renderer_visible = true;
-	bool m_software_renderer_visible = true;
+	bool m_hardware_renderer_visible = false;
+	bool m_software_renderer_visible = false;
 };

@@ -18,11 +18,14 @@
 #include "IopHw_Internal.h"
 #include "Sif.h"
 #include "Sio.h"
-#include "CDVD/CdRom.h"
+#include "CDVD/Ps1CD.h"
 #include "FW.h"
 #include "SPU2/spu2.h"
 #include "DEV9/DEV9.h"
 #include "USB/USB.h"
+#include "IopCounters.h"
+#include "IopSio2.h"
+#include "IopDma.h"
 
 #include "ps2/pgif.h"
 #include "Mdec.h"
@@ -33,7 +36,7 @@ using namespace Internal;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
-mem8_t __fastcall iopHwRead8_Page1( u32 addr )
+mem8_t iopHwRead8_Page1( u32 addr )
 {
 	// all addresses are assumed to be prefixed with 0x1f801xxx:
 	pxAssume( (addr >> 12) == 0x1f801 );
@@ -90,7 +93,7 @@ mem8_t __fastcall iopHwRead8_Page1( u32 addr )
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
-mem8_t __fastcall iopHwRead8_Page3( u32 addr )
+mem8_t iopHwRead8_Page3( u32 addr )
 {
 	// all addresses are assumed to be prefixed with 0x1f803xxx:
 	pxAssume( (addr >> 12) == 0x1f803 );
@@ -108,7 +111,7 @@ mem8_t __fastcall iopHwRead8_Page3( u32 addr )
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
-mem8_t __fastcall iopHwRead8_Page8( u32 addr )
+mem8_t iopHwRead8_Page8( u32 addr )
 {
 	// all addresses are assumed to be prefixed with 0x1f808xxx:
 	pxAssume( (addr >> 12) == 0x1f808 );
@@ -190,7 +193,7 @@ static __fi T _HwRead_16or32_Page1( u32 addr )
 
 			case 0x4:
 				ret = psxCounters[cntidx].mode;
-
+				PSXCNT_LOG("IOP Counter[%d] modeRead%d = %lx", cntidx, sizeof(T) * 8, ret);
 				// hmm!  The old code only did the following bitwise math for 16 bit reads.
 				// Logic indicates it should do the math consistently.  Question is,
 				// should it do the logic for both 16 and 32, or not do logic at all?
@@ -200,10 +203,12 @@ static __fi T _HwRead_16or32_Page1( u32 addr )
 
 			case 0x8:
 				ret = psxCounters[cntidx].target;
+				PSXCNT_LOG("IOP Counter[%d] targetRead%d = %lx", cntidx, sizeof(T), ret);
 			break;
 
 			case 0xa:
 				ret = psxCounters[cntidx].target >> 16;
+				PSXCNT_LOG("IOP Counter[%d] targetUpperRead%d = %lx", cntidx, sizeof(T), ret);
 			break;
 
 			default:
@@ -354,14 +359,14 @@ static __fi T _HwRead_16or32_Page1( u32 addr )
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
-mem16_t __fastcall iopHwRead16_Page1( u32 addr )
+mem16_t iopHwRead16_Page1( u32 addr )
 {
 	return _HwRead_16or32_Page1<mem16_t>( addr );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
-mem16_t __fastcall iopHwRead16_Page3( u32 addr )
+mem16_t iopHwRead16_Page3( u32 addr )
 {
 	// all addresses are assumed to be prefixed with 0x1f803xxx:
 	pxAssume( (addr >> 12) == 0x1f803 );
@@ -373,7 +378,7 @@ mem16_t __fastcall iopHwRead16_Page3( u32 addr )
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
-mem16_t __fastcall iopHwRead16_Page8( u32 addr )
+mem16_t iopHwRead16_Page8( u32 addr )
 {
 	// all addresses are assumed to be prefixed with 0x1f808xxx:
 	pxAssume( (addr >> 12) == 0x1f808 );
@@ -385,14 +390,14 @@ mem16_t __fastcall iopHwRead16_Page8( u32 addr )
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
-mem32_t __fastcall iopHwRead32_Page1( u32 addr )
+mem32_t iopHwRead32_Page1( u32 addr )
 {
 	return _HwRead_16or32_Page1<mem32_t>( addr );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
-mem32_t __fastcall iopHwRead32_Page3( u32 addr )
+mem32_t iopHwRead32_Page3( u32 addr )
 {
 	// all addresses are assumed to be prefixed with 0x1f803xxx:
 	pxAssume( (addr >> 12) == 0x1f803 );
@@ -403,7 +408,7 @@ mem32_t __fastcall iopHwRead32_Page3( u32 addr )
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
-mem32_t __fastcall iopHwRead32_Page8( u32 addr )
+mem32_t iopHwRead32_Page8( u32 addr )
 {
 	// all addresses are assumed to be prefixed with 0x1f808xxx:
 	pxAssume( (addr >> 12) == 0x1f808 );

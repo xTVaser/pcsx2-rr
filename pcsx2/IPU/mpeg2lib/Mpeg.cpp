@@ -698,13 +698,6 @@ __fi bool mpeg2sliceIDEC()
 {
 	u16 code;
 
-	// If FROM_IPU is running and there's stuff in the output fifo
-	// wait for FROM_IPU to grab it.
-	// Tekken 4 does this then kills the IDEC command after IPU0 finishes
-	// so it expects no extra data to have been processed, the processing is probably triggered by Output FIFO requests
-	if (ipu0ch.chcr.STR && ipuRegs.ctrl.OFC)
-		return false;
-
 	switch (ipu_cmd.pos[0])
 	{
 	case 0:
@@ -728,6 +721,11 @@ __fi bool mpeg2sliceIDEC()
 		ipu_cmd.pos[0] = 2;
 		while (1)
 		{
+			// IPU0 isn't ready for data, so let's wait for it to be
+			if ((!ipu0ch.chcr.STR || ipuRegs.ctrl.OFC || ipu0ch.qwc == 0) && ipu_cmd.pos[1] <= 2)
+			{
+				return false;
+			}
 			macroblock_8& mb8 = decoder.mb8;
 			macroblock_rgb16& rgb16 = decoder.rgb16;
 			macroblock_rgb32& rgb32 = decoder.rgb32;
@@ -832,6 +830,7 @@ __fi bool mpeg2sliceIDEC()
 
 			case 2:
 			{
+
 				pxAssert(decoder.ipu0_data > 0);
 
 				uint read = ipu_fifo.out.write((u32*)decoder.GetIpuDataPtr(), decoder.ipu0_data);
@@ -843,7 +842,13 @@ __fi bool mpeg2sliceIDEC()
 					ipu_cmd.pos[1] = 2;
 					return false;
 				}
+
 				mbaCount = 0;
+				if (read)
+				{
+					ipu_cmd.pos[1] = 3;
+					return false;
+				}
 			}
 				[[fallthrough]];
 
@@ -908,9 +913,6 @@ __fi bool mpeg2sliceIDEC()
 
 			ipu_cmd.pos[1] = 0;
 			ipu_cmd.pos[2] = 0;
-
-			if ((ipu0ch.qwc - ipuRegs.ctrl.OFC) <= 0)
-				return false;
 		}
 
 finish_idec:
@@ -920,6 +922,7 @@ finish_idec:
 	case 3:
 	{
 		u8 bit8;
+		u32 start_check;
 		if (!getBits8((u8*)&bit8, 0))
 		{
 			ipu_cmd.pos[0] = 3;
@@ -929,7 +932,28 @@ finish_idec:
 		if (bit8 == 0)
 		{
 			g_BP.Align();
-			ipuRegs.ctrl.SCD = 1;
+			do
+			{
+				if (!g_BP.FillBuffer(24))
+				{
+					ipu_cmd.pos[0] = 3;
+					return false;
+				}
+				start_check = UBITS(24);
+				if (start_check != 0)
+				{
+					if (start_check == 1)
+					{
+						ipuRegs.ctrl.SCD = 1;
+					}
+					else
+					{
+						ipuRegs.ctrl.ECD = 1;
+					}
+					break;
+				}
+				DUMPBITS(8);
+			} while (1);
 		}
 	}
 		[[fallthrough]];
@@ -953,13 +977,6 @@ finish_idec:
 __fi bool mpeg2_slice()
 {
 	int DCT_offset, DCT_stride;
-
-	// If FROM_IPU is running and there's stuff in the output fifo
-	// wait for FROM_IPU to grab it.
-	// Tekken 4 does this then kills the IDEC command after IPU0 finishes
-	// so it expects no extra data to have been processed, the processing is probably triggered by Output FIFO requests
-	if (ipu0ch.chcr.STR && ipuRegs.ctrl.OFC)
-		return false;
 
 	macroblock_8& mb8 = decoder.mb8;
 	macroblock_16& mb16 = decoder.mb16;
@@ -990,6 +1007,12 @@ __fi bool mpeg2_slice()
 
 	case 2:
 		ipu_cmd.pos[0] = 2;
+
+		// IPU0 isn't ready for data, so let's wait for it to be
+		if ((!ipu0ch.chcr.STR || ipuRegs.ctrl.OFC || ipu0ch.qwc == 0) && ipu_cmd.pos[0] <= 3)
+		{
+			return false;
+		}
 
 		if (decoder.macroblock_modes & DCT_TYPE_INTERLACED)
 		{
@@ -1190,12 +1213,18 @@ __fi bool mpeg2_slice()
 		}
 
 		mbaCount = 0;
+		if (read)
+		{
+			ipu_cmd.pos[0] = 4;
+			return false;
+		}
 	}
 		[[fallthrough]];
 
 	case 4:
 	{
 		u8 bit8;
+		u32 start_check;
 		if (!getBits8((u8*)&bit8, 0))
 		{
 			ipu_cmd.pos[0] = 4;
@@ -1205,7 +1234,28 @@ __fi bool mpeg2_slice()
 		if (bit8 == 0)
 		{
 			g_BP.Align();
-			ipuRegs.ctrl.SCD = 1;
+			do
+			{
+				if (!g_BP.FillBuffer(24)) 
+				{
+					ipu_cmd.pos[0] = 4;
+					return false;
+				}
+				start_check = UBITS(24);
+				if (start_check != 0)
+				{
+					if (start_check == 1)
+					{
+						ipuRegs.ctrl.SCD = 1;
+					}
+					else
+					{
+						ipuRegs.ctrl.ECD = 1;
+					}
+					break;
+				}
+				DUMPBITS(8);
+			} while (1);
 		}
 	}
 		[[fallthrough]];

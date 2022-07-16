@@ -16,21 +16,32 @@
 #include "PrecompiledHeader.h"
 
 #include "InterfaceSettingsWidget.h"
+#include "AutoUpdaterDialog.h"
 #include "MainWindow.h"
 #include "SettingWidgetBinder.h"
 #include "SettingsDialog.h"
 
-static const char* THEME_NAMES[] = {QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Native [Light]"),
+static const char* THEME_NAMES[] = {
+	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Native"),
 	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Fusion [Light]"),
 	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Dark Fusion (Gray) [Dark]"),
 	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Dark Fusion (Blue) [Dark]"),
 	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Untouched Lagoon (Grayish Green/-Blue ) [Light]"),
 	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Baby Pastel (Pink) [Light]"),
 	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "PCSX2 (White/Blue) [Light]"),
-	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Scarlet Devil (Red/Purple) [Dark]"), nullptr};
+	QT_TRANSLATE_NOOP("InterfaceSettingsWidget", "Scarlet Devil (Red/Purple) [Dark]"),
+	nullptr};
 
-static const char* THEME_VALUES[] = {"", "fusion", "darkfusion", "darkfusionblue", 
-	"UntouchedLagoon", "BabyPastel", "PCSX2Blue", "ScarletDevilRed", nullptr};
+static const char* THEME_VALUES[] = {
+	"",
+	"fusion",
+	"darkfusion",
+	"darkfusionblue",
+	"UntouchedLagoon",
+	"BabyPastel",
+	"PCSX2Blue",
+	"ScarletDevilRed",
+	nullptr};
 
 InterfaceSettingsWidget::InterfaceSettingsWidget(SettingsDialog* dialog, QWidget* parent)
 	: QWidget(parent)
@@ -40,9 +51,8 @@ InterfaceSettingsWidget::InterfaceSettingsWidget(SettingsDialog* dialog, QWidget
 	m_ui.setupUi(this);
 
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.inhibitScreensaver, "UI", "InhibitScreensaver", true);
-	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.discordPresence, "UI", "DiscordPresence", false);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.confirmShutdown, "UI", "ConfirmShutdown", true);
-	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.saveStateOnExit, "EmuCore", "AutoStateLoadSave", false);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.saveStateOnShutdown, "EmuCore", "SaveStateOnShutdown", false);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.pauseOnStart, "UI", "StartPaused", false);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.pauseOnFocusLoss, "UI", "PauseOnFocusLoss", false);
 
@@ -50,7 +60,10 @@ InterfaceSettingsWidget::InterfaceSettingsWidget(SettingsDialog* dialog, QWidget
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.doubleClickTogglesFullscreen, "UI", "DoubleClickTogglesFullscreen",
 		true);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.hideMouseCursor, "UI", "HideMouseCursor", false);
-	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.renderToMainWindow, "UI", "RenderToMainWindow", true);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.renderToSeparateWindow, "UI", "RenderToSeparateWindow", false);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.hideMainWindow, "UI", "HideMainWindowWhenRunning", false);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.disableWindowResizing, "UI", "DisableWindowResize", false);
+	connect(m_ui.renderToSeparateWindow, &QCheckBox::stateChanged, this, &InterfaceSettingsWidget::onRenderToSeparateWindowChanged);
 
 	SettingWidgetBinder::BindWidgetToEnumSetting(sif, m_ui.theme, "UI", "Theme", THEME_NAMES, THEME_VALUES,
 		MainWindow::DEFAULT_THEME_NAME);
@@ -60,22 +73,19 @@ InterfaceSettingsWidget::InterfaceSettingsWidget(SettingsDialog* dialog, QWidget
 		m_ui.inhibitScreensaver, tr("Inhibit Screensaver"), tr("Checked"),
 		tr("Prevents the screen saver from activating and the host from sleeping while emulation is running."));
 
-	dialog->registerWidgetHelp(m_ui.discordPresence, tr("Enable Discord Presence"), tr("Unchecked"),
-		tr("Shows the game you are currently playing as part of your profile in Discord."));
-	if (true)
+	if (AutoUpdaterDialog::isSupported())
 	{
 		SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.autoUpdateEnabled, "AutoUpdater", "CheckAtStartup", true);
 		dialog->registerWidgetHelp(m_ui.autoUpdateEnabled, tr("Enable Automatic Update Check"), tr("Checked"),
 			tr("Automatically checks for updates to the program on startup. Updates can be deferred "
 			   "until later or skipped entirely."));
 
-		// m_ui.autoUpdateTag->addItems(AutoUpdaterDialog::getTagList());
-		// SettingWidgetBinder::BindWidgetToStringSetting(m_ui.autoUpdateTag, "AutoUpdater", "UpdateTag",
-		// AutoUpdaterDialog::getDefaultTag());
+		m_ui.autoUpdateTag->addItems(AutoUpdaterDialog::getTagList());
+		SettingWidgetBinder::BindWidgetToStringSetting(sif, m_ui.autoUpdateTag, "AutoUpdater", "UpdateTag",
+			AutoUpdaterDialog::getDefaultTag());
 
-		// m_ui.autoUpdateCurrentVersion->setText(tr("%1 (%2)").arg(g_scm_tag_str).arg(g_scm_date_str));
-		// connect(m_ui.checkForUpdates, &QPushButton::clicked, [this]() {
-		// m_host_interface->getMainWindow()->checkForUpdates(true); });
+		m_ui.autoUpdateCurrentVersion->setText(tr("%1 (%2)").arg(AutoUpdaterDialog::getCurrentVersion()).arg(AutoUpdaterDialog::getCurrentVersionDate()));
+		connect(m_ui.checkForUpdates, &QPushButton::clicked, this, []() { g_main_window->checkForUpdates(true); });
 	}
 	else
 	{
@@ -87,7 +97,7 @@ InterfaceSettingsWidget::InterfaceSettingsWidget(SettingsDialog* dialog, QWidget
 		m_ui.confirmShutdown, tr("Confirm Shutdown"), tr("Checked"),
 		tr("Determines whether a prompt will be displayed to confirm shutting down the virtual machine "
 		   "when the hotkey is pressed."));
-	dialog->registerWidgetHelp(m_ui.saveStateOnExit, tr("Save State On Exit"), tr("Checked"),
+	dialog->registerWidgetHelp(m_ui.saveStateOnShutdown, tr("Save State On Shutdown"), tr("Checked"),
 		tr("Automatically saves the emulator state when powering down or exiting. You can then "
 		   "resume directly from where you left off next time."));
 	dialog->registerWidgetHelp(m_ui.pauseOnStart, tr("Pause On Start"), tr("Unchecked"),
@@ -100,9 +110,21 @@ InterfaceSettingsWidget::InterfaceSettingsWidget(SettingsDialog* dialog, QWidget
 	dialog->registerWidgetHelp(m_ui.hideMouseCursor, tr("Hide Cursor In Fullscreen"), tr("Checked"),
 		tr("Hides the mouse pointer/cursor when the emulator is in fullscreen mode."));
 	dialog->registerWidgetHelp(
-		m_ui.renderToMainWindow, tr("Render To Main Window"), tr("Checked"),
-		tr("Renders the display of the simulated console to the main window of the application, over "
-		   "the game list. If unchecked, the display will render in a separate window."));
+		m_ui.renderToSeparateWindow, tr("Render To Separate Window"), tr("Unchecked"),
+		tr("Renders the game to a separate window, instead of the main window. If unchecked, the game will display over the top of the game list."));
+	dialog->registerWidgetHelp(
+		m_ui.hideMainWindow, tr("Hide Main Window When Running"), tr("Unchecked"),
+		tr("Hides the main window (with the game list) when a game is running, requires Render To Separate Window to be enabled."));
+
+	// Not yet used, disable the options
+	m_ui.language->setDisabled(true);
+
+	onRenderToSeparateWindowChanged();
 }
 
 InterfaceSettingsWidget::~InterfaceSettingsWidget() = default;
+
+void InterfaceSettingsWidget::onRenderToSeparateWindowChanged()
+{
+	m_ui.hideMainWindow->setEnabled(m_ui.renderToSeparateWindow->isChecked());
+}

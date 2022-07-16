@@ -81,11 +81,11 @@ namespace GameDatabaseSchema
 		HalfPixelOffset,
 		RoundSprite,
 		TexturePreloading,
+		Deinterlace,
+		CPUSpriteRenderBW,
 
 		Count
 	};
-
-	using Patch = std::vector<std::string>;
 
 	struct GameEntry
 	{
@@ -100,15 +100,21 @@ namespace GameDatabaseSchema
 		std::vector<std::pair<SpeedhackId, int>> speedHacks;
 		std::vector<std::pair<GSHWFixId, s32>> gsHWFixes;
 		std::vector<std::string> memcardFilters;
-		std::unordered_map<std::string, Patch> patches;
+		std::unordered_map<u32, std::string> patches;
 
 		// Returns the list of memory card serials as a `/` delimited string
 		std::string memcardFiltersAsString() const;
-		const Patch* findPatch(const std::string_view& crc) const;
+		const std::string* findPatch(u32 crc) const;
 		const char* compatAsString() const;
+
+		/// Applies Core game fixes to an existing config. Returns the number of applied fixes.
+		u32 applyGameFixes(Pcsx2Config& config, bool applyAuto) const;
 
 		/// Applies GS hardware fixes to an existing config. Returns the number of applied fixes.
 		u32 applyGSHardwareFixes(Pcsx2Config::GSOptions& config) const;
+
+		/// Returns true if the current config value for the specified hw fix id matches the value.
+		bool configMatchesHWFix(const Pcsx2Config::GSOptions& config, GSHWFixId id, int value) const;
 	};
 };
 

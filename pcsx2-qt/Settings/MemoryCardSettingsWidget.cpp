@@ -16,6 +16,7 @@
 #include "PrecompiledHeader.h"
 
 #include <QtGui/QDrag>
+#include <QtWidgets/QFileDialog>
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMessageBox>
@@ -48,13 +49,14 @@ MemoryCardSettingsWidget::MemoryCardSettingsWidget(SettingsDialog* dialog, QWidg
 	// this is a bit lame, but resizeEvent() isn't good enough to autosize our columns,
 	// since the group box hasn't been resized at that point.
 	m_ui.cardGroupBox->installEventFilter(this);
-
+	
+	SettingWidgetBinder::BindWidgetToFolderSetting(sif, m_ui.directory, m_ui.browse, m_ui.open, m_ui.reset, "Folders", "MemoryCards", "memcards");
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.autoEject, "EmuCore", "McdEnableEjection", true);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.automaticManagement, "EmuCore", "McdFolderAutoManage", true);
 
-	for (u32 i = 0; i < static_cast<u32>(m_slots.size()); i++)
-		createSlotWidgets(&m_slots[i], i);
+	setupAdditionalUi();
 
+	connect(m_ui.directory, &QLineEdit::textChanged, this, &MemoryCardSettingsWidget::refresh);
 	m_ui.cardList->setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(m_ui.cardList, &MemoryCardListWidget::itemSelectionChanged, this, &MemoryCardSettingsWidget::updateCardActions);
 	connect(m_ui.cardList, &MemoryCardListWidget::customContextMenuRequested, this, &MemoryCardSettingsWidget::listContextMenuRequested);
@@ -85,6 +87,20 @@ bool MemoryCardSettingsWidget::eventFilter(QObject* watched, QEvent* event)
 	return QWidget::eventFilter(watched, event);
 }
 
+void MemoryCardSettingsWidget::setupAdditionalUi()
+{
+	for (u32 i = 0; i < static_cast<u32>(m_slots.size()); i++)
+		createSlotWidgets(&m_slots[i], i);
+
+	// button to swap memory cards
+	QToolButton* swap_button = new QToolButton(m_ui.portGroupBox);
+	swap_button->setIcon(QIcon::fromTheme("arrow-left-right-line"));
+	swap_button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+	swap_button->setToolTip(tr("Swap Memory Cards"));
+	connect(swap_button, &QToolButton::clicked, this, &MemoryCardSettingsWidget::swapCards);
+	static_cast<QGridLayout*>(m_ui.portGroupBox->layout())->addWidget(swap_button, 0, 1);
+}
+
 void MemoryCardSettingsWidget::createSlotWidgets(SlotGroup* port, u32 slot)
 {
 	port->root = new QWidget(m_ui.portGroupBox);
@@ -97,6 +113,7 @@ void MemoryCardSettingsWidget::createSlotWidgets(SlotGroup* port, u32 slot)
 	port->eject = new QToolButton(port->root);
 	port->eject->setIcon(QIcon::fromTheme("eject-line"));
 	port->eject->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+	port->eject->setToolTip(tr("Eject Memory Card"));
 	connect(port->eject, &QToolButton::clicked, this, [this, slot]() { ejectSlot(slot); });
 
 	port->slot = new MemoryCardSlotWidget(port->root);
@@ -112,7 +129,7 @@ void MemoryCardSettingsWidget::createSlotWidgets(SlotGroup* port, u32 slot)
 	vert_layout->addWidget(port->enable, 0);
 	vert_layout->addLayout(bottom_layout, 1);
 
-	static_cast<QGridLayout*>(m_ui.portGroupBox->layout())->addWidget(port->root, 0, slot);
+	static_cast<QGridLayout*>(m_ui.portGroupBox->layout())->addWidget(port->root, 0, (slot != 0) ? 2 : 0);
 }
 
 void MemoryCardSettingsWidget::autoSizeUI()
@@ -294,6 +311,24 @@ void MemoryCardSettingsWidget::refresh()
 
 	m_ui.cardList->refresh(m_dialog);
 	updateCardActions();
+}
+
+void MemoryCardSettingsWidget::swapCards()
+{
+	const std::string card_1_key(getSlotFilenameKey(0));
+	const std::string card_2_key(getSlotFilenameKey(1));
+	std::optional<std::string> card_1_name(m_dialog->getStringValue("MemoryCards", card_1_key.c_str(), std::nullopt));
+	std::optional<std::string> card_2_name(m_dialog->getStringValue("MemoryCards", card_2_key.c_str(), std::nullopt));
+	if (!card_1_name.has_value() || card_1_name->empty() ||
+		!card_2_name.has_value() || card_2_name->empty())
+	{
+		QMessageBox::critical(QtUtils::GetRootWidget(this), tr("Error"), tr("Both ports must have a card selected to swap."));
+		return;
+	}
+
+	m_dialog->setStringSettingValue("MemoryCards", card_1_key.c_str(), card_2_name->c_str());
+	m_dialog->setStringSettingValue("MemoryCards", card_2_key.c_str(), card_1_name->c_str());
+	refresh();
 }
 
 static QString getSizeSummary(const AvailableMcdInfo& mcd)

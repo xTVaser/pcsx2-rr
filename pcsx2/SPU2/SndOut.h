@@ -32,7 +32,7 @@ static const int SndOutVolumeShift32 = 16 - SndOutVolumeShift; // shift up, not 
 // is too problematic. :)
 extern int SampleRate;
 
-extern int FindOutputModuleById(const wchar_t* omodid);
+extern int FindOutputModuleById(const char* omodid);
 
 // Implemented in Config.cpp
 extern float VolumeAdjustFL;
@@ -586,7 +586,6 @@ private:
 	static float eTempo;
 	static int ssFreeze;
 
-	static void _InitFail();
 	static bool CheckUnderrunStatus(int& nSamples, int& quietSampleCount);
 
 	static void soundtouchInit();
@@ -614,7 +613,7 @@ private:
 
 public:
 	static void UpdateTempoChangeAsyncMixing();
-	static void Init();
+	static bool Init();
 	static void Cleanup();
 	static void Write(const StereoOut32& Sample);
 	static void ClearContents();
@@ -636,11 +635,11 @@ public:
 
 	// Returns a unique identification string for this driver.
 	// (usually just matches the driver's cpp filename)
-	virtual const wchar_t* GetIdent() const = 0;
+	virtual const char* GetIdent() const = 0;
 
 	// Returns the long name / description for this driver.
 	// (for use in configuration screen)
-	virtual const wchar_t* GetLongName() const = 0;
+	virtual const char* GetLongName() const = 0;
 
 	virtual bool Init() = 0;
 	virtual void Close() = 0;

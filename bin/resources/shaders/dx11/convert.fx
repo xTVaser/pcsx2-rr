@@ -18,11 +18,12 @@ struct VS_OUTPUT
 	float4 c : COLOR;
 };
 
-cbuffer cb0
+cbuffer cb0 : register(b0)
 {
 	float4 BGColor;
 	int EMODA;
 	int EMODC;
+	int cb0_pad[2];
 };
 
 static const float3x3 rgb2yuv =
@@ -90,30 +91,6 @@ PS_OUTPUT ps_filter_transparency(PS_INPUT input)
 	return output;
 }
 
-float4 ps_crt(PS_INPUT input, int i)
-{
-	float4 mask[4] = 
-	{
-		float4(1, 0, 0, 0), 
-		float4(0, 1, 0, 0), 
-		float4(0, 0, 1, 0), 
-		float4(1, 1, 1, 0)
-	};
-	
-	return sample_c(input.t) * saturate(mask[i] + 0.5f);
-}
-
-float4 ps_scanlines(PS_INPUT input, int i)
-{
-	float4 mask[2] =
-	{
-		float4(1, 1, 1, 0),
-		float4(0, 0, 0, 0)
-	};
-
-	return sample_c(input.t) * saturate(mask[i] + 0.5f);
-}
-
 // Need to be careful with precision here, it can break games like Spider-Man 3 and Dogs Life
 uint ps_convert_rgba8_16bits(PS_INPUT input) : SV_Target0
 {
@@ -154,55 +131,6 @@ PS_OUTPUT ps_mod256(PS_INPUT input)
 	float4 fmod2 = fmod(fmod1, 256);
 
 	output.c = fmod2 / 255.0f;
-
-	return output;
-}
-
-PS_OUTPUT ps_filter_scanlines(PS_INPUT input)
-{
-	PS_OUTPUT output;
-	
-	uint4 p = (uint4)input.p;
-
-	output.c = ps_scanlines(input, p.y % 2);
-
-	return output;
-}
-
-PS_OUTPUT ps_filter_diagonal(PS_INPUT input)
-{
-	PS_OUTPUT output;
-
-	uint4 p = (uint4)input.p;
-
-	output.c = ps_crt(input, (p.x + (p.y % 3)) % 3);
-
-	return output;
-}
-
-PS_OUTPUT ps_filter_triangular(PS_INPUT input)
-{
-	PS_OUTPUT output;
-
-	uint4 p = (uint4)input.p;
-
-	// output.c = ps_crt(input, ((p.x + (p.y & 1) * 3) >> 1) % 3); 
-	output.c = ps_crt(input, ((p.x + ((p.y >> 1) & 1) * 3) >> 1) % 3);
-
-	return output;
-}
-
-static const float PI = 3.14159265359f;
-PS_OUTPUT ps_filter_complex(PS_INPUT input) // triangular
-{
-	PS_OUTPUT output;
-
-	float2 texdim, halfpixel; 
-	Texture.GetDimensions(texdim.x, texdim.y); 
-	if (ddy(input.t.y) * texdim.y > 0.5) 
-		output.c = sample_c(input.t); 
-	else
-		output.c = (0.9 - 0.4 * cos(2 * PI * input.t.y * texdim.y)) * sample_c(float2(input.t.x, (floor(input.t.y * texdim.y) + 0.5) / texdim.y));
 
 	return output;
 }
@@ -403,6 +331,26 @@ PS_OUTPUT ps_yuv(PS_INPUT input)
 	}
 
 	return output;
+}
+
+float ps_stencil_image_init_0(PS_INPUT input) : SV_Target
+{
+	float c;
+	if ((127.5f / 255.0f) < sample_c(input.t).a) // < 0x80 pass (== 0x80 should not pass)
+		c = float(-1);
+	else
+		c = float(0x7FFFFFFF);
+	return c;
+}
+
+float ps_stencil_image_init_1(PS_INPUT input) : SV_Target
+{
+	float c;
+	if (sample_c(input.t).a < (127.5f / 255.0f)) // >= 0x80 pass
+		c = float(-1);
+	else
+		c = float(0x7FFFFFFF);
+	return c;
 }
 
 #endif

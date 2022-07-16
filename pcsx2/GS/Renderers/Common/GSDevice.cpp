@@ -22,16 +22,13 @@ const char* shaderName(ShaderConvert value)
 {
 	switch (value)
 	{
+			// clang-format off
 		case ShaderConvert::COPY:                return "ps_copy";
 		case ShaderConvert::RGBA8_TO_16_BITS:    return "ps_convert_rgba8_16bits";
 		case ShaderConvert::DATM_1:              return "ps_datm1";
 		case ShaderConvert::DATM_0:              return "ps_datm0";
 		case ShaderConvert::MOD_256:             return "ps_mod256";
-		case ShaderConvert::SCANLINE:            return "ps_filter_scanlines";
-		case ShaderConvert::DIAGONAL_FILTER:     return "ps_filter_diagonal";
 		case ShaderConvert::TRANSPARENCY_FILTER: return "ps_filter_transparency";
-		case ShaderConvert::TRIANGULAR_FILTER:   return "ps_filter_triangular";
-		case ShaderConvert::COMPLEX_FILTER:      return "ps_filter_complex";
 		case ShaderConvert::FLOAT32_TO_16_BITS:  return "ps_convert_float32_32bits";
 		case ShaderConvert::FLOAT32_TO_32_BITS:  return "ps_convert_float32_32bits";
 		case ShaderConvert::FLOAT32_TO_RGBA8:    return "ps_convert_float32_rgba8";
@@ -43,31 +40,39 @@ const char* shaderName(ShaderConvert value)
 		case ShaderConvert::DEPTH_COPY:          return "ps_depth_copy";
 		case ShaderConvert::RGBA_TO_8I:          return "ps_convert_rgba_8i";
 		case ShaderConvert::YUV:                 return "ps_yuv";
+			// clang-format on
 		default:
 			ASSERT(0);
 			return "ShaderConvertUnknownShader";
 	}
 }
 
-static const int MipmapLevelsForSize(int width, int height)
+const char* shaderName(PresentShader value)
+{
+	switch (value)
+	{
+			// clang-format off
+		case PresentShader::COPY:              return "ps_copy";
+		case PresentShader::SCANLINE:          return "ps_filter_scanlines";
+		case PresentShader::DIAGONAL_FILTER:   return "ps_filter_diagonal";
+		case PresentShader::TRIANGULAR_FILTER: return "ps_filter_triangular";
+		case PresentShader::COMPLEX_FILTER:    return "ps_filter_complex";
+		case PresentShader::LOTTES_FILTER:     return "ps_filter_lottes";
+			// clang-format on
+		default:
+			ASSERT(0);
+			return "DisplayShaderUnknownShader";
+	}
+}
+
+static int MipmapLevelsForSize(int width, int height)
 {
 	return std::min(static_cast<int>(std::log2(std::max(width, height))) + 1, MAXIMUM_TEXTURE_MIPMAP_LEVELS);
 }
 
 std::unique_ptr<GSDevice> g_gs_device;
 
-GSDevice::GSDevice()
-	: m_merge(NULL)
-	, m_weavebob(NULL)
-	, m_blend(NULL)
-	, m_target_tmp(NULL)
-	, m_current(NULL)
-	, m_frame(0)
-	, m_rbswapped(false)
-{
-	memset(&m_vertex, 0, sizeof(m_vertex));
-	memset(&m_index, 0, sizeof(m_index));
-}
+GSDevice::GSDevice() = default;
 
 GSDevice::~GSDevice()
 {
@@ -315,6 +320,21 @@ void GSDevice::StretchRect(GSTexture* sTex, GSTexture* dTex, const GSVector4& dR
 	StretchRect(sTex, GSVector4(0, 0, 1, 1), dTex, dRect, shader, linear);
 }
 
+void GSDevice::ClearCurrent()
+{
+	m_current = nullptr;
+
+	delete m_merge;
+	delete m_weavebob;
+	delete m_blend;
+	delete m_target_tmp;
+
+	m_merge = nullptr;
+	m_weavebob = nullptr;
+	m_blend = nullptr;
+	m_target_tmp = nullptr;
+}
+
 void GSDevice::Merge(GSTexture* sTex[3], GSVector4* sRect, GSVector4* dRect, const GSVector2i& fs, const GSRegPMODE& PMODE, const GSRegEXTBUF& EXTBUF, const GSVector4& c)
 {
 	// KH:COM crashes at startup when booting *through the bios* due to m_merge being NULL.
@@ -358,8 +378,9 @@ void GSDevice::Interlace(const GSVector2i& ds, int field, int mode, float yoffse
 	if (mode == 0 || mode == 2) // weave or blend
 	{
 		// weave first
+		const float offset = yoffset * static_cast<float>(field);
 
-		DoInterlace(m_merge, m_weavebob, field, false, 0);
+		DoInterlace(m_merge, m_weavebob, field, false, GSConfig.DisableInterlaceOffset ? 0.0f : offset);
 
 		if (mode == 2)
 		{
@@ -378,7 +399,8 @@ void GSDevice::Interlace(const GSVector2i& ds, int field, int mode, float yoffse
 	}
 	else if (mode == 1) // bob
 	{
-		DoInterlace(m_merge, m_weavebob, 3, true, yoffset * field);
+		// Field is reversed here as we are countering the bounce.
+		DoInterlace(m_merge, m_weavebob, 3, true, yoffset * (1-field));
 
 		m_current = m_weavebob;
 	}
@@ -475,6 +497,33 @@ bool GSDevice::ResizeTarget(GSTexture** t)
 {
 	GSVector2i s = m_current->GetSize();
 	return ResizeTexture(t, GSTexture::Type::RenderTarget, s.x, s.y);
+}
+
+void GSDevice::SetHWDrawConfigForAlphaPass(GSHWDrawConfig::PSSelector* ps,
+	GSHWDrawConfig::ColorMaskSelector* cms,
+	GSHWDrawConfig::BlendState* bs,
+	GSHWDrawConfig::DepthStencilSelector* dss)
+{
+	// only need to compute the alpha component (allow the shader to optimize better)
+	ps->no_ablend = false;
+	ps->only_alpha = true;
+
+	// definitely don't need to compute software blend (this may get rid of some barriers)
+	ps->blend_a = ps->blend_b = ps->blend_c = ps->blend_d = 0;
+
+	// only write alpha (RGB=0,A=1)
+	cms->wrgba = (1 << 3);
+
+	// no need for hardware blending, since we're not writing RGB
+	bs->enable = false;
+
+	// if depth writes are on, we can optimize to an EQUAL test, otherwise we leave the tests alone
+	// since the alpha channel isn't blended, the last fragment wins and this'll be okay
+	if (dss->zwe)
+	{
+		dss->zwe = false;
+		dss->ztst = ZTST_GEQUAL;
+	}
 }
 
 GSAdapter::operator std::string() const

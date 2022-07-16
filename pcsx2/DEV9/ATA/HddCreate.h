@@ -17,11 +17,14 @@
 
 #include <atomic>
 #include <chrono>
+#include <string>
+
+#include "common/Path.h"
 
 class HddCreate
 {
 public:
-	fs::path filePath;
+	std::string filePath;
 	u64 neededSize;
 
 	std::atomic_bool errored{false};
@@ -46,5 +49,5 @@ protected:
 	void SetCanceled();
 
 private:
-	void WriteImage(fs::path hddPath, u64 reqSizeBytes);
+	void WriteImage(std::string hddPath, u64 reqSizeBytes);
 };

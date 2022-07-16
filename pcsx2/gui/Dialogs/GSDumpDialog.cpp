@@ -21,13 +21,13 @@
 #include "gui/Dialogs/ModalPopups.h"
 
 
-#include "common/EmbeddedImage.h"
+#include "gui/EmbeddedImage.h"
 #include "common/FileSystem.h"
 #include "common/StringUtil.h"
 #include "gui/Resources/NoIcon.h"
 #include "HostDisplay.h"
 
-#include "PathDefs.h"
+#include "gui/PathDefs.h"
 #include "gui/AppConfig.h"
 #include "gui/GSFrame.h"
 #include "Counters.h"
@@ -91,6 +91,22 @@ using namespace pxSizerFlags;
 //  GSDumpDialog  Implementation
 // --------------------------------------------------------------------------------------
 
+static GSRendererType s_renderer_overrides[] = {
+	GSRendererType::SW,
+#ifdef ENABLE_OPENGL
+	GSRendererType::OGL,
+#endif
+#ifdef ENABLE_VULKAN
+	GSRendererType::VK,
+#endif
+#if defined(_WIN32)
+	GSRendererType::DX11,
+	GSRendererType::DX12,
+#elif defined(__APPLE__)
+	GSRendererType::Metal,
+#endif
+};
+
 Dialogs::GSDumpDialog::GSDumpDialog(wxWindow* parent)
 	: wxDialogWithHelpers(parent, _("GS Debugger"), pxDialogFlags().SetMinimize().SetResize())
 	, m_dump_list(new wxListView(this, ID_DUMP_LIST, wxDefaultPosition, wxSize(400, 300), wxLC_NO_HEADER | wxLC_REPORT | wxLC_SINGLE_SEL))
@@ -122,16 +138,8 @@ Dialogs::GSDumpDialog::GSDumpDialog(wxWindow* parent)
 	m_run->SetDefault();
 	wxArrayString rdoverrides;
 	rdoverrides.Add("None");
-	rdoverrides.Add(Pcsx2Config::GSOptions::GetRendererName(GSRendererType::SW));
-	rdoverrides.Add(Pcsx2Config::GSOptions::GetRendererName(GSRendererType::OGL));
-#ifdef ENABLE_VULKAN
-	rdoverrides.Add(Pcsx2Config::GSOptions::GetRendererName(GSRendererType::VK));
-#endif
-#if defined(_WIN32)
-	rdoverrides.Add(Pcsx2Config::GSOptions::GetRendererName(GSRendererType::DX11));
-#elif defined(__APPLE__)
-	rdoverrides.Add(Pcsx2Config::GSOptions::GetRendererName(GSRendererType::Metal));
-#endif
+	for (GSRendererType over : s_renderer_overrides)
+		rdoverrides.Add(Pcsx2Config::GSOptions::GetRendererName(over));
 	m_renderer_overrides->Create(this, wxID_ANY, "Renderer overrides", wxDefaultPosition, wxDefaultSize, rdoverrides, 1);
 
 	dbg_tree->Add(new wxStaticText(this, wxID_ANY, _("GIF Packets")));
@@ -214,6 +222,8 @@ void Dialogs::GSDumpDialog::GetDumpsList()
 			dumps.push_back(filename.substr(0, filename.length() - 3));
 		else if (filename.EndsWith(".gs.xz"))
 			dumps.push_back(filename.substr(0, filename.length() - 6));
+		else if (filename.EndsWith(".gs.zst"))
+			dumps.push_back(filename.substr(0, filename.length() - 7));
 		cont = snaps.GetNext(&filename);
 	}
 	std::sort(dumps.begin(), dumps.end(), [](const wxString& a, const wxString& b) { return a.CmpNoCase(b) < 0; });
@@ -241,6 +251,8 @@ void Dialogs::GSDumpDialog::SelectedDump(wxListEvent& evt)
 	wxString filename = g_Conf->Folders.Snapshots.ToAscii() + ("/" + evt.GetText()) + ".gs";
 	if (!wxFileExists(filename))
 		filename.append(".xz");
+	if (!wxFileExists(filename))
+		filename = filename.RemoveLast(3).append(".zst");
 	if (wxFileExists(filename_preview))
 	{
 		auto img = wxImage(filename_preview);
@@ -774,8 +786,8 @@ void Dialogs::GSDumpDialog::ProcessDumpEvent(const GSDumpFile::GSData& event, u8
 		}
 		case GSType::ReadFIFO2:
 		{
-			std::unique_ptr<char[]> arr(new char[*((int*)event.data)]);
-			GSreadFIFO2((u8*)arr.get(), *((int*)event.data));
+			std::unique_ptr<u8[]> arr(new u8[*((int*)event.data) * 16]);
+			GetMTGS().InitAndReadFIFO(arr.get(), *((int*)event.data));
 			break;
 		}
 		case GSType::Registers:
@@ -821,34 +833,8 @@ void Dialogs::GSDumpDialog::GSThread::ExecuteTaskInThread()
 	}
 
 	GSRendererType renderer = g_Conf->EmuOptions.GS.Renderer;
-	switch (m_renderer)
-	{
-		// Software
-		case 1:
-			renderer = GSRendererType::SW;
-			break;
-		// OpenGL
-		case 2:
-			renderer = GSRendererType::OGL;
-			break;
-		case 3:
-#ifdef ENABLE_VULKAN
-			// Vulkan
-			renderer = GSRendererType::VK;
-			break;
-		case 4:
-#endif
-#ifdef _WIN32
-			// D3D11
-			renderer = GSRendererType::DX11;
-#elif defined(__APPLE__)
-			// Metal
-			renderer = GSRendererType::Metal;
-#endif
-			break;
-		default:
-			break;
-	}
+	if (m_renderer > 0 && static_cast<size_t>(m_renderer) <= std::size(s_renderer_overrides))
+		renderer = s_renderer_overrides[m_renderer - 1];
 
 	GSinit();
 	sApp.OpenGsPanel();
@@ -896,7 +882,7 @@ void Dialogs::GSDumpDialog::GSThread::ExecuteTaskInThread()
 	}
 
 	GSvsync(1, false);
-	GSreset();
+	GSreset(false);
 	GSfreeze(FreezeAction::Load, &fd);
 
 	size_t i = 0;

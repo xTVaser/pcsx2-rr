@@ -22,9 +22,6 @@
 #include <string_view>
 #include <optional>
 
-Q_DECLARE_METATYPE(std::optional<bool>);
-Q_DECLARE_METATYPE(std::function<void()>);
-
 class ByteStream;
 
 class QAction;
@@ -37,11 +34,11 @@ class QVariant;
 class QWidget;
 class QUrl;
 
-// TODO: Get rid of wx interoperability later on.
-#include <wx/string.h>
-
 namespace QtUtils
 {
+	/// Wheel delta is 120 as in winapi.
+	static constexpr float MOUSE_WHEEL_DELTA = 120.0f;
+
 	/// Marks an action as the "default" - i.e. makes the text bold.
 	void MarkActionAsDefault(QAction* action);
 
@@ -56,20 +53,9 @@ namespace QtUtils
 	void ResizeColumnsForTableView(QTableView* view, const std::initializer_list<int>& widths);
 	void ResizeColumnsForTreeView(QTreeView* view, const std::initializer_list<int>& widths);
 
-	/// Returns a string identifier for a Qt key ID.
-	QString GetKeyIdentifier(int key);
-
-	/// Returns the integer Qt key ID for an identifier.
-	std::optional<int> GetKeyIdForIdentifier(const QString& key_identifier);
-
-	/// Stringizes a key event.
-	QString KeyEventToString(int key, Qt::KeyboardModifiers mods);
-
-	/// Returns an integer id for a stringized key event. Modifiers are in the upper bits.
-	std::optional<int> ParseKeyString(const QString& key_str);
-
-	/// Returns a key id for a key event, including any modifiers.
-	int KeyEventToInt(int key, Qt::KeyboardModifiers mods);
+	/// Returns a key id for a key event, including any modifiers that we need (e.g. Keypad).
+	/// NOTE: Defined in QtKeyCodes.cpp, not QtUtils.cpp.
+	u32 KeyEventToCode(const QKeyEvent* ev);
 
 	/// Opens a URL with the default handler.
 	void OpenURL(QWidget* parent, const QUrl& qurl);
@@ -83,7 +69,12 @@ namespace QtUtils
 	/// Converts a std::string_view to a QString safely.
 	QString StringViewToQString(const std::string_view& str);
 
-	// TODO: Get rid of wx interoperability later on.
-	wxString QStringToWxString(const QString& str);
-	QString WxStringToQString(const wxString& str);
+	/// Sets a widget to italics if the setting value is inherited.
+	void SetWidgetFontForInheritedSetting(QWidget* widget, bool inherited);
+
+	/// Changes whether a window is resizable.
+	void SetWindowResizeable(QWidget* widget, bool resizeable);
+
+	/// Adjusts the fixed size for a window if it's not resizeable.
+	void ResizePotentiallyFixedSizeWindow(QWidget* widget, int width, int height);
 } // namespace QtUtils

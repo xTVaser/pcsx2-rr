@@ -16,7 +16,9 @@
 #include "PrecompiledHeader.h"
 
 #include "GameListModel.h"
+#include "QtHost.h"
 #include "common/FileSystem.h"
+#include "common/Path.h"
 #include "common/StringUtil.h"
 #include <QtCore/QDate>
 #include <QtCore/QDateTime>
@@ -201,7 +203,7 @@ QVariant GameListModel::data(const QModelIndex& index, int role) const
 
 				case Column_FileTitle:
 				{
-					const std::string_view file_title(FileSystem::GetFileTitleFromPath(ge->path));
+					const std::string_view file_title(Path::GetFileTitle(ge->path));
 					return QString::fromUtf8(file_title.data(), static_cast<int>(file_title.length()));
 				}
 
@@ -240,7 +242,7 @@ QVariant GameListModel::data(const QModelIndex& index, int role) const
 
 				case Column_FileTitle:
 				{
-					const std::string_view file_title(FileSystem::GetFileTitleFromPath(ge->path));
+					const std::string_view file_title(Path::GetFileTitle(ge->path));
 					return QString::fromUtf8(file_title.data(), static_cast<int>(file_title.length()));
 				}
 
@@ -283,23 +285,12 @@ QVariant GameListModel::data(const QModelIndex& index, int role) const
 
 				case Column_Region:
 				{
-					switch (ge->region)
-					{
-						case GameList::Region::NTSC_J:
-							return m_region_jp_pixmap;
-						case GameList::Region::NTSC_UC:
-							return m_region_us_pixmap;
-						case GameList::Region::PAL:
-							return m_region_eu_pixmap;
-						case GameList::Region::Other:
-						default:
-							return m_region_other_pixmap;
-					}
+					return m_region_pixmaps[static_cast<int>(ge->region)];
 				}
 
 				case Column_Compatibility:
 				{
-					return m_compatibiliy_pixmaps[static_cast<int>(
+					return m_compatibility_pixmaps[static_cast<int>(
 						(static_cast<u32>(ge->compatibility_rating) >= GameList::CompatibilityRatingCount) ?
                             GameList::CompatibilityRating::Unknown :
                             ge->compatibility_rating)];
@@ -415,8 +406,8 @@ bool GameListModel::lessThan(const QModelIndex& left_index, const QModelIndex& r
 
 		case Column_FileTitle:
 		{
-			const std::string_view file_title_left(FileSystem::GetFileTitleFromPath(left->path));
-			const std::string_view file_title_right(FileSystem::GetFileTitleFromPath(right->path));
+			const std::string_view file_title_left(Path::GetFileTitle(left->path));
+			const std::string_view file_title_right(Path::GetFileTitle(right->path));
 			if (file_title_left == file_title_right)
 				return titlesLessThan(left_row, right_row);
 
@@ -466,15 +457,20 @@ void GameListModel::loadCommonImages()
 	m_type_disc_with_settings_pixmap = QIcon(QStringLiteral(":/icons/media-optical-gear-24.png")).pixmap(QSize(24, 24));
 	m_type_exe_pixmap = QIcon(QStringLiteral(":/icons/applications-system-24.png")).pixmap(QSize(24, 24));
 	m_type_playlist_pixmap = QIcon(QStringLiteral(":/icons/address-book-new-22.png")).pixmap(QSize(22, 22));
-	m_region_eu_pixmap = QIcon(QStringLiteral(":/icons/flag-eu.png")).pixmap(QSize(42, 30));
-	m_region_jp_pixmap = QIcon(QStringLiteral(":/icons/flag-jp.png")).pixmap(QSize(42, 30));
-	m_region_us_pixmap = QIcon(QStringLiteral(":/icons/flag-us.png")).pixmap(QSize(42, 30));
-	m_region_other_pixmap = QIcon(QStringLiteral(":/icons/flag-other.png")).pixmap(QSize(42, 30));
+
+	const QString base_path(QtHost::GetResourcesBasePath());
+
+	for (u32 i = 0; i < static_cast<u32>(GameList::Region::Count); i++) 
+	{
+		m_region_pixmaps[i] = QIcon(
+								QStringLiteral("%1/icons/flags/%2.png").arg(base_path).arg(GameList::RegionToString(static_cast<GameList::Region>(i))))
+								.pixmap(QSize(42, 30));
+	}
 
 	for (u32 i = 1; i < GameList::CompatibilityRatingCount; i++)
-		m_compatibiliy_pixmaps[i].load(QStringLiteral(":/icons/star-%1.png").arg(i - 1));
+		m_compatibility_pixmaps[i].load(QStringLiteral("%1/icons/star-%2.png").arg(base_path).arg(i - 1));
 
-	m_placeholder_pixmap.load(QString::fromStdString(Path::CombineStdString(EmuFolders::Resources, "cover-placeholder.png")));
+	m_placeholder_pixmap.load(QStringLiteral("%1/cover-placeholder.png").arg(base_path));
 }
 
 void GameListModel::setColumnDisplayNames()

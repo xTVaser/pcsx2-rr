@@ -41,9 +41,10 @@ void IPU_Fifo_Input::clear()
 
 	// Because the FIFO is drained it will request more data immediately
 	IPU1Status.DataRequested = true;
+
 	if (ipu1ch.chcr.STR && cpuRegs.eCycle[4] == 0x9999)
 	{
-		CPU_INT(DMAC_TO_IPU, 32);
+		CPU_INT(DMAC_TO_IPU, 4);
 	}
 }
 
@@ -61,14 +62,14 @@ void IPU_Fifo::clear()
 	out.clear();
 }
 
-wxString IPU_Fifo_Input::desc() const
+std::string IPU_Fifo_Input::desc() const
 {
-	return wxsFormat(L"IPU Fifo Input: readpos = 0x%x, writepos = 0x%x, data = 0x%x", readpos, writepos, data);
+	return StringUtil::StdStringFromFormat("IPU Fifo Input: readpos = 0x%x, writepos = 0x%x, data = 0x%x", readpos, writepos, data);
 }
 
-wxString IPU_Fifo_Output::desc() const
+std::string IPU_Fifo_Output::desc() const
 {
-	return wxsFormat(L"IPU Fifo Output: readpos = 0x%x, writepos = 0x%x, data = 0x%x", readpos, writepos, data);
+	return StringUtil::StdStringFromFormat("IPU Fifo Output: readpos = 0x%x, writepos = 0x%x, data = 0x%x", readpos, writepos, data);
 }
 
 int IPU_Fifo_Input::write(u32* pMem, int size)
@@ -86,6 +87,9 @@ int IPU_Fifo_Input::write(u32* pMem, int size)
 		pMem += 4;
 	}
 
+	if (g_BP.IFC == 8)
+		IPU1Status.DataRequested = false;
+
 	return firsttrans;
 }
 
@@ -99,7 +103,7 @@ int IPU_Fifo_Input::read(void *value)
 
 		if(ipu1ch.chcr.STR && cpuRegs.eCycle[4] == 0x9999)
 		{
-			CPU_INT( DMAC_TO_IPU, 32 );
+			CPU_INT( DMAC_TO_IPU, 4);
 		}
 
 		if (g_BP.IFC == 0) return 0;
@@ -135,7 +139,7 @@ int IPU_Fifo_Output::write(const u32 *value, uint size)
 		}
 	/*} while(true);*/
 	if(ipu0ch.chcr.STR)
-		IPU_INT_FROM(64);
+		IPU_INT_FROM(ipuRegs.ctrl.OFC * BIAS);
 	return origsize - size;
 }
 
@@ -159,7 +163,7 @@ void IPU_Fifo_Output::read(void *value, uint size)
 	}
 }
 
-void __fastcall ReadFIFO_IPUout(mem128_t* out)
+void ReadFIFO_IPUout(mem128_t* out)
 {
 	if (!pxAssertDev( ipuRegs.ctrl.OFC > 0, "Attempted read from IPUout's FIFO, but the FIFO is empty!" )) return;
 	ipu_fifo.out.read(out, 1);
@@ -168,13 +172,17 @@ void __fastcall ReadFIFO_IPUout(mem128_t* out)
 	// its either some glitchy game or a bug in pcsx2.
 }
 
-void __fastcall WriteFIFO_IPUin(const mem128_t* value)
+void WriteFIFO_IPUin(const mem128_t* value)
 {
-	IPU_LOG( "WriteFIFO/IPUin <- %ls", WX_STR(value->ToString()) );
+	IPU_LOG( "WriteFIFO/IPUin <- 0x%08X.%08X.%08X.%08X", value->_u32[0], value->_u32[1], value->_u32[2], value->_u32[3]);
 
 	//committing every 16 bytes
 	if( ipu_fifo.in.write((u32*)value, 1) == 0 )
 	{
-		IPUProcessInterrupt();
+		if (ipuRegs.ctrl.BUSY && !CommandExecuteQueued)
+		{
+			CommandExecuteQueued = true;
+			CPU_INT(IPU_PROCESS, 1 * BIAS);
+		}
 	}
 }

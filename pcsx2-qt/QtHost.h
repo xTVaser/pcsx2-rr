@@ -20,30 +20,46 @@
 #include "pcsx2/Frontend/InputManager.h"
 #include "pcsx2/VMManager.h"
 #include <QtCore/QMetaType>
+#include <QtCore/QString>
+#include <functional>
+#include <memory>
+#include <optional>
 
 class SettingsInterface;
 
 class EmuThread;
 
-Q_DECLARE_METATYPE(GSRendererType);
+enum class CDVD_SourceType : uint8_t;
+
 Q_DECLARE_METATYPE(std::shared_ptr<VMBootParameters>);
+Q_DECLARE_METATYPE(std::optional<bool>);
+Q_DECLARE_METATYPE(std::function<void()>);
+Q_DECLARE_METATYPE(GSRendererType);
 Q_DECLARE_METATYPE(InputBindingKey);
+Q_DECLARE_METATYPE(CDVD_SourceType);
 
 namespace QtHost
 {
 	bool Initialize();
 	void Shutdown();
 
-	void UpdateFolders();
-	void UpdateLogging();
+	/// Sets batch mode (exit after game shutdown).
+	bool InBatchMode();
+	void SetBatchMode(bool enabled);
+
+	/// Executes a function on the UI thread.
+	void RunOnUIThread(const std::function<void()>& func, bool block = false);
+
+	/// Returns the application name and version, optionally including debug/devel config indicator.
+	QString GetAppNameAndVersion();
+
+	/// Returns the debug/devel config indicator.
+	QString GetAppConfigSuffix();
+
+	/// Returns the base path for resources. This may be : prefixed, if we're using embedded resources.
+	QString GetResourcesBasePath();
 
 	/// Thread-safe settings access.
-	SettingsInterface* GetBaseSettingsInterface();
-	std::string GetBaseStringSettingValue(const char* section, const char* key, const char* default_value = "");
-	bool GetBaseBoolSettingValue(const char* section, const char* key, bool default_value = false);
-	int GetBaseIntSettingValue(const char* section, const char* key, int default_value = 0);
-	float GetBaseFloatSettingValue(const char* section, const char* key, float default_value = 0.0f);
-	std::vector<std::string> GetBaseStringListSetting(const char* section, const char* key);
 	void SetBaseBoolSettingValue(const char* section, const char* key, bool value);
 	void SetBaseIntSettingValue(const char* section, const char* key, int value);
 	void SetBaseFloatSettingValue(const char* section, const char* key, float value);
@@ -53,4 +69,8 @@ namespace QtHost
 	bool RemoveBaseValueFromStringList(const char* section, const char* key, const char* value);
 	void RemoveBaseSettingValue(const char* section, const char* key);
 	void QueueSettingsSave();
+
+	/// VM state, safe to access on UI thread.
+	bool IsVMValid();
+	bool IsVMPaused();
 } // namespace QtHost

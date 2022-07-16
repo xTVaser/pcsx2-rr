@@ -132,7 +132,6 @@ class GSState : public GSAlignedClass<32>
 	{
 		int x, y;
 		int start, end, total;
-		bool overflow;
 		u8* buff;
 		GIFRegBITBLTBUF m_blit;
 
@@ -162,7 +161,7 @@ protected:
 	GSVector4i m_scissor;
 	GSVector4i m_ofxy;
 
-	bool m_scanmask_used;
+	u8 m_scanmask_used;
 	bool tex_flushed;
 
 	struct
@@ -225,17 +224,17 @@ public:
 	GSPrivRegSet* m_regs;
 	GSLocalMemory m_mem;
 	GSDrawingEnvironment m_env;
+	GSDrawingEnvironment m_backup_env;
+	GSDrawingEnvironment m_prev_env;
 	GSDrawingContext* m_context;
 	u32 m_crc;
 	CRC::Game m_game;
 	std::unique_ptr<GSDumpBase> m_dump;
 	int m_options;
-	int m_frameskip;
-	bool m_NTSC_Saturation;
 	bool m_nativeres;
 	bool m_mipmap;
-	bool m_primflush;
-	GIFRegPRIM m_last_prim;
+	u32 m_dirty_gs_regs;
+	int m_backed_up_ctx;
 
 	static int s_n;
 	bool s_dump;
@@ -249,6 +248,30 @@ public:
 
 	static constexpr u32 STATE_VERSION = 8;
 
+	enum REG_DIRTY
+	{
+		DIRTY_REG_ALPHA,
+		DIRTY_REG_CLAMP,
+		DIRTY_REG_COLCLAMP,
+		DIRTY_REG_DIMX,
+		DIRTY_REG_DTHE,
+		DIRTY_REG_FBA,
+		DIRTY_REG_FOGCOL,
+		DIRTY_REG_FRAME,
+		DIRTY_REG_MIPTBP1,
+		DIRTY_REG_MIPTBP2,
+		DIRTY_REG_PABE,
+		DIRTY_REG_PRIM,
+		DIRTY_REG_SCANMSK,
+		DIRTY_REG_SCISSOR,
+		DIRTY_REG_TEST,
+		DIRTY_REG_TEX0,
+		DIRTY_REG_TEX1,
+		DIRTY_REG_TEXA,
+		DIRTY_REG_XYOFFSET,
+		DIRTY_REG_ZBUF
+	};
+
 	enum PRIM_OVERLAP
 	{
 		PRIM_OVERLAP_UNKNOW,
@@ -259,6 +282,38 @@ public:
 	PRIM_OVERLAP m_prim_overlap;
 	std::vector<size_t> m_drawlist;
 
+	// The horizontal offset values (under z) for PAL and NTSC have been tweaked
+	// they should be apparently 632 and 652 respectively, but that causes a thick black line on the left
+	// these values leave a small black line on the right in a bunch of games, but it's not so bad.
+	// The only conclusion I can come to is there is horizontal overscan expected so there would normally
+	// be black borders either side anyway, or both sides slightly covered.
+	const GSVector4i VideoModeOffsets[6] = {
+		GSVector4i(640, 224, 642, 25),
+		GSVector4i(640, 256, 676, 36),
+		GSVector4i(640, 480, 276, 34),
+		GSVector4i(720, 480, 232, 35),
+		GSVector4i(1280, 720, 302, 24),
+		GSVector4i(1920, 540, 238, 40)
+	};
+
+	const GSVector4i VideoModeOffsetsOverscan[6] = {
+		GSVector4i(711, 243, 498, 12),
+		GSVector4i(702, 288, 532, 18),
+		GSVector4i(640, 480, 276, 34),
+		GSVector4i(720, 480, 232, 35),
+		GSVector4i(1280, 720, 302, 24),
+		GSVector4i(1920, 540, 238, 40)
+	};
+
+	const GSVector4i VideoModeDividers[6] = {
+		GSVector4i(3, 0, 2559, 239),
+		GSVector4i(3, 0, 2559, 287),
+		GSVector4i(1, 0, 1279, 479),
+		GSVector4i(1, 0, 1439, 479),
+		GSVector4i(0, 0, 1279, 719),
+		GSVector4i(0, 0, 1919, 1079)
+	};
+
 public:
 	GSState();
 	virtual ~GSState();
@@ -266,28 +321,36 @@ public:
 	void ResetHandlers();
 
 	int GetFramebufferHeight();
-	void SaturateOutputSize(GSVector4i& r);
+	int GetDisplayHMagnification();
 	GSVector4i GetDisplayRect(int i = -1);
+	GSVector4i GetFrameMagnifiedRect(int i = -1);
+	GSVector2i GetResolutionOffset(int i = -1);
+	GSVector2i GetResolution();
 	GSVector4i GetFrameRect(int i = -1);
 	GSVideoMode GetVideoMode();
 
 	bool IsEnabled(int i);
 	bool isinterlaced();
+	bool isReallyInterlaced();
+	bool IsAnalogue();
 
 	float GetTvRefreshRate();
 
-	virtual void Reset();
+	virtual void Reset(bool hardware_reset);
 	virtual void UpdateSettings(const Pcsx2Config::GSOptions& old_config);
 
+	void CopyEnv(GSDrawingEnvironment* dest, GSDrawingEnvironment* src, int ctx);
 	void Flush();
 	void FlushPrim();
+	bool TestDrawChanged();
 	void FlushWrite();
 	virtual void Draw() = 0;
 	virtual void PurgePool() = 0;
 	virtual void InvalidateVideoMem(const GIFRegBITBLTBUF& BITBLTBUF, const GSVector4i& r) {}
 	virtual void InvalidateLocalMem(const GIFRegBITBLTBUF& BITBLTBUF, const GSVector4i& r, bool clut = false) {}
 
-	void Move();
+	virtual void Move();
+
 	void Write(const u8* mem, int len);
 	void Read(u8* mem, int len);
 	void InitReadFIFO(u8* mem, int len);
@@ -295,6 +358,7 @@ public:
 	void SoftReset(u32 mask);
 	void WriteCSR(u32 csr) { m_regs->CSR.U32[1] = csr; }
 	void ReadFIFO(u8* mem, int size);
+	void ReadLocalMemoryUnsync(u8* mem, int qwc, GIFRegBITBLTBUF BITBLTBUF, GIFRegTRXPOS TRXPOS, GIFRegTRXREG TRXREG);
 	template<int index> void Transfer(const u8* mem, u32 size);
 	int Freeze(freezeData* fd, bool sizeonly);
 	int Defrost(const freezeData* fd);
@@ -306,7 +370,6 @@ public:
 	u8* GetRegsMem() const { return reinterpret_cast<u8*>(m_regs); }
 	void SetRegsMem(u8* basemem) { m_regs = reinterpret_cast<GSPrivRegSet*>(basemem); }
 
-	void SetFrameSkip(int skip);
 	void DumpVertices(const std::string& filename);
 
 	PRIM_OVERLAP PrimitiveOverlap();

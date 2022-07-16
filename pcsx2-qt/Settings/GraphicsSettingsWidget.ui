@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>747</width>
+    <width>657</width>
     <height>890</height>
    </rect>
   </property>
@@ -94,6 +94,11 @@
          </item>
          <item>
           <property name="text">
+           <string>Auto Standard (4:3/3:2 Progressive)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>Standard (4:3)</string>
           </property>
          </item>
@@ -116,6 +121,11 @@
          <item>
           <property name="text">
            <string>Off (Default)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Auto Standard (4:3/3:2 Progressive)</string>
           </property>
          </item>
          <item>
@@ -261,14 +271,14 @@
        </item>
        <item row="7" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_5">
-         <item row="0" column="2">
-          <widget class="QCheckBox" name="integerScaling">
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="vsync">
            <property name="text">
-            <string>Integer Upscaling</string>
+            <string>Sync To Host Refresh (VSync)</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
+         <item row="0" column="0">
           <widget class="QCheckBox" name="bilinearFiltering">
            <property name="text">
             <string>Bilinear Filtering</string>
@@ -276,16 +286,47 @@
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QCheckBox" name="vsync">
-           <property name="text">
-            <string>Sync To Host Refresh (VSync)</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
           <widget class="QCheckBox" name="internalResolutionScreenshots">
            <property name="text">
             <string>Internal Resolution Screenshots</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QCheckBox" name="integerScaling">
+           <property name="text">
+            <string>Integer Upscaling</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QCheckBox" name="PCRTCOverscan">
+           <property name="text">
+            <string>Show Overscan</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QCheckBox" name="PCRTCOffsets">
+           <property name="text">
+            <string>Screen Offsets</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QCheckBox" name="DisableInterlaceOffset">
+           <property name="text">
+            <string>Disable Interlace Offset</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QCheckBox" name="PCRTCAntiBlur">
+           <property name="text">
+            <string>Anti-Blur</string>
+           </property>
+           <property name="shortcut">
+            <string>Ctrl+S</string>
            </property>
           </widget>
          </item>
@@ -422,7 +463,12 @@
         <widget class="QComboBox" name="trilinearFiltering">
          <item>
           <property name="text">
-           <string>None (Default)</string>
+           <string>Automatic (Default)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Off (None)</string>
           </property>
          </item>
          <item>
@@ -525,7 +571,7 @@
         <widget class="QComboBox" name="blending">
          <item>
           <property name="text">
-           <string>Minimum (Fastest)</string>
+           <string>Minimum</string>
           </property>
          </item>
          <item>
@@ -545,12 +591,12 @@
          </item>
          <item>
           <property name="text">
-           <string>Full (Very Slow)</string>
+           <string>Full (Slow)</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>Ultra (Ultra Slow)</string>
+           <string>Maximum (Very Slow)</string>
           </property>
          </item>
         </widget>
@@ -646,14 +692,14 @@
          </item>
         </widget>
        </item>
-       <item row="1" column="0">
+       <item row="2" column="0">
         <widget class="QLabel" name="label_12">
          <property name="text">
           <string>Skipdraw Range:</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
+       <item row="2" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
           <widget class="QSpinBox" name="skipDrawStart">
@@ -671,7 +717,7 @@
          </item>
         </layout>
        </item>
-       <item row="2" column="0" colspan="2">
+       <item row="3" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout">
          <item row="0" column="0">
           <widget class="QCheckBox" name="hwAutoFlush">
@@ -730,6 +776,72 @@
           </widget>
          </item>
         </layout>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_36">
+         <property name="text">
+          <string>CPU Sprite Render Size:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="cpuSpriteRenderBW">
+         <item>
+          <property name="text">
+           <string>0 (Disabled)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>1 (64 Max Width)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>2 (128 Max Width)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>3 (192 Max Width)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>4 (256 Max Width)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>5 (320 Max Width)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>6 (384 Max Width)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>7 (448 Max Width)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>8 (512 Max Width)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>9 (576 Max Width)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>10 (640 Max Width)</string>
+          </property>
+         </item>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -861,9 +973,120 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
+       <string>Texture Replacement</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QGroupBox" name="groupBox_6">
+         <property name="title">
+          <string>Search Directory</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_4">
+          <item row="1" column="0">
+           <widget class="QLineEdit" name="texturesDirectory"/>
+          </item>
+          <item row="1" column="1">
+           <widget class="QPushButton" name="texturesBrowse">
+            <property name="text">
+             <string>Browse...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QPushButton" name="texturesOpen">
+            <property name="text">
+             <string>Open...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QPushButton" name="texturesReset">
+            <property name="text">
+             <string>Reset</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="4">
+           <widget class="QLabel" name="label_38">
+            <property name="text">
+             <string>PCSX2 will dump and load texture replacements from this directory.</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox">
+         <property name="title">
+          <string>Options</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_8">
+          <item row="0" column="0">
+           <widget class="QCheckBox" name="dumpReplaceableTextures">
+            <property name="text">
+             <string>Dump Textures</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QCheckBox" name="dumpReplaceableMipmaps">
+            <property name="text">
+             <string>Dump Mipmaps</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QCheckBox" name="dumpTexturesWithFMVActive">
+            <property name="text">
+             <string>Dump FMV Textures</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QCheckBox" name="loadTextureReplacementsAsync">
+            <property name="text">
+             <string>Async Texture Loading</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QCheckBox" name="loadTextureReplacements">
+            <property name="text">
+             <string>Load Textures</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QCheckBox" name="precacheTextureReplacements">
+            <property name="text">
+             <string>Precache Textures</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
      <widget class="QGroupBox" name="osdTab">
       <attribute name="title">
-       <string>On-Screen Display</string>
+       <string>OSD</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
@@ -1043,6 +1266,47 @@
             </property>
            </widget>
           </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_35">
+            <property name="text">
+             <string>TV Shader</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QComboBox" name="tvShader">
+            <item>
+             <property name="text">
+              <string>None</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Scanline Filter</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Diagonal Filter</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Triangular Filter</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Wave Filter</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Lottes CRT</string>
+             </property>
+            </item>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
@@ -1124,7 +1388,7 @@
             </item>
            </widget>
           </item>
-          <item row="2" column="0" colspan="2">
+          <item row="3" column="0" colspan="2">
            <layout class="QGridLayout" name="gridLayout_7">
             <item row="0" column="0">
              <widget class="QCheckBox" name="useBlitSwapChain">
@@ -1154,57 +1418,46 @@
               </property>
              </widget>
             </item>
+            <item row="2" column="0">
+             <widget class="QCheckBox" name="skipPresentingDuplicateFrames">
+              <property name="text">
+               <string>Skip Presenting Duplicate Frames</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QCheckBox" name="disableHardwareReadbacks">
+              <property name="text">
+               <string>Disable Hardware Readbacks</string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupBox">
-         <property name="title">
-          <string>Texture Replacement</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_8">
-          <item row="0" column="0">
-           <widget class="QCheckBox" name="dumpReplaceableTextures">
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_34">
             <property name="text">
-             <string>Dump Textures</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QCheckBox" name="dumpReplaceableMipmaps">
-            <property name="text">
-             <string>Dump Mipmaps</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QCheckBox" name="loadTextureReplacementsAsync">
-            <property name="text">
-             <string>Async Texture Loading</string>
+             <string>GS Dump Compression:</string>
             </property>
            </widget>
           </item>
           <item row="2" column="1">
-           <widget class="QCheckBox" name="precacheTextureReplacements">
-            <property name="text">
-             <string>Precache Textures</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QCheckBox" name="loadTextureReplacements">
-            <property name="text">
-             <string>Load Textures</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QCheckBox" name="dumpTexturesWithFMVActive">
-            <property name="text">
-             <string>Dump FMV Textures</string>
-            </property>
+           <widget class="QComboBox" name="gsDumpCompression">
+            <item>
+             <property name="text">
+              <string>Uncompressed</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>LZMA (xz)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Zstandard (zst)</string>
+             </property>
+            </item>
            </widget>
           </item>
          </layout>

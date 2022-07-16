@@ -49,6 +49,9 @@ MetalHostDisplay::MetalHostDisplay()
 
 MetalHostDisplay::~MetalHostDisplay()
 {
+	MetalHostDisplay::DestroyRenderSurface();
+	m_queue = nullptr;
+	m_dev.Reset();
 }
 
 HostDisplay::AdapterAndModeList GetMetalAdapterAndModeList()
@@ -83,6 +86,9 @@ bool MetalHostDisplay::HasRenderSurface()  const { return static_cast<bool>(m_la
 void MetalHostDisplay::AttachSurfaceOnMainThread()
 {
 	ASSERT([NSThread isMainThread]);
+	m_layer = MRCRetain([CAMetalLayer layer]);
+	[m_layer setDrawableSize:CGSizeMake(m_window_info.surface_width, m_window_info.surface_height)];
+	[m_layer setDevice:m_dev.dev];
 	m_view = MRCRetain((__bridge NSView*)m_window_info.window_handle);
 	[m_view setWantsLayer:YES];
 	[m_view setLayer:m_layer];
@@ -94,6 +100,7 @@ void MetalHostDisplay::DetachSurfaceOnMainThread()
 	[m_view setLayer:nullptr];
 	[m_view setWantsLayer:NO];
 	m_view = nullptr;
+	m_layer = nullptr;
 }
 
 bool MetalHostDisplay::CreateRenderDevice(const WindowInfo& wi, std::string_view adapter_name, VsyncMode vsync, bool threaded_presentation, bool debug_device)
@@ -113,6 +120,8 @@ bool MetalHostDisplay::CreateRenderDevice(const WindowInfo& wi, std::string_view
 		if (!adapter_name.empty())
 			Console.Warning("Metal: Couldn't find adapter %s, using default", null_terminated_adapter_name.c_str());
 		m_dev = GSMTLDevice(MRCTransfer(MTLCreateSystemDefaultDevice()));
+		if (!m_dev.dev)
+			Host::ReportErrorAsync("No Metal Devices Available", "No Metal-supporting GPUs were found.  PCSX2 requires a Metal GPU (available on all macs from 2012 onwards).");
 	}
 	m_queue = MRCTransfer([m_dev.dev newCommandQueue]);
 
@@ -135,9 +144,6 @@ bool MetalHostDisplay::CreateRenderDevice(const WindowInfo& wi, std::string_view
 	{
 		OnMainThread([this]
 		{
-			m_layer = MRCRetain([CAMetalLayer layer]);
-			[m_layer setDrawableSize:CGSizeMake(m_window_info.surface_width, m_window_info.surface_height)];
-			[m_layer setDevice:m_dev.dev];
 			AttachSurfaceOnMainThread();
 		});
 		SetVSync(vsync);
@@ -154,13 +160,6 @@ bool MetalHostDisplay::InitializeRenderDevice(std::string_view shader_cache_dire
 
 bool MetalHostDisplay::MakeRenderContextCurrent() { return true; }
 bool MetalHostDisplay::DoneRenderContextCurrent() { return true; }
-
-void MetalHostDisplay::DestroyRenderDevice()
-{
-	DestroyRenderSurface();
-	m_queue = nullptr;
-	m_dev.Reset();
-}
 
 void MetalHostDisplay::DestroyRenderSurface()
 {

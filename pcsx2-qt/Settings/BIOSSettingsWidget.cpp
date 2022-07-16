@@ -19,9 +19,11 @@
 #include <QtWidgets/QFileDialog>
 #include <algorithm>
 
+#include "pcsx2/HostSettings.h"
 #include "pcsx2/ps2/BiosTools.h"
 
 #include "BIOSSettingsWidget.h"
+#include "QtHost.h"
 #include "QtUtils.h"
 #include "SettingWidgetBinder.h"
 #include "SettingsDialog.h"
@@ -34,28 +36,24 @@ BIOSSettingsWidget::BIOSSettingsWidget(SettingsDialog* dialog, QWidget* parent)
 	m_ui.setupUi(this);
 
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.fastBoot, "EmuCore", "EnableFastBoot", true);
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.patchRegion, "EmuCore", "PatchBios", false);
+	SettingWidgetBinder::BindWidgetToEnumSetting(sif, m_ui.regionComboBox, "EmuCore", "PatchRegion", BiosZoneStrings, BiosZoneBytes, BiosZoneBytes[0]);
+	SettingWidgetBinder::BindWidgetToFolderSetting(sif, m_ui.searchDirectory, m_ui.browseSearchDirectory, m_ui.openSearchDirectory,
+		m_ui.resetSearchDirectory, "Folders", "Bios", "bios");
 
+	dialog->registerWidgetHelp(m_ui.patchRegion, tr("Patch Region"), tr("Unchecked"),
+		tr("Patches the BIOS region byte in ROM. Not recommended unless you really know what you're doing."));
 	dialog->registerWidgetHelp(m_ui.fastBoot, tr("Fast Boot"), tr("Unchecked"),
 		tr("Patches the BIOS to skip the console's boot animation."));
 
-	updateSearchDirectory();
 	refreshList();
 
-	connect(m_ui.searchDirectory, &QLineEdit::textChanged, [this](const QString& text) {
-		QtHost::SetBaseStringSettingValue("Folders", "Bios", text.toUtf8().constData());
-		QtHost::UpdateFolders();
-		refreshList();
-	});
-	connect(m_ui.resetSearchDirectory, &QPushButton::clicked, [this]() {
-		QtHost::RemoveBaseSettingValue("Folders", "Bios");
-		QtHost::UpdateFolders();
-		updateSearchDirectory();
-		refreshList();
-	});
-	connect(m_ui.browseSearchDirectory, &QPushButton::clicked, this, &BIOSSettingsWidget::browseSearchDirectory);
-	connect(m_ui.openSearchDirectory, &QPushButton::clicked, this, &BIOSSettingsWidget::openSearchDirectory);
+	connect(m_ui.searchDirectory, &QLineEdit::textChanged, this, &BIOSSettingsWidget::refreshList);
 	connect(m_ui.refresh, &QPushButton::clicked, this, &BIOSSettingsWidget::refreshList);
 	connect(m_ui.fileList, &QTreeWidget::currentItemChanged, this, &BIOSSettingsWidget::listItemChanged);
+
+	connect(m_ui.patchRegion, &QCheckBox::clicked, this, [&] { m_ui.regionComboBox->setEnabled(m_ui.patchRegion->isChecked()); });
+	m_ui.regionComboBox->setEnabled(m_ui.patchRegion->isChecked());
 }
 
 BIOSSettingsWidget::~BIOSSettingsWidget()
@@ -80,30 +78,10 @@ void BIOSSettingsWidget::refreshList()
 	m_refresh_thread->start();
 }
 
-void BIOSSettingsWidget::browseSearchDirectory()
-{
-	QString directory = QDir::toNativeSeparators(QFileDialog::getExistingDirectory(
-		QtUtils::GetRootWidget(this), tr("Select Directory"), m_ui.searchDirectory->text()));
-	if (directory.isEmpty())
-		return;
-
-	m_ui.searchDirectory->setText(directory);
-}
-
-void BIOSSettingsWidget::openSearchDirectory()
-{
-	QtUtils::OpenURL(this, QUrl::fromLocalFile(m_ui.searchDirectory->text()));
-}
-
-void BIOSSettingsWidget::updateSearchDirectory()
-{
-	// this will generate a full path
-	m_ui.searchDirectory->setText(QtUtils::WxStringToQString(EmuFolders::Bios.ToString()));
-}
-
 void BIOSSettingsWidget::listRefreshed(const QVector<BIOSInfo>& items)
 {
-	const std::string selected_bios(QtHost::GetBaseStringSettingValue("Filenames", "BIOS"));
+	const std::string selected_bios(Host::GetBaseStringSettingValue("Filenames", "BIOS"));
+	const QString res_path(QtHost::GetResourcesBasePath());
 
 	QSignalBlocker sb(m_ui.fileList);
 	for (const BIOSInfo& bi : items)
@@ -115,30 +93,30 @@ void BIOSSettingsWidget::listRefreshed(const QVector<BIOSInfo>& items)
 		switch (bi.region)
 		{
 			case 2: // Japan
-				item->setIcon(0, QIcon(QStringLiteral(":/icons/flag-jp.png")));
+				item->setIcon(0, QIcon(QStringLiteral("%1/icons/flags/NTSC-J.png").arg(res_path)));
 				break;
 
 			case 3: // USA
-				item->setIcon(0, QIcon(QStringLiteral(":/icons/flag-us.png")));
+				item->setIcon(0, QIcon(QStringLiteral("%1/icons/flags/NTSC-U.png").arg(res_path)));
 				break;
 
 			case 4: // Europe
-				item->setIcon(0, QIcon(QStringLiteral(":/icons/flag-eu.png")));
+				item->setIcon(0, QIcon(QStringLiteral("%1/icons/flags/PAL-E.png").arg(res_path)));
 				break;
 
 			case 7: // China
-				item->setIcon(0, QIcon(QStringLiteral(":/icons/flag-cn.png")));
+				item->setIcon(0, QIcon(QStringLiteral("%1/icons//flags/NTSC-C.png").arg(res_path)));
 				break;
 
 			case 5: // HK
-				item->setIcon(0, QIcon(QStringLiteral(":/icons/flag-hk.png")));
+				item->setIcon(0, QIcon(QStringLiteral("%1/icons/flags/NTSC-HK.png").arg(res_path)));
 				break;
 
 			case 6: // Free
 			case 0: // T10K
 			case 1: // Test
 			default:
-				item->setIcon(0, QIcon(QStringLiteral(":/icons/flag-jp.png")));
+				item->setIcon(0, QIcon(QStringLiteral("%1/icons/flags/NTSC-J.png").arg(res_path)));
 				break;
 		}
 

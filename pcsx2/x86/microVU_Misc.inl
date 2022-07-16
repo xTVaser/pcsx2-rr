@@ -194,7 +194,7 @@ public:
 	}
 };
 
-_mVUt void __fc mVUprintRegs()
+_mVUt void mVUprintRegs()
 {
 	microVU& mVU = mVUx;
 	for (int i = 0; i < mVU.regAlloc->getXmmCount(); i++)
@@ -212,19 +212,19 @@ _mVUt void __fc mVUprintRegs()
 }
 
 // Gets called by mVUaddrFix at execution-time
-static void __fc mVUwarningRegAccess(u32 prog, u32 pc)
+static void mVUwarningRegAccess(u32 prog, u32 pc)
 {
 	Console.Error("microVU0 Warning: Accessing VU1 Regs! [%04x] [%x]", pc, prog);
 }
 
-static void __fc mVUTBit()
+static void mVUTBit()
 {
 	u32 old = vu1Thread.mtvuInterrupts.fetch_or(VU_Thread::InterruptFlagVUTBit, std::memory_order_release);
 	if (old & VU_Thread::InterruptFlagVUTBit)
 		DevCon.Warning("Old TBit not registered");
 }
 
-static void __fc mVUEBit()
+static void mVUEBit()
 {
 	vu1Thread.mtvuInterrupts.fetch_or(VU_Thread::InterruptFlagVUEBit, std::memory_order_release);
 }
@@ -235,7 +235,7 @@ static inline u32 branchAddr(const mV)
 	return ((((iPC + 2) + (_Imm11_ * 2)) & mVU.progMemMask) * 4);
 }
 
-static void __fc mVUwaitMTVU()
+static void mVUwaitMTVU()
 {
 	if (IsDevBuild)
 		DevCon.WriteLn("microVU0: Waiting on VU1 thread to access VU1 regs!");
@@ -458,7 +458,7 @@ void ADD_SS_TriAceHack(microVU& mVU, const xmm& to, const xmm& from)
 		mVUclamp3(mVU, to, t1, (isPS) ? 0xf : 0x8); \
 		mVUclamp3(mVU, from, t1, (isPS) ? 0xf : 0x8); \
 		opX(to, from); \
-		mVUclamp4(to, t1, (isPS) ? 0xf : 0x8); \
+		mVUclamp4(mVU, to, t1, (isPS) ? 0xf : 0x8); \
 	} while (0)
 
 void SSE_MAXPS(mV, const xmm& to, const xmm& from, const xmm& t1 = xEmptyReg, const xmm& t2 = xEmptyReg)

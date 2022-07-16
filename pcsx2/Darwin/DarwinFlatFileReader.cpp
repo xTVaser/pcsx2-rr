@@ -16,6 +16,8 @@
 #include "PrecompiledHeader.h"
 #include "AsyncFileReader.h"
 #include "common/FileSystem.h"
+#include <unistd.h>
+#include <fcntl.h>
 
 // The aio module has been reported to cause issues with FreeBSD 10.3, so let's
 // disable it for 10.3 and earlier and hope FreeBSD 11 and onwards is fine.
@@ -106,7 +108,7 @@ int FlatFileReader::FinishRead(void)
 
 	while (aio_suspend(aiocb_list, 1, nullptr) == -1 && errno == EINTR)
 		;
-	return aio_return(&m_aiocb) == -1 ? -1 : 1;
+	return aio_return(&m_aiocb);
 }
 
 void FlatFileReader::CancelRead(void)
@@ -129,5 +131,5 @@ void FlatFileReader::Close(void)
 
 uint FlatFileReader::GetBlockCount(void) const
 {
-	return (int)(Path::GetFileSize(m_filename) / m_blocksize);
+	return (int)(FileSystem::GetPathFileSize(m_filename.c_str()) / m_blocksize);
 }

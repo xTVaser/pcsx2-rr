@@ -11,6 +11,9 @@
    </rect>
   </property>
   <layout class="QFormLayout" name="formLayout">
+   <property name="fieldGrowthPolicy">
+    <enum>QFormLayout::ExpandingFieldsGrow</enum>
+   </property>
    <property name="leftMargin">
     <number>0</number>
    </property>
@@ -79,143 +82,6 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="0">
-    <widget class="QLabel" name="label_3">
-     <property name="text">
-      <string>Region:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="1">
-    <widget class="QComboBox" name="region">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="editable">
-      <bool>true</bool>
-     </property>
-     <item>
-      <property name="text">
-       <string>NTSC-U/C (US/Canada)</string>
-      </property>
-      <property name="icon">
-       <iconset resource="../resources/resources.qrc">
-        <normaloff>:/icons/flag-us.png</normaloff>:/icons/flag-us.png</iconset>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>NTSC-J (Japan)</string>
-      </property>
-      <property name="icon">
-       <iconset resource="../resources/resources.qrc">
-        <normaloff>:/icons/flag-jp.png</normaloff>:/icons/flag-jp.png</iconset>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>PAL (Europe/Australia)</string>
-      </property>
-      <property name="icon">
-       <iconset resource="../resources/resources.qrc">
-        <normaloff>:/icons/flag-eu.png</normaloff>:/icons/flag-eu.png</iconset>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Other</string>
-      </property>
-      <property name="icon">
-       <iconset resource="../resources/resources.qrc">
-        <normaloff>:/icons/flag-other.png</normaloff>:/icons/flag-other.png</iconset>
-      </property>
-     </item>
-    </widget>
-   </item>
-   <item row="6" column="0">
-    <widget class="QLabel" name="label_7">
-     <property name="text">
-      <string>Compatibility:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="1">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="6" column="1">
-    <widget class="QComboBox" name="compatibility">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="editable">
-      <bool>true</bool>
-     </property>
-     <item>
-      <property name="text">
-       <string>Unknown</string>
-      </property>
-      <property name="icon">
-       <iconset resource="../resources/resources.qrc">
-        <normaloff>:/icons/star-0.png</normaloff>:/icons/star-0.png</iconset>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Not Bootable</string>
-      </property>
-      <property name="icon">
-       <iconset resource="../resources/resources.qrc">
-        <normaloff>:/icons/star-1.png</normaloff>:/icons/star-1.png</iconset>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Reaches Intro</string>
-      </property>
-      <property name="icon">
-       <iconset resource="../resources/resources.qrc">
-        <normaloff>:/icons/star-2.png</normaloff>:/icons/star-2.png</iconset>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Reaches Menu</string>
-      </property>
-      <property name="icon">
-       <iconset resource="../resources/resources.qrc">
-        <normaloff>:/icons/star-3.png</normaloff>:/icons/star-3.png</iconset>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>In-Game</string>
-      </property>
-      <property name="icon">
-       <iconset resource="../resources/resources.qrc">
-        <normaloff>:/icons/star-4.png</normaloff>:/icons/star-4.png</iconset>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Perfect</string>
-      </property>
-      <property name="icon">
-       <iconset resource="../resources/resources.qrc">
-        <normaloff>:/icons/star-5.png</normaloff>:/icons/star-5.png</iconset>
-      </property>
-     </item>
-    </widget>
-   </item>
    <item row="4" column="0">
     <widget class="QLabel" name="label_5">
      <property name="text">
@@ -227,6 +93,12 @@
     <widget class="QComboBox" name="type">
      <property name="enabled">
       <bool>false</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
      <property name="editable">
       <bool>true</bool>
@@ -267,6 +139,262 @@
         <normaloff>:/icons/address-book-new-22.png</normaloff>:/icons/address-book-new-22.png</iconset>
       </property>
      </item>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Region:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="QComboBox" name="region">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="editable">
+      <bool>true</bool>
+     </property>
+     <item>
+      <property name="text">
+       <string>NTSC-B (Brazil)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>NTSC-C (China)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>NTSC-HK (Hong Kong)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>NTSC-J (Japan)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>NTSC-K (Korea)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>NTSC-T (Taiwan)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>NTSC-U (US)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Other</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-A (Australia)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-AF (South Africa)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-AU (Austria)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-BE (Belgium)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-E (Europe/Australia)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-F (France)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-FI (Finland)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-G (Germany)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-GR (Greece)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-I (Italy)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-IN (India)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-M (Europe/Australia)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-NL (Netherlands)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-NO (Norway)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-P (Portugal)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-R (Russia)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-S (Spain)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-SC (Scandinavia)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-SW (Sweden)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-SWI (Switzerland)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>PAL-UK (United Kingdom)</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>Compatibility:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QComboBox" name="compatibility">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="editable">
+      <bool>true</bool>
+     </property>
+     <item>
+      <property name="text">
+       <string>Unknown</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Not Bootable</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Reaches Intro</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Reaches Menu</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>In-Game</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Perfect</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="8" column="1">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="7" column="1">
+    <widget class="QComboBox" name="inputProfile">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <item>
+      <property name="text">
+       <string>Shared</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>Input Profile:</string>
+     </property>
     </widget>
    </item>
   </layout>

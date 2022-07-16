@@ -47,15 +47,17 @@ private:
 	GLuint m_texture;
 	u32 m_width;
 	u32 m_height;
-	u32 m_layers;
-	u32 m_levels;
 };
 
 OpenGLHostDisplay::OpenGLHostDisplay() = default;
 
 OpenGLHostDisplay::~OpenGLHostDisplay()
 {
-	pxAssertMsg(!m_gl_context, "Context should have been destroyed by now");
+	if (m_gl_context)
+	{
+		m_gl_context->DoneCurrent();
+		m_gl_context.reset();
+	}
 }
 
 HostDisplay::RenderAPI OpenGLHostDisplay::GetRenderAPI() const
@@ -87,10 +89,16 @@ std::unique_ptr<HostDisplayTexture> OpenGLHostDisplay::CreateTexture(u32 width, 
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_2D, id);
 
-	if ((GLAD_GL_ARB_texture_storage || GLAD_GL_ES_VERSION_3_0) && !data)
+	if (GLAD_GL_ARB_texture_storage || GLAD_GL_ES_VERSION_3_0)
+	{
 		glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	}
 	else
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	}
 
 	GLenum error = glGetError();
 	if (error != GL_NO_ERROR)
@@ -235,15 +243,6 @@ bool OpenGLHostDisplay::DoneRenderContextCurrent()
 	return m_gl_context->DoneCurrent();
 }
 
-void OpenGLHostDisplay::DestroyRenderDevice()
-{
-	if (!m_gl_context)
-		return;
-
-	m_gl_context->DoneCurrent();
-	m_gl_context.reset();
-}
-
 bool OpenGLHostDisplay::ChangeRenderWindow(const WindowInfo& new_wi)
 {
 	pxAssert(m_gl_context);
@@ -341,7 +340,6 @@ void OpenGLHostDisplay::DestroyImGuiContext()
 
 bool OpenGLHostDisplay::UpdateImGuiFontTexture()
 {
-	ImGui_ImplOpenGL3_DestroyFontsTexture();
 	return ImGui_ImplOpenGL3_CreateFontsTexture();
 }
 
@@ -478,18 +476,21 @@ void OpenGLHostDisplay::KickTimestampQuery()
 	m_timestamp_query_started = true;
 }
 
-void OpenGLHostDisplay::SetGPUTimingEnabled(bool enabled)
+bool OpenGLHostDisplay::SetGPUTimingEnabled(bool enabled)
 {
-	enabled &= (!m_gl_context->IsGLES() || GLAD_GL_EXT_disjoint_timer_query);
-
 	if (m_gpu_timing_enabled == enabled)
-		return;
+		return true;
+
+	if (enabled && m_gl_context->IsGLES() && !GLAD_GL_EXT_disjoint_timer_query)
+		return false;
 
 	m_gpu_timing_enabled = enabled;
 	if (m_gpu_timing_enabled)
 		CreateTimestampQueries();
 	else
 		DestroyTimestampQueries();
+
+	return true;
 }
 
 float OpenGLHostDisplay::GetAndResetAccumulatedGPUTime()

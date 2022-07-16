@@ -14,14 +14,22 @@
 */
 
 #include "PrecompiledHeader.h"
-#include <wx/stdpaths.h>
 #include <fstream>
 #include "common/FileSystem.h"
+#include "common/Path.h"
 #include "common/StringUtil.h"
 #include "Config.h"
 #include "ChunksCache.h"
 #include "GzippedFileReader.h"
 #include "zlib_indexed.h"
+
+#ifndef PCSX2_CORE
+#include "gui/StringHelpers.h"
+#include "gui/wxDirName.h"
+#include <wx/stdpaths.h>
+#else
+#include "HostSettings.h"
+#endif
 
 #define CLAMP(val, minval, maxval) (std::min(maxval, std::max(minval, val)))
 
@@ -54,7 +62,7 @@ static Access* ReadIndexFromFile(const char* filename)
 	if (std::fread(index, sizeof(Access), 1, fp.get()) != 1 ||
 		datasize != static_cast<s64>(index->have) * static_cast<s64>(sizeof(Point)))
 	{
-		Console.Error("Error: unexpected size of gzip index, please delete it manually: '%s'.", filename);
+		Console.Error("Error: Unexpected size of gzip index, please delete it manually: '%s'.", filename);
 		free(index);
 		return 0;
 	}
@@ -104,7 +112,8 @@ static void WriteIndexToFile(Access* index, const char* filename)
 	}
 }
 
-static wxString INDEX_TEMPLATE_KEY(L"$(f)");
+static const char* INDEX_TEMPLATE_KEY = "$(f)";
+
 // template:
 // must contain one and only one instance of '$(f)' (without the quotes)
 // if if !canEndWithKey -> must not end with $(f)
@@ -114,34 +123,33 @@ static wxString INDEX_TEMPLATE_KEY(L"$(f)");
 //   then it's relative to base (not to cwd)
 // No checks are performed if the result file name can be created.
 // If this proves useful, we can move it into Path:: . Right now there's no need.
-static wxString ApplyTemplate(const wxString& name, const wxDirName& base,
+static std::string ApplyTemplate(const std::string& name, const std::string& base,
 							  const std::string& fileTemplate, const std::string& filename,
 							  bool canEndWithKey)
 {
-	wxString tem(StringUtil::UTF8StringToWxString(fileTemplate));
-	wxString key = INDEX_TEMPLATE_KEY;
-	tem = tem.Trim(true).Trim(false); // both sides
+	// both sides
+	std::string trimmedTemplate(StringUtil::StripWhitespace(fileTemplate));
 
-	size_t first = tem.find(key);
-	if (first == wxString::npos    // not found
-		|| first != tem.rfind(key) // more than one instance
-		|| !canEndWithKey && first == tem.length() - key.length())
+	std::string::size_type first = trimmedTemplate.find(INDEX_TEMPLATE_KEY);
+	if (first == std::string::npos    // not found
+		|| first != trimmedTemplate.rfind(INDEX_TEMPLATE_KEY) // more than one instance
+		|| !canEndWithKey && first == trimmedTemplate.length() - std::strlen(INDEX_TEMPLATE_KEY))
 	{
-		Console.Error(L"Invalid %s template '%s'.\n"
-					  L"Template must contain exactly one '%s' and must not end with it. Abotring.",
-					  WX_STR(name), WX_STR(tem), WX_STR(key));
-		return L"";
+		Console.Error("Invalid %s template '%s'.\n"
+					  "Template must contain exactly one '%s' and must not end with it. Aborting.",
+					  name.c_str(), trimmedTemplate.c_str(), INDEX_TEMPLATE_KEY);
+		return {};
 	}
 
-	wxString fname(StringUtil::UTF8StringToWxString(filename));
+	std::string fname(filename);
 	if (first > 0)
-		fname = Path::GetFilename(fname); // without path
+		fname = Path::GetFileName(fname); // without path
 
-	tem.Replace(key, fname);
-	if (first > 0)
-		tem = Path::Combine(base, tem); // ignores appRoot if tem is absolute
+	StringUtil::ReplaceAll(&trimmedTemplate, INDEX_TEMPLATE_KEY, fname);
+	if (!Path::IsAbsolute(trimmedTemplate))
+		trimmedTemplate = Path::Combine(base, trimmedTemplate); // ignores appRoot if tem is absolute
 
-	return tem;
+	return trimmedTemplate;
 }
 
 /*
@@ -174,15 +182,15 @@ static void TestTemplate(const wxDirName &base, const wxString &fname, bool canE
 static std::string iso2indexname(const std::string& isoname)
 {
 #ifndef PCSX2_CORE
-	//testTemplate(isoname);
-	wxDirName appRoot = // TODO: have only one of this in PCSX2. Right now have few...
-		(wxDirName)(wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath());
+	std::string appRoot = // TODO: have only one of this in PCSX2. Right now have few...
+		StringUtil::wxStringToUTF8String(((wxDirName)(wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath())).ToString());
+	return ApplyTemplate("gzip index", appRoot, EmuConfig.GzipIsoIndexTemplate, isoname, false);
 #else
-	const wxDirName& appRoot = EmuFolders::DataRoot;
+	const std::string& appRoot = EmuFolders::DataRoot;
+	return ApplyTemplate("gzip index", appRoot, Host::GetBaseStringSettingValue("EmuCore", "GzipIsoIndexTemplate", "$(f).pindex.tmp"), isoname, false);
 #endif
-	//TestTemplate(appRoot, isoname, false);
-	return StringUtil::wxStringToUTF8String(ApplyTemplate(L"gzip index", appRoot, EmuConfig.GzipIsoIndexTemplate, isoname, false));
 }
+
 
 GzippedFileReader::GzippedFileReader(void)
 	: mBytesRead(0)
@@ -258,7 +266,7 @@ void GzippedFileReader::AsyncPrefetchChunk(s64 start)
 {
 	if (hOverlappedFile == INVALID_HANDLE_VALUE || asyncInProgress)
 	{
-		Console.Warning(L"Unexpected file handle or progress state. Aborting prefetch.");
+		Console.Warning("Unexpected file handle or progress state. Aborting prefetch.");
 		return;
 	}
 
@@ -283,7 +291,7 @@ void GzippedFileReader::AsyncPrefetchCancel()
 
 	if (!CancelIo(hOverlappedFile))
 	{
-		Console.Warning("canceling gz prefetch failed. following prefetching will not work.");
+		Console.Warning("Canceling gz prefetch failed. Following prefetching will not work.");
 		return;
 	}
 
@@ -337,7 +345,7 @@ bool GzippedFileReader::OkIndex()
 	}
 	else
 	{
-		Console.Error("ERROR (%d): index could not be generated for file '%s'", len, m_filename.c_str());
+		Console.Error("ERROR (%d): Index could not be generated for file '%s'", len, m_filename.c_str());
 		free_index(index);
 		InitZstates();
 		return false;
@@ -384,7 +392,7 @@ int GzippedFileReader::ReadSync(void* pBuffer, uint sector, uint count)
 	int bytesToRead = count * m_blocksize;
 	int res = _ReadSync(pBuffer, offset, bytesToRead);
 	if (res < 0)
-		Console.Error(L"Error: iso-gzip read unsuccessful.");
+		Console.Error("Error: iso-gzip read unsuccessful.");
 	return res;
 }
 
@@ -486,7 +494,7 @@ int GzippedFileReader::_ReadSync(void* pBuffer, s64 offset, uint bytesToRead)
 
 	int duration = NOW() - s;
 	if (duration > 10)
-		Console.WriteLn(Color_Gray, L"gunzip: chunk #%5d-%2d : %1.2f MB - %d ms",
+		Console.WriteLn(Color_Gray, "gunzip: chunk #%5d-%2d : %1.2f MB - %d ms",
 						(int)(offset / 4 / 1024 / 1024),
 						(int)(offset % (4 * 1024 * 1024) / GZFILE_READ_CHUNK_SIZE),
 						(float)size / 1024 / 1024,

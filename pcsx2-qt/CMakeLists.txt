@@ -14,8 +14,12 @@ target_sources(pcsx2-qt PRIVATE
 	AboutDialog.cpp
 	AboutDialog.h
 	AboutDialog.ui
+	AutoUpdaterDialog.cpp
+	AutoUpdaterDialog.h
+	AutoUpdaterDialog.ui
 	DisplayWidget.cpp
 	DisplayWidget.h
+	EarlyHardwareCheck.cpp
 	EmuThread.cpp
 	EmuThread.h
 	Main.cpp
@@ -30,6 +34,7 @@ target_sources(pcsx2-qt PRIVATE
 	QtUtils.cpp
 	QtUtils.h
 	SettingWidgetBinder.h
+	GameList/EmptyGameListWidget.ui
 	GameList/GameListModel.cpp
 	GameList/GameListModel.h
 	GameList/GameListRefreshThread.cpp
@@ -55,12 +60,16 @@ target_sources(pcsx2-qt PRIVATE
 	Settings/ControllerSettingsDialog.cpp
 	Settings/ControllerSettingsDialog.h
 	Settings/ControllerSettingsDialog.ui
+	Settings/ControllerSettingWidgetBinder.h
 	Settings/CreateMemoryCardDialog.cpp
 	Settings/CreateMemoryCardDialog.h
 	Settings/CreateMemoryCardDialog.ui
 	Settings/EmulationSettingsWidget.cpp
 	Settings/EmulationSettingsWidget.h
 	Settings/EmulationSettingsWidget.ui
+	Settings/FolderSettingsWidget.cpp
+	Settings/FolderSettingsWidget.h
+	Settings/FolderSettingsWidget.ui
 	Settings/GameFixSettingsWidget.cpp
 	Settings/GameFixSettingsWidget.h
 	Settings/GameFixSettingsWidget.ui
@@ -86,9 +95,14 @@ target_sources(pcsx2-qt PRIVATE
 	Settings/MemoryCardSettingsWidget.cpp
 	Settings/MemoryCardSettingsWidget.h
 	Settings/MemoryCardSettingsWidget.ui
+	Settings/DEV9DnsHostDialog.cpp
+	Settings/DEV9DnsHostDialog.h
+	Settings/DEV9DnsHostDialog.ui
 	Settings/DEV9SettingsWidget.cpp
 	Settings/DEV9SettingsWidget.h
 	Settings/DEV9SettingsWidget.ui
+	Settings/DEV9UiCommon.cpp
+	Settings/DEV9UiCommon.h
 	Settings/HddCreateQt.cpp
 	Settings/HddCreateQt.h
 	Settings/SettingsDialog.cpp
@@ -97,6 +111,9 @@ target_sources(pcsx2-qt PRIVATE
 	Settings/SystemSettingsWidget.cpp
 	Settings/SystemSettingsWidget.h
 	Settings/SystemSettingsWidget.ui
+	Tools/InputRecording/NewInputRecordingDlg.cpp
+	Tools/InputRecording/NewInputRecordingDlg.h
+	Tools/InputRecording/NewInputRecordingDlg.ui
 	resources/resources.qrc
 )
 
@@ -117,3 +134,12 @@ target_link_libraries(pcsx2-qt PRIVATE
 	Qt6::Widgets
 	Qt6::Network
 )
+
+# Currently, 7z is only needed for the Windows updater.
+if(WIN32)
+	target_link_libraries(pcsx2-qt PRIVATE
+		LZMA::LZMA
+	)
+endif()
+
+setup_main_executable(pcsx2-qt)

@@ -1,6 +1,7 @@
 ﻿#include "PrecompiledHeader.h"
 
 #include "VulkanHostDisplay.h"
+#include "common/Align.h"
 #include "common/Assertions.h"
 #include "common/Console.h"
 #include "common/ScopedGuard.h"
@@ -50,17 +51,35 @@ VulkanHostDisplay::VulkanHostDisplay() = default;
 
 VulkanHostDisplay::~VulkanHostDisplay()
 {
-	pxAssertRel(!g_vulkan_context, "Context should have been destroyed by now");
-	pxAssertRel(!m_swap_chain, "Swap chain should have been destroyed by now");
+	if (g_vulkan_context)
+	{
+		g_vulkan_context->WaitForGPUIdle();
+		m_swap_chain.reset();
+
+		Vulkan::ShaderCache::Destroy();
+		Vulkan::Context::Destroy();
+	}
 }
 
-HostDisplay::RenderAPI VulkanHostDisplay::GetRenderAPI() const { return HostDisplay::RenderAPI::Vulkan; }
+HostDisplay::RenderAPI VulkanHostDisplay::GetRenderAPI() const
+{
+	return HostDisplay::RenderAPI::Vulkan;
+}
 
-void* VulkanHostDisplay::GetRenderDevice() const { return nullptr; }
+void* VulkanHostDisplay::GetRenderDevice() const
+{
+	return nullptr;
+}
 
-void* VulkanHostDisplay::GetRenderContext() const { return nullptr; }
+void* VulkanHostDisplay::GetRenderContext() const
+{
+	return nullptr;
+}
 
-void* VulkanHostDisplay::GetRenderSurface() const { return m_swap_chain.get(); }
+void* VulkanHostDisplay::GetRenderSurface() const
+{
+	return m_swap_chain.get();
+}
 
 bool VulkanHostDisplay::ChangeRenderWindow(const WindowInfo& new_wi)
 {
@@ -87,8 +106,8 @@ bool VulkanHostDisplay::ChangeRenderWindow(const WindowInfo& new_wi)
 	}
 
 	WindowInfo wi_copy(new_wi);
-	VkSurfaceKHR surface = Vulkan::SwapChain::CreateVulkanSurface(
-		g_vulkan_context->GetVulkanInstance(), g_vulkan_context->GetPhysicalDevice(), &wi_copy);
+	VkSurfaceKHR surface =
+		Vulkan::SwapChain::CreateVulkanSurface(g_vulkan_context->GetVulkanInstance(), g_vulkan_context->GetPhysicalDevice(), &wi_copy);
 	if (surface == VK_NULL_HANDLE)
 	{
 		Console.Error("Failed to create new surface for swap chain");
@@ -109,19 +128,39 @@ bool VulkanHostDisplay::ChangeRenderWindow(const WindowInfo& new_wi)
 
 void VulkanHostDisplay::ResizeRenderWindow(s32 new_window_width, s32 new_window_height, float new_window_scale)
 {
+	if (m_swap_chain->GetWidth() == static_cast<u32>(new_window_width) && m_swap_chain->GetHeight() == static_cast<u32>(new_window_height))
+	{
+		// skip unnecessary resizes
+		m_window_info.surface_scale = new_window_scale;
+		return;
+	}
+
 	g_vulkan_context->WaitForGPUIdle();
 
-	if (!m_swap_chain->ResizeSwapChain(new_window_width, new_window_height))
-		pxFailRel("Failed to resize swap chain");
+	if (!m_swap_chain->ResizeSwapChain(new_window_width, new_window_height, new_window_scale))
+	{
+		// AcquireNextImage() will fail, and we'll recreate the surface.
+		Console.Error("Failed to resize swap chain. Next present will fail.");
+		return;
+	}
 
 	m_window_info = m_swap_chain->GetWindowInfo();
 }
 
-bool VulkanHostDisplay::SupportsFullscreen() const { return false; }
+bool VulkanHostDisplay::SupportsFullscreen() const
+{
+	return false;
+}
 
-bool VulkanHostDisplay::IsFullscreen() { return false; }
+bool VulkanHostDisplay::IsFullscreen()
+{
+	return false;
+}
 
-bool VulkanHostDisplay::SetFullscreen(bool fullscreen, u32 width, u32 height, float refresh_rate) { return false; }
+bool VulkanHostDisplay::SetFullscreen(bool fullscreen, u32 width, u32 height, float refresh_rate)
+{
+	return false;
+}
 
 HostDisplay::AdapterAndModeList VulkanHostDisplay::GetAdapterAndModeList()
 {
@@ -130,7 +169,6 @@ HostDisplay::AdapterAndModeList VulkanHostDisplay::GetAdapterAndModeList()
 
 void VulkanHostDisplay::DestroyRenderSurface()
 {
-	m_window_info = {};
 	g_vulkan_context->WaitForGPUIdle();
 	m_swap_chain.reset();
 }
@@ -143,53 +181,52 @@ std::string VulkanHostDisplay::GetDriverInfo() const
 	if (g_vulkan_context->GetOptionalExtensions().vk_khr_driver_properties)
 	{
 		const VkPhysicalDeviceDriverProperties& props = g_vulkan_context->GetDeviceDriverProperties();
-		ret = StringUtil::StdStringFromFormat(
-			"Driver %u.%u.%u\nVulkan %u.%u.%u\nConformance Version %u.%u.%u.%u\n%s\n%s\n%s",
+		ret = StringUtil::StdStringFromFormat("Driver %u.%u.%u\nVulkan %u.%u.%u\nConformance Version %u.%u.%u.%u\n%s\n%s\n%s",
 			VK_VERSION_MAJOR(driver_version), VK_VERSION_MINOR(driver_version), VK_VERSION_PATCH(driver_version),
 			VK_API_VERSION_MAJOR(api_version), VK_API_VERSION_MINOR(api_version), VK_API_VERSION_PATCH(api_version),
-			props.conformanceVersion.major, props.conformanceVersion.minor, props.conformanceVersion.subminor, props.conformanceVersion.patch,
-			props.driverInfo, props.driverName,
-			g_vulkan_context->GetDeviceProperties().deviceName);
+			props.conformanceVersion.major, props.conformanceVersion.minor, props.conformanceVersion.subminor,
+			props.conformanceVersion.patch, props.driverInfo, props.driverName, g_vulkan_context->GetDeviceProperties().deviceName);
 	}
 	else
 	{
-		ret = StringUtil::StdStringFromFormat(
-			"Driver %u.%u.%u\nVulkan %u.%u.%u\n%s",
-			VK_VERSION_MAJOR(driver_version), VK_VERSION_MINOR(driver_version), VK_VERSION_PATCH(driver_version),
-			VK_API_VERSION_MAJOR(api_version), VK_API_VERSION_MINOR(api_version), VK_API_VERSION_PATCH(api_version),
-			g_vulkan_context->GetDeviceProperties().deviceName);
+		ret = StringUtil::StdStringFromFormat("Driver %u.%u.%u\nVulkan %u.%u.%u\n%s", VK_VERSION_MAJOR(driver_version),
+			VK_VERSION_MINOR(driver_version), VK_VERSION_PATCH(driver_version), VK_API_VERSION_MAJOR(api_version),
+			VK_API_VERSION_MINOR(api_version), VK_API_VERSION_PATCH(api_version), g_vulkan_context->GetDeviceProperties().deviceName);
 	}
 
 	return ret;
 }
 
-static bool UploadBufferToTexture(Vulkan::Texture* texture, u32 width, u32 height, const void* data, u32 data_stride)
+static bool UploadBufferToTexture(
+	Vulkan::Texture* texture, VkCommandBuffer cmdbuf, u32 width, u32 height, const void* data, u32 data_stride)
 {
-	const u32 tight_stride = Vulkan::Util::GetTexelSize(texture->GetFormat()) * width;
-	const u32 tight_size = tight_stride * height;
+	const u32 texel_size = Vulkan::Util::GetTexelSize(texture->GetFormat());
+	const u32 upload_stride = Common::AlignUpPow2(texel_size * width, g_vulkan_context->GetBufferCopyRowPitchAlignment());
+	const u32 upload_size = upload_stride * height;
 
 	Vulkan::StreamBuffer& buf = g_vulkan_context->GetTextureUploadBuffer();
-	if (!buf.ReserveMemory(tight_size, g_vulkan_context->GetBufferImageGranularity()))
+	if (!buf.ReserveMemory(upload_size, g_vulkan_context->GetBufferCopyOffsetAlignment()))
 	{
 		Console.WriteLn("Executing command buffer for UploadBufferToTexture()");
 		g_vulkan_context->ExecuteCommandBuffer(false);
-		if (!buf.ReserveMemory(tight_size, g_vulkan_context->GetBufferImageGranularity()))
+		if (!buf.ReserveMemory(upload_size, g_vulkan_context->GetBufferCopyOffsetAlignment()))
 		{
-			Console.WriteLn("Failed to allocate %u bytes in stream buffer for UploadBufferToTexture()", tight_size);
+			Console.WriteLn("Failed to allocate %u bytes in stream buffer for UploadBufferToTexture()", upload_size);
 			return false;
 		}
+		cmdbuf = g_vulkan_context->GetCurrentInitCommandBuffer();
 	}
 
 	const u32 buf_offset = buf.GetCurrentOffset();
-	StringUtil::StrideMemCpy(buf.GetCurrentHostPointer(), tight_stride, data, data_stride, tight_stride, height);
-	buf.CommitMemory(tight_size);
+	StringUtil::StrideMemCpy(buf.GetCurrentHostPointer(), upload_stride, data, data_stride, upload_stride, height);
+	buf.CommitMemory(upload_size);
 
-	texture->UpdateFromBuffer(
-		g_vulkan_context->GetCurrentCommandBuffer(), 0, 0, 0, 0, width, height, width, buf.GetBuffer(), buf_offset);
+	texture->UpdateFromBuffer(cmdbuf, 0, 0, 0, 0, width, height, upload_stride / texel_size, buf.GetBuffer(), buf_offset);
 	return true;
 }
 
-std::unique_ptr<HostDisplayTexture> VulkanHostDisplay::CreateTexture(u32 width, u32 height, const void* data, u32 data_stride, bool dynamic /* = false */)
+std::unique_ptr<HostDisplayTexture> VulkanHostDisplay::CreateTexture(
+	u32 width, u32 height, const void* data, u32 data_stride, bool dynamic /* = false */)
 {
 	static constexpr VkFormat vk_format = VK_FORMAT_R8G8B8A8_UNORM;
 	static constexpr VkImageUsageFlags usage =
@@ -199,11 +236,11 @@ std::unique_ptr<HostDisplayTexture> VulkanHostDisplay::CreateTexture(u32 width, 
 	if (!texture.Create(width, height, 1, 1, vk_format, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage))
 		return {};
 
-	texture.TransitionToLayout(g_vulkan_context->GetCurrentCommandBuffer(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	texture.TransitionToLayout(g_vulkan_context->GetCurrentInitCommandBuffer(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	if (data)
 	{
-		if (!UploadBufferToTexture(&texture, width, height, data, data_stride))
+		if (!UploadBufferToTexture(&texture, g_vulkan_context->GetCurrentInitCommandBuffer(), width, height, data, data_stride))
 			return {};
 	}
 	else
@@ -211,20 +248,18 @@ std::unique_ptr<HostDisplayTexture> VulkanHostDisplay::CreateTexture(u32 width, 
 		// clear it instead so we don't read uninitialized data (and keep the validation layer happy!)
 		static constexpr VkClearColorValue ccv = {};
 		static constexpr VkImageSubresourceRange isr = {VK_IMAGE_ASPECT_COLOR_BIT, 0u, 1u, 0u, 1u};
-		vkCmdClearColorImage(
-			g_vulkan_context->GetCurrentCommandBuffer(), texture.GetImage(), texture.GetLayout(), &ccv, 1u, &isr);
+		vkCmdClearColorImage(g_vulkan_context->GetCurrentInitCommandBuffer(), texture.GetImage(), texture.GetLayout(), &ccv, 1u, &isr);
 	}
 
-	texture.TransitionToLayout(g_vulkan_context->GetCurrentCommandBuffer(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	texture.TransitionToLayout(g_vulkan_context->GetCurrentInitCommandBuffer(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	return std::make_unique<VulkanHostDisplayTexture>(std::move(texture));
 }
 
-void VulkanHostDisplay::UpdateTexture(
-	HostDisplayTexture* texture, u32 x, u32 y, u32 width, u32 height, const void* data, u32 data_stride)
+void VulkanHostDisplay::UpdateTexture(HostDisplayTexture* texture, u32 x, u32 y, u32 width, u32 height, const void* data, u32 data_stride)
 {
-	UploadBufferToTexture(
-		&static_cast<VulkanHostDisplayTexture*>(texture)->GetTexture(), width, height, data, data_stride);
+	UploadBufferToTexture(&static_cast<VulkanHostDisplayTexture*>(texture)->GetTexture(), g_vulkan_context->GetCurrentCommandBuffer(),
+		width, height, data, data_stride);
 }
 
 void VulkanHostDisplay::SetVSync(VsyncMode mode)
@@ -244,9 +279,8 @@ bool VulkanHostDisplay::CreateRenderDevice(
 	// debug_device = true;
 
 	WindowInfo local_wi(wi);
-	if (!Vulkan::Context::Create(
-			adapter_name, &local_wi, &m_swap_chain, GetPreferredPresentModeForVsyncMode(vsync),
-			threaded_presentation, debug_device, debug_device))
+	if (!Vulkan::Context::Create(adapter_name, &local_wi, &m_swap_chain, GetPreferredPresentModeForVsyncMode(vsync), threaded_presentation,
+			debug_device, debug_device))
 	{
 		Console.Error("Failed to create Vulkan context");
 		m_window_info = {};
@@ -265,24 +299,19 @@ bool VulkanHostDisplay::InitializeRenderDevice(std::string_view shader_cache_dir
 	return true;
 }
 
-bool VulkanHostDisplay::HasRenderDevice() const { return static_cast<bool>(g_vulkan_context); }
+bool VulkanHostDisplay::HasRenderDevice() const
+{
+	return static_cast<bool>(g_vulkan_context);
+}
 
-bool VulkanHostDisplay::HasRenderSurface() const { return static_cast<bool>(m_swap_chain); }
+bool VulkanHostDisplay::HasRenderSurface() const
+{
+	return static_cast<bool>(m_swap_chain);
+}
 
 bool VulkanHostDisplay::CreateImGuiContext()
 {
-	ImGui_ImplVulkan_InitInfo vii = {};
-	vii.Instance = g_vulkan_context->GetVulkanInstance();
-	vii.PhysicalDevice = g_vulkan_context->GetPhysicalDevice();
-	vii.Device = g_vulkan_context->GetDevice();
-	vii.QueueFamily = g_vulkan_context->GetGraphicsQueueFamilyIndex();
-	vii.Queue = g_vulkan_context->GetGraphicsQueue();
-	vii.PipelineCache = g_vulkan_shader_cache->GetPipelineCache();
-	vii.MinImageCount = m_swap_chain->GetImageCount();
-	vii.ImageCount = m_swap_chain->GetImageCount();
-	vii.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-
-	return ImGui_ImplVulkan_Init(&vii, m_swap_chain->GetClearRenderPass());
+	return ImGui_ImplVulkan_Init(m_swap_chain->GetClearRenderPass());
 }
 
 void VulkanHostDisplay::DestroyImGuiContext()
@@ -293,27 +322,18 @@ void VulkanHostDisplay::DestroyImGuiContext()
 
 bool VulkanHostDisplay::UpdateImGuiFontTexture()
 {
-	// Just in case we were drawing something.
-	g_vulkan_context->ExecuteCommandBuffer(true);
-	ImGui_ImplVulkan_DestroyFontObjects();
-	return ImGui_ImplVulkan_CreateFontsTexture(g_vulkan_context->GetCurrentCommandBuffer());
+	return ImGui_ImplVulkan_CreateFontsTexture();
 }
 
-void VulkanHostDisplay::DestroyRenderDevice()
+bool VulkanHostDisplay::MakeRenderContextCurrent()
 {
-	if (!g_vulkan_context)
-		return;
-
-	g_vulkan_context->WaitForGPUIdle();
-
-	Vulkan::ShaderCache::Destroy();
-	DestroyRenderSurface();
-	Vulkan::Context::Destroy();
+	return true;
 }
 
-bool VulkanHostDisplay::MakeRenderContextCurrent() { return true; }
-
-bool VulkanHostDisplay::DoneRenderContextCurrent() { return true; }
+bool VulkanHostDisplay::DoneRenderContextCurrent()
+{
+	return true;
+}
 
 bool VulkanHostDisplay::BeginPresent(bool frame_skip)
 {
@@ -341,7 +361,6 @@ bool VulkanHostDisplay::BeginPresent(bool frame_skip)
 			{
 				Console.Error("Failed to recreate surface after loss");
 				g_vulkan_context->ExecuteCommandBuffer(false);
-				m_swap_chain.reset();
 				return false;
 			}
 
@@ -367,15 +386,13 @@ bool VulkanHostDisplay::BeginPresent(bool frame_skip)
 	swap_chain_texture.TransitionToLayout(cmdbuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 	const VkClearValue clear_value = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-	const VkRenderPassBeginInfo rp = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO, nullptr,
-		m_swap_chain->GetClearRenderPass(), m_swap_chain->GetCurrentFramebuffer(),
-		{{0, 0}, {swap_chain_texture.GetWidth(), swap_chain_texture.GetHeight()}}, 1u, &clear_value};
+	const VkRenderPassBeginInfo rp = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO, nullptr, m_swap_chain->GetClearRenderPass(),
+		m_swap_chain->GetCurrentFramebuffer(), {{0, 0}, {swap_chain_texture.GetWidth(), swap_chain_texture.GetHeight()}}, 1u, &clear_value};
 	vkCmdBeginRenderPass(g_vulkan_context->GetCurrentCommandBuffer(), &rp, VK_SUBPASS_CONTENTS_INLINE);
 
-	const VkViewport vp{0.0f, 0.0f, static_cast<float>(swap_chain_texture.GetWidth()),
-		static_cast<float>(swap_chain_texture.GetHeight()), 0.0f, 1.0f};
-	const VkRect2D scissor{
-		{0, 0}, {static_cast<u32>(swap_chain_texture.GetWidth()), static_cast<u32>(swap_chain_texture.GetHeight())}};
+	const VkViewport vp{
+		0.0f, 0.0f, static_cast<float>(swap_chain_texture.GetWidth()), static_cast<float>(swap_chain_texture.GetHeight()), 0.0f, 1.0f};
+	const VkRect2D scissor{{0, 0}, {static_cast<u32>(swap_chain_texture.GetWidth()), static_cast<u32>(swap_chain_texture.GetHeight())}};
 	vkCmdSetViewport(g_vulkan_context->GetCurrentCommandBuffer(), 0, 1, &vp);
 	vkCmdSetScissor(g_vulkan_context->GetCurrentCommandBuffer(), 0, 1, &scissor);
 	return true;
@@ -384,21 +401,20 @@ bool VulkanHostDisplay::BeginPresent(bool frame_skip)
 void VulkanHostDisplay::EndPresent()
 {
 	ImGui::Render();
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), g_vulkan_context->GetCurrentCommandBuffer());
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData());
 
 	VkCommandBuffer cmdbuffer = g_vulkan_context->GetCurrentCommandBuffer();
 	vkCmdEndRenderPass(g_vulkan_context->GetCurrentCommandBuffer());
 	m_swap_chain->GetCurrentTexture().TransitionToLayout(cmdbuffer, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-	g_vulkan_context->SubmitCommandBuffer(m_swap_chain->GetImageAvailableSemaphore(),
-		m_swap_chain->GetRenderingFinishedSemaphore(), m_swap_chain->GetSwapChain(),
-		m_swap_chain->GetCurrentImageIndex(), !m_swap_chain->IsPresentModeSynchronizing());
+	g_vulkan_context->SubmitCommandBuffer(m_swap_chain->GetImageAvailableSemaphore(), m_swap_chain->GetRenderingFinishedSemaphore(),
+		m_swap_chain->GetSwapChain(), m_swap_chain->GetCurrentImageIndex(), !m_swap_chain->IsPresentModeSynchronizing());
 	g_vulkan_context->MoveToNextCommandBuffer();
 }
 
-void VulkanHostDisplay::SetGPUTimingEnabled(bool enabled)
+bool VulkanHostDisplay::SetGPUTimingEnabled(bool enabled)
 {
-	g_vulkan_context->SetEnableGPUTiming(enabled);
+	return g_vulkan_context->SetEnableGPUTiming(enabled);
 }
 
 float VulkanHostDisplay::GetAndResetAccumulatedGPUTime()

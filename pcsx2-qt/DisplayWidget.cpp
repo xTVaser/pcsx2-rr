@@ -15,21 +15,28 @@
 
 #include "PrecompiledHeader.h"
 
+#include "common/Assertions.h"
+
 #include "DisplayWidget.h"
 #include "EmuThread.h"
+#include "MainWindow.h"
 #include "QtHost.h"
+#include "QtUtils.h"
 
 #include "pcsx2/GS/GSIntrin.h" // _BitScanForward
 
 #include <QtCore/QDebug>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QKeyEvent>
+#include <QtGui/QResizeEvent>
 #include <QtGui/QScreen>
 #include <QtGui/QWindow>
 #include <QtGui/QWindowStateChangeEvent>
 #include <cmath>
 
-#if !defined(_WIN32) && !defined(APPLE)
+#if defined(_WIN32)
+#include "common/RedtapeWindows.h"
+#elif !defined(APPLE)
 #include <qpa/qplatformnativeinterface.h>
 #endif
 
@@ -41,11 +48,18 @@ DisplayWidget::DisplayWidget(QWidget* parent)
 	setAttribute(Qt::WA_NativeWindow, true);
 	setAttribute(Qt::WA_NoSystemBackground, true);
 	setAttribute(Qt::WA_PaintOnScreen, true);
+	setAttribute(Qt::WA_KeyCompression, false);
 	setFocusPolicy(Qt::StrongFocus);
 	setMouseTracking(true);
 }
 
-DisplayWidget::~DisplayWidget() = default;
+DisplayWidget::~DisplayWidget()
+{
+#ifdef _WIN32
+	if (m_clip_mouse_enabled)
+		ClipCursor(nullptr);
+#endif
+}
 
 qreal DisplayWidget::devicePixelRatioFromScreen() const
 {
@@ -58,15 +72,15 @@ qreal DisplayWidget::devicePixelRatioFromScreen() const
 
 int DisplayWidget::scaledWindowWidth() const
 {
-	return static_cast<int>(std::ceil(static_cast<qreal>(width()) * devicePixelRatioFromScreen()));
+	return std::max(static_cast<int>(std::ceil(static_cast<qreal>(width()) * devicePixelRatioFromScreen())), 1);
 }
 
 int DisplayWidget::scaledWindowHeight() const
 {
-	return static_cast<int>(std::ceil(static_cast<qreal>(height()) * devicePixelRatioFromScreen()));
+	return std::max(static_cast<int>(std::ceil(static_cast<qreal>(height()) * devicePixelRatioFromScreen())), 1);
 }
 
-std::optional<WindowInfo> DisplayWidget::getWindowInfo() const
+std::optional<WindowInfo> DisplayWidget::getWindowInfo()
 {
 	WindowInfo wi;
 
@@ -99,33 +113,102 @@ std::optional<WindowInfo> DisplayWidget::getWindowInfo() const
 	}
 #endif
 
-	wi.surface_width = scaledWindowWidth();
-	wi.surface_height = scaledWindowHeight();
-	wi.surface_scale = devicePixelRatioFromScreen();
+	m_last_window_width = wi.surface_width = static_cast<u32>(scaledWindowWidth());
+	m_last_window_height = wi.surface_height = static_cast<u32>(scaledWindowHeight());
+	m_last_window_scale = wi.surface_scale = static_cast<float>(devicePixelRatioFromScreen());
 	return wi;
 }
 
-void DisplayWidget::setRelativeMode(bool enabled)
+void DisplayWidget::updateRelativeMode(bool master_enable)
 {
-	if (m_relative_mouse_enabled == enabled)
+	bool relative_mode = master_enable && InputManager::HasPointerAxisBinds();
+
+#ifdef _WIN32
+	// prefer ClipCursor() over warping movement when we're using raw input
+	bool clip_cursor = relative_mode && false /*InputManager::IsUsingRawInput()*/;
+	if (m_relative_mouse_enabled == relative_mode && m_clip_mouse_enabled == clip_cursor)
 		return;
 
-	if (enabled)
-	{
-		m_relative_mouse_start_position = QCursor::pos();
+	DevCon.WriteLn("updateRelativeMode(): relative=%s, clip=%s", relative_mode ? "yes" : "no", clip_cursor ? "yes" : "no");
 
-		const QPoint center_pos = mapToGlobal(QPoint(width() / 2, height() / 2));
-		QCursor::setPos(center_pos);
-		m_relative_mouse_last_position = center_pos;
+	if (!clip_cursor && m_clip_mouse_enabled)
+	{
+		m_clip_mouse_enabled = false;
+		ClipCursor(nullptr);
+	}
+#else
+	if (m_relative_mouse_enabled == relative_mode)
+		return;
+
+	DevCon.WriteLn("updateRelativeMode(): relative=%s", relative_mode ? "yes" : "no");
+#endif
+
+	if (relative_mode)
+	{
+#ifdef _WIN32
+		m_relative_mouse_enabled = !clip_cursor;
+		m_clip_mouse_enabled = clip_cursor;
+#else
+		m_relative_mouse_enabled = true;
+#endif
+		m_relative_mouse_start_pos = QCursor::pos();
+		updateCenterPos();
 		grabMouse();
 	}
-	else
+	else if (m_relative_mouse_enabled)
 	{
-		QCursor::setPos(m_relative_mouse_start_position);
+		m_relative_mouse_enabled = false;
+		QCursor::setPos(m_relative_mouse_start_pos);
 		releaseMouse();
 	}
 
-	m_relative_mouse_enabled = enabled;
+}
+
+void DisplayWidget::updateCursor(bool master_enable)
+{
+#ifdef _WIN32
+	const bool hide = master_enable && (m_should_hide_cursor || m_relative_mouse_enabled || m_clip_mouse_enabled);
+#else
+	const bool hide = master_enable && (m_should_hide_cursor || m_relative_mouse_enabled);
+#endif
+	if (m_cursor_hidden == hide)
+		return;
+
+	m_cursor_hidden = hide;
+	if (hide)
+		setCursor(Qt::BlankCursor);
+	else
+		unsetCursor();
+}
+
+void DisplayWidget::updateCenterPos()
+{
+#ifdef _WIN32
+	if (m_clip_mouse_enabled)
+	{
+		RECT rc;
+		if (GetWindowRect(reinterpret_cast<HWND>(winId()), &rc))
+			ClipCursor(&rc);
+	}
+	else if (m_relative_mouse_enabled)
+	{
+		RECT rc;
+		if (GetWindowRect(reinterpret_cast<HWND>(winId()), &rc))
+		{
+			m_relative_mouse_center_pos.setX(((rc.right - rc.left) / 2) + rc.left);
+			m_relative_mouse_center_pos.setY(((rc.bottom - rc.top) / 2) + rc.top);
+			SetCursorPos(m_relative_mouse_center_pos.x(), m_relative_mouse_center_pos.y());
+		}
+	}
+#else
+	if (m_relative_mouse_enabled)
+	{
+		// we do a round trip here because these coordinates are dpi-unscaled
+		m_relative_mouse_center_pos = mapToGlobal(QPoint((width() + 1) / 2, (height() + 1) / 2));
+		QCursor::setPos(m_relative_mouse_center_pos);
+		m_relative_mouse_center_pos = QCursor::pos();
+	}
+#endif
 }
 
 QPaintEngine* DisplayWidget::paintEngine() const
@@ -141,11 +224,36 @@ bool DisplayWidget::event(QEvent* event)
 		case QEvent::KeyRelease:
 		{
 			const QKeyEvent* key_event = static_cast<QKeyEvent*>(event);
-			if (!key_event->isAutoRepeat())
+			if (key_event->isAutoRepeat())
+				return true;
+
+			// For some reason, Windows sends "fake" key events.
+			// Scenario: Press shift, press F1, release shift, release F1.
+			// Events: Shift=Pressed, F1=Pressed, Shift=Released, **F1=Pressed**, F1=Released.
+			// To work around this, we keep track of keys pressed with modifiers in a list, and
+			// discard the press event when it's been previously activated. It's pretty gross,
+			// but I can't think of a better way of handling it, and there doesn't appear to be
+			// any window flag which changes this behavior that I can see.
+
+			const u32 key = QtUtils::KeyEventToCode(key_event);
+			const Qt::KeyboardModifiers modifiers = key_event->modifiers();
+			const bool pressed = (key_event->type() == QEvent::KeyPress);
+			const auto it = std::find(m_keys_pressed_with_modifiers.begin(), m_keys_pressed_with_modifiers.end(), key);
+			if (it != m_keys_pressed_with_modifiers.end())
 			{
-				emit windowKeyEvent(key_event->key(), static_cast<int>(key_event->modifiers()),
-					event->type() == QEvent::KeyPress);
+				if (pressed)
+					return true;
+				else
+					m_keys_pressed_with_modifiers.erase(it);
 			}
+			else if (modifiers != Qt::NoModifier && modifiers != Qt::KeypadModifier && pressed)
+			{
+				m_keys_pressed_with_modifiers.push_back(key);
+			}
+
+			Host::RunOnCPUThread([key, pressed]() {
+				InputManager::InvokeEvents(InputManager::MakeHostKeyboardKey(key), static_cast<float>(pressed));
+			});
 
 			return true;
 		}
@@ -158,22 +266,39 @@ bool DisplayWidget::event(QEvent* event)
 			{
 				const qreal dpr = devicePixelRatioFromScreen();
 				const QPoint mouse_pos = mouse_event->pos();
-				const int scaled_x = static_cast<int>(static_cast<qreal>(mouse_pos.x()) * dpr);
-				const int scaled_y = static_cast<int>(static_cast<qreal>(mouse_pos.y()) * dpr);
 
-				windowMouseMoveEvent(scaled_x, scaled_y);
+				const float scaled_x = static_cast<float>(static_cast<qreal>(mouse_pos.x()) * dpr);
+				const float scaled_y = static_cast<float>(static_cast<qreal>(mouse_pos.y()) * dpr);
+				InputManager::UpdatePointerAbsolutePosition(0, scaled_x, scaled_y);
 			}
 			else
 			{
-				const QPoint center_pos = mapToGlobal(QPoint((width() + 1) / 2, (height() + 1) / 2));
-				const QPoint mouse_pos = mapToGlobal(mouse_event->pos());
+				// On windows, we use winapi here. The reason being that the coordinates in QCursor
+				// are un-dpi-scaled, so we lose precision at higher desktop scalings.
+				float dx = 0.0f, dy = 0.0f;
 
-				const int dx = mouse_pos.x() - center_pos.x();
-				const int dy = mouse_pos.y() - center_pos.y();
-				m_relative_mouse_last_position.setX(m_relative_mouse_last_position.x() + dx);
-				m_relative_mouse_last_position.setY(m_relative_mouse_last_position.y() + dy);
-				windowMouseMoveEvent(m_relative_mouse_last_position.x(), m_relative_mouse_last_position.y());
-				QCursor::setPos(center_pos);
+#ifndef _WIN32
+				const QPoint mouse_pos = QCursor::pos();
+				if (mouse_pos != m_relative_mouse_center_pos)
+				{
+					dx = static_cast<float>(mouse_pos.x() - m_relative_mouse_center_pos.x());
+					dy = static_cast<float>(mouse_pos.y() - m_relative_mouse_center_pos.y());
+					QCursor::setPos(m_relative_mouse_center_pos);
+				}
+#else
+				POINT mouse_pos;
+				if (GetCursorPos(&mouse_pos))
+				{
+					dx = static_cast<float>(mouse_pos.x - m_relative_mouse_center_pos.x());
+					dy = static_cast<float>(mouse_pos.y - m_relative_mouse_center_pos.y());
+					SetCursorPos(m_relative_mouse_center_pos.x(), m_relative_mouse_center_pos.y());
+				}
+#endif
+
+				if (dx != 0.0f)
+					InputManager::UpdatePointerRelativeDelta(0, InputPointerAxis::X, dx);
+				if (dy != 0.0f)
+					InputManager::UpdatePointerRelativeDelta(0, InputPointerAxis::Y, dy);
 			}
 
 			return true;
@@ -185,10 +310,16 @@ bool DisplayWidget::event(QEvent* event)
 		{
 			unsigned long button_index;
 			if (_BitScanForward(&button_index, static_cast<u32>(static_cast<const QMouseEvent*>(event)->button())))
-				emit windowMouseButtonEvent(static_cast<int>(button_index + 1u), event->type() != QEvent::MouseButtonRelease);
+			{
+				Host::RunOnCPUThread([button_index, pressed = (event->type() != QEvent::MouseButtonRelease)]() {
+					InputManager::InvokeEvents(InputManager::MakePointerButtonKey(0, button_index), static_cast<float>(pressed));
+				});
+			}
 
+			// don't toggle fullscreen when we're bound.. that wouldn't end well.
 			if (event->type() == QEvent::MouseButtonDblClick &&
 				static_cast<const QMouseEvent*>(event)->button() == Qt::LeftButton &&
+				!InputManager::HasAnyBindingsForKey(InputManager::MakePointerButtonKey(0, 0)) &&
 				Host::GetBoolSettingValue("UI", "DoubleClickTogglesFullscreen", true))
 			{
 				g_emu_thread->toggleFullscreen();
@@ -199,23 +330,53 @@ bool DisplayWidget::event(QEvent* event)
 
 		case QEvent::Wheel:
 		{
-			const QWheelEvent* wheel_event = static_cast<QWheelEvent*>(event);
-			emit windowMouseWheelEvent(wheel_event->angleDelta());
+			const QPoint delta_angle(static_cast<QWheelEvent*>(event)->angleDelta());
+			const float dx = std::clamp(static_cast<float>(delta_angle.x()) / QtUtils::MOUSE_WHEEL_DELTA, -1.0f, 1.0f);
+			if (dx != 0.0f)
+				InputManager::UpdatePointerRelativeDelta(0, InputPointerAxis::WheelX, dx);
+
+			const float dy = std::clamp(static_cast<float>(delta_angle.y()) / QtUtils::MOUSE_WHEEL_DELTA, -1.0f, 1.0f);
+			if (dy != 0.0f)
+				InputManager::UpdatePointerRelativeDelta(0, InputPointerAxis::WheelY, dy);
+
 			return true;
 		}
 
+		// According to https://bugreports.qt.io/browse/QTBUG-95925 the recommended practice for handling DPI change is responding to paint events
+		case QEvent::Paint:
 		case QEvent::Resize:
 		{
 			QWidget::event(event);
 
-			emit windowResizedEvent(scaledWindowWidth(), scaledWindowHeight(), devicePixelRatioFromScreen());
+			const float dpr = devicePixelRatioFromScreen();
+			const u32 scaled_width = static_cast<u32>(std::max(static_cast<int>(std::ceil(static_cast<qreal>(width()) * dpr)), 1));
+			const u32 scaled_height = static_cast<u32>(std::max(static_cast<int>(std::ceil(static_cast<qreal>(height()) * dpr)), 1));
+
+			// avoid spamming resize events for paint events (sent on move on windows)
+			if (m_last_window_width != scaled_width || m_last_window_height != scaled_height || m_last_window_scale != dpr)
+			{
+				m_last_window_width = scaled_width;
+				m_last_window_height = scaled_height;
+				m_last_window_scale = dpr;
+				emit windowResizedEvent(scaled_width, scaled_height, dpr);
+			}
+
+			updateCenterPos();
+			return true;
+		}
+
+		case QEvent::Move:
+		{
+			updateCenterPos();
 			return true;
 		}
 
 		case QEvent::Close:
 		{
-			emit windowClosedEvent();
-			QWidget::event(event);
+			// Closing the separate widget will either cancel the close, or trigger shutdown.
+			// In the latter case, it's going to destroy us, so don't let Qt do it first.
+			QMetaObject::invokeMethod(g_main_window, "requestShutdown", Q_ARG(bool, true), Q_ARG(bool, false), Q_ARG(bool, false));
+			event->ignore();
 			return true;
 		}
 
@@ -225,22 +386,6 @@ bool DisplayWidget::event(QEvent* event)
 
 			if (static_cast<QWindowStateChangeEvent*>(event)->oldState() & Qt::WindowMinimized)
 				emit windowRestoredEvent();
-
-			return true;
-		}
-
-		case QEvent::FocusIn:
-		{
-			QWidget::event(event);
-			emit windowFocusEvent();
-			return true;
-		}
-
-		case QEvent::ActivationChange:
-		{
-			QWidget::event(event);
-			if (isActiveWindow())
-				emit windowFocusEvent();
 
 			return true;
 		}
@@ -262,7 +407,7 @@ bool DisplayContainer::IsNeeded(bool fullscreen, bool render_to_main)
 #if defined(_WIN32) || defined(__APPLE__)
 	return false;
 #else
-	if (fullscreen || render_to_main)
+	if (!fullscreen && render_to_main)
 		return false;
 
 	// We only need this on Wayland because of client-side decorations...
@@ -289,35 +434,25 @@ DisplayWidget* DisplayContainer::removeDisplayWidget()
 
 bool DisplayContainer::event(QEvent* event)
 {
+	if (event->type() == QEvent::Close)
+	{
+		// Closing the separate widget will either cancel the close, or trigger shutdown.
+		// In the latter case, it's going to destroy us, so don't let Qt do it first.
+		QMetaObject::invokeMethod(g_main_window, "requestShutdown", Q_ARG(bool, true), Q_ARG(bool, false), Q_ARG(bool, false));
+		event->ignore();
+		return true;
+	}
+
 	const bool res = QStackedWidget::event(event);
 	if (!m_display_widget)
 		return res;
 
 	switch (event->type())
 	{
-		case QEvent::Close:
-		{
-			emit m_display_widget->windowClosedEvent();
-		}
-		break;
-
 		case QEvent::WindowStateChange:
 		{
 			if (static_cast<QWindowStateChangeEvent*>(event)->oldState() & Qt::WindowMinimized)
 				emit m_display_widget->windowRestoredEvent();
-		}
-		break;
-
-		case QEvent::FocusIn:
-		{
-			emit m_display_widget->windowFocusEvent();
-		}
-		break;
-
-		case QEvent::ActivationChange:
-		{
-			if (isActiveWindow())
-				emit m_display_widget->windowFocusEvent();
 		}
 		break;
 

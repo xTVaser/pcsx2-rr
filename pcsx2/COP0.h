@@ -13,11 +13,10 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __COP0_H__
-#define __COP0_H__
+#pragma once
 
-extern void __fastcall WriteCP0Status(u32 value);
-extern void __fastcall WriteCP0Config(u32 value);
+extern void WriteCP0Status(u32 value);
+extern void WriteCP0Config(u32 value);
 extern void cpuUpdateOperationMode();
 extern void WriteTLB(int i);
 extern void UnmapTLB(int i);
@@ -25,6 +24,3 @@ extern void MapTLB(int i);
 
 extern void COP0_UpdatePCCR();
 extern void COP0_DiagnosticPCCR();
-
-
-#endif /* __COP0_H__ */

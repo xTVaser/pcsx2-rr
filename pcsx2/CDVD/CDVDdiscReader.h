@@ -13,10 +13,7 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __CDVD_DISC_READER_H__
-#define __CDVD_DISC_READER_H__
-
-#include "IopCommon.h"
+#pragma once
 
 #if defined(_WIN32)
 #define NOMINMAX
@@ -102,4 +99,3 @@ s32 cdvdDirectReadSector(u32 sector, s32 mode, u8* buffer);
 s32 cdvdGetMediaType();
 s32 cdvdRefreshData();
 void cdvdParseTOC();
-#endif /* __CDVD_DISC_READER_H__ */
