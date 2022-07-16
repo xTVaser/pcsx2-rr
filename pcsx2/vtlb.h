@@ -112,6 +112,8 @@ extern void vtlb_DynGenWrite_Const( u32 bits, u32 addr_const );
 extern int  vtlb_DynGenRead64_Const( u32 bits, u32 addr_const, int gpr );
 extern void vtlb_DynGenRead32_Const( u32 bits, bool sign, u32 addr_const );
 
+extern uptr __fastcall vtlb_memGetPtr(u32 mem);
+
 // --------------------------------------------------------------------------------------
 //  VtlbMemoryReserve
 // --------------------------------------------------------------------------------------

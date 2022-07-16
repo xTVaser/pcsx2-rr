@@ -26,6 +26,8 @@
 #include "CDVD/CDVD.h"
 #include "ps2/BiosTools.h"
 
+#include "Jak/JakGoalDebugInspect.h"
+
 GS_VideoMode gsVideoMode = GS_VideoMode::Uninitialized;
 bool gsIsInterlaced = false;
 
@@ -569,6 +571,14 @@ void LW()
 	u32 temp = memRead32(addr);
 
 	if (!_Rt_) return;
+
+	// goal call
+	if (_Rt_ == GOAL_FUNCTION_REG)
+	{
+		//goalPushFunc(nullptr);
+		//Console.WriteLn("GOAL func push (function)");
+	}
+
 	cpuRegs.GPR.r[_Rt_].SD[0] = (s32)temp;
 }
 
@@ -582,6 +592,42 @@ void LWU()
 	u32 temp = memRead32(addr);
 
 	if (!_Rt_) return;
+
+	// goal method call
+	// TODO - gate this behind a config option
+	if (_Rt_ == GOAL_FUNCTION_REG)
+	{
+		const u32 method_id = (_Imm_ - 16) / 4;
+		if (method_id < 512)
+		{
+			std::string type_name = goalGetSymNameFromPtr(cpuRegs.GPR.r[_Rs_].UL[0]);
+			if (!type_name.empty())
+			{
+				g_goal_method_inspector.validateTypeMethods(type_name);
+				auto func = g_goal_method_inspector.getTypeMethod(type_name, method_id);
+				if (func == nullptr)
+				{
+					func = new GoalFuncInfo(temp);
+					g_goal_method_inspector.setTypeMethod(type_name, method_id, func);
+					if (method_id < 9)
+					{
+						Console.WriteLn("built-in method %s registered for %s", g_goal_method_inspector.goalMethodNames[method_id], type_name);
+					}
+					else
+					{
+						Console.WriteLn("method %u registered for %s", method_id, type_name);
+					}
+				}
+				else
+				{
+					func->func_ptr = temp;
+				}
+				g_goal_method_inspector.pushFunc(func);
+				//Console.WriteLn("GOAL func push (method)");
+			}
+		}
+	}
+
 	cpuRegs.GPR.r[_Rt_].UD[0] = temp;
 }
 

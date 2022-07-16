@@ -21,6 +21,7 @@
 #include "Common.h"
 #include "R5900OpcodeTables.h"
 #include "iR5900.h"
+#include <pcsx2/Jak/JakGoalDebugInspect.h>
 
 using namespace x86Emitter;
 
@@ -101,9 +102,23 @@ void recJALR()
 {
 	EE::Profiler.EmitOp(eeOpcode::JALR);
 
+	auto temp = cpuRegs.GPR.r[_Rs_].UL[0];
+
 	int newpc = pc + 4;
 	_allocX86reg(calleeSavedReg2d, X86TYPE_PCWRITEBACK, 0, MODE_WRITE);
 	_eeMoveGPRtoR(calleeSavedReg2d, _Rs_);
+
+	// Jak GOAL call
+	// TODO - put this behind a UI flag
+	if (_Rs_ == GOAL_FUNCTION_REG)
+	{
+		//Console.WriteLn("GOAL CALL TO #x%x", temp);
+		if (!g_goal_method_inspector.funcStackEmpty() && g_goal_method_inspector.peekFunc()->func_ptr == temp)
+		{
+			g_goal_method_inspector.analyzeFunc(g_goal_method_inspector.peekFunc());
+			g_goal_method_inspector.popFunc();
+		}
+	}
 
 	if (EmuConfig.Gamefixes.GoemonTlbHack)
 	{

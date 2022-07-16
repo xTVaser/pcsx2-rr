@@ -29,6 +29,10 @@
 **/x64/Release*
 **/x64/Debug*
 **/x64/Devel*
+**/x64-Release*
+**/x64-Debug*
+**/x64-Devel*
+**/bin/method_info*
 
 **/bin/PCSX2-linux.sh
 

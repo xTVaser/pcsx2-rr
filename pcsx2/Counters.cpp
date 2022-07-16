@@ -42,6 +42,7 @@
 #endif
 
 #include "Recording/InputRecordingControls.h"
+#include "Jak/JakGoalDebugInspect.h"
 
 using namespace Threading;
 
@@ -625,6 +626,12 @@ static __fi void VSyncStart(u32 sCycle)
 
 	if(EmuConfig.Trace.Enabled && EmuConfig.Trace.EE.m_EnableAll)
 		SysTrace.EE.Counters.Write( "    ================  EE COUNTER VSYNC START (frame: %d)  ================", g_FrameCount );
+
+	if (g_FrameCount % (60 * 1))
+	{
+		// TODO - flush GOAL methods every second
+		// Mutex to make this safe unlike before?
+	}
 
 	hwIntcIrq(INTC_VBLANK_S);
 	psxVBlankStart();
