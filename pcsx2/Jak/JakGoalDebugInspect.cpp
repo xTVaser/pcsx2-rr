@@ -4,12 +4,26 @@
 #include "Counters.h"
 #include <cstdio>
 #include <common/FileSystem.h>
+#include "fmt/core.h"
+#include "fmt/ranges.h"
+#include <pcsx2/Config.h>
 
 std::string goalGetSymName(u16 sym)
 {
 	const u32 addr = cpuRegs.GPR.r[GOAL_SYMTABLE_REG].UL[0] + (s16)sym;
-	auto name = (const char*)memGetPtr(memRead32(addr + 0xff38) + 4);
-	if (name == nullptr) {
+	auto name_addr = memRead32(addr + 0xff38);
+	if (name_addr == 0)
+	{
+		return "";
+	}
+	auto name = (const char*)memGetPtr(name_addr + 4);
+	if (name == nullptr)
+	{
+		return "";
+	}
+	// Detect bad data
+	if (name[0] < 33 || name[0] > 126)
+	{
 		return "";
 	}
 	return std::string(name);
@@ -139,7 +153,7 @@ void GOALMethodInspector::validateTypeMethods(std::string name)
 {
 	if (m_type_methods.find(name) == m_type_methods.end())
 	{
-		m_type_methods.insert_or_assign(name, new std::array<GoalFuncInfo*, 128>{nullptr});
+		m_type_methods.insert_or_assign(name, new std::array<GoalFuncInfo*, 512>{nullptr});
 	}
 }
 
@@ -155,58 +169,45 @@ void GOALMethodInspector::setTypeMethod(std::string name, u32 m, GoalFuncInfo* f
 
 void GOALMethodInspector::writeAllInfo()
 {
-	auto exec_path = FileSystem::GetProgramPath();
-	auto file = FileSystem::OpenCFile(fmt::format("{}/goal_method_info.json", exec_path).c_str(), "w+");
+	auto exec_path = EmuFolders::AppRoot;
+	auto file = FileSystem::OpenCFile(fmt::format("{}/goal_method_info.json", exec_path).c_str(), "a");
 	if (file == NULL)
 	{
 		return;
 	}
 	for (auto& type : m_type_methods)
 	{
-		fprintf(file, "[TYPE] %s\n", type.first);
-		for (int i = 0; i < 128; ++i)
+		for (int i = 0; i < 512; i++)
 		{
 			auto func = type.second->at(i);
 			if (func != nullptr)
 			{
-				auto fprintf_arg_func = [func, file](int arg) {
+				std::vector<std::string> arg_types;
+				for (int arg = 0; arg < 8; arg++)
+				{
 					if (func->arg_is_symbol[arg])
 					{
-						fprintf(file, "'%s", func->arg_types[arg]);
+						arg_types.push_back(fmt::format("\"'{}\"", func->arg_types[arg]));
 					}
 					else if (!func->arg_is_value[arg])
 					{
-						fprintf(file, "%s", func->arg_types[arg]);
+						arg_types.push_back(fmt::format("\"{}\"", func->arg_types[arg]));
 					}
 					else
 					{
 						if (func->arg_data[arg].hi == 0)
 						{
-							fprintf(file, "#x%x", func->arg_data[arg].lo);
+							arg_types.push_back(fmt::format("\"#x{:x}\"", func->arg_data[arg].lo));
 						}
 						else
 						{
-							fprintf(file, "#x%llx%llx", func->arg_data[arg].hi, func->arg_data[arg].lo);
+							arg_types.push_back(fmt::format("\"#x{:x}x{:x}x\"", func->arg_data[arg].hi, func->arg_data[arg].lo));
 						}
 					}
-				};
-				fprintf(file, "  [METHOD %3d] args est: %d (", i, func->arg_count_estimate);
-				fprintf_arg_func(0);
-				fprintf(file, ", ");
-				fprintf_arg_func(1);
-				fprintf(file, ", ");
-				fprintf_arg_func(2);
-				fprintf(file, ", ");
-				fprintf_arg_func(3);
-				fprintf(file, ", ");
-				fprintf_arg_func(4);
-				fprintf(file, ", ");
-				fprintf_arg_func(5);
-				fprintf(file, ", ");
-				fprintf_arg_func(6);
-				fprintf(file, ", ");
-				fprintf_arg_func(7);
-				fprintf(file, ")\n");
+				}
+				std::string entry = fmt::format("{{\"type_name\": \"{}\", \"method_id\": {}, \"arg_estimate\": {}, \"arg_types\": [{}]}},\n",
+					type.first, i, func->arg_count_estimate, fmt::join(arg_types, ","));
+				fprintf(file, entry.c_str());
 			}
 		}
 	}

@@ -572,13 +572,6 @@ void LW()
 
 	if (!_Rt_) return;
 
-	// goal call
-	if (_Rt_ == GOAL_FUNCTION_REG)
-	{
-		//goalPushFunc(nullptr);
-		//Console.WriteLn("GOAL func push (function)");
-	}
-
 	cpuRegs.GPR.r[_Rt_].SD[0] = (s32)temp;
 }
 
@@ -598,8 +591,11 @@ void LWU()
 	if (_Rt_ == GOAL_FUNCTION_REG)
 	{
 		const u32 method_id = (_Imm_ - 16) / 4;
-		if (method_id < 512)
+		// calls to the `delete` method seem to cause issues (can't find the symbol)
+		if (method_id != 1 && method_id < 512)
 		{
+			g_goal_method_inspector.m_lock.lock();
+			auto addr = cpuRegs.GPR.r[_Rs_].UL[0];
 			std::string type_name = goalGetSymNameFromPtr(cpuRegs.GPR.r[_Rs_].UL[0]);
 			if (!type_name.empty())
 			{
@@ -611,11 +607,13 @@ void LWU()
 					g_goal_method_inspector.setTypeMethod(type_name, method_id, func);
 					if (method_id < 9)
 					{
-						Console.WriteLn("built-in method %s registered for %s", g_goal_method_inspector.goalMethodNames[method_id], type_name);
+						auto msg = fmt::format("method {} registered for {}", g_goal_method_inspector.goalMethodNames[method_id], type_name);
+						Console.WriteLn(msg);
 					}
 					else
 					{
-						Console.WriteLn("method %u registered for %s", method_id, type_name);
+						auto msg = fmt::format("method {} registered for {}", method_id, type_name);
+						Console.WriteLn(msg);
 					}
 				}
 				else
@@ -625,6 +623,7 @@ void LWU()
 				g_goal_method_inspector.pushFunc(func);
 				//Console.WriteLn("GOAL func push (method)");
 			}
+			g_goal_method_inspector.m_lock.unlock();
 		}
 	}
 

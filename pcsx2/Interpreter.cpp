@@ -475,12 +475,14 @@ void JALR()
 	// TODO - put this behind a UI flag
 	if (_Rs_ == GOAL_FUNCTION_REG)
 	{
+		g_goal_method_inspector.m_lock.lock();
 		//Console.WriteLn("GOAL CALL TO #x%x", temp);
 		if (!g_goal_method_inspector.funcStackEmpty() && g_goal_method_inspector.peekFunc()->func_ptr == temp)
 		{
 			g_goal_method_inspector.analyzeFunc(g_goal_method_inspector.peekFunc());
 			g_goal_method_inspector.popFunc();
 		}
+		g_goal_method_inspector.m_lock.unlock();
 	}
 
 	doBranch(temp);

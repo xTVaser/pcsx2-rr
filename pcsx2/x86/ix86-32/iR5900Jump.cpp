@@ -21,7 +21,8 @@
 #include "Common.h"
 #include "R5900OpcodeTables.h"
 #include "iR5900.h"
-#include <pcsx2/Jak/JakGoalDebugInspect.h>
+
+#include "Jak/JakGoalDebugInspect.h"
 
 using namespace x86Emitter;
 
@@ -98,27 +99,37 @@ void recJR()
 }
 
 ////////////////////////////////////////////////////
+
+void GOALJumpToMethod(u32 value)
+{
+	g_goal_method_inspector.m_lock.lock();
+	if (!g_goal_method_inspector.funcStackEmpty() && g_goal_method_inspector.peekFunc()->func_ptr == value)
+	{
+		g_goal_method_inspector.analyzeFunc(g_goal_method_inspector.peekFunc());
+		g_goal_method_inspector.popFunc();
+	}
+	g_goal_method_inspector.m_lock.unlock();
+}
+
 void recJALR()
 {
 	EE::Profiler.EmitOp(eeOpcode::JALR);
 
-	auto temp = cpuRegs.GPR.r[_Rs_].UL[0];
+	if (_Rs_ == GOAL_FUNCTION_REG && GPR_IS_CONST1(_Rs_))
+	{
+		iFlushCall(FLUSH_INTERPRETER);
+		xFastCall((void*)GOALJumpToMethod, g_cpuConstRegs[_Rs_].UL[0]);
+	}
+	else
+	{
+		iFlushCall(FLUSH_INTERPRETER);
+		_eeMoveGPRtoR(ecx, _Rs_);
+		xFastCall((void*)GOALJumpToMethod, ecx);
+	}
 
 	int newpc = pc + 4;
 	_allocX86reg(calleeSavedReg2d, X86TYPE_PCWRITEBACK, 0, MODE_WRITE);
 	_eeMoveGPRtoR(calleeSavedReg2d, _Rs_);
-
-	// Jak GOAL call
-	// TODO - put this behind a UI flag
-	if (_Rs_ == GOAL_FUNCTION_REG)
-	{
-		//Console.WriteLn("GOAL CALL TO #x%x", temp);
-		if (!g_goal_method_inspector.funcStackEmpty() && g_goal_method_inspector.peekFunc()->func_ptr == temp)
-		{
-			g_goal_method_inspector.analyzeFunc(g_goal_method_inspector.peekFunc());
-			g_goal_method_inspector.popFunc();
-		}
-	}
 
 	if (EmuConfig.Gamefixes.GoemonTlbHack)
 	{

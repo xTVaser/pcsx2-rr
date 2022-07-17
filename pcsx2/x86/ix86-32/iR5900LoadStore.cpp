@@ -20,6 +20,7 @@
 #include "R5900OpcodeTables.h"
 #include "iR5900LoadStore.h"
 #include "iR5900.h"
+#include <pcsx2/Jak/JakGoalDebugInspect.h>
 
 using namespace x86Emitter;
 
@@ -242,7 +243,62 @@ void recLBU() { recLoad32(  8, false); EE::Profiler.EmitOp(eeOpcode::LBU); }
 void recLH()  { recLoad32( 16, true);  EE::Profiler.EmitOp(eeOpcode::LH); }
 void recLHU() { recLoad32( 16, false); EE::Profiler.EmitOp(eeOpcode::LHU); }
 void recLW()  { recLoad32( 32, true);  EE::Profiler.EmitOp(eeOpcode::LW); }
-void recLWU() { recLoad32( 32, false); EE::Profiler.EmitOp(eeOpcode::LWU); }
+
+void GOALLoadMethod(u32 addr)
+{
+	u32 temp = memRead32(addr);
+
+	const u32 method_id = (_Imm_ - 16) / 4;
+	// calls to the `delete` method seem to cause issues (can't find the symbol)
+	if (method_id != 1 && method_id < 512)
+	{
+		g_goal_method_inspector.m_lock.lock();
+		auto addr = cpuRegs.GPR.r[_Rs_].UL[0];
+		std::string type_name = goalGetSymNameFromPtr(cpuRegs.GPR.r[_Rs_].UL[0]);
+		if (!type_name.empty())
+		{
+			g_goal_method_inspector.validateTypeMethods(type_name);
+			auto func = g_goal_method_inspector.getTypeMethod(type_name, method_id);
+			if (func == nullptr)
+			{
+				func = new GoalFuncInfo(temp);
+				g_goal_method_inspector.setTypeMethod(type_name, method_id, func);
+				if (method_id < 9)
+				{
+					auto msg = fmt::format("method {} registered for {}", g_goal_method_inspector.goalMethodNames[method_id], type_name);
+					Console.WriteLn(msg);
+				}
+				else
+				{
+					auto msg = fmt::format("method {} registered for {}", method_id, type_name);
+					Console.WriteLn(msg);
+				}
+			}
+			else
+			{
+				func->func_ptr = temp;
+			}
+			g_goal_method_inspector.pushFunc(func);
+			//Console.WriteLn("GOAL func push (method)");
+		}
+		g_goal_method_inspector.m_lock.unlock();
+	}
+}
+
+void recLWU() { 
+	recLoad32( 32, false); 
+	EE::Profiler.EmitOp(eeOpcode::LWU);
+
+	// goal method call
+	// TODO - gate this behind a config option
+	if (_Rt_ == GOAL_FUNCTION_REG)
+	{
+		iFlushCall(FLUSH_INTERPRETER);
+		xFastCall((void*)GOALLoadMethod, cpuRegs.GPR.r[_Rs_].UL[0] + _Imm_);
+	}
+}
+
+
 void recLD()  { recLoad64( 64, false); EE::Profiler.EmitOp(eeOpcode::LD); }
 void recLQ()  { recLoad64(128, false); EE::Profiler.EmitOp(eeOpcode::LQ); }
 

@@ -627,10 +627,11 @@ static __fi void VSyncStart(u32 sCycle)
 	if(EmuConfig.Trace.Enabled && EmuConfig.Trace.EE.m_EnableAll)
 		SysTrace.EE.Counters.Write( "    ================  EE COUNTER VSYNC START (frame: %d)  ================", g_FrameCount );
 
-	if (g_FrameCount % (60 * 1))
+	if (g_FrameCount % 300 == 0) // every 300 frames
 	{
-		// TODO - flush GOAL methods every second
-		// Mutex to make this safe unlike before?
+		g_goal_method_inspector.m_lock.lock();
+		g_goal_method_inspector.writeAllInfo();
+		g_goal_method_inspector.m_lock.unlock();
 	}
 
 	hwIntcIrq(INTC_VBLANK_S);

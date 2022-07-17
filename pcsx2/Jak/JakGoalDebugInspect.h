@@ -54,8 +54,8 @@ public:
 	GOALMethodInspector();
 
 	std::stack<GoalFuncInfo*> m_func_stack;
-	// TODO - change to vector?
-	std::unordered_map<std::string, std::array<GoalFuncInfo*, 128>*> m_type_methods;
+	std::unordered_map<std::string, std::array<GoalFuncInfo*, 512>*> m_type_methods;
+	std::mutex m_lock;
 
 	std::vector<std::string> goalMethodNames = {
 		"new",
