@@ -538,6 +538,7 @@
     <ClInclude Include="HostSettings.h" />
     <ClInclude Include="IopGte.h" />
     <ClInclude Include="Jak\JakGoalDebugInspect.h" />
+    <ClInclude Include="Jak\json.hpp" />
     <ClInclude Include="PAD\Gamepad.h" />
     <ClInclude Include="PAD\Host\Global.h" />
     <ClInclude Include="PAD\Host\KeyStatus.h" />

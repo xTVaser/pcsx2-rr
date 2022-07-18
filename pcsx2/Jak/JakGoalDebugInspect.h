@@ -58,21 +58,29 @@ struct CallSignature
 
 struct GOALMethodOrFunction
 {
-	std::vector<CallSignature*> unique_signatures;
+	std::vector<CallSignature> unique_signatures;
 };
 
 
 class GOALMethodInspector
 {
 public:
-	// TODO - read in existing methods from json file
 	GOALMethodInspector();
+	~GOALMethodInspector();
 
-	std::stack<CallSignature*> m_func_call_stack;
+	std::stack<CallSignature> m_func_call_stack;
 
-	std::unordered_map<std::string, GOALMethodOrFunction*> m_function_calls;
-	std::unordered_map<std::string, std::unordered_map<int, GOALMethodOrFunction*>> m_type_methods;
+	std::unordered_map<std::string, GOALMethodOrFunction> m_function_calls;
+	std::unordered_map<std::string, std::unordered_map<int, GOALMethodOrFunction>> m_type_methods;
 	std::mutex m_lock;
+
+	// eliminates stutter on file write, not worried about accuracy / race conditions
+	// anything missed will be caught the next time (append only maps above!)
+	std::thread m_file_writer_thread;
+
+	// jak 2 for some reason needs +1 when resolving the symbol->string for functions
+	u32 m_function_name_addr_offset = 0;
+	u32 m_symbol_table_offset = 0xff38;
 
 	std::vector<std::string> goalMethodNames = {
 		"new",
@@ -88,12 +96,12 @@ public:
 	uint64_t unique_method_calls = 0;
 	uint64_t unique_function_calls = 0;
 
-	void pushCall(CallSignature* func);
+	void pushCall(CallSignature& func);
 	void popCall();
-	CallSignature* peekCall();
+	CallSignature peekCall();
 	bool callStackEmpty();
 
-	void analyzeCall(CallSignature* func, GOALMethodOrFunction* associated_type);
+	void analyzeCall(CallSignature& func, GOALMethodOrFunction& associated_type);
 
 	void writeAllInfo();
 };

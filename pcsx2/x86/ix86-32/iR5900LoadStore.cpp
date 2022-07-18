@@ -253,12 +253,11 @@ void GOALLoadFunction(u32 addr)
 	{
 		// See if we've encountered this function before
 		if (g_goal_method_inspector.m_function_calls.count(func_name) == 0) {
-			g_goal_method_inspector.m_function_calls[func_name] = new GOALMethodOrFunction();
+			g_goal_method_inspector.m_function_calls[func_name] = GOALMethodOrFunction();
 		}
 
-		auto func = g_goal_method_inspector.m_function_calls[func_name];
-		auto call = new CallSignature(temp, func_name, -1, CallType::FUNCTION);
-		g_goal_method_inspector.pushCall(call);
+		auto& func = g_goal_method_inspector.m_function_calls[func_name];
+		g_goal_method_inspector.pushCall(CallSignature(temp, func_name, -1, CallType::FUNCTION));
 	}
 	g_goal_method_inspector.m_lock.unlock();
 }
@@ -267,7 +266,7 @@ void recLW()
 { 
 	if (EmuConfig.EnableJakFunctionAnalysis)
 	{
-		if (_Rt_ == GOAL_FUNCTION_REG)
+		if (_Rt_ == GOAL_FUNCTION_REG && _Rs_ == GOAL_SYMTABLE_REG)
 		{
 			iFlushCall(FLUSH_INTERPRETER);
 			if (GPR_IS_CONST1(_Rs_))
@@ -307,12 +306,11 @@ void GOALLoadMethod(u32 addr)
 			// See if we've encountered this method before
 			if (g_goal_method_inspector.m_type_methods[type_name].count(method_id) == 0) {
 				// If not, make a new struct
-				g_goal_method_inspector.m_type_methods[type_name][method_id] = new GOALMethodOrFunction();
+				g_goal_method_inspector.m_type_methods[type_name][method_id] = GOALMethodOrFunction();
 			}
 
-			auto func = g_goal_method_inspector.m_type_methods[type_name][method_id];
-			auto call = new CallSignature(temp, type_name, method_id, CallType::METHOD);
-			g_goal_method_inspector.pushCall(call);
+			auto& func = g_goal_method_inspector.m_type_methods[type_name][method_id];
+			g_goal_method_inspector.pushCall(CallSignature(temp, type_name, method_id, CallType::METHOD));
 		}
 		g_goal_method_inspector.m_lock.unlock();
 	}

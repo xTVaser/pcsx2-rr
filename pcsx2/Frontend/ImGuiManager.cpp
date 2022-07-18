@@ -627,8 +627,8 @@ void ImGuiManager::DrawPerformanceOverlay()
 	if (EmuConfig.EnableJakFunctionAnalysis)
 	{
 		g_goal_method_inspector.m_lock.lock();
-		std::string jak_info = fmt::format("Jak Info - Types Tracked: {} | Method Calls: {} | Function Calls: {}",
-			g_goal_method_inspector.m_type_methods.size(), g_goal_method_inspector.unique_method_calls, g_goal_method_inspector.unique_function_calls);
+		std::string jak_info = fmt::format("Jak Info ({}|{}) - Types Tracked: {} | Method Calls: {} | Function Calls: {}",
+			g_goal_method_inspector.m_symbol_table_offset, g_goal_method_inspector.m_function_name_addr_offset, g_goal_method_inspector.m_type_methods.size(), g_goal_method_inspector.unique_method_calls, g_goal_method_inspector.unique_function_calls);
 		g_goal_method_inspector.m_lock.unlock();
 		DRAW_LINE(s_fixed_font, jak_info.c_str(), IM_COL32(255, 85, 0, 255));
 	}

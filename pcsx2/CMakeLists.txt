@@ -1519,6 +1519,9 @@ target_sources(PCSX2 PRIVATE
 	${pcsx2GSHeaders}
 	${pcsx2GSSources}
 	${pcsx2RecordingSources}
+	Jak/JakGoalDebugInspect.cpp
+	Jak/JakGoalDebugInspect.h
+	Jak/json.hpp
 	${pcsx2DebugToolsSources}
 	${pcsx2DebugToolsHeaders}
 	${pcsx2FrontendSources}
