@@ -18,6 +18,7 @@ constexpr int GOAL_SYMTABLE_REG = 23; // s7/r23
 constexpr int GOAL_FUNCTION_REG = 25; // t9/r25
 
 std::string goalGetSymName(u16 sym);
+std::string goalGetSymNameDirectly(u32 ptr);
 u16 goalGetSymFromPtr(u32 ptr);
 std::string goalGetSymNameFromPtr(u32 ptr);
 
@@ -28,7 +29,7 @@ enum class CallType {
 
 struct CallSignature
 {
-	std::string type_name;
+	std::string type_or_func_name;
 	int method_id;
 	u32 func_ptr;
 	CallType call_type;
@@ -41,8 +42,8 @@ struct CallSignature
 	bool arg_is_value[8];
 	std::string arg_types[8] = {};
 
-	CallSignature(u32 l_func_ptr, std::string& type_name, int method_id, CallType call_type)
-		: func_ptr(l_func_ptr), type_name(type_name), method_id(method_id), call_type(call_type)
+	CallSignature(u32 l_func_ptr, std::string& type_or_func_name, int method_id, CallType call_type)
+		: func_ptr(l_func_ptr), type_or_func_name(type_or_func_name), method_id(method_id), call_type(call_type)
 	{
 		reg_data[0] = cpuRegs.GPR.r[GOAL_FUNCARG0_REG].UQ;
 		reg_data[1] = cpuRegs.GPR.r[GOAL_FUNCARG1_REG].UQ;
@@ -69,7 +70,7 @@ public:
 
 	std::stack<CallSignature*> m_func_call_stack;
 
-	std::unordered_map<std::string, std::vector<GOALMethodOrFunction*>> m_function_calls;
+	std::unordered_map<std::string, GOALMethodOrFunction*> m_function_calls;
 	std::unordered_map<std::string, std::unordered_map<int, GOALMethodOrFunction*>> m_type_methods;
 	std::mutex m_lock;
 

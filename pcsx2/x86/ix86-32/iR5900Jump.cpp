@@ -100,15 +100,21 @@ void recJR()
 
 ////////////////////////////////////////////////////
 
-void GOALJumpToMethod(u32 value)
+void GOALJumpToMethodOrFunc(u32 value)
 {
 	g_goal_method_inspector.m_lock.lock();
 	if (!g_goal_method_inspector.m_func_call_stack.empty())
 	{
 		auto call = g_goal_method_inspector.peekCall();
 		if (call->func_ptr == value) {
-			auto type = g_goal_method_inspector.m_type_methods[call->type_name];
-			auto func = type[call->method_id];
+			GOALMethodOrFunction* func = nullptr;
+			if (call->call_type == CallType::METHOD) {
+				auto type = g_goal_method_inspector.m_type_methods[call->type_or_func_name];
+				func = type[call->method_id];
+			}
+			else {
+				func = g_goal_method_inspector.m_function_calls[call->type_or_func_name];
+			}
 			g_goal_method_inspector.analyzeCall(call, func);
 			g_goal_method_inspector.popCall();
 		}
@@ -127,12 +133,12 @@ void recJALR()
 			iFlushCall(FLUSH_INTERPRETER);
 			if (GPR_IS_CONST1(_Rs_))
 			{
-				xFastCall((void*)GOALJumpToMethod, g_cpuConstRegs[_Rs_].UL[0]);
+				xFastCall((void*)GOALJumpToMethodOrFunc, g_cpuConstRegs[_Rs_].UL[0]);
 			}
 			else
 			{
 				_eeMoveGPRtoR(ecx, _Rs_);
-				xFastCall((void*)GOALJumpToMethod, ecx);
+				xFastCall((void*)GOALJumpToMethodOrFunc, ecx);
 			}
 		}
 	}

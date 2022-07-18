@@ -248,24 +248,18 @@ void GOALLoadFunction(u32 addr)
 	u32 temp = memRead32(addr);
 
 	g_goal_method_inspector.m_lock.lock();
-	std::string type_name = goalGetSymNameFromPtr(addr);
-	//if (!type_name.empty())
-	//{
-	//	// See if we've encountered this type before and it's just a new method
-	//	if (g_goal_method_inspector.m_type_methods.count(type_name) == 0) {
-	//		g_goal_method_inspector.m_type_methods[type_name] = {};
-	//	}
+	std::string func_name = goalGetSymNameDirectly(addr);
+	if (!func_name.empty())
+	{
+		// See if we've encountered this function before
+		if (g_goal_method_inspector.m_function_calls.count(func_name) == 0) {
+			g_goal_method_inspector.m_function_calls[func_name] = new GOALMethodOrFunction();
+		}
 
-	//	// See if we've encountered this method before
-	//	if (g_goal_method_inspector.m_type_methods[type_name].count(method_id) == 0) {
-	//		// If not, make a new struct
-	//		g_goal_method_inspector.m_type_methods[type_name][method_id] = new GOALMethodOrFunction();
-	//	}
-
-	//	auto func = g_goal_method_inspector.m_type_methods[type_name][method_id];
-	//	auto call = new CallSignature(temp, type_name, method_id);
-	//	g_goal_method_inspector.pushCall(call);
-	//}
+		auto func = g_goal_method_inspector.m_function_calls[func_name];
+		auto call = new CallSignature(temp, func_name, -1, CallType::FUNCTION);
+		g_goal_method_inspector.pushCall(call);
+	}
 	g_goal_method_inspector.m_lock.unlock();
 }
 

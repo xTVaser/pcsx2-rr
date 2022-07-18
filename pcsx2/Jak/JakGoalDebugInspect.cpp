@@ -55,6 +55,33 @@ std::string goalGetSymName(u16 sym)
 	return std::string(name);
 }
 
+std::string goalGetSymNameDirectly(u32 ptr)
+{
+	if (ptr > 0x7A12000)
+	{ // beyond 128mb!
+		return "";
+	}
+	// TODO - use different offset for jak 2
+	const u32 symbol_name_table_addr = ptr + 0xff38;
+	auto symbol_name_addr = memRead32(symbol_name_table_addr);
+	// TODO - this might be skipping some stuff
+	if (symbol_name_addr == 0 || symbol_name_addr > 0x7A12000) // out of bounds!
+	{
+		return "";
+	}
+	auto name = (const char*)memGetPtr(symbol_name_addr + 4);
+	if (name == nullptr)
+	{
+		return "";
+	}
+	// Detect bad data
+	if (name[0] < 33 || name[0] > 126)
+	{
+		return "";
+	}
+	return std::string(name);
+}
+
 u16 goalGetSymFromPtr(u32 ptr)
 {
 	return (u16)(ptr - cpuRegs.GPR.r[GOAL_SYMTABLE_REG].UL[0]);
@@ -208,15 +235,24 @@ void GOALMethodInspector::analyzeCall(CallSignature* call, GOALMethodOrFunction*
 	}
 
 	associated_type->unique_signatures.push_back(call);
-	unique_method_calls++;
-	if (call->method_id < 9)
+	if (call->call_type == CallType::METHOD)
 	{
-		auto msg = fmt::format("method {} registered for {}", goalMethodNames[call->method_id], call->type_name);
-		Console.WriteLn(msg);
+		unique_method_calls++;
+		if (call->method_id < 9)
+		{
+			auto msg = fmt::format("JAK: method {} registered for '{}'", goalMethodNames[call->method_id], call->type_or_func_name);
+			Console.WriteLn(msg);
+		}
+		else
+		{
+			auto msg = fmt::format("JAK: method {} registered for '{}'", call->method_id, call->type_or_func_name);
+			Console.WriteLn(msg);
+		}
 	}
 	else
 	{
-		auto msg = fmt::format("method {} registered for {}", call->method_id, call->type_name);
+		unique_function_calls++;
+		auto msg = fmt::format("JAK: function '{}' registered", call->type_or_func_name);
 		Console.WriteLn(msg);
 	}
 }
