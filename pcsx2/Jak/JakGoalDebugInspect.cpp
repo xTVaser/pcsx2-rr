@@ -8,15 +8,41 @@
 #include "fmt/ranges.h"
 #include <pcsx2/Config.h>
 
+/*
+In Jak 1, the "true" symbol was located at s7 + 8, but in Jak 2 it's s7 + 4. 
+So there's some hard-coded 8's to clean up in places.  
+The s7 register always points to #f, and #t is always the symbol after that. 
+
+In Jak 2, symbols are only 4 bytes, so the offset is 4 now.
+*/
+
+/*
+Jak 1
+---- SYMBOL TABLE
+| ...
+| s7 - Address to the middle of the table
+| ...
+----
+---- SYMBOL NAME TABLE (with no additional symbols = s7 + 0xFF38)
+| ...
+|------ Entry (ie. profile-bar) = BASE_OF_TABLE + Symbol Index [ie. for a method call ((t9 - (MethodId * 16)) - s7)]
+| 4 bytes - string length
+| 4 bytes - string value ptr
+|------
+| ...
+|---- 147d24
+*/
 std::string goalGetSymName(u16 sym)
 {
-	const u32 addr = cpuRegs.GPR.r[GOAL_SYMTABLE_REG].UL[0] + (s16)sym;
-	auto name_addr = memRead32(addr + 0xff38);
-	if (name_addr == 0)
+	// TODO - use different offset for jak 2
+	const u32 symbol_name_table_addr = cpuRegs.GPR.r[GOAL_SYMTABLE_REG].UL[0] + 0xff38;
+	auto symbol_name_addr = memRead32(symbol_name_table_addr + (s16)sym);
+	// TODO - this might be skipping some stuff
+	if (symbol_name_addr == 0 || symbol_name_addr > 0x7A12000) // out of bounds!
 	{
 		return "";
 	}
-	auto name = (const char*)memGetPtr(name_addr + 4);
+	auto name = (const char*)memGetPtr(symbol_name_addr + 4);
 	if (name == nullptr)
 	{
 		return "";
@@ -29,13 +55,17 @@ std::string goalGetSymName(u16 sym)
 	return std::string(name);
 }
 
-u16 goalGetSymFromPtr(u32 ptr) noexcept(true)
+u16 goalGetSymFromPtr(u32 ptr)
 {
 	return (u16)(ptr - cpuRegs.GPR.r[GOAL_SYMTABLE_REG].UL[0]);
 }
 
 std::string goalGetSymNameFromPtr(u32 ptr)
 {
+	if (ptr > 0x7A12000)
+	{ // beyond 128mb!
+		return "";
+	}
 	return goalGetSymName(goalGetSymFromPtr(memRead32(ptr)));
 }
 
@@ -63,46 +93,51 @@ GOALMethodInspector::GOALMethodInspector()
 {
 }
 
-void GOALMethodInspector::pushFunc(GoalFuncInfo* func)
+void GOALMethodInspector::pushCall(CallSignature* call)
 {
-	m_func_stack.push(func);
+	m_func_call_stack.push(call);
 }
 
-void GOALMethodInspector::popFunc()
+void GOALMethodInspector::popCall()
 {
-	m_func_stack.pop();
+	m_func_call_stack.pop();
 }
 
-GoalFuncInfo* GOALMethodInspector::peekFunc()
+CallSignature* GOALMethodInspector::peekCall()
 {
-	return m_func_stack.top();
+	return m_func_call_stack.top();
 }
 
-bool GOALMethodInspector::funcStackEmpty()
+bool GOALMethodInspector::callStackEmpty()
 {
-	return m_func_stack.empty();
+	return m_func_call_stack.empty();
 }
 
-void GOALMethodInspector::analyzeFunc(GoalFuncInfo* func)
+// TODO - can probably speed up a lot of this by initializing a map of all symbols
+// and their addresses, instead of doing a lookup everytime we find a call
+
+void GOALMethodInspector::analyzeCall(CallSignature* call, GOALMethodOrFunction* associated_type)
 {
-	func->arg_count_estimate = 0;
-	func->reg_changed = 0;
-	func->arg_data[0] = cpuRegs.GPR.r[GOAL_FUNCARG0_REG].UQ;
-	func->arg_data[1] = cpuRegs.GPR.r[GOAL_FUNCARG1_REG].UQ;
-	func->arg_data[2] = cpuRegs.GPR.r[GOAL_FUNCARG2_REG].UQ;
-	func->arg_data[3] = cpuRegs.GPR.r[GOAL_FUNCARG3_REG].UQ;
-	func->arg_data[4] = cpuRegs.GPR.r[GOAL_FUNCARG4_REG].UQ;
-	func->arg_data[5] = cpuRegs.GPR.r[GOAL_FUNCARG5_REG].UQ;
-	func->arg_data[6] = cpuRegs.GPR.r[GOAL_FUNCARG6_REG].UQ;
-	func->arg_data[7] = cpuRegs.GPR.r[GOAL_FUNCARG7_REG].UQ;
+	call->arg_count_estimate = 0;
+	call->reg_changed = 0;
+	call->arg_data[0] = cpuRegs.GPR.r[GOAL_FUNCARG0_REG].UQ;
+	call->arg_data[1] = cpuRegs.GPR.r[GOAL_FUNCARG1_REG].UQ;
+	call->arg_data[2] = cpuRegs.GPR.r[GOAL_FUNCARG2_REG].UQ;
+	call->arg_data[3] = cpuRegs.GPR.r[GOAL_FUNCARG3_REG].UQ;
+	call->arg_data[4] = cpuRegs.GPR.r[GOAL_FUNCARG4_REG].UQ;
+	call->arg_data[5] = cpuRegs.GPR.r[GOAL_FUNCARG5_REG].UQ;
+	call->arg_data[6] = cpuRegs.GPR.r[GOAL_FUNCARG6_REG].UQ;
+	call->arg_data[7] = cpuRegs.GPR.r[GOAL_FUNCARG7_REG].UQ;
 
 	for (int i = 0; i < 8; ++i)
 	{
-		if (func->arg_data[i] != func->reg_data[i])
+		if (call->arg_data[i] != call->reg_data[i])
 		{
-			func->reg_changed |= 1 << i;
-			if (i + 1 > func->arg_count_estimate)
-				func->arg_count_estimate = i + 1;
+			call->reg_changed |= 1 << i;
+			if (i + 1 > call->arg_count_estimate)
+			{
+				call->arg_count_estimate = i + 1;
+			}
 		}
 	}
 
@@ -123,53 +158,72 @@ void GOALMethodInspector::analyzeFunc(GoalFuncInfo* func)
 
 	for (int i = 0; i < 8; ++i)
 	{
-		func->arg_types[i] = "(not-basic)";
-		func->arg_is_symbol[i] = false;
-		func->arg_is_value[i] = true;
-		if (func->arg_data[i].hi == 0)
+		call->arg_types[i] = "(not-basic)";
+		call->arg_is_symbol[i] = false;
+		call->arg_is_value[i] = true;
+		if (call->arg_data[i].hi == 0)
 		{
-			u64 ref = i == 0 ? func->arg_data[i]._u32[0] : func->arg_data[i].lo;
+			u64 ref = i == 0 ? call->arg_data[i]._u32[0] : call->arg_data[i].lo;
 			if (ref >= symTableFull && ref < symTableEnd)
 			{
 				auto symbol_name = goalGetSymName(ref - cpuRegs.GPR.r[GOAL_SYMTABLE_REG].UL[0]);
-				func->arg_is_symbol[i] = true;
-				func->arg_is_value[i] = false;
-				func->arg_types[i] = symbol_name;
+				if (!symbol_name.empty())
+				{
+					call->arg_is_symbol[i] = true;
+					call->arg_is_value[i] = false;
+					call->arg_types[i] = symbol_name;
+				}
 			}
 			else if ((ref & 0b111) == 4 && ref >= symTableFull && ref < 0x2000000)
 			{
 				u32 type_ptr = memRead32(ref - 4);
 				if (typeLookupFunc(type_ptr))
 				{
-					func->arg_types[i] = goalGetSymNameFromPtr(type_ptr);
+					auto symbol_name = goalGetSymNameFromPtr(type_ptr);
+					if (!symbol_name.empty())
+					{
+						call->arg_types[i] = symbol_name;
+					}
 				}
-				func->arg_is_value[i] = false;
+				call->arg_is_value[i] = false;
 			}
 		}
 	}
-}
-
-void GOALMethodInspector::validateTypeMethods(std::string name)
-{
-	if (m_type_methods.find(name) == m_type_methods.end())
+	// Check to see if we've already found this signature before
+	for (const auto& unique_sig : associated_type->unique_signatures)
 	{
-		m_type_methods.insert_or_assign(name, new std::array<GoalFuncInfo*, 512>{nullptr});
+		bool sameSig = true;
+		for (int i = 0; i < 8; i++)
+		{
+			if (call->arg_types[i] != unique_sig->arg_types[i])
+			{
+				sameSig = false;
+				break;
+			}
+		}
+		if (sameSig)
+		{
+			return;
+		}
 	}
-}
 
-GoalFuncInfo* GOALMethodInspector::getTypeMethod(std::string name, u32 m)
-{
-	return m_type_methods.at(name)->at(m);
-}
-
-void GOALMethodInspector::setTypeMethod(std::string name, u32 m, GoalFuncInfo* func)
-{
-	m_type_methods.at(name)->at(m) = func;
+	associated_type->unique_signatures.push_back(call);
+	unique_method_calls++;
+	if (call->method_id < 9)
+	{
+		auto msg = fmt::format("method {} registered for {}", goalMethodNames[call->method_id], call->type_name);
+		Console.WriteLn(msg);
+	}
+	else
+	{
+		auto msg = fmt::format("method {} registered for {}", call->method_id, call->type_name);
+		Console.WriteLn(msg);
+	}
 }
 
 void GOALMethodInspector::writeAllInfo()
 {
-	auto exec_path = EmuFolders::AppRoot;
+	/*auto exec_path = EmuFolders::AppRoot;
 	auto file = FileSystem::OpenCFile(fmt::format("{}/goal_method_info.json", exec_path).c_str(), "a");
 	if (file == NULL)
 	{
@@ -211,5 +265,5 @@ void GOALMethodInspector::writeAllInfo()
 			}
 		}
 	}
-	fclose(file);
+	fclose(file);*/
 }

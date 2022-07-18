@@ -103,10 +103,15 @@ void recJR()
 void GOALJumpToMethod(u32 value)
 {
 	g_goal_method_inspector.m_lock.lock();
-	if (!g_goal_method_inspector.funcStackEmpty() && g_goal_method_inspector.peekFunc()->func_ptr == value)
+	if (!g_goal_method_inspector.m_func_call_stack.empty())
 	{
-		g_goal_method_inspector.analyzeFunc(g_goal_method_inspector.peekFunc());
-		g_goal_method_inspector.popFunc();
+		auto call = g_goal_method_inspector.peekCall();
+		if (call->func_ptr == value) {
+			auto type = g_goal_method_inspector.m_type_methods[call->type_name];
+			auto func = type[call->method_id];
+			g_goal_method_inspector.analyzeCall(call, func);
+			g_goal_method_inspector.popCall();
+		}
 	}
 	g_goal_method_inspector.m_lock.unlock();
 }
@@ -115,16 +120,21 @@ void recJALR()
 {
 	EE::Profiler.EmitOp(eeOpcode::JALR);
 
-	if (_Rs_ == GOAL_FUNCTION_REG && GPR_IS_CONST1(_Rs_))
+	if (EmuConfig.EnableJakFunctionAnalysis)
 	{
-		iFlushCall(FLUSH_INTERPRETER);
-		xFastCall((void*)GOALJumpToMethod, g_cpuConstRegs[_Rs_].UL[0]);
-	}
-	else
-	{
-		iFlushCall(FLUSH_INTERPRETER);
-		_eeMoveGPRtoR(ecx, _Rs_);
-		xFastCall((void*)GOALJumpToMethod, ecx);
+		if (_Rs_ == GOAL_FUNCTION_REG)
+		{
+			iFlushCall(FLUSH_INTERPRETER);
+			if (GPR_IS_CONST1(_Rs_))
+			{
+				xFastCall((void*)GOALJumpToMethod, g_cpuConstRegs[_Rs_].UL[0]);
+			}
+			else
+			{
+				_eeMoveGPRtoR(ecx, _Rs_);
+				xFastCall((void*)GOALJumpToMethod, ecx);
+			}
+		}
 	}
 
 	int newpc = pc + 4;

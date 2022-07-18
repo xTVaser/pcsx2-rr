@@ -586,47 +586,6 @@ void LWU()
 
 	if (!_Rt_) return;
 
-	// goal method call
-	// TODO - gate this behind a config option
-	if (_Rt_ == GOAL_FUNCTION_REG)
-	{
-		const u32 method_id = (_Imm_ - 16) / 4;
-		// calls to the `delete` method seem to cause issues (can't find the symbol)
-		if (method_id != 1 && method_id < 512)
-		{
-			g_goal_method_inspector.m_lock.lock();
-			auto addr = cpuRegs.GPR.r[_Rs_].UL[0];
-			std::string type_name = goalGetSymNameFromPtr(cpuRegs.GPR.r[_Rs_].UL[0]);
-			if (!type_name.empty())
-			{
-				g_goal_method_inspector.validateTypeMethods(type_name);
-				auto func = g_goal_method_inspector.getTypeMethod(type_name, method_id);
-				if (func == nullptr)
-				{
-					func = new GoalFuncInfo(temp);
-					g_goal_method_inspector.setTypeMethod(type_name, method_id, func);
-					if (method_id < 9)
-					{
-						auto msg = fmt::format("method {} registered for {}", g_goal_method_inspector.goalMethodNames[method_id], type_name);
-						Console.WriteLn(msg);
-					}
-					else
-					{
-						auto msg = fmt::format("method {} registered for {}", method_id, type_name);
-						Console.WriteLn(msg);
-					}
-				}
-				else
-				{
-					func->func_ptr = temp;
-				}
-				g_goal_method_inspector.pushFunc(func);
-				//Console.WriteLn("GOAL func push (method)");
-			}
-			g_goal_method_inspector.m_lock.unlock();
-		}
-	}
-
 	cpuRegs.GPR.r[_Rt_].UD[0] = temp;
 }
 

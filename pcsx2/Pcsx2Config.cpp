@@ -1019,6 +1019,7 @@ Pcsx2Config::Pcsx2Config()
 	McdFolderAutoManage = true;
 	EnableCheats = true;
 	EnablePatches = true;
+	EnableJakFunctionAnalysis = false;
 	EnableRecordingTools = true;
 #ifdef PCSX2_CORE
 	EnableGameFixes = true;
@@ -1055,6 +1056,7 @@ void Pcsx2Config::LoadSave(SettingsWrapper& wrap)
 	SettingsWrapBitBool(EnablePINE);
 	SettingsWrapBitBool(EnableWideScreenPatches);
 	SettingsWrapBitBool(EnableNoInterlacingPatches);
+	SettingsWrapBitBool(EnableJakFunctionAnalysis);
 	SettingsWrapBitBool(EnableRecordingTools);
 #ifdef PCSX2_CORE
 	SettingsWrapBitBool(EnableGameFixes);
@@ -1207,6 +1209,7 @@ void Pcsx2Config::CopyConfig(const Pcsx2Config& cfg)
 	EnableCheats = cfg.EnableCheats;
 	EnablePINE = cfg.EnablePINE;
 	EnableWideScreenPatches = cfg.EnableWideScreenPatches;
+	EnableJakFunctionAnalysis = cfg.EnableJakFunctionAnalysis;
 	EnableNoInterlacingPatches = cfg.EnableNoInterlacingPatches;
 	EnableRecordingTools = cfg.EnableRecordingTools;
 	UseBOOT2Injection = cfg.UseBOOT2Injection;

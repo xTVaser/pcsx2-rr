@@ -242,7 +242,56 @@ void recLB()  { recLoad32(  8, true);  EE::Profiler.EmitOp(eeOpcode::LB); }
 void recLBU() { recLoad32(  8, false); EE::Profiler.EmitOp(eeOpcode::LBU); }
 void recLH()  { recLoad32( 16, true);  EE::Profiler.EmitOp(eeOpcode::LH); }
 void recLHU() { recLoad32( 16, false); EE::Profiler.EmitOp(eeOpcode::LHU); }
-void recLW()  { recLoad32( 32, true);  EE::Profiler.EmitOp(eeOpcode::LW); }
+
+void GOALLoadFunction(u32 addr)
+{
+	u32 temp = memRead32(addr);
+
+	g_goal_method_inspector.m_lock.lock();
+	std::string type_name = goalGetSymNameFromPtr(addr);
+	//if (!type_name.empty())
+	//{
+	//	// See if we've encountered this type before and it's just a new method
+	//	if (g_goal_method_inspector.m_type_methods.count(type_name) == 0) {
+	//		g_goal_method_inspector.m_type_methods[type_name] = {};
+	//	}
+
+	//	// See if we've encountered this method before
+	//	if (g_goal_method_inspector.m_type_methods[type_name].count(method_id) == 0) {
+	//		// If not, make a new struct
+	//		g_goal_method_inspector.m_type_methods[type_name][method_id] = new GOALMethodOrFunction();
+	//	}
+
+	//	auto func = g_goal_method_inspector.m_type_methods[type_name][method_id];
+	//	auto call = new CallSignature(temp, type_name, method_id);
+	//	g_goal_method_inspector.pushCall(call);
+	//}
+	g_goal_method_inspector.m_lock.unlock();
+}
+
+void recLW()
+{ 
+	if (EmuConfig.EnableJakFunctionAnalysis)
+	{
+		if (_Rt_ == GOAL_FUNCTION_REG)
+		{
+			iFlushCall(FLUSH_INTERPRETER);
+			if (GPR_IS_CONST1(_Rs_))
+			{
+				xMOV(ecx, g_cpuConstRegs[_Rs_].UL[0]);
+			}
+			else
+			{
+				_eeMoveGPRtoR(ecx, _Rs_);
+			}
+
+			xADD(ecx, _Imm_);
+			xFastCall((void*)GOALLoadFunction, ecx);
+		}
+	}
+	recLoad32( 32, true);  
+	EE::Profiler.EmitOp(eeOpcode::LW); 
+}
 
 void GOALLoadMethod(u32 addr)
 {
@@ -253,49 +302,50 @@ void GOALLoadMethod(u32 addr)
 	if (method_id != 1 && method_id < 512)
 	{
 		g_goal_method_inspector.m_lock.lock();
-		auto addr = cpuRegs.GPR.r[_Rs_].UL[0];
 		std::string type_name = goalGetSymNameFromPtr(cpuRegs.GPR.r[_Rs_].UL[0]);
 		if (!type_name.empty())
 		{
-			g_goal_method_inspector.validateTypeMethods(type_name);
-			auto func = g_goal_method_inspector.getTypeMethod(type_name, method_id);
-			if (func == nullptr)
-			{
-				func = new GoalFuncInfo(temp);
-				g_goal_method_inspector.setTypeMethod(type_name, method_id, func);
-				if (method_id < 9)
-				{
-					auto msg = fmt::format("method {} registered for {}", g_goal_method_inspector.goalMethodNames[method_id], type_name);
-					Console.WriteLn(msg);
-				}
-				else
-				{
-					auto msg = fmt::format("method {} registered for {}", method_id, type_name);
-					Console.WriteLn(msg);
-				}
+			// See if we've encountered this type before and it's just a new method
+			if (g_goal_method_inspector.m_type_methods.count(type_name) == 0) {
+				g_goal_method_inspector.m_type_methods[type_name] = {};
 			}
-			else
-			{
-				func->func_ptr = temp;
+
+			// See if we've encountered this method before
+			if (g_goal_method_inspector.m_type_methods[type_name].count(method_id) == 0) {
+				// If not, make a new struct
+				g_goal_method_inspector.m_type_methods[type_name][method_id] = new GOALMethodOrFunction();
 			}
-			g_goal_method_inspector.pushFunc(func);
-			//Console.WriteLn("GOAL func push (method)");
+
+			auto func = g_goal_method_inspector.m_type_methods[type_name][method_id];
+			auto call = new CallSignature(temp, type_name, method_id, CallType::METHOD);
+			g_goal_method_inspector.pushCall(call);
 		}
 		g_goal_method_inspector.m_lock.unlock();
 	}
 }
 
 void recLWU() { 
+	if (EmuConfig.EnableJakFunctionAnalysis)
+	{
+		if (_Rt_ == GOAL_FUNCTION_REG)
+		{
+			iFlushCall(FLUSH_INTERPRETER);
+			if (GPR_IS_CONST1(_Rs_))
+			{
+				xMOV(ecx, g_cpuConstRegs[_Rs_].UL[0]);
+			}
+			else
+			{
+				_eeMoveGPRtoR(ecx, _Rs_);
+			}
+
+			xADD(ecx, _Imm_);
+			xFastCall((void*)GOALLoadMethod, ecx);
+		}
+	}
+	
 	recLoad32( 32, false); 
 	EE::Profiler.EmitOp(eeOpcode::LWU);
-
-	// goal method call
-	// TODO - gate this behind a config option
-	if (_Rt_ == GOAL_FUNCTION_REG)
-	{
-		iFlushCall(FLUSH_INTERPRETER);
-		xFastCall((void*)GOALLoadMethod, cpuRegs.GPR.r[_Rs_].UL[0] + _Imm_);
-	}
 }
 
 

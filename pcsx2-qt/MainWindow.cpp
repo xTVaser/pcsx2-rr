@@ -309,6 +309,9 @@ void MainWindow::connectSignals()
 	SettingWidgetBinder::BindWidgetToBoolSetting(nullptr, m_ui.actionInputRecControllerLogs, "Logging", "EnableControllerLogs", false);
 	connect(m_ui.actionInputRecControllerLogs, &QAction::triggered, this, &MainWindow::onLoggingOptionChanged);
 
+	// Jak
+	SettingWidgetBinder::BindWidgetToBoolSetting(nullptr, m_ui.actionEnableJakFunctionAnalysis, "EmuCore", "EnableJakFunctionAnalysis", false);
+
 	// These need to be queued connections to stop crashing due to menus opening/closing and switching focus.
 	connect(m_game_list_widget, &GameListWidget::refreshProgress, this, &MainWindow::onGameListRefreshProgress);
 	connect(m_game_list_widget, &GameListWidget::refreshComplete, this, &MainWindow::onGameListRefreshComplete);

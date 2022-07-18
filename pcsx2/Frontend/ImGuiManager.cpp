@@ -590,6 +590,8 @@ void ImGuiManager::FormatProcessorStat(std::string& text, double usage, double t
 		fmt::format_to(std::back_inserter(text), "{:.1f}% ({:.2f}ms)", usage, time);
 }
 
+#include "Jak/JakGoalDebugInspect.h"
+
 void ImGuiManager::DrawPerformanceOverlay()
 {
 	const float scale = s_global_scale;
@@ -621,6 +623,15 @@ void ImGuiManager::DrawPerformanceOverlay()
 #else
 	constexpr bool paused = false;
 #endif
+
+	if (EmuConfig.EnableJakFunctionAnalysis)
+	{
+		g_goal_method_inspector.m_lock.lock();
+		std::string jak_info = fmt::format("Jak Info - Types Tracked: {} | Method Calls: {} | Function Calls: N/A",
+			g_goal_method_inspector.m_type_methods.size(), g_goal_method_inspector.unique_method_calls);
+		g_goal_method_inspector.m_lock.unlock();
+		DRAW_LINE(s_fixed_font, jak_info.c_str(), IM_COL32(255, 85, 0, 255));
+	}
 
 	if (!paused)
 	{
