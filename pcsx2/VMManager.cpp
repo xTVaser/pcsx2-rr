@@ -677,11 +677,13 @@ void VMManager::UpdateRunningGame(bool resetting, bool game_starting)
 		{
 			g_goal_method_inspector.m_function_name_addr_offset = 1;
 			g_goal_method_inspector.m_symbol_table_offset = 0xff37;
+			g_goal_method_inspector.m_symbol_width = 4;
 		}
 		else
 		{
 			g_goal_method_inspector.m_function_name_addr_offset = 0;
 			g_goal_method_inspector.m_symbol_table_offset = 0xff38;
+			g_goal_method_inspector.m_symbol_width = 8;
 		}
 	}
 	Host::OnGameChanged(s_disc_path, s_game_serial, s_game_name, s_game_crc);

@@ -100,7 +100,7 @@ uptr goalGetSymValFromName(const char* name)
 {
 	uptr symTableFull = cpuRegs.GPR.r[GOAL_SYMTABLE_REG].UL[0] - 0x8000;
 
-	for (auto s = symTableFull; s < symTableFull + g_goal_method_inspector.m_symbol_table_offset; s += 8)
+	for (auto s = symTableFull; s < symTableFull + g_goal_method_inspector.m_symbol_table_offset; s += g_goal_method_inspector.m_symbol_width)
 	{
 		u32 sym_name_ptr = memRead32(s + g_goal_method_inspector.m_symbol_table_offset);
 		if (sym_name_ptr == 0)
@@ -137,7 +137,7 @@ GOALMethodInspector::~GOALMethodInspector()
 	}
 }
 
-void GOALMethodInspector::pushCall(CallSignature& call)
+void GOALMethodInspector::pushCall(const CallSignature& call)
 {
 	m_func_call_stack.push(call);
 }
@@ -276,7 +276,6 @@ void GOALMethodInspector::analyzeCall(CallSignature& call, GOALMethodOrFunction&
 
 void GOALMethodInspector::writeAllInfo()
 {
-	return;
 	if (m_file_writer_thread.joinable())
 	{
 		m_file_writer_thread.join();

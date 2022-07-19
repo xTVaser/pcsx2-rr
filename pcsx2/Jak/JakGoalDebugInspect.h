@@ -81,6 +81,7 @@ public:
 	// jak 2 for some reason needs +1 when resolving the symbol->string for functions
 	u32 m_function_name_addr_offset = 0;
 	u32 m_symbol_table_offset = 0xff38;
+	int m_symbol_width = 8;
 
 	std::vector<std::string> goalMethodNames = {
 		"new",
@@ -96,7 +97,7 @@ public:
 	uint64_t unique_method_calls = 0;
 	uint64_t unique_function_calls = 0;
 
-	void pushCall(CallSignature& func);
+	void pushCall(const CallSignature& func);
 	void popCall();
 	CallSignature peekCall();
 	bool callStackEmpty();
