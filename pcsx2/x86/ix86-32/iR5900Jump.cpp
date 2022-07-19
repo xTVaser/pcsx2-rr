@@ -105,17 +105,8 @@ void GOALJumpToMethodOrFunc(u32 value)
 	g_goal_method_inspector.m_lock.lock();
 	if (!g_goal_method_inspector.m_func_call_stack.empty())
 	{
-		auto& call = g_goal_method_inspector.peekCall();
-		if (call.func_ptr == value) {
-			GOALMethodOrFunction* func;
-			if (call.call_type == CallType::METHOD) {
-				auto& type = g_goal_method_inspector.m_type_methods[call.type_or_func_name];
-				func = &type[call.method_id];
-			}
-			else {
-				func = &g_goal_method_inspector.m_function_calls[call.type_or_func_name];
-			}
-			g_goal_method_inspector.analyzeCall(call, *func);
+		auto should_pop = g_goal_method_inspector.analyzeCall(value);
+		if (should_pop) {
 			g_goal_method_inspector.popCall();
 		}
 	}

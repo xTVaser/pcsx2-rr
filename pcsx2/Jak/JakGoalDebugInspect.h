@@ -99,10 +99,10 @@ public:
 
 	void pushCall(const CallSignature& func);
 	void popCall();
-	CallSignature peekCall();
+	CallSignature& peekCall();
 	bool callStackEmpty();
 
-	void analyzeCall(CallSignature& func, GOALMethodOrFunction& associated_type);
+	bool analyzeCall(u32 value);
 
 	void writeAllInfo();
 };

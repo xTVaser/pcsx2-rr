@@ -147,7 +147,7 @@ void GOALMethodInspector::popCall()
 	m_func_call_stack.pop();
 }
 
-CallSignature GOALMethodInspector::peekCall()
+CallSignature& GOALMethodInspector::peekCall()
 {
 	return m_func_call_stack.top();
 }
@@ -160,8 +160,17 @@ bool GOALMethodInspector::callStackEmpty()
 // TODO - can probably speed up a lot of this by initializing a map of all symbols
 // and their addresses, instead of doing a lookup everytime we find a call
 
-void GOALMethodInspector::analyzeCall(CallSignature& call, GOALMethodOrFunction& associated_type)
+bool GOALMethodInspector::analyzeCall(u32 value)
 {
+	auto& call = peekCall();
+	GOALMethodOrFunction& associated_type =
+		call.call_type == CallType::METHOD ? g_goal_method_inspector.m_type_methods[call.type_or_func_name][call.method_id] :
+											 g_goal_method_inspector.m_function_calls[call.type_or_func_name];
+	if (call.func_ptr != value)
+	{
+		return false;
+	}
+
 	call.arg_count_estimate = 0;
 	call.reg_changed = 0;
 	call.arg_data[0] = cpuRegs.GPR.r[GOAL_FUNCARG0_REG].UQ;
@@ -187,7 +196,7 @@ void GOALMethodInspector::analyzeCall(CallSignature& call, GOALMethodOrFunction&
 
 	uptr symTableFull = cpuRegs.GPR.r[GOAL_SYMTABLE_REG].UL[0] - 0x8000;
 	uptr symTableEnd = symTableFull + g_goal_method_inspector.m_symbol_table_offset;
-	auto typeLookupFunc = [symTableFull](u32 ptr) {
+	auto typeLookupFunc = [symTableFull](u32 ptr, int symbol_width) {
 		if ((ptr & 0b111) != 4)
 			return false;
 		uptr s = symTableFull;
@@ -195,7 +204,7 @@ void GOALMethodInspector::analyzeCall(CallSignature& call, GOALMethodOrFunction&
 		{
 			if (memRead32(s) == ptr)
 				return true;
-			s += 8;
+			s += symbol_width;
 		}
 		return false;
 	};
@@ -221,7 +230,7 @@ void GOALMethodInspector::analyzeCall(CallSignature& call, GOALMethodOrFunction&
 			else if ((ref & 0b111) == 4 && ref >= symTableFull && ref < 0x2000000)
 			{
 				u32 type_ptr = memRead32(ref - 4);
-				if (typeLookupFunc(type_ptr))
+				if (typeLookupFunc(type_ptr, m_symbol_width))
 				{
 					auto symbol_name = goalGetSymNameFromPtr(type_ptr);
 					if (!symbol_name.empty())
@@ -247,7 +256,7 @@ void GOALMethodInspector::analyzeCall(CallSignature& call, GOALMethodOrFunction&
 		}
 		if (sameSig)
 		{
-			return;
+			return true;
 		}
 	}
 
@@ -272,6 +281,7 @@ void GOALMethodInspector::analyzeCall(CallSignature& call, GOALMethodOrFunction&
 		auto msg = fmt::format("JAK: function '{}' registered", call.type_or_func_name);
 		Console.WriteLn(msg);
 	}
+	return true;
 }
 
 void GOALMethodInspector::writeAllInfo()
