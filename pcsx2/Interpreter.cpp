@@ -31,6 +31,8 @@
 
 #include <float.h>
 
+#include "Jak/JakGoalDebugInspect.h"
+
 using namespace R5900;		// for OPCODE and OpcodeImpl
 
 extern int vu0branch, vu1branch;

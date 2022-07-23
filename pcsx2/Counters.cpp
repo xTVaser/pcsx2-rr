@@ -42,6 +42,7 @@
 #endif
 
 #include "Recording/InputRecordingControls.h"
+#include "Jak/JakGoalDebugInspect.h"
 
 using namespace Threading;
 
@@ -625,6 +626,13 @@ static __fi void VSyncStart(u32 sCycle)
 
 	if(EmuConfig.Trace.Enabled && EmuConfig.Trace.EE.m_EnableAll)
 		SysTrace.EE.Counters.Write( "    ================  EE COUNTER VSYNC START (frame: %d)  ================", g_FrameCount );
+
+	if (EmuConfig.EnableJakFunctionAnalysis && g_FrameCount % 300 == 0) // every 300 frames
+	{
+		g_goal_method_inspector.m_lock.lock();
+		g_goal_method_inspector.writeAllInfo();
+		g_goal_method_inspector.m_lock.unlock();
+	}
 
 	hwIntcIrq(INTC_VBLANK_S);
 	psxVBlankStart();

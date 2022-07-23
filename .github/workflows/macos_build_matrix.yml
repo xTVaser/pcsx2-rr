@@ -7,15 +7,9 @@ on:
   pull_request:
     branches:
       - master
+      - 128mb-build
 
 jobs:
-  build_macos_wx:
-    name: "Defaults"
-    uses: ./.github/workflows/macos_build.yml
-    with:
-      jobName: "wxWidgets"
-      gui: "wxWidgets"
-    secrets: inherit
   build_macos_qt:
     name: "Defaults"
     uses: ./.github/workflows/macos_build.yml

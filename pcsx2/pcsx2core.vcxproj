@@ -218,6 +218,7 @@
     <ClCompile Include="HostDisplay.cpp" />
     <ClCompile Include="HostSettings.cpp" />
     <ClCompile Include="IopGte.cpp" />
+    <ClCompile Include="Jak\JakGoalDebugInspect.cpp" />
     <ClCompile Include="PAD\Host\KeyStatus.cpp" />
     <ClCompile Include="PAD\Host\PAD.cpp" />
     <ClCompile Include="PAD\Host\StateManagement.cpp" />
@@ -536,6 +537,8 @@
     <ClInclude Include="HostDisplay.h" />
     <ClInclude Include="HostSettings.h" />
     <ClInclude Include="IopGte.h" />
+    <ClInclude Include="Jak\JakGoalDebugInspect.h" />
+    <ClInclude Include="Jak\json.hpp" />
     <ClInclude Include="PAD\Gamepad.h" />
     <ClInclude Include="PAD\Host\Global.h" />
     <ClInclude Include="PAD\Host\KeyStatus.h" />

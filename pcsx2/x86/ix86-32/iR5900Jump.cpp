@@ -22,6 +22,8 @@
 #include "R5900OpcodeTables.h"
 #include "iR5900.h"
 
+#include "Jak/JakGoalDebugInspect.h"
+
 using namespace x86Emitter;
 
 namespace R5900 {
@@ -97,9 +99,40 @@ void recJR()
 }
 
 ////////////////////////////////////////////////////
+
+void GOALJumpToMethodOrFunc(u32 value)
+{
+	g_goal_method_inspector.m_lock.lock();
+	if (!g_goal_method_inspector.m_func_call_stack.empty())
+	{
+		auto should_pop = g_goal_method_inspector.analyzeCall(value);
+		if (should_pop) {
+			g_goal_method_inspector.popCall();
+		}
+	}
+	g_goal_method_inspector.m_lock.unlock();
+}
+
 void recJALR()
 {
 	EE::Profiler.EmitOp(eeOpcode::JALR);
+
+	if (EmuConfig.EnableJakFunctionAnalysis)
+	{
+		if (_Rs_ == GOAL_FUNCTION_REG)
+		{
+			iFlushCall(FLUSH_INTERPRETER);
+			if (GPR_IS_CONST1(_Rs_))
+			{
+				xFastCall((void*)GOALJumpToMethodOrFunc, g_cpuConstRegs[_Rs_].UL[0]);
+			}
+			else
+			{
+				_eeMoveGPRtoR(ecx, _Rs_);
+				xFastCall((void*)GOALJumpToMethodOrFunc, ecx);
+			}
+		}
+	}
 
 	int newpc = pc + 4;
 	_allocX86reg(calleeSavedReg2d, X86TYPE_PCWRITEBACK, 0, MODE_WRITE);

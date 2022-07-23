@@ -22,7 +22,7 @@
      <x>0</x>
      <y>0</y>
      <width>950</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSystem">
@@ -191,6 +191,8 @@
     </widget>
     <addaction name="actionOpenDataDirectory"/>
     <addaction name="menuInput_Recording"/>
+    <addaction name="separator"/>
+    <addaction name="actionEnableJakFunctionAnalysis"/>
    </widget>
    <addaction name="menuSystem"/>
    <addaction name="menuSettings"/>
@@ -826,6 +828,14 @@
    </property>
    <property name="text">
     <string>Enable Log Timestamps</string>
+   </property>
+  </action>
+  <action name="actionEnableJakFunctionAnalysis">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enable Jak Function Analysis</string>
    </property>
   </action>
  </widget>

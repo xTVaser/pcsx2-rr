@@ -68,6 +68,8 @@
 #include "common/RedtapeWindows.h"
 #endif
 
+#include "Jak/JakGoalDebugInspect.h"
+
 namespace VMManager
 {
 	static void LoadSettings();
@@ -354,7 +356,7 @@ std::string VMManager::GetGameSettingsPath(const std::string_view& game_serial, 
 
 	return game_serial.empty() ?
 			   Path::Combine(EmuFolders::GameSettings, fmt::format("{:08X}.ini", game_crc)) :
-               Path::Combine(EmuFolders::GameSettings, fmt::format("{}_{:08X}.ini", sanitized_serial, game_crc));
+			   Path::Combine(EmuFolders::GameSettings, fmt::format("{}_{:08X}.ini", sanitized_serial, game_crc));
 }
 
 std::string VMManager::GetInputProfilePath(const std::string_view& name)
@@ -668,6 +670,22 @@ void VMManager::UpdateRunningGame(bool resetting, bool game_starting)
 
 	GetMTGS().SendGameCRC(new_crc);
 
+	if (EmuConfig.EnableJakFunctionAnalysis)
+	{
+		// NTSC versions only
+		if (s_game_serial == "SCUS-97265") // jak 2
+		{
+			g_goal_method_inspector.m_function_name_addr_offset = 1;
+			g_goal_method_inspector.m_symbol_table_offset = 0xff37;
+			g_goal_method_inspector.m_symbol_width = 4;
+		}
+		else
+		{
+			g_goal_method_inspector.m_function_name_addr_offset = 0;
+			g_goal_method_inspector.m_symbol_table_offset = 0xff38;
+			g_goal_method_inspector.m_symbol_width = 8;
+		}
+	}
 	Host::OnGameChanged(s_disc_path, s_game_serial, s_game_name, s_game_crc);
 
 #if 0
@@ -801,9 +819,9 @@ bool VMManager::CheckBIOSAvailability()
 	// TODO: When we translate core strings, translate this.
 
 	const char* message = "PCSX2 requires a PS2 BIOS in order to run.\n\n"
-		"For legal reasons, you *must* obtain a BIOS from an actual PS2 unit that you own (borrowing doesn't count).\n\n"
-		"Once dumped, this BIOS image should be placed in the bios folder within the data directory (Tools Menu -> Open Data Directory).\n\n"
-		"Please consult the FAQs and Guides for further instructions.";
+						  "For legal reasons, you *must* obtain a BIOS from an actual PS2 unit that you own (borrowing doesn't count).\n\n"
+						  "Once dumped, this BIOS image should be placed in the bios folder within the data directory (Tools Menu -> Open Data Directory).\n\n"
+						  "Please consult the FAQs and Guides for further instructions.";
 
 	Host::ReportErrorAsync("Startup Error", message);
 	return false;
@@ -1725,8 +1743,8 @@ DEFINE_HOTKEY("ToggleFrameLimit", "System", "Toggle Frame Limit", [](s32 pressed
 	if (!pressed)
 	{
 		VMManager::SetLimiterMode((EmuConfig.LimiterMode != LimiterModeType::Unlimited) ?
-                                      LimiterModeType::Unlimited :
-                                      LimiterModeType::Nominal);
+									  LimiterModeType::Unlimited :
+									  LimiterModeType::Nominal);
 	}
 })
 DEFINE_HOTKEY("ToggleTurbo", "System", "Toggle Turbo", [](s32 pressed) {
@@ -1734,7 +1752,7 @@ DEFINE_HOTKEY("ToggleTurbo", "System", "Toggle Turbo", [](s32 pressed) {
 	{
 		VMManager::SetLimiterMode((EmuConfig.LimiterMode != LimiterModeType::Turbo) ?
 									  LimiterModeType::Turbo :
-                                      LimiterModeType::Nominal);
+									  LimiterModeType::Nominal);
 	}
 })
 DEFINE_HOTKEY("HoldTurbo", "System", "Turbo (Hold)", [](s32 pressed) {
@@ -1742,8 +1760,8 @@ DEFINE_HOTKEY("HoldTurbo", "System", "Turbo (Hold)", [](s32 pressed) {
 	{
 		s_limiter_mode_prior_to_hold_interaction = VMManager::GetLimiterMode();
 		VMManager::SetLimiterMode((s_limiter_mode_prior_to_hold_interaction.value() != LimiterModeType::Turbo) ?
-                                      LimiterModeType::Turbo :
-                                      LimiterModeType::Nominal);
+									  LimiterModeType::Turbo :
+									  LimiterModeType::Nominal);
 	}
 	else if (pressed >= 0 && s_limiter_mode_prior_to_hold_interaction.has_value())
 	{
@@ -1755,8 +1773,8 @@ DEFINE_HOTKEY("ToggleSlowMotion", "System", "Toggle Slow Motion", [](s32 pressed
 	if (!pressed)
 	{
 		VMManager::SetLimiterMode((EmuConfig.LimiterMode != LimiterModeType::Slomo) ?
-                                      LimiterModeType::Slomo :
-                                      LimiterModeType::Nominal);
+									  LimiterModeType::Slomo :
+									  LimiterModeType::Nominal);
 	}
 })
 DEFINE_HOTKEY("IncreaseSpeed", "System", "Increase Target Speed", [](s32 pressed) {

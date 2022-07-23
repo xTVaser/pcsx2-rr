@@ -26,6 +26,8 @@
 #include "CDVD/CDVD.h"
 #include "ps2/BiosTools.h"
 
+#include "Jak/JakGoalDebugInspect.h"
+
 GS_VideoMode gsVideoMode = GS_VideoMode::Uninitialized;
 bool gsIsInterlaced = false;
 
@@ -569,6 +571,7 @@ void LW()
 	u32 temp = memRead32(addr);
 
 	if (!_Rt_) return;
+
 	cpuRegs.GPR.r[_Rt_].SD[0] = (s32)temp;
 }
 
@@ -582,6 +585,7 @@ void LWU()
 	u32 temp = memRead32(addr);
 
 	if (!_Rt_) return;
+
 	cpuRegs.GPR.r[_Rt_].UD[0] = temp;
 }
 

@@ -238,6 +238,9 @@
     <Filter Include="Tools\Input Recording">
       <UniqueIdentifier>{03ba2aa7-2cd9-48cb-93c6-fc93d5bdc938}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Jak">
+      <UniqueIdentifier>{7e476b76-85f7-485d-9cf4-5379ab1567a4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="Utilities\folderdesc.txt">
@@ -1275,6 +1278,9 @@
     <ClCompile Include="Frontend\LogSink.cpp">
       <Filter>Host</Filter>
     </ClCompile>
+    <ClCompile Include="Jak\JakGoalDebugInspect.cpp">
+      <Filter>Jak</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Patch.h">
@@ -2118,6 +2124,12 @@
     </ClInclude>
     <ClInclude Include="Frontend\LogSink.h">
       <Filter>Host</Filter>
+    </ClInclude>
+    <ClInclude Include="Jak\JakGoalDebugInspect.h">
+      <Filter>Jak</Filter>
+    </ClInclude>
+    <ClInclude Include="Jak\json.hpp">
+      <Filter>Jak</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

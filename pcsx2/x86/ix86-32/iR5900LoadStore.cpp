@@ -20,6 +20,7 @@
 #include "R5900OpcodeTables.h"
 #include "iR5900LoadStore.h"
 #include "iR5900.h"
+#include <pcsx2/Jak/JakGoalDebugInspect.h>
 
 using namespace x86Emitter;
 
@@ -241,8 +242,105 @@ void recLB()  { recLoad32(  8, true);  EE::Profiler.EmitOp(eeOpcode::LB); }
 void recLBU() { recLoad32(  8, false); EE::Profiler.EmitOp(eeOpcode::LBU); }
 void recLH()  { recLoad32( 16, true);  EE::Profiler.EmitOp(eeOpcode::LH); }
 void recLHU() { recLoad32( 16, false); EE::Profiler.EmitOp(eeOpcode::LHU); }
-void recLW()  { recLoad32( 32, true);  EE::Profiler.EmitOp(eeOpcode::LW); }
-void recLWU() { recLoad32( 32, false); EE::Profiler.EmitOp(eeOpcode::LWU); }
+
+void GOALLoadFunction(u32 addr)
+{
+	u32 temp = memRead32(addr);
+
+	g_goal_method_inspector.m_lock.lock();
+	std::string func_name = goalGetSymNameDirectly(addr);
+	if (!func_name.empty())
+	{
+		// See if we've encountered this function before
+		if (g_goal_method_inspector.m_function_calls.count(func_name) == 0) {
+			g_goal_method_inspector.m_function_calls[func_name] = GOALMethodOrFunction();
+		}
+
+		auto& func = g_goal_method_inspector.m_function_calls[func_name];
+		g_goal_method_inspector.pushCall(CallSignature(temp, func_name, -1, CallType::FUNCTION));
+	}
+	g_goal_method_inspector.m_lock.unlock();
+}
+
+void recLW()
+{ 
+	if (EmuConfig.EnableJakFunctionAnalysis)
+	{
+		if (_Rt_ == GOAL_FUNCTION_REG && _Rs_ == GOAL_SYMTABLE_REG)
+		{
+			iFlushCall(FLUSH_INTERPRETER);
+			if (GPR_IS_CONST1(_Rs_))
+			{
+				xMOV(ecx, g_cpuConstRegs[_Rs_].UL[0]);
+			}
+			else
+			{
+				_eeMoveGPRtoR(ecx, _Rs_);
+			}
+
+			xADD(ecx, _Imm_);
+			xFastCall((void*)GOALLoadFunction, ecx);
+		}
+	}
+	recLoad32( 32, true);  
+	EE::Profiler.EmitOp(eeOpcode::LW); 
+}
+
+void GOALLoadMethod(u32 addr)
+{
+	u32 temp = memRead32(addr);
+
+	const u32 method_id = (_Imm_ - 16) / 4;
+	// calls to the `delete` method seem to cause issues (can't find the symbol)
+	if (method_id != 1 && method_id < 512)
+	{
+		g_goal_method_inspector.m_lock.lock();
+		std::string type_name = goalGetSymNameFromPtr(cpuRegs.GPR.r[_Rs_].UL[0]);
+		if (!type_name.empty())
+		{
+			// See if we've encountered this type before and it's just a new method
+			if (g_goal_method_inspector.m_type_methods.count(type_name) == 0) {
+				g_goal_method_inspector.m_type_methods[type_name] = {};
+			}
+
+			// See if we've encountered this method before
+			if (g_goal_method_inspector.m_type_methods[type_name].count(method_id) == 0) {
+				// If not, make a new struct
+				g_goal_method_inspector.m_type_methods[type_name][method_id] = GOALMethodOrFunction();
+			}
+
+			auto& func = g_goal_method_inspector.m_type_methods[type_name][method_id];
+			g_goal_method_inspector.pushCall(CallSignature(temp, type_name, method_id, CallType::METHOD));
+		}
+		g_goal_method_inspector.m_lock.unlock();
+	}
+}
+
+void recLWU() { 
+	if (EmuConfig.EnableJakFunctionAnalysis)
+	{
+		if (_Rt_ == GOAL_FUNCTION_REG)
+		{
+			iFlushCall(FLUSH_INTERPRETER);
+			if (GPR_IS_CONST1(_Rs_))
+			{
+				xMOV(ecx, g_cpuConstRegs[_Rs_].UL[0]);
+			}
+			else
+			{
+				_eeMoveGPRtoR(ecx, _Rs_);
+			}
+
+			xADD(ecx, _Imm_);
+			xFastCall((void*)GOALLoadMethod, ecx);
+		}
+	}
+	
+	recLoad32( 32, false); 
+	EE::Profiler.EmitOp(eeOpcode::LWU);
+}
+
+
 void recLD()  { recLoad64( 64, false); EE::Profiler.EmitOp(eeOpcode::LD); }
 void recLQ()  { recLoad64(128, false); EE::Profiler.EmitOp(eeOpcode::LQ); }
 
