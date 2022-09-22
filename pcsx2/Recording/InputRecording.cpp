@@ -581,9 +581,9 @@ bool InputRecording::play(const std::string_view& filename)
 	initializeState();
 	InputRec::log("Replaying input recording");
 	m_file.logRecordingMetadata();
-	if (resolveGameName() != m_file.getHeader().gameName)
+	if (resolveGameName() != m_file.getHeader().m_gameName)
 	{
-		InputRec::consoleLog(fmt::format("Input recording was possibly constructed for a different game. Expected: {}, Actual: {}", m_file.getHeader().gameName, resolveGameName()));
+		InputRec::consoleLog(fmt::format("Input recording was possibly constructed for a different game. Expected: {}, Actual: {}", m_file.getHeader().m_gameName, resolveGameName()));
 	}
 
 	return true;
@@ -609,12 +609,12 @@ void InputRecording::controllerInterrupt(u8& data, u8& port, u16& bufCount, u8 b
 
 	if (bufCount == 1)
 	{
-		m_pad_data_available = data == READ_DATA_AND_VIBRATE_QUERY_FIRST_BYTE;
+		m_pad_data_available = data == s_READ_DATA_AND_VIBRATE_QUERY_FIRST_BYTE;
 		return;
 	}
 	else if (bufCount == 2)
 	{
-		m_pad_data_available = m_pad_data_available && buf[bufCount] == READ_DATA_AND_VIBRATE_QUERY_SECOND_BYTE;
+		m_pad_data_available = m_pad_data_available && buf[bufCount] == s_READ_DATA_AND_VIBRATE_QUERY_SECOND_BYTE;
 		return;
 	}
 
