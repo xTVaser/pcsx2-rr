@@ -194,30 +194,42 @@ int byteCnt = 0;
 SIO_WRITE sioWriteController(u8 data)
 {
 	//if (data == 0x01) byteCnt = 0;
-	switch(sio.bufCount)
+	if (sio.bufCount == 0)
 	{
-	case 0:
 		byteCnt = 0; //hope this gets only cleared on the first byte...
 		SIO_STAT_READY();
 		DEVICE_PLUGGED();
 		sio.buf[0] = PADstartPoll(sio.port + 1);
-		break;
-
-	default:
+	}
+	else
+	{
 		sio.buf[sio.bufCount] = PADpoll(data);
+
 		if (EmuConfig.EnableRecordingTools)
 		{
+#ifdef PCSX2_CORE
+			// Only examine controllers 1 / 2
+			// TODO - "active" check will need to go away once pad logging / virtual pads are added back
+			if (g_InputRecording.isActive() && sio.slot[sio.port] == 0)
+			{
+				if (sio.bufCount < 21)
+				{
+					if (sio.bufCount >= 3)
+						g_InputRecording.controllerInterrupt(sio.port, sio.bufCount - 3, sio.buf[sio.bufCount]);
+					else if (sio.bufCount == 1)
+						g_InputRecording.queryFirstByte(data);
+					else
+						g_InputRecording.querySecondByte(sio.buf[sio.bufCount]);
+				}
+			}
+#else
 			// Only examine controllers 1 / 2
 			if (sio.slot[sio.port] == 0 || sio.slot[sio.port] == 1)
 			{
-#ifdef PCSX2_CORE
-				g_InputRecording.controllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
-#else
 				g_InputRecording.ControllerInterrupt(data, sio.port, sio.bufCount, sio.buf);
-#endif
 			}
+#endif
 		}
-		break;
 	}
 	//Console.WriteLn( "SIO: sent = %02X  From pad data =  %02X  bufCnt %08X ", data, sio.buf[sio.bufCount], sio.bufCount);
 	sioInterrupt(); //Don't all commands(transfers) cause an interrupt?
