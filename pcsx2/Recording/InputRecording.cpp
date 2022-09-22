@@ -598,58 +598,45 @@ void InputRecording::stop()
 	}
 }
 
-void InputRecording::controllerInterrupt(u8& data, u8& port, u16& bufCount, u8 buf[])
+void InputRecording::queryFirstByte(const u8 data)
+{
+	m_pad_data_available = data == s_READ_DATA_AND_VIBRATE_QUERY_FIRST_BYTE;
+}
+
+void InputRecording::querySecondByte(const u8 bufVal)
+{
+	m_pad_data_available &= bufVal == s_READ_DATA_AND_VIBRATE_QUERY_SECOND_BYTE;
+}
+
+void InputRecording::controllerInterrupt(const u8 port, const u16 bufIndex, u8& bufVal)
 {
 	// TODO - Multi-Tap Support (Qt doesn't support it yet anyway!)
-	// TODO - this will need to go away once pad logging / virtual pads are added back
-	if (!m_is_active)
-	{
-		return;
-	}
 
-	if (bufCount == 1)
-	{
-		m_pad_data_available = data == s_READ_DATA_AND_VIBRATE_QUERY_FIRST_BYTE;
+	if (!m_pad_data_available)
 		return;
-	}
-	else if (bufCount == 2)
-	{
-		m_pad_data_available = m_pad_data_available && buf[bufCount] == s_READ_DATA_AND_VIBRATE_QUERY_SECOND_BYTE;
-		return;
-	}
 
-	// If there is data to read (previous two bytes looked correct)
-	if (bufCount >= 3 && m_pad_data_available)
+	if (m_controls.isReplaying())
 	{
-		u8& bufVal = buf[bufCount];
-		const u16 bufIndex = bufCount - 3;
-		if (m_controls.isReplaying())
+		if (!m_file.ReadKeyBuffer(bufVal, m_frame_counter, port, bufIndex))
 		{
-			if (!m_file.ReadKeyBuffer(bufVal, m_frame_counter, port, bufIndex))
-			{
-				InputRec::consoleLog(fmt::format("Failed to read input data at frame {}", m_frame_counter));
-			}
-			// Update controller data state for future VirtualPad / logging usage.
-			//pads[port].padData->UpdateControllerData(bufIndex, bufVal);
+			InputRec::consoleLog(fmt::format("Failed to read input data at frame {}", m_frame_counter));
 		}
-		else
-		{
-			// Update controller data state for future VirtualPad / logging usage.
-			//pads[port].padData->UpdateControllerData(bufIndex, bufVal);
+		// Update controller data state for future VirtualPad / logging usage.
+		//pads[port].padData->UpdateControllerData(bufIndex, bufVal);
+	}
+	else
+	{
+		// Update controller data state for future VirtualPad / logging usage.
+		//pads[port].padData->UpdateControllerData(bufIndex, bufVal);
 
-			// Commit the byte to the movie file if we are recording
-			if (m_controls.isRecording())
+		// Commit the byte to the movie file if we are recording
+		if (m_controls.isRecording())
+		{
+			if (!m_file.WriteKeyBuffer(m_frame_counter, port, bufIndex, bufVal))
 			{
-				if (!m_file.WriteKeyBuffer(m_frame_counter, port, bufIndex, bufVal))
-				{
-					InputRec::consoleLog(fmt::format("Failed to write input data at frame {}", m_frame_counter));
-				}
+				InputRec::consoleLog(fmt::format("Failed to write input data at frame {}", m_frame_counter));
 			}
 		}
-	}
-	if (bufCount > 20)
-	{
-		m_pad_data_available = false;
 	}
 }
 
