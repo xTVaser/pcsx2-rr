@@ -171,6 +171,7 @@ public:
 	u64 getFrameCounter() const;
 	bool isActive() const;
 	void handleExceededFrameCounter();
+	void handleReset();
 	void handleLoadingSavestate();
 	bool isTypeSavestate() const;
 	void adjustFrameCounterOnReRecord(u32 newFrameCounter);
@@ -189,7 +190,7 @@ private:
 
 	Type m_type;
 
-	bool m_initial_savestate_load_complete = false;
+	bool m_initial_load_complete = false;
 	bool m_is_active = false;
 	bool m_pad_data_available = false;
 	bool m_watching_for_rerecords = false;
