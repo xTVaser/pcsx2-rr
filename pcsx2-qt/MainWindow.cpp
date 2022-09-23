@@ -1602,7 +1602,7 @@ void MainWindow::onInputRecNewActionTriggered()
 				QtHost::RunOnUIThread([&]() {
 					m_ui.actionInputRecNew->setEnabled(false);
 					m_ui.actionInputRecStop->setEnabled(true);
-					return;
+					m_ui.actionReset->setEnabled(!g_InputRecording.isTypeSavestate());
 				});
 			}
 		});
@@ -1654,11 +1654,10 @@ void MainWindow::onInputRecPlayActionTriggered()
 			if (g_InputRecording.play(filename))
 			{
 				QtHost::RunOnUIThread([&]() {
+					m_ui.actionInputRecNew->setEnabled(false);
 					m_ui.actionInputRecStop->setEnabled(true);
-					return;
+					m_ui.actionReset->setEnabled(!g_InputRecording.isTypeSavestate());
 				});
-				m_ui.actionInputRecStop->setEnabled(true);
-				return;
 			}
 		});
 	}
@@ -1673,6 +1672,7 @@ void MainWindow::onInputRecStopActionTriggered()
 			QtHost::RunOnUIThread([&]() {
 				m_ui.actionInputRecNew->setEnabled(true);
 				m_ui.actionInputRecStop->setEnabled(false);
+				m_ui.actionReset->setEnabled(true);
 			});
 		});
 	}
