@@ -1122,6 +1122,11 @@ void VMManager::Reset()
 	// gameid change, so apply settings
 	if (game_was_started)
 		UpdateRunningGame(true, false);
+
+	if (g_InputRecording.isActive())
+	{
+		g_InputRecording.handleReset();
+	}
 }
 
 std::string VMManager::GetSaveStateFileName(const char* game_serial, u32 game_crc, s32 slot)
