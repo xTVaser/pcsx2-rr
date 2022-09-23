@@ -1101,6 +1101,7 @@ void VMManager::Reset()
 	if (g_InputRecording.isActive())
 	{
 		g_InputRecording.handleReset();
+		GSPresentCurrentFrame();
 	}
 }
 
@@ -1166,6 +1167,7 @@ bool VMManager::DoLoadState(const char* filename)
 		if (g_InputRecording.isActive())
 		{
 			g_InputRecording.handleLoadingSavestate();
+			GSPresentCurrentFrame();
 		}
 		return true;
 	}
