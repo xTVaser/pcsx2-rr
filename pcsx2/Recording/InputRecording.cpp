@@ -514,7 +514,7 @@ bool InputRecording::create(const std::string& fileName, const bool fromSaveStat
 		{
 			FileSystem::CopyFilePath(savestatePath.c_str(), fmt::format("{}.bak", savestatePath).c_str(), true);
 		}
-		m_initial_savestate_load_complete = false;
+		m_initial_load_complete = false;
 		m_type = Type::FROM_SAVESTATE;
 		m_is_active = true;
 		// TODO - error handling
@@ -524,6 +524,7 @@ bool InputRecording::create(const std::string& fileName, const bool fromSaveStat
 	{
 		m_starting_frame = 0;
 		m_type = Type::POWER_ON;
+		m_initial_load_complete = false;
 		m_is_active = true;
 		// TODO - should this be an explicit [full] boot instead of a reset?
 		VMManager::Reset();
@@ -558,7 +559,7 @@ bool InputRecording::play(const std::string& filename)
 			return false;
 		}
 		m_type = Type::FROM_SAVESTATE;
-		m_initial_savestate_load_complete = false;
+		m_initial_load_complete = false;
 		m_is_active = true;
 		const auto loaded = VMManager::LoadState(savestatePath.c_str());
 		if (!loaded)
@@ -573,6 +574,7 @@ bool InputRecording::play(const std::string& filename)
 	{
 		m_starting_frame = 0;
 		m_type = Type::POWER_ON;
+		m_initial_load_complete = false;
 		m_is_active = true;
 		// TODO - should this be an explicit [full] boot instead of a reset?
 		VMManager::Reset();
@@ -707,6 +709,13 @@ void InputRecording::handleExceededFrameCounter()
 	}
 }
 
+void InputRecording::handleReset()
+{
+	if (m_initial_load_complete)
+		adjustFrameCounterOnReRecord(0);
+	m_initial_load_complete = true;
+}
+
 void InputRecording::handleLoadingSavestate()
 {
 	// We need to keep track of the starting internal frame of the recording
@@ -716,10 +725,10 @@ void InputRecording::handleLoadingSavestate()
 	// Why?
 	// - When you re-record you load another save-state which has it's own frame counter
 	//   stored within, we use this to adjust the frame we are replaying/recording to
-	if (isTypeSavestate() && !m_initial_savestate_load_complete)
+	if (isTypeSavestate() && !m_initial_load_complete)
 	{
 		setStartingFrame(g_FrameCount);
-		m_initial_savestate_load_complete = true;
+		m_initial_load_complete = true;
 	}
 	else
 	{
