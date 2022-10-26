@@ -678,7 +678,7 @@ void VMManager::UpdateRunningGame(bool resetting, bool game_starting)
 		// If we don't reset the timer here, when using folder memcards the reindex will cause an eject,
 		// which a bunch of games don't like since they access the memory card on boot.
 		if (game_starting || resetting)
-			ClearMcdEjectTimeoutNow();
+			AutoEject::ClearAll();
 	}
 
 	UpdateGameSettingsLayer();
@@ -1691,8 +1691,8 @@ void VMManager::CheckForMemoryCardConfigChanges(const Pcsx2Config& old_config)
 			if (EmuConfig.Mcd[index].Enabled != old_config.Mcd[index].Enabled ||
 				EmuConfig.Mcd[index].Filename != old_config.Mcd[index].Filename)
 			{
-				Console.WriteLn("Replugging memory card %u (port %u slot %u) due to source change", index, port, slot);
-				SetForceMcdEjectTimeoutNow(port, slot);
+				Console.WriteLn("Ejecting memory card %u (port %u slot %u) due to source change", index, port, slot);
+				AutoEject::Set(port, slot);
 			}
 		}
 	}
