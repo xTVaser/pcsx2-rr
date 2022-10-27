@@ -687,7 +687,7 @@ void VMManager::UpdateRunningGame(bool resetting, bool game_starting)
 	// Clear the memory card eject notification again when booting for the first time, or starting.
 	// Otherwise, games think the card was removed on boot.
 	if (game_starting || resetting)
-		ClearMcdEjectTimeoutNow();
+		AutoEject::ClearAll();
 
 	// Check this here, for two cases: dynarec on, and when enable cheats is set per-game.
 	if (s_patches_crc != s_game_crc)
