@@ -102,7 +102,7 @@ namespace SIO0_CTRL
 namespace Send3
 {
 	static constexpr u32 PORT = 0x01;
-	static constexpr u16 COMMAND_LENGTH_MASK = 0x1ff;
+	static constexpr u16 COMMAND_LENGTH_MASK = 0x3ff;
 } // namespace Send3
 
 namespace Sio2Ctrl
