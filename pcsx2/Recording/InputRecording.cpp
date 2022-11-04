@@ -480,8 +480,6 @@ wxString InputRecording::resolveGameName()
 #include "GameDatabase.h"
 #include "fmt/format.h"
 
-#include <queue>
-
 // Future TODOs
 // - restart
 // - tooltips on GUI options
@@ -607,21 +605,35 @@ void InputRecording::queryFirstByte(const u8 data)
 	m_pad_data_available = data == s_READ_DATA_AND_VIBRATE_QUERY_FIRST_BYTE;
 }
 
-void InputRecording::querySecondByte(const u8 bufVal)
+void InputRecording::querySecondByte(const u8 data)
 {
-	m_pad_data_available &= bufVal == s_READ_DATA_AND_VIBRATE_QUERY_SECOND_BYTE;
+	m_pad_data_available &= data == s_READ_DATA_AND_VIBRATE_QUERY_SECOND_BYTE;
 }
 
-void InputRecording::controllerInterrupt(const u8 port, const u16 bufIndex, u8& bufVal)
+void InputRecording::controllerInterrupt(u8 port, size_t fifoSize, u8& dataIn, u8& dataOut)
 {
 	// TODO - Multi-Tap Support (Qt doesn't support it yet anyway!)
+	// Keep these safe-guard checks in here, they are input recording only concerns
+	if (fifoSize == 1)
+	{
+		queryFirstByte(dataOut);
+		return;
+	}
+	else if (fifoSize == 2)
+	{
+		querySecondByte(dataOut);
+		return;
+	}
 
 	if (!m_pad_data_available)
+	{
+		// bad data / first and second byte checks failed
 		return;
+	}
 
 	if (m_controls.isReplaying())
 	{
-		if (!m_file.readKeyBuffer(bufVal, m_frame_counter, port, bufIndex))
+		if (!m_file.readKeyBuffer(dataOut, m_frame_counter, port, fifoSize))
 		{
 			InputRec::consoleLog(fmt::format("Failed to read input data at frame {}", m_frame_counter));
 		}
@@ -636,7 +648,7 @@ void InputRecording::controllerInterrupt(const u8 port, const u16 bufIndex, u8& 
 		// Commit the byte to the movie file if we are recording
 		if (m_controls.isRecording())
 		{
-			if (!m_file.writeKeyBuffer(m_frame_counter, port, bufIndex, bufVal))
+			if (!m_file.writeKeyBuffer(m_frame_counter, port, fifoSize, dataOut))
 			{
 				InputRec::consoleLog(fmt::format("Failed to write input data at frame {}", m_frame_counter));
 			}
