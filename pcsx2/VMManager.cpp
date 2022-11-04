@@ -60,6 +60,8 @@
 
 #include "IconsFontAwesome5.h"
 
+#include "Recording/InputRecording.h"
+
 #include "common/emitter/tools.h"
 #ifdef _M_X86
 #include "common/emitter/x86_intrin.h"
@@ -1120,6 +1122,12 @@ void VMManager::Reset()
 	// gameid change, so apply settings
 	if (game_was_started)
 		UpdateRunningGame(true, false);
+
+	if (g_InputRecording.isActive())
+	{
+		g_InputRecording.handleReset();
+		GSPresentCurrentFrame();
+	}
 }
 
 std::string VMManager::GetSaveStateFileName(const char* game_serial, u32 game_crc, s32 slot)
@@ -1174,6 +1182,11 @@ bool VMManager::DoLoadState(const char* filename)
 		SaveState_UnzipFromDisk(filename);
 		UpdateRunningGame(false, false);
 		Host::OnSaveStateLoaded(filename, true);
+		if (g_InputRecording.isActive())
+		{
+			g_InputRecording.handleLoadingSavestate();
+			GSPresentCurrentFrame();
+		}
 		return true;
 	}
 	catch (Exception::BaseException& e)

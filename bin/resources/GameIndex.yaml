@@ -81,7 +81,7 @@ ALCH-0004:
   name: "Duel Savior Destiny [Messiah Box]"
   region: "NTSC-J"
 CPCS-01005:
-  name: "Gun Survivor 4 - Biohazard - Heroes Never Die [with GunCon2]"
+  name: "Gun Survivor 4 - BioHazard - Heroes Never Die [with GunCon2]"
   region: "NTSC-J"
   gsHWFixes:
     halfPixelOffset: 1 # Fixes character offset with flashlight and blurriness.
@@ -920,6 +920,7 @@ SCAJ-20104:
     alignSprite: 1 # Fixes vertical lines.
     mergeSprite: 1 # Fixes vertical lines.
     texturePreloading: 1 # Performs better than full.
+    cpuCLUTRender: 1 # Fixes sun occlusion.
 SCAJ-20105:
   name: "Armored Core - Nine breaker"
   region: "NTSC-Unk"
@@ -1095,6 +1096,7 @@ SCAJ-20136:
     alignSprite: 1 # Fixes vertical lines.
     mergeSprite: 1 # Fixes vertical lines.
     texturePreloading: 1 # Performs better than full.
+    cpuCLUTRender: 1 # Fixes sun occlusion.
 SCAJ-20137:
   name: "Musashiden II - Blademaster"
   region: "NTSC-Unk"
@@ -1107,6 +1109,8 @@ SCAJ-20138:
     preloadFrameData: 1 # Fixes black background in the pause menu.
     mipmap: 2 # Fixes miptrick texture effects.
     trilinearFiltering: 1 # Fixes miptrick blending.
+    halfPixelOffset: 2 # Fixes misaligned blur.
+    autoFlush: 1 # Fixes corruption in cutscenes and brightens the image.
 SCAJ-20139:
   name: "Zero - Shisei no Koe" # Fatal Frame - Rei - Irezumi no Sei
   region: "NTSC-Unk"
@@ -1129,6 +1133,10 @@ SCAJ-20144:
   region: "NTSC-Ch"
   gsHWFixes:
     preloadFrameData: 1 # Fixes black background in the pause menu.
+    mipmap: 2 # Fixes miptrick texture effects.
+    trilinearFiltering: 1 # Fixes miptrick blending.
+    halfPixelOffset: 2 # Fixes misaligned blur.
+    autoFlush: 1 # Fixes corruption in cutscenes and brightens the image.
 SCAJ-20145:
   name: "Tales of Legendia"
   region: "NTSC-J"
@@ -1244,6 +1252,7 @@ SCAJ-20164:
   region: "NTSC-Unk"
   gsHWFixes:
     autoFlush: 1 # Fixes effects.
+    halfPixelOffset: 1 # Fixes upscaling artifacts.
 SCAJ-20165:
   name: "Bleach - Hanatareshi Yabou"
   region: "NTSC-Unk"
@@ -1275,6 +1284,8 @@ SCAJ-20170:
 SCAJ-20171:
   name: "Zettai Zetsumei Toshi 2 - Itetsuita Kioku Tachi"
   region: "NTSC-J"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes some shading/shadows.
 SCAJ-20172:
   name: "Final Fantasy XII"
   region: "NTSC-Unk"
@@ -1385,6 +1396,8 @@ SCAJ-20195:
     preloadFrameData: 1 # Fixes black background in the pause menu.
     mipmap: 2 # Fixes miptrick texture effects.
     trilinearFiltering: 1 # Fixes miptrick blending.
+    halfPixelOffset: 2 # Fixes misaligned blur.
+    autoFlush: 1 # Fixes corruption in cutscenes and brightens the image.
 SCAJ-20196:
   name: "Wang Da Yu Ju Xiang [PlayStation 2 The Best]"
   region: "NTSC-Ch"
@@ -1812,6 +1825,8 @@ SCED-50750:
 SCED-50781:
   name: "Destruction Derby Arenas [Beta]"
   region: "PAL-M5"
+  gsHWFixes:
+    halfPixelOffset: 2 # Corrects shadow position.
 SCED-50825:
   name: "Official PlayStation 2 Magazine Demo 18"
   region: "PAL-M5"
@@ -2022,6 +2037,7 @@ SCED-52049:
   gsHWFixes:
     preloadFrameData: 1 # Fixes bad textures on Jake.
     halfPixelOffset: 1 # Fixes double image.
+    cpuCLUTRender: 1 # Fixes Jake going black in Smellovision.
 SCED-52051:
   name: "Official PlayStation 2 Magazine Demo 43"
   region: "PAL-M5"
@@ -2224,6 +2240,45 @@ SCED-52846:
     vuClampMode: 0 # Resolves I Reg Clamping / performance impact and yellow graphics in certain areas.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
+SCED-52869:
+  name: "WRC 4 [Demo]"
+  region: "PAL-M5"
+  gameFixes:
+    - XGKickHack # Fixes SPS.
+  patches:
+    default:
+      content: |-
+        author=kozarovv
+        // Proper patch for WRC 4. CRC independent.
+        // I wrote a small runtime that moves unpacker higher right after emulator boot.
+        // Seems little bit extensive, but there is no way to make it smaller.
+        // Solves TLB miss errors which prevented the game from booting.
+        patch=0,EE,0040000C,double,3c0500603cc70054
+        patch=0,EE,00400014,double,24a5001024840010
+        patch=0,EE,0040001C,double,7ca6000078860000
+        patch=0,EE,00400024,double,000000001487fffb
+        patch=0,EE,0040002c,double,000000000817fff5
+        patch=0,EE,005fffd4,double,3c1c70003c040060
+        patch=0,EE,005fffdc,double,3c0700003c067000
+        patch=0,EE,005fffe4,double,279c000024840800
+        patch=0,EE,005fffec,double,24e7100024c60080
+        patch=0,EE,005ffff4,double,00c7e8200818000c
+  gsHWFixes:
+    autoFlush: 1 # Fixes car shadows.
+    roundSprite: 1 # Fixes misalgined text.
+    halfPixelOffset: 1 # Fixes minor ghosting on objects.
+SCED-52880:
+  name: "WRC 4 - The Official Game of the FIA World Rally Championship [Demo]"
+  region: "PAL-E"
+  gameFixes:
+    - XGKickHack # Fixes SPS.
+  gsHWFixes:
+    autoFlush: 1 # Fixes car shadows.
+    roundSprite: 1 # Fixes misalgined text.
+    halfPixelOffset: 1 # Fixes minor ghosting on objects.
+SCED-52899:
+  name: "Killzone [Bonus Disc]"
+  region: "PAL-M5"
 SCED-52932:
   name: "Bonus Demo 8"
   region: "PAL-M5"
@@ -2406,6 +2461,9 @@ SCED-53622:
   gsHWFixes:
     autoFlush: 1 # Fixes pause menu backgrounds.
     roundSprite: 1 # Corrects proportions of fonts and pause-screen lines, adjusts display closer to software.
+SCED-53660:
+  name: "Jak X & Ratchet Gladiator [Demo]"
+  region: "PAL"
 SCED-53679:
   name: "Fire It Up Lads [Demo]"
   region: "PAL-E"
@@ -2650,6 +2708,7 @@ SCES-50000:
     halfPixelOffset: 2 # Fixes title screen and some intro post processing alignment.
     roundSprite: 1 # Fixes ui and hud alignment.
     gpuPaletteConversion: 2 # Lots of CLUTs in large textures.
+    cpuCLUTRender: 1 # Fixes car textures.
 SCES-50001:
   name: "Tekken Tag Tournament"
   region: "PAL-M5"
@@ -2747,6 +2806,8 @@ SCES-50354:
     vuClampMode: 2 # Fixes water reflection.
   gameFixes:
     - EETimingHack # Fixes flickering graphics.
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes shadows, object and enemy colours, platform transitions.
 SCES-50360:
   name: "Twisted Metal - Black"
   region: "PAL-M5"
@@ -2919,9 +2980,11 @@ SCES-50760:
     mipmap: 1
     halfPixelOffset: 1 # Fixes effect misalignment.
 SCES-50781:
-  name: "Destruction Derby Arena [Beta, Promo, & Full Retail]"
+  name: "Destruction Derby Arenas [Beta, Promo, & Full Retail]"
   region: "PAL-M6"
   compat: 5
+  gsHWFixes:
+    halfPixelOffset: 2 # Corrects shadow position.
 SCES-50791:
   name: "Frequency"
   region: "PAL-M5"
@@ -3130,6 +3193,7 @@ SCES-51248:
     roundSprite: 1 # Fix line in the sky.
     preloadFrameData: 1 # Fixes bad textures on Jake.
     halfPixelOffset: 1 # Fixes double image.
+    cpuCLUTRender: 1 # Fixes Jake going black in Smellovision.
 SCES-51426:
   name: "Getaway, The"
   region: "PAL-M5"
@@ -3305,6 +3369,8 @@ SCES-51977:
 SCES-51979:
   name: "Destruction Derby Arenas"
   region: "PAL-M6"
+  gsHWFixes:
+    halfPixelOffset: 2 # Corrects shadow position.
 SCES-52004:
   name: "Killzone"
   region: "PAL-M6"
@@ -3402,6 +3468,7 @@ SCES-52389:
   gsHWFixes:
     autoFlush: 1 # Fixes car shadows.
     roundSprite: 1 # Fixes misalgined text.
+    halfPixelOffset: 1 # Fixes minor ghosting on objects.
 SCES-52405:
   name: "DJ - Decks & FX - House Edition"
   region: "PAL-M9"
@@ -3660,6 +3727,8 @@ SCES-53247:
   compat: 5
   gameFixes:
     - XGKickHack # Fixes SPS.
+  clampModes:
+    eeClampMode: 2 # Fixes rare bug causing player to respawn when starting the race or during certain car crashes.
   patches:
     CBBC2E7F:
       content: |-
@@ -3817,6 +3886,8 @@ SCES-53642:
     preloadFrameData: 1 # Fixes black background in the pause menu.
     mipmap: 2 # Fixes miptrick texture effects.
     trilinearFiltering: 1 # Fixes miptrick blending.
+    halfPixelOffset: 2 # Fixes misaligned blur.
+    autoFlush: 1 # Fixes corruption in cutscenes and brightens the image.
 SCES-53663:
   name: "Buzz! The Music Quiz"
   region: "PAL-M3"
@@ -4924,6 +4995,8 @@ SCKA-20062:
     preloadFrameData: 1 # Fixes black background in the pause menu.
     mipmap: 2 # Fixes miptrick texture effects.
     trilinearFiltering: 1 # Fixes miptrick blending.
+    halfPixelOffset: 2 # Fixes misaligned blur.
+    autoFlush: 1 # Fixes corruption in cutscenes and brightens the image.
 SCKA-20063:
   name: "Sly 3 - Honor Among Thieves"
   region: "NTSC-K"
@@ -5029,6 +5102,13 @@ SCKA-20087:
     halfPixelOffset: 2 # Fixes misalignment and upscaling lines.
   memcardFilters:
     - "SCKA-20086"
+SCKA-20089:
+  name: "BioHazard 4"
+  region: "NTSC-K"
+  gameFixes:
+    - BlitInternalFPSHack # Fixes internal FPS detection.
+  gsHWFixes:
+    halfPixelOffset: 2 # Fixes blurriness.
 SCKA-20090:
   name: "God Hand"
   region: "NTSC-K"
@@ -5758,6 +5838,12 @@ SCPS-15096:
   name: "Saru Get You! 3"
   region: "NTSC-J"
   compat: 5
+  gsHWFixes:
+    preloadFrameData: 1 # Fixes black background in the pause menu.
+    mipmap: 2 # Fixes miptrick texture effects.
+    trilinearFiltering: 1 # Fixes miptrick blending.
+    halfPixelOffset: 2 # Fixes misaligned blur.
+    autoFlush: 1 # Fixes corruption in cutscenes and brightens the image.
 SCPS-15097:
   name: "Wanda to Kyozou"
   region: "NTSC-J"
@@ -6160,6 +6246,12 @@ SCPS-19310:
 SCPS-19311:
   name: "Saru Get You 3 [PlayStation 2 The Best]"
   region: "NTSC-J"
+  gsHWFixes:
+    preloadFrameData: 1 # Fixes black background in the pause menu.
+    mipmap: 2 # Fixes miptrick texture effects.
+    trilinearFiltering: 1 # Fixes miptrick blending.
+    halfPixelOffset: 2 # Fixes misaligned blur.
+    autoFlush: 1 # Fixes corruption in cutscenes and brightens the image.
 SCPS-19312:
   name: "Siren [PlayStation 2 The Best]"
   region: "NTSC-J"
@@ -6671,6 +6763,7 @@ SCPS-56012:
   name: "Raw Danger"
   region: "NTSC-K"
   gsHWFixes:
+    cpuCLUTRender: 1 # Fixes some shading/shadows.
     autoFlush: 1 # Fixes incorrect blur effect.
 SCPS-56013:
   name: "This is Football 2003"
@@ -8138,6 +8231,8 @@ SCUS-97501:
     preloadFrameData: 1 # Fixes black background in the pause menu.
     mipmap: 2 # Fixes miptrick texture effects.
     trilinearFiltering: 1 # Fixes miptrick blending.
+    halfPixelOffset: 2 # Fixes misaligned blur.
+    autoFlush: 1 # Fixes corruption in cutscenes and brightens the image.
 SCUS-97502:
   name: "Tourist Trophy"
   region: "NTSC-U"
@@ -8313,6 +8408,8 @@ SCUS-97548:
     preloadFrameData: 1 # Fixes black background in the pause menu.
     mipmap: 2 # Fixes miptrick texture effects.
     trilinearFiltering: 1 # Fixes miptrick blending.
+    halfPixelOffset: 2 # Fixes misaligned blur.
+    autoFlush: 1 # Fixes corruption in cutscenes and brightens the image.
 SCUS-97554:
   name: "NBA '07 featuring The Life Vol.2 [Demo]"
   region: "NTSC-U"
@@ -8634,9 +8731,11 @@ SLAJ-25053:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLAJ-25055:
   name: "Def Jam - Fight for N.Y."
   region: "NTSC-Unk"
@@ -8668,9 +8767,11 @@ SLAJ-25066:
     vuClampMode: 0 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLAJ-25066"
     - "SLPM-66108"
@@ -8690,7 +8791,7 @@ SLAJ-25072:
     halfPixelOffset: 2 # Fix effects upscaling.
 SLAJ-25073:
   name: "Resident Evil 4"
-  region: "NTSC-Unk"
+  region: "NTSC-J"
   gameFixes:
     - BlitInternalFPSHack # Fixes internal FPS detection.
   gsHWFixes:
@@ -8700,6 +8801,7 @@ SLAJ-25075:
   region: "NTSC-Unk"
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLAJ-25075"
     - "SLPM-66232"
@@ -8744,6 +8846,8 @@ SLAJ-25079:
 SLAJ-25080:
   name: "Godfather, The"
   region: "NTSC-Unk"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes light occlusion.
 SLAJ-25081:
   name: "FIFA World Cup - Germany 2006"
   region: "NTSC-Unk"
@@ -8777,9 +8881,11 @@ SLAJ-25094:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLAJ-25095:
   name: "Medal of Honor - Vanguard"
   region: "NTSC-Unk"
@@ -8913,6 +9019,8 @@ SLED-52476:
 SLED-52485:
   name: "Alias [Demo]"
   region: "PAL-E"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes lights penetrating objects.
 SLED-52488:
   name: "Suffering, The [Demo]"
   region: "PAL-E"
@@ -8925,9 +9033,11 @@ SLED-52597:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLED-52875:
   name: "Sega Superstars [Demo]"
   region: "PAL-E"
@@ -8975,9 +9085,11 @@ SLED-53512:
     vuClampMode: 0 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLED-53537:
   name: "187 - Ride or Die [Demo]"
   region: "PAL-E"
@@ -9992,6 +10104,8 @@ SLES-50423:
   name: "F1 2001"
   region: "PAL-M4"
   compat: 5
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLES-50424:
   name: "Cricket 2002"
   region: "PAL-E"
@@ -10017,6 +10131,8 @@ SLES-50430:
 SLES-50431:
   name: "F1 2001"
   region: "PAL-S"
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLES-50432:
   name: "Tony Hawk Pro Skater 3"
   region: "PAL-Unk"
@@ -10559,6 +10675,7 @@ SLES-50731:
     vuClampMode: 2 # White textures.
   gsHWFixes:
     halfPixelOffset: 1 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes "Busted" scenes.
 SLES-50735:
   name: "Jade Cocoon 2"
   region: "PAL-E"
@@ -10955,9 +11072,13 @@ SLES-50874:
   name: "F1 2002"
   region: "PAL-M4"
   compat: 5
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLES-50875:
   name: "F1 2002"
   region: "PAL-I"
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLES-50876:
   name: "Driv3r"
   region: "PAL-M5"
@@ -11000,6 +11121,9 @@ SLES-50897:
   name: "Super Trucks"
   region: "PAL-M6"
   compat: 5
+  gsHWFixes:
+    halfPixelOffset: 2 # Gets rid of fog line.
+    roundSprite: 1 # Fixes lines in FMVs.
 SLES-50898:
   name: "X-Men - The Next Dimension"
   region: "PAL-E"
@@ -11720,6 +11844,8 @@ SLES-51229:
 SLES-51230:
   name: "Minority Report"
   region: "PAL-E"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes light bleed through objects.
 SLES-51232:
   name: "Virtua Tennis 2"
   region: "PAL-M4"
@@ -11937,9 +12063,13 @@ SLES-51316:
 SLES-51317:
   name: "Minority Report"
   region: "PAL-F"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes light bleed through objects.
 SLES-51318:
   name: "Minority Report"
   region: "PAL-G"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes light bleed through objects.
 SLES-51322:
   name: "Robotech Battlecry"
   region: "PAL-M5"
@@ -12356,8 +12486,8 @@ SLES-51547:
   gameFixes:
     - VUSyncHack # Fixes SPS in game.
 SLES-51548:
-  name: "This is Football"
-  region: "PAL-M3"
+  name: "X-Men 2 - Wolverine's Revenge"
+  region: "PAL"
 SLES-51553:
   name: "Chaos Legion"
   region: "PAL-M5"
@@ -12400,6 +12530,8 @@ SLES-51584:
   name: "F1 Career Challenge"
   region: "PAL-M4"
   compat: 5
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLES-51588:
   name: "Evil Dead - A Fistful of Boomstick [with Bonus DVD Movie]"
   region: "PAL-E"
@@ -12850,9 +12982,13 @@ SLES-51820:
 SLES-51821:
   name: "Alias"
   region: "PAL-M5"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes lights penetrating objects.
 SLES-51822:
   name: "Alias"
   region: "PAL-I"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes lights penetrating objects.
 SLES-51823:
   name: "Hunter - The Reckoning Wayward"
   region: "PAL-M3"
@@ -14114,6 +14250,8 @@ SLES-52445:
   name: "Silent Hill 4 - The Room"
   region: "PAL-M5"
   compat: 5
+  speedHacks:
+    mvuFlagSpeedHack: 0 # Fixes invisible wall in front of the door leading to East 3F in the 2nd visit of Apartment world preventing Eileen's Nurse Outfit.
   gsHWFixes:
     halfPixelOffset: 1 # Fixes dark sides.
 SLES-52446:
@@ -14485,9 +14623,11 @@ SLES-52584:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLES-52585:
   name: "Burnout 3 - Takedown"
   region: "PAL-F-G-I"
@@ -14495,9 +14635,11 @@ SLES-52585:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLES-52587:
   name: "Army Men - Sarge's War"
   region: "PAL-M5"
@@ -16180,6 +16322,8 @@ SLES-53350:
   compat: 5
   roundModes:
     vuRoundMode: 0 # Prevents only backgrounds from appearing in Sonic R's multiplayer modes.
+  gsHWFixes:
+    cpuCLUTRender: 2 # Fixes CLUT colour in Sonic Fighters.
   memcardFilters: # Vectorman unlocks by having a Mega Collection or Heroes save.
     - "SLES-53350"
     - "SLES-52998"
@@ -16591,9 +16735,11 @@ SLES-53506:
     vuClampMode: 0 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLES-53506"
     - "SLES-53507"
@@ -16608,9 +16754,11 @@ SLES-53507:
     vuClampMode: 0 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLES-53506"
     - "SLES-53507"
@@ -16808,12 +16956,16 @@ SLES-53556:
   region: "PAL-M3"
   gameFixes:
     - BlitInternalFPSHack # Fixes internal FPS detection.
+  gsHWFixes:
+    cpuSpriteRenderBW: 2 # Fixes some bad textures.
+    cpuCLUTRender: 1 # Fixes the rest of the bad textures.
 SLES-53557:
   name: "Need for Speed - Most Wanted"
   region: "PAL-E"
   compat: 5
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters: # Reads Underground 2 save for extra money.
     - "SLES-53557"
     - "SLES-53558"
@@ -16825,6 +16977,7 @@ SLES-53558:
   region: "PAL-M8"
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLES-53557"
     - "SLES-53558"
@@ -16836,6 +16989,7 @@ SLES-53559:
   region: "PAL-M3"
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLES-53557"
     - "SLES-53558"
@@ -16961,6 +17115,7 @@ SLES-53616:
     cpuSpriteRenderBW: 1 # Fixes textures.
     preloadFrameData: 1 # Fixes static text screens.
     roundSprite: 1 # Fixes lines in some post-effects.
+    cpuCLUTRender: 1 # Fixes light occlusion.
 SLES-53617:
   name: "True Crime - New York City"
   region: "PAL-G"
@@ -16972,6 +17127,7 @@ SLES-53617:
     cpuSpriteRenderBW: 1 # Fixes textures.
     preloadFrameData: 1 # Fixes static text screens.
     roundSprite: 1 # Fixes lines in some post-effects.
+    cpuCLUTRender: 1 # Fixes light occlusion.
 SLES-53618:
   name: "True Crime - New York City"
   region: "PAL-S"
@@ -16983,6 +17139,7 @@ SLES-53618:
     cpuSpriteRenderBW: 1 # Fixes textures.
     preloadFrameData: 1 # Fixes static text screens.
     roundSprite: 1 # Fixes lines in some post-effects.
+    cpuCLUTRender: 1 # Fixes light occlusion.
 SLES-53621:
   name: "Wallace & Gromit - The Curse of the Were-Rabbit"
   region: "PAL-M5"
@@ -17186,6 +17343,8 @@ SLES-53702:
   name: "Resident Evil 4"
   region: "PAL-M5"
   compat: 5
+  gameFixes:
+    - BlitInternalFPSHack # Fixes internal FPS detection.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
 SLES-53703:
@@ -17382,6 +17541,8 @@ SLES-53755:
 SLES-53756:
   name: "Resident Evil 4"
   region: "PAL-M5"
+  gameFixes:
+    - BlitInternalFPSHack # Fixes internal FPS detection.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
 SLES-53758:
@@ -17497,6 +17658,9 @@ SLES-53809:
   region: "PAL-E"
   gameFixes:
     - XGKickHack # Fixes black and white fighters.
+  speedHacks:
+    MTVUSpeedHack: 0 # Fixes game from crashing.
+    InstantVU1SpeedHack: 0 # Fixes graphical issues.
   patches:
     B6F9C8D3:
       content: |-
@@ -17602,6 +17766,7 @@ SLES-53857:
   region: "PAL-M3"
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLES-53557"
     - "SLES-53558"
@@ -17830,6 +17995,8 @@ SLES-53966:
 SLES-53967:
   name: "Godfather, The"
   region: "PAL-M6"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes light occlusion.
 SLES-53968:
   name: "Parrain, Le"
   region: "PAL-F"
@@ -17992,6 +18159,9 @@ SLES-54027:
   region: "PAL-M3"
   gameFixes:
     - BlitInternalFPSHack # Fixes internal FPS detection.
+  gsHWFixes:
+    cpuSpriteRenderBW: 2 # Fixes some bad textures.
+    cpuCLUTRender: 1 # Fixes the rest of the bad textures.
 SLES-54030:
   name: "Black"
   region: "PAL-E"
@@ -18112,6 +18282,7 @@ SLES-54114:
   region: "PAL-E"
   gsHWFixes:
     autoFlush: 1 # Fixes effects.
+    halfPixelOffset: 1 # Fixes upscaling artifacts.
   compat: 5
 SLES-54115:
   name: "Delta Force - Black Hawk Down - Team Sabre"
@@ -18464,21 +18635,25 @@ SLES-54232:
   region: "PAL-F"
   gsHWFixes:
     autoFlush: 1 # Fixes effects.
+    halfPixelOffset: 1 # Fixes upscaling artifacts.
 SLES-54233:
   name: "Kingdom Hearts II"
   region: "PAL-G"
   gsHWFixes:
     autoFlush: 1 # Fixes effects.
+    halfPixelOffset: 1 # Fixes upscaling artifacts.
 SLES-54234:
   name: "Kingdom Hearts II"
   region: "PAL-I"
   gsHWFixes:
     autoFlush: 1 # Fixes effects.
+    halfPixelOffset: 1 # Fixes upscaling artifacts.
 SLES-54235:
   name: "Kingdom Hearts II"
   region: "PAL-S"
   gsHWFixes:
     autoFlush: 1 # Fixes effects.
+    halfPixelOffset: 1 # Fixes upscaling artifacts.
 SLES-54237:
   name: "Pirates of the Caribbean - The Legend of Jack Sparrow"
   region: "PAL-M5"
@@ -19290,6 +19465,8 @@ SLES-54586:
 SLES-54587:
   name: "Raw Danger"
   region: "PAL-E"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes some shading/shadows.
 SLES-54588:
   name: "Brunswick Pro Bowling"
   region: "PAL-E"
@@ -19374,9 +19551,11 @@ SLES-54627:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLES-54628:
   name: "Skate Attack [Promo]"
   region: "PAL-E"
@@ -19543,9 +19722,11 @@ SLES-54681:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLES-54683:
   name: "Medal of Honor - Vanguard"
   region: "PAL-M9"
@@ -20339,6 +20520,9 @@ SLES-54991:
 SLES-54992:
   name: "PDC World Championship Darts 2008"
   region: "PAL-M6"
+  gsHWFixes:
+    autoFlush: 1 # Fixes lights not appearing.
+    cpuCLUTRender: 1 # Fixes lights going through darts players.
 SLES-54994:
   name: "Pippa Funnell - Ranch Rescue"
   region: "PAL-M11"
@@ -21356,6 +21540,8 @@ SLES-55444:
 SLES-55448:
   name: "Indiana Jones and the Staff of Kings"
   region: "PAL-M5"
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes ghosting.
 SLES-55451:
   name: "Rock Band 2"
   region: "PAL-M5"
@@ -21522,6 +21708,8 @@ SLES-55532:
 SLES-55533:
   name: "Guitar Hero 5"
   region: "PAL-M5"
+  roundModes:
+    vuRoundMode: 0 # Fixes SPS and VU size spam.
 SLES-55536:
   name: "Disney-Pixar Cars - Race-O-Rama"
   region: "PAL-M5"
@@ -22066,6 +22254,11 @@ SLKA-15018:
     eeRoundMode: 1 # Fixes camera issue.
   gameFixes:
     - FpuNegDivHack # Fixes target loss issue.
+SLKA-15019:
+  name: "F1 Career Challenge"
+  region: "NTSC-K"
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLKA-15021:
   name: "GrowLanser3"
   region: "NTSC-K"
@@ -22182,7 +22375,7 @@ SLKA-25035:
   name: "Mobile Suit Gundam - Lost War Chronicles"
   region: "NTSC-K"
 SLKA-25038:
-  name: "Gun Survivor 4 - Biohazard - Heroes Never Die"
+  name: "Gun Survivor 4 - BioHazard - Heroes Never Die"
   region: "NTSC-K"
   gsHWFixes:
     halfPixelOffset: 1 # Fixes character offset with flashlight and blurriness.
@@ -22496,9 +22689,11 @@ SLKA-25146:
   gsHWFixes:
     alignSprite: 1 # Fixes vertical lines.
 SLKA-25149:
-  name: "Silent Hill 4 The Room"
+  name: "Silent Hill 4 - The Room"
   region: "NTSC-K"
   compat: 5
+  speedHacks:
+    mvuFlagSpeedHack: 0 # Fixes invisible wall in front of the door leading to East 3F in the 2nd visit of Apartment world preventing Eileen's Nurse Outfit.
   gsHWFixes:
     halfPixelOffset: 1 # Fixes dark sides.
 SLKA-25150:
@@ -22639,9 +22834,11 @@ SLKA-25206:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLKA-25207:
   name: "Sakura Taisen V - Episode 0 - Samurai Girl of Wild"
   region: "NTSC-K"
@@ -22903,9 +23100,11 @@ SLKA-25304:
     vuClampMode: 0 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLKA-25307:
   name: "Dragon Ball Z Sparking"
   region: "NTSC-K"
@@ -22993,6 +23192,7 @@ SLKA-25334:
   region: "NTSC-K"
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLKA-25335:
   name: "Shadow the Hedgehog"
   region: "NTSC-K"
@@ -23003,6 +23203,9 @@ SLKA-25341:
   region: "NTSC-K"
   gameFixes:
     - BlitInternalFPSHack # Fixes internal FPS detection.
+  gsHWFixes:
+    cpuSpriteRenderBW: 2 # Fixes some bad textures.
+    cpuCLUTRender: 1 # Fixes the rest of the bad textures.
 SLKA-25342:
   name: "Ryu ga Gotoku"
   region: "NTSC-K"
@@ -23119,6 +23322,13 @@ SLKA-25407:
   name: "Dragon Ball Z - Sparkling! Meteor"
   region: "NTSC-K"
   compat: 5
+SLKA-25410:
+  name: "BioHazard 4"
+  region: "NTSC-K"
+  gameFixes:
+    - BlitInternalFPSHack # Fixes internal FPS detection.
+  gsHWFixes:
+    halfPixelOffset: 2 # Fixes blurriness.
 SLKA-25413:
   name: "SD Gundam G - Generation Spirits"
   region: "NTSC-K"
@@ -23184,9 +23394,11 @@ SLPM-55004:
     vuClampMode: 0 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLPM-55005:
   name: "Mana Khemia 2 - Ochita Gakuen to Renkinjutsushi Tachi"
   region: "NTSC-J"
@@ -23221,9 +23433,11 @@ SLPM-55036:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLPM-55039:
   name: "Soukoku no Kusabi - Hiiro no Kakera 3 [Limited Edition]"
   region: "NTSC-J"
@@ -23392,6 +23606,13 @@ SLPM-55131:
 SLPM-55138:
   name: "Harukanaru Toki no Naka de - Yume no Ukihashi Special"
   region: "NTSC-J"
+SLPM-55140:
+  name: "Silent Hill 4 - The Room [Konami Dendou Selection]"
+  region: "NTSC-J"
+  speedHacks:
+    mvuFlagSpeedHack: 0 # Fixes invisible wall in front of the door leading to East 3F in the 2nd visit of Apartment world preventing Eileen's Nurse Outfit.
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes dark sides.
 SLPM-55146:
   name: "Jikkyou Powerful Pro Yakyuu 2009"
   region: "NTSC-J"
@@ -23694,6 +23915,7 @@ SLPM-60109:
     halfPixelOffset: 2 # Fixes title screen and some intro post processing alignment.
     roundSprite: 1 # Fixes ui and hud alignment.
     gpuPaletteConversion: 2 # Lots of CLUTs in large textures.
+    cpuCLUTRender: 1 # Fixes car textures.
 SLPM-60123:
   name: "Gekikuukan Pro Baseball - The End of the Century 1999 [Trial]"
   region: "NTSC-J"
@@ -23714,6 +23936,8 @@ SLPM-60138:
     vuClampMode: 2 # Fixes water reflection.
   gameFixes:
     - EETimingHack # Fixes flickering graphics.
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes shadows, object and enemy colours, platform transitions.
 SLPM-60167:
   name: "Zero [Trial]"
   region: "NTSC-J"
@@ -23763,9 +23987,11 @@ SLPM-60246:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLPM-60251:
   name: "Devil May Cry 3 [Trial Version]"
   region: "NTSC-J"
@@ -23777,6 +24003,8 @@ SLPM-60251:
 SLPM-60254:
   name: "Zettai Zetsumei Toshi 2 - Itetsuita Kioku-tachi [Trial A]"
   region: "NTSC-J"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes some shading/shadows.
 SLPM-60256:
   name: "Dengeki D73 demo"
   region: "NTSC-J"
@@ -23823,6 +24051,8 @@ SLPM-60272:
 SLPM-60273:
   name: "Zettai Zetsumei Toshi 2 - Itetsuita Kioku-tachi [Trial B]"
   region: "NTSC-J"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes some shading/shadows.
 SLPM-60274:
   name: "Full House Kiss 2 [Trial]"
   region: "NTSC-J"
@@ -23863,7 +24093,7 @@ SLPM-61018:
   name: "Abarenbou Princess [Trial]"
   region: "NTSC-J"
 SLPM-61039:
-  name: "Gun Survivor 4 - Biohazard - Heroes Never Die [Demo]"
+  name: "Gun Survivor 4 - BioHazard - Heroes Never Die [Demo]"
   region: "NTSC-J"
   gsHWFixes:
     halfPixelOffset: 1 # Fixes character offset with flashlight and blurriness.
@@ -23873,6 +24103,8 @@ SLPM-61039:
 SLPM-61046:
   name: "Dennou Senki - Virtual-On Marz [Trial]"
   region: "NTSC-J"
+  gsHWFixes:
+    cpuCLUTRender: 2 # Fixes CLUT colours.
 SLPM-61051:
   name: "Dengeki PS2 D61"
   region: "NTSC-J"
@@ -24570,6 +24802,9 @@ SLPM-62255:
 SLPM-62256:
   name: "Super Trucks"
   region: "NTSC-J"
+  gsHWFixes:
+    halfPixelOffset: 2 # Gets rid of fog line.
+    roundSprite: 1 # Fixes lines in FMVs.
 SLPM-62257:
   name: "Rally Championship"
   region: "NTSC-J"
@@ -25381,6 +25616,8 @@ SLPM-62547:
   name: "Sega Ages 2500 Series Vol.16 - Virtua Fighter 2"
   region: "NTSC-J"
   compat: 5
+  gsHWFixes:
+    cpuCLUTRender: 2 # Fixes CLUT colours.
 SLPM-62548:
   name: "Heisei Bakutoden [SuperLite 2000 Series]"
   region: "NTSC-J"
@@ -25490,6 +25727,9 @@ SLPM-62581:
   region: "NTSC-J"
   gameFixes:
     - XGKickHack # Fixes black and white fighters.
+  speedHacks:
+    MTVUSpeedHack: 0 # Fixes game from crashing.
+    InstantVU1SpeedHack: 0 # Fixes graphical issues.
   patches:
     0A1042EE:
       content: |-
@@ -25561,6 +25801,8 @@ SLPM-62606:
   name: "Sega Ages 2500 Series Vol.19 - Fighting Vipers"
   region: "NTSC-J"
   compat: 5
+  gsHWFixes:
+    cpuCLUTRender: 2 # Fixes CLUT colours.
 SLPM-62607:
   name: "Shikigami no Shiro III [Taito The Best]"
   region: "NTSC-J"
@@ -25794,6 +26036,8 @@ SLPM-62686:
 SLPM-62687:
   name: "Sega Ages 2500 Series Vol.24 - Last Bronx"
   region: "NTSC-J"
+  gsHWFixes:
+    cpuCLUTRender: 2 # Fixes CLUT colours.
 SLPM-62689:
   name: "Langrisser III"
   region: "NTSC-J"
@@ -25841,6 +26085,8 @@ SLPM-62703:
   name: "Sega Rally Championship '95"
   region: "NTSC-J"
   compat: 5
+  gsHWFixes:
+    cpuCLUTRender: 2 # Fixes CLUT colours.
 SLPM-62704:
   name: "Oretachi Geasen Zoku Sono Vol.10 - Quarth"
   region: "NTSC-J"
@@ -26102,6 +26348,11 @@ SLPM-64528:
 SLPM-64532:
   name: "Digital Holmes"
   region: "NTSC-K"
+SLPM-64533:
+  name: "F1 2002"
+  region: "NTSC-K"
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLPM-64534:
   name: "Psyvariar - Complete Edition"
   region: "NTSC-K"
@@ -27148,6 +27399,8 @@ SLPM-65302:
 SLPM-65303:
   name: "Dennou Senki - Virtual-On Marz"
   region: "NTSC-J"
+  gsHWFixes:
+    cpuCLUTRender: 2 # Fixes CLUT colours.
 SLPM-65305:
   name: "Genso Suikoden 3"
   region: "NTSC-J"
@@ -27269,6 +27522,8 @@ SLPM-65335:
 SLPM-65336:
   name: "K-1 World Grand Prix - The Beast Attack!"
   region: "NTSC-J"
+  gsHWFixes:
+    alignSprite: 1 # Fixes upscaling lines.
 SLPM-65337:
   name: "Gegege no Kitaro - Ibun Youkaitan"
   region: "NTSC-J"
@@ -27563,6 +27818,8 @@ SLPM-65432:
 SLPM-65433:
   name: "K-1 World Grand Prix 2003"
   region: "NTSC-J"
+  gsHWFixes:
+    alignSprite: 1 # Fixes upscaling lines.
 SLPM-65434:
   name: "Battle Gear 3"
   region: "NTSC-J"
@@ -28001,6 +28258,8 @@ SLPM-65574:
   name: "Silent Hill 4 - The Room"
   region: "NTSC-J"
   compat: 5
+  speedHacks:
+    mvuFlagSpeedHack: 0 # Fixes invisible wall in front of the door leading to East 3F in the 2nd visit of Apartment world preventing Eileen's Nurse Outfit.
   gsHWFixes:
     halfPixelOffset: 1 # Fixes dark sides.
 SLPM-65575:
@@ -28462,9 +28721,11 @@ SLPM-65719:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLPM-65720:
   name: "Shin Sangoku Musou 2 Mushoden [Koei the Best]"
   region: "NTSC-J"
@@ -28894,7 +29155,7 @@ SLPM-65843:
   name: "120 Yen no Haru - 120 Yen Stories"
   region: "NTSC-J"
   gsHWFixes:
-    pointListPalette: 1
+    cpuCLUTRender: 1 # Fixes CLUT generation.
 SLPM-65844:
   name: "Air [Best]"
   region: "NTSC-J"
@@ -29272,9 +29533,11 @@ SLPM-65958:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLPM-65959:
   name: "Standard Daisenryaku - Ushinawareta Shouri"
   region: "NTSC-J"
@@ -29328,9 +29591,30 @@ SLPM-65974:
 SLPM-65975:
   name: "WRC 4"
   region: "NTSC-J"
+  gameFixes:
+    - XGKickHack # Fixes SPS.
+  patches:
+    default:
+      content: |-
+        author=kozarovv
+        // Proper patch for WRC 4. CRC independent.
+        // I wrote a small runtime that moves unpacker higher right after emulator boot.
+        // Seems little bit extensive, but there is no way to make it smaller.
+        // Solves TLB miss errors which prevented the game from booting.
+        patch=0,EE,0040000C,double,3c0500603cc70054
+        patch=0,EE,00400014,double,24a5001024840010
+        patch=0,EE,0040001C,double,7ca6000078860000
+        patch=0,EE,00400024,double,000000001487fffb
+        patch=0,EE,0040002c,double,000000000817fff5
+        patch=0,EE,005fffd4,double,3c1c70003c040060
+        patch=0,EE,005fffdc,double,3c0700003c067000
+        patch=0,EE,005fffe4,double,279c000024840800
+        patch=0,EE,005fffec,double,24e7100024c60080
+        patch=0,EE,005ffff4,double,00c7e8200818000c
   gsHWFixes:
     autoFlush: 1 # Fixes car shadows.
     roundSprite: 1 # Fixes misalgined text.
+    halfPixelOffset: 1 # Fixes minor ghosting on objects.
 SLPM-65976:
   name: "Grandia III [Disc1of2]"
   region: "NTSC-J"
@@ -29397,6 +29681,7 @@ SLPM-65995:
   gsHWFixes:
     preloadFrameData: 1 # Fixes bad textures on Jake.
     halfPixelOffset: 1 # Fixes double image.
+    cpuCLUTRender: 1 # Fixes Jake going black in Smellovision.
 SLPM-65996:
   name: "Hametsu no Mars [Limited Edition]"
   region: "NTSC-J"
@@ -29530,6 +29815,8 @@ SLPM-66031:
 SLPM-66032:
   name: "Silent Hill 4 [Konami The Best]"
   region: "NTSC-J"
+  speedHacks:
+    mvuFlagSpeedHack: 0 # Fixes invisible wall in front of the door leading to East 3F in the 2nd visit of Apartment world preventing Eileen's Nurse Outfit.
   gsHWFixes:
     halfPixelOffset: 1 # Fixes dark sides.
 SLPM-66033:
@@ -29662,6 +29949,8 @@ SLPM-66074:
   compat: 5
   roundModes:
     vuRoundMode: 0 # Prevents only backgrounds from appearing in Sonic R's multiplayer modes.
+  gsHWFixes:
+    cpuCLUTRender: 2 # Fixes CLUT colour in Sonic Fighters.
   memcardFilters:
     - "SLPM-66074"
     - "SLPM-65758"
@@ -29787,9 +30076,11 @@ SLPM-66108:
     vuClampMode: 0 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLAJ-25066"
     - "SLPM-66108"
@@ -30165,6 +30456,8 @@ SLPM-66213:
   name: "BioHazard 4"
   region: "NTSC-J"
   compat: 5
+  gameFixes:
+    - BlitInternalFPSHack # Fixes internal FPS detection.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
 SLPM-66214:
@@ -30250,6 +30543,7 @@ SLPM-66232:
   region: "NTSC-J"
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLAJ-25075"
     - "SLPM-66232"
@@ -30262,6 +30556,7 @@ SLPM-66233:
   region: "NTSC-J"
   gsHWFixes:
     autoFlush: 1 # Fixes effects.
+    halfPixelOffset: 1 # Fixes upscaling artifacts.
   compat: 5
 SLPM-66234:
   name: "Wizardry X - Zensen no Gakufu [Wonder Price]"
@@ -30621,9 +30916,30 @@ SLPM-66333:
 SLPM-66334:
   name: "WRC 4 [Spike the Best]"
   region: "NTSC-J"
+  gameFixes:
+    - XGKickHack # Fixes SPS.
+  patches:
+    default:
+      content: |-
+        author=kozarovv
+        // Proper patch for WRC 4. CRC independent.
+        // I wrote a small runtime that moves unpacker higher right after emulator boot.
+        // Seems little bit extensive, but there is no way to make it smaller.
+        // Solves TLB miss errors which prevented the game from booting.
+        patch=0,EE,0040000C,double,3c0500603cc70054
+        patch=0,EE,00400014,double,24a5001024840010
+        patch=0,EE,0040001C,double,7ca6000078860000
+        patch=0,EE,00400024,double,000000001487fffb
+        patch=0,EE,0040002c,double,000000000817fff5
+        patch=0,EE,005fffd4,double,3c1c70003c040060
+        patch=0,EE,005fffdc,double,3c0700003c067000
+        patch=0,EE,005fffe4,double,279c000024840800
+        patch=0,EE,005fffec,double,24e7100024c60080
+        patch=0,EE,005ffff4,double,00c7e8200818000c
   gsHWFixes:
     autoFlush: 1 # Fixes car shadows.
     roundSprite: 1 # Fixes misalgined text.
+    halfPixelOffset: 1 # Fixes minor ghosting on objects.
 SLPM-66336:
   name: "Shinseiki Evangelion - Koutetsu no Girlfriend [Special Edition]"
   region: "NTSC-J"
@@ -31120,6 +31436,7 @@ SLPM-66473:
     cpuSpriteRenderBW: 1 # Fixes textures.
     preloadFrameData: 1 # Fixes static text screens.
     roundSprite: 1 # Fixes lines in some post-effects.
+    cpuCLUTRender: 1 # Fixes light occlusion.
 SLPM-66474:
   name: "Odin Sphere"
   region: "NTSC-J"
@@ -31429,6 +31746,7 @@ SLPM-66562:
   region: "NTSC-J"
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLAJ-25075"
     - "SLPM-66232"
@@ -31460,6 +31778,9 @@ SLPM-66567:
   region: "NTSC-J"
   gameFixes:
     - BlitInternalFPSHack # Fixes internal FPS detection.
+  gsHWFixes:
+    cpuSpriteRenderBW: 2 # Fixes some bad textures.
+    cpuCLUTRender: 1 # Fixes the rest of the bad textures.
 SLPM-66568:
   name: "Brothers In Arms - Road to Hill 30 [Ubisoft Best]"
   region: "NTSC-J"
@@ -31759,9 +32080,11 @@ SLPM-66652:
     vuClampMode: 0 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLAJ-25066"
     - "SLPM-66108"
@@ -31858,6 +32181,7 @@ SLPM-66675:
   region: "NTSC-J"
   gsHWFixes:
     autoFlush: 1 # Fixes effects.
+    halfPixelOffset: 1 # Fixes upscaling artifacts.
   compat: 5
   memcardFilters: # Reads Re:Chain data and vice-versa.
     - "SLPM-66675"
@@ -32009,6 +32333,8 @@ SLPM-66709:
 SLPM-66710:
   name: "Godfather, The"
   region: "NTSC-J"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes light occlusion.
 SLPM-66712:
   name: "Rozen Maiden - Geppetto Garden [Limited Edition]"
   region: "NTSC-J"
@@ -32125,9 +32451,11 @@ SLPM-66739:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLPM-66740:
   name: "Sentou Kokka Kai - Legend [DX Pack]"
   region: "NTSC-J"
@@ -32526,6 +32854,8 @@ SLPM-66863:
 SLPM-66864:
   name: "Umisho"
   region: "NTSC-J"
+  gsHWFixes:
+    alignSprite: 1 # Reduces misaligned line distortian when in QTE.
 SLPM-66866:
   name: "Jissen Pachi-Slot Hisshouhou! Hokuto no Ken 2"
   region: "NTSC-J"
@@ -32840,9 +33170,11 @@ SLPM-66962:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLPM-66963:
   name: "Medal of Honor - Frontline [EA-SY! 1980]"
   region: "NTSC-J"
@@ -32856,6 +33188,8 @@ SLPM-66965:
 SLPM-66966:
   name: "Godfather, The [EA-SY! 1980]"
   region: "NTSC-J"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes light occlusion.
 SLPM-66967:
   name: "Aria - The Natural - Tooi Yume no Mirage [Alchemist Best Collection]"
   region: "NTSC-J"
@@ -33104,6 +33438,7 @@ SLPM-67527:
     vuClampMode: 2 # White textures.
   gsHWFixes:
     halfPixelOffset: 1 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes "Busted" scenes.
 SLPM-67528:
   name: "Hajime no Ippo - Victorious Boxers [Championship Edition]"
   region: "NTSC-K"
@@ -33245,7 +33580,7 @@ SLPM-74104:
   name: "Momotarou Densetsu 15 [PlayStation 2 The Best]"
   region: "NTSC-J"
 SLPM-74201:
-  name: "Biohazard Outbreak [PlayStation 2 The Best]"
+  name: "BioHazard Outbreak [PlayStation 2 The Best]"
   region: "NTSC-J"
 SLPM-74202:
   name: "Fuuun Shinsengumi [PlayStation 2 The Best]"
@@ -33322,6 +33657,8 @@ SLPM-74228:
 SLPM-74229:
   name: "BioHazard 4 [PlayStation 2 The Best]"
   region: "NTSC-J"
+  gameFixes:
+    - BlitInternalFPSHack # Fixes internal FPS detection.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
 SLPM-74230:
@@ -33394,6 +33731,7 @@ SLPM-74243:
     cpuSpriteRenderBW: 1 # Fixes textures.
     preloadFrameData: 1 # Fixes static text screens.
     roundSprite: 1 # Fixes lines in some post-effects.
+    cpuCLUTRender: 1 # Fixes light occlusion.
 SLPM-74244:
   name: "Phantasy Star Universe [PlayStation 2 The Best]"
   region: "NTSC-J"
@@ -33482,6 +33820,13 @@ SLPM-74278:
 SLPM-74286:
   name: "Shin Sangoku Musou 5 Special [PlayStation 2 The Best]"
   region: "NTSC-J"
+SLPM-74288:
+  name: "BioHazard 4"
+  region: "NTSC-J"
+  gameFixes:
+    - BlitInternalFPSHack # Fixes internal FPS detection.
+  gsHWFixes:
+    halfPixelOffset: 2 # Fixes blurriness.
 SLPM-74301:
   name: "Ryu ga Gotoku 2 [PlayStation 2 The Best]"
   region: "NTSC-J"
@@ -33517,7 +33862,7 @@ SLPM-74408:
   name: "Rakugaki Kingdom [PlayStation 2 The Best]"
   region: "NTSC-J"
 SLPM-74409:
-  name: "Gun Survivor 2 - Biohazard Code - Veronica [PlayStation 2 The Best]"
+  name: "Gun Survivor 2 - BioHazard Code - Veronica [PlayStation 2 The Best]"
   region: "NTSC-J"
 SLPM-74410:
   name: "Breath of Fire V - Dragon Quarter [PlayStation 2 The Best]"
@@ -33543,6 +33888,8 @@ SLPM-74420:
 SLPM-74421:
   name: "Dennou Senki - Virtual-On Marz [PlayStation 2 The Best]"
   region: "NTSC-J"
+  gsHWFixes:
+    cpuCLUTRender: 2 # Fixes CLUT colours.
 SLPS-20001:
   name: "Ridge Racer V"
   region: "NTSC-J"
@@ -33555,6 +33902,7 @@ SLPS-20001:
     halfPixelOffset: 2 # Fixes title screen and some intro post processing alignment.
     roundSprite: 1 # Fixes ui and hud alignment.
     gpuPaletteConversion: 2 # Lots of CLUTs in large textures.
+    cpuCLUTRender: 1 # Fixes car textures.
 SLPS-20002:
   name: "Doukyu Billiards"
   region: "NTSC-J"
@@ -33882,10 +34230,10 @@ SLPS-20115:
   name: "Gendai Yougo no Kiso Chishiki 2001"
   region: "NTSC-J"
 SLPS-20120:
-  name: "Formula One 2001"
+  name: "F1 2001"
   region: "NTSC-J"
-  gameFixes:
-    - XGKickHack
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLPS-20121:
   name: "Kanon"
   region: "NTSC-J"
@@ -34045,6 +34393,8 @@ SLPS-20198:
 SLPS-20199:
   name: "F1 2002"
   region: "NTSC-J"
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLPS-20202:
   name: "Coloball 2002"
   region: "NTSC-J"
@@ -34231,6 +34581,11 @@ SLPS-20293:
 SLPS-20294:
   name: "Hanabi Shokunin Ninarou 2"
   region: "NTSC-J"
+SLPS-20295:
+  name: "F1 Career Challenge"
+  region: "NTSC-J"
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLPS-20296:
   name: "Dugout '03 - The Turning Point"
   region: "NTSC-J"
@@ -34648,6 +35003,9 @@ SLPS-20453:
   compat: 5
   gameFixes:
     - XGKickHack # Fixes black and white fighters.
+  speedHacks:
+    MTVUSpeedHack: 0 # Fixes game from crashing.
+    InstantVU1SpeedHack: 0 # Fixes graphical issues.
   patches:
     602B7A48:
       content: |-
@@ -34983,6 +35341,8 @@ SLPS-25033:
     vuClampMode: 2 # Fixes water reflection.
   gameFixes:
     - EETimingHack # Fixes flickering graphics.
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes shadows, object and enemy colours, platform transitions.
 SLPS-25034:
   name: "Flower, Sun and Rain"
   region: "NTSC-J"
@@ -36312,6 +36672,7 @@ SLPS-25418:
     alignSprite: 1 # Fixes vertical lines.
     mergeSprite: 1 # Fixes vertical lines.
     texturePreloading: 1 # Performs better than full.
+    cpuCLUTRender: 1 # Fixes sun occlusion.
   patches:
     86089F31:
       content: |-
@@ -36864,6 +37225,9 @@ SLPS-25578:
   region: "NTSC-J"
   gameFixes:
     - XGKickHack # Fixes black and white fighters.
+  speedHacks:
+    MTVUSpeedHack: 0 # Fixes game from crashing.
+    InstantVU1SpeedHack: 0 # Fixes graphical issues.
   patches:
     F8664E20:
       content: |-
@@ -36959,6 +37323,8 @@ SLPS-25606:
   name: "Zettai Zetsumei Toshi 2 - Itetsuita Kioutachi"
   region: "NTSC-J"
   compat: 5
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes some shading/shadows.
 SLPS-25607:
   name: "Makai Senki Disgaea 2 [Limited Edition]"
   region: "NTSC-J"
@@ -37869,6 +38235,8 @@ SLPS-25850:
 SLPS-25851:
   name: "Zettai Zetsumei Toshi 2 - Itetsuita Kioku Tachi [Irem Collection]"
   region: "NTSC-J"
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes some shading/shadows.
 SLPS-25852:
   name: "Sanyo Pachinko Paradise 13 [Irem Collection]"
   region: "NTSC-J"
@@ -38363,6 +38731,7 @@ SLPS-73218:
     alignSprite: 1 # Fixes vertical lines.
     mergeSprite: 1 # Fixes vertical lines.
     texturePreloading: 1 # Performs better than full.
+    cpuCLUTRender: 1 # Fixes sun occlusion.
 SLPS-73219:
   name: "Tales of Destiny 2 [PlayStation 2 The Best]"
   region: "NTSC-J"
@@ -38663,6 +39032,8 @@ SLPS-73404:
     vuClampMode: 2 # Fixes water reflection.
   gameFixes:
     - EETimingHack # Fixes flickering graphics.
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes shadows, object and enemy colours, platform transitions.
 SLPS-73405:
   name: "Zero [PlayStation 2 The Best]"
   region: "NTSC-J"
@@ -38795,6 +39166,7 @@ SLUS-20002:
     halfPixelOffset: 2 # Fixes title screen and some intro post processing alignment.
     roundSprite: 1 # Fixes ui and hud alignment.
     gpuPaletteConversion: 2 # Lots of CLUTs in large textures.
+    cpuCLUTRender: 1 # Fixes car textures.
 SLUS-20003:
   name: "Portal Runner"
   region: "NTSC-U"
@@ -39280,6 +39652,8 @@ SLUS-20151:
     vuClampMode: 2 # Fixes water reflection.
   gameFixes:
     - EETimingHack # Fixes flickering graphics.
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes shadows, object and enemy colours, platform transitions.
 SLUS-20152:
   name: "Ace Combat 04 - Shattered Skies"
   region: "NTSC-U"
@@ -39750,6 +40124,8 @@ SLUS-20263:
 SLUS-20264:
   name: "F1 2001"
   region: "NTSC-U"
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLUS-20265:
   name: "007 - Agent Under Fire"
   region: "NTSC-U"
@@ -40053,6 +40429,8 @@ SLUS-20331:
   name: "Minority Report - Everybody Runs"
   region: "NTSC-U"
   compat: 5
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes light bleed through objects.
 SLUS-20332:
   name: "NCAA March Madness 2002"
   region: "NTSC-U"
@@ -40176,6 +40554,7 @@ SLUS-20362:
     vuClampMode: 2 # White textures.
   gsHWFixes:
     halfPixelOffset: 1 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes "Busted" scenes.
 SLUS-20363:
   name: "Sled Storm"
   region: "NTSC-U"
@@ -40610,6 +40989,8 @@ SLUS-20454:
 SLUS-20455:
   name: "F1 2002"
   region: "NTSC-U"
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLUS-20456:
   name: "Soccer Mania"
   region: "NTSC-U"
@@ -41633,6 +42014,8 @@ SLUS-20673:
   name: "Alias"
   region: "NTSC-U"
   compat: 5
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes lights penetrating objects.
 SLUS-20674:
   name: "Cyber Troopers - Virtual-On Marz"
   region: "NTSC-U"
@@ -41716,6 +42099,8 @@ SLUS-20691:
 SLUS-20693:
   name: "F1 Career Challenge"
   region: "NTSC-U"
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes black void when upscaling.
 SLUS-20694:
   name: "Onimusha 3 - Demon Siege"
   region: "NTSC-U"
@@ -41965,6 +42350,9 @@ SLUS-20748:
   name: "Super Trucks Racing"
   region: "NTSC-U"
   compat: 5
+  gsHWFixes:
+    halfPixelOffset: 2 # Gets rid of fog line.
+    roundSprite: 1 # Fixes lines in FMVs.
 SLUS-20749:
   name: "Rugby 2004"
   region: "NTSC-U"
@@ -42428,6 +42816,7 @@ SLUS-20851:
     alignSprite: 1 # Fixes vertical lines.
     mergeSprite: 1 # Fixes vertical lines.
     texturePreloading: 1 # Performs better than full.
+    cpuCLUTRender: 1 # Fixes sun occlusion.
   patches:
     39B574F0:
       content: |-
@@ -42456,6 +42845,8 @@ SLUS-20855:
   name: "Destruction Derby Arenas"
   region: "NTSC-U"
   compat: 5
+  gsHWFixes:
+    halfPixelOffset: 2 # Corrects shadow position.
 SLUS-20856:
   name: "Spy Fiction"
   region: "NTSC-U"
@@ -42549,6 +42940,8 @@ SLUS-20873:
   name: "Silent Hill 4 - The Room"
   region: "NTSC-U"
   compat: 5
+  speedHacks:
+    mvuFlagSpeedHack: 0 # Fixes invisible wall in front of the door leading to East 3F in the 2nd visit of Apartment world preventing Eileen's Nurse Outfit.
   gsHWFixes:
     halfPixelOffset: 1 # Fixes dark sides.
 SLUS-20874:
@@ -43207,6 +43600,7 @@ SLUS-21005:
   region: "NTSC-U"
   gsHWFixes:
     autoFlush: 1 # Fixes effects.
+    halfPixelOffset: 1 # Fixes upscaling artifacts.
   compat: 5
 SLUS-21006:
   name: "Ghost in the Shell - Stand Alone Complex"
@@ -43313,7 +43707,8 @@ SLUS-21018:
     vuClampMode: 3 # Fixes minor SPS on characters.
   gsHWFixes:
     preloadFrameData: 1 # Fixes bad textures on Jake.
-    halfPixelOffset: 1 # Fixes double image.
+    halfPixelOffset: 1 # Fixes double image.gsHWFixes:
+    cpuCLUTRender: 1 # Fixes Jake going black in Smellovision.
 SLUS-21019:
   name: "Technic Beat"
   region: "NTSC-U"
@@ -43483,9 +43878,11 @@ SLUS-21050:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLUS-21051:
   name: "FIFA 2005"
   region: "NTSC-U"
@@ -43738,6 +44135,7 @@ SLUS-21106:
     cpuSpriteRenderBW: 1 # Fixes textures.
     preloadFrameData: 1 # Fixes static text screens.
     roundSprite: 1 # Fixes lines in some post-effects.
+    cpuCLUTRender: 1 # Fixes light occlusion.
 SLUS-21107:
   name: "X-Men - The Official Game"
   region: "NTSC-U"
@@ -44433,9 +44831,11 @@ SLUS-21242:
     vuClampMode: 0 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters: # Reads Burnout 3 and NFL 06 saves for unlockables.
     - "SLUS-21242"
     - "SLUS-21050"
@@ -44586,6 +44986,7 @@ SLUS-21267:
   compat: 5
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLUS-21267"
     - "SLUS-21351"
@@ -44618,6 +45019,9 @@ SLUS-21271:
   compat: 5
   gameFixes:
     - BlitInternalFPSHack # Fixes internal FPS detection.
+  gsHWFixes:
+    cpuSpriteRenderBW: 2 # Fixes some bad textures.
+    cpuCLUTRender: 1 # Fixes the rest of the bad textures.
 SLUS-21272:
   name: "Super Monkey Ball Adventure"
   region: "NTSC-U"
@@ -45051,6 +45455,7 @@ SLUS-21351:
   compat: 5
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
   memcardFilters:
     - "SLUS-21267"
     - "SLUS-21351"
@@ -45267,6 +45672,8 @@ SLUS-21385:
   name: "Godfather, The"
   region: "NTSC-U"
   compat: 5
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes light occlusion.
 SLUS-21386:
   name: "Tales of the Abyss"
   region: "NTSC-U"
@@ -45342,6 +45749,9 @@ SLUS-21399:
   region: "NTSC-U"
   gameFixes:
     - BlitInternalFPSHack # Fixes internal FPS detection.
+  gsHWFixes:
+    cpuSpriteRenderBW: 2 # Fixes some bad textures.
+    cpuCLUTRender: 1 # Fixes the rest of the bad textures.
 SLUS-21400:
   name: "Monster House"
   region: "NTSC-U"
@@ -45373,6 +45783,8 @@ SLUS-21407:
   compat: 5
   clampModes:
     vuClampMode: 3 # Missing geometry with microVU.
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes light occlusion.
 SLUS-21408:
   name: "FIFA World Cup Germany '06"
   region: "NTSC-U"
@@ -45885,6 +46297,8 @@ SLUS-21501:
   name: "Raw Danger"
   region: "NTSC-U"
   compat: 5
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes some shading/shadows.
 SLUS-21503:
   name: "God Hand"
   region: "NTSC-U"
@@ -46165,9 +46579,11 @@ SLUS-21596:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLUS-21597:
   name: "Medal of Honor - Vanguard"
   region: "NTSC-U"
@@ -47015,6 +47431,9 @@ SLUS-21773:
   name: "PDC World Championship Darts 2008"
   region: "NTSC-U"
   compat: 5
+  gsHWFixes:
+    autoFlush: 1 # Fixes lights not appearing.
+    cpuCLUTRender: 1 # Fixes lights going through darts players.
 SLUS-21774:
   name: "Dynasty Warriors 6"
   region: "NTSC-U"
@@ -47293,6 +47712,8 @@ SLUS-21843:
   compat: 5
   roundModes:
     vuRoundMode: 0 # Crashes without.
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes bad colours during play.
 SLUS-21844:
   name: "Bolt"
   region: "NTSC-U"
@@ -47375,6 +47796,8 @@ SLUS-21865:
   name: "Guitar Hero 5"
   region: "NTSC-U"
   compat: 5
+  roundModes:
+    vuRoundMode: 0 # Fixes SPS and VU size spam.
 SLUS-21866:
   name: "Guitar Hero - Smash Hits"
   region: "NTSC-U"
@@ -47469,6 +47892,8 @@ SLUS-21885:
   name: "Indiana Jones and the Staff of Kings"
   region: "NTSC-U"
   compat: 5
+  gsHWFixes:
+    halfPixelOffset: 1 # Fixes ghosting.
 SLUS-21886:
   name: "G.I. Joe - The Rise of Cobra"
   region: "NTSC-U"
@@ -47762,6 +48187,8 @@ SLUS-28004:
     vuClampMode: 2 # Fixes water reflection.
   gameFixes:
     - EETimingHack # Fixes flickering graphics.
+  gsHWFixes:
+    cpuCLUTRender: 1 # Fixes shadows, object and enemy colours, platform transitions.
 SLUS-28006:
   name: "Burnout [Trade Demo]"
   region: "NTSC-U"
@@ -48249,9 +48676,11 @@ SLUS-29113:
     vuClampMode: 3 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLUS-29116:
   name: "WWE SmackDown! vs. RAW [Public Beta Vol.1.0]"
   region: "NTSC-U"
@@ -48355,9 +48784,11 @@ SLUS-29153:
     vuClampMode: 0 # Fixes buggy lighting in the garage.
   gsHWFixes:
     halfPixelOffset: 2 # Fixes depth lines.
-    autoFlush: 1 # Fixes blur.
+    autoFlush: 1 # Fixes blur and obscures sun behind objects.
+    preloadFrameData: 1 # Makes sun appear.
     mipmap: 2 # Fixes over sharpening.
     trilinearFiltering: 1 # Smoothes out mipmapping.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLUS-29154:
   name: "NHL '06 [Demo]"
   region: "NTSC-U"
@@ -48366,6 +48797,7 @@ SLUS-29155:
   region: "NTSC-U"
   gsHWFixes:
     halfPixelOffset: 2 # Fixes blurriness.
+    cpuCLUTRender: 1 # Fixes sun penetrating bridges (along with HPO special).
 SLUS-29156:
   name: "Marvel Nemesis - Rise of the Imperfects [Demo]"
   region: "NTSC-U"
@@ -48460,6 +48892,9 @@ SLUS-29185:
   region: "NTSC-U"
   gameFixes:
     - BlitInternalFPSHack # Fixes internal FPS detection.
+  gsHWFixes:
+    cpuSpriteRenderBW: 2 # Fixes some bad textures.
+    cpuCLUTRender: 1 # Fixes the rest of the bad textures.
 SLUS-29188:
   name: "Steambot Chronicles [Regular Demo]"
   region: "NTSC-U"

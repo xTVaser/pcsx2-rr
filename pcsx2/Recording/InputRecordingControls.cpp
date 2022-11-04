@@ -167,7 +167,7 @@ void InputRecordingControls::TogglePause()
 	{
 		resumeEmulation = pauseEmulation;
 		pauseEmulation = !pauseEmulation;
-		inputRec::log(pauseEmulation ? "Paused Emulation" : "Resumed Emulation");
+		InputRec::log(pauseEmulation ? "Paused Emulation" : "Resumed Emulation");
 	}
 	else
 		g_InputRecording.SetToRecordMode();
@@ -211,14 +211,13 @@ void InputRecordingControls::StopCapture() const
 		if (mainFrame->IsCapturing())
 		{
 			mainFrame->VideoCaptureToggle();
-			inputRec::log("Capture completed");
+			InputRec::log("Capture completed");
 		}
 	}
 }
 
 #else
 
-#include "Counters.h"
 #include "DebugTools/Debug.h"
 #include "MemoryTypes.h"
 
@@ -226,198 +225,87 @@ void InputRecordingControls::StopCapture() const
 #include "InputRecordingControls.h"
 #include "Utilities/InputRecordingLogger.h"
 
+#include "GS/GS.h"
 #include "VMManager.h"
 
-InputRecordingControls g_InputRecordingControls;
-
-void InputRecordingControls::CheckPauseStatus()
+void InputRecordingControls::toggleRecordMode()
 {
-	frame_advance_frame_counter++;
-	if (frameAdvancing && frame_advance_frame_counter >= frames_per_frame_advance)
+	if (isReplaying())
 	{
-		frameAdvancing = false;
-		pauseEmulation = true;
-	}
-
-	if (g_InputRecording.IsActive())
-	{
-		g_InputRecording.IncrementFrameCounter();
-
-		if (switchToReplay)
-		{
-			g_InputRecording.SetToReplayMode();
-			switchToReplay = false;
-		}
-
-		if (IsFinishedReplaying() || g_InputRecording.GetFrameCounter() == INT_MAX)
-		{
-			if (!pauseEmulation)
-				pauseEmulation = true;
-			StopCapture();
-		}
-	}
-	g_InputRecording.LogAndRedraw();
-}
-
-void InputRecordingControls::HandlePausingAndLocking()
-{
-	// Explicit frame locking
-	if (frameLock)
-	{
-		if (g_FrameCount == frameLockTracker)
-		{
-			frameLock = false;
-			Resume();
-		}
-		else if (!emulationCurrentlyPaused && (VMManager::GetState() == VMState::Running || VMManager::GetState() != VMState::Paused))
-		{
-			emulationCurrentlyPaused = true;
-			VMManager::SetPaused(true);
-		}
-	}
-	else if (pauseEmulation && (VMManager::GetState() == VMState::Running || VMManager::GetState() != VMState::Paused))
-	{
-		emulationCurrentlyPaused = true;
-		VMManager::SetPaused(true);
-	}
-}
-
-void InputRecordingControls::ResumeCoreThreadIfStarted()
-{
-	if (resumeEmulation && (VMManager::GetState() == VMState::Running || VMManager::GetState() == VMState::Paused))
-	{
-		VMManager::SetPaused(false);
-		resumeEmulation = false;
-		emulationCurrentlyPaused = false;
-	}
-}
-
-void InputRecordingControls::FrameAdvance()
-{
-	if (!IsFinishedReplaying())
-	{
-		frameAdvancing = true;
-		frame_advance_frame_counter = 0;
-		Resume();
+		setRecordMode();
 	}
 	else
 	{
-		g_InputRecording.SetToRecordMode();
+		setReplayMode();
 	}
 }
 
-void InputRecordingControls::setFrameAdvanceAmount(int amount)
+void InputRecordingControls::setRecordMode(bool waitForFrameToEnd)
 {
-	frames_per_frame_advance = amount;
-}
-
-bool InputRecordingControls::IsFrameAdvancing()
-{
-	return frameAdvancing;
-}
-
-bool InputRecordingControls::IsPaused()
-{
-	return emulationCurrentlyPaused && VMManager::GetState() == VMState::Paused;
-}
-
-void InputRecordingControls::Pause()
-{
-	pauseEmulation = true;
-	resumeEmulation = false;
-}
-
-void InputRecordingControls::PauseImmediately()
-{
-	if (VMManager::GetState() != VMState::Paused)
+	if (!waitForFrameToEnd || VMManager::GetState() == VMState::Paused)
 	{
-		Pause();
-		if ((VMManager::GetState() == VMState::Running || VMManager::GetState() == VMState::Paused))
-		{
-			emulationCurrentlyPaused = true;
-			VMManager::SetPaused(true);
-		}
-	}
-}
-
-void InputRecordingControls::Resume()
-{
-	if (!IsFinishedReplaying())
-	{
-		pauseEmulation = false;
-		resumeEmulation = true;
+		m_state = Mode::Recording;
+		InputRec::log("Record mode ON");
+		GSPresentCurrentFrame();
 	}
 	else
-		g_InputRecording.SetToRecordMode();
-}
-
-void InputRecordingControls::ResumeImmediately()
-{
-	if (VMManager::GetState() == VMState::Paused)
 	{
-		Resume();
-		if ((VMManager::GetState() == VMState::Running || VMManager::GetState() == VMState::Paused))
-		{
-			emulationCurrentlyPaused = false;
-			VMManager::SetPaused(false);
-		}
+		m_controlQueue.push([&]() {
+			m_state = Mode::Recording;
+			InputRec::log("Record mode ON");
+		});
 	}
 }
 
-void InputRecordingControls::TogglePause()
+void InputRecordingControls::setReplayMode(bool waitForFrameToEnd)
 {
-	if (!pauseEmulation || !IsFinishedReplaying())
+	if (!waitForFrameToEnd || VMManager::GetState() == VMState::Paused)
 	{
-		resumeEmulation = pauseEmulation;
-		pauseEmulation = !pauseEmulation;
-		inputRec::log(pauseEmulation ? "Paused Emulation" : "Resumed Emulation");
+		m_state = Mode::Replaying;
+		InputRec::log("Replay mode ON");
+		GSPresentCurrentFrame();
 	}
 	else
-		g_InputRecording.SetToRecordMode();
-}
-
-void InputRecordingControls::RecordModeToggle()
-{
-	if (g_InputRecording.IsReplaying())
-		g_InputRecording.SetToRecordMode();
-	else if (g_InputRecording.IsRecording())
 	{
-		if (IsPaused() || g_InputRecording.GetFrameCounter() < g_InputRecording.GetInputRecordingData().GetTotalFrames())
-			g_InputRecording.SetToReplayMode();
-		else
-			switchToReplay = true;
+		m_controlQueue.push([&]() {
+			m_state = Mode::Replaying;
+			InputRec::log("Replay mode ON");
+		});
 	}
 }
 
-void InputRecordingControls::Lock(u32 frame)
+bool InputRecordingControls::isReplaying() const
 {
-	frameLock = true;
-	frameLockTracker = frame;
-	frameAdvancing = false;
-	// Ensures that g_frameCount can be used to resume emulation after a fast/full boot
-	if (!g_InputRecording.GetInputRecordingData().FromSaveState())
+	return m_state == Mode::Replaying;
+}
+
+void InputRecordingControls::processControlQueue()
+{
+	while (!m_controlQueue.empty())
 	{
-		g_FrameCount = frame + 1;
+		m_controlQueue.front()();
+		m_controlQueue.pop();
 	}
 }
 
-bool InputRecordingControls::IsFinishedReplaying() const
+bool InputRecordingControls::isRecording() const
 {
-	return g_InputRecording.IsReplaying() &&
-		   g_InputRecording.GetFrameCounter() >= g_InputRecording.GetInputRecordingData().GetTotalFrames();
+	return m_state == Mode::Recording;
 }
 
-void InputRecordingControls::StopCapture() const
-{
-	// TODO - Vaser - Is capturing supported in Qt yet - Check
-	/*if (MainEmuFrame* mainFrame = GetMainFramePtr())
-	{
-		if (mainFrame->IsCapturing())
-		{
-			mainFrame->VideoCaptureToggle();
-			inputRec::log("Capture completed");
-		}
-	}*/
-}
+
+// TODO - Once there is GS Capture support again
+//void InputRecordingControls::StopCapture() const
+//{
+//	// TODO - Vaser - Is capturing supported in Qt yet - Check
+//	/*if (MainEmuFrame* mainFrame = GetMainFramePtr())
+//	{
+//		if (mainFrame->IsCapturing())
+//		{
+//			mainFrame->VideoCaptureToggle();
+//			inputRec::log("Capture completed");
+//		}
+//	}*/
+//}
 
 #endif

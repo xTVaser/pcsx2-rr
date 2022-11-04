@@ -841,8 +841,12 @@ void cdvdReset()
 
 	// If we are recording, always use the same RTC setting
 	// for games that use the RTC to seed their RNG -- this is very important to be the same everytime!
-#ifndef DISABLE_RECORDING
-	if (g_InputRecording.IsActive())
+#ifndef PCSX2_CORE
+	const bool input_recording_active = g_InputRecording.IsActive();
+#else
+	const bool input_recording_active = g_InputRecording.isActive();
+#endif
+	if (input_recording_active)
 	{
 		Console.WriteLn("Input Recording Active - Using Constant RTC of 04-03-2020 (DD-MM-YYYY)");
 		// Why not just 0 everything? Some games apparently require the date to be valid in terms of when
@@ -855,7 +859,6 @@ void cdvdReset()
 		cdvd.RTC.year = 20;
 	}
 	else
-#endif
 	{
 		// CDVD internally uses GMT+9.  If you think the time's wrong, you're wrong.
 		// Set up your time zone and winter/summer in the BIOS.  No PS2 BIOS I know of features automatic DST.
