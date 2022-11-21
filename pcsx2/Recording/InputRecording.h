@@ -169,13 +169,11 @@ public:
 	void queryFirstByte(const u8 data);
 	void querySecondByte(const u8 bufVal);
 	void controllerInterrupt(const u8 port, const size_t fifoSize, u8& dataIn, u8& dataOut);
+	void ReadOrWritePAD(const std::string test);
 	void incFrameCounter();
 	u64 getFrameCounter() const;
 	bool isActive() const;
-
-	// Main handler for ingesting input data and either saving it to the recording file (recording)
-	// or mutating it to the contents of the recording file (replaying)
-	void ControllerInterrupt(u8 port, size_t fifoSize, u8 dataIn, u8 dataOut);
+	void processRecordQueue();
     
 	void handleExceededFrameCounter();
 	void handleReset();
@@ -202,12 +200,18 @@ private:
 	bool m_pad_data_available = false;
 	bool m_watching_for_rerecords = false;
 
+	// A consistent way to run actions at the end of the each frame (ie. stop the recording)
+	std::queue<std::function<void()>> m_recordingQueue;
+
 	u32 m_frame_counter = 0;
 	// Either 0 for a power-on movie, or the g_FrameCount that is stored on the starting frame
 	u32 m_starting_frame = 0;
 
 	void initializeState();
 	void setStartingFrame(u32 startingFrame);
+	void closeActiveFile();
+
+	PadData m_temp_pad = PadData();
 
 private:
 	// Resolve the name and region of the game currently loaded using the GameDB

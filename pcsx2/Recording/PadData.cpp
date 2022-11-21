@@ -208,6 +208,8 @@ void PadData::LogPadData(u8 const& port)
 
 #include <fmt/core.h>
 
+// TODO - replace relevant parts of this class with PAD::KeyStatus overtime
+
 void PadData::UpdateControllerData(u16 bufIndex, u8 const bufVal) noexcept
 {
 	if (bufIndex == static_cast<u8>(BufferIndex::PressedFlagsGroupOne))
@@ -273,9 +275,48 @@ u8 PadData::PollControllerData(u16 bufIndex) const noexcept
 	}
 	else
 	{
-		bufIndex -= 2;
+		// TODO - bringing back the switch because the commented out code causes access violations
+		/*bufIndex -= 2;
 		if (bufIndex < sizeof(m_allIntensities) / sizeof(u8*))
-			byte = *m_allIntensities[bufIndex - 2];
+			byte = *m_allIntensities[bufIndex - 2];*/
+		BufferIndex temp = static_cast<BufferIndex>(bufIndex);
+		switch (temp)
+		{
+			case BufferIndex::RightAnalogXVector:
+				return m_rightAnalogX;
+			case BufferIndex::RightAnalogYVector:
+				return m_rightAnalogY;
+			case BufferIndex::LeftAnalogXVector:
+				return m_leftAnalogX;
+			case BufferIndex::LeftAnalogYVector:
+				return m_leftAnalogY;
+			case BufferIndex::RightPressure:
+				return m_rightPressure;
+			case BufferIndex::LeftPressure:
+				return m_leftPressure;
+			case BufferIndex::UpPressure:
+				return m_upPressure;
+			case BufferIndex::DownPressure:
+				return m_downPressure;
+			case BufferIndex::TrianglePressure:
+				return m_trianglePressure;
+			case BufferIndex::CirclePressure:
+				return m_circlePressure;
+			case BufferIndex::CrossPressure:
+				return m_crossPressure;
+			case BufferIndex::SquarePressure:
+				return m_squarePressure;
+			case BufferIndex::L1Pressure:
+				return m_l1Pressure;
+			case BufferIndex::R1Pressure:
+				return m_r1Pressure;
+			case BufferIndex::L2Pressure:
+				return m_l2Pressure;
+			case BufferIndex::R2Pressure:
+				return m_r2Pressure;
+			default:
+				return 0;
+		}
 	}
 
 	return byte;
@@ -287,9 +328,10 @@ std::string PadData::RawPadBytesToString(int start, int end)
 	for (int i = start; i < end; i++)
 	{
 		str += fmt::format("{}", PollControllerData(i));
-
 		if (i != end - 1)
+		{
 			str += ", ";
+		}
 	}
 	return str;
 }

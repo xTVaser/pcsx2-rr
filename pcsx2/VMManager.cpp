@@ -366,7 +366,7 @@ std::string VMManager::GetGameSettingsPath(const std::string_view& game_serial, 
 
 	return game_serial.empty() ?
 			   Path::Combine(EmuFolders::GameSettings, fmt::format("{:08X}.ini", game_crc)) :
-               Path::Combine(EmuFolders::GameSettings, fmt::format("{}_{:08X}.ini", sanitized_serial, game_crc));
+			   Path::Combine(EmuFolders::GameSettings, fmt::format("{}_{:08X}.ini", sanitized_serial, game_crc));
 }
 
 std::string VMManager::GetInputProfilePath(const std::string_view& name)
@@ -1548,7 +1548,20 @@ void VMManager::Internal::VSyncOnCPUThread()
 		}
 	}
 
+	// TODO - all this code is called :
+	// - _before_ vsync end
+	// - _after_ vsync start
+
 	Host::CPUThreadVSync();
+
+	// TODO - move everything out of counters and into this entrypoint
+
+	if (EmuConfig.EnableRecordingTools)
+	{
+		// At this point, the PAD data has been read from the user for the current frame
+		// so we can either read from it, or overwrite it!
+		g_InputRecording.ReadOrWritePAD("After");
+	}
 }
 
 void VMManager::CheckForCPUConfigChanges(const Pcsx2Config& old_config)

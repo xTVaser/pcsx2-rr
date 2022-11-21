@@ -486,11 +486,7 @@ wxString InputRecording::resolveGameName()
 // - Controller Logging (virtual pad related)
 // - persist last browsed IR path
 // - logs are weirdly formatted
-// - force OSD updates since a lot of input recording occurs during a paused state
 // - differentiating OSD logs somehow would be nice (color / a preceding icon?)
-
-#include <queue>
-#include <fmt/format.h>
 
 void SaveStateBase::InputRecordingFreeze()
 {
@@ -594,17 +590,39 @@ bool InputRecording::play(const std::string& filename)
 	return true;
 }
 
-void InputRecording::stop()
+void InputRecording::closeActiveFile()
 {
-	m_is_active = false;
+	if (!m_is_active)
+	{
+		return;
+	}
 	if (m_file.close())
 	{
+		m_is_active = false;
 		InputRec::log("Input recording stopped");
+	}
+	else
+	{
+		InputRec::log("Unable to stop input recording");
 	}
 }
 
-// TODO: Refactor this
-void InputRecording::ControllerInterrupt(u8 port, size_t fifoSize, u8 dataIn, u8 dataOut)
+void InputRecording::stop()
+{
+	if (VMManager::GetState() == VMState::Paused)
+	{
+		closeActiveFile();
+	}
+	else
+	{
+		// Don't stop immediately, close the file after the current frame completes
+		m_recordingQueue.push([&]() {
+			closeActiveFile();
+		});
+	}
+}
+
+void InputRecording::queryFirstByte(const u8 data)
 {
 	m_pad_data_available = data == s_READ_DATA_AND_VIBRATE_QUERY_FIRST_BYTE;
 }
@@ -635,28 +653,56 @@ void InputRecording::controllerInterrupt(u8 port, size_t fifoSize, u8& dataIn, u
 		return;
 	}
 
-	if (m_controls.isReplaying())
+	int fifoIndex = (fifoSize - 3) - (port * 18);
+
+	m_temp_pad.UpdateControllerData(fifoIndex, dataOut);
+
+	if (m_is_active && m_controls.isReplaying())
 	{
-		if (!m_file.readKeyBuffer(dataOut, m_frame_counter, port, fifoSize))
+		if (!m_file.readKeyBuffer(dataOut, m_frame_counter, fifoIndex, 20))
 		{
 			InputRec::consoleLog(fmt::format("Failed to read input data at frame {}", m_frame_counter));
 		}
 		// Update controller data state for future VirtualPad / logging usage.
 		//pads[port].padData->UpdateControllerData(bufIndex, bufVal);
 	}
-
-	// If there is data to read (previous two bytes looked correct)
-	if (bufCount >= 3 && m_pad_data_available)
+	else if (m_is_active && m_controls.isRecording())
 	{
-		u8& bufVal = dataOut;
-		const u16 bufIndex = fifoSize - 3;
-		if (state == InputRecordingMode::Replaying)
+		// Update controller data state for future VirtualPad / logging usage.
+		//pads[port].padData->UpdateControllerData(bufIndex, bufVal);
+
+		// Commit the byte to the movie file if we are recording
+		if (m_controls.isRecording())
 		{
-			if (!m_file.writeKeyBuffer(m_frame_counter, port, fifoSize, dataOut))
+			if (!m_file.writeKeyBuffer(m_frame_counter, port, fifoIndex, dataOut))
 			{
 				InputRec::consoleLog(fmt::format("Failed to write input data at frame {}", m_frame_counter));
 			}
 		}
+	}
+
+	if (fifoIndex == 17) {
+		m_temp_pad.LogPadData(port);
+	}
+}
+
+#include "PAD/Host/KeyStatus.h"
+#include "Sio.h"
+
+void InputRecording::ReadOrWritePAD(const std::string test) {
+	// TODO - is there a way to get all valid ports/slots?
+	// For now just enumerate both normal port 0/1, support multi-tap in the future
+	const u32 ext_port = sioConvertPortAndSlotToPad(0, 0);
+	const u32 buttons = g_key_status.GetButtons(ext_port);
+	InputRec::consoleLog(fmt::format("{} - Buttons - {}", test, buttons));
+}
+
+void InputRecording::processRecordQueue()
+{
+	while (!m_recordingQueue.empty())
+	{
+		m_recordingQueue.front()();
+		m_recordingQueue.pop();
 	}
 }
 
@@ -677,6 +723,11 @@ std::string InputRecording::resolveGameName()
 
 void InputRecording::incFrameCounter()
 {
+	if (!m_is_active)
+	{
+		return;
+	}
+
 	if (m_frame_counter >= std::numeric_limits<u64>::max())
 	{
 		// TODO - log the incredible achievment of playing for longer than 4 billion years, and end the recording

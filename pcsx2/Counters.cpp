@@ -689,6 +689,7 @@ static __fi void VSyncEnd(u32 sCycle)
 #else
 	if (EmuConfig.EnableRecordingTools && g_InputRecording.isActive())
 	{
+		g_InputRecording.processRecordQueue();
 		g_InputRecording.getControls().processControlQueue();
 		g_InputRecording.incFrameCounter();
 	}
