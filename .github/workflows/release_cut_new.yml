@@ -38,7 +38,7 @@ jobs:
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ github.token }}
           tag_prefix: v
           default_bump: patch
 
@@ -53,7 +53,7 @@ jobs:
         env:
           OWNER: xTVaser
           REPO: pcsx2-rr
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           COMMIT_SHA: ${{ github.SHA }}
         run: |
           cd ./.github/workflows/scripts/releases/generate-release-notes
@@ -161,7 +161,7 @@ jobs:
       # Windows|Linux: PCSX2-<tag>-<windows|linux>-<32bit|64bit>--[additional hyphen seperated tags]
       - name: Name and Upload the Release Assets
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           SCAN_DIR: ${{ github.WORKSPACE }}/ci-artifacts
           OUT_DIR: ${{ github.WORKSPACE }}/ci-artifacts/out
         run: |
@@ -174,6 +174,8 @@ jobs:
           gh release upload "${TAG_VAL}" ${{ github.WORKSPACE }}/ci-artifacts/out/*  --repo xTVaser/pcsx2-rr --clobber
 
       - name: Publish Release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           TAG_VAL=$(git tag --points-at HEAD)
           echo "TAG_VAL=${TAG_VAL}"
