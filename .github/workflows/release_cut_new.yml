@@ -166,10 +166,10 @@ jobs:
           mkdir -p ${{ github.WORKSPACE }}/ci-artifacts/out
           python ./.github/workflows/scripts/releases/rename-release-assets.py
           ls ${{ github.WORKSPACE }}/ci-artifacts/out
-          TAG_VAL=$(echo ${{ github.REF }} | awk -F'refs/tags/' '{print $2}')
+          TAG_VAL=$(git tag --points-at HEAD)
           gh release upload "${TAG_VAL}" ${{ github.WORKSPACE }}/ci-artifacts/out/*  --repo xTVaser/pcsx2-rr --clobber
 
       - name: Publish Release
         run: |
-          TAG_VAL=$(echo ${{ github.REF }} | awk -F'refs/tags/' '{print $2}')
+          TAG_VAL=$(git tag --points-at HEAD)
           gh release edit ${TAG_VAL} --draft=false --repo xTVaser/pcsx2-rr
