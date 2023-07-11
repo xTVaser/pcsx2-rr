@@ -15,20 +15,9 @@
 
 #pragma once
 
-#include "SysForwardDefs.h"
-
-#include "common/Exceptions.h"
-#include "common/SafeArray.h"
-#include "common/Threading.h"		// to use threading stuff, include the Threading namespace in your file.
-
-#include "vtlb.h"
-
 #include "Config.h"
-
-typedef SafeArray<u8> VmStateBuffer;
-
-class BaseVUmicroCPU;
-class RecompiledCodeReserve;
+#include "VirtualMemory.h"
+#include "vtlb.h"
 
 // This is a table of default virtual map addresses for ps2vm components.  These locations
 // are provided and used to assist in debugging and possibly hacking; as it makes it possible
@@ -64,7 +53,7 @@ namespace HostMemoryMap
 	//////////////////////////////////////////////////////////////////////////
 	// Code
 	//////////////////////////////////////////////////////////////////////////
-	static const u32 CodeSize = 0x0F100000; // 241 mb
+	static const u32 CodeSize = 0x13100000; // 305 mb
 
 	// EE recompiler code cache area (64mb)
 	static const u32 EErecOffset   = 0x00000000;
@@ -86,6 +75,10 @@ namespace HostMemoryMap
 
 	// SSE-optimized VIF unpack functions (1mb)
 	static const u32 VIFUnpackRecOffset = 0x0F000000;
+
+	// Software Renderer JIT buffer (64mb)
+	static const u32 SWrecOffset = 0x0F100000;
+	static const u32 SWrecSize = 0x04000000;
 }
 
 // --------------------------------------------------------------------------------------
@@ -140,9 +133,6 @@ extern SysCpuProviderPack& GetCpuProviders();
 
 extern void SysLogMachineCaps();		// Detects cpu type and fills cpuInfo structs.
 extern void SysClearExecutionCache();	// clears recompiled execution caches!
-
-extern std::string SysGetBiosDiscID();
-extern std::string SysGetDiscID();
 
 extern SysMainMemory& GetVmMemory();
 

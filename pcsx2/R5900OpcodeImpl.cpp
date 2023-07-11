@@ -21,10 +21,15 @@
 
 #include "R5900.h"
 #include "R5900OpcodeTables.h"
-#include "R5900Exceptions.h"
 #include "GS.h"
 #include "CDVD/CDVD.h"
 #include "ps2/BiosTools.h"
+#include "DebugTools/DebugInterface.h"
+#include "DebugTools/Breakpoints.h"
+#include "Host.h"
+#include "VMManager.h"
+
+#include "fmt/format.h"
 
 GS_VideoMode gsVideoMode = GS_VideoMode::Uninitialized;
 bool gsIsInterlaced = false;
@@ -149,16 +154,19 @@ void Deci2Reset()
 {
 	deci2handler	= 0;
 	deci2addr		= 0;
-	memzero( deci2buffer );
+	std::memset(deci2buffer, 0, sizeof(deci2buffer));
 }
 
-void SaveStateBase::deci2Freeze()
+bool SaveStateBase::deci2Freeze()
 {
-	FreezeTag( "deci2" );
+	if (!FreezeTag("deci2"))
+		return false;
 
 	Freeze( deci2addr );
 	Freeze( deci2handler );
 	Freeze( deci2buffer );
+
+	return IsOkay();
 }
 
 /*
@@ -514,6 +522,15 @@ void DSRLV(){ if (!_Rd_) return; cpuRegs.GPR.r[_Rd_].UD[0] = (u64)(cpuRegs.GPR.r
 //    exceptions, since the lower bits of the address are used to determine the portions
 //    of the address/register operations.
 
+__noinline static void RaiseAddressError(u32 addr, bool store)
+{
+	const std::string message(fmt::format("Address Error, addr=0x{:x} [{}]", addr, store ? "store" : "load"));
+
+	// TODO: This doesn't actually get raised in the CPU yet.
+	Console.Error(message);
+
+	Cpu->CancelInstruction();
+}
 
 void LB()
 {
@@ -537,8 +554,8 @@ void LH()
 {
 	u32 addr = cpuRegs.GPR.r[_Rs_].UL[0] + _Imm_;
 
-	if( addr & 1 )
-		throw R5900Exception::AddressError( addr, false );
+	if (unlikely(addr & 1))
+		RaiseAddressError(addr, false);
 
 	s16 temp = memRead16(addr);
 
@@ -550,8 +567,8 @@ void LHU()
 {
 	u32 addr = cpuRegs.GPR.r[_Rs_].UL[0] + _Imm_;
 
-	if( addr & 1 )
-		throw R5900Exception::AddressError( addr, false );
+	if (unlikely(addr & 1))
+		RaiseAddressError(addr, false);
 
 	u16 temp = memRead16(addr);
 
@@ -563,8 +580,8 @@ void LW()
 {
 	u32 addr = cpuRegs.GPR.r[_Rs_].UL[0] + _Imm_;
 
-	if( addr & 3 )
-		throw R5900Exception::AddressError( addr, false );
+	if (unlikely(addr & 3))
+		RaiseAddressError(addr, false);
 
 	u32 temp = memRead32(addr);
 
@@ -576,8 +593,8 @@ void LWU()
 {
 	u32 addr = cpuRegs.GPR.r[_Rs_].UL[0] + _Imm_;
 
-	if( addr & 3 )
-		throw R5900Exception::AddressError( addr, false );
+	if (unlikely(addr & 3))
+		RaiseAddressError(addr, false);
 
 	u32 temp = memRead32(addr);
 
@@ -664,8 +681,8 @@ void LD()
 {
     s32 addr = cpuRegs.GPR.r[_Rs_].UL[0] + _Imm_;
 
-	if( addr & 7 )
-		throw R5900Exception::AddressError( addr, false );
+	if (unlikely(addr & 7))
+		RaiseAddressError(addr, false);
 
 	cpuRegs.GPR.r[_Rt_].UD[0] = memRead64(addr);
 }
@@ -726,8 +743,8 @@ void SH()
 {
 	u32 addr = cpuRegs.GPR.r[_Rs_].UL[0] + _Imm_;
 
-	if( addr & 1 )
-		throw R5900Exception::AddressError( addr, true );
+	if (unlikely(addr & 1))
+		RaiseAddressError(addr, true);
 
 	memWrite16(addr, cpuRegs.GPR.r[_Rt_].US[0]);
 }
@@ -736,10 +753,10 @@ void SW()
 {
 	u32 addr = cpuRegs.GPR.r[_Rs_].UL[0] + _Imm_;
 
-	if( addr & 3 )
-		throw R5900Exception::AddressError( addr, true );
+	if (unlikely(addr & 3))
+		RaiseAddressError(addr, true);
 
-    memWrite32(addr, cpuRegs.GPR.r[_Rt_].UL[0]);
+  memWrite32(addr, cpuRegs.GPR.r[_Rt_].UL[0]);
 }
 
 static const u32 SWL_MASK[4] = { 0xffffff00, 0xffff0000, 0xff000000, 0x00000000 };
@@ -793,8 +810,8 @@ void SD()
 {
 	u32 addr = cpuRegs.GPR.r[_Rs_].UL[0] + _Imm_;
 
-	if( addr & 7 )
-		throw R5900Exception::AddressError( addr, true );
+	if (unlikely(addr & 7))
+		RaiseAddressError(addr, true);
 
     memWrite64(addr,cpuRegs.GPR.r[_Rt_].UD[0]);
 }
@@ -884,69 +901,78 @@ void SYSCALL()
 	{
 		case Syscall::SetGsCrt:
 		{
-					//Function "SetGsCrt(Interlace, Mode, Field)"
-					//Useful for fetching information of interlace/video/field display parameters of the Graphics Synthesizer
+			//Function "SetGsCrt(Interlace, Mode, Field)"
+			//Useful for fetching information of interlace/video/field display parameters of the Graphics Synthesizer
 
-					gsIsInterlaced = cpuRegs.GPR.n.a0.UL[0] & 1;
-					bool gsIsFrameMode = cpuRegs.GPR.n.a2.UL[0] & 1;
-					const char* inter = (gsIsInterlaced) ? "Interlaced" : "Progressive";
-					const char* field = (gsIsFrameMode) ? "FRAME" : "FIELD";
-					std::string mode;
-					// Warning info might be incorrect!
-					switch (cpuRegs.GPR.n.a1.UC[0])
-					{
-						case 0x0:
-						case 0x2:
-							mode = "NTSC 640x448 @ 59.940 (59.82)"; gsSetVideoMode(GS_VideoMode::NTSC); break;
+			gsIsInterlaced = cpuRegs.GPR.n.a0.UL[0] & 1;
+			bool gsIsFrameMode = cpuRegs.GPR.n.a2.UL[0] & 1;
+			const char* inter = (gsIsInterlaced) ? "Interlaced" : "Progressive";
+			const char* field = (gsIsFrameMode) ? "FRAME" : "FIELD";
+			std::string mode;
+			// Warning info might be incorrect!
+			switch (cpuRegs.GPR.n.a1.UC[0])
+			{
+				case 0x0:
+				case 0x2:
+					mode = "NTSC 640x448 @ 59.940 (59.82)"; gsSetVideoMode(GS_VideoMode::NTSC); break;
 
-						case 0x1:
-						case 0x3:
-							mode = "PAL  640x512 @ 50.000 (49.76)"; gsSetVideoMode(GS_VideoMode::PAL); break;
+				case 0x1:
+				case 0x3:
+					mode = "PAL  640x512 @ 50.000 (49.76)"; gsSetVideoMode(GS_VideoMode::PAL); break;
 
-						case 0x1A: mode = "VESA 640x480 @ 59.940"; gsSetVideoMode(GS_VideoMode::VESA); break;
-						case 0x1B: mode = "VESA 640x480 @ 72.809"; gsSetVideoMode(GS_VideoMode::VESA); break;
-						case 0x1C: mode = "VESA 640x480 @ 75.000"; gsSetVideoMode(GS_VideoMode::VESA); break;
-						case 0x1D: mode = "VESA 640x480 @ 85.008"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x1A: mode = "VESA 640x480 @ 59.940"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x1B: mode = "VESA 640x480 @ 72.809"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x1C: mode = "VESA 640x480 @ 75.000"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x1D: mode = "VESA 640x480 @ 85.008"; gsSetVideoMode(GS_VideoMode::VESA); break;
 
-						case 0x2A: mode = "VESA 800x600 @ 56.250"; gsSetVideoMode(GS_VideoMode::VESA); break;
-						case 0x2B: mode = "VESA 800x600 @ 60.317"; gsSetVideoMode(GS_VideoMode::VESA); break;
-						case 0x2C: mode = "VESA 800x600 @ 72.188"; gsSetVideoMode(GS_VideoMode::VESA); break;
-						case 0x2D: mode = "VESA 800x600 @ 75.000"; gsSetVideoMode(GS_VideoMode::VESA); break;
-						case 0x2E: mode = "VESA 800x600 @ 85.061"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x2A: mode = "VESA 800x600 @ 56.250"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x2B: mode = "VESA 800x600 @ 60.317"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x2C: mode = "VESA 800x600 @ 72.188"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x2D: mode = "VESA 800x600 @ 75.000"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x2E: mode = "VESA 800x600 @ 85.061"; gsSetVideoMode(GS_VideoMode::VESA); break;
 
-						case 0x3B: mode = "VESA 1024x768 @ 60.004"; gsSetVideoMode(GS_VideoMode::VESA); break;
-						case 0x3C: mode = "VESA 1024x768 @ 70.069"; gsSetVideoMode(GS_VideoMode::VESA); break;
-						case 0x3D: mode = "VESA 1024x768 @ 75.029"; gsSetVideoMode(GS_VideoMode::VESA); break;
-						case 0x3E: mode = "VESA 1024x768 @ 84.997"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x3B: mode = "VESA 1024x768 @ 60.004"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x3C: mode = "VESA 1024x768 @ 70.069"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x3D: mode = "VESA 1024x768 @ 75.029"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x3E: mode = "VESA 1024x768 @ 84.997"; gsSetVideoMode(GS_VideoMode::VESA); break;
 
-						case 0x4A: mode = "VESA 1280x1024 @ 63.981"; gsSetVideoMode(GS_VideoMode::VESA); break;
-						case 0x4B: mode = "VESA 1280x1024 @ 79.976"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x4A: mode = "VESA 1280x1024 @ 63.981"; gsSetVideoMode(GS_VideoMode::VESA); break;
+				case 0x4B: mode = "VESA 1280x1024 @ 79.976"; gsSetVideoMode(GS_VideoMode::VESA); break;
 
-						case 0x50: mode = "SDTV   720x480 @ 59.94"; gsSetVideoMode(GS_VideoMode::SDTV_480P); break;
-						case 0x51: mode = "HDTV 1920x1080 @ 60.00"; gsSetVideoMode(GS_VideoMode::HDTV_1080I); break;
-						case 0x52: mode = "HDTV  1280x720 @ ??.???"; gsSetVideoMode(GS_VideoMode::HDTV_720P); break;
-						case 0x53: mode = "SDTV   768x576 @ ??.???"; gsSetVideoMode(GS_VideoMode::SDTV_576P); break;
-						case 0x54: mode = "HDTV 1920x1080 @ ??.???"; gsSetVideoMode(GS_VideoMode::HDTV_1080P); break;
+				case 0x50: mode = "SDTV   720x480 @ 59.94"; gsSetVideoMode(GS_VideoMode::SDTV_480P); break;
+				case 0x51: mode = "HDTV 1920x1080 @ 60.00"; gsSetVideoMode(GS_VideoMode::HDTV_1080I); break;
+				case 0x52: mode = "HDTV  1280x720 @ ??.???"; gsSetVideoMode(GS_VideoMode::HDTV_720P); break;
+				case 0x53: mode = "SDTV   768x576 @ ??.???"; gsSetVideoMode(GS_VideoMode::SDTV_576P); break;
+				case 0x54: mode = "HDTV 1920x1080 @ ??.???"; gsSetVideoMode(GS_VideoMode::HDTV_1080P); break;
 
-						case 0x72:
-						case 0x82:
-							mode = "DVD NTSC 640x448 @ ??.???"; gsSetVideoMode(GS_VideoMode::DVD_NTSC); break;
-						case 0x73:
-						case 0x83:
-							mode = "DVD PAL 720x480 @ ??.???"; gsSetVideoMode(GS_VideoMode::DVD_PAL); break;
+				case 0x72:
+				case 0x82:
+					mode = "DVD NTSC 640x448 @ ??.???"; gsSetVideoMode(GS_VideoMode::DVD_NTSC); break;
+				case 0x73:
+				case 0x83:
+					mode = "DVD PAL 720x480 @ ??.???"; gsSetVideoMode(GS_VideoMode::DVD_PAL); break;
 
-						default:
-							DevCon.Error("Mode %x is not supported. Report me upstream", cpuRegs.GPR.n.a1.UC[0]);
-							gsSetVideoMode(GS_VideoMode::Unknown);
-					}
-					DevCon.Warning("Set GS CRTC configuration. %s %s (%s)",mode.c_str(), inter, field);
-				}
-				break;
+				default:
+					DevCon.Error("Mode %x is not supported. Report me upstream", cpuRegs.GPR.n.a1.UC[0]);
+					gsSetVideoMode(GS_VideoMode::Unknown);
+			}
+			DevCon.Warning("Set GS CRTC configuration. %s %s (%s)",mode.c_str(), inter, field);
+		}
+		break;
+		case Syscall::ExecPS2:
+		{
+			if (DebugInterface::getPauseOnEntry())
+			{
+				CBreakPoints::AddBreakPoint(BREAKPOINT_EE, cpuRegs.GPR.n.a0.UL[0], true);
+				DebugInterface::setPauseOnEntry(false);
+			}
+		}
+		break;
 		case Syscall::SetOsdConfigParam:
 			AllowParams1 = true;
 			break;
 		case Syscall::GetOsdConfigParam:
-			if(!NoOSD && g_SkipBiosHack && !AllowParams1)
+			if(!NoOSD && !AllowParams1)
 			{
 				u32 memaddr = cpuRegs.GPR.n.a0.UL[0];
 				u8 params[16];
@@ -970,7 +996,7 @@ void SYSCALL()
 			AllowParams2 = true;
 			break;
 		case Syscall::GetOsdConfigParam2:
-			if (!NoOSD && g_SkipBiosHack && !AllowParams2)
+			if (!NoOSD && !AllowParams2)
 			{
 				u32 memaddr = cpuRegs.GPR.n.a0.UL[0];
 				u8 params[16];
@@ -989,7 +1015,7 @@ void SYSCALL()
 		case Syscall::StartThread:
 		case Syscall::ChangeThreadPriority:
 		{
-			if (CurrentBiosInformation.threadListAddr == 0)
+			if (CurrentBiosInformation.eeThreadListAddr == 0)
 			{
 				u32 offset = 0x0;
 				// Suprisingly not that slow :)
@@ -1007,16 +1033,16 @@ void SYSCALL()
 						// We've found the instruction pattern!
 						// We (well, I) know that the thread address is always 0x8001 + the immediate of the 6th instruction from here
 						const u32 op = memRead32(0x80000000 + offset + (sizeof(u32) * 6));
-						CurrentBiosInformation.threadListAddr = 0x80010000 + static_cast<u16>(op) - 8; // Subtract 8 because the address here is offset by 8.
-						DevCon.WriteLn("BIOS: Successfully found the instruction pattern. Assuming the thread list is here: %0x", CurrentBiosInformation.threadListAddr);
+						CurrentBiosInformation.eeThreadListAddr = 0x80010000 + static_cast<u16>(op) - 8; // Subtract 8 because the address here is offset by 8.
+						DevCon.WriteLn("BIOS: Successfully found the instruction pattern. Assuming the thread list is here: %0x", CurrentBiosInformation.eeThreadListAddr);
 						break;
 					}
 					offset += 4;
 				}
-				if (!CurrentBiosInformation.threadListAddr)
+				if (!CurrentBiosInformation.eeThreadListAddr)
 				{
 					// We couldn't find the address
-					CurrentBiosInformation.threadListAddr = -1;
+					CurrentBiosInformation.eeThreadListAddr = -1;
 					// If you're here because a user has reported this message, this means that the instruction pattern is not present on their bios, or it is aligned weirdly.
 					Console.Warning("BIOS Warning: Unable to get a thread list offset. The debugger thread and stack frame views will not be functional.");
 				}
@@ -1152,9 +1178,6 @@ void PREF()
 
 static void trap(u16 code=0)
 {
-	// unimplemented?
-	// throw R5900Exception::Trap(code);
-
 	cpuRegs.pc -= 4;
 	Console.Warning("Trap exception at 0x%08x", cpuRegs.pc);
 	cpuException(0x34, cpuRegs.branch);

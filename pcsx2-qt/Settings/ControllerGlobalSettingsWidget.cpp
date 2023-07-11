@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2022  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -15,12 +15,17 @@
 
 #include "PrecompiledHeader.h"
 
-#include "Frontend/InputManager.h"
 #include "Settings/ControllerGlobalSettingsWidget.h"
 #include "Settings/ControllerSettingsDialog.h"
 #include "Settings/ControllerSettingWidgetBinder.h"
 #include "QtUtils.h"
 #include "SettingWidgetBinder.h"
+
+#include "pcsx2/Input/InputManager.h"
+
+#ifdef SDL_BUILD
+#include "pcsx2/Input/SDLInputSource.h"
+#endif
 
 ControllerGlobalSettingsWidget::ControllerGlobalSettingsWidget(QWidget* parent, ControllerSettingsDialog* dialog)
 	: QWidget(parent)
@@ -30,13 +35,29 @@ ControllerGlobalSettingsWidget::ControllerGlobalSettingsWidget(QWidget* parent, 
 
 	SettingsInterface* sif = dialog->getProfileSettingsInterface();
 
+#ifdef SDL_BUILD
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.enableSDLSource, "InputSources", "SDL", true);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.enableSDLEnhancedMode, "InputSources", "SDLControllerEnhancedMode", false);
+	connect(m_ui.enableSDLSource, &QCheckBox::stateChanged, this, &ControllerGlobalSettingsWidget::updateSDLOptionsEnabled);
+	connect(m_ui.ledSettings, &QToolButton::clicked, this, &ControllerGlobalSettingsWidget::ledSettingsClicked);
+#else
+	m_ui.enableSDLSource->setEnabled(false);
+	m_ui.ledSettings->setEnabled(false);
+#endif
+
+#if defined(SDL_BUILD) && defined(_WIN32)
+	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.enableSDLRawInput, "InputSources", "SDLRawInput", false);
+#else
+	m_ui.gridLayout_2->removeWidget(m_ui.enableSDLRawInput);
+	m_ui.enableSDLRawInput->deleteLater();
+	m_ui.enableSDLRawInput = nullptr;
+#endif
+
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.enableMouseMapping, "UI", "EnableMouseMapping", false);
+	connect(m_ui.mouseSettings, &QToolButton::clicked, this, &ControllerGlobalSettingsWidget::mouseSettingsClicked);
+
 	ControllerSettingWidgetBinder::BindWidgetToInputProfileBool(sif, m_ui.multitapPort1, "Pad", "MultitapPort1", false);
 	ControllerSettingWidgetBinder::BindWidgetToInputProfileBool(sif, m_ui.multitapPort2, "Pad", "MultitapPort2", false);
-	ControllerSettingWidgetBinder::BindWidgetToInputProfileFloat(sif, m_ui.pointerXScale, "Pad", "PointerXScale", 8.0f);
-	ControllerSettingWidgetBinder::BindWidgetToInputProfileFloat(sif, m_ui.pointerYScale, "Pad", "PointerYScale", 8.0f);
 
 #ifdef _WIN32
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.enableXInputSource, "InputSources", "XInput", false);
@@ -66,14 +87,8 @@ ControllerGlobalSettingsWidget::ControllerGlobalSettingsWidget(QWidget* parent, 
 		m_ui.profileSettings = nullptr;
 	}
 
-	connect(m_ui.enableSDLSource, &QCheckBox::stateChanged, this, &ControllerGlobalSettingsWidget::updateSDLOptionsEnabled);
 	for (QCheckBox* cb : {m_ui.multitapPort1, m_ui.multitapPort2})
 		connect(cb, &QCheckBox::stateChanged, this, [this]() { emit bindingSetupChanged(); });
-
-	connect(m_ui.pointerXScale, &QSlider::valueChanged, this, [this](int value) { m_ui.pointerXScaleLabel->setText(QStringLiteral("%1").arg(value)); });
-	connect(m_ui.pointerYScale, &QSlider::valueChanged, this, [this](int value) { m_ui.pointerYScaleLabel->setText(QStringLiteral("%1").arg(value)); });
-	m_ui.pointerXScaleLabel->setText(QStringLiteral("%1").arg(m_ui.pointerXScale->value()));
-	m_ui.pointerYScaleLabel->setText(QStringLiteral("%1").arg(m_ui.pointerYScale->value()));
 
 	updateSDLOptionsEnabled();
 }
@@ -106,4 +121,81 @@ void ControllerGlobalSettingsWidget::updateSDLOptionsEnabled()
 {
 	const bool enabled = m_ui.enableSDLSource->isChecked();
 	m_ui.enableSDLEnhancedMode->setEnabled(enabled);
+	m_ui.ledSettings->setEnabled(enabled);
+#ifdef _WIN32
+	m_ui.enableSDLRawInput->setEnabled(enabled);
+#endif
 }
+
+void ControllerGlobalSettingsWidget::ledSettingsClicked()
+{
+	ControllerLEDSettingsDialog dialog(this, m_dialog);
+	dialog.exec();
+}
+
+void ControllerGlobalSettingsWidget::mouseSettingsClicked()
+{
+	ControllerMouseSettingsDialog dialog(this, m_dialog);
+	dialog.exec();
+}
+
+ControllerLEDSettingsDialog::ControllerLEDSettingsDialog(QWidget* parent, ControllerSettingsDialog* dialog)
+	: QDialog(parent)
+	, m_dialog(dialog)
+{
+	m_ui.setupUi(this);
+
+	linkButton(m_ui.SDL0LED, 0);
+	linkButton(m_ui.SDL1LED, 1);
+	linkButton(m_ui.SDL2LED, 2);
+	linkButton(m_ui.SDL3LED, 3);
+
+	connect(m_ui.buttonBox->button(QDialogButtonBox::Close), &QPushButton::clicked, this, &QDialog::accept);
+}
+
+ControllerLEDSettingsDialog::~ControllerLEDSettingsDialog() = default;
+
+void ControllerLEDSettingsDialog::linkButton(ColorPickerButton* button, u32 player_id)
+{
+#ifdef SDL_BUILD
+	std::string key(fmt::format("Player{}LED", player_id));
+	const u32 current_value = SDLInputSource::ParseRGBForPlayerId(m_dialog->getStringValue("SDLExtra", key.c_str(), ""), player_id);
+	button->setColor(current_value);
+
+	connect(button, &ColorPickerButton::colorChanged, this, [this, key = std::move(key)](u32 new_rgb) {
+		m_dialog->setStringValue("SDLExtra", key.c_str(), fmt::format("{:06X}", new_rgb).c_str());
+	});
+#endif
+}
+
+ControllerMouseSettingsDialog::ControllerMouseSettingsDialog(QWidget* parent, ControllerSettingsDialog* dialog)
+	: QDialog(parent)
+{
+	m_ui.setupUi(this);
+
+	SettingsInterface* sif = dialog->getProfileSettingsInterface();
+
+	m_ui.icon->setPixmap(QIcon::fromTheme(QStringLiteral("mouse-line")).pixmap(32, 32));
+
+	ControllerSettingWidgetBinder::BindWidgetToInputProfileFloat(sif, m_ui.pointerXSpeedSlider, "Pad", "PointerXSpeed", 40.0f);
+	ControllerSettingWidgetBinder::BindWidgetToInputProfileFloat(sif, m_ui.pointerYSpeedSlider, "Pad", "PointerYSpeed", 40.0f);
+	ControllerSettingWidgetBinder::BindWidgetToInputProfileFloat(sif, m_ui.pointerXDeadZoneSlider, "Pad", "PointerXDeadZone", 20.0f);
+	ControllerSettingWidgetBinder::BindWidgetToInputProfileFloat(sif, m_ui.pointerYDeadZoneSlider, "Pad", "PointerYDeadZone", 20.0f);
+	ControllerSettingWidgetBinder::BindWidgetToInputProfileFloat(sif, m_ui.pointerInertiaSlider, "Pad", "PointerInertia", 10.0f);
+
+	connect(m_ui.pointerXSpeedSlider, &QSlider::valueChanged, this, [this](int value) { m_ui.pointerXSpeedVal->setText(QStringLiteral("%1").arg(value)); });
+	connect(m_ui.pointerYSpeedSlider, &QSlider::valueChanged, this, [this](int value) { m_ui.pointerYSpeedVal->setText(QStringLiteral("%1").arg(value)); });
+	connect(m_ui.pointerXDeadZoneSlider, &QSlider::valueChanged, this, [this](int value) { m_ui.pointerXDeadZoneVal->setText(QStringLiteral("%1").arg(value)); });
+	connect(m_ui.pointerYDeadZoneSlider, &QSlider::valueChanged, this, [this](int value) { m_ui.pointerYDeadZoneVal->setText(QStringLiteral("%1").arg(value)); });
+	connect(m_ui.pointerInertiaSlider, &QSlider::valueChanged, this, [this](int value) { m_ui.pointerInertiaVal->setText(QStringLiteral("%1").arg(value)); });
+
+	m_ui.pointerXSpeedVal->setText(QStringLiteral("%1").arg(m_ui.pointerXSpeedSlider->value()));
+	m_ui.pointerYSpeedVal->setText(QStringLiteral("%1").arg(m_ui.pointerYSpeedSlider->value()));
+	m_ui.pointerXDeadZoneVal->setText(QStringLiteral("%1").arg(m_ui.pointerXDeadZoneSlider->value()));
+	m_ui.pointerYDeadZoneVal->setText(QStringLiteral("%1").arg(m_ui.pointerYDeadZoneSlider->value()));
+	m_ui.pointerInertiaVal->setText(QStringLiteral("%1").arg(m_ui.pointerInertiaSlider->value()));
+
+	connect(m_ui.buttonBox->button(QDialogButtonBox::Close), &QPushButton::clicked, this, &QDialog::accept);
+}
+
+ControllerMouseSettingsDialog::~ControllerMouseSettingsDialog() = default;

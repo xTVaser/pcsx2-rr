@@ -15,6 +15,7 @@
 
 #pragma once
 #include "Pcsx2Types.h"
+#include <algorithm>
 #include <charconv>
 #include <cstdarg>
 #include <cstddef>
@@ -100,10 +101,7 @@ namespace StringUtil
 			return std::nullopt;
 
 		if (endptr)
-		{
-			const size_t remaining_len = end - ptr - 1;
-			*endptr = (remaining_len > 0) ? std::string_view(result.ptr, remaining_len) : std::string_view();
-		}
+			*endptr = (result.ptr < end) ? std::string_view(result.ptr, end - result.ptr) : std::string_view();
 
 		return value;
 	}
@@ -131,10 +129,7 @@ namespace StringUtil
 			return std::nullopt;
 
 		if (endptr)
-		{
-			const size_t remaining_len = end - ptr - 1;
-			*endptr = (remaining_len > 0) ? std::string_view(result.ptr, remaining_len) : std::string_view();
-		}
+			*endptr = (result.ptr < end) ? std::string_view(result.ptr, end - result.ptr) : std::string_view();
 
 		return value;
 	}
@@ -346,4 +341,15 @@ namespace StringUtil
 	/// Converts unsigned 128-bit data to string.
 	std::string U128ToString(const u128& u);
 	std::string& AppendU128ToString(const u128& u, std::string& s);
+
+	template <typename ContainerType>
+	static inline bool ContainsSubString(const ContainerType& haystack, const std::string_view& needle)
+	{
+		using ValueType = typename ContainerType::value_type;
+		if (needle.empty())
+			return std::empty(haystack);
+
+		return std::search(std::begin(haystack), std::end(haystack), reinterpret_cast<const ValueType*>(needle.data()),
+				   reinterpret_cast<const ValueType*>(needle.data() + needle.length())) != std::end(haystack);
+	}
 } // namespace StringUtil

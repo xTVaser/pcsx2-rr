@@ -12,41 +12,39 @@
  *  You should have received a copy of the GNU General Public License along with PCSX2.
  *  If not, see <http://www.gnu.org/licenses/>.
  */
-
+	
 #include "PrecompiledHeader.h"
-
-#include "common/FileSystem.h"
-#include "common/Path.h"
-#include "common/StringUtil.h"
-
-#include "pcsx2/Frontend/GameList.h"
-#include "pcsx2/HostSettings.h"
-#include "pcsx2/INISettingsInterface.h"
 
 #include "MainWindow.h"
 #include "QtHost.h"
 #include "QtUtils.h"
+#include "Settings/AchievementSettingsWidget.h"
+#include "Settings/AdvancedSettingsWidget.h"
+#include "Settings/AudioSettingsWidget.h"
+#include "Settings/BIOSSettingsWidget.h"
+#include "Settings/DEV9SettingsWidget.h"
+#include "Settings/DebugSettingsWidget.h"
+#include "Settings/EmulationSettingsWidget.h"
+#include "Settings/FolderSettingsWidget.h"
+#include "Settings/GameCheatSettingsWidget.h"
+#include "Settings/GameFixSettingsWidget.h"
+#include "Settings/GameListSettingsWidget.h"
+#include "Settings/GamePatchSettingsWidget.h"
+#include "Settings/GameSummaryWidget.h"
+#include "Settings/GraphicsSettingsWidget.h"
+#include "Settings/HotkeySettingsWidget.h"
+#include "Settings/InterfaceSettingsWidget.h"
+#include "Settings/MemoryCardSettingsWidget.h"
 #include "SettingsDialog.h"
 
-#include "AdvancedSettingsWidget.h"
-#include "AudioSettingsWidget.h"
-#include "BIOSSettingsWidget.h"
-#include "EmulationSettingsWidget.h"
-#include "GameSummaryWidget.h"
-#include "GameFixSettingsWidget.h"
-#include "GameListSettingsWidget.h"
-#include "GraphicsSettingsWidget.h"
-#include "DEV9SettingsWidget.h"
-#include "FolderSettingsWidget.h"
-#include "HotkeySettingsWidget.h"
-#include "InterfaceSettingsWidget.h"
-#include "MemoryCardSettingsWidget.h"
-#include "DebugSettingsWidget.h"
+#include "pcsx2/Achievements.h"
+#include "pcsx2/GameList.h"
+#include "pcsx2/Host.h"
+#include "pcsx2/INISettingsInterface.h"
 
-#ifdef ENABLE_ACHIEVEMENTS
-#include "AchievementSettingsWidget.h"
-#include "pcsx2/Frontend/Achievements.h"
-#endif
+#include "common/FileSystem.h"
+#include "common/Path.h"
+#include "common/StringUtil.h"
 
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QTextEdit>
@@ -89,7 +87,7 @@ void SettingsDialog::setupUi(const GameList::Entry* game)
 	}
 
 	addWidget(m_interface_settings = new InterfaceSettingsWidget(this, m_ui.settingsContainer), tr("Interface"),
-		QStringLiteral("settings-3-line"),
+		QStringLiteral("interface-line"),
 		tr("<strong>Interface Settings</strong><hr>These options control how the software looks and behaves.<br><br>Mouse over an option "
 		   "for additional information."));
 
@@ -97,52 +95,61 @@ void SettingsDialog::setupUi(const GameList::Entry* game)
 	if (!isPerGameSettings())
 	{
 		addWidget(m_game_list_settings = new GameListSettingsWidget(this, m_ui.settingsContainer), tr("Game List"),
-			QStringLiteral("folder-settings-line"),
+			QStringLiteral("folder-open-line"),
 			tr("<strong>Game List Settings</strong><hr>The list above shows the directories which will be searched by PCSX2 to populate "
 			   "the game list. Search directories can be added, removed, and switched to recursive/non-recursive."));
-		addWidget(m_bios_settings = new BIOSSettingsWidget(this, m_ui.settingsContainer), tr("BIOS"), QStringLiteral("hard-drive-2-line"),
+		addWidget(m_bios_settings = new BIOSSettingsWidget(this, m_ui.settingsContainer), tr("BIOS"), QStringLiteral("chip-line"),
 			tr("<strong>BIOS Settings</strong><hr>Configure your BIOS here.<br><br>Mouse over an option for additional information."));
 	}
 
 	// Common to both per-game and global settings.
 	addWidget(m_emulation_settings = new EmulationSettingsWidget(this, m_ui.settingsContainer), tr("Emulation"),
-		QStringLiteral("dashboard-line"),
+		QStringLiteral("emulation-line"),
 		tr("<strong>Emulation Settings</strong><hr>These options determine the configuration of frame pacing and game "
 		   "settings.<br><br>Mouse over an option for additional information."));
+
+	if (isPerGameSettings() && game && game->crc != 0)
+	{
+		addWidget(m_game_patch_settings_widget = new GamePatchSettingsWidget(game, this, m_ui.settingsContainer),
+			tr("Patches"), QStringLiteral("tools-line"),
+			tr("<strong>Patches</strong><hr>This section allows you to select optional patches to apply to the game, "
+			   "which may provide performance, visual, or gameplay improvements."));
+		addWidget(m_game_cheat_settings_widget = new GameCheatSettingsWidget(game, this, m_ui.settingsContainer),
+			tr("Cheats"), QStringLiteral("flask-line"),
+			tr("<strong>Cheats</strong><hr>This section allows you to select which cheats you wish to enable. You "
+			   "cannot enable/disable cheats without labels for old-format pnach files, those will automatically "
+			   "activate if the main cheat enable option is checked."));
+	}
 
 	// Only show the game fixes for per-game settings, there's really no reason to be setting them globally.
 	if (show_advanced_settings && isPerGameSettings())
 	{
-		addWidget(m_game_fix_settings_widget = new GameFixSettingsWidget(this, m_ui.settingsContainer), tr("Game Fix"),
-			QStringLiteral("close-line"),
-			tr("<strong>Game Fix Settings</strong><hr>Gamefixes can work around incorrect emulation in some titles<br>however they can "
+		addWidget(m_game_fix_settings_widget = new GameFixSettingsWidget(this, m_ui.settingsContainer), tr("Game Fixes"),
+			QStringLiteral("hammer-line"),
+			tr("<strong>Game Fixes Settings</strong><hr>Game Fixes can work around incorrect emulation in some titles.<br>However, they can "
 			   "also cause problems in games if used incorrectly.<br>It is best to leave them all disabled unless advised otherwise."));
 	}
 
-	addWidget(m_graphics_settings = new GraphicsSettingsWidget(this, m_ui.settingsContainer), tr("Graphics"), QStringLiteral("brush-line"),
+	addWidget(m_graphics_settings = new GraphicsSettingsWidget(this, m_ui.settingsContainer), tr("Graphics"), QStringLiteral("image-fill"),
 		tr("<strong>Graphics Settings</strong><hr>These options determine the configuration of the graphical output.<br><br>Mouse over an "
 		   "option for additional information."));
 	addWidget(m_audio_settings = new AudioSettingsWidget(this, m_ui.settingsContainer), tr("Audio"), QStringLiteral("volume-up-line"),
 		tr("<strong>Audio Settings</strong><hr>These options control the audio output of the console.<br><br>Mouse over an option for "
 		   "additional information."));
 
-	// for now, memory cards aren't settable per-game
-	if (!isPerGameSettings())
-	{
-		addWidget(m_memory_card_settings = new MemoryCardSettingsWidget(this, m_ui.settingsContainer), tr("Memory Cards"),
-			QStringLiteral("sd-card-line"),
-			tr("<strong>Memory Card Settings</strong><hr>Create and configure Memory Cards here.<br><br>Mouse over an option for "
-			   "additional information."));
-	}
+	addWidget(m_memory_card_settings = new MemoryCardSettingsWidget(this, m_ui.settingsContainer), tr("Memory Cards"),
+		QStringLiteral("memcard-line"),
+		tr("<strong>Memory Card Settings</strong><hr>Create and configure Memory Cards here.<br><br>Mouse over an option for "
+			  "additional information."));
 
-	addWidget(m_dev9_settings = new DEV9SettingsWidget(this, m_ui.settingsContainer), tr("Network & HDD"), QStringLiteral("dashboard-line"),
+	addWidget(m_dev9_settings = new DEV9SettingsWidget(this, m_ui.settingsContainer), tr("Network & HDD"), QStringLiteral("global-line"),
 		tr("<strong>Network & HDD Settings</strong><hr>These options control the network connectivity and internal HDD storage of the "
 		   "console.<br><br>Mouse over an option for additional information."));
 
 	if (!isPerGameSettings())
 	{
 		addWidget(m_folder_settings = new FolderSettingsWidget(this, m_ui.settingsContainer), tr("Folders"),
-			QStringLiteral("folder-open-line"),
+			QStringLiteral("folder-settings-line"),
 			tr("<strong>Folder Settings</strong><hr>These options control where PCSX2 will save runtime data files."));
 	}
 
@@ -176,11 +183,11 @@ void SettingsDialog::setupUi(const GameList::Entry* game)
 	if (show_advanced_settings)
 	{
 		addWidget(m_advanced_settings = new AdvancedSettingsWidget(this, m_ui.settingsContainer), tr("Advanced"),
-			QStringLiteral("artboard-2-line"),
+			QStringLiteral("warning-line"),
 			tr("<strong>Advanced Settings</strong><hr>These are advanced options to determine the configuration of the simulated "
 			   "console.<br><br>Mouse over an option for additional information."));
 		addWidget(m_debug_settings = new DebugSettingsWidget(this, m_ui.settingsContainer), tr("Debug"),
-			QStringLiteral("folder-download-line"),
+			QStringLiteral("heart-monitor-line"),
 			tr("<strong>Debug Settings</strong><hr>These are options which can be used to log internal information about the application. "
 			   "<strong>Do not modify unless you know what you are doing</strong>, it will cause significant slowdown, and can waste large "
 			   "amounts of disk space."));
@@ -191,7 +198,7 @@ void SettingsDialog::setupUi(const GameList::Entry* game)
 	m_ui.settingsContainer->setCurrentIndex(0);
 	m_ui.helpText->setText(m_category_help_text[0]);
 	connect(m_ui.settingsCategory, &QListWidget::currentRowChanged, this, &SettingsDialog::onCategoryCurrentRowChanged);
-	connect(m_ui.closeButton, &QPushButton::clicked, this, &SettingsDialog::accept);
+	connect(m_ui.closeButton, &QPushButton::clicked, this, &SettingsDialog::close);
 	connect(m_ui.restoreDefaultsButton, &QPushButton::clicked, this, &SettingsDialog::onRestoreDefaultsClicked);
 }
 
@@ -484,6 +491,14 @@ void SettingsDialog::setStringSettingValue(const char* section, const char* key,
 		Host::CommitBaseSettingChanges();
 		g_emu_thread->applySettings();
 	}
+}
+
+bool SettingsDialog::containsSettingValue(const char* section, const char* key) const
+{
+	if (m_sif)
+		return m_sif->ContainsValue(section, key);
+	else
+		return Host::ContainsBaseSettingValue(section, key);
 }
 
 void SettingsDialog::removeSettingValue(const char* section, const char* key)

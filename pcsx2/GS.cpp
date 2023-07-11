@@ -14,16 +14,15 @@
  */
 
 #include "PrecompiledHeader.h"
+
+#include "Counters.h"
 #include "Common.h"
+#include "Config.h"
+#include "Gif_Unit.h"
+#include "MTGS.h"
+#include "VMManager.h"
 
 #include <list>
-
-#include "Gif_Unit.h"
-#include "Counters.h"
-#include "Config.h"
-
-using namespace Threading;
-using namespace R5900;
 
 alignas(16) u8 g_RealGSMem[Ps2MemSize::GSregs];
 static bool s_GSRegistersWritten = false;
@@ -31,25 +30,22 @@ static bool s_GSRegistersWritten = false;
 void gsSetVideoMode(GS_VideoMode mode)
 {
 	gsVideoMode = mode;
-	UpdateVSyncRate();
-	CSRreg.FIELD = 1;
+	UpdateVSyncRate(false);
 }
 
 // Make sure framelimiter options are in sync with GS capabilities.
 void gsReset()
 {
-	GetMTGS().ResetGS(true);
-
-	UpdateVSyncRate();
-	memzero(g_RealGSMem);
-
-	CSRreg.Reset();
-	GSIMR.reset();
+	MTGS::ResetGS(true);
+	gsVideoMode = GS_VideoMode::Uninitialized;
+	std::memset(g_RealGSMem, 0, sizeof(g_RealGSMem));
+	UpdateVSyncRate(true);
 }
 
 void gsUpdateFrequency(Pcsx2Config& config)
 {
-	if (config.GS.FrameLimitEnable)
+	if (config.GS.FrameLimitEnable &&
+		(!config.EnableFastBootFastForward || !VMManager::Internal::IsFastBootInProgress()))
 	{
 		switch (config.LimiterMode)
 		{
@@ -74,8 +70,8 @@ void gsUpdateFrequency(Pcsx2Config& config)
 		config.GS.LimitScalar = 0.0f;
 	}
 
-	GetMTGS().UpdateVSyncMode();
-	UpdateVSyncRate();
+	MTGS::UpdateVSyncMode();
+	UpdateVSyncRate(true);
 }
 
 static __fi void gsCSRwrite( const tGS_CSR& csr )
@@ -85,11 +81,12 @@ static __fi void gsCSRwrite( const tGS_CSR& csr )
 		//Console.Warning( "csr.RESET" );
 		//gifUnit.Reset(true); // Don't think gif should be reset...
 		gifUnit.gsSIGNAL.queued = false;
-		GetMTGS().SendSimplePacket(GS_RINGTYPE_RESET, 0, 0, 0);
-		const u32 field = CSRreg.FIELD;
-		CSRreg.Reset();
+		gifUnit.gsFINISH.gsFINISHFired = true;
+		// Privilage registers also reset.
+		std::memset(g_RealGSMem, 0, sizeof(g_RealGSMem));
 		GSIMR.reset();
-		CSRreg.FIELD = field;
+		CSRreg.Reset();
+		MTGS::ResetGS(false);
 	}
 
 	if(csr.FLUSH)
@@ -226,6 +223,12 @@ void gsWrite64_generic( u32 mem, u64 value )
 void gsWrite64_page_00( u32 mem, u64 value )
 {
 	s_GSRegistersWritten |= (mem == GS_DISPFB1 || mem == GS_DISPFB2 || mem == GS_PMODE);
+
+	if (mem == GS_SMODE1 || mem == GS_SMODE2)
+	{
+		if (value != *(u64*)PS2GS_BASE(mem))
+			UpdateVSyncRate(false);
+	}
 
 	gsWrite64_generic( mem, value );
 }
@@ -366,12 +369,13 @@ void gsPostVsyncStart()
 
 	const bool registers_written = s_GSRegistersWritten;
 	s_GSRegistersWritten = false;
-	GetMTGS().PostVsyncStart(registers_written);
+	MTGS::PostVsyncStart(registers_written);
 }
 
-void SaveStateBase::gsFreeze()
+bool SaveStateBase::gsFreeze()
 {
 	FreezeMem(PS2MEM_GS, 0x2000);
 	Freeze(gsVideoMode);
+	return IsOkay();
 }
 

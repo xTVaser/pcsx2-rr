@@ -16,11 +16,12 @@
 #include "PrecompiledHeader.h"
 #include "GSSetupPrimCodeGenerator.all.h"
 #include "GSVertexSW.h"
+#include "common/Perf.h"
 
 MULTI_ISA_UNSHARED_IMPL;
 using namespace Xbyak;
 
-#define _rip_local(field) ((m_rip) ? ptr[rip + (char*)&m_local.field] : ptr[_m_local + OFFSETOF(GSScanlineLocalData, field)])
+#define _rip_local(field) (ptr[_m_local + OFFSETOF(GSScanlineLocalData, field)])
 
 #define _64_m_local _64_t0
 
@@ -48,23 +49,21 @@ using namespace Xbyak;
 	#define _rip_local_d_p(x) _rip_local_d(x)
 #endif
 
-GSSetupPrimCodeGenerator2::GSSetupPrimCodeGenerator2(Xbyak::CodeGenerator* base, const ProcessorFeatures& cpu, void* param, u64 key)
+GSSetupPrimCodeGenerator2::GSSetupPrimCodeGenerator2(Xbyak::CodeGenerator* base, const ProcessorFeatures& cpu, u64 key)
 	: _parent(base, cpu)
-	, m_local(*(GSScanlineLocalData*)param)
-	, m_rip(false), many_regs(false)
+	, many_regs(false)
 	// On x86 arg registers are very temporary but on x64 they aren't, so on x86 some registers overlap
 #ifdef _WIN32
 	, _64_vertex(rcx)
 	, _index(rdx)
 	, _dscan(r8)
-	, _64_t0(r9), t1(r10)
+	, _m_local(r9), t1(r10)
 #else
 	, _64_vertex(rdi)
 	, _index(rsi)
 	, _dscan(rdx)
-	, _64_t0(rcx), t1(r8)
+	, _m_local(rcx), t1(r8)
 #endif
-	, _m_local(chooseLocal(&m_local, _64_m_local))
 {
 	m_sel.key = key;
 
@@ -98,9 +97,6 @@ void GSSetupPrimCodeGenerator2::broadcastss(const XYm& reg, const Address& mem)
 
 void GSSetupPrimCodeGenerator2::Generate()
 {
-	// Technically we just need the delta < 2GB
-	m_rip = (size_t)&m_local < 0x80000000 && (size_t)getCurr() < 0x80000000;
-
 	bool needs_shift = ((m_en.z || m_en.f) && m_sel.prim != GS_SPRITE_CLASS) || m_en.t || (m_en.c && m_sel.iip);
 	many_regs = isYmm && !m_sel.notest && needs_shift;
 
@@ -115,9 +111,6 @@ void GSSetupPrimCodeGenerator2::Generate()
 		}
 	}
 #endif
-
-	if (!m_rip)
-		mov(_64_m_local, (size_t)&m_local);
 
 	if (needs_shift)
 	{
@@ -155,6 +148,8 @@ void GSSetupPrimCodeGenerator2::Generate()
 	if (isYmm)
 		vzeroupper();
 	ret();
+
+	Perf::any.RegisterKey(actual.getCode(), actual.getSize(), "GSSetupPrim_", m_sel.key);
 }
 
 void GSSetupPrimCodeGenerator2::Depth_XMM()
@@ -218,7 +213,7 @@ void GSSetupPrimCodeGenerator2::Depth_XMM()
 	{
 		// GSVector4 p = vertex[index[1]].p;
 
-		mov(eax, ptr[_index + sizeof(u32) * 1]);
+		movzx(eax, word[_index + sizeof(u16) * 1]);
 		shl(eax, 6); // * sizeof(GSVertexSW)
 		add(rax, _64_vertex);
 
@@ -307,7 +302,7 @@ void GSSetupPrimCodeGenerator2::Depth_YMM()
 	{
 		// GSVector4 p = vertex[index[1]].p;
 
-		mov(eax, ptr[_index + sizeof(u32) * 1]);
+		movzx(eax, word[_index + sizeof(u16) * 1]);
 		shl(eax, 6); // * sizeof(GSVertexSW)
 		add(rax, _64_vertex);
 
@@ -512,7 +507,7 @@ void GSSetupPrimCodeGenerator2::Color()
 
 		if (!(m_sel.prim == GS_SPRITE_CLASS && (m_en.z || m_en.f))) // if this is a sprite, the last vertex was already loaded in Depth()
 		{
-			mov(eax, ptr[_index + sizeof(u32) * last]);
+			movzx(eax, word[_index + sizeof(u16) * last]);
 			shl(eax, 6); // * sizeof(GSVertexSW)
 			add(rax, _64_vertex);
 		}

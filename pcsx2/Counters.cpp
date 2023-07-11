@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2021  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023 PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -25,17 +25,17 @@
 #include "IopCounters.h"
 
 #include "GS.h"
-#include "VUmicro.h"
+#include "GS/GS.h"
+#include "MTGS.h"
 #include "PerformanceMetrics.h"
 #include "Patch.h"
-
 #include "ps2/HwInternal.h"
 #include "Sio.h"
-#include "HostDisplay.h"
 #include "SPU2/spu2.h"
 #include "PAD/Host/PAD.h"
 #include "Recording/InputRecording.h"
 #include "VMManager.h"
+#include "VUmicro.h"
 
 using namespace Threading;
 
@@ -95,6 +95,7 @@ static __fi void _rcntSet( int cntidx )
 	// Stopped or special hsync gate?
 	if (!counter.mode.IsCounting || (counter.mode.ClockSource == 0x3) ) return;
 
+	if (!counter.mode.TargetInterrupt && !counter.mode.OverflowInterrupt) return;
 	// check for special cases where the overflow or target has just passed
 	// (we probably missed it because we're doing/checking other things)
 	if( counter.count > 0x10000 || counter.count > counter.target )
@@ -113,6 +114,7 @@ static __fi void _rcntSet( int cntidx )
 	if (c < nextCounter)
 	{
 		nextCounter = c;
+
 		cpuSetNextEvent( nextsCounter, nextCounter ); // Need to update on counter resets/target changes
 	}
 
@@ -154,7 +156,9 @@ static __fi void cpuRcntSet()
 		_rcntSet( i );
 
 	// sanity check!
-	if( nextCounter < 0 ) nextCounter = 0;
+	if (nextCounter < 0)
+		nextCounter = 0;
+
 	cpuSetNextEvent(nextsCounter, nextCounter); // Need to update on counter resets/target changes
 }
 
@@ -164,7 +168,7 @@ void rcntInit()
 
 	g_FrameCount = 0;
 
-	memzero(counters);
+	std::memset(counters, 0, sizeof(counters));
 
 	for (i=0; i<4; i++) {
 		counters[i].rate = 2;
@@ -226,10 +230,11 @@ static void vSyncInfoCalc(vSyncTimingInfo* info, double framesPerSecond, u32 sca
 	// Dynasty Warriors 3 Xtreme Legends - fake save corruption when loading save
 	// Jak II - random speedups
 	// Shadow of Rome - FMV audio issues
+	const bool ntsc_hblank = gsVideoMode != GS_VideoMode::PAL && gsVideoMode == GS_VideoMode::DVD_PAL;
 	const u64 HalfFrame = Frame / 2;
-	const u64 Blank = Scanline * ((gsVideoMode == GS_VideoMode::NTSC ? 22 : 25) + static_cast<int>(gsIsInterlaced));
+	const u64 Blank = Scanline * ((ntsc_hblank ? 22 : 25) + static_cast<int>(!IsProgressiveVideoMode()));
 	const u64 Render = HalfFrame - Blank;
-	const u64 GSBlank = Scanline * (gsVideoMode == GS_VideoMode::NTSC ? 3.5 : 3); // GS VBlank/CSR Swap happens roughly 3.5(NTSC) and 3(PAL) Scanlines after VBlank Start
+	const u64 GSBlank = Scanline * (ntsc_hblank ? 3.5 : 3); // GS VBlank/CSR Swap happens roughly 3.5(NTSC) and 3(PAL) Scanlines after VBlank Start
 
 	// Important!  The hRender/hBlank timers should be 50/50 for best results.
 	//  (this appears to be what the real EE's timing crystal does anyway)
@@ -321,16 +326,17 @@ double GetVerticalFrequency()
 	// https://web.archive.org/web/20201102100937/http://forums.nesdev.com/viewtopic.php?t=7909
 	// https://web.archive.org/web/20120629231826fw_/http://ntsc-tv.com/index.html
 	// https://web.archive.org/web/20200831051302/https://www.hdretrovision.com/240p/
+
 	switch (gsVideoMode)
 	{
 	case GS_VideoMode::Uninitialized: // SetGsCrt hasn't executed yet, give some temporary values.
 		return 60.00;
 	case GS_VideoMode::PAL:
 	case GS_VideoMode::DVD_PAL:
-		return gsIsInterlaced ? EmuConfig.GS.FrameratePAL : EmuConfig.GS.FrameratePAL - 0.24f;
+		return (IsProgressiveVideoMode() == false) ? EmuConfig.GS.FrameratePAL : EmuConfig.GS.FrameratePAL - 0.24f;
 	case GS_VideoMode::NTSC:
 	case GS_VideoMode::DVD_NTSC:
-		return gsIsInterlaced ? EmuConfig.GS.FramerateNTSC : EmuConfig.GS.FramerateNTSC - 0.11f;
+		return (IsProgressiveVideoMode() == false) ? EmuConfig.GS.FramerateNTSC : EmuConfig.GS.FramerateNTSC - 0.11f;
 	case GS_VideoMode::SDTV_480P:
 		return 59.94;
 	case GS_VideoMode::HDTV_1080P:
@@ -355,7 +361,7 @@ static double AdjustToHostRefreshRate(double vertical_frequency, double frame_li
 	}
 
 	float host_refresh_rate;
-	if (!g_host_display->GetHostRefreshRate(&host_refresh_rate))
+	if (!GSGetHostRefreshRate(&host_refresh_rate))
 	{
 		Console.Warning("Cannot sync to host refresh since the query failed.");
 		SPU2::SetDeviceSampleRateMultiplier(1.0);
@@ -378,7 +384,7 @@ static double AdjustToHostRefreshRate(double vertical_frequency, double frame_li
 	return frame_limit;
 }
 
-u32 UpdateVSyncRate()
+void UpdateVSyncRate(bool force)
 {
 	// Notice:  (and I probably repeat this elsewhere, but it's worth repeating)
 	//  The PS2's vsync timer is an *independent* crystal that is fixed to either 59.94 (NTSC)
@@ -389,62 +395,67 @@ u32 UpdateVSyncRate()
 	const double vertical_frequency = GetVerticalFrequency();
 
 	const double frames_per_second = vertical_frequency / 2.0;
-	const double frame_limit = AdjustToHostRefreshRate(vertical_frequency, frames_per_second * EmuConfig.GS.LimitScalar);
 
-	const double tick_rate = GetTickFrequency() / 2.0;
-	const s64 ticks = static_cast<s64>(tick_rate / std::max(frame_limit, 1.0));
-
-	u32 total_scanlines = 0;
-	bool custom  = false;
-
-	switch (gsVideoMode)
+	if (vSyncInfo.Framerate != frames_per_second || vSyncInfo.VideoMode != gsVideoMode || force)
 	{
-	case GS_VideoMode::Uninitialized: // SYSCALL instruction hasn't executed yet, give some temporary values.
-		if(gsIsInterlaced)
-			total_scanlines = SCANLINES_TOTAL_NTSC_I;
-		else
-			total_scanlines = SCANLINES_TOTAL_NTSC_NI;
-		break;
-	case GS_VideoMode::PAL:
-	case GS_VideoMode::DVD_PAL:
-		custom = (EmuConfig.GS.FrameratePAL != Pcsx2Config::GSOptions::DEFAULT_FRAME_RATE_PAL);
-		if (gsIsInterlaced)
-			total_scanlines = SCANLINES_TOTAL_PAL_I;
-		else
-			total_scanlines = SCANLINES_TOTAL_PAL_NI;
-		break;
-	case GS_VideoMode::NTSC:
-	case GS_VideoMode::DVD_NTSC:
-		custom = (EmuConfig.GS.FramerateNTSC != Pcsx2Config::GSOptions::DEFAULT_FRAME_RATE_NTSC);
-		if (gsIsInterlaced)
-			total_scanlines = SCANLINES_TOTAL_NTSC_I;
-		else
-			total_scanlines = SCANLINES_TOTAL_NTSC_NI;
-		break;
-	case GS_VideoMode::SDTV_480P:
-	case GS_VideoMode::SDTV_576P:
-	case GS_VideoMode::HDTV_720P:
-	case GS_VideoMode::VESA:
-		total_scanlines = SCANLINES_TOTAL_NTSC_I;
-		break;
-	case GS_VideoMode::HDTV_1080P:
-	case GS_VideoMode::HDTV_1080I:
-		total_scanlines = SCANLINES_TOTAL_1080;
-		break;
-	case GS_VideoMode::Unknown:
-	default:
-		if (gsIsInterlaced)
-			total_scanlines = SCANLINES_TOTAL_NTSC_I;
-		else
-			total_scanlines = SCANLINES_TOTAL_NTSC_NI;
-		Console.Error("PCSX2-Counters: Unknown video mode detected");
-		pxAssertDev(false , "Unknown video mode detected via SetGsCrt");
-	}
+		const double frame_limit = AdjustToHostRefreshRate(vertical_frequency, frames_per_second * EmuConfig.GS.LimitScalar);
 
-	const bool video_mode_initialized = gsVideoMode != GS_VideoMode::Uninitialized;
+		const double tick_rate = GetTickFrequency() / 2.0;
+		const s64 ticks = static_cast<s64>(tick_rate / std::max(frame_limit, 1.0));
 
-	if (vSyncInfo.Framerate != frames_per_second || vSyncInfo.VideoMode != gsVideoMode)
-	{
+		u32 total_scanlines = 0;
+		bool custom = false;
+
+		switch (gsVideoMode)
+		{
+			case GS_VideoMode::Uninitialized: // SYSCALL instruction hasn't executed yet, give some temporary values.
+				if (gsIsInterlaced)
+					total_scanlines = SCANLINES_TOTAL_NTSC_I;
+				else
+					total_scanlines = SCANLINES_TOTAL_NTSC_NI;
+				break;
+			case GS_VideoMode::PAL:
+			case GS_VideoMode::DVD_PAL:
+				custom = (EmuConfig.GS.FrameratePAL != Pcsx2Config::GSOptions::DEFAULT_FRAME_RATE_PAL);
+				if (gsIsInterlaced)
+					total_scanlines = SCANLINES_TOTAL_PAL_I;
+				else
+					total_scanlines = SCANLINES_TOTAL_PAL_NI;
+				break;
+			case GS_VideoMode::NTSC:
+			case GS_VideoMode::DVD_NTSC:
+				custom = (EmuConfig.GS.FramerateNTSC != Pcsx2Config::GSOptions::DEFAULT_FRAME_RATE_NTSC);
+				if (gsIsInterlaced)
+					total_scanlines = SCANLINES_TOTAL_NTSC_I;
+				else
+					total_scanlines = SCANLINES_TOTAL_NTSC_NI;
+				break;
+			case GS_VideoMode::SDTV_480P:
+			case GS_VideoMode::SDTV_576P:
+			case GS_VideoMode::HDTV_720P:
+			case GS_VideoMode::VESA:
+				total_scanlines = SCANLINES_TOTAL_NTSC_I;
+				break;
+			case GS_VideoMode::HDTV_1080P:
+			case GS_VideoMode::HDTV_1080I:
+				total_scanlines = SCANLINES_TOTAL_1080;
+				break;
+			case GS_VideoMode::Unknown:
+			default:
+				if (gsIsInterlaced)
+					total_scanlines = SCANLINES_TOTAL_NTSC_I;
+				else
+					total_scanlines = SCANLINES_TOTAL_NTSC_NI;
+				Console.Error("PCSX2-Counters: Unknown video mode detected");
+				pxAssertDev(false, "Unknown video mode detected via SetGsCrt");
+		}
+
+		const bool video_mode_initialized = gsVideoMode != GS_VideoMode::Uninitialized;
+
+		// NBA Jam 2004 PAL will fail to display 3D on the menu if this value isn't correct on reset.
+		if (video_mode_initialized && vSyncInfo.VideoMode != gsVideoMode)
+			CSRreg.FIELD = 1;
+
 		vSyncInfo.VideoMode = gsVideoMode;
 
 		vSyncInfoCalc(&vSyncInfo, frames_per_second, total_scanlines);
@@ -457,18 +468,18 @@ u32 UpdateVSyncRate()
 
 		hsyncCounter.CycleT = vSyncInfo.hRender; // Amount of cycles before the counter will be updated
 		vsyncCounter.CycleT = vSyncInfo.Render;  // Amount of cycles before the counter will be updated
-
+		hsyncCounter.sCycle = cpuRegs.cycle;
+		vsyncCounter.sCycle = cpuRegs.cycle;
+		vsyncCounter.Mode = MODE_VRENDER;
 		cpuRcntSet();
+
+		PerformanceMetrics::SetVerticalFrequency(vertical_frequency);
+
+		if (m_iTicks != ticks)
+			m_iTicks = ticks;
+
+		m_iStart = GetCPUTicks();
 	}
-
-	PerformanceMetrics::SetVerticalFrequency(vertical_frequency);
-
-	if (m_iTicks != ticks)
-		m_iTicks = ticks;
-
-	m_iStart = GetCPUTicks();
-
-	return static_cast<u32>(m_iTicks);
 }
 
 void frameLimitReset()
@@ -531,18 +542,22 @@ static __fi void DoFMVSwitch()
 		RendererSwitched = GSConfig.UseHardwareRenderer();
 
 		// we don't use the sw toggle here, because it'll change back to auto if set to sw
-		GetMTGS().SwitchRenderer(new_fmv_state ? GSRendererType::SW : EmuConfig.GS.Renderer, false);
+		MTGS::SwitchRenderer(new_fmv_state ? GSRendererType::SW : EmuConfig.GS.Renderer, false);
 	}
 	else
 		RendererSwitched = false;
 }
 
-// Convenience function to update UI thread and set patches.
-static __fi void frameLimitUpdateCore()
+// Convenience function to update UI thread and set patches. 
+static __fi void VSyncUpdateCore()
 {
 	DoFMVSwitch();
 
 	VMManager::Internal::VSyncOnCPUThread();
+}
+
+static __fi void VSyncCheckExit()
+{
 	if (VMManager::Internal::IsExecutionInterrupted())
 		Cpu->ExitExecution();
 }
@@ -553,10 +568,7 @@ static __fi void frameLimit()
 {
 	// Framelimiter off in settings? Framelimiter go brrr.
 	if (EmuConfig.GS.LimitScalar == 0.0f || s_use_vsync_for_timing)
-	{
-		frameLimitUpdateCore();
 		return;
-	}
 
 	const u64 uExpectedEnd = m_iStart + m_iTicks;  // Compute when we would expect this frame to end, assuming everything goes perfectly perfect.
 	const u64 iEnd = GetCPUTicks();                // The current tick we actually stopped on.
@@ -567,7 +579,6 @@ static __fi void frameLimit()
 	{
 		// ... Fudge the next frame start over a bit. Prevents fast forward zoomies.
 		m_iStart += (sDeltaTime / m_iTicks) * m_iTicks;
-		frameLimitUpdateCore();
 		return;
 	}
 
@@ -591,16 +602,17 @@ static __fi void frameLimit()
 
 	// Finally, set our next frame start to when this one ends
 	m_iStart = uExpectedEnd;
-	frameLimitUpdateCore();
 }
 
 static __fi void VSyncStart(u32 sCycle)
 {
 	// Update vibration at the end of a frame.
+	VSyncUpdateCore();
 	PAD::Update();
 
 	frameLimit(); // limit FPS
 	gsPostVsyncStart(); // MUST be after framelimit; doing so before causes funk with frame times!
+	VSyncCheckExit();
 
 	if(EmuConfig.Trace.Enabled && EmuConfig.Trace.EE.m_EnableAll)
 		SysTrace.EE.Counters.Write( "    ================  EE COUNTER VSYNC START (frame: %d)  ================", g_FrameCount );
@@ -802,6 +814,8 @@ static __fi void _cpuTestOverflow( int i )
 __fi void rcntUpdate()
 {
 	rcntUpdate_vSync();
+	// HBlank after as VSync can do error compensation
+	rcntUpdate_hScanline();
 
 	// Update counters so that we can perform overflow and target tests.
 
@@ -824,8 +838,9 @@ __fi void rcntUpdate()
 			counters[i].sCycleT = cpuRegs.cycle - change;
 
 			// Check Counter Targets and Overflows:
-			_cpuTestTarget( i );
+			// Check Overflow first, in case the target is 0
 			_cpuTestOverflow( i );
+			_cpuTestTarget(i);
 		}
 		else counters[i].sCycleT = cpuRegs.cycle;
 	}
@@ -869,14 +884,14 @@ static __fi void rcntStartGate(bool isVblank, u32 sCycle)
 		{
 			// Update counters using the hblank as the clock.  This keeps the hblank source
 			// nicely in sync with the counters and serves as an optimization also, since these
-			// counter won't recieve special rcntUpdate scheduling.
+			// counter won't receive special rcntUpdate scheduling.
 
 			// Note: Target and overflow tests must be done here since they won't be done
 			// currectly by rcntUpdate (since it's not being scheduled for these counters)
 
 			counters[i].count += HBLANK_COUNTER_SPEED;
+			_cpuTestOverflow(i);
 			_cpuTestTarget( i );
-			_cpuTestOverflow( i );
 		}
 
 		if (!(gates & (1<<i))) continue;
@@ -1148,7 +1163,7 @@ template u16 rcntRead32<0x01>( u32 mem );
 template bool rcntWrite32<0x00>( u32 mem, mem32_t& value );
 template bool rcntWrite32<0x01>( u32 mem, mem32_t& value );
 
-void SaveStateBase::rcntFreeze()
+bool SaveStateBase::rcntFreeze()
 {
 	Freeze( counters );
 	Freeze( hsyncCounter );
@@ -1162,4 +1177,6 @@ void SaveStateBase::rcntFreeze()
 
 	if( IsLoading() )
 		cpuRcntSet();
+
+	return IsOkay();
 }

@@ -8,6 +8,8 @@ in vec4 PSin_c;
 
 uniform vec4 ZrH;
 
+layout(binding = 0) uniform sampler2D TextureSampler;
+
 layout(location = 0) out vec4 SV_Target0;
 
 
@@ -19,7 +21,7 @@ void ps_main0()
 	int vpos  = int(gl_FragCoord.y); // vertical position of destination texture
 
 	if ((vpos & 1) == field)
-		SV_Target0 = texture(TextureSampler, PSin_t);
+		SV_Target0 = textureLod(TextureSampler, PSin_t, 0);
 	else
 		discard;
 }
@@ -28,7 +30,7 @@ void ps_main0()
 // Bob shader
 void ps_main1()
 {
-	SV_Target0 = texture(TextureSampler, PSin_t);
+	SV_Target0 = textureLod(TextureSampler, PSin_t, 0);
 }
 
 
@@ -36,9 +38,9 @@ void ps_main1()
 void ps_main2()
 {
 	vec2 vstep = vec2(0.0f, ZrH.y);
-	vec4 c0 = texture(TextureSampler, PSin_t - vstep);
-	vec4 c1 = texture(TextureSampler, PSin_t);
-	vec4 c2 = texture(TextureSampler, PSin_t + vstep);
+	vec4 c0 = textureLod(TextureSampler, PSin_t - vstep, 0);
+	vec4 c1 = textureLod(TextureSampler, PSin_t, 0);
+	vec4 c2 = textureLod(TextureSampler, PSin_t + vstep, 0);
 
 	SV_Target0 = (c0 + c1 * 2.0f + c2) / 4.0f;
 }
@@ -60,15 +62,11 @@ void ps_main3()
 	int  vres   = int(ZrH.z) >> 1;                           // vertical resolution of source texture
 	int  lofs   = ((((vres + 1) >> 1) << 1) - vres) & bank;  // line alignment offset for bank 1
 	int  vpos   = int(gl_FragCoord.y) + lofs;                // vertical position of destination texture
-	vec2 bofs   = vec2(0.0f, 0.5f * float(bank));            // vertical offset of the current bank relative to source texture size
-	vec2 vscale = vec2(1.0f, 2.0f);                          // scaling factor from source to destination texture
-	vec2 optr   = PSin_t - bofs;                             // used to check if the current destination line is within the current bank
-	vec2 iptr   = optr * vscale;                             // pointer to the current pixel in the source texture
 
 	// if the index of current destination line belongs to the current fiels we update it, otherwise
 	// we leave the old line in the destination buffer
-	if ((optr.y >= 0.0f) && (optr.y < 0.5f) && ((vpos & 1) == field))
-		SV_Target0 = texture(TextureSampler, iptr);
+	if ((vpos & 1) == field)
+		SV_Target0 = textureLod(TextureSampler, PSin_t, 0);
 	else
 		discard;
 }
@@ -126,13 +124,13 @@ void ps_main4()
 	// calculating motion, only relevant for missing lines where the "center line" is pointed
 	// by p_t1
 
-	vec4 hn = texture(TextureSampler, p_t0 - lofs); // new high pixel
-	vec4 cn = texture(TextureSampler, p_t1);        // new center pixel
-	vec4 ln = texture(TextureSampler, p_t0 + lofs); // new low pixel
+	vec4 hn = textureLod(TextureSampler, p_t0 - lofs, 0); // new high pixel
+	vec4 cn = textureLod(TextureSampler, p_t1, 0);        // new center pixel
+	vec4 ln = textureLod(TextureSampler, p_t0 + lofs, 0); // new low pixel
 
-	vec4 ho = texture(TextureSampler, p_t2 - lofs); // old high pixel
-	vec4 co = texture(TextureSampler, p_t3);        // old center pixel
-	vec4 lo = texture(TextureSampler, p_t2 + lofs); // old low pixel
+	vec4 ho = textureLod(TextureSampler, p_t2 - lofs, 0); // old high pixel
+	vec4 co = textureLod(TextureSampler, p_t3, 0);        // old center pixel
+	vec4 lo = textureLod(TextureSampler, p_t2 + lofs, 0); // old low pixel
 
 	vec3 mh = hn.rgb - ho.rgb; // high pixel motion
 	vec3 mc = cn.rgb - co.rgb; // center pixel motion
@@ -158,7 +156,7 @@ void ps_main4()
 	if ((vpos & 1) == field)
 	{
 		// output coordinate present on current field
-		SV_Target0 = texture(TextureSampler, p_t0);
+		SV_Target0 = textureLod(TextureSampler, p_t0, 0);
 	}
 	else if ((iptr.y > 0.5f - lofs.y) || (iptr.y < 0.0 + lofs.y))
 	{

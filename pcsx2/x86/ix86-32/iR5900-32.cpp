@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2010  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -16,29 +16,23 @@
 #include "PrecompiledHeader.h"
 
 #include "Common.h"
-#include "Memory.h"
-#include "R3000A.h"
-
-#include "R5900Exceptions.h"
-#include "R5900OpcodeTables.h"
-#include "iR5900.h"
-#include "iR5900Analysis.h"
-#include "BaseblockEx.h"
-#include "System/RecTypes.h"
-
-#include "vtlb.h"
-
-#include "VMManager.h"
-#include "GS.h"
 #include "CDVD/CDVD.h"
-#include "Elfheader.h"
-
 #include "DebugTools/Breakpoints.h"
+#include "Elfheader.h"
+#include "GS.h"
+#include "Memory.h"
 #include "Patch.h"
+#include "R3000A.h"
+#include "R5900OpcodeTables.h"
+#include "VMManager.h"
+#include "VirtualMemory.h"
+#include "vtlb.h"
+#include "x86/BaseblockEx.h"
+#include "x86/iR5900.h"
+#include "x86/iR5900Analysis.h"
 
 #include "common/AlignedMalloc.h"
 #include "common/FastJmp.h"
-#include "common/MemsetFast.inl"
 #include "common/Perf.h"
 
 // Only for MOVQ workaround.
@@ -60,8 +54,7 @@
 using namespace x86Emitter;
 using namespace R5900;
 
-static std::atomic<bool> eeRecIsReset(false);
-static std::atomic<bool> eeRecNeedsReset(false);
+static bool eeRecNeedsReset = false;
 static bool eeCpuExecuting = false;
 static bool eeRecExitRequested = false;
 static bool g_resetEeScalingStats = false;
@@ -517,7 +510,7 @@ static void _DynGen_Dispatchers()
 
 	recBlocks.SetJITCompile(JITCompile);
 
-	Perf::any.map((uptr)&eeRecDispatchers, 4096, "EE Dispatcher");
+	Perf::any.Register((void*)eeRecDispatchers, 4096, "EE Dispatcher");
 }
 
 
@@ -536,7 +529,6 @@ static void recReserve()
 		return;
 
 	recMem = new RecompiledCodeReserve("R5900 Recompiler Cache");
-	recMem->SetProfilerName("EErec");
 	recMem->Assign(GetVmMemory().CodeMemory(), HostMemoryMap::EErecOffset, 64 * _1mb);
 }
 
@@ -617,17 +609,11 @@ alignas(16) static u8 manual_counter[Ps2MemSize::MainRam >> 12];
 ////////////////////////////////////////////////////
 static void recResetRaw()
 {
-	Perf::ee.reset();
+	Console.WriteLn(Color_StrongBlack, "EE/iR5900-32 Recompiler Reset");
 
 	EE::Profiler.Reset();
 
 	recAlloc();
-
-	eeRecNeedsReset = false;
-	if (eeRecIsReset.exchange(true))
-		return;
-
-	Console.WriteLn(Color_StrongBlack, "EE/iR5900-32 Recompiler Reset");
 
 	recMem->Reset();
 	ClearRecLUT((BASEBLOCK*)recLutReserve_RAM, recLutSize);
@@ -662,9 +648,41 @@ static void recShutdown()
 
 	safe_free(s_pInstCache);
 	s_nInstCacheSize = 0;
+}
 
-	// FIXME Warning thread unsafe
-	Perf::dump();
+void recStep()
+{
+}
+
+static fastjmp_buf m_SetJmp_StateCheck;
+
+static void recExitExecution()
+{
+	fastjmp_jmp(&m_SetJmp_StateCheck, 1);
+}
+
+static void recSafeExitExecution()
+{
+	// If we're currently processing events, we can't safely jump out of the recompiler here, because we'll
+	// leave things in an inconsistent state. So instead, we flag it for exiting once cpuEventTest() returns.
+	// Exiting in the middle of a rec block with the registers unsaved would be a bad idea too..
+	eeRecExitRequested = true;
+
+	// Force an event test at the end of this block.
+	if (!eeEventTestIsActive)
+	{
+		// EE is running.
+		cpuRegs.nextEventCycle = 0;
+	}
+	else
+	{
+		// IOP might be running, so break out if so.
+		if (psxRegs.iopCycleEE > 0)
+		{
+			psxRegs.iopBreak += psxRegs.iopCycleEE; // record the number of cycles the IOP didn't run.
+			psxRegs.iopCycleEE = 0;
+		}
+	}
 }
 
 static void recResetEE()
@@ -673,39 +691,16 @@ static void recResetEE()
 	{
 		// get outta here as soon as we can
 		eeRecNeedsReset = true;
-		eeRecExitRequested = true;
+		recSafeExitExecution();
 		return;
 	}
 
 	recResetRaw();
 }
 
-void recStep()
+static void recCancelInstruction()
 {
-}
-
-static fastjmp_buf m_SetJmp_StateCheck;
-static std::unique_ptr<BaseR5900Exception> m_cpuException;
-static std::unique_ptr<BaseException> m_Exception;
-
-static void recExitExecution()
-{
-	// Without SEH we'll need to hop to a safehouse point outside the scope of recompiled
-	// code.  C++ exceptions can't cross the mighty chasm in the stackframe that the recompiler
-	// creates.  However, the longjump is slow so we only want to do one when absolutely
-	// necessary:
-
-	fastjmp_jmp(&m_SetJmp_StateCheck, 1);
-}
-
-static void recSafeExitExecution()
-{
-	// If we're currently processing events, we can't safely jump out of the recompiler here, because we'll
-	// leave things in an inconsistent state. So instead, we flag it for exiting once cpuEventTest() returns.
-	if (eeEventTestIsActive)
-		eeRecExitRequested = true;
-	else
-		recExitExecution();
+	pxFailRel("recCancelInstruction() called, this should never happen!");
 }
 
 static void recExecute()
@@ -713,12 +708,11 @@ static void recExecute()
 	// Reset before we try to execute any code, if there's one pending.
 	// We need to do this here, because if we reset while we're executing, it sets the "needs reset"
 	// flag, which triggers a JIT exit (the fastjmp_set below), and eventually loops back here.
-	eeRecIsReset.store(false);
-	if (eeRecNeedsReset.load())
+	if (eeRecNeedsReset)
+	{
+		eeRecNeedsReset = false;
 		recResetRaw();
-
-	m_cpuException = nullptr;
-	m_Exception = nullptr;
+	}
 
 	// setjmp will save the register context and will return 0
 	// A call to longjmp will restore the context (included the eip/rip)
@@ -738,14 +732,6 @@ static void recExecute()
 	}
 
 	eeCpuExecuting = false;
-
-	if (m_cpuException)
-		m_cpuException->Rethrow();
-	if (m_Exception)
-		m_Exception->Rethrow();
-
-	// FIXME Warning thread unsafe
-	Perf::dump();
 
 	EE::Profiler.Print();
 }
@@ -1637,10 +1623,23 @@ void recMemcheck(u32 op, u32 bits, bool store)
 		if (checks[i].result & MEMCHECK_LOG)
 		{
 			xMOV(edx, store);
-			xFastCall((void*)dynarecMemLogcheck, ecx, edx);
+			// Preserve ecx (address) and edx (address+size) because we aren't breaking
+			// out of this loops iteration and dynarecMemLogcheck will clobber them
+			// Also keep 16 byte stack alignment
+			if(!(checks[i].result & MEMCHECK_BREAK))
+			{
+				xPUSH(eax); xPUSH(ebx); xPUSH(ecx); xPUSH(edx);
+				xFastCall((void*)dynarecMemLogcheck, ecx, edx);
+				xPOP(edx); xPOP(ecx); xPOP(ebx); xPOP(eax);
+			}
+			else
+			{
+				xFastCall((void*)dynarecMemLogcheck, ecx, edx);
+			}
 		}
 		if (checks[i].result & MEMCHECK_BREAK)
 		{
+			// Don't need to preserve edx and ecx, we don't return
 			xFastCall((void*)dynarecMemcheck);
 		}
 
@@ -1694,7 +1693,7 @@ void recompileNextInstruction(bool delayslot, bool swapped_delay_slot)
 	int count;
 
 	if (EmuConfig.EnablePatches)
-		ApplyDynamicPatches(pc);
+		Patch::ApplyDynamicPatches(pc);
 
 	// add breakpoint
 	if (!delayslot)
@@ -1913,11 +1912,10 @@ void recompileNextInstruction(bool delayslot, bool swapped_delay_slot)
 
 				else if (COP2IsQOP(cpuRegs.code))
 				{
-					std::string disasm;
 					Console.Warning("Possible incorrect Q value used in COP2. If the game is broken, please report to http://github.com/pcsx2/pcsx2.");
 					for (u32 i = s_pCurBlockEx->startpc; i < s_nEndBlock; i += 4)
 					{
-						disasm = "";
+						std::string disasm = "";
 						disR5900Fasm(disasm, memRead32(i), i, false);
 						Console.Warning("%x %s%08X %s", i, i == pc - 4 ? "*" : i == p ? "=" :
                                                                                         " ",
@@ -2131,7 +2129,7 @@ static void memory_protect_recompiled_code(u32 startpc, u32 size)
 }
 
 // Skip MPEG Game-Fix
-bool skipMPEG_By_Pattern(u32 sPC)
+static bool skipMPEG_By_Pattern(u32 sPC)
 {
 
 	if (!CHECK_SKIPMPEGHACK)
@@ -2160,6 +2158,56 @@ bool skipMPEG_By_Pattern(u32 sPC)
 	return 0;
 }
 
+static bool recSkipTimeoutLoop(s32 reg, bool is_timeout_loop)
+{
+	if (!EmuConfig.Speedhacks.WaitLoop || !is_timeout_loop)
+		return false;
+
+	DevCon.WriteLn("[EE] Skipping timeout loop at 0x%08X -> 0x%08X", s_pCurBlockEx->startpc, s_nEndBlock);
+
+	// basically, if the time it takes the loop to run is shorter than the
+	// time to the next event, then we want to skip ahead to the event, but
+	// update v0 to reflect how long the loop would have run for.
+
+	// if (cycle >= nextEventCycle) { jump to dispatcher, we're running late }
+	// new_cycles = min(v0 * 8, nextEventCycle)
+	// new_v0 = (new_cycles - cycles) / 8
+	// if new_v0 > 0 { jump to dispatcher because loop exited early }
+	// else new_v0 is 0, so exit loop
+
+	xMOV(ebx, ptr32[&cpuRegs.cycle]); // ebx = cycle
+	xMOV(ecx, ptr32[&cpuRegs.nextEventCycle]); // ecx = nextEventCycle
+	xCMP(ebx, ecx);
+	//xJAE((void*)DispatcherEvent); // jump to dispatcher if event immediately
+
+	// TODO: In the case where nextEventCycle < cycle because it's overflowed, tack 8
+	// cycles onto the event count, so hopefully it'll wrap around. This is pretty
+	// gross, but until we switch to 64-bit counters, not many better options.
+	xForwardJB8 not_dispatcher;
+	xADD(ebx, 8);
+	xMOV(ptr32[&cpuRegs.cycle], ebx);
+	xJMP((void*)DispatcherEvent);
+	not_dispatcher.SetTarget();
+
+	xMOV(edx, ptr32[&cpuRegs.GPR.r[reg].UL[0]]); // eax = v0
+	xLEA(rax, ptrNative[rdx * 8 + rbx]); // edx = v0 * 8 + cycle
+	xCMP(rcx, rax);
+	xCMOVB(rax, rcx); // eax = new_cycles = min(v8 * 8, nextEventCycle)
+	xMOV(ptr32[&cpuRegs.cycle], eax); // writeback new_cycles
+	xSUB(eax, ebx); // new_cycles -= cycle
+	xSHR(eax, 3); // compute new v0 value
+	xSUB(edx, eax); // v0 -= cycle_diff
+	xMOV(ptr32[&cpuRegs.GPR.r[reg].UL[0]], edx); // write back new value of v0
+	xJNZ((void*)DispatcherEvent); // jump to dispatcher if new v0 is not zero (i.e. an event)
+	xMOV(ptr32[&cpuRegs.pc], s_nEndBlock); // otherwise end of loop
+	recBlocks.Link(HWADDR(s_nEndBlock), xJcc32());
+
+	g_branch = 1;
+	pc = s_nEndBlock;
+
+	return true;
+}
+
 static void recRecompile(const u32 startpc)
 {
 	u32 i = 0;
@@ -2171,14 +2219,17 @@ static void recRecompile(const u32 startpc)
 	if (recPtr >= (recMem->GetPtrEnd() - _64kb))
 		eeRecNeedsReset = true;
 
+	if (HWADDR(startpc) == VMManager::Internal::GetCurrentELFEntryPoint())
+		VMManager::Internal::EntryPointCompilingOnCPUThread();
+
 	if (eeRecNeedsReset)
+	{
+		eeRecNeedsReset = false;
 		recResetRaw();
+	}
 
 	xSetPtr(recPtr);
 	recPtr = xGetAlignedCallTarget();
-
-	if (0x8000d618 == startpc)
-		DbgCon.WriteLn("Compiling block @ 0x%08x", startpc);
 
 	s_pCurBlock = PC_GETBLOCK(startpc);
 
@@ -2202,7 +2253,7 @@ static void recRecompile(const u32 startpc)
 	if (g_eeloadMain && HWADDR(startpc) == HWADDR(g_eeloadMain))
 	{
 		xFastCall((void*)eeloadHook);
-		if (g_SkipBiosHack)
+		if (VMManager::Internal::IsFastBootInProgress())
 		{
 			// There are four known versions of EELOAD, identifiable by the location of the 'jal' to the EELOAD function which
 			// calls ExecPS2(). The function itself is at the same address in all BIOSs after v1.00-v1.10.
@@ -2221,14 +2272,6 @@ static void recRecompile(const u32 startpc)
 
 	if (g_eeloadExec && HWADDR(startpc) == HWADDR(g_eeloadExec))
 		xFastCall((void*)eeloadHook2);
-
-	// this is the only way patches get applied, doesn't depend on a hack
-	if (g_GameLoading && HWADDR(startpc) == ElfEntry)
-	{
-		Console.WriteLn("Elf entry point @ 0x%08x about to get recompiled. Load patches first.", startpc);
-		xFastCall((void*)eeGameStarting);
-		VMManager::Internal::EntryPointCompilingOnCPUThread();
-	}
 
 	g_branch = 0;
 
@@ -2266,6 +2309,26 @@ static void recRecompile(const u32 startpc)
 	i = startpc;
 	s_nEndBlock = 0xffffffff;
 	s_branchTo = -1;
+
+	// Timeout loop speedhack.
+	// God of War 2 and other games (e.g. NFS series) have these timeout loops which just spin for a few thousand
+	// iterations, usually after kicking something which results in an IRQ, but instead of cancelling the loop,
+	// they just let it finish anyway. Such loops look like:
+	//
+	//   00186D6C addiu  v0,v0, -0x1
+	//   00186D70 nop
+	//   00186D74 nop
+	//   00186D78 nop
+	//   00186D7C nop
+	//   00186D80 bne    v0, zero, ->$0x00186D6C
+	//   00186D84 nop
+	//
+	// Skipping them entirely seems to have no negative effects, but we skip cycles based on the incoming value
+	// if the register being decremented, which appears to vary. So far I haven't seen any which increment instead
+	// of decrementing, so we'll limit the test to that to be safe.
+	//
+	s32 timeout_reg = -1;
+	bool is_timeout_loop = true;
 
 	// compile breakpoints as individual blocks
 	int n1 = isBreakpointNeeded(i);
@@ -2309,6 +2372,28 @@ static void recRecompile(const u32 startpc)
 
 		//HUH ? PSM ? whut ? THIS IS VIRTUAL ACCESS GOD DAMMIT
 		cpuRegs.code = *(int*)PSM(i);
+
+		if (is_timeout_loop)
+		{
+			if ((cpuRegs.code >> 26) == 8 || (cpuRegs.code >> 26) == 9)
+			{
+				// addi/addiu
+				if (timeout_reg >= 0 || _Rs_ != _Rt_ || _Imm_ >= 0)
+					is_timeout_loop = false;
+				else
+					timeout_reg = _Rs_;
+			}
+			else if ((cpuRegs.code >> 26) == 5)
+			{
+				// bne
+				if (timeout_reg != _Rs_ || _Rt_ != 0 || memRead32(i + 4) != 0)
+					is_timeout_loop = false;
+			}
+			else if (cpuRegs.code != 0)
+			{
+				is_timeout_loop = false;
+			}
+		}
 
 		switch (cpuRegs.code >> 26)
 		{
@@ -2401,11 +2486,6 @@ StartRecomp:
 	// (excepting registers initialised with constants or memory loads) or use any instructions
 	// which alter the machine state apart from registers, it will do the same thing on every
 	// iteration.
-	// TODO: special handling for counting loops.  God of war wastes time in a loop which just
-	// counts to some large number and does nothing else, many other games use a counter as a
-	// timeout on a register read.  AFAICS the only way to optimise this for non-const cases
-	// without a significant loss in cycle accuracy is with a division, but games would probably
-	// be happy with time wasting loops completing in 0 cycles and timeouts waiting forever.
 	s_nBlockFF = false;
 	if (s_branchTo == startpc)
 	{
@@ -2484,6 +2564,10 @@ StartRecomp:
 			}
 		}
 	}
+	else
+	{
+		is_timeout_loop = false;
+	}
 
 	// rec info //
 	bool has_cop2_instructions = false;
@@ -2546,7 +2630,7 @@ StartRecomp:
 	memory_protect_recompiled_code(startpc, (s_nEndBlock - startpc) >> 2);
 
 	// Skip Recompilation if sceMpegIsEnd Pattern detected
-	bool doRecompilation = !skipMPEG_By_Pattern(startpc);
+	bool doRecompilation = !skipMPEG_By_Pattern(startpc) && !recSkipTimeoutLoop(timeout_reg, is_timeout_loop);
 
 	if (doRecompilation)
 	{
@@ -2669,8 +2753,7 @@ StartRecomp:
 
 	pxAssert(xGetPtr() < recMem->GetPtrEnd());
 
-	pxAssert(xGetPtr() - recPtr < _64kb);
-	s_pCurBlockEx->x86size = xGetPtr() - recPtr;
+	s_pCurBlockEx->x86size = static_cast<u32>(xGetPtr() - recPtr);
 
 #if 0
 	// Example: Dump both x86/EE code
@@ -2678,7 +2761,7 @@ StartRecomp:
 		iDumpBlock(s_pCurBlockEx->startpc, s_pCurBlockEx->size*4, s_pCurBlockEx->fnptr, s_pCurBlockEx->x86size);
 	}
 #endif
-	Perf::ee.map(s_pCurBlockEx->fnptr, s_pCurBlockEx->x86size, s_pCurBlockEx->startpc);
+	Perf::ee.RegisterPC((void*)s_pCurBlockEx->fnptr, s_pCurBlockEx->x86size, s_pCurBlockEx->startpc);
 
 	recPtr = xGetPtr();
 
@@ -2686,25 +2769,6 @@ StartRecomp:
 
 	s_pCurBlock = NULL;
 	s_pCurBlockEx = NULL;
-}
-
-// The only *safe* way to throw exceptions from the context of recompiled code.
-// The exception is cached and the recompiler is exited safely using either an
-// SEH unwind (MSW) or setjmp/longjmp (GCC).
-static void recThrowException(const BaseR5900Exception& ex)
-{
-	if (!eeCpuExecuting)
-		ex.Rethrow();
-	m_cpuException = std::unique_ptr<BaseR5900Exception>(ex.Clone());
-	recExitExecution();
-}
-
-static void recThrowException(const BaseException& ex)
-{
-	if (!eeCpuExecuting)
-		ex.Rethrow();
-	m_Exception = std::unique_ptr<BaseException>(ex.Clone());
-	recExitExecution();
 }
 
 R5900cpu recCpu = {
@@ -2716,6 +2780,5 @@ R5900cpu recCpu = {
 	recExecute,
 
 	recSafeExitExecution,
-	recThrowException,
-	recThrowException,
+	recCancelInstruction,
 	recClear};

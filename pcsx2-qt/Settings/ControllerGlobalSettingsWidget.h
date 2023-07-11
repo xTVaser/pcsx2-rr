@@ -20,7 +20,11 @@
 #include <array>
 #include <vector>
 
+#include "ColorPickerButton.h"
+
 #include "ui_ControllerGlobalSettingsWidget.h"
+#include "ui_ControllerLEDSettingsDialog.h"
+#include "ui_ControllerMouseSettingsDialog.h"
 
 class ControllerSettingsDialog;
 
@@ -38,9 +42,39 @@ public:
 Q_SIGNALS:
 	void bindingSetupChanged();
 
-private:
+private Q_SLOTS:
 	void updateSDLOptionsEnabled();
+	void ledSettingsClicked();
+	void mouseSettingsClicked();
 
+private:
 	Ui::ControllerGlobalSettingsWidget m_ui;
 	ControllerSettingsDialog* m_dialog;
+};
+
+class ControllerLEDSettingsDialog : public QDialog
+{
+	Q_OBJECT
+
+public:
+	ControllerLEDSettingsDialog(QWidget* parent, ControllerSettingsDialog* dialog);
+	~ControllerLEDSettingsDialog();
+
+private:
+	void linkButton(ColorPickerButton* button, u32 player_id);
+
+	Ui::ControllerLEDSettingsDialog m_ui;
+	ControllerSettingsDialog* m_dialog;
+};
+
+class ControllerMouseSettingsDialog : public QDialog
+{
+	Q_OBJECT
+
+public:
+	ControllerMouseSettingsDialog(QWidget* parent, ControllerSettingsDialog* dialog);
+	~ControllerMouseSettingsDialog();
+
+private:
+	Ui::ControllerMouseSettingsDialog m_ui;
 };

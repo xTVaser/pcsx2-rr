@@ -81,6 +81,10 @@ public:
 		static_assert(1 << ilog2(PageHeight) == PageHeight, "PageHeight must be a power of 2");
 	}
 
+	/// Returns the amount to shift to convert a width to pages.
+	u8 pageShiftX() const { return m_pageShiftX; }
+	u8 pageShiftY() const { return m_pageShiftY; }
+
 	/// Get the block number of the given pixel
 	u32 bn(int x, int y, u32 bp, u32 bw) const;
 
@@ -178,6 +182,12 @@ public:
 	u32 bn(int x, int y) const
 	{
 		return BNHelper(*this, x, y).value();
+	}
+
+	/// Get the block number of the given pixel, without wrapping to MAX_BLOCKS
+	u32 bnNoWrap(int x, int y) const
+	{
+		return BNHelper(*this, x, y).valueNoWrap();
 	}
 
 	/// Get a helper class for efficiently calculating multiple block numbers
@@ -481,7 +491,7 @@ public:
 	static psm_t m_psm[64];
 	static readImage m_readImageX;
 
-	static const int m_vmsize = 1024 * 1024 * 4;
+	static constexpr int m_vmsize = 1024 * 1024 * 4;
 
 	u8* m_vm8;
 
@@ -525,6 +535,7 @@ public:
 	GSLocalMemory();
 	~GSLocalMemory();
 
+	__forceinline u8* vm8() const { return m_vm8; }
 	__forceinline u16* vm16() const { return reinterpret_cast<u16*>(m_vm8); }
 	__forceinline u32* vm32() const { return reinterpret_cast<u32*>(m_vm8); }
 
@@ -535,6 +546,10 @@ public:
 	GSPixelOffset* GetPixelOffset(const GIFRegFRAME& FRAME, const GIFRegZBUF& ZBUF);
 	GSPixelOffset4* GetPixelOffset4(const GIFRegFRAME& FRAME, const GIFRegZBUF& ZBUF);
 	std::vector<GSVector2i>* GetPage2TileMap(const GIFRegTEX0& TEX0);
+	static bool IsPageAligned(u32 psm, const GSVector4i& rc);
+	static u32 GetStartBlockAddress(u32 bp, u32 bw, u32 psm, GSVector4i rect);
+	static u32 GetEndBlockAddress(u32 bp, u32 bw, u32 psm, GSVector4i rect);
+	static GSVector4i GetRectForPageOffset(u32 base_bp, u32 offset_bp, u32 bw, u32 psm);
 
 	// address
 
@@ -981,10 +996,15 @@ public:
 		off.loopPixels(r, vm32(), (u32*)src, pitch, [&](u32* dst, u32* src) { *dst = *src; });
 	}
 
+	void WritePixel32(u8* RESTRICT src, u32 pitch, const GSOffset& off, const GSVector4i& r, u32 write_mask)
+	{
+		off.loopPixels(r, vm32(), (u32*)src, pitch, [&](u32* dst, u32* src) { *dst = (*dst & ~write_mask) | (*src & write_mask); });
+	}
+
 	void WritePixel24(u8* RESTRICT src, u32 pitch, const GSOffset& off, const GSVector4i& r)
 	{
 		off.loopPixels(r, vm32(), (u32*)src, pitch,
-		[&](u32* dst, u32* src)
+			[&](u32* dst, u32* src)
 		{
 			*dst = (*dst & 0xff000000) | (*src & 0x00ffffff);
 		});
@@ -1128,20 +1148,20 @@ constexpr inline GSOffset GSOffset::fromKnownPSM(u32 bp, u32 bw, GS_PSM psm)
 {
 	switch (psm)
 	{
-		case PSM_PSMCT32:  return GSOffset(GSLocalMemory::swizzle32,   bp, bw, psm);
-		case PSM_PSMCT24:  return GSOffset(GSLocalMemory::swizzle32,   bp, bw, psm);
-		case PSM_PSMCT16:  return GSOffset(GSLocalMemory::swizzle16,   bp, bw, psm);
-		case PSM_PSMCT16S: return GSOffset(GSLocalMemory::swizzle16S,  bp, bw, psm);
-		case PSM_PSGPU24:  return GSOffset(GSLocalMemory::swizzle16,   bp, bw, psm);
-		case PSM_PSMT8:    return GSOffset(GSLocalMemory::swizzle8,    bp, bw, psm);
-		case PSM_PSMT4:    return GSOffset(GSLocalMemory::swizzle4,    bp, bw, psm);
-		case PSM_PSMT8H:   return GSOffset(GSLocalMemory::swizzle32,   bp, bw, psm);
-		case PSM_PSMT4HL:  return GSOffset(GSLocalMemory::swizzle32,   bp, bw, psm);
-		case PSM_PSMT4HH:  return GSOffset(GSLocalMemory::swizzle32,   bp, bw, psm);
-		case PSM_PSMZ32:   return GSOffset(GSLocalMemory::swizzle32Z,  bp, bw, psm);
-		case PSM_PSMZ24:   return GSOffset(GSLocalMemory::swizzle32Z,  bp, bw, psm);
-		case PSM_PSMZ16:   return GSOffset(GSLocalMemory::swizzle16Z,  bp, bw, psm);
-		case PSM_PSMZ16S:  return GSOffset(GSLocalMemory::swizzle16SZ, bp, bw, psm);
+		case PSMCT32:  return GSOffset(GSLocalMemory::swizzle32,   bp, bw, psm);
+		case PSMCT24:  return GSOffset(GSLocalMemory::swizzle32,   bp, bw, psm);
+		case PSMCT16:  return GSOffset(GSLocalMemory::swizzle16,   bp, bw, psm);
+		case PSMCT16S: return GSOffset(GSLocalMemory::swizzle16S,  bp, bw, psm);
+		case PSGPU24:  return GSOffset(GSLocalMemory::swizzle16,   bp, bw, psm);
+		case PSMT8:    return GSOffset(GSLocalMemory::swizzle8,    bp, bw, psm);
+		case PSMT4:    return GSOffset(GSLocalMemory::swizzle4,    bp, bw, psm);
+		case PSMT8H:   return GSOffset(GSLocalMemory::swizzle32,   bp, bw, psm);
+		case PSMT4HL:  return GSOffset(GSLocalMemory::swizzle32,   bp, bw, psm);
+		case PSMT4HH:  return GSOffset(GSLocalMemory::swizzle32,   bp, bw, psm);
+		case PSMZ32:   return GSOffset(GSLocalMemory::swizzle32Z,  bp, bw, psm);
+		case PSMZ24:   return GSOffset(GSLocalMemory::swizzle32Z,  bp, bw, psm);
+		case PSMZ16:   return GSOffset(GSLocalMemory::swizzle16Z,  bp, bw, psm);
+		case PSMZ16S:  return GSOffset(GSLocalMemory::swizzle16SZ, bp, bw, psm);
 	}
 	return GSOffset(GSLocalMemory::swizzle32, bp, bw, psm);
 }

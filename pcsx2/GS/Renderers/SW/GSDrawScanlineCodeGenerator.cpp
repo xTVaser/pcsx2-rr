@@ -81,10 +81,8 @@ static bool shouldUseCDrawScanline(u64 key)
 	return idx->second;
 }
 
-GSDrawScanlineCodeGenerator::GSDrawScanlineCodeGenerator(void* param, u64 key, void* code, size_t maxsize)
+GSDrawScanlineCodeGenerator::GSDrawScanlineCodeGenerator(u64 key, void* code, size_t maxsize)
 	: Xbyak::CodeGenerator(maxsize, code)
-	, m_local(*(GSScanlineLocalData*)param)
-	, m_rip(false)
 {
 	m_sel.key = key;
 
@@ -93,20 +91,10 @@ GSDrawScanlineCodeGenerator::GSDrawScanlineCodeGenerator(void* param, u64 key, v
 
 	if (shouldUseCDrawScanline(key))
 	{
-#if defined(_WIN32)
-		mov(r8, reinterpret_cast<size_t>(&m_local));
-		push(ptr[r8 + offsetof(GSScanlineLocalData, gd)]);
-		push(r8);
-		sub(rsp, 32); // CC required shadow space
-		call(reinterpret_cast<void*>(GSDrawScanline::CDrawScanline));
-		ret(48);
-#else
-		mov(r8, reinterpret_cast<size_t>(&m_local));
-		mov(r9, ptr[r8 + offsetof(GSScanlineLocalData, gd)]);
-		jmp(reinterpret_cast<void*>(GSDrawScanline::CDrawScanline));
-#endif
+		jmp(reinterpret_cast<const void*>(static_cast<void (*)(int, int, int, const GSVertexSW&, GSScanlineLocalData&)>(
+			&GSDrawScanline::CDrawScanline)));
 		return;
 	}
 
-	GSDrawScanlineCodeGenerator2(this, g_cpu, (void*)&m_local, m_sel.key).Generate();
+	GSDrawScanlineCodeGenerator2(this, g_cpu, m_sel.key).Generate();
 }

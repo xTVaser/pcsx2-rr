@@ -38,7 +38,7 @@ namespace USB
 	s32 DeviceTypeNameToIndex(const std::string_view& device);
 	const char* DeviceTypeIndexToName(s32 device);
 
-	std::vector<std::pair<std::string, std::string>> GetDeviceTypes();
+	std::vector<std::pair<const char*, const char*>> GetDeviceTypes();
 	const char* GetDeviceName(const std::string_view& device);
 	const char* GetDeviceSubtypeName(const std::string_view& device, u32 subtype);
 	gsl::span<const char*> GetDeviceSubtypes(const std::string_view& device);
@@ -70,6 +70,13 @@ namespace USB
 	/// Clears all bindings for a given port.
 	void ClearPortBindings(SettingsInterface& si, u32 port);
 
+	/// Copies configuration between two profiles.
+	void CopyConfiguration(SettingsInterface* dest_si, const SettingsInterface& src_si, bool copy_devices = true,
+		bool copy_bindings = true);
+
+	/// Resets configuration for all ports.
+	void SetDefaultConfiguration(SettingsInterface* si);
+
 	/// Identifies any device/subtype changes and recreates devices.
 	void CheckForConfigChanges(const Pcsx2Config& old_config);
 
@@ -93,7 +100,7 @@ struct WindowInfo;
 
 // ---------------------------------------------------------------------
 
-s32 USBinit();
+void USBinit();
 void USBasync(u32 cycles);
 void USBshutdown();
 void USBclose();

@@ -160,11 +160,11 @@ void CpuWidget::onStepOut()
 	// Allow the cpu to skip this pc if it is a breakpoint
 	CBreakPoints::SetSkipFirst(m_cpu.getCpuType(), m_cpu.getPC());
 
-	if (m_stacklistObjects.size() < 2)
+	if (m_stackModel.rowCount() < 2)
 		return;
 
 	Host::RunOnCPUThread([&] {
-		CBreakPoints::AddBreakPoint(m_cpu.getCpuType(), m_stacklistObjects.at(1).pc, true);
+		CBreakPoints::AddBreakPoint(m_cpu.getCpuType(), m_stackModel.data(m_stackModel.index(1, StackModel::PC), Qt::UserRole).toUInt(), true);
 		m_cpu.resumeCpu();
 	});
 
@@ -418,6 +418,7 @@ void CpuWidget::onFuncListContextMenu(QPoint pos)
 	else
 		m_funclistContextMenu->clear();
 
+	//: "Demangling" is the opposite of "Name mangling", which is a process where a compiler takes function names and combines them with other characteristics of the function (e.g. what types of data it accepts) to ensure they stay unique even when multiple functions exist with the same name (but different inputs / const-ness). See here: https://en.wikipedia.org/wiki/Name_mangling#C++
 	QAction* demangleAction = new QAction(tr("Demangle Symbols"), m_ui.listFunctions);
 	demangleAction->setCheckable(true);
 	demangleAction->setChecked(m_demangleFunctions);
@@ -664,9 +665,11 @@ void CpuWidget::onSearchButtonClicked()
 
 	const QString searchValue = m_ui.txtSearchValue->text();
 
+	unsigned long long value;
+
 	if (searchType < 4)
 	{
-		searchValue.toLong(&ok, searchHex ? 16 : 10);
+		value = searchValue.toULongLong(&ok, searchHex ? 16 : 10);
 	}
 	else if (searchType != 6)
 	{
@@ -677,6 +680,29 @@ void CpuWidget::onSearchButtonClicked()
 	{
 		QMessageBox::critical(this, tr("Debugger"), tr("Invalid search value"));
 		return;
+	}
+
+	switch (searchType)
+	{
+		case 6:
+		case 5:
+		case 4:
+			break;
+		case 3:
+			if (value <= std::numeric_limits<unsigned long long>::max())
+				break;
+		case 2:
+			if (value <= std::numeric_limits<unsigned long>::max())
+				break;
+		case 1:
+			if (value <= std::numeric_limits<unsigned short>::max())
+				break;
+		case 0:
+			if (value <= std::numeric_limits<unsigned char>::max())
+				break;
+		default:
+			QMessageBox::critical(this, tr("Debugger"), tr("Value is larger than type"));
+			return;
 	}
 
 	QFutureWatcher<std::vector<u32>>* workerWatcher = new QFutureWatcher<std::vector<u32>>;

@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2022  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -22,8 +22,8 @@
 #include "SettingWidgetBinder.h"
 #include "QtUtils.h"
 
-#include "pcsx2/Frontend/Achievements.h"
-#include "pcsx2/HostSettings.h"
+#include "pcsx2/Achievements.h"
+#include "pcsx2/Host.h"
 
 #include "common/StringUtil.h"
 
@@ -56,8 +56,8 @@ AchievementSettingsWidget::AchievementSettingsWidget(SettingsDialog* dialog, QWi
 	dialog->registerWidgetHelp(m_ui.unofficialTestMode, tr("Test Unofficial Achievements"), tr("Unchecked"),
 		tr("When enabled, PCSX2 will list achievements from unofficial sets. Please note that these achievements are "
 		   "not tracked by RetroAchievements, so they unlock every time."));
-	dialog->registerWidgetHelp(m_ui.richPresence, tr("Enable Rich Presence"), tr("Unchecked"),
-		tr("When enabled, rich presence information will be collected and sent to the server where supported."));
+	dialog->registerWidgetHelp(m_ui.richPresence, tr("Enable RA's Rich Presence"), tr("Unchecked"),
+		tr("When enabled, rich presence information will be collected and sent to the RetroAchievements servers where supported."));
 	dialog->registerWidgetHelp(m_ui.challengeMode, tr("Enable Hardcore Mode"), tr("Unchecked"),
 		tr("\"Challenge\" mode for achievements, including leaderboard tracking. Disables save state, cheats, and slowdown functions."));
 	dialog->registerWidgetHelp(m_ui.leaderboards, tr("Enable Leaderboards"), tr("Checked"),
@@ -105,14 +105,13 @@ void AchievementSettingsWidget::updateEnableState()
 {
 	const bool enabled = m_dialog->getEffectiveBoolValue("Achievements", "Enabled", false);
 	const bool challenge = m_dialog->getEffectiveBoolValue("Achievements", "ChallengeMode", false);
-	const bool notifications = m_dialog->getEffectiveBoolValue("Achievements", "Notifications", true);
 	m_ui.testMode->setEnabled(enabled);
 	m_ui.unofficialTestMode->setEnabled(enabled);
 	m_ui.richPresence->setEnabled(enabled);
 	m_ui.challengeMode->setEnabled(enabled);
 	m_ui.leaderboards->setEnabled(enabled && challenge);
 	m_ui.notifications->setEnabled(enabled);
-	m_ui.soundEffects->setEnabled(enabled && notifications);
+	m_ui.soundEffects->setEnabled(enabled);
 	m_ui.primedIndicators->setEnabled(enabled);
 }
 
@@ -150,6 +149,7 @@ void AchievementSettingsWidget::updateLoginState()
 		const u64 login_unix_timestamp =
 			StringUtil::FromChars<u64>(Host::GetBaseStringSettingValue("Achievements", "LoginTimestamp", "0")).value_or(0);
 		const QDateTime login_timestamp(QDateTime::fromSecsSinceEpoch(static_cast<qint64>(login_unix_timestamp)));
+		//: Variable %1 is an username, variable %2 is a timestamp.
 		m_ui.loginStatus->setText(tr("Username: %1\nLogin token generated on %2.")
 									  .arg(QString::fromStdString(username))
 									  .arg(login_timestamp.toString(Qt::TextDate)));

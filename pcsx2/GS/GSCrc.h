@@ -23,14 +23,9 @@ public:
 	enum Title : u32
 	{
 		NoTitle,
-		FFX2,
 		GetawayGames,
-		HauntingGround,
 		ICO,
-		KOF2002,
-		PolyphonyDigitalGames,
 		SMTNocturne,
-		SVCChaos,
 		Tekken5,
 		TitleCount,
 	};

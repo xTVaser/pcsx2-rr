@@ -75,7 +75,6 @@ namespace usb_msd
 			struct usb_msd_csw csw;
 			enum USBMSDMode mode;
 			uint32_t data_len;
-			uint32_t residue;
 			uint32_t tag;
 			uint32_t file_op_tag; // read from file or buf
 			int32_t result;
@@ -729,9 +728,8 @@ namespace usb_msd
 		int index, int length, uint8_t* data)
 	{
 		MSDState* s = USB_CONTAINER_OF(dev, MSDState, dev);
-		int ret = 0;
+		const int ret = usb_desc_handle_control(dev, p, request, value, index, length, data);
 
-		ret = usb_desc_handle_control(dev, p, request, value, index, length, data);
 		if (ret >= 0)
 		{
 			return;
@@ -743,7 +741,6 @@ namespace usb_msd
 			case ClassInterfaceOutRequest | MassStorageReset:
 				/* Reset state ready for the next CBW.  */
 				s->f.mode = USB_MSDM_CBW;
-				ret = 0;
 				break;
 			case ClassInterfaceRequest | GetMaxLun:
 				data[0] = 0;
@@ -974,7 +971,8 @@ namespace usb_msd
 		std::string path(USB::GetConfigString(si, port, TypeName(), "ImagePath"));
 		if (path.empty() || !(s->file = FileSystem::OpenCFile(path.c_str(), "r+b")))
 		{
-			Host::AddOSDMessage(fmt::format("usb-msd: Could not open image file '{}'", path), Host::OSD_ERROR_DURATION);
+			Host::AddOSDMessage(fmt::format(TRANSLATE_SV("USB", "usb-msd: Could not open image file '{}'"), path),
+				Host::OSD_ERROR_DURATION);
 			goto fail;
 		}
 
@@ -1021,7 +1019,7 @@ namespace usb_msd
 
 	const char* MsdDevice::Name() const
 	{
-		return "Mass Storage Device";
+		return TRANSLATE_NOOP("USB", "Mass Storage Device");
 	}
 
 	bool MsdDevice::Freeze(USBDevice* dev, StateWrapper& sw) const
@@ -1041,7 +1039,8 @@ namespace usb_msd
 		// resetting port to try to avoid possible data corruption
 		if (sw.IsReading() && old_mtime != s->f.mtime)
 		{
-			Host::AddOSDMessage("Modification time to USB mass storage image changed, reattaching.",
+			Host::AddOSDMessage(
+				TRANSLATE_STR("USB", "Modification time to USB mass storage image changed, reattaching."),
 				Host::OSD_ERROR_DURATION);
 			usb_reattach(dev->port);
 		}
@@ -1057,7 +1056,8 @@ namespace usb_msd
 	gsl::span<const SettingInfo> MsdDevice::Settings(u32 subtype) const
 	{
 		static constexpr const SettingInfo settings[] = {
-			{SettingInfo::Type::Path, "ImagePath", "Image Path", "Sets the path to image which will back the virtual mass storage device."},
+			{SettingInfo::Type::Path, "ImagePath", TRANSLATE_NOOP("USB", "Image Path"),
+				TRANSLATE_NOOP("USB", "Sets the path to image which will back the virtual mass storage device.")},
 		};
 		return settings;
 	}

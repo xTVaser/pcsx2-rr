@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2022  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -20,7 +20,7 @@
 #include "QtHost.h"
 #include "QtUtils.h"
 
-#include "pcsx2/HostSettings.h"
+#include "pcsx2/Host.h"
 #include "pcsx2/SysForwardDefs.h"
 #include "svnrev.h"
 
@@ -224,7 +224,6 @@ void AutoUpdaterDialog::getLatestReleaseComplete(QNetworkReply* reply)
 						bool is_symbols = false;
 						bool is_avx2 = false;
 						bool is_sse4 = false;
-						bool is_qt_asset = false;
 						bool is_perfect_match = false;
 						for (const QJsonValue& additional_tag : additional_tags_array)
 						{
@@ -234,12 +233,6 @@ void AutoUpdaterDialog::getLatestReleaseComplete(QNetworkReply* reply)
 								// we're not interested in symbols downloads
 								is_symbols = true;
 								break;
-							}
-							else if (additional_tag_str.startsWith(QStringLiteral("Qt")))
-							{
-								// found a qt build
-								// Note: The website improperly parses macOS file names, and gives them the tag "Qt.tar" instead of "Qt"
-								is_qt_asset = true;
 							}
 							else if (additional_tag_str == QStringLiteral("SSE4"))
 							{
@@ -258,7 +251,7 @@ void AutoUpdaterDialog::getLatestReleaseComplete(QNetworkReply* reply)
 #endif
 						}
 
-						if (!is_qt_asset || is_symbols || (!x86caps.hasAVX2 && is_avx2))
+						if (is_symbols || (!x86caps.hasAVX2 && is_avx2))
 						{
 							// skip this asset
 							continue;
@@ -385,7 +378,7 @@ void AutoUpdaterDialog::getChangesComplete(QNetworkReply* reply)
 			if (update_will_break_save_states)
 			{
 				changes_html.prepend(tr("<h2>Save State Warning</h2><p>Installing this update will make your save states "
-										"<b>incompatible</b>. Please ensure you have saved your games to memory card "
+										"<b>incompatible</b>. Please ensure you have saved your games to a Memory Card "
 										"before installing this update or you will lose progress.</p>"));
 			}
 
@@ -465,7 +458,7 @@ void AutoUpdaterDialog::downloadUpdateClicked()
 	else if (result == 1)
 	{
 		// updater started. since we're a modal on the main window, we have to queue this.
-		QMetaObject::invokeMethod(g_main_window, &MainWindow::requestExit, Qt::QueuedConnection);
+		QMetaObject::invokeMethod(g_main_window, "requestExit", Qt::QueuedConnection, Q_ARG(bool, true));
 		done(0);
 	}
 
@@ -494,6 +487,16 @@ void AutoUpdaterDialog::checkIfUpdateNeeded()
 	}
 
 	Console.WriteLn(Color_StrongRed, "Update needed.");
+
+	// Don't show the dialog if a game started while the update info was downloading. Some people have
+	// really slow connections, apparently. If we're a manual triggered update check, then display
+	// regardless. This will fall through and signal main to delete us.
+	if (!m_display_messages &&
+		(QtHost::IsVMValid() || (g_emu_thread->isRunningFullscreenUI() && g_emu_thread->isFullscreen())))
+	{
+		Console.WriteLn(Color_StrongRed, "Not showing update dialog due to active VM.");
+		return;
+	}
 
 	m_ui.currentVersion->setText(tr("Current Version: %1 (%2)").arg(getCurrentVersion()).arg(getCurrentVersionDate()));
 	m_ui.newVersion->setText(tr("New Version: %1 (%2)").arg(m_latest_version).arg(m_latest_version_timestamp.toString()));
@@ -585,6 +588,11 @@ bool AutoUpdaterDialog::doUpdate(const QString& zip_path, const QString& updater
 	return true;
 }
 
+void AutoUpdaterDialog::cleanupAfterUpdate()
+{
+	// Nothing to do on Windows for now, the updater stub cleans everything up.
+}
+
 #elif defined(__linux__)
 
 bool AutoUpdaterDialog::processUpdate(const QByteArray& update_data, QProgressDialog&)
@@ -653,6 +661,7 @@ bool AutoUpdaterDialog::processUpdate(const QByteArray& update_data, QProgressDi
 	// Execute new appimage.
 	QProcess* new_process = new QProcess();
 	new_process->setProgram(qappimage_path);
+	new_process->setArguments(QStringList{QStringLiteral("-updatecleanup")});
 	if (!new_process->startDetached())
 	{
 		reportError("Failed to execute new AppImage.");
@@ -661,6 +670,23 @@ bool AutoUpdaterDialog::processUpdate(const QByteArray& update_data, QProgressDi
 
 	// We exit once we return.
 	return true;
+}
+
+void AutoUpdaterDialog::cleanupAfterUpdate()
+{
+	// Remove old/backup AppImage.
+	const char* appimage_path = std::getenv("APPIMAGE");
+	if (!appimage_path)
+		return;
+
+	const QString qappimage_path(QString::fromUtf8(appimage_path));
+	const QString backup_appimage_path(qappimage_path + QStringLiteral(".backup"));
+	if (!QFile::exists(backup_appimage_path))
+		return;
+
+	Console.WriteLn(Color_StrongOrange, QStringLiteral("Removing backup AppImage %1").arg(backup_appimage_path).toStdString());
+	if (!QFile::remove(backup_appimage_path))
+		Console.Error(QStringLiteral("Failed to remove backup AppImage %1").arg(backup_appimage_path).toStdString());
 }
 
 #elif defined(__APPLE__)
@@ -771,7 +797,8 @@ bool AutoUpdaterDialog::processUpdate(const QByteArray& update_data, QProgressDi
 		}
 		QDir(QString::fromStdString(*trashed_path)).removeRecursively();
 	}
-	if (!CocoaTools::LaunchApplication(open_path.toStdString()))
+	// For some reason if I use QProcess the shell gets killed immediately with SIGKILL, but NSTask is fine...
+	if (!CocoaTools::DelayedLaunch(open_path.toStdString()))
 	{
 		reportError("Failed to start new application");
 		return false;
@@ -779,11 +806,19 @@ bool AutoUpdaterDialog::processUpdate(const QByteArray& update_data, QProgressDi
 	return true;
 }
 
+void AutoUpdaterDialog::cleanupAfterUpdate()
+{
+}
+
 #else
 
 bool AutoUpdaterDialog::processUpdate(const QByteArray& update_data, QProgressDialog& progress)
 {
 	return false;
+}
+
+void AutoUpdaterDialog::cleanupAfterUpdate()
+{
 }
 
 #endif

@@ -79,6 +79,7 @@ QVariant BreakpointModel::data(const QModelIndex& index, int role) const
 					QString type("");
 					type += (mc->cond & MEMCHECK_READ) ? tr("Read") : "";
 					type += ((mc->cond & MEMCHECK_BOTH) == MEMCHECK_BOTH) ? ", " : " ";
+					//: (C) = changes, as in "look for changes".
 					type += (mc->cond & MEMCHECK_WRITE) ? (mc->cond & MEMCHECK_WRITE_ONCHANGE) ? tr("Write(C)") : tr("Write") : "";
 					return type;
 				}
@@ -169,18 +170,25 @@ QVariant BreakpointModel::headerData(int section, Qt::Orientation orientation, i
 		switch (section)
 		{
 			case BreakpointColumns::TYPE:
+				//: Warning: limited space available. Abbreviate if needed.
 				return tr("TYPE");
 			case BreakpointColumns::OFFSET:
+				//: Warning: limited space available. Abbreviate if needed.
 				return tr("OFFSET");
 			case BreakpointColumns::SIZE_LABEL:
+				//: Warning: limited space available. Abbreviate if needed.
 				return tr("SIZE / LABEL");
 			case BreakpointColumns::OPCODE:
+				//: Warning: limited space available. Abbreviate if needed.
 				return tr("INSTRUCTION");
 			case BreakpointColumns::CONDITION:
+				//: Warning: limited space available. Abbreviate if needed.
 				return tr("CONDITION");
 			case BreakpointColumns::HITS:
+				//: Warning: limited space available. Abbreviate if needed.
 				return tr("HITS");
 			case BreakpointColumns::ENABLED:
+				//: Warning: limited space available. Abbreviate if needed.
 				return tr("ENABLED");
 			default:
 				return QVariant();
@@ -311,8 +319,12 @@ bool BreakpointModel::insertBreakpointRows(int row, int count, std::vector<Break
 	if (breakpoints.size() != static_cast<size_t>(count))
 		return false;
 
-	beginInsertRows(index, row, row + count);
+	beginInsertRows(index, row, row + (count - 1));
 
+	// After endInsertRows, Qt will try and validate our new rows
+	// Because we add the breakpoints off of the UI thread, our new rows may not be visible yet
+	// To prevent the (seemingly harmless?) warning emitted by enderInsertRows, add the breakpoints manually here as well
+	m_breakpoints.insert(m_breakpoints.begin(), breakpoints.begin(), breakpoints.end());
 	for (const auto& bp_mc : breakpoints)
 	{
 		if (const auto* bp = std::get_if<BreakPoint>(&bp_mc))

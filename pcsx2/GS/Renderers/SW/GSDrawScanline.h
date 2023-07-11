@@ -16,77 +16,54 @@
 #pragma once
 
 #include "GS/GSState.h"
-#include "GS/Renderers/SW/GSRasterizer.h"
-#include "GS/Renderers/SW/GSScanlineEnvironment.h"
 #include "GS/Renderers/SW/GSSetupPrimCodeGenerator.h"
 #include "GS/Renderers/SW/GSDrawScanlineCodeGenerator.h"
-#include "GS/config.h"
+
+struct GSScanlineLocalData;
 
 MULTI_ISA_UNSHARED_START
 
-class GSDrawScanline : public IDrawScanline
+class GSRasterizerData;
+
+class GSSetupPrimCodeGenerator;
+class GSDrawScanlineCodeGenerator;
+
+class GSDrawScanline : public GSVirtualAlignedClass<32>
 {
-public:
-	class SharedData : public GSRasterizerData
-	{
-	public:
-		GSScanlineGlobalData global;
-	};
-
-protected:
-	GSScanlineGlobalData m_global;
-	GSScanlineLocalData m_local;
-
-	GSCodeGeneratorFunctionMap<GSSetupPrimCodeGenerator, u64, SetupPrimPtr> m_sp_map;
-	GSCodeGeneratorFunctionMap<GSDrawScanlineCodeGenerator, u64, DrawScanlinePtr> m_ds_map;
-
-	template <class T, bool masked>
-	void DrawRectT(const GSOffset& off, const GSVector4i& r, u32 c, u32 m);
-
-	template <class T, bool masked>
-	__forceinline void FillRect(const GSOffset& off, const GSVector4i& r, u32 c, u32 m);
-
-#if _M_SSE >= 0x501
-
-	template <class T, bool masked>
-	__forceinline void FillBlock(const GSOffset& off, const GSVector4i& r, const GSVector8i& c, const GSVector8i& m);
-
-#else
-
-	template <class T, bool masked>
-	__forceinline void FillBlock(const GSOffset& off, const GSVector4i& r, const GSVector4i& c, const GSVector4i& m);
-
-#endif
+	friend GSSetupPrimCodeGenerator;
+	friend GSDrawScanlineCodeGenerator;
 
 public:
 	GSDrawScanline();
-	virtual ~GSDrawScanline() = default;
+	~GSDrawScanline() override;
 
-	// IDrawScanline
+	/// Function pointer types which we call back into.
+	using SetupPrimPtr = void(*)(const GSVertexSW* vertex, const u16* index, const GSVertexSW& dscan, GSScanlineLocalData& local);
+	using DrawScanlinePtr = void(*)(int pixels, int left, int top, const GSVertexSW& scan, GSScanlineLocalData& local);
 
-	void BeginDraw(const GSRasterizerData* data);
-	void EndDraw(u64 frame, u64 ticks, int actual, int total, int prims);
+	/// Flushes the code cache, forcing everything to be recompiled.
+	void ResetCodeCache();
 
-	void DrawRect(const GSVector4i& r, const GSVertexSW& v);
+	/// Populates function pointers. If this returns false, we ran out of code space.
+	bool SetupDraw(GSRasterizerData& data);
 
-	static void CSetupPrim(const GSVertexSW* vertex, const u32* index, const GSVertexSW& dscan, GSScanlineLocalData& local, const GSScanlineGlobalData& global);
-	static void CDrawScanline(int pixels, int left, int top, const GSVertexSW& scan, GSScanlineLocalData& local, const GSScanlineGlobalData& global);
+	/// Draw pre-calculations, computed per-thread.
+	static void BeginDraw(const GSRasterizerData& data, GSScanlineLocalData& local);
 
-	template<class T> static bool TestAlpha(T& test, T& fm, T& zm, const T& ga, const GSScanlineGlobalData& global);
-	template<class T> static void WritePixel(const T& src, int addr, int i, u32 psm, const GSScanlineGlobalData& global);
+	/// Not currently jitted.
+	static void DrawRect(const GSVector4i& r, const GSVertexSW& v, GSScanlineLocalData& local);
 
-#ifndef ENABLE_JIT_RASTERIZER
+	void UpdateDrawStats(u64 frame, u64 ticks, int actual, int total, int prims);
+	void PrintStats();
 
-	void SetupPrim(const GSVertexSW* vertex, const u32* index, const GSVertexSW& dscan);
-	void DrawScanline(int pixels, int left, int top, const GSVertexSW& scan);
-	void DrawEdge(int pixels, int left, int top, const GSVertexSW& scan);
+private:
+	GSCodeGeneratorFunctionMap<GSSetupPrimCodeGenerator, u64, SetupPrimPtr> m_sp_map;
+	GSCodeGeneratorFunctionMap<GSDrawScanlineCodeGenerator, u64, DrawScanlinePtr> m_ds_map;
 
-#endif
-
-	void PrintStats()
-	{
-		m_ds_map.PrintStats();
-	}
+	static void CSetupPrim(const GSVertexSW* vertex, const u16* index, const GSVertexSW& dscan, GSScanlineLocalData& local);
+	static void CDrawScanline(int pixels, int left, int top, const GSVertexSW& scan, GSScanlineLocalData& local);
+	static void CDrawEdge(int pixels, int left, int top, const GSVertexSW& scan, GSScanlineLocalData& local);
+	__ri static void CDrawScanline(int pixels, int left, int top, const GSVertexSW& scan, GSScanlineLocalData& local, GSScanlineSelector sel);
 };
 
 MULTI_ISA_UNSHARED_END

@@ -14,8 +14,13 @@
  */
 
 #include "PrecompiledHeader.h"
-#include "GSDrawScanline.h"
-#include "GSTextureCacheSW.h"
+#include "GS/Renderers/SW/GSDrawScanline.h"
+#include "GS/Renderers/SW/GSTextureCacheSW.h"
+#include "GS/Renderers/SW/GSScanlineEnvironment.h"
+#include "GS/Renderers/SW/GSRasterizer.h"
+
+// Comment to disable all dynamic code generation.
+#define ENABLE_JIT_RASTERIZER
 
 #if MULTI_ISA_COMPILE_ONCE
 // Lack of a better home
@@ -24,20 +29,33 @@ constexpr GSScanlineConstantData g_const;
 
 MULTI_ISA_UNSHARED_IMPL;
 
-GSDrawScanline::GSDrawScanline()
-	: m_sp_map("GSSetupPrim", &m_local)
-	, m_ds_map("GSDrawScanline", &m_local)
+static __forceinline const GSScanlineGlobalData& GlobalFromLocal(const GSScanlineLocalData& local)
 {
-	memset(&m_local, 0, sizeof(m_local));
-
-	m_local.gd = &m_global;
+	return *local.gd;
 }
 
-void GSDrawScanline::BeginDraw(const GSRasterizerData* data)
+GSDrawScanline::GSDrawScanline()
+	: m_sp_map("GSSetupPrim")
+	, m_ds_map("GSDrawScanline")
 {
-	memcpy(&m_global, &((const SharedData*)data)->global, sizeof(m_global));
+	GSCodeReserve::GetInstance().AllowModification();
+	GSCodeReserve::GetInstance().Reset();
+}
 
-	if (m_global.sel.mmin && m_global.sel.lcm)
+GSDrawScanline::~GSDrawScanline()
+{
+	if (const size_t used = GSCodeReserve::GetInstance().GetMemoryUsed(); used > 0)
+		DevCon.WriteLn("SW JIT generated %zu bytes of code", used);
+
+	GSCodeReserve::GetInstance().ForbidModification();
+}
+
+void GSDrawScanline::BeginDraw(const GSRasterizerData& data, GSScanlineLocalData& local)
+{
+	const GSScanlineGlobalData& global = data.global;
+	local.gd = &global;
+
+	if (global.sel.mmin && global.sel.lcm)
 	{
 #if defined(__GNUC__) && _M_SSE >= 0x501
 		// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=80286
@@ -49,42 +67,51 @@ void GSDrawScanline::BeginDraw(const GSRasterizerData* data)
 		// Generated code keep the integer in an XMM register but bit [64:32] aren't cleared.
 		// So the srl16 shift will be huge and v will be 0.
 		//
-		int lod_x = m_global.lod.i.x0;
-		GSVector4i v = m_global.t.minmax.srl16(lod_x);
+		int lod_x = global.lod.i.x0;
+		GSVector4i v = global.t.minmax.srl16(lod_x);
 #else
-		GSVector4i v = m_global.t.minmax.srl16(m_global.lod.i.extract32<0>()); //.x);
+		GSVector4i v = global.t.minmax.srl16(global.lod.i.extract32<0>()); //.x);
 #endif
 
 		v = v.upl16(v);
 
-		m_local.temp.uv_minmax[0] = v.upl32(v);
-		m_local.temp.uv_minmax[1] = v.uph32(v);
+		local.temp.uv_minmax[0] = v.upl32(v);
+		local.temp.uv_minmax[1] = v.uph32(v);
 	}
+}
 
-	m_ds = m_ds_map[m_global.sel];
+void GSDrawScanline::ResetCodeCache()
+{
+	Console.Warning("GS Software JIT cache overflow, resetting.");
+	m_sp_map.Clear();
+	m_ds_map.Clear();
+	GSCodeReserve::GetInstance().Reset();
+}
 
-	if (m_global.sel.aa1)
+bool GSDrawScanline::SetupDraw(GSRasterizerData& data)
+{
+	const GSScanlineGlobalData& global = data.global;
+
+#ifdef ENABLE_JIT_RASTERIZER
+	data.draw_scanline = m_ds_map[global.sel];
+	if (!unlikely(data.draw_scanline))
+		return false;
+
+	if (global.sel.aa1)
 	{
 		GSScanlineSelector sel;
 
-		sel.key = m_global.sel.key;
+		sel.key = global.sel.key;
 		sel.zwrite = 0;
 		sel.edge = 1;
 
-		m_de = m_ds_map[sel];
+		data.draw_edge = m_ds_map[sel];
+		if (unlikely(!data.draw_edge))
+			return false;
 	}
 	else
 	{
-		m_de = NULL;
-	}
-
-	if (m_global.sel.IsSolidRect())
-	{
-		m_dr = (DrawRectPtr)&GSDrawScanline::DrawRect;
-	}
-	else
-	{
-		m_dr = NULL;
+		data.draw_edge = nullptr;
 	}
 
 	// doesn't need all bits => less functions generated
@@ -93,24 +120,35 @@ void GSDrawScanline::BeginDraw(const GSRasterizerData* data)
 
 	sel.key = 0;
 
-	sel.iip = m_global.sel.iip;
-	sel.tfx = m_global.sel.tfx;
-	sel.tcc = m_global.sel.tcc;
-	sel.fst = m_global.sel.fst;
-	sel.fge = m_global.sel.fge;
-	sel.prim = m_global.sel.prim;
-	sel.fb = m_global.sel.fb;
-	sel.zb = m_global.sel.zb;
-	sel.zoverflow = m_global.sel.zoverflow;
-	sel.zequal = m_global.sel.zequal;
-	sel.notest = m_global.sel.notest;
+	sel.iip = global.sel.iip;
+	sel.tfx = global.sel.tfx;
+	sel.tcc = global.sel.tcc;
+	sel.fst = global.sel.fst;
+	sel.fge = global.sel.fge;
+	sel.prim = global.sel.prim;
+	sel.fb = global.sel.fb;
+	sel.zb = global.sel.zb;
+	sel.zoverflow = global.sel.zoverflow;
+	sel.zequal = global.sel.zequal;
+	sel.notest = global.sel.notest;
 
-	m_sp = m_sp_map[sel];
+	return (data.setup_prim = m_sp_map[sel]) != nullptr;
+#else
+	data.setup_prim = &GSDrawScanline::CSetupPrim;
+	data.draw_scanline = &GSDrawScanline::CDrawScanline;
+	data.draw_edge = global.sel.aa1 ? &GSDrawScanline::CDrawEdge : nullptr;
+	return true;
+#endif
 }
 
-void GSDrawScanline::EndDraw(u64 frame, u64 ticks, int actual, int total, int prims)
+void GSDrawScanline::UpdateDrawStats(u64 frame, u64 ticks, int actual, int total, int prims)
 {
 	m_ds_map.UpdateStats(frame, ticks, actual, total, prims);
+}
+
+void GSDrawScanline::PrintStats()
+{
+	m_ds_map.PrintStats();
 }
 
 #if _M_SSE >= 0x501
@@ -123,8 +161,9 @@ typedef GSVector4  VectorF;
 #define LOCAL_STEP local.d4
 #endif
 
-void GSDrawScanline::CSetupPrim(const GSVertexSW* vertex, const u32* index, const GSVertexSW& dscan, GSScanlineLocalData& local, const GSScanlineGlobalData& global)
+void GSDrawScanline::CSetupPrim(const GSVertexSW* vertex, const u16* index, const GSVertexSW& dscan, GSScanlineLocalData& local)
 {
+	const GSScanlineGlobalData& global = GlobalFromLocal(local);
 	GSScanlineSelector sel = global.sel;
 
 	bool has_z = sel.zb != 0;
@@ -306,9 +345,120 @@ void GSDrawScanline::CSetupPrim(const GSVertexSW* vertex, const u32* index, cons
 	}
 }
 
-void GSDrawScanline::CDrawScanline(int pixels, int left, int top, const GSVertexSW& scan, GSScanlineLocalData& local, const GSScanlineGlobalData& global)
+template <class T>
+__ri static bool TestAlpha(T& test, T& fm, T& zm, const T& ga, const GSScanlineGlobalData& global)
 {
 	GSScanlineSelector sel = global.sel;
+
+	switch (sel.afail)
+	{
+		case AFAIL_FB_ONLY:
+			if (!sel.zwrite)
+				return true;
+			break;
+
+		case AFAIL_ZB_ONLY:
+			if (!sel.fwrite)
+				return true;
+			break;
+
+		case AFAIL_RGB_ONLY:
+			if (!sel.zwrite && sel.fpsm == 1)
+				return true;
+			break;
+	}
+
+	T t;
+
+	switch (sel.atst)
+	{
+		case ATST_NEVER:
+			t = GSVector4i::xffffffff();
+			break;
+
+		case ATST_ALWAYS:
+			return true;
+
+		case ATST_LESS:
+		case ATST_LEQUAL:
+			t = (ga >> 16) > T(global.aref);
+			break;
+
+		case ATST_EQUAL:
+			t = (ga >> 16) != T(global.aref);
+			break;
+
+		case ATST_GEQUAL:
+		case ATST_GREATER:
+			t = (ga >> 16) < T(global.aref);
+			break;
+
+		case ATST_NOTEQUAL:
+			t = (ga >> 16) == T(global.aref);
+			break;
+
+		default:
+			__assume(0);
+	}
+
+	switch (sel.afail)
+	{
+		case AFAIL_KEEP:
+			test |= t;
+			if (test.alltrue())
+				return false;
+			break;
+
+		case AFAIL_FB_ONLY:
+			zm |= t;
+			break;
+
+		case AFAIL_ZB_ONLY:
+			fm |= t;
+			break;
+
+		case AFAIL_RGB_ONLY:
+			zm |= t;
+			fm |= t & T::xff000000(); // fpsm 16 bit => & 0xffff8000?
+			break;
+
+		default:
+			__assume(0);
+	}
+
+	return true;
+}
+
+static const int s_offsets[] = {0, 2, 8, 10, 16, 18, 24, 26}; // columnTable16[0]
+
+template <class T>
+__ri static void WritePixel(const T& src, int addr, int i, u32 psm, const GSScanlineGlobalData& global)
+{
+	u8* dst = (u8*)global.vm + addr * 2 + s_offsets[i] * 2;
+
+	switch (psm)
+	{
+		case 0:
+			*(u32*)dst = src.U32[i];
+			break;
+		case 1:
+			*(u32*)dst = (src.U32[i] & 0xffffff) | (*(u32*)dst & 0xff000000);
+			break;
+		case 2:
+			*(u16*)dst = src.U16[i * 2];
+			break;
+	}
+}
+
+void GSDrawScanline::CDrawScanline(int pixels, int left, int top, const GSVertexSW& scan, GSScanlineLocalData& local)
+{
+	CDrawScanline(pixels, left, top, scan, local, GlobalFromLocal(local).sel);
+}
+
+__ri void GSDrawScanline::CDrawScanline(int pixels, int left, int top, const GSVertexSW& scan, GSScanlineLocalData& local, GSScanlineSelector sel)
+{
+	const GSScanlineGlobalData& global = GlobalFromLocal(local);
+
 	constexpr int vlen = sizeof(VectorF) / sizeof(float);
 
 #if _M_SSE < 0x501
@@ -1581,222 +1731,95 @@ void GSDrawScanline::CDrawScanline(int pixels, int left, int top, const GSVertex
 	}
 }
 
-#ifndef ENABLE_JIT_RASTERIZER
-void GSDrawScanline::SetupPrim(const GSVertexSW* vertex, const u32* index, const GSVertexSW& dscan)
+void GSDrawScanline::CDrawEdge(int pixels, int left, int top, const GSVertexSW& scan, GSScanlineLocalData& local)
 {
-	CSetupPrim(vertex, index, dscan, m_local, m_global);
-}
-void GSDrawScanline::DrawScanline(int pixels, int left, int top, const GSVertexSW& scan)
-{
-	CDrawScanline(pixels, left, top, scan, m_local, m_global);
-}
-void GSDrawScanline::DrawEdge(int pixels, int left, int top, const GSVertexSW& scan)
-{
-	u32 zwrite = m_global.sel.zwrite;
-	u32 edge = m_global.sel.edge;
-
-	m_global.sel.zwrite = 0;
-	m_global.sel.edge = 1;
-
-	CDrawScanline(pixels, left, top, scan, m_local, m_global);
-
-	m_global.sel.zwrite = zwrite;
-	m_global.sel.edge = edge;
-}
-#endif
-
-template <class T>
-bool GSDrawScanline::TestAlpha(T& test, T& fm, T& zm, const T& ga, const GSScanlineGlobalData& global)
-{
-	GSScanlineSelector sel = global.sel;
-
-	switch (sel.afail)
-	{
-		case AFAIL_FB_ONLY:
-			if (!sel.zwrite)
-				return true;
-			break;
-
-		case AFAIL_ZB_ONLY:
-			if (!sel.fwrite)
-				return true;
-			break;
-
-		case AFAIL_RGB_ONLY:
-			if (!sel.zwrite && sel.fpsm == 1)
-				return true;
-			break;
-	}
-
-	T t;
-
-	switch (sel.atst)
-	{
-		case ATST_NEVER:
-			t = GSVector4i::xffffffff();
-			break;
-
-		case ATST_ALWAYS:
-			return true;
-
-		case ATST_LESS:
-		case ATST_LEQUAL:
-			t = (ga >> 16) > T(global.aref);
-			break;
-
-		case ATST_EQUAL:
-			t = (ga >> 16) != T(global.aref);
-			break;
-
-		case ATST_GEQUAL:
-		case ATST_GREATER:
-			t = (ga >> 16) < T(global.aref);
-			break;
-
-		case ATST_NOTEQUAL:
-			t = (ga >> 16) == T(global.aref);
-			break;
-
-		default:
-			__assume(0);
-	}
-
-	switch (sel.afail)
-	{
-		case AFAIL_KEEP:
-			test |= t;
-			if (test.alltrue())
-				return false;
-			break;
-
-		case AFAIL_FB_ONLY:
-			zm |= t;
-			break;
-
-		case AFAIL_ZB_ONLY:
-			fm |= t;
-			break;
-
-		case AFAIL_RGB_ONLY:
-			zm |= t;
-			fm |= t & T::xff000000(); // fpsm 16 bit => & 0xffff8000?
-			break;
-
-		default:
-			__assume(0);
-	}
-
-	return true;
-}
-
-static const int s_offsets[] = {0, 2, 8, 10, 16, 18, 24, 26}; // columnTable16[0]
-
-template <class T>
-void GSDrawScanline::WritePixel(const T& src, int addr, int i, u32 psm, const GSScanlineGlobalData& global)
-{
-	u8* dst = (u8*)global.vm + addr * 2 + s_offsets[i] * 2;
-
-	switch (psm)
-	{
-		case 0:
-			*(u32*)dst = src.U32[i];
-			break;
-		case 1:
-			*(u32*)dst = (src.U32[i] & 0xffffff) | (*(u32*)dst & 0xff000000);
-			break;
-		case 2:
-			*(u16*)dst = src.U16[i * 2];
-			break;
-	}
-}
-
-void GSDrawScanline::DrawRect(const GSVector4i& r, const GSVertexSW& v)
-{
-	ASSERT(r.y >= 0);
-	ASSERT(r.w >= 0);
-
-	// FIXME: sometimes the frame and z buffer may overlap, the outcome is undefined
-
-	u32 m;
-
-#if _M_SSE >= 0x501
-	m = m_global.zm;
-#else
-	m = m_global.zm.U32[0];
-#endif
-
-	if (m != 0xffffffff)
-	{
-		u32 z = v.t.U32[3]; // (u32)v.p.z;
-
-		if (m_global.sel.zpsm != 2)
-		{
-			if (m == 0)
-			{
-				DrawRectT<u32, false>(m_global.zbo, r, z, m);
-			}
-			else
-			{
-				DrawRectT<u32, true>(m_global.zbo, r, z, m);
-			}
-		}
-		else
-		{
-			if ((m & 0xffff) == 0)
-			{
-				DrawRectT<u16, false>(m_global.zbo, r, z, m);
-			}
-			else
-			{
-				DrawRectT<u16, true>(m_global.zbo, r, z, m);
-			}
-		}
-	}
-
-#if _M_SSE >= 0x501
-	m = m_global.fm;
-#else
-	m = m_global.fm.U32[0];
-#endif
-
-	if (m != 0xffffffff)
-	{
-		u32 c = (GSVector4i(v.c) >> 7).rgba32();
-
-		if (m_global.sel.fba)
-		{
-			c |= 0x80000000;
-		}
-
-		if (m_global.sel.fpsm != 2)
-		{
-			if (m == 0)
-			{
-				DrawRectT<u32, false>(m_global.fbo, r, c, m);
-			}
-			else
-			{
-				DrawRectT<u32, true>(m_global.fbo, r, c, m);
-			}
-		}
-		else
-		{
-			c = ((c & 0xf8) >> 3) | ((c & 0xf800) >> 6) | ((c & 0xf80000) >> 9) | ((c & 0x80000000) >> 16);
-
-			if ((m & 0xffff) == 0)
-			{
-				DrawRectT<u16, false>(m_global.fbo, r, c, m);
-			}
-			else
-			{
-				DrawRectT<u16, true>(m_global.fbo, r, c, m);
-			}
-		}
-	}
+	GSScanlineSelector sel = local.gd->sel;
+	sel.zwrite = 0;
+	sel.edge = 1;
+	CDrawScanline(pixels, left, top, scan, local, sel);
 }
 
 template <class T, bool masked>
-void GSDrawScanline::DrawRectT(const GSOffset& off, const GSVector4i& r, u32 c, u32 m)
+__ri static void FillRect(const GSOffset& off, const GSVector4i& r, u32 c, u32 m, GSScanlineLocalData& local)
+{
+	if (r.x >= r.z)
+		return;
+
+	T* vm = (T*)GlobalFromLocal(local).vm;
+
+	for (int y = r.y; y < r.w; y++)
+	{
+		auto pa = off.paMulti(vm, 0, y);
+
+		for (int x = r.x; x < r.z; x++)
+		{
+			T& d = *pa.value(x);
+			d = (T)(!masked ? c : (c | (d & m)));
+		}
+	}
+}
+
+#if _M_SSE >= 0x501
+
+template <class T, bool masked>
+__ri static void FillBlock(const GSOffset& off, const GSVector4i& r, const GSVector8i& c, const GSVector8i& m, GSScanlineLocalData& local)
+{
+	if (r.x >= r.z)
+		return;
+
+	T* vm = (T*)GlobalFromLocal(local).vm;
+
+	for (int y = r.y; y < r.w; y += 8)
+	{
+		for (int x = r.x; x < r.z; x += 8 * 4 / sizeof(T))
+		{
+			GSVector8i* RESTRICT p = (GSVector8i*)&vm[off.pa(x, y)];
+
+			p[0] = !masked ? c : (c | (p[0] & m));
+			p[1] = !masked ? c : (c | (p[1] & m));
+			p[2] = !masked ? c : (c | (p[2] & m));
+			p[3] = !masked ? c : (c | (p[3] & m));
+			p[4] = !masked ? c : (c | (p[4] & m));
+			p[5] = !masked ? c : (c | (p[5] & m));
+			p[6] = !masked ? c : (c | (p[6] & m));
+			p[7] = !masked ? c : (c | (p[7] & m));
+		}
+	}
+}
+
+#else
+
+template <class T, bool masked>
+__ri static void FillBlock(const GSOffset& off, const GSVector4i& r, const GSVector4i& c, const GSVector4i& m, GSScanlineLocalData& local)
+{
+	if (r.x >= r.z)
+		return;
+
+	T* vm = (T*)GlobalFromLocal(local).vm;
+
+	for (int y = r.y; y < r.w; y += 8)
+	{
+		auto pa = off.paMulti(vm, 0, y);
+
+		for (int x = r.x; x < r.z; x += 8 * 4 / sizeof(T))
+		{
+			GSVector4i* RESTRICT p = (GSVector4i*)pa.value(x);
+
+			for (int i = 0; i < 16; i += 4)
+			{
+				p[i + 0] = !masked ? c : (c | (p[i + 0] & m));
+				p[i + 1] = !masked ? c : (c | (p[i + 1] & m));
+				p[i + 2] = !masked ? c : (c | (p[i + 2] & m));
+				p[i + 3] = !masked ? c : (c | (p[i + 3] & m));
+			}
+		}
+	}
+}
+
+#endif
+
+template <class T, bool masked>
+__ri static void DrawRectT(const GSOffset& off, const GSVector4i& r, u32 c, u32 m, GSScanlineLocalData& local)
 {
 	if (m == 0xffffffff)
 		return;
@@ -1831,98 +1854,105 @@ void GSDrawScanline::DrawRectT(const GSOffset& off, const GSVector4i& r, u32 c, 
 
 	if (!br.rempty())
 	{
-		FillRect<T, masked>(off, GSVector4i(r.x, r.y, r.z, br.y), c, m);
-		FillRect<T, masked>(off, GSVector4i(r.x, br.w, r.z, r.w), c, m);
+		FillRect<T, masked>(off, GSVector4i(r.x, r.y, r.z, br.y), c, m, local);
+		FillRect<T, masked>(off, GSVector4i(r.x, br.w, r.z, r.w), c, m, local);
 
 		if (r.x < br.x || br.z < r.z)
 		{
-			FillRect<T, masked>(off, GSVector4i(r.x, br.y, br.x, br.w), c, m);
-			FillRect<T, masked>(off, GSVector4i(br.z, br.y, r.z, br.w), c, m);
+			FillRect<T, masked>(off, GSVector4i(r.x, br.y, br.x, br.w), c, m, local);
+			FillRect<T, masked>(off, GSVector4i(br.z, br.y, r.z, br.w), c, m, local);
 		}
 
-		FillBlock<T, masked>(off, br, color, mask);
+		FillBlock<T, masked>(off, br, color, mask, local);
 	}
 	else
 	{
-		FillRect<T, masked>(off, r, c, m);
+		FillRect<T, masked>(off, r, c, m, local);
 	}
 }
 
-template <class T, bool masked>
-void GSDrawScanline::FillRect(const GSOffset& off, const GSVector4i& r, u32 c, u32 m)
+void GSDrawScanline::DrawRect(const GSVector4i& r, const GSVertexSW& v, GSScanlineLocalData& local)
 {
-	if (r.x >= r.z)
-		return;
+	const GSScanlineGlobalData& global = GlobalFromLocal(local);
+	ASSERT(r.y >= 0);
+	ASSERT(r.w >= 0);
 
-	T* vm = (T*)m_global.vm;
+	// FIXME: sometimes the frame and z buffer may overlap, the outcome is undefined
 
-	for (int y = r.y; y < r.w; y++)
-	{
-		auto pa = off.paMulti(vm, 0, y);
-
-		for (int x = r.x; x < r.z; x++)
-		{
-			T& d = *pa.value(x);
-			d = (T)(!masked ? c : (c | (d & m)));
-		}
-	}
-}
+	u32 m;
 
 #if _M_SSE >= 0x501
+	m = global.zm;
+#else
+	m = global.zm.U32[0];
+#endif
 
-template <class T, bool masked>
-void GSDrawScanline::FillBlock(const GSOffset& off, const GSVector4i& r, const GSVector8i& c, const GSVector8i& m)
-{
-	if (r.x >= r.z)
-		return;
-
-	T* vm = (T*)m_global.vm;
-
-	for (int y = r.y; y < r.w; y += 8)
+	if (m != 0xffffffff)
 	{
-		for (int x = r.x; x < r.z; x += 8 * 4 / sizeof(T))
-		{
-			GSVector8i* RESTRICT p = (GSVector8i*)&vm[off.pa(x, y)];
+		u32 z = v.t.U32[3]; // (u32)v.p.z;
 
-			p[0] = !masked ? c : (c | (p[0] & m));
-			p[1] = !masked ? c : (c | (p[1] & m));
-			p[2] = !masked ? c : (c | (p[2] & m));
-			p[3] = !masked ? c : (c | (p[3] & m));
-			p[4] = !masked ? c : (c | (p[4] & m));
-			p[5] = !masked ? c : (c | (p[5] & m));
-			p[6] = !masked ? c : (c | (p[6] & m));
-			p[7] = !masked ? c : (c | (p[7] & m));
+		if (global.sel.zpsm != 2)
+		{
+			if (m == 0)
+			{
+				DrawRectT<u32, false>(global.zbo, r, z, m, local);
+			}
+			else
+			{
+				DrawRectT<u32, true>(global.zbo, r, z, m, local);
+			}
+		}
+		else
+		{
+			if ((m & 0xffff) == 0)
+			{
+				DrawRectT<u16, false>(global.zbo, r, z, m, local);
+			}
+			else
+			{
+				DrawRectT<u16, true>(global.zbo, r, z, m, local);
+			}
 		}
 	}
-}
 
+#if _M_SSE >= 0x501
+	m = global.fm;
 #else
+	m = global.fm.U32[0];
+#endif
 
-template <class T, bool masked>
-void GSDrawScanline::FillBlock(const GSOffset& off, const GSVector4i& r, const GSVector4i& c, const GSVector4i& m)
-{
-	if (r.x >= r.z)
-		return;
-
-	T* vm = (T*)m_global.vm;
-
-	for (int y = r.y; y < r.w; y += 8)
+	if (m != 0xffffffff)
 	{
-		auto pa = off.paMulti(vm, 0, y);
+		u32 c = (GSVector4i(v.c) >> 7).rgba32();
 
-		for (int x = r.x; x < r.z; x += 8 * 4 / sizeof(T))
+		if (global.sel.fba)
 		{
-			GSVector4i* RESTRICT p = (GSVector4i*)pa.value(x);
+			c |= 0x80000000;
+		}
 
-			for (int i = 0; i < 16; i += 4)
+		if (global.sel.fpsm != 2)
+		{
+			if (m == 0)
 			{
-				p[i + 0] = !masked ? c : (c | (p[i + 0] & m));
-				p[i + 1] = !masked ? c : (c | (p[i + 1] & m));
-				p[i + 2] = !masked ? c : (c | (p[i + 2] & m));
-				p[i + 3] = !masked ? c : (c | (p[i + 3] & m));
+				DrawRectT<u32, false>(global.fbo, r, c, m, local);
+			}
+			else
+			{
+				DrawRectT<u32, true>(global.fbo, r, c, m, local);
+			}
+		}
+		else
+		{
+			c = ((c & 0xf8) >> 3) | ((c & 0xf800) >> 6) | ((c & 0xf80000) >> 9) | ((c & 0x80000000) >> 16);
+
+			if ((m & 0xffff) == 0)
+			{
+				DrawRectT<u16, false>(global.fbo, r, c, m, local);
+			}
+			else
+			{
+				DrawRectT<u16, true>(global.fbo, r, c, m, local);
 			}
 		}
 	}
 }
-
-#endif

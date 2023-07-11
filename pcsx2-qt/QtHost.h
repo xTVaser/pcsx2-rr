@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2022  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -21,9 +21,7 @@
 #include <optional>
 
 #include "pcsx2/Host.h"
-#include "pcsx2/HostDisplay.h"
-#include "pcsx2/HostSettings.h"
-#include "pcsx2/Frontend/InputManager.h"
+#include "pcsx2/Input/InputManager.h"
 #include "pcsx2/VMManager.h"
 
 #include <QtCore/QList>
@@ -62,6 +60,7 @@ public:
 
 	__fi QEventLoop* getEventLoop() const { return m_event_loop; }
 	__fi bool isFullscreen() const { return m_is_fullscreen; }
+	__fi bool isExclusiveFullscreen() const { return m_is_exclusive_fullscreen; }
 	__fi bool isRenderingToMain() const { return m_is_rendering_to_main; }
 	__fi bool isSurfaceless() const { return m_is_surfaceless; }
 	__fi bool isRunningFullscreenUI() const { return m_run_fullscreen_ui; }
@@ -70,10 +69,9 @@ public:
 	bool shouldRenderToMain() const;
 
 	/// Called back from the GS thread when the display state changes (e.g. fullscreen, render to main).
-	bool acquireHostDisplay(RenderAPI api, bool clear_state_on_fail);
+	std::optional<WindowInfo> acquireRenderWindow(bool recreate_window);
 	void connectDisplaySignals(DisplayWidget* widget);
-	void releaseHostDisplay(bool clear_state);
-	void updateDisplay();
+	void releaseRenderWindow();
 
 	void startBackgroundControllerPollTimer();
 	void stopBackgroundControllerPollTimer();
@@ -94,7 +92,7 @@ public Q_SLOTS:
 	void saveState(const QString& filename);
 	void saveStateToSlot(qint32 slot);
 	void toggleFullscreen();
-	void setFullscreen(bool fullscreen);
+	void setFullscreen(bool fullscreen, bool allow_render_to_main);
 	void setSurfaceless(bool surfaceless);
 	void applySettings();
 	void reloadGameSettings();
@@ -118,10 +116,9 @@ public Q_SLOTS:
 Q_SIGNALS:
 	bool messageConfirmed(const QString& title, const QString& message);
 
-	DisplayWidget* onCreateDisplayRequested(bool fullscreen, bool render_to_main);
-	DisplayWidget* onUpdateDisplayRequested(bool fullscreen, bool render_to_main, bool surfaceless);
-	void onResizeDisplayRequested(qint32 width, qint32 height);
-	void onDestroyDisplayRequested();
+	std::optional<WindowInfo> onAcquireRenderWindowRequested(bool recreate_window, bool fullscreen, bool render_to_main, bool surfaceless);
+	void onResizeRenderWindowRequested(qint32 width, qint32 height);
+	void onReleaseRenderWindowRequested();
 	void onRelativeMouseModeRequested(bool enabled);
 
 	/// Called when the VM is starting initialization, but has not been completed yet.
@@ -140,7 +137,8 @@ Q_SIGNALS:
 	void onVMStopped();
 
 	/// Provided by the host; called when the running executable changes.
-	void onGameChanged(const QString& path, const QString& elf_override, const QString& serial, const QString& name, quint32 crc);
+	void onGameChanged(const QString& title, const QString& elf_override, const QString& disc_path,
+		const QString& serial, quint32 disc_crc, quint32 crc);
 
 	void onInputDevicesEnumerated(const QList<QPair<QString, QString>>& devices);
 	void onInputDeviceConnected(const QString& identifier, const QString& device_name);
@@ -159,6 +157,10 @@ Q_SIGNALS:
 
 	/// Called when achievements are reloaded/refreshed (e.g. game change, login, option change).
 	void onAchievementsRefreshed(quint32 id, const QString& game_info_string, quint32 total, quint32 points);
+
+	/// Called when video capture starts/stops.
+	void onCaptureStarted(const QString& filename);
+	void onCaptureStopped();
 
 protected:
 	void run();
@@ -196,6 +198,7 @@ private:
 	bool m_run_fullscreen_ui = false;
 	bool m_is_rendering_to_main = false;
 	bool m_is_fullscreen = false;
+	bool m_is_exclusive_fullscreen = false;
 	bool m_is_surfaceless = false;
 	bool m_save_state_on_shutdown = false;
 	bool m_pause_on_focus_loss = false;
@@ -214,6 +217,15 @@ extern EmuThread* g_emu_thread;
 
 namespace QtHost
 {
+	/// Default theme name for the platform.
+	const char* GetDefaultThemeName();
+
+	/// Default language for the platform.
+	const char* GetDefaultLanguage();
+
+	/// Sets application theme according to settings.
+	void UpdateApplicationTheme();
+
 	/// Sets batch mode (exit after game shutdown).
 	bool InBatchMode();
 
@@ -228,6 +240,12 @@ namespace QtHost
 
 	/// Executes a function on the UI thread.
 	void RunOnUIThread(const std::function<void()>& func, bool block = false);
+
+	/// Returns a list of supported languages and codes (suffixes for translation files).
+	std::vector<std::pair<QString, QString>> GetAvailableLanguageList();
+
+	/// Call when the language changes.
+	void InstallTranslator();
 
 	/// Returns the application name and version, optionally including debug/devel config indicator.
 	QString GetAppNameAndVersion();

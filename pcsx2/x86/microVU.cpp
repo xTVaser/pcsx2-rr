@@ -31,7 +31,6 @@ alignas(__pagesize) static u8 vu1_RecDispatchers[mVUdispCacheSize];
 void mVUreserveCache(microVU& mVU)
 {
 	mVU.cache_reserve = new RecompiledCodeReserve(StringUtil::StdStringFromFormat("Micro VU%u Recompiler Cache", mVU.index));
-	mVU.cache_reserve->SetProfilerName(StringUtil::StdStringFromFormat("mVU%urec", mVU.index));
 
 	const size_t alloc_offset = mVU.index ? HostMemoryMap::mVU0recOffset : HostMemoryMap::mVU1recOffset;
 	mVU.cache_reserve->Assign(GetVmMemory().CodeMemory(), alloc_offset, mVU.cacheSize * _1mb);
@@ -41,7 +40,7 @@ void mVUreserveCache(microVU& mVU)
 // Only run this once per VU! ;)
 void mVUinit(microVU& mVU, uint vuIndex)
 {
-	memzero(mVU.prog);
+	std::memset(&mVU.prog, 0, sizeof(mVU.prog));
 
 	mVU.index        =  vuIndex;
 	mVU.cop2         =  0;
@@ -128,11 +127,6 @@ void mVUreset(microVU& mVU, bool resetReserve)
 	}
 
 	HostSys::MemProtect(mVU.dispCache, mVUdispCacheSize, PageAccess_ExecOnly());
-
-	if (mVU.index)
-		Perf::any.map((uptr)&mVU.dispCache, mVUdispCacheSize, "mVU1 Dispatcher");
-	else
-		Perf::any.map((uptr)&mVU.dispCache, mVUdispCacheSize, "mVU0 Dispatcher");
 }
 
 // Free Allocated Resources
@@ -161,7 +155,7 @@ __fi void mVUclear(mV, u32 addr, u32 size)
 	if (!mVU.prog.cleared)
 	{
 		mVU.prog.cleared = 1; // Next execution searches/creates a new microprogram
-		memzero(mVU.prog.lpState); // Clear pipeline state
+		std::memset(&mVU.prog.lpState, 0, sizeof(mVU.prog.lpState)); // Clear pipeline state
 		for (u32 i = 0; i < (mVU.progSize / 2); i++)
 		{
 			mVU.prog.quick[i].block = NULL; // Clear current quick-reference block
@@ -468,13 +462,14 @@ void recMicroVU1::ResumeXGkick()
 	((mVUrecCallXG)microVU1.startFunctXG)();
 }
 
-void SaveStateBase::vuJITFreeze()
+bool SaveStateBase::vuJITFreeze()
 {
 	if (IsSaving())
 		vu1Thread.WaitVU();
 
 	Freeze(microVU0.prog.lpState);
 	Freeze(microVU1.prog.lpState);
+	return IsOkay();
 }
 
 #if 0

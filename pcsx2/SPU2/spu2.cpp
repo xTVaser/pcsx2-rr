@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2021  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023 PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -18,11 +18,12 @@
 #include "SPU2/Debug.h"
 #include "SPU2/spu2.h"
 #include "SPU2/Dma.h"
+#include "GS/GSCapture.h"
+#include "MTGS.h"
 #include "R3000A.h"
 
 namespace SPU2
 {
-	static int GetConsoleSampleRate();
 	static void InitSndBuffer();
 	static void UpdateSampleRate();
 	static void InternalReset(bool psxmode);
@@ -35,7 +36,7 @@ int SampleRate = 48000;
 
 u32 lClocks = 0;
 
-int SPU2::GetConsoleSampleRate()
+s32 SPU2::GetConsoleSampleRate()
 {
 	return s_psxmode ? 44100 : 48000;
 }
@@ -129,6 +130,13 @@ void SPU2::UpdateSampleRate()
 	SndBuffer::Cleanup();
 	SampleRate = new_sample_rate;
 	InitSndBuffer();
+
+	// Can't be capturing when the sample rate changes.
+	if (IsAudioCaptureActive())
+	{
+		MTGS::RunOnGSThread(&GSEndCapture);
+		MTGS::WaitGS(false, false, false);
+	}
 }
 
 void SPU2::InternalReset(bool psxmode)
@@ -168,45 +176,6 @@ void SPU2::SetDeviceSampleRateMultiplier(double multiplier)
 	s_device_sample_rate_multiplier = multiplier;
 	UpdateSampleRate();
 }
-
-bool SPU2::Initialize()
-{
-	pxAssert(regtable[0x400] == nullptr);
-	spu2regs = (s16*)malloc(0x010000);
-	_spu2mem = (s16*)malloc(0x200000);
-
-	// adpcm decoder cache:
-	//  the cache data size is determined by taking the number of adpcm blocks
-	//  (2MB / 16) and multiplying it by the decoded block size (28 samples).
-	//  Thus: pcm_cache_data = 7,340,032 bytes (ouch!)
-	//  Expanded: 16 bytes expands to 56 bytes [3.5:1 ratio]
-	//    Resulting in 2MB * 3.5.
-
-	pcm_cache_data = (PcmCacheEntry*)calloc(pcm_BlockCount, sizeof(PcmCacheEntry));
-
-	if (!spu2regs || !_spu2mem || !pcm_cache_data)
-	{
-		Console.Error("SPU2: Error allocating Memory");
-		return false;
-	}
-
-	// Patch up a copy of regtable that directly maps "nullptrs" to SPU2 memory.
-
-	memcpy(regtable, regtable_original, sizeof(regtable));
-
-	for (uint mem = 0; mem < 0x800; mem++)
-	{
-		u16* ptr = regtable[mem >> 1];
-		if (!ptr)
-		{
-			regtable[mem >> 1] = &(spu2Ru16(mem));
-		}
-	}
-
-	InitADSR();
-	return true;
-}
-
 
 bool SPU2::Open()
 {
@@ -250,13 +219,6 @@ void SPU2::Close()
 #endif
 }
 
-void SPU2::Shutdown()
-{
-	safe_free(spu2regs);
-	safe_free(_spu2mem);
-	safe_free(pcm_cache_data);
-}
-
 bool SPU2::IsRunningPSXMode()
 {
 	return s_psxmode;
@@ -270,7 +232,9 @@ void SPU2async(u32 cycles)
 u16 SPU2read(u32 rmem)
 {
 	u16 ret = 0xDEAD;
-	u32 core = 0, mem = rmem & 0xFFFF, omem = mem;
+	u32 core = 0;
+	const u32 mem = rmem & 0xFFFF;
+	u32 omem = mem;
 
 	if (mem & 0x400)
 	{
@@ -334,18 +298,6 @@ void SPU2write(u32 rmem, u16 value)
 #endif
 		SPU2_FastWrite(rmem, value);
 	}
-}
-
-// returns a non zero value if successful
-bool SPU2setupRecording(const std::string* filename)
-{
-	return RecordStart(filename);
-}
-
-void SPU2endRecording()
-{
-	if (WavRecordEnabled)
-		RecordStop();
 }
 
 s32 SPU2freeze(FreezeAction mode, freezeData* data)

@@ -9,11 +9,11 @@ if (WIN32)
 	add_subdirectory(3rdparty/zlib EXCLUDE_FROM_ALL)
 	add_subdirectory(3rdparty/libpng EXCLUDE_FROM_ALL)
 	add_subdirectory(3rdparty/libjpeg EXCLUDE_FROM_ALL)
-	add_subdirectory(3rdparty/soundtouch EXCLUDE_FROM_ALL)
 	add_subdirectory(3rdparty/wil EXCLUDE_FROM_ALL)
 	add_subdirectory(3rdparty/xz EXCLUDE_FROM_ALL)
 	add_subdirectory(3rdparty/D3D12MemAlloc EXCLUDE_FROM_ALL)
 	set(FFMPEG_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/3rdparty/ffmpeg/include")
+	find_package(Vtune)
 else()
 	find_package(PCAP REQUIRED)
 	find_package(LibLZMA REQUIRED)
@@ -73,8 +73,6 @@ else()
 		endif()
 	endif()
 
-	check_lib(SOUNDTOUCH SoundTouch SoundTouch.h PATH_SUFFIXES soundtouch)
-
 	if(NOT QT_BUILD)
 		find_optional_system_library(SDL2 3rdparty/sdl2 2.0.12)
 	endif()
@@ -84,8 +82,12 @@ else()
 		make_imported_target_if_missing(X11::X11 X11)
 
 		if(WAYLAND_API)
-			find_package(Wayland REQUIRED)
+			find_package(ECM REQUIRED NO_MODULE)
+			list(APPEND CMAKE_MODULE_PATH "${ECM_MODULE_PATH}")
+			find_package(Wayland REQUIRED Egl)
 		endif()
+
+		find_package(Libbacktrace)
 	endif()
 endif(WIN32)
 
@@ -100,18 +102,7 @@ if(ENABLE_TESTS)
 	endif()
 endif()
 
-#----------------------------------------
-# Check correctness of the parameter
-# Note: wxWidgets_INCLUDE_DIRS must be defined
-#----------------------------------------
-include(ApiValidation)
-
-# Blacklist bad GCC
-if(GCC_VERSION VERSION_EQUAL "7.0" OR GCC_VERSION VERSION_EQUAL "7.1")
-	GCC7_BUG()
-endif()
-
-if((GCC_VERSION VERSION_EQUAL "9.0" OR GCC_VERSION VERSION_GREATER "9.0") AND GCC_VERSION LESS "9.2")
+if(GCC_VERSION VERSION_GREATER_EQUAL "9.0" AND GCC_VERSION VERSION_LESS "9.2")
 	message(WARNING "
 	It looks like you are compiling with 9.0.x or 9.1.x. Using these versions is not recommended,
 	as there is a bug known to cause the compiler to segfault while compiling. See patch
@@ -132,7 +123,7 @@ find_optional_system_library(libzip 3rdparty/libzip 1.8.0)
 if(QT_BUILD)
 	# Default to bundled Qt6 for Windows.
 	if(WIN32 AND NOT DEFINED Qt6_DIR)
-		set(Qt6_DIR ${CMAKE_SOURCE_DIR}/3rdparty/qt/6.4.0/msvc2022_64/lib/cmake/Qt6)
+		set(Qt6_DIR ${CMAKE_SOURCE_DIR}/3rdparty/qt/6.5.0/msvc2022_64/lib/cmake/Qt6)
 	endif()
 
 	# Find the Qt components that we need.
@@ -152,6 +143,9 @@ if(QT_BUILD)
 	# rcheevos backend for RetroAchievements.
 	if(USE_ACHIEVEMENTS)
 		add_subdirectory(3rdparty/rcheevos EXCLUDE_FROM_ALL)
+		if(WIN32)
+			add_subdirectory(3rdparty/rainterface EXCLUDE_FROM_ALL)
+		endif()
 	endif()
 
 	# Discord-RPC library for rich presence.
@@ -170,6 +164,7 @@ endif()
 
 add_subdirectory(3rdparty/lzma EXCLUDE_FROM_ALL)
 add_subdirectory(3rdparty/libchdr EXCLUDE_FROM_ALL)
+add_subdirectory(3rdparty/soundtouch EXCLUDE_FROM_ALL)
 
 # rapidyaml includes fast_float as a submodule, saves us pulling it in directly.
 # Normally, we'd just pull in the cmake project, and link to it, but... it seems to enable

@@ -2,32 +2,30 @@ name: 🐧 Linux Builds
 
 on:
   push:
-    branches:
-      - '*'
+    branches-ignore:
+      - "l10n_master"
   pull_request:
     branches:
       - master
 
 jobs:
-  build_linux_qt_sse4:
+  build_linux_qt:
     name: "AppImage"
+    if: github.repository != 'PCSX2/pcsx2' || github.event_name == 'pull_request'
     uses: ./.github/workflows/linux_build_qt.yml
     with:
-      jobName: "Qt SSE4"
+      jobName: "AppImage Build"
       compiler: clang
       cmakeflags: ""
-      simd: "SSE4"
       buildAppImage: true
     secrets: inherit
-
-  build_linux_qt_avx2:
-    name: "AppImage"
-    uses: ./.github/workflows/linux_build_qt.yml
+  build_linux_flatpak:
+    name: "Flatpak"
+    if: github.repository != 'PCSX2/pcsx2' || github.event_name == 'pull_request'
+    uses: ./.github/workflows/linux_build_flatpak.yml
     with:
-      jobName: "Qt AVX2"
-      detail: ""
+      jobName: "Flatpak Build"
       compiler: clang
-      cmakeflags: "-DARCH_FLAG=-march=haswell"
-      simd: "AVX2"
-      buildAppImage: true
+      cmakeflags: ""
+      publish: false
     secrets: inherit

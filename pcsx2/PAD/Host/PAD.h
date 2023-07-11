@@ -30,7 +30,7 @@ enum class GenericInputBinding : u8;
 
 s32 PADinit();
 void PADshutdown();
-s32 PADopen(const WindowInfo& wi);
+s32 PADopen();
 void PADclose();
 s32 PADsetSlot(u8 port, u8 slot);
 s32 PADfreeze(FreezeAction mode, freezeData* data);
@@ -76,6 +76,8 @@ namespace PAD
 	/// Default stick deadzone/sensitivity.
 	static constexpr float DEFAULT_STICK_DEADZONE = 0.0f;
 	static constexpr float DEFAULT_STICK_SCALE = 1.33f;
+	static constexpr float DEFAULT_TRIGGER_DEADZONE = 0.0f;
+	static constexpr float DEFAULT_TRIGGER_SCALE = 1.0f;
 	static constexpr float DEFAULT_MOTOR_SCALE = 1.0f;
 	static constexpr float DEFAULT_PRESSURE_MODIFIER = 0.5f;
 	static constexpr float DEFAULT_BUTTON_DEADZONE = 0.0f;
@@ -101,7 +103,7 @@ namespace PAD
 	void Update();
 
 	/// Returns a list of controller type names. Pair of [name, display name].
-	std::vector<std::pair<std::string, std::string>> GetControllerTypeNames();
+	std::vector<std::pair<const char*, const char*>> GetControllerTypeNames();
 
 	/// Returns the list of binds for the specified controller type.
 	std::vector<std::string> GetControllerBinds(const std::string_view& type);

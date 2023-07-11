@@ -35,6 +35,7 @@ enum class VMState
 	Initializing,
 	Running,
 	Paused,
+	Resetting,
 	Stopping,
 };
 
@@ -55,6 +56,9 @@ namespace VMManager
 	/// The number of usable save state slots.
 	static constexpr s32 NUM_SAVE_STATE_SLOTS = 10;
 
+	/// The stack size to use for threads running recompilers
+	static constexpr std::size_t EMU_THREAD_STACK_SIZE = 2 * 1024 * 1024; // µVU likes recursion
+
 	/// Makes sure that AVX2 is available if we were compiled with it.
 	bool PerformEarlyHardwareChecks(const char** error);
 
@@ -70,17 +74,23 @@ namespace VMManager
 	/// Returns the path of the disc currently running.
 	std::string GetDiscPath();
 
-	/// Returns the crc of the executable currently running.
-	u32 GetGameCRC();
+	/// Returns the serial of the disc currently running.
+	std::string GetDiscSerial();
 
-	/// Returns the serial of the disc/executable currently running.
-	std::string GetGameSerial();
+	/// Returns the path of the main ELF of the disc currently running.
+	std::string GetDiscELF();
 
 	/// Returns the name of the disc/executable currently running.
-	std::string GetGameName();
+	std::string GetTitle();
 
-	/// Loads global settings (i.e. EmuConfig).
-	void LoadSettings();
+	/// Returns the CRC for the main ELF of the disc currently running.
+	u32 GetDiscCRC();
+
+	/// Returns the version of the disc currently running.
+	std::string GetDiscVersion();
+
+	/// Returns the crc of the executable currently running.
+	u32 GetCurrentCRC();
 
 	/// Initializes all system components.
 	bool Initialize(VMBootParameters boot_params);
@@ -103,8 +113,8 @@ namespace VMManager
 	/// Reloads game specific settings, and applys any changes present.
 	bool ReloadGameSettings();
 
-	/// Reloads cheats/patches. If verbose is set, the number of patches loaded will be shown in the OSD.
-	void ReloadPatches(bool verbose, bool show_messages_when_disabled);
+	/// Reloads game patches.
+	void ReloadPatches(bool reload_files, bool reload_enabled_list, bool verbose, bool verbose_if_changed);
 
 	/// Returns the save state filename for the given game serial/crc.
 	std::string GetSaveStateFileName(const char* game_serial, u32 game_crc, s32 slot);
@@ -180,32 +190,56 @@ namespace VMManager
 	/// If the scale is set to 0, the internal resolution will be used, otherwise it is treated as a multiplier to 1x.
 	void RequestDisplaySize(float scale = 0.0f);
 
-	/// Initializes default configuration in the specified file.
-	void SetDefaultSettings(SettingsInterface& si);
+	/// Initializes default configuration in the specified file for the specified categories.
+	void SetDefaultSettings(SettingsInterface& si, bool folders, bool core, bool controllers, bool hotkeys, bool ui);
 
 	/// Returns a list of processors in the system, and their corresponding affinity mask.
 	/// This list is ordered by most performant to least performant for pinning threads to.
 	const std::vector<u32>& GetSortedProcessorList();
 
+	/// Returns the time elapsed in the current play session.
+	u64 GetSessionPlayedTime();
+
+	/// Called when the rich presence string, provided by RetroAchievements, changes.
+	void UpdateDiscordPresence(const std::string& rich_presence);
+
 	/// Internal callbacks, implemented in the emu core.
 	namespace Internal
 	{
-		/// Performs early global initialization.
-		bool InitializeGlobals();
+		/// Checks settings version. Call once on startup. If it returns false, you should prompt the user to reset.
+		bool CheckSettingsVersion();
 
-		/// Releases resources allocated in InitializeGlobals().
-		void ReleaseGlobals();
+		/// Loads early settings. Call once on startup.
+		void LoadStartupSettings();
 
-		/// Reserves memory for the virtual machines.
-		bool InitializeMemory();
+		/// Initializes common host state, called on the CPU thread.
+		bool CPUThreadInitialize();
 
-		/// Completely releases all memory for the virtual machine.
-		void ReleaseMemory();
+		/// Cleans up common host state, called on the CPU thread.
+		void CPUThreadShutdown();
 
-		const std::string& GetElfOverride();
+		/// Resets any state for hotkey-related VMs, called on VM startup.
+		void ResetVMHotkeyState();
+
+		/// Updates the variables in the EmuFolders namespace, reloading subsystems if needed.
+		void UpdateEmuFolders();
+
+		/// Returns true if fast booting is active (requested but ELF not started).
+		bool IsFastBootInProgress();
+
+		/// Disables fast boot if it was requested, and found to be incompatible.
+		void DisableFastBoot();
+
+		/// Returns true if the current ELF has started executing.
+		bool HasBootedELF();
+
+		/// Returns the PC of the currently-executing ELF's entry point.
+		u32 GetCurrentELFEntryPoint();
+
+		const std::string& GetELFOverride();
 		bool IsExecutionInterrupted();
+		void ELFLoadingOnCPUThread(std::string elf_path);
 		void EntryPointCompilingOnCPUThread();
-		void GameStartingOnCPUThread();
 		void VSyncOnCPUThread();
 	} // namespace Internal
 } // namespace VMManager
@@ -237,10 +271,6 @@ namespace Host
 	/// Called when performance metrics are updated, approximately once a second.
 	void OnPerformanceMetricsUpdated();
 
-	/// Looks up the serial and CRC for a game in the most efficient manner possible.
-	/// Implemented in the host because it may have a game list cache.
-	bool GetSerialAndCRCForFilename(const char* filename, std::string* serial, u32* crc);
-
 	/// Called when a save state is loading, before the file is processed.
 	void OnSaveStateLoading(const std::string_view& filename);
 
@@ -252,12 +282,9 @@ namespace Host
 	void OnSaveStateSaved(const std::string_view& filename);
 
 	/// Provided by the host; called when the running executable changes.
-	void OnGameChanged(const std::string& disc_path, const std::string& elf_override, const std::string& game_serial,
-		const std::string& game_name, u32 game_crc);
+	void OnGameChanged(const std::string& title, const std::string& elf_override, const std::string& disc_path,
+		const std::string& disc_serial, u32 disc_crc, u32 current_crc);
 
 	/// Provided by the host; called once per frame at guest vsync.
-	void CPUThreadVSync();
-
-	/// Provided by the host; called when a state is saved, and the frontend should invalidate its save state cache.
-	void InvalidateSaveStateCache();
+	void VSyncOnCPUThread();
 } // namespace Host

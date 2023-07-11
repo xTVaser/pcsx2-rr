@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2022  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -13,19 +13,25 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "PrecompiledHeader.h"
-#include "R3000A.h"
+
 #include "Common.h"
-#include "R5900.h" // for g_GameStarted
+#include "DebugTools/SymbolMap.h"
 #include "IopBios.h"
 #include "IopMem.h"
+#include "R3000A.h"
+#include "R5900.h"
+#include "ps2/BiosTools.h"
+#include "x86/iR3000A.h"
+#include "VMManager.h"
 
-#include <ctype.h>
-#include <string.h>
-#include <sys/stat.h>
 #include "common/FileSystem.h"
 #include "common/Path.h"
+
+#include <cctype>
+#include <cstring>
+#include <fmt/format.h>
+#include <sys/stat.h>
 
 #include <fcntl.h>
 
@@ -90,6 +96,11 @@ void Hle_SetElfPath(const char* elfFileName)
 	DevCon.WriteLn("HLE Host: Will load ELF: %s\n", elfFileName);
 	hostRoot = Path::ToNativePath(Path::GetDirectory(elfFileName));
 	Console.WriteLn("HLE Host: Set 'host:' root path to: %s\n", hostRoot.c_str());
+}
+
+void Hle_ClearElfPath()
+{
+	hostRoot = {};
 }
 
 namespace R3000A
@@ -159,6 +170,17 @@ namespace R3000A
 			new_path = std::move(native_path);
 		else if (!hostRoot.empty()) // relative paths
 			new_path = Path::Combine(hostRoot, native_path);
+
+		// Allow opening the ELF override.
+		if (new_path == VMManager::Internal::GetELFOverride())
+			return new_path;
+
+		// Allow nothing if hostfs isn't enabled.
+		if (!EmuConfig.HostFs)
+		{
+			new_path.clear();
+			return new_path;
+		}
 
 		// Double-check that it falls within the directory of the elf.
 		// Not a real sandbox, but emulators shouldn't be treated as such. Don't run untrusted code!
@@ -552,7 +574,7 @@ namespace R3000A
 			if (not_number_pos == std::string::npos)
 				return false;
 
-			return ((!g_GameStarted || EmuConfig.HostFs) && 0 == path.compare(0, 4, "host") && path[not_number_pos] == ':');
+			return (path.compare(0, 4, "host") == 0 && path[not_number_pos] == ':');
 		}
 
 		int open_HLE()
@@ -983,6 +1005,37 @@ namespace R3000A
 
 	namespace loadcore
 	{
+
+		// Gets the thread list ptr from thbase
+		u32 GetThreadList(u32 a0reg, u32 version)
+		{
+			// Function 3 returns the main thread manager struct
+			u32 function = iopMemRead32(a0reg + 0x20);
+
+			// read the lui
+			u32 thstruct = (iopMemRead32(function) & 0xFFFF) << 16;
+			thstruct |= iopMemRead32(function + 4) & 0xFFFF;
+
+			u32 list = thstruct + 0x42c;
+
+			if (version > 0x101)
+				list = thstruct + 0x430;
+
+			return list;
+		}
+
+		int RegisterLibraryEntries_HLE()
+		{
+			const std::string modname = iopMemReadString(a0 + 12);
+			if (modname == "thbase")
+			{
+				const u32 version = iopMemRead32(a0 + 8);
+				CurrentBiosInformation.iopThreadListAddr = GetThreadList(a0, version);
+			}
+
+			return 0;
+		}
+
 		void RegisterLibraryEntries_DEBUG()
 		{
 			const std::string modname = iopMemReadString(a0 + 12);
@@ -1091,6 +1144,11 @@ namespace R3000A
 		// clang-format off
 		MODULE(sysmem)
 			EXPORT_H( 14, Kprintf)
+		END_MODULE
+
+		// For grabbing the thread list from thbase
+		MODULE(loadcore)
+			EXPORT_H( 6, RegisterLibraryEntries)
 		END_MODULE
 
 		// Special case with ioman and iomanX

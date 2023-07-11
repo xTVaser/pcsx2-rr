@@ -28,6 +28,7 @@
 #define PAGE_SIZE 8192u
 #define BLOCK_SIZE 256u
 #define COLUMN_SIZE 64u
+#define BLOCKS_PER_PAGE (PAGE_SIZE / BLOCK_SIZE)
 
 #define MAX_PAGES (VM_SIZE / PAGE_SIZE)
 #define MAX_BLOCKS (VM_SIZE / BLOCK_SIZE)
@@ -157,20 +158,20 @@ enum GIF_FLG
 
 enum GS_PSM
 {
-	PSM_PSMCT32  =  0, // 0000-0000
-	PSM_PSMCT24  =  1, // 0000-0001
-	PSM_PSMCT16  =  2, // 0000-0010
-	PSM_PSMCT16S = 10, // 0000-1010
-	PSM_PSGPU24  = 18, // 0001-0010
-	PSM_PSMT8    = 19, // 0001-0011
-	PSM_PSMT4    = 20, // 0001-0100
-	PSM_PSMT8H   = 27, // 0001-1011
-	PSM_PSMT4HL  = 36, // 0010-0100
-	PSM_PSMT4HH  = 44, // 0010-1100
-	PSM_PSMZ32   = 48, // 0011-0000
-	PSM_PSMZ24   = 49, // 0011-0001
-	PSM_PSMZ16   = 50, // 0011-0010
-	PSM_PSMZ16S  = 58, // 0011-1010
+	PSMCT32  =  0, // 0000-0000
+	PSMCT24  =  1, // 0000-0001
+	PSMCT16  =  2, // 0000-0010
+	PSMCT16S = 10, // 0000-1010
+	PSGPU24  = 18, // 0001-0010
+	PSMT8    = 19, // 0001-0011
+	PSMT4    = 20, // 0001-0100
+	PSMT8H   = 27, // 0001-1011
+	PSMT4HL  = 36, // 0010-0100
+	PSMT4HH  = 44, // 0010-1100
+	PSMZ32   = 48, // 0011-0000
+	PSMZ24   = 49, // 0011-0001
+	PSMZ16   = 50, // 0011-0010
+	PSMZ16S  = 58, // 0011-1010
 };
 
 enum GS_TFX
@@ -823,16 +824,26 @@ union
 REG_END2
 	__forceinline bool IsRepeating() const
 	{
+		// This is actually "does the texture span more than one page".
 		if (TBW < 2)
 		{
-			if (PSM == PSM_PSMT8)
+			if (PSM == PSMT8)
 				return TW > 7 || TH > 6;
-			if (PSM == PSM_PSMT4)
+			if (PSM == PSMT4)
 				return TW > 7 || TH > 7;
 		}
 
 		// The recast of TBW seems useless but it avoid tons of warning from GCC...
 		return ((u32)TBW << 6u) < (1u << TW);
+	}
+
+	__forceinline static GIFRegTEX0 Create(u32 bp, u32 bw, u32 psm)
+	{
+		GIFRegTEX0 ret = {};
+		ret.TBP0 = bp;
+		ret.TBW = bw;
+		ret.PSM = psm;
+		return ret;
 	}
 REG_END2
 

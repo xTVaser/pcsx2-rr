@@ -14,6 +14,7 @@
  */
 
 #pragma once
+#include "DebugTools/BiosDebugData.h"
 #include "MemoryTypes.h"
 #include "ExpressionParser.h"
 #include "SymbolMap.h"
@@ -76,6 +77,7 @@ public:
 	virtual u128 getHI() = 0;
 	virtual u128 getLO() = 0;
 	virtual u32 getPC() = 0;
+	virtual bool getCPCOND0() = 0;
 	virtual void setPc(u32 newPc) = 0;
 	virtual void setRegister(int cat, int num, u128 newValue) = 0;
 
@@ -84,6 +86,7 @@ public:
 	virtual u32 getCycles() = 0;
 	virtual BreakPointCpu getCpuType() = 0;
 	[[nodiscard]] virtual SymbolMap& GetSymbolMap() const = 0;
+	[[nodiscard]] virtual std::vector<std::unique_ptr<BiosThread>> GetThreadList() const = 0;
 
 	bool initExpression(const char* exp, PostfixExpression& dest);
 	bool parseExpression(PostfixExpression& exp, u64& dest);
@@ -92,6 +95,12 @@ public:
 	void pauseCpu();
 	void resumeCpu();
 	char* stringFromPointer(u32 p);
+
+	static void setPauseOnEntry(bool pauseOnEntry) { m_pause_on_entry = pauseOnEntry; };
+	static bool getPauseOnEntry() { return m_pause_on_entry; }
+
+private:
+	static bool m_pause_on_entry;
 };
 
 class R5900DebugInterface : public DebugInterface
@@ -121,9 +130,11 @@ public:
 	u128 getHI() override;
 	u128 getLO() override;
 	u32 getPC() override;
+	bool getCPCOND0() override;
 	void setPc(u32 newPc) override;
 	void setRegister(int cat, int num, u128 newValue) override;
 	[[nodiscard]] SymbolMap& GetSymbolMap() const override;
+	[[nodiscard]] std::vector<std::unique_ptr<BiosThread>> GetThreadList() const override;
 
 	std::string disasm(u32 address, bool simplify) override;
 	bool isValidAddress(u32 address) override;
@@ -159,9 +170,11 @@ public:
 	u128 getHI() override;
 	u128 getLO() override;
 	u32 getPC() override;
+	bool getCPCOND0() override;
 	void setPc(u32 newPc) override;
 	void setRegister(int cat, int num, u128 newValue) override;
 	[[nodiscard]] SymbolMap& GetSymbolMap() const override;
+	[[nodiscard]] std::vector<std::unique_ptr<BiosThread>> GetThreadList() const override;
 
 	std::string disasm(u32 address, bool simplify) override;
 	bool isValidAddress(u32 address) override;

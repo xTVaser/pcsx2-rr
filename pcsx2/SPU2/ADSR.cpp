@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2020  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -14,29 +14,38 @@
  */
 
 #include "PrecompiledHeader.h"
-#include "Global.h"
+
+#include "SPU2/Global.h"
+
 #include "common/Assertions.h"
 
-static const s32 ADSR_MAX_VOL = 0x7fffffff;
+#include <array>
+
+static constexpr s32 ADSR_MAX_VOL = 0x7fffffff;
 
 static const int InvExpOffsets[] = {0, 4, 6, 8, 9, 10, 11, 12};
-static u32 PsxRates[160];
 
+using PSXRateTable = std::array<u32, 160>;
 
-void InitADSR() // INIT ADSR
+static constexpr PSXRateTable ComputePSXRates()
 {
+	PSXRateTable rates = {};
 	for (int i = 0; i < (32 + 128); i++)
 	{
-		int shift = (i - 32) >> 2;
+		const int shift = (i - 32) >> 2;
 		s64 rate = (i & 3) + 4;
 		if (shift < 0)
 			rate >>= -shift;
 		else
 			rate <<= shift;
 
-		PsxRates[i] = (int)std::min(rate, (s64)0x3fffffffLL);
+		// Maximum rate is 0x4000.
+		rates[i] = (int)std::min(rate, (s64)0x40000000LL);
 	}
+	return rates;
 }
+
+static constexpr const PSXRateTable PsxRates = ComputePSXRates();
 
 bool V_ADSR::Calculate()
 {
@@ -73,7 +82,7 @@ bool V_ADSR::Calculate()
 
 		case 2: // decay
 		{
-			u32 off = InvExpOffsets[(Value >> 28) & 7];
+			const u32 off = InvExpOffsets[(Value >> 28) & 7];
 			Value -= PsxRates[((DecayRate ^ 0x1f) * 4) - 0x18 + off + 32];
 
 			// calculate sustain level as a factor of the ADSR maximum volume.
@@ -99,7 +108,7 @@ bool V_ADSR::Calculate()
 			{
 				if (SustainMode & 4) // exponential
 				{
-					u32 off = InvExpOffsets[(Value >> 28) & 7];
+					const u32 off = InvExpOffsets[(Value >> 28) & 7];
 					Value -= PsxRates[(SustainRate ^ 0x7f) - 0x1b + off + 32];
 				}
 				else // linear
@@ -137,7 +146,7 @@ bool V_ADSR::Calculate()
 		case 5:              // release
 			if (ReleaseMode) // exponential
 			{
-				u32 off = InvExpOffsets[(Value >> 28) & 7];
+				const u32 off = InvExpOffsets[(Value >> 28) & 7];
 				Value -= PsxRates[((ReleaseRate ^ 0x1f) * 4) - 0x18 + off + 32];
 			}
 			else
@@ -193,7 +202,7 @@ void V_VolumeSlide::Update()
 
 		if (Mode & VOLFLAG_EXPONENTIAL)
 		{
-			u32 off = InvExpOffsets[(value >> 28) & 7];
+			const u32 off = InvExpOffsets[(value >> 28) & 7];
 			value -= PsxRates[(Increment ^ 0x7f) - 0x1b + off + 32];
 		}
 		else

@@ -14,7 +14,6 @@
  */
 
 #include "PrecompiledHeader.h"
-#include "common/SafeArray.inl"
 #include "common/Path.h"
 
 #include "MemoryCardFile.h"
@@ -40,43 +39,37 @@
 #include <mutex>
 #include <optional>
 
-static ryml::Tree parseYamlStr(const std::string& str)
-{
-	ryml::Callbacks rymlCallbacks = ryml::get_callbacks();
-	rymlCallbacks.m_error = [](const char* msg, size_t msg_len, ryml::Location loc, void*) {
-		throw std::runtime_error(fmt::format("[YAML] Parsing error at {}:{} (bufpos={}): {}",
-			loc.line, loc.col, loc.offset, msg));
-	};
-	ryml::set_callbacks(rymlCallbacks);
-	c4::set_error_callback([](const char* msg, size_t msg_size) {
-		throw std::runtime_error(fmt::format("[YAML] Internal Parsing error: {}",
-			msg));
-	});
-	ryml::Tree tree = ryml::parse_in_arena(c4::to_csubstr(str));
-
-	ryml::reset_callbacks();
-	return tree;
-}
-
 // A helper function to parse the YAML file
 static std::optional<ryml::Tree> loadYamlFile(const char* filePath)
 {
-	try
+	std::optional<std::string> buffer = FileSystem::ReadFileToString(filePath);
+	if (!buffer.has_value())
+		return std::nullopt;
+
+	static u32 errorCount;
+	errorCount = 0;
+
+	ryml::Callbacks rymlCallbacks = ryml::get_callbacks();
+	rymlCallbacks.m_error = [](const char* msg, size_t msg_len, ryml::Location loc, void* userdata) {
+		Console.Error(fmt::format("[YAML] Parsing error at {}:{} (bufpos={}): {}",
+			loc.line, loc.col, loc.offset, std::string_view(msg, msg_len)));
+		errorCount++;
+	};
+	ryml::set_callbacks(rymlCallbacks);
+	c4::set_error_callback([](const char* msg, size_t msg_size) {
+		Console.Error(fmt::format("[YAML] Internal Parsing error: {}", std::string_view(msg, msg_size)));
+		errorCount++;
+	});
+
+	ryml::Tree tree = ryml::parse_in_arena(c4::to_csubstr(buffer.value()));
+	ryml::reset_callbacks();
+	if (errorCount > 0)
 	{
-		std::optional<std::string> buffer = FileSystem::ReadFileToString(filePath);
-		if (!buffer.has_value())
-		{
-			return std::nullopt;
-		}
-		ryml::Tree tree = parseYamlStr(buffer.value());
-		return std::make_optional(tree);
-	}
-	catch (const std::exception& e)
-	{
-		Console.Error(fmt::format("[MemoryCard] Error occured when parsing folder memory card at path '{}': {}", filePath, e.what()));
-		ryml::reset_callbacks();
+		Console.Error(fmt::format("[MemoryCard] Error occured when parsing folder memory card at path '{}'.", filePath));
 		return std::nullopt;
 	}
+
+	return tree;
 }
 
 /// A helper function to write a YAML file
@@ -89,6 +82,7 @@ static void SaveYAMLToFile(const char* filename, const ryml::NodeRef& node)
 }
 
 static constexpr time_t MEMORY_CARD_FILE_ENTRY_DATE_TIME_OFFSET = 60 * 60 * 9; // 9 hours from UTC
+static auto last = std::chrono::time_point<std::chrono::system_clock>();
 
 MemoryCardFileEntryDateTime MemoryCardFileEntryDateTime::FromTime(time_t time)
 {
@@ -233,6 +227,7 @@ void FolderMemoryCard::Close(bool flush)
 	m_oldDataCache.clear();
 	m_lastAccessedFile.CloseAll();
 	m_fileMetadataQuickAccess.clear();
+	m_isEnabled = false;
 }
 
 bool FolderMemoryCard::ReIndex(bool enableFiltering, const std::string& filter)
@@ -1584,7 +1579,7 @@ bool FolderMemoryCard::WriteToFile(const u8* src, u32 adr, u32 dataLength)
 	return false;
 }
 
-std::string FolderMemoryCard::GetFolderName()
+const std::string& FolderMemoryCard::GetFolderName()
 {
 	return m_folderName;
 }
@@ -1776,7 +1771,7 @@ void FolderMemoryCard::AttemptToRecreateIndexFile(const std::string& directory) 
 
 std::string FolderMemoryCard::GetDisabledMessage(uint slot) const
 {
-	return fmt::format("The PS2-slot {} has been automatically disabled.  You can correct the problem\nand re-enable it at any time using Config:Memory cards from the main menu.", slot); //TODO: translate internal slot index to human-readable slot description
+	return fmt::format("The PS2-slot {} has been automatically disabled.  You can correct the problem\nand re-enable it at any time using Config:Memory Cards from the main menu.", slot); //TODO: translate internal slot index to human-readable slot description
 }
 
 std::string FolderMemoryCard::GetCardFullMessage(const std::string& filePath) const
@@ -1818,13 +1813,13 @@ std::vector<FolderMemoryCard::EnumeratedFileEntry> FolderMemoryCard::GetOrderedF
 				if (yaml.has_value() && !yaml.value().empty())
 				{
 					ryml::NodeRef index = yaml.value().rootref();
-					for (const ryml::NodeRef& n : index.children())
+					for (const auto& n : index.children())
 					{
 						auto key = std::string(n.key().str, n.key().len);
 					}
 					if (index.has_child(c4::to_csubstr(fd.FileName)))
 					{
-						const ryml::NodeRef& node = index[c4::to_csubstr(fd.FileName)];
+						const auto& node = index[c4::to_csubstr(fd.FileName)];
 						if (node.has_child("timeCreated"))
 						{
 							node["timeCreated"] >> entry.m_timeCreated;
@@ -1870,7 +1865,7 @@ std::vector<FolderMemoryCard::EnumeratedFileEntry> FolderMemoryCard::GetOrderedF
 						// NOTE - working around a rapidyaml issue that needs to get resolved upstream
 						// '%' is a directive in YAML and it's not being quoted, this makes the memcards backwards compatible
 						// switched from '%' to '$'
-						const ryml::NodeRef& node = indexForDirectory["%ROOT"];
+						const auto& node = indexForDirectory["%ROOT"];
 						if (node.has_child("timeCreated"))
 						{
 							node["timeCreated"] >> entry.m_timeCreated;
@@ -1882,7 +1877,7 @@ std::vector<FolderMemoryCard::EnumeratedFileEntry> FolderMemoryCard::GetOrderedF
 					}
 					else if (indexForDirectory.has_child("$ROOT"))
 					{
-						const ryml::NodeRef& node = indexForDirectory["$ROOT"];
+						const auto& node = indexForDirectory["$ROOT"];
 						if (node.has_child("timeCreated"))
 						{
 							node["timeCreated"] >> entry.m_timeCreated;
@@ -1919,10 +1914,13 @@ void FolderMemoryCard::DeleteFromIndex(const std::string& filePath, const std::s
 	if (yaml.has_value() && !yaml.value().empty())
 	{
 		ryml::NodeRef index = yaml.value().rootref();
-		index.remove_child(c4::csubstr(entry.data(), entry.length()));
-
-		// Write out the changes
-		SaveYAMLToFile(indexName.c_str(), index);
+		
+		if (index.has_child(c4::csubstr(entry.data(), entry.length())))
+		{
+			index.remove_child(c4::csubstr(entry.data(), entry.length()));
+			// Write out the changes
+			SaveYAMLToFile(indexName.c_str(), index);
+		}
 	}
 }
 
@@ -2101,7 +2099,7 @@ void FileAccessHelper::WriteIndex(const std::string& baseFolderName, MemoryCardF
 			ryml::NodeRef newNode = index[key];
 			newNode |= ryml::MAP;
 			unsigned int maxOrder = 0;
-			for (const ryml::NodeRef& n : index.children())
+			for (const auto& n : index.children())
 			{
 				unsigned int currOrder = 0; // NOTE - this limits the usefulness of making the order an int64
 				if (n.is_map() && n.has_child("order"))
@@ -2350,9 +2348,17 @@ s32 FolderMemoryCardAggregator::Save(uint slot, const u8* src, u32 adr, int size
 	const s32 saveResult = m_cards[slot].Save(src, adr, size);
 	if (saveResult)
 	{
-		const std::string_view filename = Path::GetFileName(m_cards[slot].GetFolderName());
-		Host::AddIconOSDMessage(fmt::format("MemoryCardSave{}", slot), ICON_FA_SD_CARD,
-			fmt::format("Memory card '{}' was saved to storage.", filename), Host::OSD_INFO_DURATION);
+		std::chrono::duration<float> elapsed = std::chrono::system_clock::now() - last;
+		if (elapsed > std::chrono::seconds(5))
+		{
+			const std::string_view filename = Path::GetFileName(m_cards[slot].GetFolderName());
+			Host::AddIconOSDMessage(fmt::format("MemoryCardSave{}", slot), ICON_FA_SD_CARD,
+				fmt::format(TRANSLATE_SV("MemoryCard", "Memory Card '{}' was saved to storage."), filename),
+				Host::OSD_INFO_DURATION);
+
+			last = std::chrono::system_clock::now();
+		}
+		
 	}
 
 	return saveResult;
@@ -2382,5 +2388,7 @@ bool FolderMemoryCardAggregator::ReIndex(uint slot, const bool enableFiltering, 
 		return true;
 	}
 
+	SetFiltering(enableFiltering);
+	m_lastKnownFilter = filter;
 	return false;
 }

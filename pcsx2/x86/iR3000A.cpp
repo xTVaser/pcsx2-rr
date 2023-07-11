@@ -23,11 +23,11 @@
 #include "iR3000A.h"
 #include "R3000A.h"
 #include "BaseblockEx.h"
-#include "System/RecTypes.h"
 #include "R5900OpcodeTables.h"
 #include "IopBios.h"
 #include "IopHw.h"
 #include "Common.h"
+#include "VirtualMemory.h"
 #include "VMManager.h"
 
 #include <time.h>
@@ -283,7 +283,7 @@ static void _DynGen_Dispatchers()
 
 	recBlocks.SetJITCompile(iopJITCompile);
 
-	Perf::any.map((uptr)&iopRecDispatchers, 4096, "IOP Dispatcher");
+	Perf::any.Register((void*)iopRecDispatchers, 4096, "IOP Dispatcher");
 }
 
 ////////////////////////////////////////////////////
@@ -896,7 +896,6 @@ static void recReserve()
 		return;
 
 	recMem = new RecompiledCodeReserve("R3000A Recompiler Cache");
-	recMem->SetProfilerName("IOPrec");
 	recMem->Assign(GetVmMemory().CodeMemory(), HostMemoryMap::IOPrecOffset, 32 * _1mb);
 }
 
@@ -939,8 +938,6 @@ static void recAlloc()
 void recResetIOP()
 {
 	DevCon.WriteLn("iR3000A Recompiler reset.");
-
-	Perf::iop.reset();
 
 	recAlloc();
 	recMem->Reset();
@@ -1005,9 +1002,6 @@ static void recShutdown()
 
 	safe_free(s_pInstCache);
 	s_nInstCacheSize = 0;
-
-	// FIXME Warning thread unsafe
-	Perf::dump();
 }
 
 static void iopClearRecLUT(BASEBLOCK* base, int count)
@@ -1388,7 +1382,18 @@ static void psxRecMemcheck(u32 op, u32 bits, bool store)
 		if (checks[i].result & MEMCHECK_LOG)
 		{
 			xMOV(edx, store);
-			xFastCall((void*)psxDynarecMemLogcheck, ecx, edx);
+
+			// Refer to the EE recompiler for an explaination
+			if(!(checks[i].result & MEMCHECK_BREAK))
+			{
+				xPUSH(eax); xPUSH(ebx); xPUSH(ecx); xPUSH(edx);
+				xFastCall((void*)psxDynarecMemLogcheck, ecx, edx);
+				xPOP(edx); xPOP(ecx); xPOP(ebx); xPOP(eax);
+			}
+			else
+			{
+				xFastCall((void*)psxDynarecMemLogcheck, ecx, edx);
+			}
 		}
 		if (checks[i].result & MEMCHECK_BREAK)
 		{
@@ -1768,7 +1773,7 @@ StartRecomp:
 	pxAssert(xGetPtr() - recPtr < _64kb);
 	s_pCurBlockEx->x86size = xGetPtr() - recPtr;
 
-	Perf::iop.map(s_pCurBlockEx->fnptr, s_pCurBlockEx->x86size, s_pCurBlockEx->startpc);
+	Perf::iop.RegisterPC((void*)s_pCurBlockEx->fnptr, s_pCurBlockEx->x86size, s_pCurBlockEx->startpc);
 
 	recPtr = xGetPtr();
 

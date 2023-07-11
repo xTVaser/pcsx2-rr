@@ -53,8 +53,6 @@ bool GSDevice11::CreateTextureFX()
 
 	SetupVS(sel, &cb);
 
-	SetupGS(GSSelector(1));
-
 	//
 
 	return true;
@@ -68,11 +66,13 @@ void GSDevice11::SetupVS(VSSelector sel, const GSHWDrawConfig::VSConstantBuffer*
 	{
 		ShaderMacro sm(m_shader_cache.GetFeatureLevel());
 
+		sm.AddMacro("VERTEX_SHADER", 1);
 		sm.AddMacro("VS_TME", sel.tme);
 		sm.AddMacro("VS_FST", sel.fst);
 		sm.AddMacro("VS_IIP", sel.iip);
+		sm.AddMacro("VS_EXPAND", static_cast<int>(sel.expand));
 
-		D3D11_INPUT_ELEMENT_DESC layout[] =
+		static constexpr const D3D11_INPUT_ELEMENT_DESC layout[] =
 		{
 			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 			{"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UINT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
@@ -84,8 +84,16 @@ void GSDevice11::SetupVS(VSSelector sel, const GSHWDrawConfig::VSConstantBuffer*
 		};
 
 		GSVertexShader11 vs;
-		m_shader_cache.GetVertexShaderAndInputLayout(m_dev.get(),
-			vs.vs.put(), vs.il.put(), layout, std::size(layout), m_tfx_source, sm.GetPtr(), "vs_main");
+		if (sel.expand == GSHWDrawConfig::VSExpand::None)
+		{
+			m_shader_cache.GetVertexShaderAndInputLayout(m_dev.get(), vs.vs.put(), vs.il.put(), layout,
+				std::size(layout), m_tfx_source, sm.GetPtr(), "vs_main");
+		}
+		else
+		{
+			vs.vs = m_shader_cache.GetVertexShader(m_dev.get(), m_tfx_source, sm.GetPtr(), "vs_main_expand");
+		}
+
 		i = m_vs.try_emplace(sel.key, std::move(vs)).first;
 	}
 
@@ -99,37 +107,6 @@ void GSDevice11::SetupVS(VSSelector sel, const GSHWDrawConfig::VSConstantBuffer*
 	IASetInputLayout(i->second.il.get());
 }
 
-void GSDevice11::SetupGS(GSSelector sel)
-{
-	wil::com_ptr_nothrow<ID3D11GeometryShader> gs;
-
-	// Geometry shader is disabled if sprite conversion is done on the cpu (sel.cpu_sprite).
-	if (sel.expand)
-	{
-		const auto i = std::as_const(m_gs).find(sel.key);
-
-		if (i != m_gs.end())
-		{
-			gs = i->second;
-		}
-		else
-		{
-			ShaderMacro sm(m_shader_cache.GetFeatureLevel());
-
-			sm.AddMacro("GS_IIP", sel.iip);
-			sm.AddMacro("GS_PRIM", static_cast<int>(sel.topology));
-			sm.AddMacro("GS_EXPAND", sel.expand);
-			sm.AddMacro("GS_FORWARD_PRIMID", sel.forward_primid);
-
-			gs = m_shader_cache.GetGeometryShader(m_dev.get(), m_tfx_source, sm.GetPtr(), "gs_main");
-
-			m_gs[sel.key] = gs;
-		}
-	}
-
-	GSSetShader(gs.get(), m_vs_cb.get());
-}
-
 void GSDevice11::SetupPS(const PSSelector& sel, const GSHWDrawConfig::PSConstantBuffer* cb, PSSamplerSelector ssel)
 {
 	auto i = std::as_const(m_ps).find(sel);
@@ -138,10 +115,12 @@ void GSDevice11::SetupPS(const PSSelector& sel, const GSHWDrawConfig::PSConstant
 	{
 		ShaderMacro sm(m_shader_cache.GetFeatureLevel());
 
-		sm.AddMacro("PS_SCALE_FACTOR", StringUtil::ToChars(GSConfig.UpscaleMultiplier));
+		sm.AddMacro("PIXEL_SHADER", 1);
 		sm.AddMacro("PS_FST", sel.fst);
 		sm.AddMacro("PS_WMS", sel.wms);
 		sm.AddMacro("PS_WMT", sel.wmt);
+		sm.AddMacro("PS_ADJS", sel.adjs);
+		sm.AddMacro("PS_ADJT", sel.adjt);
 		sm.AddMacro("PS_AEM_FMT", sel.aem_fmt);
 		sm.AddMacro("PS_AEM", sel.aem);
 		sm.AddMacro("PS_TFX", sel.tfx);
@@ -150,21 +129,23 @@ void GSDevice11::SetupPS(const PSSelector& sel, const GSHWDrawConfig::PSConstant
 		sm.AddMacro("PS_ATST", sel.atst);
 		sm.AddMacro("PS_FOG", sel.fog);
 		sm.AddMacro("PS_IIP", sel.iip);
-		sm.AddMacro("PS_CLR_HW", sel.clr_hw);
+		sm.AddMacro("PS_BLEND_HW", sel.blend_hw);
+		sm.AddMacro("PS_A_MASKED", sel.a_masked);
 		sm.AddMacro("PS_FBA", sel.fba);
 		sm.AddMacro("PS_FBMASK", sel.fbmask);
 		sm.AddMacro("PS_LTF", sel.ltf);
 		sm.AddMacro("PS_TCOFFSETHACK", sel.tcoffsethack);
 		sm.AddMacro("PS_POINT_SAMPLER", sel.point_sampler);
+		sm.AddMacro("PS_REGION_RECT", sel.region_rect);
 		sm.AddMacro("PS_SHUFFLE", sel.shuffle);
 		sm.AddMacro("PS_READ_BA", sel.read_ba);
+		sm.AddMacro("PS_READ16_SRC", sel.real16src);
 		sm.AddMacro("PS_CHANNEL_FETCH", sel.channel);
 		sm.AddMacro("PS_TALES_OF_ABYSS_HLE", sel.tales_of_abyss_hle);
 		sm.AddMacro("PS_URBAN_CHAOS_HLE", sel.urban_chaos_hle);
 		sm.AddMacro("PS_DFMT", sel.dfmt);
 		sm.AddMacro("PS_DEPTH_FMT", sel.depth_fmt);
 		sm.AddMacro("PS_PAL_FMT", sel.pal_fmt);
-		sm.AddMacro("PS_INVALID_TEX0", sel.invalid_tex0);
 		sm.AddMacro("PS_HDR", sel.hdr);
 		sm.AddMacro("PS_COLCLIP", sel.colclip);
 		sm.AddMacro("PS_BLEND_A", sel.blend_a);
@@ -172,6 +153,7 @@ void GSDevice11::SetupPS(const PSSelector& sel, const GSHWDrawConfig::PSConstant
 		sm.AddMacro("PS_BLEND_C", sel.blend_c);
 		sm.AddMacro("PS_BLEND_D", sel.blend_d);
 		sm.AddMacro("PS_BLEND_MIX", sel.blend_mix);
+		sm.AddMacro("PS_ROUND_INV", sel.round_inv);
 		sm.AddMacro("PS_FIXED_ONE_A", sel.fixed_one_a);
 		sm.AddMacro("PS_PABE", sel.pabe);
 		sm.AddMacro("PS_DITHER", sel.dither);

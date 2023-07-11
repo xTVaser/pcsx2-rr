@@ -46,28 +46,32 @@ public:
 	BIOSSettingsWidget(SettingsDialog* dialog, QWidget* parent);
 	~BIOSSettingsWidget();
 
-private Q_SLOTS:
-	void refreshList();
-
-	void listItemChanged(const QTreeWidgetItem* current, const QTreeWidgetItem* previous);
-	void listRefreshed(const QVector<BIOSInfo>& items);
-
-private:
-	Ui::BIOSSettingsWidget m_ui;
-
 	class RefreshThread final : public QThread
 	{
 	public:
-		RefreshThread(BIOSSettingsWidget* parent, const QString& directory);
+		RefreshThread(QWidget* parent, const QString& directory);
 		~RefreshThread();
 
 	protected:
 		void run() override;
 
 	private:
-		BIOSSettingsWidget* m_parent;
 		QString m_directory;
 	};
+
+	static void populateList(QTreeWidget* list, const QVector<BIOSInfo>& items);
+
+private Q_SLOTS:
+	void refreshList();
+
+	void listItemChanged(const QTreeWidgetItem* current, const QTreeWidgetItem* previous);
+	void listRefreshed(const QVector<BIOSInfo>& items);
+
+	void fastBootChanged();
+
+private:
+	Ui::BIOSSettingsWidget m_ui;
+	SettingsDialog* m_dialog;
 
 	RefreshThread* m_refresh_thread = nullptr;
 };

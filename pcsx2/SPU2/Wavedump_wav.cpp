@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2020  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -91,40 +91,3 @@ namespace WaveDump
 } // namespace WaveDump
 
 #endif // PCSX2_DEVBUILD
-
-bool WavRecordEnabled = false;
-
-static std::unique_ptr<Common::WAVWriter> m_wavrecord;
-static std::mutex WavRecordMutex;
-
-bool RecordStart(const std::string* filename)
-{
-	std::unique_lock lock(WavRecordMutex);
-	m_wavrecord.reset();
-	m_wavrecord = std::make_unique<Common::WAVWriter>();
-	if (!m_wavrecord->Open(m_wavrecord ? filename->c_str() : "audio_recording.wav", SampleRate, 2))
-	{
-		Console.Error("SPU2 couldn't open file for recording: %s.\nWavfile capture disabled.", filename ? filename->c_str() : "audio_recording.wav");
-		m_wavrecord.reset();
-		WavRecordEnabled = false;
-		return false;
-	}
-
-	WavRecordEnabled = true;
-	return true;
-}
-
-void RecordStop()
-{
-	std::unique_lock lock(WavRecordMutex);
-	WavRecordEnabled = false;
-	m_wavrecord.reset();
-}
-
-void RecordWrite(const StereoOut16& sample)
-{
-	std::unique_lock lock(WavRecordMutex);
-	if (!m_wavrecord)
-		return;
-	m_wavrecord->WriteFrames(reinterpret_cast<const s16*>(&sample), 2);
-}

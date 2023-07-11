@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2021  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -28,8 +28,6 @@ static const s32 tbl_XA_Factor[16][2] =
 		{98, -55},
 		{122, -60}};
 
-float SPU2::FinalVolume = 1.0f;
-
 // Performs a 64-bit multiplication between two values and returns the
 // high 32 bits as a result (discarding the fractional 32 bits).
 // The combined fractional bits of both inputs must be 32 bits for this
@@ -45,33 +43,17 @@ float SPU2::FinalVolume = 1.0f;
 //
 static __forceinline s32 MulShr32(s32 srcval, s32 mulval)
 {
-	return (s64)srcval * mulval >> 32;
+	return static_cast<s64>(srcval) * mulval >> 32;
 }
 
-__forceinline s32 clamp_mix(s32 x, u8 bitshift)
+__forceinline s32 clamp_mix(s32 x)
 {
-	assert(bitshift <= 15);
-	return std::clamp(x, -(0x8000 << bitshift), 0x7fff << bitshift);
+	return std::clamp(x, -0x8000, 0x7fff);
 }
 
-#if _MSC_VER
-__forceinline
-// Without the keyword static, gcc compilation fails on the inlining...
-// Unfortunately the function is also used in Reverb.cpp. In order to keep the code
-// clean we just disable it.
-// We will need link-time code generation / Whole Program optimization to do a clean
-// inline. Gcc 4.5 has the experimental options -flto, -fwhopr and -fwhole-program to
-// do it but it still experimental...
-#endif
-	StereoOut32
-	clamp_mix(const StereoOut32& sample, u8 bitshift)
+__forceinline StereoOut32 clamp_mix(StereoOut32 sample)
 {
-	// We should clampify between -0x8000 and 0x7fff, however some audio output
-	// modules or sound drivers could (will :p) overshoot with that. So giving it a small safety.
-
-	return StereoOut32(
-		std::clamp(sample.Left, -(0x7f00 << bitshift), 0x7f00 << bitshift),
-		std::clamp(sample.Right, -(0x7f00 << bitshift), 0x7f00 << bitshift));
+	return StereoOut32(clamp_mix(sample.Left), clamp_mix(sample.Right));
 }
 
 static void __forceinline XA_decode_block(s16* buffer, const s16* block, s32& prev1, s32& prev2)
@@ -131,7 +113,7 @@ static void __forceinline IncrementNextA(V_Core& thiscore, uint voiceidx)
 // decoded pcm data, used to cache the decoded data so that it needn't be decoded
 // multiple times.  Cache chunks are decoded when the mixer requests the blocks, and
 // invalided when DMA transfers and memory writes are performed.
-PcmCacheEntry* pcm_cache_data = nullptr;
+PcmCacheEntry pcm_cache_data[pcm_BlockCount];
 
 int g_counter_cache_hits = 0;
 int g_counter_cache_misses = 0;
@@ -692,16 +674,9 @@ __forceinline
 	}
 	else
 	{
-		Out.Left = MulShr32(Out.Left << SndOutVolumeShift, Cores[1].MasterVol.Left.Value);
-		Out.Right = MulShr32(Out.Right << SndOutVolumeShift, Cores[1].MasterVol.Right.Value);
-
-		
-		
+		Out.Left = MulShr32(Out.Left, Cores[1].MasterVol.Left.Value);
+		Out.Right = MulShr32(Out.Right, Cores[1].MasterVol.Right.Value);
 	}
-
-	// Configurable output volume
-	Out.Left *= SPU2::FinalVolume;
-	Out.Right *= SPU2::FinalVolume;
 
 	// Final Clamp!
 	// Like any good audio system, the PS2 pumps the volume and incurs some distortion in its
@@ -711,12 +686,9 @@ __forceinline
 	// Edit: I'm sorry Jake, but I know of no good audio system that arbitrary distorts and clips
 	// output by design.
 	// Good thing though that this code gets the volume exactly right, as per tests :)
-	Out = clamp_mix(Out, SndOutVolumeShift);
+	Out = clamp_mix(Out);
 
-	SndBuffer::Write(Out);
-
-	if (SampleRate == 96000) // Double up samples for 96khz (Port Audio Non-Exclusive)
-		SndBuffer::Write(Out);
+	SndBuffer::Write(StereoOut16(Out));
 
 	// Update AutoDMA output positioning
 	OutPos++;
@@ -742,14 +714,4 @@ __forceinline
 					g_counter_cache_ignores = 0;
 		}
 	}
-}
-
-s32 SPU2::GetOutputVolume()
-{
-	return static_cast<s32>(std::round(FinalVolume * 100.0f));
-}
-
-void SPU2::SetOutputVolume(s32 volume)
-{
-	FinalVolume = static_cast<float>(std::clamp<s32>(volume, 0, Pcsx2Config::SPU2Options::MAX_VOLUME)) / 100.0f;
 }

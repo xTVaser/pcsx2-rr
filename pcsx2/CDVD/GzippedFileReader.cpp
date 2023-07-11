@@ -14,15 +14,18 @@
 */
 
 #include "PrecompiledHeader.h"
-#include <fstream>
-#include "common/FileSystem.h"
-#include "common/Path.h"
-#include "common/StringUtil.h"
+
 #include "Config.h"
 #include "ChunksCache.h"
 #include "GzippedFileReader.h"
-#include "HostSettings.h"
-#include "zlib_indexed.h"
+#include "Host.h"
+#include "CDVD/zlib_indexed.h"
+
+#include "common/FileSystem.h"
+#include "common/Path.h"
+#include "common/StringUtil.h"
+
+#include <fstream>
 
 #define CLAMP(val, minval, maxval) (std::min(maxval, std::max(minval, val)))
 
@@ -293,7 +296,7 @@ bool GzippedFileReader::OkIndex()
 	Console.Warning("This may take a while (but only once). Scanning compressed file to generate a quick access index...");
 
 	const s64 prevoffset = FileSystem::FTell64(m_src);
-	Access* index;
+	Access* index = nullptr;
 	int len = build_index(m_src, GZFILE_SPAN_DEFAULT, &index);
 	printf("\n"); // build_index prints progress without \n's
 	FileSystem::FSeek64(m_src, prevoffset, SEEK_SET);

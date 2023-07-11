@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2022  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023 PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -14,17 +14,17 @@
  */
 
 #include "PrecompiledHeader.h"
+
+#include "GS/GS.h"
+#include "Host.h"
+#include "Input/InputManager.h"
+#include "StateWrapper.h"
+#include "USB/USB.h"
 #include "USB/deviceproxy.h"
+#include "USB/qemu-usb/USBinternal.h"
 #include "USB/qemu-usb/desc.h"
 #include "USB/usb-lightgun/guncon2.h"
-#include "USB/qemu-usb/USBinternal.h"
-#include "USB/USB.h"
-#include "GS/GS.h"
-#include "HostDisplay.h"
-#include "StateWrapper.h"
 #include "VMManager.h"
-
-#include "Frontend/InputManager.h"
 
 #include <tuple>
 
@@ -34,7 +34,8 @@ namespace usb_lightgun
 	{
 		GUNCON2_FLAG_PROGRESSIVE = 0x0100,
 
-		GUNCON2_CALIBRATION_DELAY = 9
+		GUNCON2_CALIBRATION_DELAY = 12,
+		GUNCON2_CALIBRATION_REPORT_DELAY = 5,
 	};
 
 	enum : u32
@@ -71,11 +72,13 @@ namespace usb_lightgun
 		{"SLUS-20485", 90.25f, 92.5f, 390, 132, 640, 240}, // Dino Stalker (U)
 		{"SLUS-20389", 89.25f, 93.5f, 422, 141, 640, 240}, // Endgame (U)
 		{"SLES-50936", 112.0f, 100.0f, 320, 120, 512, 256}, // Endgame (E) (Guncon2 needs to be connected to USB port 2)
+		{"SLPM-65139", 90.0f, 91.5f, 320, 120, 640, 240}, // Gun Survivor 3: Dino Crisis (J)
 		{"SLES-52620", 89.5f, 112.3f, 390, 147, 640, 256}, // Guncom 2 (E)
 		{"SLES-51289", 84.5f, 89.0f, 456, 164, 640, 256}, // Gunfighter 2 - Jesse James (E)
 		{"SLPS-25165", 90.25f, 98.0f, 390, 138, 640, 240}, // Gunvari Collection (J) (480i)
 		// {"SLPS-25165", 86.75f, 96.0f, 454, 164, 640, 256}, // Gunvari Collection (J) (480p)
 		{"SCES-50889", 90.25f, 94.5f, 390, 169, 640, 256}, // Ninja Assault (E)
+		{"SLPS-20218", 90.0f, 92.0f, 320, 134, 640, 240}, // Ninja Assault (J)
 		{"SLUS-20492", 90.25f, 92.5f, 390, 132, 640, 240}, // Ninja Assault (U)
 		{"SLES-50650", 84.75f, 96.0f, 454, 164, 640, 240}, // Resident Evil Survivor 2 (E)
 		{"SLES-51448", 90.25f, 95.0f, 420, 132, 640, 240}, // Resident Evil - Dead Aim (E)
@@ -89,13 +92,14 @@ namespace usb_lightgun
 		{"SLUS-20927", 90.25f, 99.0f, 390, 153, 640, 240}, // Time Crisis - Crisis Zone (U) (480i)
 		// {"SLUS-20927", 94.5f, 104.75f, 423, 407, 768, 768}, // Time Crisis - Crisis Zone (U) (480p)
 		{"SCES-50411", 89.8f, 99.9f, 421, 138, 640, 256}, // Vampire Night (E)
+		{"SLPS-25077", 90.0f, 97.5f, 422, 118, 640, 240}, // Vampire Night (J)
 		{"SLUS-20221", 89.8f, 102.5f, 422, 124, 640, 228}, // Vampire Night (U)
 		{"SLES-51229", 110.15f, 100.0f, 433, 159, 512, 256}, // Virtua Cop - Elite Edition (E,J) (480i)
 		// {"SLES-51229", 85.75f, 92.0f, 456, 164, 640, 256}, // Virtua Cop - Elite Edition (E,J) (480p)
 	};
 
 	static constexpr s32 DEFAULT_SCREEN_WIDTH = 640;
-	static constexpr s32 DEFAULT_SCREEN_HEIGHT = 480;
+	static constexpr s32 DEFAULT_SCREEN_HEIGHT = 240;
 	static constexpr float DEFAULT_CENTER_X = 320.0f;
 	static constexpr float DEFAULT_CENTER_Y = 120.0f;
 	static constexpr float DEFAULT_SCALE_X = 100.0f;
@@ -286,7 +290,7 @@ namespace usb_lightgun
 						out.pos_y = us->calibration_pos_y;
 						us->calibration_timer--;
 
-						if (us->calibration_timer == 0)
+						if (us->calibration_timer < GUNCON2_CALIBRATION_REPORT_DELAY)
 						{
 							out.pos_x = 0;
 							out.pos_y = 0;
@@ -329,7 +333,7 @@ namespace usb_lightgun
 
 	void GunCon2State::AutoConfigure()
 	{
-		const std::string serial(VMManager::GetGameSerial());
+		const std::string serial = VMManager::GetDiscSerial();
 		for (const GameConfig& gc : s_game_config)
 		{
 			if (serial != gc.serial)
@@ -359,7 +363,7 @@ namespace usb_lightgun
 		GSTranslateWindowToDisplayCoordinates(abs_pos.first, abs_pos.second, &pointer_x, &pointer_y);
 
 		s16 pos_x, pos_y;
-		if (pointer_x < 0.0f || pointer_y < 0.0f || (button_state & BID_SHOOT_OFFSCREEN))
+		if (pointer_x < 0.0f || pointer_y < 0.0f)
 		{
 			// off-screen
 			pos_x = 0;
@@ -401,7 +405,7 @@ namespace usb_lightgun
 
 	const char* GunCon2Device::Name() const
 	{
-		return "GunCon 2";
+		return TRANSLATE_NOOP("USB", "GunCon 2");
 	}
 
 	const char* GunCon2Device::TypeName() const
@@ -478,21 +482,21 @@ namespace usb_lightgun
 	{
 		static constexpr const InputBindingInfo bindings[] = {
 			//{"pointer", "Pointer/Aiming", InputBindingInfo::Type::Pointer, BID_POINTER_X, GenericInputBinding::Unknown},
-			{"Up", "D-Pad Up", InputBindingInfo::Type::Button, BID_DPAD_UP, GenericInputBinding::DPadUp},
-			{"Down", "D-Pad Down", InputBindingInfo::Type::Button, BID_DPAD_DOWN, GenericInputBinding::DPadDown},
-			{"Left", "D-Pad Left", InputBindingInfo::Type::Button, BID_DPAD_LEFT, GenericInputBinding::DPadLeft},
-			{"Right", "D-Pad Right", InputBindingInfo::Type::Button, BID_DPAD_RIGHT,
+			{"Up", TRANSLATE_NOOP("USB", "D-Pad Up"), InputBindingInfo::Type::Button, BID_DPAD_UP, GenericInputBinding::DPadUp},
+			{"Down", TRANSLATE_NOOP("USB", "D-Pad Down"), InputBindingInfo::Type::Button, BID_DPAD_DOWN, GenericInputBinding::DPadDown},
+			{"Left", TRANSLATE_NOOP("USB", "D-Pad Left"), InputBindingInfo::Type::Button, BID_DPAD_LEFT, GenericInputBinding::DPadLeft},
+			{"Right", TRANSLATE_NOOP("USB", "D-Pad Right"), InputBindingInfo::Type::Button, BID_DPAD_RIGHT,
 				GenericInputBinding::DPadRight},
-			{"Trigger", "Trigger", InputBindingInfo::Type::Button, BID_TRIGGER, GenericInputBinding::R2},
-			{"ShootOffscreen", "Shoot Offscreen", InputBindingInfo::Type::Button, BID_SHOOT_OFFSCREEN,
+			{"Trigger", TRANSLATE_NOOP("USB", "Trigger"), InputBindingInfo::Type::Button, BID_TRIGGER, GenericInputBinding::R2},
+			{"ShootOffscreen", TRANSLATE_NOOP("USB", "Shoot Offscreen"), InputBindingInfo::Type::Button, BID_SHOOT_OFFSCREEN,
 				GenericInputBinding::R1},
-			{"Recalibrate", "Calibration Shot", InputBindingInfo::Type::Button, BID_RECALIBRATE,
+			{"Recalibrate", TRANSLATE_NOOP("USB", "Calibration Shot"), InputBindingInfo::Type::Button, BID_RECALIBRATE,
 				GenericInputBinding::Unknown},
-			{"A", "A", InputBindingInfo::Type::Button, BID_A, GenericInputBinding::Cross},
-			{"B", "B", InputBindingInfo::Type::Button, BID_B, GenericInputBinding::Circle},
-			{"C", "C", InputBindingInfo::Type::Button, BID_C, GenericInputBinding::Triangle},
-			{"Select", "Select", InputBindingInfo::Type::Button, BID_SELECT, GenericInputBinding::Select},
-			{"Start", "Start", InputBindingInfo::Type::Button, BID_START, GenericInputBinding::Start},
+			{"A", TRANSLATE_NOOP("USB", "A"), InputBindingInfo::Type::Button, BID_A, GenericInputBinding::Cross},
+			{"B", TRANSLATE_NOOP("USB", "B"), InputBindingInfo::Type::Button, BID_B, GenericInputBinding::Circle},
+			{"C", TRANSLATE_NOOP("USB", "C"), InputBindingInfo::Type::Button, BID_C, GenericInputBinding::Triangle},
+			{"Select", TRANSLATE_NOOP("USB", "Select"), InputBindingInfo::Type::Button, BID_SELECT, GenericInputBinding::Select},
+			{"Start", TRANSLATE_NOOP("USB", "Start"), InputBindingInfo::Type::Button, BID_START, GenericInputBinding::Start},
 		};
 
 		return bindings;
@@ -501,23 +505,28 @@ namespace usb_lightgun
 	gsl::span<const SettingInfo> GunCon2Device::Settings(u32 subtype) const
 	{
 		static constexpr const SettingInfo info[] = {
-			{SettingInfo::Type::Boolean, "custom_config", "Manual Screen Configuration",
-				"Forces the use of the screen parameters below, instead of automatic parameters if available.",
+			{SettingInfo::Type::Boolean, "custom_config", TRANSLATE_NOOP("USB", "Manual Screen Configuration"),
+				TRANSLATE_NOOP("USB",
+					"Forces the use of the screen parameters below, instead of automatic parameters if available."),
 				"false"},
-			{SettingInfo::Type::Float, "scale_x", "X Scale (Sensitivity)",
+			{SettingInfo::Type::Float, "scale_x", TRANSLATE_NOOP("USB", "X Scale (Sensitivity)"),
 				"Scales the position to simulate CRT curvature.", "100", "0", "200", "0.1", "%.2f%%", nullptr, nullptr,
 				1.0f},
-			{SettingInfo::Type::Float, "scale_y", "Y Scale (Sensitivity)",
+			{SettingInfo::Type::Float, "scale_y", TRANSLATE_NOOP("USB", "Y Scale (Sensitivity)"),
 				"Scales the position to simulate CRT curvature.", "100", "0", "200", "0.1", "%.2f%%", nullptr, nullptr,
 				1.0f},
-			{SettingInfo::Type::Float, "center_x", "Center X", "Sets the center position of the simulated screen.",
-				"320", "0", "1024", "1", "%.0fpx", nullptr, nullptr, 1.0f},
-			{SettingInfo::Type::Float, "center_y", "Center Y", "Sets the center position of the simulated screen.",
-				"120", "0", "1024", "1", "%.0fpx", nullptr, nullptr, 1.0f},
-			{SettingInfo::Type::Integer, "screen_width", "Screen Width", "Sets the width of the simulated screen.",
-				"640", "1", "1024", "1", "%dpx", nullptr, nullptr, 1.0f},
-			{SettingInfo::Type::Integer, "screen_height", "Screen Height", "Sets the height of the simulated screen.",
-				"240", "1", "1024", "1", "%dpx", nullptr, nullptr, 1.0f},
+			{SettingInfo::Type::Float, "center_x", TRANSLATE_NOOP("USB", "Center X"),
+				TRANSLATE_NOOP("USB", "Sets the horizontal center position of the simulated screen."), "320", "0",
+				"1024", "1", "%.0fpx", nullptr, nullptr, 1.0f},
+			{SettingInfo::Type::Float, "center_y", TRANSLATE_NOOP("USB", "Center Y"),
+				TRANSLATE_NOOP("USB", "Sets the vertical center position of the simulated screen."), "120", "0", "1024",
+				"1", "%.0fpx", nullptr, nullptr, 1.0f},
+			{SettingInfo::Type::Integer, "screen_width", TRANSLATE_NOOP("USB", "Screen Width"),
+				TRANSLATE_NOOP("USB", "Sets the width of the simulated screen."), "640", "1", "1024", "1", "%dpx",
+				nullptr, nullptr, 1.0f},
+			{SettingInfo::Type::Integer, "screen_height", TRANSLATE_NOOP("USB", "Screen Height"),
+				TRANSLATE_NOOP("USB", "Sets the height of the simulated screen."), "240", "1", "1024", "1", "%dpx",
+				nullptr, nullptr, 1.0f},
 		};
 		return info;
 	}

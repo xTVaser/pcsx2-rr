@@ -19,7 +19,7 @@
 #include <QtWidgets/QMessageBox>
 #include <limits>
 
-#include "pcsx2/HostSettings.h"
+#include "pcsx2/Host.h"
 
 #include "EmulationSettingsWidget.h"
 #include "QtUtils.h"
@@ -64,9 +64,29 @@ EmulationSettingsWidget::EmulationSettingsWidget(SettingsDialog* dialog, QWidget
 				   .arg(m_ui.eeCycleRate->itemText(
 					   std::clamp(Host::GetBaseIntSettingValue("EmuCore/Speedhacks", "EECycleRate", DEFAULT_EE_CYCLE_RATE) - MINIMUM_EE_CYCLE_RATE,
 						   0, MAXIMUM_EE_CYCLE_RATE - MINIMUM_EE_CYCLE_RATE))));
+
+		// Disable cheats, use the cheats panel instead (move fastcvd up in its spot).
+		const int count = m_ui.systemSettingsLayout->count();
+		for (int i = 0; i < count; i++)
+		{
+			QLayoutItem* item = m_ui.systemSettingsLayout->itemAt(i);
+			if (item && item->widget() == m_ui.cheats)
+			{
+				int row, col, rowSpan, colSpan;
+				m_ui.systemSettingsLayout->getItemPosition(i, &row, &col, &rowSpan, &colSpan);
+				delete m_ui.systemSettingsLayout->takeAt(i);
+				m_ui.systemSettingsLayout->removeWidget(m_ui.fastCDVD);
+				m_ui.systemSettingsLayout->addWidget(m_ui.fastCDVD, row, col);
+				delete m_ui.cheats;
+				m_ui.cheats = nullptr;
+				break;
+			}
+		}
 	}
 	else
 	{
+		SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.cheats, "EmuCore", "EnableCheats", false);
+
 		// Allow for FastCDVD for per-game settings only
 		m_ui.systemSettingsLayout->removeWidget(m_ui.fastCDVD);
 		m_ui.fastCDVD->deleteLater();
@@ -84,32 +104,35 @@ EmulationSettingsWidget::EmulationSettingsWidget(SettingsDialog* dialog, QWidget
 		m_dialog->setIntSettingValue("EmuCore/Speedhacks", "EECycleRate", value);
 	});
 
-	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.cheats, "EmuCore", "EnableCheats", false);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.hostFilesystem, "EmuCore", "HostFs", false);
 
 	dialog->registerWidgetHelp(m_ui.normalSpeed, tr("Normal Speed"), "100%",
 		tr("Sets the target emulation speed. It is not guaranteed that this speed will be reached, "
 		   "and if not, the emulator will run as fast as it can manage."));
-	dialog->registerWidgetHelp(m_ui.fastForwardSpeed, tr("Fast Forward Speed"), tr("User Preference"),
-		tr("Sets the fast forward speed. This speed will be used when the fast forward hotkey is pressed/toggled."));
-	dialog->registerWidgetHelp(m_ui.slowMotionSpeed, tr("Slow Motion Speed"), tr("User Preference"),
-		tr("Sets the slow motion speed. This speed will be used when the slow motion hotkey is pressed/toggled."));	
+	//: The "User Preference" string will appear after the text "Recommended Value:"
+	dialog->registerWidgetHelp(m_ui.fastForwardSpeed, tr("Fast-Forward Speed"), tr("User Preference"),
+		tr("Sets the fast-forward speed. This speed will be used when the fast-forward hotkey is pressed/toggled."));
+	//: The "User Preference" string will appear after the text "Recommended Value:"
+	dialog->registerWidgetHelp(m_ui.slowMotionSpeed, tr("Slow-Motion Speed"), tr("User Preference"),
+		tr("Sets the slow-motion speed. This speed will be used when the slow-motion hotkey is pressed/toggled."));	
 	dialog->registerWidgetHelp(m_ui.speedLimiter, tr("Speed Limiter"), tr("Checked"),
 		tr("Limits the emulation to the appropriate framerate for the currently running game."));
 
-	dialog->registerWidgetHelp(m_ui.eeCycleRate, tr("Cycle Rate"), tr("100% (Normal Speed)"),
+	dialog->registerWidgetHelp(m_ui.eeCycleRate, tr("EE Cycle Rate"), tr("100% (Normal Speed)"),
 		tr("Higher values may increase internal framerate in games, but will increase CPU requirements substantially. "
 		   "Lower values will reduce the CPU load allowing lightweight games to run full speed on weaker CPUs."));
-	dialog->registerWidgetHelp(m_ui.eeCycleSkipping, tr("Cycle Skip"), tr("Disabled"),
+	dialog->registerWidgetHelp(m_ui.eeCycleSkipping, tr("EE Cycle Skip"), tr("Disabled"),
 		tr("Makes the emulated Emotion Engine skip cycles. "
+		   //: SOTC = Shadow of the Colossus. A game's title, should not be translated unless an official translation exists.
 		   "Helps a small subset of games like SOTC. Most of the time it's harmful to performance."));
 	dialog->registerWidgetHelp(m_ui.affinityControl, tr("Affinity Control"), tr("Disabled"),
 		tr("Sets the priority for specific threads in a specific order ignoring the system scheduler. "
-		   "May help CPUs with big (P) and little (E) cores (e.g. Intel 12th or newer generation CPUs from Intel or other vendors such as AMD)"));
-	dialog->registerWidgetHelp(m_ui.MTVU, tr("MTVU (Multi-threaded VU1)"), tr("Checked"),
-		tr("Generally a speedup on CPUs with 3 or more threads. "
+		   //: P-Core = Performance Core, E-Core = Efficiency Core. See if Intel has official translations for these terms.
+		   "May help CPUs with big (P) and little (E) cores (e.g. Intel 12th or newer generation CPUs from Intel or other vendors such as AMD)."));
+	dialog->registerWidgetHelp(m_ui.MTVU, tr("Enable Multithreaded VU1 (MTVU1)"), tr("Checked"),
+		tr("Generally a speedup on CPUs with 4 or more cores. "
 		   "Safe for most games, but a few are incompatible and may hang."));
-	dialog->registerWidgetHelp(m_ui.instantVU1, tr("Instant VU1"), tr("Checked"),
+	dialog->registerWidgetHelp(m_ui.instantVU1, tr("Enable Instant VU1"), tr("Checked"),
 		tr("Runs VU1 instantly. Provides a modest speed improvement in most games. "
 		   "Safe for most games, but a few games may exhibit graphical errors."));
 	dialog->registerWidgetHelp(m_ui.fastCDVD, tr("Enable Fast CDVD"), tr("Unchecked"),
@@ -120,8 +143,8 @@ EmulationSettingsWidget::EmulationSettingsWidget(SettingsDialog* dialog, QWidget
 		tr("Allows games and homebrew to access files / folders directly on the host computer."));
 
 	dialog->registerWidgetHelp(m_ui.optimalFramePacing, tr("Optimal Frame Pacing"), tr("Unchecked"),
-		tr("Sets the vsync queue size to 0, making every frame be completed and presented by the GS before input is polled, and the next frame begins. "
-		   "Using this setting can reduce input lag, at the cost of measurably higher CPU and GPU requirements."));
+		tr("Sets the VSync queue size to 0, making every frame be completed and presented by the GS before input is polled and the next frame begins. "
+		   "Using this setting can reduce input lag at the cost of measurably higher CPU and GPU requirements."));
 	dialog->registerWidgetHelp(m_ui.maxFrameLatency, tr("Maximum Frame Latency"), tr("2 Frames"),
 		tr("Sets the maximum number of frames that can be queued up to the GS, before the CPU thread will wait for one of them to complete before continuing. "
 		   "Higher values can assist with smoothing out irregular frame times, but add additional input lag."));
@@ -161,9 +184,11 @@ void EmulationSettingsWidget::initializeSpeedCombo(QComboBox* cb, const char* se
 			QVariant(static_cast<float>(speed) / 100.0f));
 	}
 
+	//: Every case that uses this particular string seems to refer to speeds: Normal Speed/Fast Forward Speed/Slow Motion Speed.
 	cb->addItem(tr("Unlimited"), QVariant(0.0f));
 
 	const int custom_index = cb->count();
+	//: Every case that uses this particular string seems to refer to speeds: Normal Speed/Fast Forward Speed/Slow Motion Speed.
 	cb->addItem(tr("Custom"));
 
 	if (const int index = cb->findData(QVariant(value)); index >= 0)

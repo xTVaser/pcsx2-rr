@@ -42,6 +42,8 @@
 // this is a #define instead of a variable to avoid warnings from non-literal format strings
 #define TEXTURE_FILENAME_FORMAT_STRING "%" PRIx64 "-%08x"
 #define TEXTURE_FILENAME_CLUT_FORMAT_STRING "%" PRIx64 "-%" PRIx64 "-%08x"
+#define TEXTURE_FILENAME_REGION_FORMAT_STRING "%" PRIx64 "-r%" PRIx64 "-" "-%08x"
+#define TEXTURE_FILENAME_REGION_CLUT_FORMAT_STRING "%" PRIx64 "-%" PRIx64 "-r%" PRIx64 "-%08x"
 #define TEXTURE_REPLACEMENT_SUBDIRECTORY_NAME "replacements"
 #define TEXTURE_DUMP_SUBDIRECTORY_NAME "dumps"
 
@@ -51,6 +53,7 @@ namespace
 	{
 		u64 TEX0Hash;
 		u64 CLUTHash;
+		GSTextureCache::SourceRegion region;
 
 		union
 		{
@@ -68,25 +71,28 @@ namespace
 		};
 		u32 miplevel;
 
-		__fi u32 Width() const { return (1u << TEX0_TW); }
-		__fi u32 Height() const { return (1u << TEX0_TH); }
+		__fi u32 Width() const { return (region.HasX() ? region.GetWidth() : (1u << TEX0_TW)); }
+		__fi u32 Height() const { return (region.HasY() ? region.GetWidth() : (1u << TEX0_TH)); }
 		__fi bool HasPalette() const { return (GSLocalMemory::m_psm[TEX0_PSM].pal > 0); }
+		__fi bool HasRegion() const { return region.HasEither(); }
 
-		__fi GSVector2 ReplacementScale(const GSTextureReplacements::ReplacementTexture& rtex) const
+		__fi bool operator==(const TextureName& rhs) const
 		{
-			return ReplacementScale(rtex.width, rtex.height);
+			return std::tie(TEX0Hash, CLUTHash, region.bits, bits) ==
+				   std::tie(rhs.TEX0Hash, rhs.CLUTHash, region.bits, rhs.bits);
 		}
-
-		__fi GSVector2 ReplacementScale(u32 rwidth, u32 rheight) const
+		__fi bool operator!=(const TextureName& rhs) const
 		{
-			return GSVector2(static_cast<float>(rwidth) / static_cast<float>(Width()), static_cast<float>(rheight) / static_cast<float>(Height()));
+			return std::tie(TEX0Hash, CLUTHash, region.bits, bits) !=
+				   std::tie(rhs.TEX0Hash, rhs.CLUTHash, region.bits, rhs.bits);
 		}
-
-		__fi bool operator==(const TextureName& rhs) const { return std::tie(TEX0Hash, CLUTHash, bits) == std::tie(rhs.TEX0Hash, rhs.CLUTHash, rhs.bits); }
-		__fi bool operator!=(const TextureName& rhs) const { return std::tie(TEX0Hash, CLUTHash, bits) != std::tie(rhs.TEX0Hash, rhs.CLUTHash, rhs.bits); }
-		__fi bool operator<(const TextureName& rhs) const { return std::tie(TEX0Hash, CLUTHash, bits) < std::tie(rhs.TEX0Hash, rhs.CLUTHash, rhs.bits); }
+		__fi bool operator<(const TextureName& rhs) const
+		{
+			return std::tie(TEX0Hash, CLUTHash, region.bits, bits) <
+				   std::tie(rhs.TEX0Hash, rhs.CLUTHash, region.bits, rhs.bits);
+		}
 	};
-	static_assert(sizeof(TextureName) == 24, "ReplacementTextureName is expected size");
+	static_assert(sizeof(TextureName) == 32, "ReplacementTextureName is expected size");
 } // namespace
 
 namespace std
@@ -97,7 +103,7 @@ namespace std
 		std::size_t operator()(const TextureName& val) const
 		{
 			std::size_t h = 0;
-			HashCombine(h, val.TEX0Hash, val.CLUTHash, val.bits, val.miplevel);
+			HashCombine(h, val.TEX0Hash, val.CLUTHash, val.region.bits, val.bits, val.miplevel);
 			return h;
 		}
 	};
@@ -111,7 +117,7 @@ namespace GSTextureReplacements
 	static std::string GetGameTextureDirectory();
 	static std::string GetDumpFilename(const TextureName& name, u32 level);
 	static std::optional<ReplacementTexture> LoadReplacementTexture(const TextureName& name, const std::string& filename, bool only_base_image);
-	static void QueueAsyncReplacementTextureLoad(const TextureName& name, const std::string& filename, bool mipmap);
+	static void QueueAsyncReplacementTextureLoad(const TextureName& name, const std::string& filename, bool mipmap, bool cache_only);
 	static void PrecacheReplacementTextures();
 	static void ClearReplacementTextures();
 
@@ -123,9 +129,6 @@ namespace GSTextureReplacements
 	static void CancelPendingLoadsAndDumps();
 
 	static std::string s_current_serial;
-
-	/// Backreference to the texture cache so we can inject replacements.
-	static GSTextureCache* s_tc;
 
 	/// Textures that have been dumped, to save stat() calls.
 	static std::unordered_set<TextureName> s_dumped_textures;
@@ -140,8 +143,8 @@ namespace GSTextureReplacements
 	static std::unordered_map<TextureName, ReplacementTexture> s_replacement_texture_cache;
 	static std::mutex s_replacement_texture_cache_mutex;
 
-	/// List of textures that are pending asynchronous load.
-	static std::unordered_set<TextureName> s_pending_async_load_textures;
+	/// List of textures that are pending asynchronous load. Second element is whether we're only precaching.
+	static std::unordered_map<TextureName, bool> s_pending_async_load_textures;
 
 	/// List of textures that we have asynchronously loaded and can now be injected back into the TC.
 	/// Second element is whether the texture should be created with mipmaps.
@@ -169,6 +172,7 @@ TextureName GSTextureReplacements::CreateTextureName(const GSTextureCache::HashC
 	name.TEX0Hash = hash.TEX0Hash;
 	name.CLUTHash = name.HasPalette() ? hash.CLUTHash : 0;
 	name.miplevel = miplevel;
+	name.region = hash.region;
 	return name;
 }
 
@@ -184,6 +188,7 @@ GSTextureCache::HashCacheKey GSTextureReplacements::HashCacheKeyFromTextureName(
 	key.TEXA.TA1 = tn.TEXA_TA1;
 	key.TEX0Hash = tn.TEX0Hash;
 	key.CLUTHash = tn.HasPalette() ? tn.CLUTHash : 0;
+	key.region = tn.region;
 	return key;
 }
 
@@ -192,15 +197,40 @@ std::optional<TextureName> GSTextureReplacements::ParseReplacementName(const std
 	TextureName ret;
 	ret.miplevel = 0;
 
-	// TODO(Stenzek): Make this better.
 	char extension_dot;
-	if (std::sscanf(filename.c_str(), TEXTURE_FILENAME_CLUT_FORMAT_STRING "%c", &ret.TEX0Hash, &ret.CLUTHash, &ret.bits, &extension_dot) != 4 || extension_dot != '.')
+	if (std::sscanf(filename.c_str(), TEXTURE_FILENAME_REGION_CLUT_FORMAT_STRING "%c", &ret.TEX0Hash, &ret.CLUTHash,
+			&ret.region.bits, &ret.bits, &extension_dot) == 5 &&
+		extension_dot == '.')
 	{
-		if (std::sscanf(filename.c_str(), TEXTURE_FILENAME_FORMAT_STRING "%c", &ret.TEX0Hash, &ret.bits, &extension_dot) != 3 || extension_dot != '.')
-			return std::nullopt;
+		return ret;
 	}
 
-	return ret;
+	if (std::sscanf(filename.c_str(), TEXTURE_FILENAME_REGION_FORMAT_STRING "%c", &ret.TEX0Hash, &ret.region.bits,
+			&ret.bits, &extension_dot) == 4 &&
+		extension_dot == '.')
+	{
+		ret.CLUTHash = 0;
+		return ret;
+	}
+
+	ret.region.bits = 0;
+
+	if (std::sscanf(filename.c_str(), TEXTURE_FILENAME_CLUT_FORMAT_STRING "%c", &ret.TEX0Hash, &ret.CLUTHash, &ret.bits,
+			&extension_dot) == 4 &&
+		extension_dot == '.')
+	{
+		return ret;
+	}
+
+	if (std::sscanf(filename.c_str(), TEXTURE_FILENAME_FORMAT_STRING "%c", &ret.TEX0Hash, &ret.bits, &extension_dot) ==
+			3 &&
+		extension_dot == '.')
+	{
+		ret.CLUTHash = 0;
+		return ret;
+	}
+
+	return std::nullopt;
 }
 
 std::string GSTextureReplacements::GetGameTextureDirectory()
@@ -229,30 +259,51 @@ std::string GSTextureReplacements::GetDumpFilename(const TextureName& name, u32 
 
 	const std::string game_subdir(Path::Combine(game_dir, TEXTURE_DUMP_SUBDIRECTORY_NAME));
 
-	if (name.HasPalette())
+	std::string filename;
+	if (name.HasRegion())
 	{
-		const std::string filename(
-			(level > 0) ?
-                StringUtil::StdStringFromFormat(TEXTURE_FILENAME_CLUT_FORMAT_STRING "-mip%u.png", name.TEX0Hash, name.CLUTHash, name.bits, level) :
-                StringUtil::StdStringFromFormat(TEXTURE_FILENAME_CLUT_FORMAT_STRING ".png", name.TEX0Hash, name.CLUTHash, name.bits));
-		ret = Path::Combine(game_subdir, filename);
+		if (name.HasPalette())
+		{
+			filename = (level > 0) ?
+						   StringUtil::StdStringFromFormat(TEXTURE_FILENAME_REGION_CLUT_FORMAT_STRING "-mip%u.png",
+							   name.TEX0Hash, name.CLUTHash, name.region.bits, name.bits, level) :
+						   StringUtil::StdStringFromFormat(TEXTURE_FILENAME_REGION_CLUT_FORMAT_STRING ".png",
+							   name.TEX0Hash, name.CLUTHash, name.region.bits, name.bits);
+		}
+		else
+		{
+			filename = (level > 0) ? StringUtil::StdStringFromFormat(
+										 TEXTURE_FILENAME_FORMAT_STRING "-mip%u.png", name.TEX0Hash, name.bits, level) :
+									 StringUtil::StdStringFromFormat(
+										 TEXTURE_FILENAME_FORMAT_STRING ".png", name.TEX0Hash, name.bits);
+		}
 	}
 	else
 	{
-		const std::string filename(
-			(level > 0) ?
-                StringUtil::StdStringFromFormat(TEXTURE_FILENAME_FORMAT_STRING "-mip%u.png", name.TEX0Hash, name.bits, level) :
-                StringUtil::StdStringFromFormat(TEXTURE_FILENAME_FORMAT_STRING ".png", name.TEX0Hash, name.bits));
-		ret = Path::Combine(game_subdir, filename);
+		if (name.HasPalette())
+		{
+			filename = (level > 0) ? StringUtil::StdStringFromFormat(TEXTURE_FILENAME_CLUT_FORMAT_STRING "-mip%u.png",
+										 name.TEX0Hash, name.CLUTHash, name.bits, level) :
+									 StringUtil::StdStringFromFormat(TEXTURE_FILENAME_CLUT_FORMAT_STRING ".png",
+										 name.TEX0Hash, name.CLUTHash, name.bits);
+		}
+		else
+		{
+			filename = (level > 0) ? StringUtil::StdStringFromFormat(
+										 TEXTURE_FILENAME_FORMAT_STRING "-mip%u.png", name.TEX0Hash, name.bits, level) :
+									 StringUtil::StdStringFromFormat(
+										 TEXTURE_FILENAME_FORMAT_STRING ".png", name.TEX0Hash, name.bits);
+		}
 	}
+
+	ret = Path::Combine(game_subdir, filename);
 
 	return ret;
 }
 
-void GSTextureReplacements::Initialize(GSTextureCache* tc)
+void GSTextureReplacements::Initialize()
 {
-	s_tc = tc;
-	s_current_serial = VMManager::GetGameSerial();
+	s_current_serial = VMManager::GetDiscSerial();
 
 	if (GSConfig.DumpReplaceableTextures || GSConfig.LoadTextureReplacements)
 		StartWorkerThread();
@@ -262,10 +313,7 @@ void GSTextureReplacements::Initialize(GSTextureCache* tc)
 
 void GSTextureReplacements::GameChanged()
 {
-	if (!s_tc)
-		return;
-
-	std::string new_serial(VMManager::GetGameSerial());
+	std::string new_serial = VMManager::GetDiscSerial();
 	if (s_current_serial == new_serial)
 		return;
 
@@ -367,7 +415,6 @@ void GSTextureReplacements::Shutdown()
 	std::string().swap(s_current_serial);
 	ClearReplacementTextures();
 	ClearDumpedTextureList();
-	s_tc = nullptr;
 }
 
 u32 GSTextureReplacements::CalcMipmapLevelsForReplacement(u32 width, u32 height)
@@ -386,7 +433,8 @@ bool GSTextureReplacements::HasReplacementTextureWithOtherPalette(const GSTextur
 	return s_replacement_textures_without_clut_hash.find(name) != s_replacement_textures_without_clut_hash.end();
 }
 
-GSTexture* GSTextureReplacements::LookupReplacementTexture(const GSTextureCache::HashCacheKey& hash, bool mipmap, bool* pending)
+GSTexture* GSTextureReplacements::LookupReplacementTexture(const GSTextureCache::HashCacheKey& hash, bool mipmap,
+	bool* pending, std::pair<u8, u8>* alpha_minmax)
 {
 	const TextureName name(CreateTextureName(hash, 0));
 	*pending = false;
@@ -403,7 +451,8 @@ GSTexture* GSTextureReplacements::LookupReplacementTexture(const GSTextureCache:
 		if (it != s_replacement_texture_cache.end())
 		{
 			// replacement is cached, can immediately upload to host GPU
-			return CreateReplacementTexture(it->second, name.ReplacementScale(it->second), mipmap);
+			*alpha_minmax = it->second.alpha_minmax;
+			return CreateReplacementTexture(it->second, mipmap);
 		}
 	}
 
@@ -412,7 +461,7 @@ GSTexture* GSTextureReplacements::LookupReplacementTexture(const GSTextureCache:
 	{
 		// replacement will be injected into the TC later on
 		std::unique_lock<std::mutex> lock(s_replacement_texture_cache_mutex);
-		QueueAsyncReplacementTextureLoad(name, fnit->second, mipmap);
+		QueueAsyncReplacementTextureLoad(name, fnit->second, mipmap, false);
 
 		*pending = true;
 		return nullptr;
@@ -429,7 +478,8 @@ GSTexture* GSTextureReplacements::LookupReplacementTexture(const GSTextureCache:
 		const ReplacementTexture& rtex = s_replacement_texture_cache.emplace(name, std::move(replacement.value())).first->second;
 
 		// and upload to gpu
-		return CreateReplacementTexture(rtex, name.ReplacementScale(rtex), mipmap);
+		*alpha_minmax = rtex.alpha_minmax;
+		return CreateReplacementTexture(rtex, mipmap);
 	}
 }
 
@@ -443,24 +493,38 @@ std::optional<GSTextureReplacements::ReplacementTexture> GSTextureReplacements::
 	if (!loader(filename.c_str(), &rtex, only_base_image))
 		return std::nullopt;
 
+	rtex.alpha_minmax = GSGetRGBA8AlphaMinMax(rtex.data.data(), rtex.width, rtex.height, rtex.pitch);
+
 	return rtex;
 }
 
-void GSTextureReplacements::QueueAsyncReplacementTextureLoad(const TextureName& name, const std::string& filename, bool mipmap)
+void GSTextureReplacements::QueueAsyncReplacementTextureLoad(const TextureName& name, const std::string& filename, bool mipmap, bool cache_only)
 {
 	// check the pending list, so we don't queue it up multiple times
-	if (s_pending_async_load_textures.find(name) != s_pending_async_load_textures.end())
+	auto it = s_pending_async_load_textures.find(name);
+	if (it != s_pending_async_load_textures.end())
+	{
+		it->second &= cache_only;
 		return;
+	}
 
-	s_pending_async_load_textures.insert(name);
+	s_pending_async_load_textures.emplace(name, cache_only);
 	QueueWorkerThreadItem([name, filename, mipmap]() {
 		// actually load the file, this is what will take the time
 		std::optional<ReplacementTexture> replacement(LoadReplacementTexture(name, filename, !mipmap));
 
 		// check the pending set, there's a race here if we disable replacements while loading otherwise
+		// also check the full replacement list, if async loading is off, it might already be in there
 		std::unique_lock<std::mutex> lock(s_replacement_texture_cache_mutex);
-		if (s_pending_async_load_textures.find(name) == s_pending_async_load_textures.end())
+		auto it = s_pending_async_load_textures.find(name);
+		if (it == s_pending_async_load_textures.end() ||
+			s_replacement_texture_cache.find(name) != s_replacement_texture_cache.end())
+		{
+			if (it != s_pending_async_load_textures.end())
+				s_pending_async_load_textures.erase(it);
+
 			return;
+		}
 
 		// insert into the cache and queue for later injection
 		if (replacement.has_value())
@@ -492,7 +556,7 @@ void GSTextureReplacements::PrecacheReplacementTextures()
 			continue;
 
 		// precaching always goes async.. for now
-		QueueAsyncReplacementTextureLoad(it.first, it.second, mipmap);
+		QueueAsyncReplacementTextureLoad(it.first, it.second, mipmap, true);
 	}
 }
 
@@ -507,7 +571,7 @@ void GSTextureReplacements::ClearReplacementTextures()
 	s_async_loaded_textures.clear();
 }
 
-GSTexture* GSTextureReplacements::CreateReplacementTexture(const ReplacementTexture& rtex, const GSVector2& scale, bool mipmap)
+GSTexture* GSTextureReplacements::CreateReplacementTexture(const ReplacementTexture& rtex, bool mipmap)
 {
 	// can't use generated mipmaps with compressed formats, because they can't be rendered to
 	// in the future I guess we could decompress the dds and generate them... but there's no reason that modders can't generate mips in dds
@@ -516,10 +580,11 @@ GSTexture* GSTextureReplacements::CreateReplacementTexture(const ReplacementText
 		static bool log_once = false;
 		if (!log_once)
 		{
-			static const char* message =
-				"Disabling autogenerated mipmaps on one or more compressed replacement textures. Please generate mipmaps when compressing your textures.";
-			Console.Warning(message);
-			Host::AddIconOSDMessage("DisablingReplacementAutoGeneratedMipmap", ICON_FA_EXCLAMATION_CIRCLE, message, Host::OSD_WARNING_DURATION);
+			Console.Warning("Disabling autogenerated mipmaps on one or more compressed replacement textures.");
+			Host::AddIconOSDMessage("DisablingReplacementAutoGeneratedMipmap", ICON_FA_EXCLAMATION_CIRCLE,
+				TRANSLATE_SV("GS", "Disabling autogenerated mipmaps on one or more compressed replacement textures. "
+								   "Please generate mipmaps when compressing your textures."),
+				Host::OSD_WARNING_DURATION);
 			log_once = true;
 		}
 
@@ -543,7 +608,6 @@ GSTexture* GSTextureReplacements::CreateReplacementTexture(const ReplacementText
 		}
 	}
 
-	tex->SetScale(scale);
 	return tex;
 }
 
@@ -554,7 +618,16 @@ void GSTextureReplacements::ProcessAsyncLoadedTextures()
 	for (const auto& [name, mipmap] : s_async_loaded_textures)
 	{
 		// no longer pending!
-		s_pending_async_load_textures.erase(name);
+		const auto pit = s_pending_async_load_textures.find(name);
+		if (pit != s_pending_async_load_textures.end())
+		{
+			const bool cache_only = pit->second;
+			s_pending_async_load_textures.erase(pit);
+
+			// if we were precaching, don't inject into the TC if we didn't actually get requested
+			if (cache_only)
+				continue;
+		}
 
 		// we should be in the cache now, lock and loaded
 		auto it = s_replacement_texture_cache.find(name);
@@ -562,14 +635,15 @@ void GSTextureReplacements::ProcessAsyncLoadedTextures()
 			continue;
 
 		// upload and inject into TC
-		GSTexture* tex = CreateReplacementTexture(it->second, name.ReplacementScale(it->second), mipmap);
+		GSTexture* tex = CreateReplacementTexture(it->second, mipmap);
 		if (tex)
-			s_tc->InjectHashCacheTexture(HashCacheKeyFromTextureName(name), tex);
+			g_texture_cache->InjectHashCacheTexture(HashCacheKeyFromTextureName(name), tex, it->second.alpha_minmax);
 	}
 	s_async_loaded_textures.clear();
 }
 
-void GSTextureReplacements::DumpTexture(const GSTextureCache::HashCacheKey& hash, const GIFRegTEX0& TEX0, const GIFRegTEXA& TEXA, GSLocalMemory& mem, u32 level)
+void GSTextureReplacements::DumpTexture(const GSTextureCache::HashCacheKey& hash, const GIFRegTEX0& TEX0,
+	const GIFRegTEXA& TEXA, GSTextureCache::SourceRegion region, GSLocalMemory& mem, u32 level)
 {
 	// check if it's been dumped or replaced already
 	const TextureName name(CreateTextureName(hash, level));
@@ -589,23 +663,25 @@ void GSTextureReplacements::DumpTexture(const GSTextureCache::HashCacheKey& hash
 	// compute width/height
 	const GSLocalMemory::psm_t& psm = GSLocalMemory::m_psm[TEX0.PSM];
 	const GSVector2i& bs = psm.bs;
-	const int tw = 1 << TEX0.TW;
-	const int th = 1 << TEX0.TH;
-	const GSVector4i rect(0, 0, tw, th);
+	const int tw = region.HasX() ? region.GetWidth() : (1 << TEX0.TW);
+	const int th = region.HasY() ? region.GetHeight() : (1 << TEX0.TH);
+	const GSVector4i rect(region.GetRect(tw, th));
 	const GSVector4i block_rect(rect.ralign<Align_Outside>(bs));
-	const int read_width = std::max(tw, psm.bs.x);
-	const int read_height = std::max(th, psm.bs.y);
+	const int read_width = block_rect.width();
+	const int read_height = block_rect.height();
 	const u32 pitch = static_cast<u32>(read_width) * sizeof(u32);
 
 	// use per-texture buffer so we can compress the texture asynchronously and not block the GS thread
 	// must be 32 byte aligned for ReadTexture().
-	AlignedBuffer<u8, 32> buffer(pitch * static_cast<u32>(read_height));
-	psm.rtx(mem, mem.GetOffset(TEX0.TBP0, TEX0.TBW, TEX0.PSM), block_rect, buffer.GetPtr(), pitch, TEXA);
+	u8* buffer = static_cast<u8*>(_aligned_malloc(pitch * static_cast<u32>(read_height), 32));
+	psm.rtx(mem, mem.GetOffset(TEX0.TBP0, TEX0.TBW, TEX0.PSM), block_rect, buffer, pitch, TEXA);
 
 	// okay, now we can actually dump it
-	QueueWorkerThreadItem([filename = std::move(filename), tw, th, pitch, buffer = std::move(buffer)]() {
-		if (!SavePNGImage(filename.c_str(), tw, th, buffer.GetPtr(), pitch))
-			Console.Error("Failed to dump texture to '%s'.", filename.c_str());
+	const u32 buffer_offset = ((rect.top - block_rect.top) * pitch) + ((rect.left - block_rect.left) * sizeof(u32));
+	QueueWorkerThreadItem([filename = std::move(filename), tw, th, pitch, buffer, buffer_offset]() {
+		if (!SavePNGImage(filename.c_str(), tw, th, buffer + buffer_offset, pitch))
+			Console.Error(fmt::format("Failed to dump texture to '{}'.", filename));
+		_aligned_free(buffer);
 	});
 }
 

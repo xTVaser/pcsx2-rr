@@ -27,10 +27,7 @@ ThreadModel::ThreadModel(DebugInterface& cpu, QObject* parent)
 
 int ThreadModel::rowCount(const QModelIndex&) const
 {
-	if (m_cpu.getCpuType() == BREAKPOINT_EE)
-		return getEEThreads().size();
-	else
-		return 0;
+	return m_cpu.GetThreadList().size();
 }
 
 int ThreadModel::columnCount(const QModelIndex&) const
@@ -40,66 +37,65 @@ int ThreadModel::columnCount(const QModelIndex&) const
 
 QVariant ThreadModel::data(const QModelIndex& index, int role) const
 {
+	const auto threads = m_cpu.GetThreadList();
+	auto* const thread = threads.at(index.row()).get();
+
 	if (role == Qt::DisplayRole)
 	{
-		const auto thread = getEEThreads().at(index.row());
-
 		switch (index.column())
 		{
 			case ThreadModel::ID:
-				return thread.tid;
+				return thread->TID();
 			case ThreadModel::PC:
 			{
-				if (thread.data.status == THS_RUN)
+				if (thread->Status() == ThreadStatus::THS_RUN)
 					return QtUtils::FilledQStringFromValue(m_cpu.getPC(), 16);
-				else
-					return QtUtils::FilledQStringFromValue(thread.data.entry, 16);
+
+				return QtUtils::FilledQStringFromValue(thread->PC(), 16);
 			}
 			case ThreadModel::ENTRY:
-				return QtUtils::FilledQStringFromValue(thread.data.entry_init, 16);
+				return QtUtils::FilledQStringFromValue(thread->EntryPoint(), 16);
 			case ThreadModel::PRIORITY:
-				return QString::number(thread.data.currentPriority);
+				return QString::number(thread->Priority());
 			case ThreadModel::STATE:
 			{
-				const auto& state = ThreadStateStrings.find(thread.data.status);
+				const auto& state = ThreadStateStrings.find(thread->Status());
 				if (state != ThreadStateStrings.end())
 					return state->second;
-				else
-					return tr("INVALID");
+
+				return tr("INVALID");
 			}
 			case ThreadModel::WAIT_TYPE:
 			{
-				const auto& waitType = ThreadWaitStrings.find(thread.data.waitType);
+				const auto& waitType = ThreadWaitStrings.find(thread->Wait());
 				if (waitType != ThreadWaitStrings.end())
 					return waitType->second;
-				else
-					return tr("INVALID");
+
+				return tr("INVALID");
 			}
 		}
 	}
 	else if (role == Qt::UserRole)
 	{
-		const auto thread = getEEThreads().at(index.row());
-
 		switch (index.column())
 		{
 			case ThreadModel::ID:
-				return thread.tid;
+				return thread->TID();
 			case ThreadModel::PC:
 			{
-				if (thread.data.status == THS_RUN)
+				if (thread->Status() == ThreadStatus::THS_RUN)
 					return m_cpu.getPC();
-				else
-					return thread.data.entry;
+
+				return thread->PC();
 			}
 			case ThreadModel::ENTRY:
-				return thread.data.entry_init;
+				return thread->EntryPoint();
 			case ThreadModel::PRIORITY:
-				return thread.data.currentPriority;
+				return thread->Priority();
 			case ThreadModel::STATE:
-				return thread.data.status;
+				return static_cast<u32>(thread->Status());
 			case ThreadModel::WAIT_TYPE:
-				return thread.data.waitType;
+				return static_cast<u32>(thread->Wait());
 			default:
 				return QVariant();
 		}
@@ -114,16 +110,22 @@ QVariant ThreadModel::headerData(int section, Qt::Orientation orientation, int r
 		switch (section)
 		{
 			case ThreadColumns::ID:
+				//: Warning: short space limit. Abbreviate if needed.
 				return tr("ID");
 			case ThreadColumns::PC:
+				//: Warning: short space limit. Abbreviate if needed. PC = Program Counter (location where the CPU is executing).
 				return tr("PC");
 			case ThreadColumns::ENTRY:
+				//: Warning: short space limit. Abbreviate if needed.
 				return tr("ENTRY");
 			case ThreadColumns::PRIORITY:
+				//: Warning: short space limit. Abbreviate if needed.
 				return tr("PRIORITY");
 			case ThreadColumns::STATE:
+				//: Warning: short space limit. Abbreviate if needed.
 				return tr("STATE");
 			case ThreadColumns::WAIT_TYPE:
+				//: Warning: short space limit. Abbreviate if needed.
 				return tr("WAIT TYPE");
 			default:
 				return QVariant();

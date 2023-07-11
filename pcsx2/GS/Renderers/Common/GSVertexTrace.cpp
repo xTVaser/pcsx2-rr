@@ -19,14 +19,12 @@
 #include "GS/GSState.h"
 
 GSVertexTrace::GSVertexTrace(const GSState* state, bool provoking_vertex_first)
-	: m_accurate_stq(false), m_state(state), m_primclass(GS_INVALID_CLASS)
+	: m_state(state)
 {
-	memset(&m_alpha, 0, sizeof(m_alpha));
-
 	MULTI_ISA_SELECT(GSVertexTracePopulateFunctions)(*this, provoking_vertex_first);
 }
 
-void GSVertexTrace::Update(const void* vertex, const u32* index, int v_count, int i_count, GS_PRIM_CLASS primclass)
+void GSVertexTrace::Update(const void* vertex, const u16* index, int v_count, int i_count, GS_PRIM_CLASS primclass)
 {
 	if (i_count == 0)
 		return;
@@ -45,7 +43,7 @@ void GSVertexTrace::Update(const void* vertex, const u32* index, int v_count, in
 	// that feel big enough.
 	if (!fst && !m_accurate_stq && m_min.t.z > 1e30)
 	{
-		fprintf(stderr, "Vertex Trace: float overflow detected ! min %e max %e\n", m_min.t.z, m_max.t.z);
+		Console.Warning("Vertex Trace: float overflow detected ! min %e max %e", m_min.t.z, m_max.t.z);
 		m_accurate_stq = true;
 	}
 

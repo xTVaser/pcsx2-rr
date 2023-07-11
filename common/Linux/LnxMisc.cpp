@@ -31,6 +31,10 @@
 #include "common/Threading.h"
 #include "common/WindowInfo.h"
 
+#ifdef DBUS_API
+#include <dbus/dbus.h>
+#endif
+
 // Returns 0 on failure (not supported by the operating system).
 u64 GetPhysicalMemory()
 {
@@ -41,11 +45,6 @@ u64 GetPhysicalMemory()
 #endif
 
 	return pages * getpagesize();
-}
-
-
-void InitCPUTicks()
-{
 }
 
 u64 GetTickFrequency()
@@ -69,11 +68,77 @@ std::string GetOSVersionString()
 #endif
 }
 
-#ifdef X11_API
+#ifdef DBUS_API
+
+bool ChangeScreenSaverStateDBus(const bool inhibit_requested, const char* program_name, const char* reason)
+{
+	static dbus_uint32_t s_cookie;
+	// "error_dbus" doesn't need to be cleared in the end with "dbus_message_unref" at least if there is
+	// no error set, since calling "dbus_error_free" reinitializes it like "dbus_error_init" after freeing.
+	DBusError error_dbus;
+	dbus_error_init(&error_dbus);
+	DBusConnection* connection = nullptr;
+	DBusMessage* message = nullptr;
+	DBusMessage* response = nullptr;
+	// Initialized here because initializations should be before "goto" statements.
+	const char* bus_method = (inhibit_requested) ? "Inhibit" : "UnInhibit";
+	// "dbus_bus_get" gets a pointer to the same connection in libdbus, if exists, without creating a new connection.
+	// this doesn't need to be deleted, except if there's an error then calling "dbus_connection_unref", to free it,
+	// might be better so a new connection is established on the next try.
+	if (!(connection = dbus_bus_get(DBUS_BUS_SESSION, &error_dbus)) || (dbus_error_is_set(&error_dbus)))
+		goto cleanup;
+	if (!(message = dbus_message_new_method_call("org.freedesktop.ScreenSaver", "/org/freedesktop/ScreenSaver", "org.freedesktop.ScreenSaver", bus_method)))
+		goto cleanup;
+	// Initialize an append iterator for the message, gets freed with the message.
+	DBusMessageIter message_itr;
+	dbus_message_iter_init_append(message, &message_itr);
+	if (inhibit_requested)
+	{
+		// Append process/window name.
+		if (!dbus_message_iter_append_basic(&message_itr, DBUS_TYPE_STRING, &program_name))
+			goto cleanup;
+		// Append reason for inhibiting the screensaver.
+		if (!dbus_message_iter_append_basic(&message_itr, DBUS_TYPE_STRING, &reason))
+			goto cleanup;
+	}
+	else
+	{
+		// Only Append the cookie.
+		if (!dbus_message_iter_append_basic(&message_itr, DBUS_TYPE_UINT32, &s_cookie))
+			goto cleanup;
+	}
+	// Send message and get response.
+	if (!(response = dbus_connection_send_with_reply_and_block(connection, message, DBUS_TIMEOUT_USE_DEFAULT, &error_dbus)) 
+		|| dbus_error_is_set(&error_dbus))
+		goto cleanup;
+	if (inhibit_requested)
+	{
+		// Get the cookie from the response message.
+		if (!dbus_message_get_args(response, &error_dbus, DBUS_TYPE_UINT32, &s_cookie, DBUS_TYPE_INVALID))
+			goto cleanup;
+	}
+	dbus_message_unref(message);
+	dbus_message_unref(response);
+	return true;
+cleanup:
+	if (dbus_error_is_set(&error_dbus))
+		dbus_error_free(&error_dbus);
+	if (connection)
+		dbus_connection_unref(connection);
+	if (message)
+		dbus_message_unref(message);
+	if (response)
+		dbus_message_unref(response);
+	return false;
+}
+
+#endif
+
+#if !defined(DBUS_API) && defined(X11_API)
 
 static bool SetScreensaverInhibitX11(const WindowInfo& wi, bool inhibit)
 {
-	extern char **environ;
+	extern char** environ;
 
 	const char* command = "xdg-screensaver";
 	const char* operation = inhibit ? "suspend" : "resume";
@@ -87,8 +152,6 @@ static bool SetScreensaverInhibitX11(const WindowInfo& wi, bool inhibit)
 	int res = posix_spawnp(&pid, "xdg-screensaver", nullptr, nullptr, argv, environ);
 	return (res == 0);
 }
-
-#endif
 
 static bool SetScreensaverInhibit(const WindowInfo& wi, bool inhibit)
 {
@@ -106,8 +169,18 @@ static bool SetScreensaverInhibit(const WindowInfo& wi, bool inhibit)
 
 static std::optional<WindowInfo> s_inhibit_window_info;
 
+#endif
+
 bool WindowInfo::InhibitScreensaver(const WindowInfo& wi, bool inhibit)
 {
+
+#ifdef DBUS_API
+
+	return ChangeScreenSaverStateDBus(inhibit, "PCSX2", "PCSX2 VM is running.");
+
+#else
+
+	//ChangeScreenSaverStateDBus
 	if (s_inhibit_window_info.has_value())
 	{
 		// Bit of extra logic here, because wx spams it and we don't want to
@@ -132,6 +205,9 @@ bool WindowInfo::InhibitScreensaver(const WindowInfo& wi, bool inhibit)
 
 	s_inhibit_window_info = wi;
 	return true;
+
+#endif
+
 }
 
 bool Common::PlaySoundAsync(const char* path)

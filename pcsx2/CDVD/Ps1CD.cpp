@@ -22,6 +22,8 @@
 #include "IopHw.h"
 #include "IopDma.h"
 
+#include "common/Threading.h"
+
 //THIS ALL IS FOR THE CDROM REGISTERS HANDLING
 
 enum cdrom_registers
@@ -591,7 +593,7 @@ void cdrReadInterrupt()
 	if (cdr.RErr == -1)
 	{
 		DevCon.Warning("CD err");
-		memzero(cdr.Transfer);
+		std::memset(cdr.Transfer, 0, sizeof(cdr.Transfer));
 		cdr.Stat = DiskError;
 		cdr.StatP |= STATUS_ERROR;
 		cdr.Result[0] = cdr.StatP;
@@ -1107,15 +1109,18 @@ void psxDma3(u32 madr, u32 bcr, u32 chcr)
 
 void cdrReset()
 {
-	memzero(cdr);
+	std::memset(&cdr, 0, sizeof(cdr));
 	cdr.CurTrack = 1;
 	cdr.File = 1;
 	cdr.Channel = 1;
 	cdReadTime = (PSXCLK / 1757) * BIAS;
 }
 
-void SaveStateBase::cdrFreeze()
+bool SaveStateBase::cdrFreeze()
 {
-	FreezeTag("cdrom");
+	if (!FreezeTag("cdrom"))
+		return false;
+
 	Freeze(cdr);
+	return IsOkay();
 }

@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2020  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -15,9 +15,14 @@
 
 #pragma once
 
-#include "Mixer.h"
-#include "SndOut.h"
-#include "Global.h"
+#include "SPU2/Mixer.h"
+#include "SPU2/SndOut.h"
+#include "SPU2/Global.h"
+
+// --------------------------------------------------------------------------------------
+//  SPU2 Register Table LUT
+// --------------------------------------------------------------------------------------
+extern const std::array<u16*, 0x401> regtable;
 
 // --------------------------------------------------------------------------------------
 //  SPU2 Memory Indexers
@@ -523,7 +528,7 @@ struct V_Core
 
 	__forceinline u16 DmaRead()
 	{
-		const u16 ret = (u16)spu2M_Read(ActiveTSA);
+		const u16 ret = static_cast<u16>(spu2M_Read(ActiveTSA));
 		++ActiveTSA;
 		ActiveTSA &= 0xfffff;
 		TSA = ActiveTSA;
@@ -560,15 +565,14 @@ extern u16 InputPos;
 // SPU Mixing Cycles ("Ticks mixed" counter)
 extern u32 Cycles;
 
-extern s16* spu2regs;
-extern s16* _spu2mem;
+extern s16 spu2regs[0x010000 / sizeof(s16)];
+extern s16 _spu2mem[0x200000 / sizeof(s16)];
 extern int PlayMode;
 
 extern void SetIrqCall(int core);
 extern void SetIrqCallDMA(int core);
 extern void StartVoices(int core, u32 value);
 extern void StopVoices(int core, u32 value);
-extern void InitADSR();
 extern void CalculateADSR(V_Voice& vc);
 extern void UpdateSpdifMode();
 
@@ -584,20 +588,25 @@ namespace SPU2Savestate
 // --------------------------------------------------------------------------------------
 //  ADPCM Decoder Cache
 // --------------------------------------------------------------------------------------
+//  the cache data size is determined by taking the number of adpcm blocks
+//  (2MB / 16) and multiplying it by the decoded block size (28 samples).
+//  Thus: pcm_cache_data = 7,340,032 bytes (ouch!)
+//  Expanded: 16 bytes expands to 56 bytes [3.5:1 ratio]
+//    Resulting in 2MB * 3.5.
 
 // The SPU2 has a dynamic memory range which is used for several internal operations, such as
 // registers, CORE 1/2 mixing, AutoDMAs, and some other fancy stuff.  We exclude this range
 // from the cache here:
-static const s32 SPU2_DYN_MEMLINE = 0x2800;
+static constexpr s32 SPU2_DYN_MEMLINE = 0x2800;
 
 // 8 short words per encoded PCM block. (as stored in SPU2 ram)
-static const int pcm_WordsPerBlock = 8;
+static constexpr int pcm_WordsPerBlock = 8;
 
 // number of cachable ADPCM blocks (any blocks above the SPU2_DYN_MEMLINE)
-static const int pcm_BlockCount = 0x100000 / pcm_WordsPerBlock;
+static constexpr int pcm_BlockCount = 0x100000 / pcm_WordsPerBlock;
 
 // 28 samples per decoded PCM block (as stored in our cache)
-static const int pcm_DecodedSamplesPerBlock = 28;
+static constexpr int pcm_DecodedSamplesPerBlock = 28;
 
 struct PcmCacheEntry
 {
@@ -607,4 +616,4 @@ struct PcmCacheEntry
 	s32 Prev2;
 };
 
-extern PcmCacheEntry* pcm_cache_data;
+extern PcmCacheEntry pcm_cache_data[pcm_BlockCount];

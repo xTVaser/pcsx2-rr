@@ -25,11 +25,12 @@
     <Filter Include="Debugger\Models">
       <UniqueIdentifier>{f4084ca0-d9d5-4584-b9d2-063db9f67de2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Translations">
+      <UniqueIdentifier>{ad04f939-64a0-4039-97aa-a38b8aa46855}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\pcsx2\PCSX2.rc">
-      <Filter>Resources</Filter>
-    </ResourceCompile>
+    <ResourceCompile Include="..\pcsx2\windows\PCSX2.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PrecompiledHeader.cpp" />
@@ -189,10 +190,10 @@
     <ClCompile Include="Settings\AudioSettingsWidget.cpp">
       <Filter>Settings</Filter>
     </ClCompile>
-    <ClCompile Include="$(IntDir)Settings\moc_CreateMemoryCardDialog.cpp">
+    <ClCompile Include="$(IntDir)Settings\moc_MemoryCardCreateDialog.cpp">
       <Filter>moc</Filter>
     </ClCompile>
-    <ClCompile Include="Settings\CreateMemoryCardDialog.cpp">
+    <ClCompile Include="Settings\MemoryCardCreateDialog.cpp">
       <Filter>Settings</Filter>
     </ClCompile>
     <ClCompile Include="Settings\DEV9DnsHostDialog.cpp">
@@ -313,6 +314,28 @@
     <ClCompile Include="$(IntDir)Debugger\Models\moc_StackModel.cpp">
       <Filter>moc</Filter>
     </ClCompile>
+    <ClCompile Include="ColorPickerButton.cpp" />
+    <ClCompile Include="$(IntDir)moc_ColorPickerButton.cpp">
+      <Filter>moc</Filter>
+    </ClCompile>
+    <ClCompile Include="Themes.cpp" />
+    <ClCompile Include="Settings\GamePatchSettingsWidget.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="Settings\GameCheatSettingsWidget.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="$(IntDir)Settings\moc_GamePatchSettingsWidget.cpp">
+      <Filter>moc</Filter>
+    </ClCompile>
+    <ClCompile Include="$(IntDir)Settings\moc_GameCheatSettingsWidget.cpp">
+      <Filter>moc</Filter>
+    </ClCompile>
+    <ClCompile Include="Translations.cpp" />
+    <ClCompile Include="SetupWizardDialog.cpp" />
+    <ClCompile Include="$(IntDir)moc_SetupWizardDialog.cpp">
+      <Filter>moc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="..\pcsx2\windows\PCSX2.manifest">
@@ -400,7 +423,7 @@
     <QtMoc Include="Settings\AudioSettingsWidget.h">
       <Filter>Settings</Filter>
     </QtMoc>
-    <QtMoc Include="Settings\CreateMemoryCardDialog.h">
+    <QtMoc Include="Settings\MemoryCardCreateDialog.h">
       <Filter>Settings</Filter>
     </QtMoc>
     <QtMoc Include="Settings\DEV9DnsHostDialog.h">
@@ -458,6 +481,14 @@
     </QtMoc>
     <QtMoc Include="Debugger\Models\StackModel.h">
       <Filter>Debugger\Models</Filter>
+    </QtMoc>
+    <QtMoc Include="ColorPickerButton.h" />
+    <QtMoc Include="SetupWizardDialog.h" />
+    <QtMoc Include="Settings\GameCheatSettingsWidget.h">
+      <Filter>Settings</Filter>
+    </QtMoc>
+    <QtMoc Include="Settings\GamePatchSettingsWidget.h">
+      <Filter>Settings</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
@@ -518,7 +549,7 @@
     <QtUi Include="Settings\AudioSettingsWidget.ui">
       <Filter>Settings</Filter>
     </QtUi>
-    <QtUi Include="Settings\CreateMemoryCardDialog.ui">
+    <QtUi Include="Settings\MemoryCardCreateDialog.ui">
       <Filter>Settings</Filter>
     </QtUi>
     <QtUi Include="Settings\DEV9DnsHostDialog.ui">
@@ -577,6 +608,19 @@
     <QtUi Include="Debugger\BreakpointDialog.ui">
       <Filter>Debugger</Filter>
     </QtUi>
+    <QtUi Include="Settings\ControllerLEDSettingsDialog.ui">
+      <Filter>Settings</Filter>
+    </QtUi>
+    <QtUi Include="Settings\ControllerMouseSettingsDialog.ui">
+      <Filter>Settings</Filter>
+    </QtUi>
+    <QtUi Include="Settings\GameCheatSettingsWidget.ui">
+      <Filter>Settings</Filter>
+    </QtUi>
+    <QtUi Include="Settings\GamePatchSettingsWidget.ui">
+      <Filter>Settings</Filter>
+    </QtUi>
+    <QtUi Include="SetupWizardDialog.ui" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Settings\FolderSettingsWidget.ui">
@@ -588,5 +632,10 @@
     <None Include="Settings\USBBindingWidget_DrivingForce.ui">
       <Filter>Settings</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <QtTs Include="Translations\pcsx2-qt_en.ts">
+      <Filter>Translations</Filter>
+    </QtTs>
   </ItemGroup>
 </Project>

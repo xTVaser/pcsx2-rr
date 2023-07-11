@@ -15,25 +15,30 @@
 
 #include "PrecompiledHeader.h"
 #include "Common.h"
-#include "IPU.h"
+#include "IPU/IPU.h"
 #include "IPU/IPUdma.h"
-#include "mpeg2lib/Mpeg.h"
+#include "IPU/IPU_MultiISA.h"
 
 IPUStatus IPU1Status;
 bool CommandExecuteQueued;
+u32 ProcessedData;
 
 void ipuDmaReset()
 {
 	IPU1Status.InProgress	= false;
 	IPU1Status.DMAFinished	= true;
 	CommandExecuteQueued	= false;
+	ProcessedData			= 0;
 }
 
-void SaveStateBase::ipuDmaFreeze()
+bool SaveStateBase::ipuDmaFreeze()
 {
-	FreezeTag( "IPUdma" );
+	if (!FreezeTag("IPUdma"))
+		return false;
+
 	Freeze(IPU1Status);
 	Freeze(CommandExecuteQueued);
+	return IsOkay();
 }
 
 static __fi int IPU1chain() {
@@ -123,7 +128,7 @@ void IPU1dma()
 		totalqwc += IPU1chain();
 
 	//Do this here to prevent double settings on Chain DMA's
-	if(totalqwc == 0 || (IPU1Status.DMAFinished && !IPU1Status.InProgress))
+	if((totalqwc == 0 && g_BP.IFC < 8) || (IPU1Status.DMAFinished && !IPU1Status.InProgress))
 	{
 		totalqwc = std::max(4, totalqwc) + tagcycles;
 		IPU_INT_TO(totalqwc * BIAS);
@@ -199,7 +204,7 @@ void IPU0dma()
 	{
 		CommandExecuteQueued = true;
 		CPU_SET_DMASTALL(DMAC_FROM_IPU, true);
-		CPU_INT(IPU_PROCESS, 4);
+		CPU_INT(IPU_PROCESS, readsize * BIAS);
 	}
 }
 
@@ -281,6 +286,7 @@ __fi void dmaIPU1() // toIPU
 void ipuCMDProcess()
 {
 	CommandExecuteQueued = false;
+	ProcessedData = 0;
 	IPUProcessInterrupt();
 }
 

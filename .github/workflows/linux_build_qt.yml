@@ -9,7 +9,7 @@ on:
       os:
         required: false
         type: string
-        default: ubuntu-20.04
+        default: ubuntu-22.04
       platform:
         required: false
         type: string
@@ -28,11 +28,7 @@ on:
         required: false
         type: string
         default: ""
-      simd:
-        required: false
-        type: string
-        default: ""
-      cheats_url:
+      patches_url:
         required: false
         type: string
         default: https://github.com/PCSX2/pcsx2_patches/releases/latest/download
@@ -61,9 +57,7 @@ jobs:
         shell: bash
         env:
           OS: linux
-          GUI_FRAMEWORK: QT
           ARCH: ${{ inputs.platform }}
-          SIMD: ${{ inputs.simd }}
           EVENT_NAME: ${{ github.event_name }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_NUM: ${{ github.event.pull_request.number }}
@@ -79,8 +73,8 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .ccache
-          key: ${{ inputs.os }} ${{ inputs.platform }} ${{ inputs.compiler }} ${{ inputs.simd }} ${{ inputs.detail }} ccache ${{ steps.ccache_cache_timestamp.outputs.timestamp }}
-          restore-keys: ${{ inputs.os }} ${{ inputs.platform }} ${{ inputs.compiler }} ${{ inputs.simd }} ${{ inputs.detail }} ccache
+          key: ${{ inputs.os }} ${{ inputs.platform }} ${{ inputs.compiler }} ${{ inputs.detail }} ccache ${{ steps.ccache_cache_timestamp.outputs.timestamp }}
+          restore-keys: ${{ inputs.os }} ${{ inputs.platform }} ${{ inputs.compiler }} ${{ inputs.detail }} ccache
 
       - name: Install Packages
         env:
@@ -92,22 +86,25 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/deps
-          key: ${{ inputs.os }} ${{ inputs.platform }} ${{ inputs.gui }} deps ${{ hashFiles('.github/workflows/scripts/linux/build-dependencies-qt.sh') }}
+          key: ${{ inputs.os }} ${{ inputs.platform }} deps ${{ hashFiles('.github/workflows/scripts/linux/build-dependencies-qt.sh') }}
 
       - name: Build Dependencies
         if: steps.cache-deps.outputs.cache-hit != 'true'
         run: .github/workflows/scripts/linux/build-dependencies-qt.sh
 
-      - name: Download cheats
+      - name: Download patches
         run: |
           cd bin/resources
-          aria2c -Z "${{ inputs.cheats_url }}/cheats_ni.zip" "${{ inputs.cheats_url }}/cheats_ws.zip"
+          aria2c -Z "${{ inputs.patches_url }}/patches.zip"
 
       - name: Generate CMake
         env:
           COMPILER: ${{ inputs.compiler }}
           ADDITIONAL_CMAKE_ARGS: ${{ inputs.cmakeflags }}
-        run: .github/workflows/scripts/linux/generate-cmake-qt.sh
+          CLANG_PATH: /usr/bin/clang-16
+          CLANGXX_PATH: /usr/bin/clang++-16
+        run: |
+          DEPS_PREFIX="$HOME/deps" .github/workflows/scripts/linux/generate-cmake-qt.sh
 
       - name: Build PCSX2
         working-directory: build
@@ -122,9 +119,9 @@ jobs:
         env:
           NAME: ${{ steps.artifact-metadata.outputs.artifact-name }}
         run: |
-                .github/workflows/scripts/linux/appimage-qt.sh "$(realpath .)" "$(realpath ./build)" "$HOME/deps" "$NAME"
-                mkdir -p "$GITHUB_WORKSPACE"/ci-artifacts/
-                mv "${NAME}.AppImage" "$GITHUB_WORKSPACE"/ci-artifacts/
+          .github/workflows/scripts/linux/appimage-qt.sh "$(realpath .)" "$(realpath ./build)" "$HOME/deps" "$NAME"
+          mkdir -p "$GITHUB_WORKSPACE"/ci-artifacts/
+          mv "${NAME}.AppImage" "$GITHUB_WORKSPACE"/ci-artifacts/
 
       - name: Upload artifact
         if: inputs.buildAppImage == true

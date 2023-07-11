@@ -26,25 +26,28 @@
 #include <string>
 #include <optional>
 
+#include "DEV9/PacketReader/MAC_Address.h"
 #include "DEV9/PacketReader/IP/IP_Address.h"
 
 namespace AdapterUtils
 {
 #ifdef _WIN32
-	bool GetWin32Adapter(const std::string& name, PIP_ADAPTER_ADDRESSES adapter, std::unique_ptr<IP_ADAPTER_ADDRESSES[]>* buffer);
-	bool GetWin32AdapterAuto(PIP_ADAPTER_ADDRESSES adapter, std::unique_ptr<IP_ADAPTER_ADDRESSES[]>* buffer);
-
-	std::optional<PacketReader::IP::IP_Address> GetAdapterIP(PIP_ADAPTER_ADDRESSES adapter);
-	//Mask
-	std::vector<PacketReader::IP::IP_Address> GetGateways(PIP_ADAPTER_ADDRESSES adapter);
-	std::vector<PacketReader::IP::IP_Address> GetDNS(PIP_ADAPTER_ADDRESSES adapter);
+	typedef IP_ADAPTER_ADDRESSES Adapter;
+	typedef std::unique_ptr<IP_ADAPTER_ADDRESSES[]> AdapterBuffer;
 #elif defined(__POSIX__)
-	bool GetIfAdapter(const std::string& name, ifaddrs* adapter, ifaddrs** buffer);
-	bool GetIfAdapterAuto(ifaddrs* adapter, ifaddrs** buffer);
-
-	std::optional<PacketReader::IP::IP_Address> GetAdapterIP(ifaddrs* adapter);
-	//Mask
-	std::vector<PacketReader::IP::IP_Address> GetGateways(ifaddrs* adapter);
-	std::vector<PacketReader::IP::IP_Address> GetDNS(ifaddrs* adapter);
+	typedef ifaddrs Adapter;
+	struct IfAdaptersDeleter
+	{
+		void operator()(ifaddrs* buffer) const { freeifaddrs(buffer); }
+	};
+	typedef std::unique_ptr<ifaddrs, IfAdaptersDeleter> AdapterBuffer;
 #endif
+	bool GetAdapter(const std::string& name, Adapter* adapter, AdapterBuffer* buffer);
+	bool GetAdapterAuto(Adapter* adapter, AdapterBuffer* buffer);
+
+	std::optional<PacketReader::MAC_Address> GetAdapterMAC(Adapter* adapter);
+	std::optional<PacketReader::IP::IP_Address> GetAdapterIP(Adapter* adapter);
+	// Mask.
+	std::vector<PacketReader::IP::IP_Address> GetGateways(Adapter* adapter);
+	std::vector<PacketReader::IP::IP_Address> GetDNS(Adapter* adapter);
 }; // namespace AdapterUtils

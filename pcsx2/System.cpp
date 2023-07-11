@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2021  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -14,27 +14,31 @@
  */
 
 #include "PrecompiledHeader.h"
+
 #include "Common.h"
+#include "GS/Renderers/Common/GSFunctionMap.h"
+#include "CDVD/CDVD.h"
+#include "Elfheader.h"
+#include "GSDumpReplayer.h"
+#include "MTVU.h"
 #include "R3000A.h"
 #include "VUmicro.h"
-#include "newVif.h"
-#include "MTVU.h"
-
-#include "Elfheader.h"
-
-#include "System/RecTypes.h"
+#include "ps2/BiosTools.h"
+#include "svnrev.h"
+#include "SysForwardDefs.h"
+#include "x86/newVif.h"
 
 #include "common/Align.h"
-#include "common/MemsetFast.inl"
 #include "common/Perf.h"
 #include "common/StringUtil.h"
-#include "CDVD/CDVD.h"
 
+#ifdef _M_X86
 #include "common/emitter/x86_intrin.h"
-
-#include "GSDumpReplayer.h"
+#endif
 
 extern R5900cpu GSDumpReplayerCpu;
+
+Pcsx2Config EmuConfig;
 
 SSE_MXCSR g_sseMXCSR = {DEFAULT_sseMXCSR};
 SSE_MXCSR g_sseVU0MXCSR = {DEFAULT_sseVUMXCSR};
@@ -52,91 +56,6 @@ void SetCPUState(SSE_MXCSR sseMXCSR, SSE_MXCSR sseVU0MXCSR, SSE_MXCSR sseVU1MXCS
 
 	_mm_setcsr(g_sseMXCSR.bitmask);
 }
-
-// --------------------------------------------------------------------------------------
-//  RecompiledCodeReserve  (implementations)
-// --------------------------------------------------------------------------------------
-
-// Constructor!
-// Parameters:
-//   name - a nice long name that accurately describes the contents of this reserve.
-RecompiledCodeReserve::RecompiledCodeReserve(std::string name)
-	: VirtualMemoryReserve(std::move(name))
-{
-}
-
-RecompiledCodeReserve::~RecompiledCodeReserve()
-{
-	Release();
-}
-
-void RecompiledCodeReserve::_registerProfiler()
-{
-	if (m_profiler_name.empty() || !IsOk())
-		return;
-
-	Perf::any.map((uptr)m_baseptr, m_size, m_profiler_name.c_str());
-}
-
-void RecompiledCodeReserve::Assign(VirtualMemoryManagerPtr allocator, size_t offset, size_t size)
-{
-	// Anything passed to the memory allocator must be page aligned.
-	size = Common::PageAlign(size);
-
-	// Since the memory has already been allocated as part of the main memory map, this should never fail.
-	u8* base = allocator->Alloc(offset, size);
-	if (!base)
-	{
-		Console.WriteLn("(RecompiledCodeReserve) Failed to allocate %zu bytes for %s at offset %zu", size, m_name.c_str(), offset);
-		pxFailRel("RecompiledCodeReserve allocation failed.");
-	}
-
-	VirtualMemoryReserve::Assign(std::move(allocator), base, size);
-	_registerProfiler();
-}
-
-void RecompiledCodeReserve::Reset()
-{
-	if (IsDevBuild && m_baseptr)
-	{
-		// Clear the recompiled code block to 0xcc (INT3) -- this helps disasm tools show
-		// the assembly dump more cleanly.  We don't clear the block on Release builds since
-		// it can add a noticeable amount of overhead to large block recompilations.
-
-		std::memset(m_baseptr, 0xCC, m_size);
-	}
-}
-
-void RecompiledCodeReserve::AllowModification()
-{
-	// Apple Silicon enforces write protection in hardware.
-#if !defined(__APPLE__) || !defined(_M_ARM64)
-	HostSys::MemProtect(m_baseptr, m_size, PageAccess_Any());
-#endif
-}
-
-void RecompiledCodeReserve::ForbidModification()
-{
-	// Apple Silicon enforces write protection in hardware.
-#if !defined(__APPLE__) || !defined(_M_ARM64)
-	HostSys::MemProtect(m_baseptr, m_size, PageProtectionMode().Read().Execute());
-#endif
-}
-
-// Sets the abbreviated name used by the profiler.  Name should be under 10 characters long.
-// After a name has been set, a profiler source will be automatically registered and cleared
-// in accordance with changes in the reserve area.
-RecompiledCodeReserve& RecompiledCodeReserve::SetProfilerName(std::string name)
-{
-	m_profiler_name = std::move(name);
-	_registerProfiler();
-	return *this;
-}
-
-#include "svnrev.h"
-
-Pcsx2Config EmuConfig;
-
 
 // This function should be called once during program execution.
 void SysLogMachineCaps()
@@ -184,19 +103,17 @@ void SysLogMachineCaps()
 		GetOSVersionString().c_str(),
 		(u32)(GetPhysicalMemory() / _1mb));
 
-	u32 speed = x86caps.CalculateMHz();
 
 	Console.Indent().WriteLn(
 		"CPU name         =  %s\n"
 		"Vendor/Model     =  %s (stepping %02X)\n"
-		"CPU speed        =  %u.%03u ghz (%u logical thread%ls)\n"
+		"Logical Cores    =  %u\n"
 		"x86PType         =  %s\n"
 		"x86Flags         =  %08x %08x\n"
 		"x86EFlags        =  %08x",
 		x86caps.FamilyName,
 		x86caps.VendorName, x86caps.StepID,
-		speed / 1000, speed % 1000,
-		x86caps.LogicalCores, (x86caps.LogicalCores == 1) ? L"" : L"s",
+		x86caps.LogicalCores,
 		x86caps.GetTypeName(),
 		x86caps.Flags, x86caps.Flags2,
 		x86caps.EFlags);
@@ -205,8 +122,10 @@ void SysLogMachineCaps()
 
 	std::string features;
 
-	if (x86caps.hasAVX)  features += "AVX ";
-	if (x86caps.hasAVX2) features += "AVX2 ";
+	if (x86caps.hasAVX)
+		features += "AVX ";
+	if (x86caps.hasAVX2)
+		features += "AVX2 ";
 
 	StringUtil::StripWhitespace(&features);
 
@@ -221,9 +140,9 @@ namespace HostMemoryMap
 	// For debuggers
 	extern "C" {
 #ifdef _WIN32
-	_declspec(dllexport) uptr EEmem, IOPmem, VUmem, EErec, IOPrec, VIF0rec, VIF1rec, mVU0rec, mVU1rec, bumpAllocator;
+	_declspec(dllexport) uptr EEmem, IOPmem, VUmem, EErec, IOPrec, VIF0rec, VIF1rec, mVU0rec, mVU1rec, SWjit, bumpAllocator;
 #else
-	__attribute__((visibility("default"), used)) uptr EEmem, IOPmem, VUmem, EErec, IOPrec, VIF0rec, VIF1rec, mVU0rec, mVU1rec, bumpAllocator;
+	__attribute__((visibility("default"), used)) uptr EEmem, IOPmem, VUmem, EErec, IOPrec, VIF0rec, VIF1rec, mVU0rec, mVU1rec, SWjit, bumpAllocator;
 #endif
 	}
 } // namespace HostMemoryMap
@@ -294,14 +213,15 @@ SysMainMemory::~SysMainMemory()
 bool SysMainMemory::Allocate()
 {
 	DevCon.WriteLn(Color_StrongBlue, "Allocating host memory for virtual systems...");
-	pxInstallSignalHandler();
 
 	ConsoleIndentScope indent(1);
 
 	m_ee.Assign(MainMemory());
 	m_iop.Assign(MainMemory());
 	m_vu.Assign(MainMemory());
+
 	vtlb_Core_Alloc();
+
 	return true;
 }
 
@@ -315,6 +235,7 @@ void SysMainMemory::Reset()
 	m_vu.Reset();
 
 	// Note: newVif is reset as part of other VIF structures.
+	// Software is reset on the GS thread.
 }
 
 void SysMainMemory::Release()
@@ -332,8 +253,6 @@ void SysMainMemory::Release()
 	m_ee.Release();
 	m_iop.Release();
 	m_vu.Release();
-
-	safe_delete(Source_PageFault);
 }
 
 
@@ -356,10 +275,14 @@ SysCpuProviderPack::SysCpuProviderPack()
 		dVifReserve(0);
 		dVifReserve(1);
 	}
+
+	GSCodeReserve::GetInstance().Assign(GetVmMemory().CodeMemory());
 }
 
 SysCpuProviderPack::~SysCpuProviderPack()
 {
+	GSCodeReserve::GetInstance().Release();
+
 	if (newVifDynaRec)
 	{
 		dVifRelease(1);
@@ -378,6 +301,15 @@ BaseVUmicroCPU* CpuVU1 = nullptr;
 
 void SysCpuProviderPack::ApplyConfig() const
 {
+	if (GSDumpReplayer::IsReplayingDump())
+	{
+		Cpu = &GSDumpReplayerCpu;
+		psxCpu = &psxInt;
+		CpuVU0 = &CpuIntVU0;
+		CpuVU1 = &CpuIntVU1;
+		return;
+	}
+
 	Cpu = CHECK_EEREC ? &recCpu : &intCpu;
 	psxCpu = CHECK_IOPREC ? &psxRec : &psxInt;
 
@@ -389,9 +321,6 @@ void SysCpuProviderPack::ApplyConfig() const
 
 	if (EmuConfig.Cpu.Recompiler.EnableVU1)
 		CpuVU1 = &CpuMicroVU1;
-
-	if (GSDumpReplayer::IsReplayingDump())
-		Cpu = &GSDumpReplayerCpu;
 }
 
 // Resets all PS2 cpu execution caches, which does not affect that actual PS2 state/condition.
@@ -416,35 +345,4 @@ void SysClearExecutionCache()
 		dVifReset(0);
 		dVifReset(1);
 	}
-}
-
-std::string SysGetBiosDiscID()
-{
-	// FIXME: we should return a serial based on
-	// the BIOS being run (either a checksum of the BIOS roms, and/or a string based on BIOS
-	// region and revision).
-	// Good candidate can be first part of EXTINFO data in the BIOS rom:
-	// Example for romver 0160EC20010704
-	// 20010704-160707,ROMconf,PS20160EC20010704.bin,kuma@rom-server/~/f10k/g/app/rom
-	// 20010704-160707 can be used as unique ID for Bios
-	// rom0:EXTINFO first 15 bytes
-
-	return {};
-}
-
-// This function always returns a valid DiscID -- using the Sony serial when possible, and
-// falling back on the CRC checksum of the ELF binary if the PS2 software being run is
-// homebrew or some other serial-less item.
-std::string SysGetDiscID()
-{
-	if (!DiscSerial.empty())
-		return DiscSerial;
-
-	if (!ElfCRC)
-	{
-		// system is currently running the BIOS
-		return SysGetBiosDiscID();
-	}
-
-	return StringUtil::StdStringFromFormat("%08x", ElfCRC);
 }

@@ -23,22 +23,16 @@
 #include "common/StringUtil.h"
 #include <WinSock2.h>
 #include <iphlpapi.h>
-#elif defined(__linux__)
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <unistd.h>
-#elif defined(__POSIX__)
-#include <sys/types.h>
-#include <ifaddrs.h>
-#include <unistd.h>
 #endif
 
 #include <stdio.h>
-#include <stdarg.h>
 #include "pcap_io.h"
 #include "DEV9.h"
 #include "AdapterUtils.h"
 #include "net.h"
+#include "PacketReader/EthernetFrame.h"
+#include "PacketReader/EthernetFrameEditor.h"
+#include "PacketReader/ARP/ARP_PacketEditor.h"
 #ifndef PCAP_NETMASK_UNKNOWN
 #define PCAP_NETMASK_UNKNOWN 0xffffffff
 #endif
@@ -47,237 +41,9 @@
 #define PCAPPREFIX "\\Device\\NPF_"
 #endif
 
-pcap_t* adhandle;
-pcap_dumper_t* dump_pcap = nullptr;
-char errbuf[PCAP_ERRBUF_SIZE];
-
-int pcap_io_running = 0;
-bool pcap_io_switched;
-bool pcap_io_blocking;
-
-extern u8 eeprom[];
-
-char namebuff[256];
-
-ip_address ps2_ip;
-mac_address ps2_mac;
-mac_address host_mac;
-
-// Fetches the MAC address and prints it
-int GetMACAddress(const std::string& adapter, mac_address* addr)
-{
-	int retval = 0;
-#ifdef _WIN32
-	IP_ADAPTER_ADDRESSES adapterInfo;
-	std::unique_ptr<IP_ADAPTER_ADDRESSES[]> buffer;
-
-	if (AdapterUtils::GetWin32Adapter(adapter, &adapterInfo, &buffer))
-	{
-		memcpy(addr, adapterInfo.PhysicalAddress, 6);
-		retval = 1;
-	}
-
-#elif defined(__linux__)
-	struct ifreq ifr;
-	int fd = socket(AF_INET, SOCK_DGRAM, 0);
-	strcpy(ifr.ifr_name, adapter.c_str());
-	if (0 == ioctl(fd, SIOCGIFHWADDR, &ifr))
-	{
-		retval = 1;
-		memcpy(addr, ifr.ifr_hwaddr.sa_data, 6);
-	}
-	else
-	{
-		Console.Error("Could not get MAC address for adapter: %s", adapter.c_str());
-	}
-	close(fd);
-#else
-	Console.Error("Could not get MAC address for adapter, OS not supported");
-#endif
-	return retval;
-}
-
-int pcap_io_init(const std::string& adapter, bool switched, mac_address virtual_mac)
-{
-	struct bpf_program fp;
-	char filter[1024] = "ether broadcast or ether dst ";
-	int dlt;
-	char* dlt_name;
-	Console.WriteLn("DEV9: Opening adapter '%s'...", adapter.c_str());
-
-	pcap_io_switched = switched;
-
-#ifdef _WIN32
-	std::string pcapAdapter = PCAPPREFIX + adapter;
-#else
-	std::string pcapAdapter = adapter;
-#endif
-	/* Open the adapter */
-	if ((adhandle = pcap_open_live(pcapAdapter.c_str(), // name of the device
-			 65536, // portion of the packet to capture.
-			 // 65536 grants that the whole packet will be captured on all the MACs.
-			 switched ? 1 : 0,
-			 1, // read timeout
-			 errbuf // error buffer
-			 )) == NULL)
-	{
-		Console.Error("DEV9: %s", errbuf);
-		Console.Error("DEV9: Unable to open the adapter. %s is not supported by pcap", adapter.c_str());
-		return -1;
-	}
-	if (switched)
-	{
-		char virtual_mac_str[18];
-		sprintf(virtual_mac_str, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", virtual_mac.bytes[0], virtual_mac.bytes[1], virtual_mac.bytes[2], virtual_mac.bytes[3], virtual_mac.bytes[4], virtual_mac.bytes[5]);
-		strcat(filter, virtual_mac_str);
-		//	fprintf(stderr, "Trying pcap filter: %s\n", filter);
-
-		if (pcap_compile(adhandle, &fp, filter, 1, PCAP_NETMASK_UNKNOWN) == -1)
-		{
-			Console.Error("DEV9: Error calling pcap_compile: %s", pcap_geterr(adhandle));
-			return -1;
-		}
-
-		if (pcap_setfilter(adhandle, &fp) == -1)
-		{
-			Console.Error("DEV9: Error setting filter: %s", pcap_geterr(adhandle));
-			return -1;
-		}
-	}
-
-	if (pcap_setnonblock(adhandle, 1, errbuf) == -1)
-	{
-		Console.Error("DEV9: Error setting non-blocking: %s", pcap_geterr(adhandle));
-		Console.Error("DEV9: Continuing in blocking mode");
-		pcap_io_blocking = true;
-	}
-	else
-		pcap_io_blocking = false;
-
-	dlt = pcap_datalink(adhandle);
-	dlt_name = (char*)pcap_datalink_val_to_name(dlt);
-
-	Console.Error("DEV9: Device uses DLT %d: %s", dlt, dlt_name);
-	switch (dlt)
-	{
-		case DLT_EN10MB:
-			//case DLT_IEEE802_11:
-			break;
-		default:
-			Console.Error("ERROR: Unsupported DataLink Type (%d): %s", dlt, dlt_name);
-			pcap_close(adhandle);
-			return -1;
-	}
-
-#ifdef DEBUG
-	const std::string plfile(s_strLogPath + "/pkt_log.pcap");
-	dump_pcap = pcap_dump_open(adhandle, plfile.c_str());
-#endif
-
-	pcap_io_running = 1;
-	Console.WriteLn("DEV9: Adapter Ok.");
-	return 0;
-}
-
-#ifdef _WIN32
-int gettimeofday(struct timeval* tv, void* tz)
-{
-	unsigned __int64 ns100; /*time since 1 Jan 1601 in 100ns units */
-
-	GetSystemTimeAsFileTime((LPFILETIME)&ns100);
-	tv->tv_usec = (long)((ns100 / 10L) % 1000000L);
-	tv->tv_sec = (long)((ns100 - 116444736000000000L) / 10000000L);
-	return (0);
-}
-#endif
-
-int pcap_io_send(void* packet, int plen)
-{
-	if (pcap_io_running <= 0)
-		return -1;
-
-	if (!pcap_io_switched)
-	{
-		if (((ethernet_header*)packet)->protocol == 0x0008) //IP
-		{
-			ps2_ip = ((ip_header*)((u8*)packet + sizeof(ethernet_header)))->src;
-		}
-		if (((ethernet_header*)packet)->protocol == 0x0608) //ARP
-		{
-			ps2_ip = ((arp_packet*)((u8*)packet + sizeof(ethernet_header)))->p_src;
-			((arp_packet*)((u8*)packet + sizeof(ethernet_header)))->h_src = host_mac;
-		}
-		((ethernet_header*)packet)->src = host_mac;
-	}
-
-	if (dump_pcap)
-	{
-		static struct pcap_pkthdr ph;
-		gettimeofday(&ph.ts, NULL);
-		ph.caplen = plen;
-		ph.len = plen;
-		pcap_dump((u_char*)dump_pcap, &ph, (u_char*)packet);
-	}
-
-	return pcap_sendpacket(adhandle, (u_char*)packet, plen);
-}
-
-int pcap_io_recv(void* packet, int max_len)
-{
-	static struct pcap_pkthdr* header;
-	static const u_char* pkt_data1;
-
-	if (pcap_io_running <= 0)
-		return -1;
-
-	if ((pcap_next_ex(adhandle, &header, &pkt_data1)) > 0)
-	{
-		if ((int)header->len > max_len)
-			return -1;
-
-		memcpy(packet, pkt_data1, header->len);
-
-		if (!pcap_io_switched)
-		{
-			{
-				if (((ethernet_header*)packet)->protocol == 0x0008)
-				{
-					ip_header* iph = ((ip_header*)((u8*)packet + sizeof(ethernet_header)));
-					if (ip_compare(iph->dst, ps2_ip) == 0)
-					{
-						((ethernet_header*)packet)->dst = ps2_mac;
-					}
-				}
-				if (((ethernet_header*)packet)->protocol == 0x0608)
-				{
-					arp_packet* aph = ((arp_packet*)((u8*)packet + sizeof(ethernet_header)));
-					if (ip_compare(aph->p_dst, ps2_ip) == 0)
-					{
-						((ethernet_header*)packet)->dst = ps2_mac;
-						((arp_packet*)((u8*)packet + sizeof(ethernet_header)))->h_dst = ps2_mac;
-					}
-				}
-			}
-		}
-
-		if (dump_pcap)
-			pcap_dump((u_char*)dump_pcap, header, (u_char*)packet);
-
-		return header->len;
-	}
-
-	return -1;
-}
-
-void pcap_io_close()
-{
-	if (dump_pcap)
-		pcap_dump_close(dump_pcap);
-	if (adhandle)
-		pcap_close(adhandle);
-	pcap_io_running = 0;
-}
-
+using namespace PacketReader;
+using namespace PacketReader::ARP;
+using namespace PacketReader::IP;
 
 PCAPAdapter::PCAPAdapter()
 	: NetAdapter()
@@ -289,50 +55,62 @@ PCAPAdapter::PCAPAdapter()
 		return;
 #endif
 
-	mac_address hostMAC;
-	mac_address newMAC;
+#ifdef _WIN32
+	std::string pcapAdapter = PCAPPREFIX + EmuConfig.DEV9.EthDevice;
+#else
+	std::string pcapAdapter = EmuConfig.DEV9.EthDevice;
+#endif
 
-	GetMACAddress(EmuConfig.DEV9.EthDevice, &hostMAC);
-	memcpy(&newMAC, ps2MAC, 6);
+	switched = EmuConfig.DEV9.EthApi == Pcsx2Config::DEV9Options::NetApi::PCAP_Switched;
 
-	//Lets take the hosts last 2 bytes to make it unique on Xlink
-	newMAC.bytes[5] = hostMAC.bytes[4];
-	newMAC.bytes[4] = hostMAC.bytes[5];
-
-	SetMACAddress((u8*)&newMAC);
-	host_mac = hostMAC;
-	ps2_mac = newMAC; //Needed outside of this class
-
-	if (pcap_io_init(EmuConfig.DEV9.EthDevice, EmuConfig.DEV9.EthApi == Pcsx2Config::DEV9Options::NetApi::PCAP_Switched, newMAC) == -1)
+	if (!InitPCAP(pcapAdapter, switched))
 	{
 		Console.Error("DEV9: Can't open Device '%s'", EmuConfig.DEV9.EthDevice.c_str());
 		return;
 	}
 
-#ifdef _WIN32
-	IP_ADAPTER_ADDRESSES adapter;
-	std::unique_ptr<IP_ADAPTER_ADDRESSES[]> buffer;
-	if (AdapterUtils::GetWin32Adapter(EmuConfig.DEV9.EthDevice, &adapter, &buffer))
-		InitInternalServer(&adapter);
+	AdapterUtils::Adapter adapter;
+	AdapterUtils::AdapterBuffer buffer;
+	std::optional<MAC_Address> adMAC = std::nullopt;
+	const bool foundAdapter = AdapterUtils::GetAdapter(EmuConfig.DEV9.EthDevice, &adapter, &buffer);
+	if (foundAdapter)
+		adMAC = AdapterUtils::GetAdapterMAC(&adapter);
+	else
+		Console.Error("DEV9: Failed to get adapter information");
+
+	if (adMAC.has_value())
+	{
+		hostMAC = adMAC.value();
+		MAC_Address newMAC = ps2MAC;
+
+		//Lets take the hosts last 2 bytes to make it unique on Xlink
+		newMAC.bytes[5] = hostMAC.bytes[4];
+		newMAC.bytes[4] = hostMAC.bytes[5];
+
+		SetMACAddress(&newMAC);
+	}
+	else if (switched)
+		Console.Error("DEV9: Failed to get MAC address for adapter, proceeding with hardcoded MAC address");
 	else
 	{
-		Console.Error("DEV9: Failed to get adapter information");
-		InitInternalServer(nullptr);
+		Console.Error("DEV9: Failed to get MAC address for adapter");
+		pcap_close(hpcap);
+		hpcap = nullptr;
+		return;
 	}
-#elif defined(__POSIX__)
-	ifaddrs adapter;
-	ifaddrs* buffer;
-	if (AdapterUtils::GetIfAdapter(EmuConfig.DEV9.EthDevice, &adapter, &buffer))
+
+	if (switched && !SetMACSwitchedFilter(ps2MAC))
 	{
+		pcap_close(hpcap);
+		hpcap = nullptr;
+		Console.Error("DEV9: Can't open Device '%s'", EmuConfig.DEV9.EthDevice.c_str());
+		return;
+	}
+
+	if (foundAdapter)
 		InitInternalServer(&adapter);
-		freeifaddrs(buffer);
-	}
 	else
-	{
-		Console.Error("DEV9: Failed to get adapter information");
 		InitInternalServer(nullptr);
-	}
-#endif
 }
 AdapterOptions PCAPAdapter::GetAdapterOptions()
 {
@@ -340,70 +118,88 @@ AdapterOptions PCAPAdapter::GetAdapterOptions()
 }
 bool PCAPAdapter::blocks()
 {
-	pxAssert(pcap_io_running);
-	return pcap_io_blocking;
+	pxAssert(hpcap);
+	return blocking;
 }
 bool PCAPAdapter::isInitialised()
 {
-	return !!pcap_io_running;
+	return hpcap != nullptr;
 }
 //gets a packet.rv :true success
 bool PCAPAdapter::recv(NetPacket* pkt)
 {
-	if (!pcap_io_blocking && NetAdapter::recv(pkt))
+	pxAssert(hpcap);
+
+	if (!blocking && NetAdapter::recv(pkt))
 		return true;
 
-	int size = pcap_io_recv(pkt->buffer, sizeof(pkt->buffer));
-	if (size > 0 && VerifyPkt(pkt, size))
+	pcap_pkthdr* header;
+	const u_char* pkt_data;
+
+	// pcap bridged will pick up packets not intended for us, returning false on those packets will incur a 1ms wait.
+	// This delays getting packets we need, so instead loop untill a valid packet, or no packet, is returned from pcap_next_ex.
+	while (pcap_next_ex(hpcap, &header, &pkt_data) > 0)
 	{
-		InspectRecv(pkt);
-		return true;
+		if (header->len > sizeof(pkt->buffer))
+		{
+			Console.Error("DEV9: Dropped jumbo frame of size: %u", header->len);
+			continue;
+		}
+
+		pxAssert(header->len == header->caplen);
+
+		memcpy(pkt->buffer, pkt_data, header->len);
+		pkt->size = (int)header->len;
+
+		if (!switched)
+			SetMACBridgedRecv(pkt);
+
+		if (VerifyPkt(pkt, header->len))
+		{
+			InspectRecv(pkt);
+			return true;
+		}
+		// continue.
 	}
-	else
-		return false;
+
+	return false;
 }
 //sends the packet .rv :true success
 bool PCAPAdapter::send(NetPacket* pkt)
 {
+	pxAssert(hpcap);
+
 	InspectSend(pkt);
 	if (NetAdapter::send(pkt))
 		return true;
 
-	if (pcap_io_send(pkt->buffer, pkt->size))
-	{
+	// TODO: loopback broadcast packets to host pc in switched mode.
+	if (!switched)
+		SetMACBridgedSend(pkt);
+
+	if (pcap_sendpacket(hpcap, (u_char*)pkt->buffer, pkt->size))
 		return false;
-	}
 	else
-	{
 		return true;
-	}
 }
 
 void PCAPAdapter::reloadSettings()
 {
-#ifdef _WIN32
-	IP_ADAPTER_ADDRESSES adapter;
-	std::unique_ptr<IP_ADAPTER_ADDRESSES[]> buffer;
-	if (AdapterUtils::GetWin32Adapter(EmuConfig.DEV9.EthDevice, &adapter, &buffer))
+	AdapterUtils::Adapter adapter;
+	AdapterUtils::AdapterBuffer buffer;
+	if (AdapterUtils::GetAdapter(EmuConfig.DEV9.EthDevice, &adapter, &buffer))
 		ReloadInternalServer(&adapter);
 	else
 		ReloadInternalServer(nullptr);
-#elif defined(__POSIX__)
-	ifaddrs adapter;
-	ifaddrs* buffer;
-	if (AdapterUtils::GetIfAdapter(EmuConfig.DEV9.EthDevice, &adapter, &buffer))
-	{
-		ReloadInternalServer(&adapter);
-		freeifaddrs(buffer);
-	}
-	else
-		ReloadInternalServer(nullptr);
-#endif
 }
 
 PCAPAdapter::~PCAPAdapter()
 {
-	pcap_io_close();
+	if (hpcap)
+	{
+		pcap_close(hpcap);
+		hpcap = nullptr;
+	}
 }
 
 std::vector<AdapterEntry> PCAPAdapter::GetAdapters()
@@ -415,6 +211,7 @@ std::vector<AdapterEntry> PCAPAdapter::GetAdapters()
 		return nic;
 #endif
 
+	char errbuf[PCAP_ERRBUF_SIZE];
 	pcap_if_t* alldevs;
 	pcap_if_t* d;
 
@@ -440,7 +237,7 @@ std::vector<AdapterEntry> PCAPAdapter::GetAdapters()
 		IP_ADAPTER_ADDRESSES adapterInfo;
 		std::unique_ptr<IP_ADAPTER_ADDRESSES[]> buffer;
 
-		if (AdapterUtils::GetWin32Adapter(entry.guid, &adapterInfo, &buffer))
+		if (AdapterUtils::GetAdapter(entry.guid, &adapterInfo, &buffer))
 			entry.name = StringUtil::WideStringToUTF8String(std::wstring(adapterInfo.FriendlyName));
 		else
 		{
@@ -469,4 +266,118 @@ std::vector<AdapterEntry> PCAPAdapter::GetAdapters()
 	}
 
 	return nic;
+}
+
+// Opens device for capture and sets non-blocking.
+bool PCAPAdapter::InitPCAP(const std::string& adapter, bool promiscuous)
+{
+	char errbuf[PCAP_ERRBUF_SIZE];
+	Console.WriteLn("DEV9: Opening adapter '%s'...", adapter.c_str());
+
+	// Open the adapter.
+	if ((hpcap = pcap_open_live(adapter.c_str(), // Name of the device.
+			 65536, // portion of the packet to capture.
+			 // 65536 grants that the whole packet will be captured on all the MACs.
+			 promiscuous ? 1 : 0,
+			 1, // Read timeout.
+			 errbuf // Error buffer.
+			 )) == nullptr)
+	{
+		Console.Error("DEV9: %s", errbuf);
+		Console.Error("DEV9: Unable to open the adapter. %s is not supported by pcap", adapter.c_str());
+		return false;
+	}
+
+	if (pcap_setnonblock(hpcap, 1, errbuf) == -1)
+	{
+		Console.Error("DEV9: Error setting non-blocking: %s", pcap_geterr(hpcap));
+		Console.Error("DEV9: Continuing in blocking mode");
+		blocking = true;
+	}
+	else
+		blocking = false;
+
+	// Validate.
+	const int dlt = pcap_datalink(hpcap);
+	const char* dlt_name = pcap_datalink_val_to_name(dlt);
+
+	Console.Error("DEV9: Device uses DLT %d: %s", dlt, dlt_name);
+	switch (dlt)
+	{
+		case DLT_EN10MB:
+			//case DLT_IEEE802_11:
+			break;
+		default:
+			Console.Error("ERROR: Unsupported DataLink Type (%d): %s", dlt, dlt_name);
+			pcap_close(hpcap);
+			hpcap = nullptr;
+			return false;
+	}
+
+	Console.WriteLn("DEV9: Adapter Ok.");
+	return true;
+}
+
+bool PCAPAdapter::SetMACSwitchedFilter(MAC_Address mac)
+{
+	bpf_program fp;
+	char filter[1024] = "ether broadcast or ether dst ";
+
+	char virtual_mac_str[18];
+	sprintf(virtual_mac_str, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", mac.bytes[0], mac.bytes[1], mac.bytes[2], mac.bytes[3], mac.bytes[4], mac.bytes[5]);
+	strcat(filter, virtual_mac_str);
+
+	if (pcap_compile(hpcap, &fp, filter, 1, PCAP_NETMASK_UNKNOWN) == -1)
+	{
+		Console.Error("DEV9: Error calling pcap_compile: %s", pcap_geterr(hpcap));
+		return false;
+	}
+
+	int setFilterRet;
+	if ((setFilterRet = pcap_setfilter(hpcap, &fp)) == -1)
+		Console.Error("DEV9: Error setting filter: %s", pcap_geterr(hpcap));
+
+	pcap_freecode(&fp);
+	return setFilterRet != -1;
+}
+
+void PCAPAdapter::SetMACBridgedRecv(NetPacket* pkt)
+{
+	EthernetFrameEditor frame(pkt);
+	if (frame.GetProtocol() == (u16)EtherType::IPv4) // IP
+	{
+		// Compare DEST IP in IP with the PS2's IP, if they match, change DEST MAC to ps2MAC.
+		PayloadPtr* payload = frame.GetPayload();
+		IP_Packet ippkt(payload->data, payload->GetLength());
+		if (ippkt.destinationIP == ps2IP)
+			frame.SetDestinationMAC(ps2MAC);
+	}
+	if (frame.GetProtocol() == (u16)EtherType::ARP) // ARP
+	{
+		// Compare DEST IP in ARP with the PS2's IP, if they match, DEST MAC to ps2MAC on both ARP and ETH Packet headers.
+		ARP_PacketEditor arpPkt(frame.GetPayload());
+		if (*(IP_Address*)arpPkt.TargetProtocolAddress() == ps2IP)
+		{
+			frame.SetDestinationMAC(ps2MAC);
+			*(MAC_Address*)arpPkt.TargetHardwareAddress() = ps2MAC;
+		}
+	}
+}
+
+void PCAPAdapter::SetMACBridgedSend(NetPacket* pkt)
+{
+	EthernetFrameEditor frame(pkt);
+	if (frame.GetProtocol() == (u16)EtherType::IPv4) // IP
+	{
+		PayloadPtr* payload = frame.GetPayload();
+		IP_Packet ippkt(payload->data, payload->GetLength());
+		ps2IP = ippkt.sourceIP;
+	}
+	if (frame.GetProtocol() == (u16)EtherType::ARP) // ARP
+	{
+		ARP_PacketEditor arpPkt(frame.GetPayload());
+		ps2IP = *(IP_Address*)arpPkt.SenderProtocolAddress();
+		*(MAC_Address*)arpPkt.SenderHardwareAddress() = hostMAC;
+	}
+	frame.SetSourceMAC(hostMAC);
 }

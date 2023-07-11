@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2010  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023 PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -15,11 +15,13 @@
 
 #pragma once
 
+#include "common/Pcsx2Defs.h"
+
 #include <atomic>
 #include <map>
 #include <memory>
 #include <string>
-#include "common/Pcsx2Defs.h"
+#include <cstring>
 
 // This macro is actually useful for about any and every possible application of C++
 // equality operators.
@@ -116,6 +118,14 @@ static __fi PageProtectionMode PageAccess_Any()
 	return PageProtectionMode().All();
 }
 
+struct PageFaultInfo
+{
+	uptr pc;
+	uptr addr;
+};
+
+using PageFaultHandler = bool(*)(const PageFaultInfo& info);
+
 // --------------------------------------------------------------------------------------
 //  HostSys
 // --------------------------------------------------------------------------------------
@@ -141,6 +151,12 @@ namespace HostSys
 	extern void DestroySharedMemory(void* ptr);
 	extern void* MapSharedMemory(void* handle, size_t offset, void* baseaddr, size_t size, const PageProtectionMode& mode);
 	extern void UnmapSharedMemory(void* baseaddr, size_t size);
+
+	/// Installs the specified page fault handler. Only one handler can be active at once.
+	bool InstallPageFaultHandler(PageFaultHandler handler);
+
+	/// Removes the page fault handler. handler is only specified to check against the active callback.
+	void RemovePageFaultHandler(PageFaultHandler handler);
 }
 
 class SharedMemoryMappingArea
@@ -182,7 +198,6 @@ private:
 #define SafeSysMunmap(ptr, size) \
 	((void)(HostSys::Munmap(ptr, size), (ptr) = 0))
 
-extern void InitCPUTicks();
 extern u64 GetTickFrequency();
 extern u64 GetCPUTicks();
 extern u64 GetPhysicalMemory();

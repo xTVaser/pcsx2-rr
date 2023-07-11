@@ -113,6 +113,7 @@ public:
 	QString getSummary() const;
 
 private Q_SLOTS:
+	void onPressureChanged();
 	void onSetFrequencyClicked();
 	void updateBinds();
 
@@ -139,7 +140,7 @@ class ControllerCustomSettingsWidget : public QWidget
 
 public:
 	ControllerCustomSettingsWidget(gsl::span<const SettingInfo> settings, std::string config_section, std::string config_prefix,
-		const QString& group_title, const char* translation_ctx, ControllerSettingsDialog* dialog, QWidget* parent_widget);
+		const char* translation_ctx, ControllerSettingsDialog* dialog, QWidget* parent_widget);
 	~ControllerCustomSettingsWidget();
 
 private Q_SLOTS:

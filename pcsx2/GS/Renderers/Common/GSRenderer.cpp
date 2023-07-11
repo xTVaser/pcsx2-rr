@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2021 PCSX2 Dev Team
+ *  Copyright (C) 2002-2023 PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -14,31 +14,41 @@
  */
 
 #include "PrecompiledHeader.h"
-#include "GSRenderer.h"
+
+#include "ImGui/FullscreenUI.h"
+#include "ImGui/ImGuiManager.h"
+#include "GS/Renderers/Common/GSRenderer.h"
 #include "GS/GSCapture.h"
+#include "GS/GSDump.h"
 #include "GS/GSGL.h"
+#include "GS/GSPerfMon.h"
+#include "GS/GSUtil.h"
+#include "GSDumpReplayer.h"
 #include "Host.h"
-#include "HostDisplay.h"
 #include "PerformanceMetrics.h"
 #include "pcsx2/Config.h"
-#include "IconsFontAwesome5.h"
 #include "VMManager.h"
+
 #include "common/FileSystem.h"
 #include "common/Image.h"
 #include "common/Path.h"
 #include "common/StringUtil.h"
 #include "common/Timer.h"
+
 #include "fmt/core.h"
+#include "IconsFontAwesome5.h"
+
 #include <algorithm>
 #include <array>
 #include <deque>
 #include <thread>
 #include <mutex>
 
-static constexpr std::array<PresentShader, 6> s_tv_shader_indices = {
+static constexpr std::array<PresentShader, 8> s_tv_shader_indices = {
 	PresentShader::COPY, PresentShader::SCANLINE,
 	PresentShader::DIAGONAL_FILTER, PresentShader::TRIANGULAR_FILTER,
-	PresentShader::COMPLEX_FILTER, PresentShader::LOTTES_FILTER};
+	PresentShader::COMPLEX_FILTER, PresentShader::LOTTES_FILTER,
+	PresentShader::SUPERSAMPLE_4xRGSS, PresentShader::SUPERSAMPLE_AUTO};
 
 static std::deque<std::thread> s_screenshot_threads;
 static std::mutex s_screenshot_threads_mutex;
@@ -49,6 +59,11 @@ std::unique_ptr<GSRenderer> g_gs_renderer;
 // we might be switching while the other thread reads it.
 static GSVector4 s_last_draw_rect;
 
+// Last time we reset the renderer due to a GPU crash, if any.
+static Common::Timer::Value s_last_gpu_reset_time;
+
+// Screen alignment
+static GSDisplayAlignment s_display_alignment = GSDisplayAlignment::Center;
 
 GSRenderer::GSRenderer()
 	: m_shader_time_start(Common::Timer::GetCurrentValue())
@@ -60,11 +75,22 @@ GSRenderer::~GSRenderer() = default;
 
 void GSRenderer::Reset(bool hardware_reset)
 {
-	// clear the current display texture
+	// Clear the current display texture.
 	if (hardware_reset)
 		g_gs_device->ClearCurrent();
 
 	GSState::Reset(hardware_reset);
+
+	// Restart video capture if it's been started.
+	// Otherwise we get a buildup of audio frames from the CPU thread.
+	if (hardware_reset && GSCapture::IsCapturing())
+	{
+		std::string next_filename = GSCapture::GetNextCaptureFileName();
+		const GSVector2i size = GSCapture::GetSize();
+		Console.Warning(fmt::format("Restarting video capture to {}.", next_filename));
+		EndCapture();
+		BeginCapture(std::move(next_filename), size);
+	}
 }
 
 void GSRenderer::Destroy()
@@ -74,270 +100,116 @@ void GSRenderer::Destroy()
 
 bool GSRenderer::Merge(int field)
 {
-	bool en[2];
-
-	GSVector4i fr[2];
-	GSVector4i dr[2];
-	GSVector2i display_offsets[2];
-
-	GSVector2i display_baseline = {INT_MAX, INT_MAX};
-	GSVector2i frame_baseline = {INT_MAX, INT_MAX};
-	GSVector2i display_combined = {0, 0};
-	bool feedback_merge = m_regs->EXTWRITE.WRITE == 1;
-	bool display_offset = false;
-
-	for (int i = 0; i < 2; i++)
-	{
-		en[i] = IsEnabled(i) || (m_regs->EXTBUF.FBIN == i && feedback_merge);
-
-		if (en[i])
-		{
-			fr[i] = GetFrameRect(i);
-			dr[i] = GetDisplayRect(i);
-			display_offsets[i] = GetResolutionOffset(i);
-
-			display_combined.x = std::max(((dr[i].right) - dr[i].left) + display_offsets[i].x, display_combined.x);
-			display_combined.y = std::max((dr[i].bottom - dr[i].top) + display_offsets[i].y, display_combined.y);
-
-			display_baseline.x = std::min(display_offsets[i].x, display_baseline.x);
-			display_baseline.y = std::min(display_offsets[i].y, display_baseline.y);
-			frame_baseline.x = std::min(std::max(fr[i].left, 0), frame_baseline.x);
-			frame_baseline.y = std::min(std::max(fr[i].top, 0), frame_baseline.y);
-
-			display_offset |= std::abs(display_baseline.y - display_offsets[i].y) == 1;
-			/*DevCon.Warning("Read offset was X %d(left %d) Y %d(top %d)", display_baseline.x, dr[i].left, display_baseline.y, dr[i].top);
-			DevCon.Warning("[%d]: %d %d %d %d, %d %d %d %d\n", i, fr[i].x,fr[i].y,fr[i].z,fr[i].w , dr[i].x,dr[i].y,dr[i].z,dr[i].w);
-			DevCon.Warning("Offset X %d Offset Y %d", display_offsets[i].x, display_offsets[i].y);*/
-		}
-	}
-
-	if (!en[0] && !en[1])
-	{
-		return false;
-	}
-
-	GL_PUSH("Renderer Merge %d (0: enabled %d 0x%x, 1: enabled %d 0x%x)", s_n, en[0], m_regs->DISP[0].DISPFB.Block(), en[1], m_regs->DISP[1].DISPFB.Block());
-
-	// try to avoid fullscreen blur, could be nice on tv but on a monitor it's like double vision, hurts my eyes (persona 4, guitar hero)
-	//
-	// NOTE: probably the technique explained in graphtip.pdf (Antialiasing by Supersampling / 4. Reading Odd/Even Scan Lines Separately with the PCRTC then Blending)
-
-	const bool samesrc =
-		en[0] && en[1] &&
-		m_regs->DISP[0].DISPFB.FBP == m_regs->DISP[1].DISPFB.FBP &&
-		m_regs->DISP[0].DISPFB.FBW == m_regs->DISP[1].DISPFB.FBW &&
-		GSUtil::HasCompatibleBits(m_regs->DISP[0].DISPFB.PSM, m_regs->DISP[1].DISPFB.PSM);
-	bool single_fetch = false;
-
 	GSVector2i fs(0, 0);
-	GSVector2i ds(0, 0);
+	GSTexture* tex[3] = { nullptr, nullptr, nullptr };
+	float tex_scale[3] = { 0.0f, 0.0f, 0.0f };
+	int y_offset[3] = { 0, 0, 0 };
+	const bool feedback_merge = m_regs->EXTWRITE.WRITE == 1;
 
-	GSTexture* tex[3] = {NULL, NULL, NULL};
-	int y_offset[3] = {0, 0, 0};
+	PCRTCDisplays.SetVideoMode(GetVideoMode());
+	PCRTCDisplays.EnableDisplays(m_regs->PMODE, m_regs->SMODE2, isReallyInterlaced());
+	PCRTCDisplays.CheckSameSource();
 
-	s_n++;
+	if (!PCRTCDisplays.PCRTCDisplays[0].enabled && !PCRTCDisplays.PCRTCDisplays[1].enabled)
+		return false;
+
+	// Need to do this here, if the user has Anti-Blur enabled, these offsets can get wiped out/changed.
+	const bool game_deinterlacing = (m_regs->DISP[0].DISPFB.DBY != PCRTCDisplays.PCRTCDisplays[0].prevFramebufferReg.DBY) !=
+									(m_regs->DISP[1].DISPFB.DBY != PCRTCDisplays.PCRTCDisplays[1].prevFramebufferReg.DBY);
+
+	PCRTCDisplays.SetRects(0, m_regs->DISP[0].DISPLAY, m_regs->DISP[0].DISPFB);
+	PCRTCDisplays.SetRects(1, m_regs->DISP[1].DISPLAY, m_regs->DISP[1].DISPFB);
+	PCRTCDisplays.CalculateDisplayOffset(m_scanmask_used);
+	PCRTCDisplays.CalculateFramebufferOffset(m_scanmask_used);
 
 	// Only need to check the right/bottom on software renderer, hardware always gets the full texture then cuts a bit out later.
-	if (samesrc && !feedback_merge && (GSConfig.UseHardwareRenderer() || (fr[0].right == fr[1].right && fr[0].bottom == fr[1].bottom)))
+	if (PCRTCDisplays.FrameRectMatch() && !PCRTCDisplays.FrameWrap() && !feedback_merge)
 	{
-		tex[0] = GetOutput(0, y_offset[0]);
+		tex[0] = GetOutput(-1, tex_scale[0], y_offset[0]);
 		tex[1] = tex[0]; // saves one texture fetch
 		y_offset[1] = y_offset[0];
-		single_fetch = true;
+		tex_scale[1] = tex_scale[0];
 	}
 	else
 	{
-		if (en[0])
-			tex[0] = GetOutput(0, y_offset[0]);
-		if (en[1])
-			tex[1] = GetOutput(1, y_offset[1]);
+		if (PCRTCDisplays.PCRTCDisplays[0].enabled)
+			tex[0] = GetOutput(0, tex_scale[0], y_offset[0]);
+		if (PCRTCDisplays.PCRTCDisplays[1].enabled)
+			tex[1] = GetOutput(1, tex_scale[1], y_offset[1]);
 		if (feedback_merge)
-			tex[2] = GetFeedbackOutput();
+			tex[2] = GetFeedbackOutput(tex_scale[2]);
 	}
 
-	GSVector4 src_out_rect[2];
+	if (!tex[0] && !tex[1])
+		return false;
+
+	s_n++;
+
 	GSVector4 src_gs_read[2];
 	GSVector4 dst[3];
 
-	const bool slbg = m_regs->PMODE.SLBG;
-
-	GSVector2i resolution(GetResolution());
-	bool scanmask_frame = m_scanmask_used && !display_offset;
-	const bool ignore_offset = !GSConfig.PCRTCOffsets;
-	const bool is_bob = GSConfig.InterlaceMode == GSInterlaceMode::BobTFF || GSConfig.InterlaceMode == GSInterlaceMode::BobBFF;
-
 	// Use offset for bob deinterlacing always, extra offset added later for FFMD mode.
-	float offset = is_bob ? (tex[1] ? tex[1]->GetScale().y : tex[0]->GetScale().y) : 0.0f;
-
+	const bool scanmask_frame = m_scanmask_used && abs(PCRTCDisplays.PCRTCDisplays[0].displayRect.y - PCRTCDisplays.PCRTCDisplays[1].displayRect.y) != 1;
 	int field2 = 0;
-	int mode = 3;
+	int mode = 3; // If the game is manually deinterlacing then we need to bob (if we want to get away with no deinterlacing).
+	bool is_bob = GSConfig.InterlaceMode == GSInterlaceMode::BobTFF || GSConfig.InterlaceMode == GSInterlaceMode::BobBFF;
 
-	// FFMD (half frames) requires blend deinterlacing, so automatically use that. Same when SCANMSK is used but not blended in the merge circuit (Alpine Racer 3)
+	// FFMD (half frames) requires blend deinterlacing, so automatically use that. Same when SCANMSK is used but not blended in the merge circuit (Alpine Racer 3).
 	if (GSConfig.InterlaceMode != GSInterlaceMode::Automatic || (!m_regs->SMODE2.FFMD && !scanmask_frame))
 	{
-		field2 = ((static_cast<int>(GSConfig.InterlaceMode) - 2) & 1);
-		mode = ((static_cast<int>(GSConfig.InterlaceMode) - 2) >> 1);
+		// If the game is offsetting each frame itself and we're using full height buffers, we can offset this with Bob.
+		if (game_deinterlacing && !scanmask_frame && GSConfig.InterlaceMode == GSInterlaceMode::Automatic)
+		{
+			mode = 1; // Bob.
+			is_bob = true;
+		}
+		else
+		{
+			field2 = ((static_cast<int>(GSConfig.InterlaceMode) - 2) & 1);
+			mode = ((static_cast<int>(GSConfig.InterlaceMode) - 2) >> 1);
+		}
 	}
 
 	for (int i = 0; i < 2; i++)
 	{
-		if (!en[i] || !tex[i])
+		 const GSPCRTCRegs::PCRTCDisplay& curCircuit = PCRTCDisplays.PCRTCDisplays[i];
+
+		if (!curCircuit.enabled || !tex[i])
 			continue;
 
-		GSVector4i r = GetFrameMagnifiedRect(i);
-		GSVector4 scale = GSVector4(tex[i]->GetScale()).xyxy();
-
-
-		GSVector2i off(ignore_offset ? 0 : display_offsets[i]);
-		GSVector2i display_diff(display_offsets[i].x - display_baseline.x, display_offsets[i].y - display_baseline.y);
-		GSVector2i frame_diff(fr[i].left - frame_baseline.x, fr[i].top - frame_baseline.y);
-
-		if (!GSConfig.UseHardwareRenderer())
-		{
-			// Clear any frame offsets, offset is already done in the software GetOutput.
-			fr[i].right -= fr[i].left;
-			fr[i].left = 0;
-			fr[i].bottom -= fr[i].top;
-			fr[i].top = 0;
-
-			// Put any frame offset difference back if we aren't anti-blurring on a single fetch (not offset).
-			if (!GSConfig.PCRTCAntiBlur && single_fetch)
-			{
-				fr[i].right += frame_diff.x;
-				fr[i].left += frame_diff.x;
-				fr[i].bottom += frame_diff.y;
-				fr[i].top += frame_diff.y;
-			}
-			
-		}
-
-		// If using scanmsk we have to keep the single line offset, regardless of upscale
-		// so we handle this separately after the rect calculations.
-		float interlace_offset = 0.0f;
-
-		if ((!GSConfig.PCRTCAntiBlur || m_scanmask_used) && display_offset)
-		{
-			interlace_offset = static_cast<float>(display_diff.y & 1);
-
-			// When the displays are offset by 1 we need to adjust for upscale to handle it (reduces bounce in MGS2 when upscaling)
-			interlace_offset += (tex[i]->GetScale().y - 1.0f)  / 2;
-
-			if (interlace_offset >= 1.0f)
-			{
-				if (!ignore_offset)
-					off.y -= 1;
-
-				display_diff.y -= 1;
-			}
-		}
-
-		// Start of Anti-Blur code.
-		if (!ignore_offset)
-		{
-			if (GSConfig.PCRTCAntiBlur)
-			{
-				if (samesrc)
-				{
-					// Offset by DISPLAY setting
-					if (display_diff.x < 4)
-						off.x -= display_diff.x;
-					if (display_diff.y < 4)
-						off.y -= display_diff.y;
-
-					// Only functional in HW mode, software clips/positions the framebuffer on read.
-					if (GSConfig.UseHardwareRenderer())
-					{
-						// Offset by DISPFB setting
-						if (abs(frame_diff.x) < 4)
-							off.x += frame_diff.x;
-						if (abs(frame_diff.y) < 4)
-							off.y += frame_diff.y;
-					}
-				}
-			}
-		}
-		else
-		{
-			if (!slbg || !feedback_merge)
-			{
-				// If the offsets between the two displays are quite large, it's probably intended for an effect.
-				if (display_diff.x >= 4 || !GSConfig.PCRTCAntiBlur)
-					off.x = display_diff.x;
-
-				if (display_diff.y >= 4 || !GSConfig.PCRTCAntiBlur)
-					off.y = display_diff.y;
-
-				// Need to check if only circuit 2 is enabled. Stuntman toggles circuit 1 on and off every other frame.
-				if (samesrc || m_regs->PMODE.EN == 2)
-				{
-					// Adjusting the screen offset when using a negative offset.
-					const int videomode = static_cast<int>(GetVideoMode()) - 1;
-					const GSVector4i offsets = !GSConfig.PCRTCOverscan ? VideoModeOffsets[videomode] : VideoModeOffsetsOverscan[videomode];
-					GSVector2i base_resolution(offsets.x, offsets.y);
-
-					if (isinterlaced() && !m_regs->SMODE2.FFMD)
-						base_resolution.y *= 2;
-
-					// Offset by DISPLAY setting
-					if (display_diff.x < 0)
-					{
-						off.x = 0;
-						if (base_resolution.x > resolution.x)
-							resolution.x -= display_diff.x;
-					}
-					if (display_diff.y < 0)
-					{
-						off.y = 0;
-						if (base_resolution.y > resolution.y)
-							resolution.y -= display_diff.y;
-					}
-
-					// Don't do X, we only care about height, this would need to be tailored for games using X (Black does -5).
-					// Mainly for Hokuto no Ken which does -14 Y offset.
-					if (display_baseline.y < -4)
-						off.y += display_baseline.y;
-
-					// Anti-Blur stuff
-					// Only functional in HW mode, software clips/positions the framebuffer on read.
-					if (GSConfig.PCRTCAntiBlur && GSConfig.UseHardwareRenderer())
-					{
-						// Offset by DISPFB setting
-						if (abs(frame_diff.x) < 4)
-							off.x += frame_diff.x;
-						if (abs(frame_diff.y) < 4)
-							off.y += frame_diff.y;
-					}
-				}
-			}
-		}
-		// End of Anti-Blur code.
-
-		if (isinterlaced() && m_regs->SMODE2.FFMD)
-			off.y >>= 1;
+		const GSVector4 scale = GSVector4(tex_scale[i]);
 
 		// dst is the final destination rect with offset on the screen.
-		dst[i] = scale * (GSVector4(off).xyxy() + GSVector4(r.rsize()));
+		dst[i] = scale * GSVector4(curCircuit.displayRect);
 
 		// src_gs_read is the size which we're really reading from GS memory.
-		src_gs_read[i] = ((GSVector4(fr[i]) + GSVector4(0, y_offset[i], 0, y_offset[i])) * scale) / GSVector4(tex[i]->GetSize()).xyxy();
-
-		// src_out_rect is the resized rect for output. (Not really used)
-		src_out_rect[i] = (GSVector4(r) * scale) / GSVector4(tex[i]->GetSize()).xyxy();
-
-		if (m_regs->SMODE2.FFMD && !is_bob && !GSConfig.DisableInterlaceOffset && GSConfig.InterlaceMode != GSInterlaceMode::Off)
+		src_gs_read[i] = ((GSVector4(curCircuit.framebufferRect) + GSVector4(0, y_offset[i], 0, y_offset[i])) * scale) / GSVector4(tex[i]->GetSize()).xyxy();
+		
+		float interlace_offset = 0.0f;
+		if (isReallyInterlaced() && m_regs->SMODE2.FFMD && !is_bob && !GSConfig.DisableInterlaceOffset && GSConfig.InterlaceMode != GSInterlaceMode::Off)
 		{
-			// We do half because FFMD is a half sized framebuffer, then we offset by 1 in the shader for the actual interlace
-			if(GetUpscaleMultiplier() > 1.0f)
-				interlace_offset += ((((tex[1] ? tex[1]->GetScale().y : tex[0]->GetScale().y) + 0.5f) * 0.5f) - 1.0f) * static_cast<float>(field ^ field2);
-			offset = 1.0f;
+			interlace_offset = (scale.y) * static_cast<float>(field ^ field2);
 		}
-		// Restore manually offset "interlace" lines
+		// Scanmask frame offsets. It's gross, I'm sorry but it sucks.
+		if (m_scanmask_used)
+		{
+			int displayIntOffset = PCRTCDisplays.PCRTCDisplays[i].displayRect.y - PCRTCDisplays.PCRTCDisplays[1 - i].displayRect.y;
+			
+			if (displayIntOffset > 0)
+			{
+				displayIntOffset &= 1;
+				dst[i].y -= displayIntOffset * scale.y;
+				dst[i].w -= displayIntOffset * scale.y;
+				interlace_offset += displayIntOffset;
+			}
+		}
+
 		dst[i] += GSVector4(0.0f, interlace_offset, 0.0f, interlace_offset);
 	}
 
 	if (feedback_merge && tex[2])
 	{
-		GSVector4 scale = GSVector4(tex[2]->GetScale()).xyxy();
+		const GSVector4 scale = GSVector4(tex_scale[2]);
 		GSVector4i feedback_rect;
 
 		feedback_rect.left = m_regs->EXTBUF.WDX;
@@ -348,50 +220,30 @@ bool GSRenderer::Merge(int field)
 		dst[2] = GSVector4(scale * GSVector4(feedback_rect.rsize()));
 	}
 
-	// Set the resolution to the height of the displays (kind of a saturate height)
-	if (ignore_offset && !feedback_merge)
-	{
-		GSVector2i max_resolution = GetResolution();
-		resolution.x = display_combined.x - display_baseline.x;
-		resolution.y = display_combined.y - display_baseline.y;
-
-		if (isinterlaced() && m_regs->SMODE2.FFMD)
-		{
-			resolution.y >>= 1;
-		}
-
-		resolution.x = std::min(max_resolution.x, resolution.x);
-		resolution.y = std::min(max_resolution.y, resolution.y);
-	}
-
+	const GSVector2i resolution = PCRTCDisplays.GetResolution();
 	fs = GSVector2i(static_cast<int>(static_cast<float>(resolution.x) * GetUpscaleMultiplier()),
 		static_cast<int>(static_cast<float>(resolution.y) * GetUpscaleMultiplier()));
-	ds = fs;
 
-	// When interlace(FRAME) mode, the rect is half height, so it needs to be stretched.
-	const bool is_interlaced_resolution = m_regs->SMODE2.INT || (isReallyInterlaced() && IsAnalogue() && GSConfig.InterlaceMode != GSInterlaceMode::Off);
+	m_real_size = GSVector2i(fs.x, fs.y);
 
-	if (is_interlaced_resolution && m_regs->SMODE2.FFMD)
-		ds.y *= 2;
-
-	m_real_size = GSVector2i(fs.x, is_interlaced_resolution ? ds.y : fs.y);
-
-	if (!tex[0] && !tex[1])
-		return false;
-
-	if ((tex[0] == tex[1]) && (src_out_rect[0] == src_out_rect[1]).alltrue() && (dst[0] == dst[1]).alltrue() && !feedback_merge && !slbg)
+	if ((tex[0] == tex[1]) && (src_gs_read[0] == src_gs_read[1]).alltrue() && (dst[0] == dst[1]).alltrue() &&
+		(PCRTCDisplays.PCRTCDisplays[0].displayRect == PCRTCDisplays.PCRTCDisplays[1].displayRect).alltrue() &&
+		(PCRTCDisplays.PCRTCDisplays[0].framebufferRect == PCRTCDisplays.PCRTCDisplays[1].framebufferRect).alltrue() &&
+		!feedback_merge && !m_regs->PMODE.SLBG)
 	{
 		// the two outputs are identical, skip drawing one of them (the one that is alpha blended)
-
-		tex[0] = NULL;
+		tex[0] = nullptr;
 	}
 
-	GSVector4 c = GSVector4((int)m_regs->BGCOLOR.R, (int)m_regs->BGCOLOR.G, (int)m_regs->BGCOLOR.B, (int)m_regs->PMODE.ALP) / 255;
-
+	const u32 c = (m_regs->BGCOLOR.U32[0] & 0x00FFFFFFu) | (m_regs->PMODE.ALP << 24);
 	g_gs_device->Merge(tex, src_gs_read, dst, fs, m_regs->PMODE, m_regs->EXTBUF, c);
 
 	if (isReallyInterlaced() && GSConfig.InterlaceMode != GSInterlaceMode::Off)
-		g_gs_device->Interlace(ds, field ^ field2, mode, offset);
+	{
+		const float offset = is_bob ? (tex[1] ? tex_scale[1] : tex_scale[0]) : 0.0f;
+
+		g_gs_device->Interlace(fs, field ^ field2, mode, offset);
+	}
 
 	if (GSConfig.ShadeBoost)
 		g_gs_device->ShadeBoost();
@@ -400,9 +252,9 @@ bool GSRenderer::Merge(int field)
 		g_gs_device->FXAA();
 
 	// Sharpens biinear at lower resolutions, almost nearest but with more uniform pixels.
-	if (GSConfig.LinearPresent == GSPostBilinearMode::BilinearSharp && (g_host_display->GetWindowWidth() > fs.x || g_host_display->GetWindowHeight() > fs.y))
+	if (GSConfig.LinearPresent == GSPostBilinearMode::BilinearSharp && (g_gs_device->GetWindowWidth() > fs.x || g_gs_device->GetWindowHeight() > fs.y))
 	{
-		g_gs_device->Resize(g_host_display->GetWindowWidth(), g_host_display->GetWindowHeight());
+		g_gs_device->Resize(g_gs_device->GetWindowWidth(), g_gs_device->GetWindowHeight());
 	}
 
 	if (m_scanmask_used)
@@ -416,13 +268,32 @@ GSVector2i GSRenderer::GetInternalResolution()
 	return m_real_size;
 }
 
+float GSRenderer::GetModXYOffset()
+{
+	float mod_xy = 0.0f;
+
+	if (GSConfig.UserHacks_HalfPixelOffset == 1)
+	{
+		mod_xy = GetUpscaleMultiplier();
+		switch (static_cast<int>(std::round(mod_xy)))
+		{
+			case 2: case 4: case 6: case 8: mod_xy += 0.2f; break;
+			case 3: case 7:                 mod_xy += 0.1f; break;
+			case 5:                         mod_xy += 0.3f; break;
+			default:                        mod_xy = 0.0f; break;
+		}
+	}
+
+	return mod_xy;
+}
+
 static float GetCurrentAspectRatioFloat(bool is_progressive)
 {
 	static constexpr std::array<float, static_cast<size_t>(AspectRatioType::MaxCount) + 1> ars = {{4.0f / 3.0f, 4.0f / 3.0f, 4.0f / 3.0f, 16.0f / 9.0f, 3.0f / 2.0f}};
 	return ars[static_cast<u32>(GSConfig.AspectRatio) + (3u * (is_progressive && GSConfig.AspectRatio == AspectRatioType::RAuto4_3_3_2))];
 }
 
-static GSVector4 CalculateDrawDstRect(s32 window_width, s32 window_height, const GSVector4i& src_rect, const GSVector2i& src_size, HostDisplay::Alignment alignment, bool flip_y, bool is_progressive)
+static GSVector4 CalculateDrawDstRect(s32 window_width, s32 window_height, const GSVector4i& src_rect, const GSVector2i& src_size, GSDisplayAlignment alignment, bool flip_y, bool is_progressive)
 {
 	const float f_width = static_cast<float>(window_width);
 	const float f_height = static_cast<float>(window_height);
@@ -459,8 +330,22 @@ static GSVector4 CalculateDrawDstRect(s32 window_width, s32 window_height, const
 	if (GSConfig.IntegerScaling)
 	{
 		// make target width/height an integer multiple of the texture width/height
-		const float t_width = static_cast<double>(src_rect.width());
-		const float t_height = static_cast<double>(src_rect.height());
+		float t_width = static_cast<double>(src_rect.width());
+		float t_height = static_cast<double>(src_rect.height());
+
+		// If using Bilinear (Shape) the image will be prescaled to larger than the window, so we need to unscale it.
+		if (GSConfig.LinearPresent == GSPostBilinearMode::BilinearSharp && src_rect.width() > 0 && src_rect.height() > 0)
+		{
+			const GSVector2i resolution = g_gs_renderer->PCRTCDisplays.GetResolution();
+			const GSVector2i fs = GSVector2i(static_cast<int>(static_cast<float>(resolution.x) * g_gs_renderer->GetUpscaleMultiplier()),
+				static_cast<int>(static_cast<float>(resolution.y) * g_gs_renderer->GetUpscaleMultiplier()));
+
+			if (g_gs_device->GetWindowWidth() > fs.x || g_gs_device->GetWindowHeight() > fs.y)
+			{
+				t_width *= static_cast<float>(fs.x) / src_rect.width();
+				t_height *= static_cast<float>(fs.y) / src_rect.height();
+			}
+		}
 
 		float scale;
 		if ((t_width / t_height) >= 1.0)
@@ -485,13 +370,13 @@ static GSVector4 CalculateDrawDstRect(s32 window_width, s32 window_height, const
 	{
 		switch (alignment)
 		{
-			case HostDisplay::Alignment::Center:
+			case GSDisplayAlignment::Center:
 				target_x = (f_width - target_width) * 0.5f;
 				break;
-			case HostDisplay::Alignment::RightOrBottom:
+			case GSDisplayAlignment::RightOrBottom:
 				target_x = (f_width - target_width);
 				break;
-			case HostDisplay::Alignment::LeftOrTop:
+			case GSDisplayAlignment::LeftOrTop:
 			default:
 				target_x = 0.0f;
 				break;
@@ -505,13 +390,13 @@ static GSVector4 CalculateDrawDstRect(s32 window_width, s32 window_height, const
 	{
 		switch (alignment)
 		{
-			case HostDisplay::Alignment::Center:
+			case GSDisplayAlignment::Center:
 				target_y = (f_height - target_height) * 0.5f;
 				break;
-			case HostDisplay::Alignment::RightOrBottom:
+			case GSDisplayAlignment::RightOrBottom:
 				target_y = (f_height - target_height);
 				break;
-			case HostDisplay::Alignment::LeftOrTop:
+			case GSDisplayAlignment::LeftOrTop:
 			default:
 				target_y = 0.0f;
 				break;
@@ -554,20 +439,31 @@ static void CompressAndWriteScreenshot(std::string filename, u32 width, u32 heig
 	image.SetPixels(width, height, std::move(pixels));
 
 	std::string key(fmt::format("GSScreenshot_{}", filename));
-	Host::AddIconOSDMessage(key, ICON_FA_CAMERA, fmt::format("Saving screenshot to '{}'.", Path::GetFileName(filename)), 60.0f);
+
+	if (!GSDumpReplayer::IsRunner())
+	{
+		Host::AddIconOSDMessage(key, ICON_FA_CAMERA,
+			fmt::format(TRANSLATE_SV("GS", "Saving screenshot to '{}'."), Path::GetFileName(filename)), 60.0f);
+	}
 
 	// maybe std::async would be better here.. but it's definitely worth threading, large screenshots take a while to compress.
 	std::unique_lock lock(s_screenshot_threads_mutex);
-	s_screenshot_threads.emplace_back([key = std::move(key), filename = std::move(filename), image = std::move(image), quality = GSConfig.ScreenshotQuality]() {
+	s_screenshot_threads.emplace_back([key = std::move(key), filename = std::move(filename), image = std::move(image),
+										  quality = GSConfig.ScreenshotQuality]() {
 		if (image.SaveToFile(filename.c_str(), quality))
 		{
-			Host::AddIconOSDMessage(std::move(key), ICON_FA_CAMERA,
-				fmt::format("Saved screenshot to '{}'.", Path::GetFileName(filename)), Host::OSD_INFO_DURATION);
+			if (!GSDumpReplayer::IsRunner())
+			{
+				Host::AddIconOSDMessage(std::move(key), ICON_FA_CAMERA,
+					fmt::format(TRANSLATE_SV("GS", "Saved screenshot to '{}'."), Path::GetFileName(filename)),
+					Host::OSD_INFO_DURATION);
+			}
 		}
 		else
 		{
 			Host::AddIconOSDMessage(std::move(key), ICON_FA_CAMERA,
-				fmt::format("Failed to save screenshot to '{}'.", Path::GetFileName(filename), Host::OSD_ERROR_DURATION));
+				fmt::format(TRANSLATE_SV("GS", "Failed to save screenshot to '{}'."), Path::GetFileName(filename),
+					Host::OSD_ERROR_DURATION));
 		}
 
 		// remove ourselves from the list, if the GS thread is waiting for us, we won't be in there
@@ -598,10 +494,63 @@ void GSJoinSnapshotThreads()
 	}
 }
 
-void GSRenderer::VSync(u32 field, bool registers_written)
+bool GSRenderer::BeginPresentFrame(bool frame_skip)
 {
-	Flush(GSFlushReason::VSYNC);
+	Host::BeginPresentFrame();
 
+	const GSDevice::PresentResult res = g_gs_device->BeginPresent(frame_skip);
+	if (res == GSDevice::PresentResult::FrameSkipped)
+	{
+		// If we're skipping a frame, we need to reset imgui's state, since
+		// we won't be calling EndPresentFrame().
+		ImGuiManager::SkipFrame();
+		return false;
+	}
+	else if (res == GSDevice::PresentResult::OK)
+	{
+		// All good!
+		return true;
+	}
+
+	// If we're constantly crashing on something in particular, we don't want to end up in an
+	// endless reset loop.. that'd probably end up leaking memory and/or crashing us for other
+	// reasons. So just abort in such case.
+	const Common::Timer::Value current_time = Common::Timer::GetCurrentValue();
+	if (s_last_gpu_reset_time != 0 &&
+		Common::Timer::ConvertValueToSeconds(current_time - s_last_gpu_reset_time) < 15.0f)
+	{
+		pxFailRel("Host GPU lost too many times, device is probably completely wedged.");
+	}
+	s_last_gpu_reset_time = current_time;
+
+	// Device lost, something went really bad.
+	// Let's just toss out everything, and try to hobble on.
+	if (!GSreopen(true, false, GSConfig))
+	{
+		pxFailRel("Failed to recreate GS device after loss.");
+		return false;
+	}
+
+	// First frame after reopening is definitely going to be trash, so skip it.
+	Host::AddIconOSDMessage("GSDeviceLost", ICON_FA_EXCLAMATION_TRIANGLE,
+		TRANSLATE_SV("GS", "Host GPU device encountered an error and was recovered. This may have broken rendering."),
+		Host::OSD_CRITICAL_ERROR_DURATION);
+	return false;
+}
+
+void GSRenderer::EndPresentFrame()
+{
+	if (GSDumpReplayer::IsReplayingDump())
+		GSDumpReplayer::RenderUI();
+
+	FullscreenUI::Render();
+	ImGuiManager::RenderOSD();
+	g_gs_device->EndPresent();
+	ImGuiManager::NewFrame();
+}
+
+void GSRenderer::VSync(u32 field, bool registers_written, bool idle_frame)
+{
 	if (GSConfig.DumpGSData && s_n >= GSConfig.SaveN)
 	{
 		m_regs->Dump(GetDrawDumpPath("vsync_%05d_f%lld_gs_reg.txt", s_n, g_perfmon.GetFrame()));
@@ -611,7 +560,7 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 	const bool fb_sprite_frame = (fb_sprite_blits > 0);
 
 	bool skip_frame = false;
-	if (GSConfig.SkipDuplicateFrames)
+	if (GSConfig.SkipDuplicateFrames && !GSCapture::IsCapturingVideo())
 	{
 		bool is_unique_frame;
 		switch (PerformanceMetrics::GetInternalFPSMethod())
@@ -640,17 +589,20 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 
 	const bool blank_frame = !Merge(field);
 
+	m_last_draw_n = s_n;
+	m_last_transfer_n = s_transfer_n;
+
 	if (skip_frame)
 	{
-		g_gs_device->ResetAPIState();
-		if (Host::BeginPresentFrame(true))
-			Host::EndPresentFrame();
-		g_gs_device->RestoreAPIState();
+		if (BeginPresentFrame(true))
+			EndPresentFrame();
+
 		PerformanceMetrics::Update(registers_written, fb_sprite_frame, true);
 		return;
 	}
 
-	g_gs_device->AgePool();
+	if (!idle_frame)
+		g_gs_device->AgePool();
 
 	g_perfmon.EndFrame();
 	if ((g_perfmon.GetFrame() & 0x1f) == 0)
@@ -664,9 +616,9 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 	{
 		src_rect = CalculateDrawSrcRect(current);
 		src_uv = GSVector4(src_rect) / GSVector4(current->GetSize()).xyxy();
-		draw_rect = CalculateDrawDstRect(g_host_display->GetWindowWidth(), g_host_display->GetWindowHeight(),
-			src_rect, current->GetSize(), g_host_display->GetDisplayAlignment(), g_host_display->UsesLowerLeftOrigin(),
-			GetVideoMode() == GSVideoMode::SDTV_480P || (GSConfig.PCRTCOverscan && GSConfig.PCRTCOffsets));
+		draw_rect = CalculateDrawDstRect(g_gs_device->GetWindowWidth(), g_gs_device->GetWindowHeight(),
+			src_rect, current->GetSize(), s_display_alignment, g_gs_device->UsesLowerLeftOrigin(),
+			GetVideoMode() == GSVideoMode::SDTV_480P);
 		s_last_draw_rect = draw_rect;
 
 		if (GSConfig.CASMode != GSCASMode::Disabled)
@@ -676,21 +628,22 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 			{
 				// sharpen only if the IR is higher than the display resolution
 				const bool sharpen_only = (GSConfig.CASMode == GSCASMode::SharpenOnly ||
-										   (current->GetWidth() > g_host_display->GetWindowWidth() &&
-											   current->GetHeight() > g_host_display->GetWindowHeight()));
+										   (current->GetWidth() > g_gs_device->GetWindowWidth() &&
+											   current->GetHeight() > g_gs_device->GetWindowHeight()));
 				g_gs_device->CAS(current, src_rect, src_uv, draw_rect, sharpen_only);
 			}
 			else if (!cas_log_once)
 			{
 				Host::AddIconOSDMessage("CASUnsupported", ICON_FA_EXCLAMATION_TRIANGLE,
-					"CAS is not available, your graphics driver does not support the required functionality.", 10.0f);
+					TRANSLATE_SV("GS",
+						"CAS is not available, your graphics driver does not support the required functionality."),
+					10.0f);
 				cas_log_once = true;
 			}
 		}
 	}
 
-	g_gs_device->ResetAPIState();
-	if (Host::BeginPresentFrame(false))
+	if (BeginPresentFrame(false))
 	{
 		if (current && !blank_frame)
 		{
@@ -701,12 +654,12 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 				s_tv_shader_indices[GSConfig.TVShader], shader_time, GSConfig.LinearPresent != GSPostBilinearMode::Off);
 		}
 
-		Host::EndPresentFrame();
+		EndPresentFrame();
 
 		if (GSConfig.OsdShowGPU)
-			PerformanceMetrics::OnGPUPresent(g_host_display->GetAndResetAccumulatedGPUTime());
+			PerformanceMetrics::OnGPUPresent(g_gs_device->GetAndResetAccumulatedGPUTime());
 	}
-	g_gs_device->RestoreAPIState();
+
 	PerformanceMetrics::Update(registers_written, fb_sprite_frame, false);
 
 	// snapshot
@@ -731,7 +684,7 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 			std::string_view compression_str;
 			if (GSConfig.GSDumpCompression == GSDumpCompressionMethod::Uncompressed)
 			{
-				m_dump = std::unique_ptr<GSDumpBase>(new GSDumpUncompressed(m_snapshot, VMManager::GetGameSerial(), m_crc,
+				m_dump = std::unique_ptr<GSDumpBase>(new GSDumpUncompressed(m_snapshot, VMManager::GetDiscSerial(), m_crc,
 					screenshot_width, screenshot_height,
 					screenshot_pixels.empty() ? nullptr : screenshot_pixels.data(),
 					fd, m_regs));
@@ -739,7 +692,7 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 			}
 			else if (GSConfig.GSDumpCompression == GSDumpCompressionMethod::LZMA)
 			{
-				m_dump = std::unique_ptr<GSDumpBase>(new GSDumpXz(m_snapshot, VMManager::GetGameSerial(), m_crc,
+				m_dump = std::unique_ptr<GSDumpBase>(new GSDumpXz(m_snapshot, VMManager::GetDiscSerial(), m_crc,
 					screenshot_width, screenshot_height,
 					screenshot_pixels.empty() ? nullptr : screenshot_pixels.data(),
 					fd, m_regs));
@@ -747,7 +700,7 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 			}
 			else
 			{
-				m_dump = std::unique_ptr<GSDumpBase>(new GSDumpZst(m_snapshot, VMManager::GetGameSerial(), m_crc,
+				m_dump = std::unique_ptr<GSDumpBase>(new GSDumpZst(m_snapshot, VMManager::GetDiscSerial(), m_crc,
 					screenshot_width, screenshot_height,
 					screenshot_pixels.empty() ? nullptr : screenshot_pixels.data(),
 					fd, m_regs));
@@ -756,17 +709,19 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 
 			delete[] fd.data;
 
-			Host::AddKeyedOSDMessage("GSDump", fmt::format("Saving {0} GS dump {1} to '{2}'",
-				(m_dump_frames == 1) ? "single frame" : "multi-frame", compression_str,
-				Path::GetFileName(m_dump->GetPath())), Host::OSD_INFO_DURATION);
+			Host::AddKeyedOSDMessage("GSDump",
+				fmt::format(TRANSLATE_SV("GS", "Saving {0} GS dump {1} to '{2}'"),
+					(m_dump_frames == 1) ? "single frame" : "multi-frame", compression_str,
+					Path::GetFileName(m_dump->GetPath())),
+				Host::OSD_INFO_DURATION);
 		}
 
 		const bool internal_resolution = (GSConfig.ScreenshotSize >= GSScreenshotSize::InternalResolution);
 		const bool aspect_correct = (GSConfig.ScreenshotSize != GSScreenshotSize::InternalResolutionUncorrected);
 
 		if (g_gs_device->GetCurrent() && SaveSnapshotToMemory(
-			internal_resolution ? 0 : g_host_display->GetWindowWidth(),
-			internal_resolution ? 0 : g_host_display->GetWindowHeight(),
+			internal_resolution ? 0 : g_gs_device->GetWindowWidth(),
+			internal_resolution ? 0 : g_gs_device->GetWindowHeight(),
 			aspect_correct, true,
 			&screenshot_width, &screenshot_height, &screenshot_pixels))
 		{
@@ -775,7 +730,8 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 		}
 		else
 		{
-			Host::AddIconOSDMessage("GSScreenshot", ICON_FA_CAMERA, "Failed to render/download screenshot.", Host::OSD_ERROR_DURATION);
+			Host::AddIconOSDMessage("GSScreenshot", ICON_FA_CAMERA,
+				TRANSLATE_SV("GS", "Failed to render/download screenshot."), Host::OSD_ERROR_DURATION);
 		}
 
 		m_snapshot = {};
@@ -785,7 +741,9 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 		const bool last = (m_dump_frames == 0);
 		if (m_dump->VSync(field, last, m_regs))
 		{
-			Host::AddKeyedOSDMessage("GSDump", fmt::format("Saved GS dump to '{}'.", Path::GetFileName(m_dump->GetPath())), Host::OSD_INFO_DURATION);
+			Host::AddKeyedOSDMessage("GSDump",
+				fmt::format(TRANSLATE_SV("GS", "Saved GS dump to '{}'."), Path::GetFileName(m_dump->GetPath())),
+				Host::OSD_INFO_DURATION);
 			m_dump.reset();
 		}
 		else if (!last)
@@ -795,23 +753,36 @@ void GSRenderer::VSync(u32 field, bool registers_written)
 	}
 
 	// capture
-	if (GSCapture::IsCapturing())
+	if (GSCapture::IsCapturingVideo())
 	{
+		const GSVector2i size = GSCapture::GetSize();
 		if (GSTexture* current = g_gs_device->GetCurrent())
 		{
-			GSVector2i size = GSCapture::GetSize();
-
-			bool res;
-			GSTexture::GSMap m;
-			if (size == current->GetSize())
-				res = g_gs_device->DownloadTexture(current, GSVector4i(0, 0, size.x, size.y), m);
-			else
-				res = g_gs_device->DownloadTextureConvert(current, GSVector4(0, 0, 1, 1), size, GSTexture::Format::Color, ShaderConvert::COPY, m, true);
-
-			if (res)
+			// TODO: Maybe avoid this copy in the future? We can use swscale to fix it up on the dumping thread..
+			if (current->GetSize() != size)
 			{
-				GSCapture::DeliverFrame(m.bits, m.pitch, !g_gs_device->IsRBSwapped());
-				g_gs_device->DownloadTextureComplete();
+				GSTexture* temp = g_gs_device->CreateRenderTarget(size.x, size.y, GSTexture::Format::Color, false);
+				if (temp)
+				{
+					g_gs_device->StretchRect(current, temp, GSVector4(0, 0, size.x, size.y));
+					GSCapture::DeliverVideoFrame(temp);
+					g_gs_device->Recycle(temp);
+				}
+			}
+			else
+			{
+				GSCapture::DeliverVideoFrame(current);
+			}
+		}
+		else
+		{
+			// Bit janky, but unless we want to make variable frame rate files, we need to deliver *a* frame to
+			// the video file, so just grab a blank RT.
+			GSTexture* temp = g_gs_device->CreateRenderTarget(size.x, size.y, GSTexture::Format::Color, true);
+			if (temp)
+			{
+				GSCapture::DeliverVideoFrame(temp);
+				g_gs_device->Recycle(temp);
 			}
 		}
 	}
@@ -836,26 +807,26 @@ void GSRenderer::QueueSnapshot(const std::string& path, u32 gsdump_frames)
 	m_dump_frames = gsdump_frames;
 }
 
-std::string GSGetBaseSnapshotFilename()
+static std::string GSGetBaseFilename()
 {
 	std::string filename;
 
 	// append the game serial and title
-	if (std::string name(VMManager::GetGameName()); !name.empty())
+	if (std::string name(VMManager::GetTitle()); !name.empty())
 	{
 		Path::SanitizeFileName(&name);
 		if (name.length() > 219)
 			name.resize(219);
 		filename += name;
 	}
-	if (std::string serial(VMManager::GetGameSerial()); !serial.empty())
+	if (std::string serial = VMManager::GetDiscSerial(); !serial.empty())
 	{
 		Path::SanitizeFileName(&serial);
 		filename += '_';
 		filename += serial;
 	}
 
-	time_t cur_time = time(nullptr);
+	const time_t cur_time = time(nullptr);
 	char local_time[16];
 
 	if (strftime(local_time, sizeof(local_time), "%Y%m%d%H%M%S", localtime(&cur_time)))
@@ -879,8 +850,19 @@ std::string GSGetBaseSnapshotFilename()
 		prev_snap = cur_time;
 	}
 
+	return filename;
+}
+
+std::string GSGetBaseSnapshotFilename()
+{
 	// prepend snapshots directory
-	return Path::Combine(EmuFolders::Snapshots, filename);
+	return Path::Combine(EmuFolders::Snapshots, GSGetBaseFilename());
+}
+
+std::string GSGetBaseVideoFilename()
+{
+	// prepend video directory
+	return Path::Combine(EmuFolders::Videos, GSGetBaseFilename());
 }
 
 void GSRenderer::StopGSDump()
@@ -891,17 +873,16 @@ void GSRenderer::StopGSDump()
 
 void GSRenderer::PresentCurrentFrame()
 {
-	g_gs_device->ResetAPIState();
-	if (Host::BeginPresentFrame(false))
+	if (BeginPresentFrame(false))
 	{
 		GSTexture* current = g_gs_device->GetCurrent();
 		if (current)
 		{
 			const GSVector4i src_rect(CalculateDrawSrcRect(current));
 			const GSVector4 src_uv(GSVector4(src_rect) / GSVector4(current->GetSize()).xyxy());
-			const GSVector4 draw_rect(CalculateDrawDstRect(g_host_display->GetWindowWidth(), g_host_display->GetWindowHeight(),
-				src_rect, current->GetSize(), g_host_display->GetDisplayAlignment(), g_host_display->UsesLowerLeftOrigin(),
-				GetVideoMode() == GSVideoMode::SDTV_480P || (GSConfig.PCRTCOverscan && GSConfig.PCRTCOffsets)));
+			const GSVector4 draw_rect(CalculateDrawDstRect(g_gs_device->GetWindowWidth(), g_gs_device->GetWindowHeight(),
+				src_rect, current->GetSize(), s_display_alignment, g_gs_device->UsesLowerLeftOrigin(),
+				GetVideoMode() == GSVideoMode::SDTV_480P));
 			s_last_draw_rect = draw_rect;
 
 			const u64 current_time = Common::Timer::GetCurrentValue();
@@ -911,9 +892,8 @@ void GSRenderer::PresentCurrentFrame()
 				s_tv_shader_indices[GSConfig.TVShader], shader_time, GSConfig.LinearPresent != GSPostBilinearMode::Off);
 		}
 
-		Host::EndPresentFrame();
+		EndPresentFrame();
 	}
-	g_gs_device->RestoreAPIState();
 }
 
 void GSTranslateWindowToDisplayCoordinates(float window_x, float window_y, float* display_x, float* display_y)
@@ -933,10 +913,21 @@ void GSTranslateWindowToDisplayCoordinates(float window_x, float window_y, float
 	*display_y = rel_y / draw_height;
 }
 
-bool GSRenderer::BeginCapture(std::string filename)
+void GSSetDisplayAlignment(GSDisplayAlignment alignment)
 {
-	return GSCapture::BeginCapture(GetTvRefreshRate(), GetInternalResolution(),
-		GetCurrentAspectRatioFloat(GetVideoMode() == GSVideoMode::SDTV_480P || (GSConfig.PCRTCOverscan && GSConfig.PCRTCOffsets)),
+	s_display_alignment = alignment;
+}
+
+bool GSRenderer::BeginCapture(std::string filename, const GSVector2i& size)
+{
+	const GSVector2i capture_resolution = (size.x != 0 && size.y != 0) ?
+											  size :
+											  (GSConfig.VideoCaptureAutoResolution ?
+													  GetInternalResolution() :
+													  GSVector2i(GSConfig.VideoCaptureWidth, GSConfig.VideoCaptureHeight));
+
+	return GSCapture::BeginCapture(GetTvRefreshRate(), capture_resolution,
+		GetCurrentAspectRatioFloat(GetVideoMode() == GSVideoMode::SDTV_480P),
 		std::move(filename));
 }
 
@@ -945,18 +936,14 @@ void GSRenderer::EndCapture()
 	GSCapture::EndCapture();
 }
 
-void GSRenderer::PurgePool()
-{
-	g_gs_device->PurgePool();
-}
-
-void GSRenderer::PurgeTextureCache()
-{
-}
-
-GSTexture* GSRenderer::LookupPaletteSource(u32 CBP, u32 CPSM, u32 CBW, GSVector2i& offset, const GSVector2i& size)
+GSTexture* GSRenderer::LookupPaletteSource(u32 CBP, u32 CPSM, u32 CBW, GSVector2i& offset, float* scale, const GSVector2i& size)
 {
 	return nullptr;
+}
+
+bool GSRenderer::IsIdleFrame() const
+{
+	return (m_last_draw_n == s_n && m_last_transfer_n == s_transfer_n);
 }
 
 bool GSRenderer::SaveSnapshotToMemory(u32 window_width, u32 window_height, bool apply_aspect, bool crop_borders,
@@ -974,7 +961,7 @@ bool GSRenderer::SaveSnapshotToMemory(u32 window_width, u32 window_height, bool 
 	const GSVector4i src_rect(CalculateDrawSrcRect(current));
 	const GSVector4 src_uv(GSVector4(src_rect) / GSVector4(current->GetSize()).xyxy());
 
-	const bool is_progressive = (GetVideoMode() == GSVideoMode::SDTV_480P || (GSConfig.PCRTCOverscan && GSConfig.PCRTCOffsets));
+	const bool is_progressive = (GetVideoMode() == GSVideoMode::SDTV_480P);
 	GSVector4 draw_rect;
 	if (window_width == 0 || window_height == 0)
 	{
@@ -1001,31 +988,46 @@ bool GSRenderer::SaveSnapshotToMemory(u32 window_width, u32 window_height, bool 
 	else
 	{
 		draw_rect = CalculateDrawDstRect(window_width, window_height, src_rect, current->GetSize(),
-			HostDisplay::Alignment::LeftOrTop, false, is_progressive);
+			GSDisplayAlignment::LeftOrTop, false, is_progressive);
 	}
 	const u32 draw_width = static_cast<u32>(draw_rect.z - draw_rect.x);
 	const u32 draw_height = static_cast<u32>(draw_rect.w - draw_rect.y);
 	const u32 image_width = crop_borders ? draw_width : std::max(draw_width, window_width);
 	const u32 image_height = crop_borders ? draw_height : std::max(draw_height, window_height);
 
-	GSTexture::GSMap map;
-	const bool result = g_gs_device->DownloadTextureConvert(
-		current, src_uv,
-		GSVector2i(draw_width, draw_height), GSTexture::Format::Color,
-		ShaderConvert::TRANSPARENCY_FILTER, map, true);
-	if (result)
+	// We're not expecting screenshots to be fast, so just allocate a download texture on demand.
+	GSTexture* rt = g_gs_device->CreateRenderTarget(draw_width, draw_height, GSTexture::Format::Color, false);
+	if (rt)
 	{
-		const u32 pad_x = (image_width - draw_width) / 2;
-		const u32 pad_y = (image_height - draw_height) / 2;
-		pixels->clear();
-		pixels->resize(image_width * image_height, 0);
-		*width = image_width;
-		*height = image_height;
-		StringUtil::StrideMemCpy(pixels->data() + pad_y * image_width + pad_x, image_width * sizeof(u32),
-			map.bits, map.pitch, draw_width * sizeof(u32), draw_height);
+		std::unique_ptr<GSDownloadTexture> dl(g_gs_device->CreateDownloadTexture(draw_width, draw_height, GSTexture::Format::Color));
+		if (dl)
+		{
+			const GSVector4i rc(0, 0, draw_width, draw_height);
+			g_gs_device->StretchRect(current, src_uv, rt, GSVector4(rc), ShaderConvert::TRANSPARENCY_FILTER);
+			dl->CopyFromTexture(rc, rt, rc, 0);
+			dl->Flush();
 
-		g_gs_device->DownloadTextureComplete();
+			if (dl->Map(rc))
+			{
+				const u32 pad_x = (image_width - draw_width) / 2;
+				const u32 pad_y = (image_height - draw_height) / 2;
+				pixels->clear();
+				pixels->resize(image_width * image_height, 0);
+				*width = image_width;
+				*height = image_height;
+				StringUtil::StrideMemCpy(pixels->data() + pad_y * image_width + pad_x, image_width * sizeof(u32), dl->GetMapPointer(),
+					dl->GetMapPitch(), draw_width * sizeof(u32), draw_height);
+
+				g_gs_device->Recycle(rt);
+				return true;
+			}
+		}
+
+		g_gs_device->Recycle(rt);
 	}
 
-	return result;
+	*width = 0;
+	*height = 0;
+	pixels->clear();
+	return false;
 }

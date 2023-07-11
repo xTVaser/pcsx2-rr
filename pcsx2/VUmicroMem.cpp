@@ -64,9 +64,9 @@ void vuMemoryReserve::Reset()
 	//memMapVUmicro();
 
 	// === VU0 Initialization ===
-	memzero(VU0.ACC);
-	memzero(VU0.VF);
-	memzero(VU0.VI);
+	std::memset(&VU0.ACC, 0, sizeof(VU0.ACC));
+	std::memset(VU0.VF, 0, sizeof(VU0.VF));
+	std::memset(VU0.VI, 0, sizeof(VU0.VI));
     VU0.VF[0].f.x = 0.0f;
 	VU0.VF[0].f.y = 0.0f;
 	VU0.VF[0].f.z = 0.0f;
@@ -74,9 +74,9 @@ void vuMemoryReserve::Reset()
 	VU0.VI[0].UL = 0;
 
 	// === VU1 Initialization ===
-	memzero(VU1.ACC);
-	memzero(VU1.VF);
-	memzero(VU1.VI);
+	std::memset(&VU1.ACC, 0, sizeof(VU1.ACC));
+	std::memset(VU1.VF, 0, sizeof(VU1.VF));
+	std::memset(VU1.VI, 0, sizeof(VU1.VI));
 	VU1.VF[0].f.x = 0.0f;
 	VU1.VF[0].f.y = 0.0f;
 	VU1.VF[0].f.z = 0.0f;
@@ -84,12 +84,13 @@ void vuMemoryReserve::Reset()
 	VU1.VI[0].UL = 0;
 }
 
-void SaveStateBase::vuMicroFreeze()
+bool SaveStateBase::vuMicroFreeze()
 {
 	if(IsSaving())
 		vu1Thread.WaitVU();
 
-	FreezeTag( "vuMicroRegs" );
+	if (!FreezeTag("vuMicroRegs"))
+		return false;
 
 	// VU0 state information
 
@@ -109,7 +110,6 @@ void SaveStateBase::vuMicroFreeze()
 	Freeze(VU0.ebit);
 	Freeze(VU0.pending_q);
 	Freeze(VU0.pending_p);
-	Freeze(VU0.blockhasmbit);
 	Freeze(VU0.micro_macflags);
 	Freeze(VU0.micro_clipflags);
 	Freeze(VU0.micro_statusflags);
@@ -149,7 +149,6 @@ void SaveStateBase::vuMicroFreeze()
 	Freeze(VU1.ebit);
 	Freeze(VU1.pending_q);
 	Freeze(VU1.pending_p);
-	Freeze(VU1.blockhasmbit);
 	Freeze(VU1.micro_macflags);
 	Freeze(VU1.micro_clipflags);
 	Freeze(VU1.micro_statusflags);
@@ -177,4 +176,6 @@ void SaveStateBase::vuMicroFreeze()
 	Freeze(VU1.ialureadpos);
 	Freeze(VU1.ialuwritepos);
 	Freeze(VU1.ialucount);
+
+	return IsOkay();
 }

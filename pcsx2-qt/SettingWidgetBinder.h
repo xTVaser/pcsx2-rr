@@ -35,7 +35,7 @@
 #include "common/Path.h"
 
 #include "pcsx2/Config.h"
-#include "pcsx2/HostSettings.h"
+#include "pcsx2/Host.h"
 
 #include "QtHost.h"
 #include "QtUtils.h"
@@ -124,7 +124,9 @@ namespace SettingWidgetBinder
 		static void setBoolValue(QComboBox* widget, bool value) { widget->setCurrentIndex(value ? 1 : 0); }
 		static void makeNullableBool(QComboBox* widget, bool globalValue)
 		{
+			//: THIS STRING IS SHARED ACROSS MULTIPLE OPTIONS. Be wary about gender/number. Also, ignore Crowdin's warning regarding [Enabled]: the text must be translated.
 			widget->insertItem(0, globalValue ? qApp->translate("SettingsDialog", "Use Global Setting [Enabled]") :
+												//: THIS STRING IS SHARED ACROSS MULTIPLE OPTIONS. Be wary about gender/number. Also, ignore Crowdin's warning regarding [Disabled]: the text must be translated.
 												qApp->translate("SettingsDialog", "Use Global Setting [Disabled]"));
 		}
 
@@ -595,7 +597,7 @@ namespace SettingWidgetBinder
 	/// Binds a widget's value to a setting, updating it when the value changes.
 
 	template <typename WidgetType>
-	static void BindWidgetToBoolSetting(
+	static inline void BindWidgetToBoolSetting(
 		SettingsInterface* sif, WidgetType* widget, std::string section, std::string key, bool default_value)
 	{
 		using Accessor = SettingAccessor<WidgetType>;
@@ -636,7 +638,7 @@ namespace SettingWidgetBinder
 	}
 
 	template <typename WidgetType>
-	static void BindWidgetToIntSetting(
+	static inline void BindWidgetToIntSetting(
 		SettingsInterface* sif, WidgetType* widget, std::string section, std::string key, int default_value, int option_offset = 0)
 	{
 		using Accessor = SettingAccessor<WidgetType>;
@@ -677,7 +679,7 @@ namespace SettingWidgetBinder
 	}
 
 	template <typename WidgetType>
-	static void BindWidgetToFloatSetting(
+	static inline void BindWidgetToFloatSetting(
 		SettingsInterface* sif, WidgetType* widget, std::string section, std::string key, float default_value)
 	{
 		using Accessor = SettingAccessor<WidgetType>;
@@ -718,7 +720,7 @@ namespace SettingWidgetBinder
 	}
 
 	template <typename WidgetType>
-	static void BindWidgetToNormalizedSetting(
+	static inline void BindWidgetToNormalizedSetting(
 		SettingsInterface* sif, WidgetType* widget, std::string section, std::string key, float range, float default_value)
 	{
 		using Accessor = SettingAccessor<WidgetType>;
@@ -759,7 +761,7 @@ namespace SettingWidgetBinder
 	}
 
 	template <typename WidgetType>
-	static void BindWidgetToStringSetting(
+	static inline void BindWidgetToStringSetting(
 		SettingsInterface* sif, WidgetType* widget, std::string section, std::string key, std::string default_value = std::string())
 	{
 		using Accessor = SettingAccessor<WidgetType>;
@@ -804,7 +806,7 @@ namespace SettingWidgetBinder
 	}
 
 	template <typename WidgetType, typename DataType>
-	static void BindWidgetToEnumSetting(SettingsInterface* sif, WidgetType* widget, std::string section, std::string key,
+	static inline void BindWidgetToEnumSetting(SettingsInterface* sif, WidgetType* widget, std::string section, std::string key,
 		std::optional<DataType> (*from_string_function)(const char* str), const char* (*to_string_function)(DataType value),
 		DataType default_value)
 	{
@@ -866,7 +868,7 @@ namespace SettingWidgetBinder
 	}
 
 	template <typename WidgetType, typename DataType>
-	static void BindWidgetToEnumSetting(
+	static inline void BindWidgetToEnumSetting(
 		SettingsInterface* sif, WidgetType* widget, std::string section, std::string key, const char** enum_names, DataType default_value)
 	{
 		using Accessor = SettingAccessor<WidgetType>;
@@ -928,15 +930,19 @@ namespace SettingWidgetBinder
 	}
 
 	template <typename WidgetType>
-	static void BindWidgetToEnumSetting(SettingsInterface* sif, WidgetType* widget, std::string section, std::string key,
-		const char** enum_names, const char** enum_values, const char* default_value)
+	static inline void BindWidgetToEnumSetting(SettingsInterface* sif, WidgetType* widget, std::string section, std::string key,
+		const char** enum_names, const char** enum_values, const char* default_value, const char* translation_ctx = nullptr)
 	{
 		using Accessor = SettingAccessor<WidgetType>;
 
 		const std::string value = Host::GetBaseStringSettingValue(section.c_str(), key.c_str(), default_value);
 
 		for (int i = 0; enum_names[i] != nullptr; i++)
-			widget->addItem(QString::fromUtf8(enum_names[i]));
+		{
+			widget->addItem(translation_ctx ?
+								qApp->translate(translation_ctx, enum_names[i]) :
+								QString::fromUtf8(enum_names[i]));
+		}
 
 		int enum_index = -1;
 		for (int i = 0; enum_values[i] != nullptr; i++)
@@ -992,7 +998,7 @@ namespace SettingWidgetBinder
 	}
 
 	template <typename WidgetType>
-	static void BindWidgetToFolderSetting(SettingsInterface* sif, WidgetType* widget, QAbstractButton* browse_button,
+	static inline void BindWidgetToFolderSetting(SettingsInterface* sif, WidgetType* widget, QAbstractButton* browse_button,
 		QAbstractButton* open_button, QAbstractButton* reset_button, std::string section, std::string key, std::string default_value,
 		bool use_relative = true)
 	{
@@ -1045,6 +1051,7 @@ namespace SettingWidgetBinder
 		{
 			QObject::connect(browse_button, &QAbstractButton::clicked, browse_button, [widget, key]() {
 				const QString path(QDir::toNativeSeparators(QFileDialog::getExistingDirectory(QtUtils::GetRootWidget(widget),
+					//It seems that the latter half should show the types of folders that can be selected within Settings -> Folders, but right now it's broken. It would be best for localization purposes to duplicate this into multiple lines, each per type of folder.
 					qApp->translate("SettingWidgetBinder", "Select folder for %1").arg(QString::fromStdString(key)))));
 				if (path.isEmpty())
 					return;
@@ -1068,7 +1075,7 @@ namespace SettingWidgetBinder
 		}
 	}
 
-	[[maybe_unused]] static void BindSliderToIntSetting(SettingsInterface* sif, QSlider* slider, QLabel* label, const QString& label_suffix,
+	static inline void BindSliderToIntSetting(SettingsInterface* sif, QSlider* slider, QLabel* label, const QString& label_suffix,
 		std::string section, std::string key, s32 default_value)
 	{
 		const s32 global_value = Host::GetBaseIntSettingValue(section.c_str(), key.c_str(), default_value);
@@ -1109,8 +1116,8 @@ namespace SettingWidgetBinder
 				});
 
 			slider->connect(slider, &QSlider::valueChanged, slider,
-				[sif, label, label_suffix, section = std::move(section), key = std::move(key),
-					orig_font = std::move(orig_font), bold_font = std::move(bold_font)](int value) {
+				[sif, label, label_suffix, section = std::move(section), key = std::move(key), orig_font = std::move(orig_font),
+					bold_font = std::move(bold_font)](int value) {
 					label->setText(QStringLiteral("%1%2").arg(value).arg(label_suffix));
 
 					if (label->font() != bold_font)

@@ -15,21 +15,24 @@
 
 #include "PrecompiledHeader.h"
 
-#include <algorithm>
 #ifdef __POSIX__
 #include <vector>
 #include <fstream>
 #include <net/if.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include "common/StringUtil.h"
 
+#ifdef __linux__
+#include <unistd.h>
+#include <sys/ioctl.h>
+#endif
+
 #if defined(__FreeBSD__) || (__APPLE__)
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <sys/socket.h>
-#include <net/if.h>
 #include <net/route.h>
 
 #include "common/Assertions.h"
@@ -39,13 +42,14 @@
 
 #include "AdapterUtils.h"
 
+using namespace PacketReader;
 using namespace PacketReader::IP;
 
 #ifdef _WIN32
-bool AdapterUtils::GetWin32Adapter(const std::string& name, PIP_ADAPTER_ADDRESSES adapter, std::unique_ptr<IP_ADAPTER_ADDRESSES[]>* buffer)
+bool AdapterUtils::GetAdapter(const std::string& name, Adapter* adapter, AdapterBuffer* buffer)
 {
 	int neededSize = 128;
-	std::unique_ptr<IP_ADAPTER_ADDRESSES[]> AdapterInfo = std::make_unique<IP_ADAPTER_ADDRESSES[]>(neededSize);
+	std::unique_ptr<IP_ADAPTER_ADDRESSES[]> adapterInfo = std::make_unique<IP_ADAPTER_ADDRESSES[]>(neededSize);
 	ULONG dwBufLen = sizeof(IP_ADAPTER_ADDRESSES) * neededSize;
 
 	PIP_ADAPTER_ADDRESSES pAdapterInfo;
@@ -54,14 +58,14 @@ bool AdapterUtils::GetWin32Adapter(const std::string& name, PIP_ADAPTER_ADDRESSE
 		AF_UNSPEC,
 		GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_INCLUDE_GATEWAYS,
 		NULL,
-		AdapterInfo.get(),
+		adapterInfo.get(),
 		&dwBufLen);
 
 	if (dwStatus == ERROR_BUFFER_OVERFLOW)
 	{
 		DevCon.WriteLn("DEV9: GetWin32Adapter() buffer too small, resizing");
 		neededSize = dwBufLen / sizeof(IP_ADAPTER_ADDRESSES) + 1;
-		AdapterInfo = std::make_unique<IP_ADAPTER_ADDRESSES[]>(neededSize);
+		adapterInfo = std::make_unique<IP_ADAPTER_ADDRESSES[]>(neededSize);
 		dwBufLen = sizeof(IP_ADAPTER_ADDRESSES) * neededSize;
 		DevCon.WriteLn("DEV9: New size %i", neededSize);
 
@@ -69,31 +73,32 @@ bool AdapterUtils::GetWin32Adapter(const std::string& name, PIP_ADAPTER_ADDRESSE
 			AF_UNSPEC,
 			GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_INCLUDE_GATEWAYS,
 			NULL,
-			AdapterInfo.get(),
+			adapterInfo.get(),
 			&dwBufLen);
 	}
 	if (dwStatus != ERROR_SUCCESS)
 		return false;
 
-	pAdapterInfo = AdapterInfo.get();
+	pAdapterInfo = adapterInfo.get();
 
 	do
 	{
 		if (strcmp(pAdapterInfo->AdapterName, name.c_str()) == 0)
 		{
 			*adapter = *pAdapterInfo;
-			buffer->swap(AdapterInfo);
+			buffer->swap(adapterInfo);
 			return true;
 		}
 
 		pAdapterInfo = pAdapterInfo->Next;
 	} while (pAdapterInfo);
+
 	return false;
 }
-bool AdapterUtils::GetWin32AdapterAuto(PIP_ADAPTER_ADDRESSES adapter, std::unique_ptr<IP_ADAPTER_ADDRESSES[]>* buffer)
+bool AdapterUtils::GetAdapterAuto(Adapter* adapter, AdapterBuffer* buffer)
 {
 	int neededSize = 128;
-	std::unique_ptr<IP_ADAPTER_ADDRESSES[]> AdapterInfo = std::make_unique<IP_ADAPTER_ADDRESSES[]>(neededSize);
+	std::unique_ptr<IP_ADAPTER_ADDRESSES[]> adapterInfo = std::make_unique<IP_ADAPTER_ADDRESSES[]>(neededSize);
 	ULONG dwBufLen = sizeof(IP_ADAPTER_ADDRESSES) * neededSize;
 
 	PIP_ADAPTER_ADDRESSES pAdapter;
@@ -102,7 +107,7 @@ bool AdapterUtils::GetWin32AdapterAuto(PIP_ADAPTER_ADDRESSES adapter, std::uniqu
 		AF_UNSPEC,
 		GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_INCLUDE_GATEWAYS,
 		NULL,
-		AdapterInfo.get(),
+		adapterInfo.get(),
 		&dwBufLen);
 
 	if (dwStatus == ERROR_BUFFER_OVERFLOW)
@@ -110,7 +115,7 @@ bool AdapterUtils::GetWin32AdapterAuto(PIP_ADAPTER_ADDRESSES adapter, std::uniqu
 		DevCon.WriteLn("DEV9: PCAPGetWin32Adapter() buffer too small, resizing");
 		//
 		neededSize = dwBufLen / sizeof(IP_ADAPTER_ADDRESSES) + 1;
-		AdapterInfo = std::make_unique<IP_ADAPTER_ADDRESSES[]>(neededSize);
+		adapterInfo = std::make_unique<IP_ADAPTER_ADDRESSES[]>(neededSize);
 		dwBufLen = sizeof(IP_ADAPTER_ADDRESSES) * neededSize;
 		DevCon.WriteLn("DEV9: New size %i", neededSize);
 
@@ -118,45 +123,45 @@ bool AdapterUtils::GetWin32AdapterAuto(PIP_ADAPTER_ADDRESSES adapter, std::uniqu
 			AF_UNSPEC,
 			GAA_FLAG_INCLUDE_PREFIX | GAA_FLAG_INCLUDE_GATEWAYS,
 			NULL,
-			AdapterInfo.get(),
+			adapterInfo.get(),
 			&dwBufLen);
 	}
 
 	if (dwStatus != ERROR_SUCCESS)
 		return 0;
 
-	pAdapter = AdapterInfo.get();
+	pAdapter = adapterInfo.get();
 
 	do
 	{
 		if (pAdapter->IfType != IF_TYPE_SOFTWARE_LOOPBACK &&
 			pAdapter->OperStatus == IfOperStatusUp)
 		{
-			//Search for an adapter with;
-			//IPv4 Address
-			//DNS
-			//Gateway
+			// Search for an adapter with;
+			// IPv4 Address,
+			// DNS,
+			// Gateway.
 
 			bool hasIPv4 = false;
 			bool hasDNS = false;
 			bool hasGateway = false;
 
-			//IPv4
+			// IPv4.
 			if (GetAdapterIP(pAdapter).has_value())
 				hasIPv4 = true;
 
-			//DNS
+			// DNS.
 			if (GetDNS(pAdapter).size() > 0)
 				hasDNS = true;
 
-			//Gateway
+			// Gateway.
 			if (GetGateways(pAdapter).size() > 0)
 				hasGateway = true;
 
 			if (hasIPv4 && hasDNS && hasGateway)
 			{
 				*adapter = *pAdapter;
-				buffer->swap(AdapterInfo);
+				buffer->swap(adapterInfo);
 				return true;
 			}
 		}
@@ -167,16 +172,18 @@ bool AdapterUtils::GetWin32AdapterAuto(PIP_ADAPTER_ADDRESSES adapter, std::uniqu
 	return false;
 }
 #elif defined(__POSIX__)
-bool AdapterUtils::GetIfAdapter(const std::string& name, ifaddrs* adapter, ifaddrs** buffer)
+bool AdapterUtils::GetAdapter(const std::string& name, Adapter* adapter, AdapterBuffer* buffer)
 {
-	ifaddrs* adapterInfo;
+	ifaddrs* ifa;
 	ifaddrs* pAdapter;
 
-	int error = getifaddrs(&adapterInfo);
+	int error = getifaddrs(&ifa);
 	if (error)
 		return false;
 
-	pAdapter = adapterInfo;
+	std::unique_ptr<ifaddrs, IfAdaptersDeleter> adapterInfo(ifa, IfAdaptersDeleter());
+
+	pAdapter = adapterInfo.get();
 
 	do
 	{
@@ -189,32 +196,33 @@ bool AdapterUtils::GetIfAdapter(const std::string& name, ifaddrs* adapter, ifadd
 	if (pAdapter != nullptr)
 	{
 		*adapter = *pAdapter;
-		*buffer = adapterInfo;
+		buffer->swap(adapterInfo);
 		return true;
 	}
 
-	freeifaddrs(adapterInfo);
 	return false;
 }
-bool AdapterUtils::GetIfAdapterAuto(ifaddrs* adapter, ifaddrs** buffer)
+bool AdapterUtils::GetAdapterAuto(Adapter* adapter, AdapterBuffer* buffer)
 {
-	ifaddrs* adapterInfo;
+	ifaddrs* ifa;
 	ifaddrs* pAdapter;
 
-	int error = getifaddrs(&adapterInfo);
+	int error = getifaddrs(&ifa);
 	if (error)
 		return false;
 
-	pAdapter = adapterInfo;
+	std::unique_ptr<ifaddrs, IfAdaptersDeleter> adapterInfo(ifa, IfAdaptersDeleter());
+
+	pAdapter = adapterInfo.get();
 
 	do
 	{
 		if ((pAdapter->ifa_flags & IFF_LOOPBACK) == 0 &&
 			(pAdapter->ifa_flags & IFF_UP) != 0)
 		{
-			//Search for an adapter with;
-			//IPv4 Address
-			//Gateway
+			// Search for an adapter with;
+			// IPv4 Address,
+			// Gateway.
 
 			bool hasIPv4 = false;
 			bool hasGateway = false;
@@ -228,7 +236,7 @@ bool AdapterUtils::GetIfAdapterAuto(ifaddrs* adapter, ifaddrs** buffer)
 			if (hasIPv4 && hasGateway)
 			{
 				*adapter = *pAdapter;
-				*buffer = adapterInfo;
+				buffer->swap(adapterInfo);
 				return true;
 			}
 		}
@@ -236,14 +244,47 @@ bool AdapterUtils::GetIfAdapterAuto(ifaddrs* adapter, ifaddrs** buffer)
 		pAdapter = pAdapter->ifa_next;
 	} while (pAdapter);
 
-	freeifaddrs(adapterInfo);
 	return false;
 }
 #endif
 
-//AdapterIP
+// AdapterMAC.
 #ifdef _WIN32
-std::optional<IP_Address> AdapterUtils::GetAdapterIP(PIP_ADAPTER_ADDRESSES adapter)
+std::optional<MAC_Address> AdapterUtils::GetAdapterMAC(Adapter* adapter)
+{
+	if (adapter != nullptr && adapter->PhysicalAddressLength == 6)
+		return *(MAC_Address*)adapter->PhysicalAddress;
+
+	return std::nullopt;
+}
+#elif defined(__POSIX__)
+#ifdef __linux__
+std::optional<MAC_Address> AdapterUtils::GetAdapterMAC(Adapter* adapter)
+{
+	struct ifreq ifr;
+	strcpy(ifr.ifr_name, adapter->ifa_name);
+
+	int fd = socket(AF_INET, SOCK_DGRAM, 0);
+	int ret = ioctl(fd, SIOCGIFHWADDR, &ifr);
+	close(fd);
+
+	if (ret == 0)
+		return *(MAC_Address*)ifr.ifr_hwaddr.sa_data;
+
+	return std::nullopt;
+}
+#else
+std::optional<MAC_Address> AdapterUtils::GetAdapterMAC(Adapter* adapter)
+{
+	Console.Error("DEV9: Unsupported OS, can't get MAC address");
+	return std::nullopt;
+}
+#endif
+#endif
+
+// AdapterIP.
+#ifdef _WIN32
+std::optional<IP_Address> AdapterUtils::GetAdapterIP(Adapter* adapter)
 {
 	PIP_ADAPTER_UNICAST_ADDRESS address = nullptr;
 	if (adapter != nullptr)
@@ -261,7 +302,7 @@ std::optional<IP_Address> AdapterUtils::GetAdapterIP(PIP_ADAPTER_ADDRESSES adapt
 	return std::nullopt;
 }
 #elif defined(__POSIX__)
-std::optional<IP_Address> AdapterUtils::GetAdapterIP(ifaddrs* adapter)
+std::optional<IP_Address> AdapterUtils::GetAdapterIP(Adapter* adapter)
 {
 	sockaddr* address = nullptr;
 	if (adapter != nullptr)
@@ -279,9 +320,9 @@ std::optional<IP_Address> AdapterUtils::GetAdapterIP(ifaddrs* adapter)
 }
 #endif
 
-//Gateways
+// Gateways.
 #ifdef _WIN32
-std::vector<IP_Address> AdapterUtils::GetGateways(PIP_ADAPTER_ADDRESSES adapter)
+std::vector<IP_Address> AdapterUtils::GetGateways(Adapter* adapter)
 {
 	if (adapter == nullptr)
 		return {};
@@ -303,10 +344,10 @@ std::vector<IP_Address> AdapterUtils::GetGateways(PIP_ADAPTER_ADDRESSES adapter)
 }
 #elif defined(__POSIX__)
 #ifdef __linux__
-std::vector<IP_Address> AdapterUtils::GetGateways(ifaddrs* adapter)
+std::vector<IP_Address> AdapterUtils::GetGateways(Adapter* adapter)
 {
-	///proc/net/route contains some information about gateway addresses,
-	//and separates the information about by each interface.
+	// /proc/net/route contains some information about gateway addresses,
+	// and separates the information about by each interface.
 	if (adapter == nullptr)
 		return {};
 
@@ -325,8 +366,8 @@ std::vector<IP_Address> AdapterUtils::GetGateways(ifaddrs* adapter)
 		routeLines.push_back(line);
 	route.close();
 
-	//Columns are as follows (first-line header):
-	//Iface  Destination  Gateway  Flags  RefCnt  Use  Metric  Mask  MTU  Window  IRTT
+	// Columns are as follows (first-line header):
+	// Iface  Destination  Gateway  Flags  RefCnt  Use  Metric  Mask  MTU  Window  IRTT.
 	for (size_t i = 1; i < routeLines.size(); i++)
 	{
 		std::string line = routeLines[i];
@@ -349,14 +390,14 @@ std::vector<IP_Address> AdapterUtils::GetGateways(ifaddrs* adapter)
 	return collection;
 }
 #elif defined(__FreeBSD__) || (__APPLE__)
-std::vector<IP_Address> AdapterUtils::GetGateways(ifaddrs* adapter)
+std::vector<IP_Address> AdapterUtils::GetGateways(Adapter* adapter)
 {
 	if (adapter == nullptr)
 		return {};
 
 	std::vector<IP_Address> collection;
 
-	//Get index for our adapter by matching the adapter name
+	// Get index for our adapter by matching the adapter name.
 	int ifIndex = -1;
 
 	struct if_nameindex* ifNI;
@@ -379,14 +420,14 @@ std::vector<IP_Address> AdapterUtils::GetGateways(ifaddrs* adapter)
 	}
 	if_freenameindex(ifNI);
 
-	//Check if we found the adapter
+	// Check if we found the adapter.
 	if (ifIndex == -1)
 	{
 		Console.Error("DEV9: Failed to get index for adapter");
 		return collection;
 	}
 
-	//Find the gateway by looking though the routing information
+	// Find the gateway by looking though the routing information.
 	int name[] = {CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_DUMP, 0};
 	size_t bufferLen = 0;
 
@@ -396,7 +437,7 @@ std::vector<IP_Address> AdapterUtils::GetGateways(ifaddrs* adapter)
 		return collection;
 	}
 
-	//len is an estimate, double it to be safe
+	// bufferLen is an estimate, double it to be safe.
 	bufferLen *= 2;
 	std::unique_ptr<u8[]> buffer = std::make_unique<u8[]>(bufferLen);
 
@@ -416,7 +457,7 @@ std::vector<IP_Address> AdapterUtils::GetGateways(ifaddrs* adapter)
 			sockaddr* sockaddrs = (sockaddr*)(hdr + 1);
 			pxAssert(sockaddrs[RTAX_DST].sa_family == AF_INET);
 
-			//Default gateway has no destination address
+			// Default gateway has no destination address.
 			sockaddr_in* sockaddr = (sockaddr_in*)&sockaddrs[RTAX_DST];
 			if (sockaddr->sin_addr.s_addr != 0)
 				continue;
@@ -429,7 +470,7 @@ std::vector<IP_Address> AdapterUtils::GetGateways(ifaddrs* adapter)
 	return collection;
 }
 #else
-std::vector<IP_Address> AdapterUtils::GetGateways(ifaddrs* adapter)
+std::vector<IP_Address> AdapterUtils::GetGateways(Adapter* adapter)
 {
 	Console.Error("DEV9: Unsupported OS, can't find Gateway");
 	return {};
@@ -437,9 +478,9 @@ std::vector<IP_Address> AdapterUtils::GetGateways(ifaddrs* adapter)
 #endif
 #endif
 
-//DNS
+// DNS.
 #ifdef _WIN32
-std::vector<IP_Address> AdapterUtils::GetDNS(PIP_ADAPTER_ADDRESSES adapter)
+std::vector<IP_Address> AdapterUtils::GetDNS(Adapter* adapter)
 {
 	if (adapter == nullptr)
 		return {};
@@ -460,9 +501,9 @@ std::vector<IP_Address> AdapterUtils::GetDNS(PIP_ADAPTER_ADDRESSES adapter)
 	return collection;
 }
 #elif defined(__POSIX__)
-std::vector<IP_Address> AdapterUtils::GetDNS(ifaddrs* adapter)
+std::vector<IP_Address> AdapterUtils::GetDNS(Adapter* adapter)
 {
-	//On Linux and OSX, DNS is system wide, not adapter specific, so we can ignore adapter
+	// On Linux and OSX, DNS is system wide, not adapter specific, so we can ignore the adapter parameter.
 
 	// Parse /etc/resolv.conf for all of the "nameserver" entries.
 	// These are the DNS servers the machine is configured to use.

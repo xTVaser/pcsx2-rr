@@ -39,18 +39,6 @@ static constexpr s32 DEFAULT_SOUNDTOUCH_SEQUENCE_LENGTH = 30;
 static constexpr s32 DEFAULT_SOUNDTOUCH_SEEK_WINDOW = 20;
 static constexpr s32 DEFAULT_SOUNDTOUCH_OVERLAP = 10;
 
-static const char* s_output_module_entries[] = {QT_TRANSLATE_NOOP("AudioSettingsWidget", "No Sound (Emulate SPU2 only)"),
-	QT_TRANSLATE_NOOP("AudioSettingsWidget", "Cubeb (Cross-platform)"),
-#ifdef _WIN32
-	QT_TRANSLATE_NOOP("AudioSettingsWidget", "XAudio2"),
-#endif
-	nullptr};
-static const char* s_output_module_values[] = {"nullout", "cubeb",
-#ifdef _WIN32
-	"xaudio2",
-#endif
-	nullptr};
-
 AudioSettingsWidget::AudioSettingsWidget(SettingsDialog* dialog, QWidget* parent)
 	: QWidget(parent)
 	, m_dialog(dialog)
@@ -58,6 +46,7 @@ AudioSettingsWidget::AudioSettingsWidget(SettingsDialog* dialog, QWidget* parent
 	SettingsInterface* sif = dialog->getSettingsInterface();
 
 	m_ui.setupUi(this);
+	populateOutputModules();
 
 	SettingWidgetBinder::BindWidgetToIntSetting(sif, m_ui.syncMode, "SPU2/Output", "SynchMode", DEFAULT_SYNCHRONIZATION_MODE);
 	SettingWidgetBinder::BindWidgetToIntSetting(sif, m_ui.expansionMode, "SPU2/Output", "SpeakerConfiguration", DEFAULT_EXPANSION_MODE);
@@ -67,9 +56,9 @@ AudioSettingsWidget::AudioSettingsWidget(SettingsDialog* dialog, QWidget* parent
 	updateTargetLatencyRange();
 	expansionModeChanged();
 
-	SettingWidgetBinder::BindWidgetToEnumSetting(
-		sif, m_ui.outputModule, "SPU2/Output", "OutputModule", s_output_module_entries, s_output_module_values, DEFAULT_OUTPUT_MODULE);
+	SettingWidgetBinder::BindWidgetToStringSetting(sif, m_ui.outputModule, "SPU2/Output", "OutputModule", DEFAULT_OUTPUT_MODULE);
 	SettingWidgetBinder::BindSliderToIntSetting(
+		//: Measuring unit that will appear after the number selected in its option. Adapt the space depending on your language's rules.
 		sif, m_ui.targetLatency, m_ui.targetLatencyLabel, tr(" ms"), "SPU2/Output", "Latency", DEFAULT_TARGET_LATENCY);
 	SettingWidgetBinder::BindSliderToIntSetting(
 		sif, m_ui.outputLatency, m_ui.outputLatencyLabel, tr(" ms"), "SPU2/Output", "OutputLatency", DEFAULT_OUTPUT_LATENCY);
@@ -83,15 +72,18 @@ AudioSettingsWidget::AudioSettingsWidget(SettingsDialog* dialog, QWidget* parent
 	outputModuleChanged();
 
 	m_ui.volume->setValue(m_dialog->getEffectiveIntValue("SPU2/Mixing", "FinalVolume", DEFAULT_VOLUME));
-	m_ui.volume->setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(m_ui.volume, &QSlider::valueChanged, this, &AudioSettingsWidget::volumeChanged);
-	connect(m_ui.volume, &QSlider::customContextMenuRequested, this, &AudioSettingsWidget::volumeContextMenuRequested);
 	updateVolumeLabel();
-	if (sif && sif->ContainsValue("SPU2/Mixing", "FinalVolume"))
+	if (dialog->isPerGameSettings())
 	{
-		QFont bold_font(m_ui.volume->font());
-		bold_font.setBold(true);
-		m_ui.volumeLabel->setFont(bold_font);
+		connect(m_ui.volume, &QSlider::customContextMenuRequested, this, &AudioSettingsWidget::volumeContextMenuRequested);
+		m_ui.volume->setContextMenuPolicy(Qt::CustomContextMenu);
+		if (sif->ContainsValue("SPU2/Mixing", "FinalVolume"))
+		{
+			QFont bold_font(m_ui.volume->font());
+			bold_font.setBold(true);
+			m_ui.volumeLabel->setFont(bold_font);
+		}
 	}
 
 	SettingWidgetBinder::BindSliderToIntSetting(sif, m_ui.sequenceLength, m_ui.sequenceLengthLabel, tr(" ms"), "Soundtouch",
@@ -108,13 +100,21 @@ AudioSettingsWidget::AudioSettingsWidget(SettingsDialog* dialog, QWidget* parent
 	onMinimalOutputLatencyStateChanged();
 	updateLatencyLabels();
 
-	dialog->registerWidgetHelp(m_ui.syncMode, tr("Synchronization"), tr("TimeStretch (Recommended)"), tr(""));
+	dialog->registerWidgetHelp(m_ui.syncMode, tr("Synchronization"), tr("TimeStretch (Recommended)"),
+		tr("When running outside of 100% speed, adjusts the tempo on audio instead of dropping frames. Produces much nicer fast-forward/slowdown audio."));
 
-	dialog->registerWidgetHelp(m_ui.expansionMode, tr("Expansion"), tr("Stereo (None, Default)"), tr(""));
+	dialog->registerWidgetHelp(m_ui.expansionMode, tr("Expansion"), tr("Stereo (None, Default)"), 
+		tr("Determines how the stereo output from the emulated system is upmixed into a greater number of the output speakers."));
 
-	dialog->registerWidgetHelp(m_ui.outputModule, tr("Output Module"), tr("Cubeb (Cross-platform)"), tr(""));
+	//: Cubeb is an audio engine name. Leave as-is.
+	dialog->registerWidgetHelp(m_ui.outputModule, tr("Output Module"), tr("Cubeb (Cross-platform)"), 
+		tr("Selects the library to be used for audio output."));
 
-	dialog->registerWidgetHelp(m_ui.backend, tr("Output Backend"), tr("Default"), tr(""));
+	dialog->registerWidgetHelp(m_ui.backend, tr("Output Backend"), tr("Default"), 
+		tr("When the sound output module supports multiple audio backends, determines the API to be used for audio output to the system."));
+
+	dialog->registerWidgetHelp(m_ui.outputDevice, tr("Output Device"), tr("Default"), 
+		tr("Determines which audio device to output the sound to."));
 
 	dialog->registerWidgetHelp(m_ui.targetLatency, tr("Target Latency"), tr("60 ms"),
 		tr("Determines the buffer size which the time stretcher will try to keep filled. It effectively selects the average latency, as "
@@ -125,7 +125,8 @@ AudioSettingsWidget::AudioSettingsWidget(SettingsDialog* dialog, QWidget* parent
 
 	dialog->registerWidgetHelp(m_ui.sequenceLength, tr("Sequence Length"), tr("30 ms"), tr(""));
 
-	dialog->registerWidgetHelp(m_ui.seekWindowSize, tr("Seekwindow Size"), tr("20 ms"), tr(""));
+	//: Seek Window: the region of samples (window) the audio stretching algorithm is allowed to search.
+	dialog->registerWidgetHelp(m_ui.seekWindowSize, tr("Seek Window Size"), tr("20 ms"), tr(""));
 
 	dialog->registerWidgetHelp(m_ui.overlap, tr("Overlap"), tr("10 ms"), tr(""));
 
@@ -139,6 +140,12 @@ void AudioSettingsWidget::expansionModeChanged()
 {
 	const bool expansion51 = m_dialog->getEffectiveIntValue("SPU2/Output", "SpeakerConfiguration", 0) == 2;
 	m_ui.dplLevel->setDisabled(!expansion51);
+}
+
+void AudioSettingsWidget::populateOutputModules()
+{
+	for (const SndOutModule* mod : GetSndOutModules())
+		m_ui.outputModule->addItem(qApp->translate("SPU2", mod->GetDisplayName()), QString::fromUtf8(mod->GetIdent()));
 }
 
 void AudioSettingsWidget::outputModuleChanged()
@@ -272,7 +279,7 @@ void AudioSettingsWidget::volumeContextMenuRequested(const QPoint& pt)
 	m_ui.volume->connect(menu.addAction(qApp->translate("SettingWidgetBinder", "Reset")), &QAction::triggered, this, [this]() {
 		const s32 global_value = Host::GetBaseIntSettingValue("SPU2/Mixing", "FinalVolume", DEFAULT_VOLUME);
 		{
-			QSignalBlocker sb(m_ui.volumeLabel);
+			QSignalBlocker sb(m_ui.volume);
 			m_ui.volume->setValue(global_value);
 			updateVolumeLabel();
 		}
@@ -297,6 +304,7 @@ void AudioSettingsWidget::volumeContextMenuRequested(const QPoint& pt)
 
 void AudioSettingsWidget::updateVolumeLabel()
 {
+	//: Variable value that indicates a percentage. Preserve the %1 variable, adapt the latter % (and/or any possible spaces) to your language's ruleset.
 	m_ui.volumeLabel->setText(tr("%1%").arg(m_ui.volume->value()));
 }
 
@@ -315,6 +323,7 @@ void AudioSettingsWidget::updateLatencyLabels()
 {
 	const bool minimal_output = m_dialog->getEffectiveBoolValue("SPU2/Output", "OutputLatencyMinimal", false);
 
+	//: Preserve the %1 variable, adapt the latter ms (and/or any possible spaces in between) to your language's ruleset.
 	m_ui.outputLatencyLabel->setText(minimal_output ? tr("N/A") : tr("%1 ms").arg(m_ui.outputLatency->value()));
 
 	const u32 output_latency_ms =

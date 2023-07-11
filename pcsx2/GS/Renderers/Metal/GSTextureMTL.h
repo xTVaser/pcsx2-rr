@@ -33,15 +33,6 @@ class GSTextureMTL : public GSTexture
 	MRCOwned<id<MTLTexture>> m_texture;
 	bool m_has_mipmaps = false;
 
-	// In Metal clears happen as a part of render passes instead of as separate steps, but the GSDevice API has it as a separate step
-	// To deal with that, store the fact that a clear was requested here and it'll be applied on the next render pass
-	bool m_needs_color_clear = false;
-	bool m_needs_depth_clear = false;
-	bool m_needs_stencil_clear = false;
-	GSVector4 m_clear_color;
-	float m_clear_depth;
-	int m_clear_stencil;
-
 public:
 	u64 m_last_read = 0;  ///< Last time this texture was read by a draw
 	u64 m_last_write = 0; ///< Last time this texture was written by a draw
@@ -51,22 +42,8 @@ public:
 	/// For making fake backbuffers
 	void SetSize(GSVector2i size) { m_size = size; }
 
-	/// Requests the texture be cleared the next time a color render is done
-	void RequestColorClear(GSVector4 color);
-	/// Requests the texture be cleared the next time a depth render is done
-	void RequestDepthClear(float depth);
-	/// Requests the texture be cleared the next time a stencil render is done
-	void RequestStencilClear(int stencil);
-	/// Reads whether a color clear was requested, then clears the request
-	bool GetResetNeedsColorClear(GSVector4& colorOut);
-	/// Reads whether a depth clear was requested, then clears the request
-	bool GetResetNeedsDepthClear(float& depthOut);
-	/// Reads whether a stencil clear was requested, then clears the request
-	bool GetResetNeedsStencilClear(int& stencilOut);
 	/// Flushes requested clears to the texture
 	void FlushClears();
-	/// Marks pending clears as done (e.g. if the whole texture is about to be overwritten)
-	void InvalidateClears();
 
 	void* GetNativeHandle() const override;
 	bool Update(const GSVector4i& r, const void* data, int pitch, int layer = 0) override;
@@ -76,6 +53,28 @@ public:
 	void GenerateMipmap() override;
 	void Swap(GSTexture* tex) override;
 	id<MTLTexture> GetTexture() { return m_texture; }
+};
+
+class GSDownloadTextureMTL final : public GSDownloadTexture
+{
+public:
+	~GSDownloadTextureMTL() override;
+
+	static std::unique_ptr<GSDownloadTextureMTL> Create(GSDeviceMTL* dev, u32 width, u32 height, GSTexture::Format format);
+
+	void CopyFromTexture(const GSVector4i& drc, GSTexture* stex, const GSVector4i& src, u32 src_level, bool use_transfer_pitch) override;
+
+	bool Map(const GSVector4i& read_rc) override;
+	void Unmap() override;
+
+	void Flush() override;
+
+private:
+	GSDownloadTextureMTL(GSDeviceMTL* dev, MRCOwned<id<MTLBuffer>> buffer, u32 width, u32 height, GSTexture::Format format);
+
+	GSDeviceMTL* m_dev;
+	MRCOwned<id<MTLBuffer>> m_buffer;
+	MRCOwned<id<MTLCommandBuffer>> m_copy_cmdbuffer = nil;
 };
 
 #endif

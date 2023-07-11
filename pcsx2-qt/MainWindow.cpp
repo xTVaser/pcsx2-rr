@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2022  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -15,31 +15,6 @@
 
 #include "PrecompiledHeader.h"
 
-#include <QtCore/QDateTime>
-#include <QtGui/QCloseEvent>
-#include <QtWidgets/QFileDialog>
-#include <QtWidgets/QInputDialog>
-#include <QtWidgets/QMessageBox>
-#include <QtWidgets/QProgressBar>
-#include <QtWidgets/QStyle>
-#include <QtWidgets/QStyleFactory>
-
-#include "common/Assertions.h"
-#include "common/CocoaTools.h"
-#include "common/FileSystem.h"
-
-#include "pcsx2/CDVD/CDVDcommon.h"
-#include "pcsx2/CDVD/CDVDdiscReader.h"
-#include "pcsx2/Frontend/GameList.h"
-#include "pcsx2/Frontend/LogSink.h"
-#include "pcsx2/GS/GS.h"
-#include "pcsx2/GSDumpReplayer.h"
-#include "pcsx2/HostDisplay.h"
-#include "pcsx2/HostSettings.h"
-#include "pcsx2/PerformanceMetrics.h"
-#include "pcsx2/Recording/InputRecording.h"
-#include "pcsx2/Recording/InputRecordingControls.h"
-
 #include "AboutDialog.h"
 #include "AutoUpdaterDialog.h"
 #include "CoverDownloadDialog.h"
@@ -49,28 +24,51 @@
 #include "MainWindow.h"
 #include "QtHost.h"
 #include "QtUtils.h"
+#include "SettingWidgetBinder.h"
 #include "Settings/ControllerSettingsDialog.h"
 #include "Settings/GameListSettingsWidget.h"
 #include "Settings/InterfaceSettingsWidget.h"
-#include "SettingWidgetBinder.h"
-#include "svnrev.h"
 #include "Tools/InputRecording/InputRecordingViewer.h"
 #include "Tools/InputRecording/NewInputRecordingDlg.h"
+#include "svnrev.h"
+
+#include "pcsx2/Achievements.h"
+#include "pcsx2/CDVD/CDVDcommon.h"
+#include "pcsx2/CDVD/CDVDdiscReader.h"
+#include "pcsx2/GS.h"
+#include "pcsx2/GS/GS.h"
+#include "pcsx2/GSDumpReplayer.h"
+#include "pcsx2/GameList.h"
+#include "pcsx2/Host.h"
+#include "pcsx2/LogSink.h"
+#include "pcsx2/MTGS.h"
+#include "pcsx2/PerformanceMetrics.h"
+#include "pcsx2/Recording/InputRecording.h"
+#include "pcsx2/Recording/InputRecordingControls.h"
+
+#include "common/Assertions.h"
+#include "common/CocoaTools.h"
+#include "common/FileSystem.h"
+
+#include <QtCore/QDateTime>
+#include <QtGui/QCloseEvent>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QInputDialog>
+#include <QtWidgets/QMessageBox>
+#include <QtWidgets/QProgressBar>
+#include <QtWidgets/QStyle>
+#include <QtWidgets/QStyleFactory>
 
 #ifdef _WIN32
 #include "common/RedtapeWindows.h"
 #include <Dbt.h>
 #endif
 
-#ifdef ENABLE_RAINTEGRATION
-#include "pcsx2/Frontend/Achievements.h"
-#endif
-
-
 const char* MainWindow::OPEN_FILE_FILTER =
-	QT_TRANSLATE_NOOP("MainWindow", "All File Types (*.bin *.iso *.cue *.chd *.cso *.gz *.elf *.irx *.gs *.gs.xz *.gs.zst *.dump);;"
+	QT_TRANSLATE_NOOP("MainWindow", "All File Types (*.bin *.iso *.cue *.mdf *.chd *.cso *.gz *.elf *.irx *.gs *.gs.xz *.gs.zst *.dump);;"
 									"Single-Track Raw Images (*.bin *.iso);;"
 									"Cue Sheets (*.cue);;"
+									"Media Descriptor File (*.mdf);;"
 									"MAME CHD Images (*.chd);;"
 									"CSO Images (*.cso);;"
 									"GZ Images (*.gz);;"
@@ -79,24 +77,16 @@ const char* MainWindow::OPEN_FILE_FILTER =
 									"GS Dumps (*.gs *.gs.xz *.gs.zst);;"
 									"Block Dumps (*.dump)");
 
-const char* MainWindow::DISC_IMAGE_FILTER = QT_TRANSLATE_NOOP("MainWindow", "All File Types (*.bin *.iso *.cue *.chd *.cso *.gz *.dump);;"
+const char* MainWindow::DISC_IMAGE_FILTER = QT_TRANSLATE_NOOP("MainWindow", "All File Types (*.bin *.iso *.cue *.mdf *.chd *.cso *.gz *.dump);;"
 																			"Single-Track Raw Images (*.bin *.iso);;"
 																			"Cue Sheets (*.cue);;"
+																			"Media Descriptor File (*.mdf);;"
 																			"MAME CHD Images (*.chd);;"
 																			"CSO Images (*.cso);;"
 																			"GZ Images (*.gz);;"
 																			"Block Dumps (*.dump)");
 
-#ifdef __APPLE__
-const char* MainWindow::DEFAULT_THEME_NAME = "";
-#else
-const char* MainWindow::DEFAULT_THEME_NAME = "darkfusion";
-#endif
-
 MainWindow* g_main_window = nullptr;
-static QString s_unthemed_style_name;
-static QPalette s_unthemed_palette;
-static bool s_unthemed_style_name_set;
 
 #if defined(_WIN32) || defined(__APPLE__)
 static const bool s_use_central_widget = false;
@@ -157,7 +147,7 @@ void MainWindow::initialize()
 	restoreStateFromConfig();
 	switchToGameListView();
 	updateWindowTitle();
-	updateSaveStateMenus(QString(), QString(), 0);
+	updateSaveStateMenusEnableState(false);
 
 #ifdef _WIN32
 	registerForDeviceNotifications();
@@ -193,7 +183,6 @@ void MainWindow::setupAdditionalUi()
 {
 	const bool show_advanced_settings = QtHost::ShouldShowAdvancedSettings();
 
-	setWindowIcon(QIcon(QStringLiteral("%1/icons/AppIconLarge.png").arg(QtHost::GetResourcesBasePath())));
 	makeIconsMasks(menuBar());
 
 	m_ui.menuDebug->menuAction()->setVisible(show_advanced_settings);
@@ -254,13 +243,17 @@ void MainWindow::setupAdditionalUi()
 	m_status_vps_widget->setFixedSize(125, 16);
 	m_status_vps_widget->hide();
 
+	m_settings_toolbar_menu = new QMenu(m_ui.toolBar);
+	m_settings_toolbar_menu->addAction(m_ui.actionSettings);
+	m_settings_toolbar_menu->addAction(m_ui.actionViewGameProperties);
+
 	for (u32 scale = 0; scale <= 10; scale++)
 	{
 		QAction* action = m_ui.menuWindowSize->addAction((scale == 0) ? tr("Internal Resolution") : tr("%1x Scale").arg(scale));
 		connect(action, &QAction::triggered, [scale]() { g_emu_thread->requestDisplaySize(static_cast<float>(scale)); });
 	}
 
-	updateEmulationActions(false, false);
+	updateEmulationActions(false, false, false);
 	updateDisplayRelatedActions(false, false, false);
 
 #ifdef ENABLE_RAINTEGRATION
@@ -300,7 +293,6 @@ void MainWindow::connectSignals()
 	connect(m_ui.actionStartFile, &QAction::triggered, this, &MainWindow::onStartFileActionTriggered);
 	connect(m_ui.actionStartDisc, &QAction::triggered, this, &MainWindow::onStartDiscActionTriggered);
 	connect(m_ui.actionStartBios, &QAction::triggered, this, &MainWindow::onStartBIOSActionTriggered);
-	connect(m_ui.actionChangeDisc, &QAction::triggered, [this] { m_ui.menuChangeDisc->exec(QCursor::pos()); });
 	connect(m_ui.actionChangeDiscFromFile, &QAction::triggered, this, &MainWindow::onChangeDiscFromFileActionTriggered);
 	connect(m_ui.actionChangeDiscFromDevice, &QAction::triggered, this, &MainWindow::onChangeDiscFromDeviceActionTriggered);
 	connect(m_ui.actionChangeDiscFromGameList, &QAction::triggered, this, &MainWindow::onChangeDiscFromGameListActionTriggered);
@@ -309,8 +301,17 @@ void MainWindow::connectSignals()
 	connect(m_ui.menuChangeDisc, &QMenu::aboutToHide, this, &MainWindow::onChangeDiscMenuAboutToHide);
 	connect(m_ui.actionPowerOff, &QAction::triggered, this, [this]() { requestShutdown(true, true, EmuConfig.SaveStateOnShutdown); });
 	connect(m_ui.actionPowerOffWithoutSaving, &QAction::triggered, this, [this]() { requestShutdown(false, false, false); });
-	connect(m_ui.actionLoadState, &QAction::triggered, this, [this]() { m_ui.menuLoadState->exec(QCursor::pos()); });
-	connect(m_ui.actionSaveState, &QAction::triggered, this, [this]() { m_ui.menuSaveState->exec(QCursor::pos()); });
+	connect(m_ui.actionToolbarStartFile, &QAction::triggered, this, &MainWindow::onStartFileActionTriggered);
+	connect(m_ui.actionToolbarStartDisc, &QAction::triggered, this, &MainWindow::onStartDiscActionTriggered);
+	connect(m_ui.actionToolbarStartBios, &QAction::triggered, this, &MainWindow::onStartBIOSActionTriggered);
+	connect(m_ui.actionToolbarChangeDisc, &QAction::triggered, [this] { m_ui.menuChangeDisc->exec(QCursor::pos()); });
+	connect(m_ui.actionToolbarPowerOff, &QAction::triggered, this, [this]() { requestShutdown(true, true, EmuConfig.SaveStateOnShutdown); });
+	connect(m_ui.actionToolbarLoadState, &QAction::triggered, this, [this]() { m_ui.menuLoadState->exec(QCursor::pos()); });
+	connect(m_ui.actionToolbarSaveState, &QAction::triggered, this, [this]() { m_ui.menuSaveState->exec(QCursor::pos()); });
+	connect(m_ui.actionToolbarSettings, &QAction::triggered, this, &MainWindow::onSettingsTriggeredFromToolbar);
+	connect(m_ui.actionToolbarControllerSettings, &QAction::triggered,
+		[this]() { doControllerSettings(ControllerSettingsDialog::Category::GlobalSettings); });
+	connect(m_ui.actionToolbarScreenshot, &QAction::triggered, this, &MainWindow::onScreenshotActionTriggered);
 	connect(m_ui.actionExit, &QAction::triggered, this, &MainWindow::close);
 	connect(m_ui.actionScreenshot, &QAction::triggered, this, &MainWindow::onScreenshotActionTriggered);
 	connect(m_ui.menuLoadState, &QMenu::aboutToShow, this, &MainWindow::onLoadStateMenuAboutToShow);
@@ -346,7 +347,7 @@ void MainWindow::connectSignals()
 	connect(m_ui.actionDiscordServer, &QAction::triggered, this, &MainWindow::onDiscordServerActionTriggered);
 	connect(m_ui.actionAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt);
 	connect(m_ui.actionAbout, &QAction::triggered, this, &MainWindow::onAboutActionTriggered);
-	connect(m_ui.actionCheckForUpdates, &QAction::triggered, this, &MainWindow::onCheckForUpdatesActionTriggered);
+	connect(m_ui.actionCheckForUpdates, &QAction::triggered, this, [this]() { checkForUpdates(true, true); });
 	connect(m_ui.actionOpenDataDirectory, &QAction::triggered, this, &MainWindow::onToolsOpenDataDirectoryTriggered);
 	connect(m_ui.actionCoverDownloader, &QAction::triggered, this, &MainWindow::onToolsCoverDownloaderTriggered);
 	connect(m_ui.actionGridViewShowTitles, &QAction::triggered, m_game_list_widget, &GameListWidget::setShowCoverTitles);
@@ -408,12 +409,11 @@ void MainWindow::connectSignals()
 void MainWindow::connectVMThreadSignals(EmuThread* thread)
 {
 	connect(m_ui.actionStartFullscreenUI, &QAction::triggered, thread, &EmuThread::startFullscreenUI);
-	connect(m_ui.actionStartFullscreenUI2, &QAction::triggered, thread, &EmuThread::startFullscreenUI);
+	connect(m_ui.actionToolbarStartFullscreenUI, &QAction::triggered, thread, &EmuThread::startFullscreenUI);
 	connect(thread, &EmuThread::messageConfirmed, this, &MainWindow::confirmMessage, Qt::BlockingQueuedConnection);
-	connect(thread, &EmuThread::onCreateDisplayRequested, this, &MainWindow::createDisplay, Qt::BlockingQueuedConnection);
-	connect(thread, &EmuThread::onUpdateDisplayRequested, this, &MainWindow::updateDisplay, Qt::BlockingQueuedConnection);
-	connect(thread, &EmuThread::onDestroyDisplayRequested, this, &MainWindow::destroyDisplay, Qt::BlockingQueuedConnection);
-	connect(thread, &EmuThread::onResizeDisplayRequested, this, &MainWindow::displayResizeRequested);
+	connect(thread, &EmuThread::onAcquireRenderWindowRequested, this, &MainWindow::acquireRenderWindow, Qt::BlockingQueuedConnection);
+	connect(thread, &EmuThread::onReleaseRenderWindowRequested, this, &MainWindow::releaseRenderWindow, Qt::BlockingQueuedConnection);
+	connect(thread, &EmuThread::onResizeRenderWindowRequested, this, &MainWindow::displayResizeRequested);
 	connect(thread, &EmuThread::onRelativeMouseModeRequested, this, &MainWindow::relativeMouseModeRequested);
 	connect(thread, &EmuThread::onVMStarting, this, &MainWindow::onVMStarting);
 	connect(thread, &EmuThread::onVMStarted, this, &MainWindow::onVMStarted);
@@ -421,10 +421,15 @@ void MainWindow::connectVMThreadSignals(EmuThread* thread)
 	connect(thread, &EmuThread::onVMResumed, this, &MainWindow::onVMResumed);
 	connect(thread, &EmuThread::onVMStopped, this, &MainWindow::onVMStopped);
 	connect(thread, &EmuThread::onGameChanged, this, &MainWindow::onGameChanged);
+	connect(thread, &EmuThread::onCaptureStarted, this, &MainWindow::onCaptureStarted);
+	connect(thread, &EmuThread::onCaptureStopped, this, &MainWindow::onCaptureStopped);
 
 	connect(m_ui.actionReset, &QAction::triggered, thread, &EmuThread::resetVM);
 	connect(m_ui.actionPause, &QAction::toggled, thread, &EmuThread::setVMPaused);
 	connect(m_ui.actionFullscreen, &QAction::triggered, thread, &EmuThread::toggleFullscreen);
+	connect(m_ui.actionToolbarReset, &QAction::triggered, thread, &EmuThread::resetVM);
+	connect(m_ui.actionToolbarPause, &QAction::toggled, thread, &EmuThread::setVMPaused);
+	connect(m_ui.actionToolbarFullscreen, &QAction::triggered, thread, &EmuThread::toggleFullscreen);
 	connect(m_ui.actionToggleSoftwareRendering, &QAction::triggered, thread, &EmuThread::toggleSoftwareRendering);
 	connect(m_ui.actionDebugger, &QAction::triggered, this, &MainWindow::openDebugger);
 	connect(m_ui.actionReloadPatches, &QAction::triggered, thread, &EmuThread::reloadPatches);
@@ -498,380 +503,7 @@ void MainWindow::resetSettings(bool ui)
 	g_main_window->recreateSettings();
 }
 
-void MainWindow::updateApplicationTheme()
-{
-	if (!s_unthemed_style_name_set)
-	{
-		s_unthemed_style_name_set = true;
-		s_unthemed_style_name = QApplication::style()->objectName();
-		s_unthemed_palette = QApplication::style()->standardPalette();
-	}
 
-	setStyleFromSettings();
-	setIconThemeFromStyle();
-}
-
-void MainWindow::setStyleFromSettings()
-{
-	const std::string theme(Host::GetBaseStringSettingValue("UI", "Theme", DEFAULT_THEME_NAME));
-
-	if (theme == "fusion")
-	{
-		qApp->setPalette(s_unthemed_palette);
-		qApp->setStyleSheet(QString());
-		qApp->setStyle(QStyleFactory::create("Fusion"));
-	}
-	else if (theme == "darkfusion")
-	{
-		// adapted from https://gist.github.com/QuantumCD/6245215
-		qApp->setStyle(QStyleFactory::create("Fusion"));
-
-		const QColor lighterGray(75, 75, 75);
-		const QColor darkGray(53, 53, 53);
-		const QColor gray(128, 128, 128);
-		const QColor black(25, 25, 25);
-		const QColor blue(198, 238, 255);
-
-		QPalette darkPalette;
-		darkPalette.setColor(QPalette::Window, darkGray);
-		darkPalette.setColor(QPalette::WindowText, Qt::white);
-		darkPalette.setColor(QPalette::Base, black);
-		darkPalette.setColor(QPalette::AlternateBase, darkGray);
-		darkPalette.setColor(QPalette::ToolTipBase, darkGray);
-		darkPalette.setColor(QPalette::ToolTipText, Qt::white);
-		darkPalette.setColor(QPalette::Text, Qt::white);
-		darkPalette.setColor(QPalette::Button, darkGray);
-		darkPalette.setColor(QPalette::ButtonText, Qt::white);
-		darkPalette.setColor(QPalette::Link, blue);
-		darkPalette.setColor(QPalette::Highlight, lighterGray);
-		darkPalette.setColor(QPalette::HighlightedText, Qt::white);
-		darkPalette.setColor(QPalette::PlaceholderText, QColor(Qt::white).darker());
-
-		darkPalette.setColor(QPalette::Active, QPalette::Button, darkGray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::ButtonText, gray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::WindowText, gray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::Text, gray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::Light, darkGray);
-
-		qApp->setPalette(darkPalette);
-
-		qApp->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
-	}
-	else if (theme == "darkfusionblue")
-	{
-		// adapted from https://gist.github.com/QuantumCD/6245215
-		qApp->setStyle(QStyleFactory::create("Fusion"));
-
-		const QColor darkGray(53, 53, 53);
-		const QColor gray(128, 128, 128);
-		const QColor black(25, 25, 25);
-		const QColor blue(198, 238, 255);
-		const QColor blue2(0, 88, 208);
-
-		QPalette darkPalette;
-		darkPalette.setColor(QPalette::Window, darkGray);
-		darkPalette.setColor(QPalette::WindowText, Qt::white);
-		darkPalette.setColor(QPalette::Base, black);
-		darkPalette.setColor(QPalette::AlternateBase, darkGray);
-		darkPalette.setColor(QPalette::ToolTipBase, blue2);
-		darkPalette.setColor(QPalette::ToolTipText, Qt::white);
-		darkPalette.setColor(QPalette::Text, Qt::white);
-		darkPalette.setColor(QPalette::Button, darkGray);
-		darkPalette.setColor(QPalette::ButtonText, Qt::white);
-		darkPalette.setColor(QPalette::Link, blue);
-		darkPalette.setColor(QPalette::Highlight, blue2);
-		darkPalette.setColor(QPalette::HighlightedText, Qt::white);
-		darkPalette.setColor(QPalette::PlaceholderText, QColor(Qt::white).darker());
-
-		darkPalette.setColor(QPalette::Active, QPalette::Button, darkGray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::ButtonText, gray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::WindowText, gray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::Text, gray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::Light, darkGray);
-
-		qApp->setPalette(darkPalette);
-
-		qApp->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
-	}
-	else if (theme == "UntouchedLagoon")
-	{
-		// Custom palette by RedDevilus, Tame (Light/Washed out) Green as main color and Grayish Blue as complimentary.
-		// Alternative white theme.
-		qApp->setStyle(QStyleFactory::create("Fusion"));
-
-		const QColor black(25, 25, 25);
-		const QColor darkteal(0, 77, 77);
-		const QColor teal(0, 128, 128);
-		const QColor tameTeal(160, 190, 185);
-		const QColor grayBlue(160, 180, 190);
-
-		QPalette standardPalette;
-		standardPalette.setColor(QPalette::Window, tameTeal);
-		standardPalette.setColor(QPalette::WindowText, black.lighter());
-		standardPalette.setColor(QPalette::Base, grayBlue);
-		standardPalette.setColor(QPalette::AlternateBase, tameTeal);
-		standardPalette.setColor(QPalette::ToolTipBase, tameTeal);
-		standardPalette.setColor(QPalette::ToolTipText, grayBlue);
-		standardPalette.setColor(QPalette::Text, black);
-		standardPalette.setColor(QPalette::Button, tameTeal);
-		standardPalette.setColor(QPalette::ButtonText, black);
-		standardPalette.setColor(QPalette::Link, black.lighter());
-		standardPalette.setColor(QPalette::Highlight, teal);
-		standardPalette.setColor(QPalette::HighlightedText, grayBlue.lighter());
-
-		standardPalette.setColor(QPalette::Active, QPalette::Button, tameTeal);
-		standardPalette.setColor(QPalette::Disabled, QPalette::ButtonText, darkteal);
-		standardPalette.setColor(QPalette::Disabled, QPalette::WindowText, darkteal.lighter());
-		standardPalette.setColor(QPalette::Disabled, QPalette::Text, darkteal.lighter());
-		standardPalette.setColor(QPalette::Disabled, QPalette::Light, tameTeal);
-
-		qApp->setPalette(standardPalette);
-
-		qApp->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
-	}
-	else if (theme == "BabyPastel")
-	{
-		// Custom palette by RedDevilus, Blue as main color and blue as complimentary.
-		// Alternative light theme.
-		qApp->setStyle(QStyleFactory::create("Fusion"));
-
-		const QColor gray(150, 150, 150);
-		const QColor black(25, 25, 25);
-		const QColor redpinkish(200, 75, 132);
-		const QColor pink(255, 174, 201);
-		const QColor brightPink(255, 230, 255);
-		const QColor congoPink(255, 127, 121);
-		const QColor blue(221, 225, 239);
-
-		QPalette standardPalette;
-		standardPalette.setColor(QPalette::Window, pink);
-		standardPalette.setColor(QPalette::WindowText, black);
-		standardPalette.setColor(QPalette::Base, brightPink);
-		standardPalette.setColor(QPalette::AlternateBase, blue);
-		standardPalette.setColor(QPalette::ToolTipBase, pink);
-		standardPalette.setColor(QPalette::ToolTipText, brightPink);
-		standardPalette.setColor(QPalette::Text, black);
-		standardPalette.setColor(QPalette::Button, pink);
-		standardPalette.setColor(QPalette::ButtonText, black);
-		standardPalette.setColor(QPalette::Link, black);
-		standardPalette.setColor(QPalette::Highlight, congoPink);
-		standardPalette.setColor(QPalette::HighlightedText, black);
-
-		standardPalette.setColor(QPalette::Active, QPalette::Button, pink);
-		standardPalette.setColor(QPalette::Disabled, QPalette::ButtonText, redpinkish);
-		standardPalette.setColor(QPalette::Disabled, QPalette::WindowText, redpinkish);
-		standardPalette.setColor(QPalette::Disabled, QPalette::Text, redpinkish);
-		standardPalette.setColor(QPalette::Disabled, QPalette::Light, gray);
-
-		qApp->setPalette(standardPalette);
-
-		qApp->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
-	}
-	else if (theme == "PCSX2Blue")
-	{
-		// Custom palette by RedDevilus, White as main color and Blue as complimentary.
-		// Alternative light theme.
-		qApp->setStyle(QStyleFactory::create("Fusion"));
-
-		const QColor blackish(35, 35, 35);
-		const QColor darkBlue(73, 97, 177);
-		const QColor blue2(80, 120, 200);
-		const QColor blue(106, 156, 255);
-		const QColor lightBlue(130, 155, 241);
-
-		QPalette standardPalette;
-		standardPalette.setColor(QPalette::Window, blue2.lighter());
-		standardPalette.setColor(QPalette::WindowText, blackish);
-		standardPalette.setColor(QPalette::Base, lightBlue);
-		standardPalette.setColor(QPalette::AlternateBase, blue2.lighter());
-		standardPalette.setColor(QPalette::ToolTipBase, blue2);
-		standardPalette.setColor(QPalette::ToolTipText, Qt::white);
-		standardPalette.setColor(QPalette::Text, blackish);
-		standardPalette.setColor(QPalette::Button, blue);
-		standardPalette.setColor(QPalette::ButtonText, blackish);
-		standardPalette.setColor(QPalette::Link, darkBlue);
-		standardPalette.setColor(QPalette::Highlight, Qt::white);
-		standardPalette.setColor(QPalette::HighlightedText, blackish);
-
-		standardPalette.setColor(QPalette::Active, QPalette::Button, blue);
-		standardPalette.setColor(QPalette::Disabled, QPalette::ButtonText, darkBlue);
-		standardPalette.setColor(QPalette::Disabled, QPalette::WindowText, darkBlue);
-		standardPalette.setColor(QPalette::Disabled, QPalette::Text, darkBlue);
-		standardPalette.setColor(QPalette::Disabled, QPalette::Light, darkBlue);
-
-		qApp->setPalette(standardPalette);
-
-		qApp->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
-	}
-	else if (theme == "ScarletDevilRed")
-	{
-		// Custom palette by RedDevilus, Red as main color and Purple as complimentary.
-		// Alternative dark theme.
-		qApp->setStyle(QStyleFactory::create("Fusion"));
-
-		const QColor darkRed(80, 45, 69);
-		const QColor purplishRed(120, 45, 69);
-		const QColor brightRed(200, 45, 69);
-
-		QPalette darkPalette;
-		darkPalette.setColor(QPalette::Window, darkRed);
-		darkPalette.setColor(QPalette::WindowText, Qt::white);
-		darkPalette.setColor(QPalette::Base, purplishRed);
-		darkPalette.setColor(QPalette::AlternateBase, darkRed);
-		darkPalette.setColor(QPalette::ToolTipBase, darkRed);
-		darkPalette.setColor(QPalette::ToolTipText, Qt::white);
-		darkPalette.setColor(QPalette::Text, Qt::white);
-		darkPalette.setColor(QPalette::Button, purplishRed.darker());
-		darkPalette.setColor(QPalette::ButtonText, Qt::white);
-		darkPalette.setColor(QPalette::Link, brightRed);
-		darkPalette.setColor(QPalette::Highlight, brightRed);
-		darkPalette.setColor(QPalette::HighlightedText, Qt::white);
-
-		darkPalette.setColor(QPalette::Active, QPalette::Button, purplishRed.darker());
-		darkPalette.setColor(QPalette::Disabled, QPalette::ButtonText, brightRed);
-		darkPalette.setColor(QPalette::Disabled, QPalette::WindowText, brightRed);
-		darkPalette.setColor(QPalette::Disabled, QPalette::Text, brightRed);
-		darkPalette.setColor(QPalette::Disabled, QPalette::Light, darkRed);
-
-		qApp->setPalette(darkPalette);
-
-		qApp->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
-	}
-	else if (theme == "VioletAngelPurple")
-	{
-		// Custom palette by RedDevilus, Blue as main color and Purple as complimentary.
-		// Alternative dark theme.
-		qApp->setStyle(QStyleFactory::create("Fusion"));
-
-		const QColor blackishblue(50, 25, 70);
-		const QColor darkerPurple(90, 30, 105);
-		const QColor nauticalPurple(110, 30, 125);
-
-		QPalette darkPalette;
-		darkPalette.setColor(QPalette::Window, blackishblue);
-		darkPalette.setColor(QPalette::WindowText, Qt::white);
-		darkPalette.setColor(QPalette::Base, nauticalPurple);
-		darkPalette.setColor(QPalette::AlternateBase, blackishblue);
-		darkPalette.setColor(QPalette::ToolTipBase, nauticalPurple);
-		darkPalette.setColor(QPalette::ToolTipText, Qt::white);
-		darkPalette.setColor(QPalette::Text, Qt::white);
-		darkPalette.setColor(QPalette::Button, nauticalPurple.darker());
-		darkPalette.setColor(QPalette::ButtonText, Qt::white);
-		darkPalette.setColor(QPalette::Link, darkerPurple.lighter());
-		darkPalette.setColor(QPalette::Highlight, darkerPurple.lighter());
-		darkPalette.setColor(QPalette::HighlightedText, Qt::white);
-
-		darkPalette.setColor(QPalette::Active, QPalette::Button, nauticalPurple.darker());
-		darkPalette.setColor(QPalette::Disabled, QPalette::ButtonText, darkerPurple.lighter());
-		darkPalette.setColor(QPalette::Disabled, QPalette::WindowText, darkerPurple.lighter());
-		darkPalette.setColor(QPalette::Disabled, QPalette::Text, darkerPurple.darker());
-		darkPalette.setColor(QPalette::Disabled, QPalette::Light, nauticalPurple);
-
-		qApp->setPalette(darkPalette);
-
-		qApp->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
-	}
-	else if (theme == "Ruby")
-	{
-		// Custom palette by Daisouji, Black as main color and Red as complimentary.
-		// Alternative dark (black) theme.
-		qApp->setStyle(QStyleFactory::create("Fusion"));
-
-		const QColor gray(128, 128, 128);
-		const QColor slate(18, 18, 18);
-		const QColor rubyish(172, 21, 31);
-
-		QPalette darkPalette;
-		darkPalette.setColor(QPalette::Window, slate);
-		darkPalette.setColor(QPalette::WindowText, Qt::white);
-		darkPalette.setColor(QPalette::Base, slate.lighter());
-		darkPalette.setColor(QPalette::AlternateBase, slate.lighter());
-		darkPalette.setColor(QPalette::ToolTipBase, slate);
-		darkPalette.setColor(QPalette::ToolTipText, Qt::white);
-		darkPalette.setColor(QPalette::Text, Qt::white);
-		darkPalette.setColor(QPalette::Button, slate);
-		darkPalette.setColor(QPalette::ButtonText, Qt::white);
-		darkPalette.setColor(QPalette::Link, Qt::white);
-		darkPalette.setColor(QPalette::Highlight, rubyish);
-		darkPalette.setColor(QPalette::HighlightedText, Qt::white);
-
-		darkPalette.setColor(QPalette::Active, QPalette::Button, slate);
-		darkPalette.setColor(QPalette::Disabled, QPalette::ButtonText, gray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::WindowText, gray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::Text, gray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::Light, slate.lighter());
-
-		qApp->setPalette(darkPalette);
-
-		qApp->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
-	}
-	else if (theme == "Sapphire")
-	{
-		// Custom palette by RedDevilus, Black as main color and Blue as complimentary.
-		// Alternative dark (black) theme.
-		qApp->setStyle(QStyleFactory::create("Fusion"));
-
-		const QColor gray(128, 128, 128);
-		const QColor slate(18, 18, 18);
-		const QColor persianBlue(32, 35, 204);
-
-		QPalette darkPalette;
-		darkPalette.setColor(QPalette::Window, slate);
-		darkPalette.setColor(QPalette::WindowText, Qt::white);
-		darkPalette.setColor(QPalette::Base, slate.lighter());
-		darkPalette.setColor(QPalette::AlternateBase, slate.lighter());
-		darkPalette.setColor(QPalette::ToolTipBase, slate);
-		darkPalette.setColor(QPalette::ToolTipText, Qt::white);
-		darkPalette.setColor(QPalette::Text, Qt::white);
-		darkPalette.setColor(QPalette::Button, slate);
-		darkPalette.setColor(QPalette::ButtonText, Qt::white);
-		darkPalette.setColor(QPalette::Link, Qt::white);
-		darkPalette.setColor(QPalette::Highlight, persianBlue);
-		darkPalette.setColor(QPalette::HighlightedText, Qt::white);
-
-		darkPalette.setColor(QPalette::Active, QPalette::Button, slate);
-		darkPalette.setColor(QPalette::Disabled, QPalette::ButtonText, gray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::WindowText, gray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::Text, gray);
-		darkPalette.setColor(QPalette::Disabled, QPalette::Light, slate.lighter());
-
-		qApp->setPalette(darkPalette);
-
-		qApp->setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }");
-	}
-	else if (theme == "Custom")
-	{
-
-		//Additional Theme option than loads .qss from main PCSX2 Directory
-		qApp->setStyle(QStyleFactory::create("Fusion"));
-
-		QString sheet_content;
-		QFile sheets(QString::fromStdString(Path::Combine(EmuFolders::DataRoot, "custom.qss")));
-
-		if (sheets.open(QFile::ReadOnly))
-		{
-			QString sheet_content = QString::fromUtf8(sheets.readAll().data());
-			qApp->setStyleSheet(sheet_content);
-		}
-		else
-		{
-			qApp->setStyle(QStyleFactory::create("Fusion"));
-		}
-	}
-	else
-	{
-		qApp->setPalette(s_unthemed_palette);
-		qApp->setStyleSheet(QString());
-		qApp->setStyle(s_unthemed_style_name);
-	}
-}
-
-void MainWindow::setIconThemeFromStyle()
-{
-	QPalette palette = qApp->palette();
-	bool dark = palette.windowText().color().value() > palette.window().color().value();
-	QIcon::setThemeName(dark ? QStringLiteral("white") : QStringLiteral("black"));
-}
 
 void MainWindow::onScreenshotActionTriggered()
 {
@@ -956,6 +588,10 @@ void MainWindow::onToolsVideoCaptureToggled(bool checked)
 	if (!s_vm_valid)
 		return;
 
+	// Reset the checked state, we'll get updated by the GS thread.
+	QSignalBlocker sb(m_ui.actionToolsVideoCapture);
+	m_ui.actionToolsVideoCapture->setChecked(!checked);
+
 	if (!checked)
 	{
 		g_emu_thread->endCapture();
@@ -963,19 +599,45 @@ void MainWindow::onToolsVideoCaptureToggled(bool checked)
 	}
 
 	const QString container(QString::fromStdString(
-		Host::GetStringSettingValue("EmuCore/GS", "VideoCaptureContainer", Pcsx2Config::GSOptions::DEFAULT_VIDEO_CAPTURE_CONTAINER)));
+		Host::GetStringSettingValue("EmuCore/GS", "CaptureContainer", Pcsx2Config::GSOptions::DEFAULT_CAPTURE_CONTAINER)));
 	const QString filter(tr("%1 Files (*.%2)").arg(container.toUpper()).arg(container));
 
-	QString path(QStringLiteral("%1.%2").arg(QString::fromStdString(GSGetBaseSnapshotFilename())).arg(container));
+	QString path(QStringLiteral("%1.%2").arg(QString::fromStdString(GSGetBaseVideoFilename())).arg(container));
 	path = QFileDialog::getSaveFileName(this, tr("Video Capture"), path, filter);
 	if (path.isEmpty())
-	{
-		QSignalBlocker sb(m_ui.actionToolsVideoCapture);
-		m_ui.actionToolsVideoCapture->setChecked(false);
 		return;
-	}
 
 	g_emu_thread->beginCapture(path);
+}
+
+void MainWindow::onCaptureStarted(const QString& filename)
+{
+	if (!s_vm_valid)
+		return;
+
+	QSignalBlocker sb(m_ui.actionToolsVideoCapture);
+	m_ui.actionToolsVideoCapture->setChecked(true);
+}
+
+void MainWindow::onCaptureStopped()
+{
+	if (!s_vm_valid)
+		return;
+
+	QSignalBlocker sb(m_ui.actionToolsVideoCapture);
+	m_ui.actionToolsVideoCapture->setChecked(false);
+}
+
+void MainWindow::onSettingsTriggeredFromToolbar()
+{
+	if (s_vm_valid)
+	{
+		m_settings_toolbar_menu->exec(QCursor::pos());
+	}
+	else
+	{
+		doSettings();
+	}
 }
 
 void MainWindow::saveStateToConfig()
@@ -983,27 +645,28 @@ void MainWindow::saveStateToConfig()
 	if (!isVisible())
 		return;
 
+	bool changed = false;
+
+	const QByteArray geometry(saveGeometry());
+	const QByteArray geometry_b64(geometry.toBase64());
+	const std::string old_geometry_b64(Host::GetBaseStringSettingValue("UI", "MainWindowGeometry"));
+	if (old_geometry_b64 != geometry_b64.constData())
 	{
-		const QByteArray geometry = saveGeometry();
-		const QByteArray geometry_b64 = geometry.toBase64();
-		const std::string old_geometry_b64 = Host::GetBaseStringSettingValue("UI", "MainWindowGeometry");
-		if (old_geometry_b64 != geometry_b64.constData())
-		{
-			Host::SetBaseStringSettingValue("UI", "MainWindowGeometry", geometry_b64.constData());
-			Host::CommitBaseSettingChanges();
-		}
+		Host::SetBaseStringSettingValue("UI", "MainWindowGeometry", geometry_b64.constData());
+		changed = true;
 	}
 
+	const QByteArray state(saveState());
+	const QByteArray state_b64(state.toBase64());
+	const std::string old_state_b64(Host::GetBaseStringSettingValue("UI", "MainWindowState"));
+	if (old_state_b64 != state_b64.constData())
 	{
-		const QByteArray state = saveState();
-		const QByteArray state_b64 = state.toBase64();
-		const std::string old_state_b64 = Host::GetBaseStringSettingValue("UI", "MainWindowState");
-		if (old_state_b64 != state_b64.constData())
-		{
-			Host::SetBaseStringSettingValue("UI", "MainWindowState", state_b64.constData());
-			Host::CommitBaseSettingChanges();
-		}
+		Host::SetBaseStringSettingValue("UI", "MainWindowState", state_b64.constData());
+		changed = true;
 	}
+
+	if (changed)
+		Host::CommitBaseSettingChanges();
 }
 
 void MainWindow::restoreStateFromConfig()
@@ -1032,51 +695,77 @@ void MainWindow::restoreStateFromConfig()
 	}
 }
 
-void MainWindow::updateEmulationActions(bool starting, bool running)
+void MainWindow::updateEmulationActions(bool starting, bool running, bool stopping)
 {
 	const bool starting_or_running = starting || running;
 
-	m_ui.actionStartFile->setDisabled(starting_or_running);
-	m_ui.actionStartDisc->setDisabled(starting_or_running);
-	m_ui.actionStartBios->setDisabled(starting_or_running);
+	m_ui.actionStartFile->setDisabled(starting_or_running || stopping);
+	m_ui.actionStartDisc->setDisabled(starting_or_running || stopping);
+	m_ui.actionStartBios->setDisabled(starting_or_running || stopping);
+	m_ui.actionToolbarStartFile->setDisabled(starting_or_running || stopping);
+	m_ui.actionToolbarStartDisc->setDisabled(starting_or_running || stopping);
+	m_ui.actionToolbarStartBios->setDisabled(starting_or_running || stopping);
 
 	m_ui.actionPowerOff->setEnabled(running);
 	m_ui.actionPowerOffWithoutSaving->setEnabled(running);
 	m_ui.actionReset->setEnabled(running);
 	m_ui.actionPause->setEnabled(running);
-	m_ui.actionChangeDisc->setEnabled(running);
 	m_ui.actionScreenshot->setEnabled(running);
 	m_ui.menuChangeDisc->setEnabled(running);
-
-	m_ui.actionSaveState->setEnabled(running);
 	m_ui.menuSaveState->setEnabled(running);
+
+	m_ui.actionToolbarPowerOff->setEnabled(running);
+	m_ui.actionToolbarReset->setEnabled(running);
+	m_ui.actionToolbarPause->setEnabled(running);
+	m_ui.actionToolbarScreenshot->setEnabled(running);
+	m_ui.actionToolbarChangeDisc->setEnabled(running);
+	m_ui.actionToolbarSaveState->setEnabled(running);
 
 	m_ui.actionViewGameProperties->setEnabled(running);
 
 	m_ui.actionToolsVideoCapture->setEnabled(running);
 	if (!running && m_ui.actionToolsVideoCapture->isChecked())
+	{
+		QSignalBlocker sb(m_ui.actionToolsVideoCapture);
 		m_ui.actionToolsVideoCapture->setChecked(false);
+	}
 
 	m_game_list_widget->setDisabled(starting && !running);
 
 	if (!starting && !running)
-		m_ui.actionPause->setChecked(false);
+	{
+		{
+			QSignalBlocker sb(m_ui.actionPause);
+			m_ui.actionPause->setChecked(false);
+		}
+
+		{
+			QSignalBlocker sb(m_ui.actionToolbarPause);
+			m_ui.actionToolbarPause->setChecked(false);
+		}
+	}
 
 	// scanning needs to be disabled while running
-	m_ui.actionScanForNewGames->setDisabled(starting_or_running);
-	m_ui.actionRescanAllGames->setDisabled(starting_or_running);
+	m_ui.actionScanForNewGames->setDisabled(starting_or_running || stopping);
+	m_ui.actionRescanAllGames->setDisabled(starting_or_running || stopping);
 }
 
 void MainWindow::updateDisplayRelatedActions(bool has_surface, bool render_to_main, bool fullscreen)
 {
 	// rendering to main, or switched to gamelist/grid
-	m_ui.actionViewSystemDisplay->setEnabled((has_surface && render_to_main) || (!has_surface && g_host_display));
+	m_ui.actionViewSystemDisplay->setEnabled((has_surface && render_to_main) || (!has_surface && MTGS::IsOpen()));
 	m_ui.menuWindowSize->setEnabled(has_surface && !fullscreen);
 	m_ui.actionFullscreen->setEnabled(has_surface);
+	m_ui.actionToolbarFullscreen->setEnabled(has_surface);
 
 	{
 		QSignalBlocker blocker(m_ui.actionFullscreen);
 		m_ui.actionFullscreen->setChecked(fullscreen);
+	}
+
+	{
+		QSignalBlocker blocker(m_ui.actionToolbarFullscreen);
+		m_ui.actionToolbarFullscreen->setChecked(fullscreen);
 	}
 }
 
@@ -1107,9 +796,9 @@ void MainWindow::updateWindowTitle()
 {
 	QString suffix(QtHost::GetAppConfigSuffix());
 	QString main_title(QtHost::GetAppNameAndVersion() + suffix);
-	QString display_title(m_current_game_name + suffix);
+	QString display_title(m_current_title + suffix);
 
-	if (!s_vm_valid || m_current_game_name.isEmpty())
+	if (!s_vm_valid || m_current_title.isEmpty())
 		display_title = main_title;
 	else if (isRenderingToMain())
 		main_title = display_title;
@@ -1182,10 +871,10 @@ bool MainWindow::isShowingGameList() const
 
 bool MainWindow::isRenderingFullscreen() const
 {
-	if (!g_host_display || !m_display_widget)
+	if (!MTGS::IsOpen() || !m_display_widget)
 		return false;
 
-	return getDisplayContainer()->isFullScreen() || g_host_display->IsFullscreen();
+	return getDisplayContainer()->isFullScreen();
 }
 
 bool MainWindow::isRenderingToMain() const
@@ -1259,11 +948,6 @@ void MainWindow::cancelGameListRefresh()
 	m_game_list_widget->cancelRefresh();
 }
 
-void MainWindow::invalidateSaveStateCache()
-{
-	m_save_states_invalidated = true;
-}
-
 void MainWindow::reportError(const QString& title, const QString& message)
 {
 	QMessageBox::critical(this, title, message);
@@ -1280,14 +964,13 @@ void MainWindow::runOnUIThread(const std::function<void()>& func)
 	func();
 }
 
-bool MainWindow::requestShutdown(bool allow_confirm /* = true */, bool allow_save_to_state /* = true */,
-	bool default_save_to_state /* = true */, bool block_until_done /* = false */)
+bool MainWindow::requestShutdown(bool allow_confirm, bool allow_save_to_state, bool default_save_to_state)
 {
 	if (!s_vm_valid)
 		return true;
 
 	// If we don't have a crc, we can't save state.
-	allow_save_to_state &= (m_current_game_crc != 0);
+	allow_save_to_state &= (m_current_disc_crc != 0);
 	bool save_state = allow_save_to_state && default_save_to_state;
 
 	// Only confirm on UI thread because we need to display a msgbox.
@@ -1324,36 +1007,34 @@ bool MainWindow::requestShutdown(bool allow_confirm /* = true */, bool allow_sav
 	if (!isRenderingToMain() && isHidden() && !QtHost::InBatchMode() && !g_emu_thread->isRunningFullscreenUI())
 		updateWindowState(true);
 
+	// Clear the VM valid state early. That way we can't do anything in the UI if we take a while to shut down.
+	if (s_vm_valid)
+	{
+		s_vm_valid = false;
+		updateEmulationActions(false, false, true);
+		updateDisplayRelatedActions(false, false, false);
+	}
+
 	// Now we can actually shut down the VM.
 	g_emu_thread->shutdownVM(save_state);
-
-	if (block_until_done || m_is_closing || QtHost::InBatchMode())
-	{
-		// We need to yield here, since the display gets destroyed.
-		while (VMManager::GetState() != VMState::Shutdown)
-			QApplication::processEvents(QEventLoop::ExcludeUserInputEvents, 1);
-	}
-
-	if (!m_is_closing && QtHost::InBatchMode())
-	{
-		// If we don't set the closing flag here, the VM shutdown may not complete by the time closeEvent() is called,
-		// leading to a confirm.
-		m_is_closing = true;
-		QGuiApplication::quit();
-	}
-
 	return true;
 }
 
-void MainWindow::requestExit()
+void MainWindow::requestExit(bool allow_confirm)
 {
+	// requestShutdown() clears this flag.
+	const bool vm_was_valid = QtHost::IsVMValid();
+
 	// this is block, because otherwise closeEvent() will also prompt
-	if (!requestShutdown(true, true, EmuConfig.SaveStateOnShutdown, true))
+	if (!requestShutdown(allow_confirm, true, EmuConfig.SaveStateOnShutdown))
 		return;
 
-	// We could use close here, but if we're not visible (e.g. quitting from fullscreen), closing the window
-	// doesn't quit the application.
-	QGuiApplication::quit();
+	// VM stopped signal won't have fired yet, so queue an exit if we still have one.
+	// Otherwise, immediately exit, because there's no VM to exit us later.
+	if (vm_was_valid)
+		m_is_closing = true;
+	else
+		QGuiApplication::quit();
 }
 
 void MainWindow::checkForSettingChanges()
@@ -1374,11 +1055,6 @@ std::optional<WindowInfo> MainWindow::getWindowInfo()
 		return std::nullopt;
 }
 
-void Host::InvalidateSaveStateCache()
-{
-	QMetaObject::invokeMethod(g_main_window, &MainWindow::invalidateSaveStateCache, Qt::QueuedConnection);
-}
-
 void MainWindow::onGameListRefreshProgress(const QString& status, int current, int total)
 {
 	m_ui.statusBar->showMessage(status);
@@ -1387,6 +1063,7 @@ void MainWindow::onGameListRefreshProgress(const QString& status, int current, i
 
 void MainWindow::onGameListRefreshComplete()
 {
+	m_ui.statusBar->clearMessage();
 	clearProgressBar();
 }
 
@@ -1454,6 +1131,7 @@ void MainWindow::onGameListEntryContextMenuRequested(const QPoint& point)
 			});
 		}
 
+		//: Refers to the directory where a game is contained.
 		action = menu.addAction(tr("Open Containing Directory..."));
 		connect(action, &QAction::triggered, [this, entry]() {
 			const QFileInfo fi(QString::fromStdString(entry->path));
@@ -1487,8 +1165,12 @@ void MainWindow::onGameListEntryContextMenuRequested(const QPoint& point)
 
 			if (m_ui.menuDebug->menuAction()->isVisible())
 			{
-				// TODO: Hook this up once it's implemented.
 				action = menu.addAction(tr("Boot and Debug"));
+				connect(action, &QAction::triggered, [this, entry]() {
+					DebugInterface::setPauseOnEntry(true);
+					startGameListEntry(entry);
+					getDebuggerWindow()->show();
+				});
 			}
 
 			menu.addSeparator();
@@ -1580,14 +1262,16 @@ void MainWindow::onChangeDiscMenuAboutToHide()
 
 void MainWindow::onLoadStateMenuAboutToShow()
 {
-	if (m_save_states_invalidated)
-		updateSaveStateMenus(m_current_disc_path, m_current_game_serial, m_current_game_crc);
+	m_ui.menuLoadState->clear();
+	updateSaveStateMenusEnableState(!m_current_disc_serial.isEmpty());
+	populateLoadStateMenu(m_ui.menuLoadState, m_current_disc_path, m_current_disc_serial, m_current_disc_crc);
 }
 
 void MainWindow::onSaveStateMenuAboutToShow()
 {
-	if (m_save_states_invalidated)
-		updateSaveStateMenus(m_current_disc_path, m_current_game_serial, m_current_game_crc);
+	m_ui.menuSaveState->clear();
+	updateSaveStateMenusEnableState(!m_current_disc_serial.isEmpty());
+	populateSaveStateMenu(m_ui.menuSaveState, m_current_disc_serial, m_current_disc_crc);
 }
 
 void MainWindow::onViewToolbarActionToggled(bool checked)
@@ -1635,23 +1319,29 @@ void MainWindow::onViewGamePropertiesActionTriggered()
 		return;
 
 	// prefer to use a game list entry, if we have one, that way the summary is populated
-	if (!m_current_disc_path.isEmpty() || !m_current_elf_override.isEmpty())
+	if (!m_current_disc_path.isEmpty() && m_current_elf_override.isEmpty())
 	{
 		auto lock = GameList::GetLock();
-		const GameList::Entry* entry = m_current_elf_override.isEmpty() ?
-										   GameList::GetEntryForPath(m_current_disc_path.toUtf8().constData()) :
-										   GameList::GetEntryForPath(m_current_elf_override.toUtf8().constData());
+		const GameList::Entry* entry = GameList::GetEntryForPath(m_current_disc_path.toUtf8().constData());
 		if (entry)
 		{
-			SettingsDialog::openGamePropertiesDialog(
-				entry, m_current_elf_override.isEmpty() ? std::string_view(entry->serial) : std::string_view(), entry->crc);
+			SettingsDialog::openGamePropertiesDialog(entry, entry->serial, entry->crc);
 			return;
 		}
 	}
 
 	// open properties for the current running file (isn't in the game list)
-	if (m_current_game_crc != 0)
-		SettingsDialog::openGamePropertiesDialog(nullptr, m_current_game_serial.toStdString(), m_current_game_crc);
+	if (m_current_disc_crc == 0)
+	{
+		QMessageBox::critical(this, tr("Game Properties"), tr("Game properties is unavailable for the current game."));
+		return;
+	}
+
+	// can't use serial for ELFs, because they might have a disc set
+	if (m_current_elf_override.isEmpty())
+		SettingsDialog::openGamePropertiesDialog(nullptr, m_current_disc_serial.toStdString(), m_current_disc_crc);
+	else
+		SettingsDialog::openGamePropertiesDialog(nullptr, std::string_view(), m_current_disc_crc);
 }
 
 void MainWindow::onGitHubRepositoryActionTriggered()
@@ -1675,15 +1365,7 @@ void MainWindow::onAboutActionTriggered()
 	about.exec();
 }
 
-void MainWindow::onCheckForUpdatesActionTriggered()
-{
-	// Wipe out the last version, that way it displays the update if we've previously skipped it.
-	Host::RemoveBaseSettingValue("AutoUpdater", "LastVersion");
-	Host::CommitBaseSettingChanges();
-	checkForUpdates(true);
-}
-
-void MainWindow::checkForUpdates(bool display_message)
+void MainWindow::checkForUpdates(bool display_message, bool force_check)
 {
 	if (!AutoUpdaterDialog::isSupported())
 	{
@@ -1714,6 +1396,13 @@ void MainWindow::checkForUpdates(bool display_message)
 	if (m_auto_updater_dialog)
 		return;
 
+	if (force_check)
+	{
+		// Wipe out the last version, that way it displays the update if we've previously skipped it.
+		Host::RemoveBaseSettingValue("AutoUpdater", "LastVersion");
+		Host::CommitBaseSettingChanges();
+	}
+
 	m_auto_updater_dialog = new AutoUpdaterDialog(this);
 	connect(m_auto_updater_dialog, &AutoUpdaterDialog::updateCheckCompleted, this, &MainWindow::onUpdateCheckComplete);
 	m_auto_updater_dialog->queueUpdateCheck(display_message);
@@ -1733,7 +1422,7 @@ void MainWindow::startupUpdateCheck()
 	if (!Host::GetBaseBoolSettingValue("AutoUpdater", "CheckAtStartup", true))
 		return;
 
-	checkForUpdates(false);
+	checkForUpdates(false, false);
 }
 
 void MainWindow::onToolsOpenDataDirectoryTriggered()
@@ -1751,8 +1440,14 @@ void MainWindow::onToolsCoverDownloaderTriggered()
 
 void MainWindow::updateTheme()
 {
-	updateApplicationTheme();
+	QtHost::UpdateApplicationTheme();
 	m_game_list_widget->refreshImages();
+}
+
+void MainWindow::updateLanguage()
+{
+	QtHost::InstallTranslator();
+	recreate();
 }
 
 void MainWindow::onInputRecNewActionTriggered()
@@ -1778,6 +1473,7 @@ void MainWindow::onInputRecNewActionTriggered()
 						m_ui.actionInputRecNew->setEnabled(false);
 						m_ui.actionInputRecStop->setEnabled(true);
 						m_ui.actionReset->setEnabled(!g_InputRecording.isTypeSavestate());
+						m_ui.actionToolbarReset->setEnabled(!g_InputRecording.isTypeSavestate());
 					});
 				}
 			});
@@ -1830,6 +1526,7 @@ void MainWindow::onInputRecPlayActionTriggered()
 					m_ui.actionInputRecNew->setEnabled(false);
 					m_ui.actionInputRecStop->setEnabled(true);
 					m_ui.actionReset->setEnabled(!g_InputRecording.isTypeSavestate());
+					m_ui.actionToolbarReset->setEnabled(!g_InputRecording.isTypeSavestate());
 				});
 			}
 		});
@@ -1846,6 +1543,7 @@ void MainWindow::onInputRecStopActionTriggered()
 				m_ui.actionInputRecNew->setEnabled(true);
 				m_ui.actionInputRecStop->setEnabled(false);
 				m_ui.actionReset->setEnabled(true);
+				m_ui.actionToolbarReset->setEnabled(true);
 			});
 		});
 	}
@@ -1885,18 +1583,18 @@ void MainWindow::onInputRecOpenViewer()
 void MainWindow::onVMStarting()
 {
 	s_vm_valid = true;
-	updateEmulationActions(true, false);
+	updateEmulationActions(true, false, false);
 	updateWindowTitle();
 
 	// prevent loading state until we're fully initialized
-	updateSaveStateMenus(QString(), QString(), 0);
+	updateSaveStateMenusEnableState(false);
 }
 
 void MainWindow::onVMStarted()
 {
 	s_vm_valid = true;
 	m_was_disc_change_request = false;
-	updateEmulationActions(true, true);
+	updateEmulationActions(true, true, false);
 	updateWindowTitle();
 	updateStatusBarWidgetVisibility();
 	updateInputRecordingActions(true);
@@ -1908,6 +1606,10 @@ void MainWindow::onVMPaused()
 	{
 		QSignalBlocker sb(m_ui.actionPause);
 		m_ui.actionPause->setChecked(true);
+	}
+	{
+		QSignalBlocker sb(m_ui.actionToolbarPause);
+		m_ui.actionToolbarPause->setChecked(true);
 	}
 
 	s_vm_paused = true;
@@ -1925,6 +1627,10 @@ void MainWindow::onVMResumed()
 	{
 		QSignalBlocker sb(m_ui.actionPause);
 		m_ui.actionPause->setChecked(false);
+	}
+	{
+		QSignalBlocker sb(m_ui.actionToolbarPause);
+		m_ui.actionToolbarPause->setChecked(false);
 	}
 
 	s_vm_paused = false;
@@ -1945,11 +1651,19 @@ void MainWindow::onVMStopped()
 	s_vm_valid = false;
 	s_vm_paused = false;
 	m_last_fps_status = QString();
-	updateEmulationActions(false, false);
+	updateEmulationActions(false, false, false);
 	updateWindowTitle();
 	updateWindowState();
 	updateStatusBarWidgetVisibility();
 	updateInputRecordingActions(false);
+
+	// If we're closing or in batch mode, quit the whole application now.
+	if (m_is_closing || QtHost::InBatchMode())
+	{
+		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents, 1);
+		QCoreApplication::quit();
+		return;
+	}
 
 	if (m_display_widget)
 		updateDisplayWidgetCursor();
@@ -1961,15 +1675,17 @@ void MainWindow::onVMStopped()
 		m_game_list_widget->refresh(false);
 }
 
-void MainWindow::onGameChanged(const QString& path, const QString& elf_override, const QString& serial, const QString& name, quint32 crc)
+void MainWindow::onGameChanged(const QString& title, const QString& elf_override, const QString& disc_path,
+	const QString& serial, quint32 disc_crc, quint32 crc)
 {
-	m_current_disc_path = path;
+	m_current_title = title;
 	m_current_elf_override = elf_override;
-	m_current_game_serial = serial;
-	m_current_game_name = name;
-	m_current_game_crc = crc;
+	m_current_disc_path = disc_path;
+	m_current_disc_serial = serial;
+	m_current_disc_crc = disc_crc;
+	m_current_running_crc = crc;
 	updateWindowTitle();
-	updateSaveStateMenus(path, serial, crc);
+	updateSaveStateMenusEnableState(!serial.isEmpty());
 }
 
 void MainWindow::showEvent(QShowEvent* event)
@@ -1990,16 +1706,24 @@ void MainWindow::showEvent(QShowEvent* event)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-	if (!requestShutdown(true, true, EmuConfig.SaveStateOnShutdown, true))
+	// If there's no VM, we can just exit as normal.
+	if (!s_vm_valid)
 	{
-		event->ignore();
+		saveStateToConfig();
+		QMainWindow::closeEvent(event);
 		return;
 	}
 
-	saveStateToConfig();
-	m_is_closing = true;
+	// But if there is, we have to cancel the action, regardless of whether we ended exiting
+	// or not. The window still needs to be visible while GS is shutting down.
+	event->ignore();
 
-	QMainWindow::closeEvent(event);
+	// Exit cancelled?
+	if (!requestShutdown(true, true, EmuConfig.SaveStateOnShutdown))
+		return;
+
+	// Application will be exited in VM stopped handler.
+	m_is_closing = true;
 }
 
 static QString getFilenameFromMimeData(const QMimeData* md)
@@ -2010,7 +1734,7 @@ static QString getFilenameFromMimeData(const QMimeData* md)
 		// only one url accepted
 		const QList<QUrl> urls(md->urls());
 		if (urls.size() == 1)
-			filename = urls.front().toLocalFile();
+			filename = QDir::toNativeSeparators(urls.front().toLocalFile());
 	}
 
 	return filename;
@@ -2097,80 +1821,29 @@ bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr
 
 #endif
 
-DisplayWidget* MainWindow::createDisplay(bool fullscreen, bool render_to_main)
+std::optional<WindowInfo> MainWindow::acquireRenderWindow(bool recreate_window, bool fullscreen, bool render_to_main, bool surfaceless)
 {
-	DevCon.WriteLn("createDisplay(%u, %u)", static_cast<u32>(fullscreen), static_cast<u32>(render_to_main));
-
-	if (!g_host_display)
-		return nullptr;
-
-	const std::string fullscreen_mode(Host::GetBaseStringSettingValue("EmuCore/GS", "FullscreenMode", ""));
-	const bool is_exclusive_fullscreen = (fullscreen && !fullscreen_mode.empty() && g_host_display->SupportsFullscreen());
-
-	createDisplayWidget(fullscreen, render_to_main, is_exclusive_fullscreen);
-
-	// we need the surface visible.. this might be able to be replaced with something else
-	QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-
-	std::optional<WindowInfo> wi = m_display_widget->getWindowInfo();
-	if (!wi.has_value())
-	{
-		QMessageBox::critical(this, tr("Error"), tr("Failed to get window info from widget"));
-		destroyDisplayWidget(true);
-		return nullptr;
-	}
-
-	g_emu_thread->connectDisplaySignals(m_display_widget);
-
-	if (!g_host_display->CreateDevice(wi.value(), Host::GetEffectiveVSyncMode()))
-	{
-		QMessageBox::critical(this, tr("Error"), tr("Failed to create host display device context."));
-		destroyDisplayWidget(true);
-		return nullptr;
-	}
-
-	m_display_created = true;
-
-	if (is_exclusive_fullscreen)
-		setDisplayFullscreen(fullscreen_mode);
-
-	updateWindowTitle();
-	updateWindowState();
-
-	m_ui.actionStartFullscreenUI->setEnabled(false);
-	m_ui.actionStartFullscreenUI2->setEnabled(false);
-
-	updateDisplayWidgetCursor();
-	m_display_widget->setFocus();
-
-	g_host_display->DoneCurrent();
-	return m_display_widget;
-}
-
-DisplayWidget* MainWindow::updateDisplay(bool fullscreen, bool render_to_main, bool surfaceless)
-{
-	DevCon.WriteLn("updateDisplay() fullscreen=%s render_to_main=%s surfaceless=%s", fullscreen ? "true" : "false",
-		render_to_main ? "true" : "false", surfaceless ? "true" : "false");
+	DevCon.WriteLn("acquireRenderWindow() recreate=%s fullscreen=%s render_to_main=%s surfaceless=%s", recreate_window ? "true" : "false",
+		fullscreen ? "true" : "false", render_to_main ? "true" : "false", surfaceless ? "true" : "false");
 
 	QWidget* container = m_display_container ? static_cast<QWidget*>(m_display_container) : static_cast<QWidget*>(m_display_widget);
 	const bool is_fullscreen = isRenderingFullscreen();
 	const bool is_rendering_to_main = isRenderingToMain();
-	const std::string fullscreen_mode(Host::GetBaseStringSettingValue("EmuCore/GS", "FullscreenMode", ""));
-	const bool is_exclusive_fullscreen = (fullscreen && !fullscreen_mode.empty() && g_host_display->SupportsFullscreen());
 	const bool changing_surfaceless = (!m_display_widget != surfaceless);
-	if (fullscreen == is_fullscreen && is_rendering_to_main == render_to_main && !changing_surfaceless)
-		return m_display_widget;
+	if (m_display_created && !recreate_window && fullscreen == is_fullscreen && is_rendering_to_main == render_to_main &&
+		!changing_surfaceless)
+	{
+		return m_display_widget ? m_display_widget->getWindowInfo() : WindowInfo();
+	}
 
 	// Skip recreating the surface if we're just transitioning between fullscreen and windowed with render-to-main off.
 	// .. except on Wayland, where everything tends to break if you don't recreate.
 	const bool has_container = (m_display_container != nullptr);
 	const bool needs_container = DisplayContainer::isNeeded(fullscreen, render_to_main);
-	if (!is_rendering_to_main && !render_to_main && !is_exclusive_fullscreen && has_container == needs_container && !needs_container &&
-		!changing_surfaceless)
+	if (m_display_created && !recreate_window && !is_rendering_to_main && !render_to_main && has_container == needs_container &&
+		!needs_container && !changing_surfaceless)
 	{
 		DevCon.WriteLn("Toggling to %s without recreating surface", (fullscreen ? "fullscreen" : "windowed"));
-		if (g_host_display->IsFullscreen())
-			g_host_display->SetFullscreen(false, 0, 0, 0.0f);
 
 		// since we don't destroy the display widget, we need to save it here
 		if (!is_fullscreen && !is_rendering_to_main)
@@ -2191,45 +1864,44 @@ DisplayWidget* MainWindow::updateDisplay(bool fullscreen, bool render_to_main, b
 		updateWindowState();
 
 		QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-		return m_display_widget;
+		return m_display_widget->getWindowInfo();
 	}
 
-	g_host_display->DestroySurface();
-
 	destroyDisplayWidget(surfaceless);
+	m_display_created = true;
 
 	// if we're going to surfaceless, we're done here
 	if (surfaceless)
-		return nullptr;
+		return WindowInfo();
 
-	createDisplayWidget(fullscreen, render_to_main, is_exclusive_fullscreen);
+	createDisplayWidget(fullscreen, render_to_main);
+
+	// we need the surface visible.. this might be able to be replaced with something else
+	QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
 	std::optional<WindowInfo> wi = m_display_widget->getWindowInfo();
 	if (!wi.has_value())
 	{
-		QMessageBox::critical(this, tr("Error"), tr("Failed to get new window info from widget"));
+		QMessageBox::critical(this, tr("Error"), tr("Failed to get window info from widget"));
 		destroyDisplayWidget(true);
-		return nullptr;
+		return std::nullopt;
 	}
 
 	g_emu_thread->connectDisplaySignals(m_display_widget);
 
-	if (!g_host_display->ChangeWindow(wi.value()))
-		pxFailRel("Failed to recreate surface on new widget.");
-
-	if (is_exclusive_fullscreen)
-		setDisplayFullscreen(fullscreen_mode);
-
 	updateWindowTitle();
 	updateWindowState();
+
+	m_ui.actionStartFullscreenUI->setEnabled(false);
+	m_ui.actionToolbarStartFullscreenUI->setEnabled(false);
 
 	updateDisplayWidgetCursor();
 	m_display_widget->setFocus();
 
-	return m_display_widget;
+	return wi;
 }
 
-void MainWindow::createDisplayWidget(bool fullscreen, bool render_to_main, bool is_exclusive_fullscreen)
+void MainWindow::createDisplayWidget(bool fullscreen, bool render_to_main)
 {
 	// If we're rendering to main and were hidden (e.g. coming back from fullscreen),
 	// make sure we're visible before trying to add ourselves. Otherwise Wayland breaks.
@@ -2264,12 +1936,14 @@ void MainWindow::createDisplayWidget(bool fullscreen, bool render_to_main, bool 
 		// Don't risk doing this on Wayland, it really doesn't like window state changes,
 		// and positioning has no effect anyway.
 		if (!s_use_central_widget)
-			restoreDisplayWindowGeometryFromConfig();
+		{
+			if (isVisible() && g_emu_thread->shouldRenderToMain())
+				container->move(pos());
+			else
+				restoreDisplayWindowGeometryFromConfig();
+		}
 
-		if (!is_exclusive_fullscreen)
-			container->showFullScreen();
-		else
-			container->showNormal();
+		container->showFullScreen();
 	}
 	else if (!render_to_main)
 	{
@@ -2326,11 +2000,11 @@ void MainWindow::relativeMouseModeRequested(bool enabled)
 		return;
 
 	m_relative_mouse_mode = enabled;
-	if (s_vm_valid && !s_vm_paused)
+	if (m_display_widget && !s_vm_paused)
 		updateDisplayWidgetCursor();
 }
 
-void MainWindow::destroyDisplay()
+void MainWindow::releaseRenderWindow()
 {
 	// Now we can safely destroy the display window.
 	destroyDisplayWidget(true);
@@ -2339,7 +2013,7 @@ void MainWindow::destroyDisplay()
 	m_ui.actionViewSystemDisplay->setEnabled(false);
 	m_ui.actionFullscreen->setEnabled(false);
 	m_ui.actionStartFullscreenUI->setEnabled(true);
-	m_ui.actionStartFullscreenUI2->setEnabled(true);
+	m_ui.actionToolbarStartFullscreenUI->setEnabled(true);
 }
 
 void MainWindow::destroyDisplayWidget(bool show_game_list)
@@ -2395,6 +2069,7 @@ void MainWindow::destroyDisplayWidget(bool show_game_list)
 
 void MainWindow::updateDisplayWidgetCursor()
 {
+	pxAssertRel(m_display_widget, "Should have a display widget");
 	m_display_widget->updateRelativeMode(s_vm_valid && !s_vm_paused && m_relative_mouse_mode);
 	m_display_widget->updateCursor(s_vm_valid && !s_vm_paused && shouldHideMouseCursor());
 }
@@ -2450,29 +2125,17 @@ void MainWindow::restoreDisplayWindowGeometryFromConfig()
 	}
 }
 
-void MainWindow::setDisplayFullscreen(const std::string& fullscreen_mode)
-{
-	u32 width, height;
-	float refresh_rate;
-	if (HostDisplay::ParseFullscreenMode(fullscreen_mode, &width, &height, &refresh_rate))
-	{
-		if (g_host_display->SetFullscreen(true, width, height, refresh_rate))
-		{
-			Host::AddOSDMessage("Acquired exclusive fullscreen.", Host::OSD_INFO_DURATION);
-		}
-		else
-		{
-			Host::AddOSDMessage("Failed to acquire exclusive fullscreen.", Host::OSD_WARNING_DURATION);
-		}
-	}
-}
-
 SettingsDialog* MainWindow::getSettingsDialog()
 {
 	if (!m_settings_dialog)
 	{
 		m_settings_dialog = new SettingsDialog(this);
 		connect(m_settings_dialog->getInterfaceSettingsWidget(), &InterfaceSettingsWidget::themeChanged, this, &MainWindow::updateTheme);
+		connect(m_settings_dialog->getInterfaceSettingsWidget(), &InterfaceSettingsWidget::languageChanged, this, [this]() {
+			// reopen settings dialog after it applies
+			updateLanguage();
+			g_main_window->doSettings("Interface");
+		});
 	}
 
 	return m_settings_dialog;
@@ -2825,21 +2488,14 @@ void MainWindow::populateSaveStateMenu(QMenu* menu, const QString& serial, quint
 	}
 }
 
-void MainWindow::updateSaveStateMenus(const QString& filename, const QString& serial, quint32 crc)
+void MainWindow::updateSaveStateMenusEnableState(bool enable)
 {
-	const bool load_enabled = !serial.isEmpty();
-	const bool save_enabled = !serial.isEmpty() && s_vm_valid;
-	m_ui.menuLoadState->clear();
+	const bool load_enabled = enable;
+	const bool save_enabled = enable && s_vm_valid;
 	m_ui.menuLoadState->setEnabled(load_enabled);
-	m_ui.actionLoadState->setEnabled(load_enabled);
-	m_ui.menuSaveState->clear();
+	m_ui.actionToolbarLoadState->setEnabled(load_enabled);
 	m_ui.menuSaveState->setEnabled(save_enabled);
-	m_ui.actionSaveState->setEnabled(save_enabled);
-	m_save_states_invalidated = false;
-	if (load_enabled)
-		populateLoadStateMenu(m_ui.menuLoadState, filename, serial, crc);
-	if (save_enabled)
-		populateSaveStateMenu(m_ui.menuSaveState, serial, crc);
+	m_ui.actionToolbarSaveState->setEnabled(save_enabled);
 }
 
 void MainWindow::doStartFile(std::optional<CDVD_SourceType> source, const QString& path)
@@ -2854,6 +2510,9 @@ void MainWindow::doStartFile(std::optional<CDVD_SourceType> source, const QStrin
 	// we might still be saving a resume state...
 	VMManager::WaitForSaveStateFlush();
 
+	// GetSaveStateFileName() might temporarily mount the ISO to get the serial.
+	cancelGameListRefresh();
+
 	const std::optional<bool> resume(
 		promptForResumeState(QString::fromStdString(VMManager::GetSaveStateFileName(params->filename.c_str(), -1))));
 	if (!resume.has_value())
@@ -2867,10 +2526,10 @@ void MainWindow::doStartFile(std::optional<CDVD_SourceType> source, const QStrin
 void MainWindow::doDiscChange(CDVD_SourceType source, const QString& path)
 {
 	bool reset_system = false;
-	if (!m_was_disc_change_request)
+	if (!m_was_disc_change_request && !GSDumpReplayer::IsReplayingDump())
 	{
 		QMessageBox message(QMessageBox::Question, tr("Confirm Disc Change"),
-			tr("Do you want to swap discs or boot the new image (via system reset)?"));
+			tr("Do you want to swap discs or boot the new image (via system reset)?"), QMessageBox::NoButton, this);
 		message.addButton(tr("Swap Disc"), QMessageBox::ActionRole);
 		QPushButton* reset_button = message.addButton(tr("Reset"), QMessageBox::ActionRole);
 		QPushButton* cancel_button = message.addButton(QMessageBox::Cancel);
@@ -2891,19 +2550,33 @@ void MainWindow::doDiscChange(CDVD_SourceType source, const QString& path)
 
 MainWindow::VMLock MainWindow::pauseAndLockVM()
 {
-	const bool was_fullscreen = isRenderingFullscreen();
+	// To switch out of fullscreen when displaying a popup, or not to?
+	// For Windows, with driver's direct scanout, what renders behind tends to be hit and miss.
+	// We can't draw anything over exclusive fullscreen, so get out of it in that case.
+	// Wayland's a pain as usual, we need to recreate the window, which means there'll be a brief
+	// period when there's no window, and Qt might shut us down. So avoid it there.
+	// On MacOS, it forces a workspace switch, which is kinda jarring.
+#ifndef __APPLE__
+	const bool was_fullscreen = g_emu_thread->isFullscreen() && !s_use_central_widget;
+#else
+	const bool was_fullscreen = false;
+#endif
 	const bool was_paused = s_vm_paused;
 
-	// We use surfaceless rather than switching out of fullscreen, because
-	// we're paused, so we're not going to be rendering anyway.
-	if (was_fullscreen)
-		g_emu_thread->setSurfaceless(true);
 	if (!was_paused)
 		g_emu_thread->setVMPaused(true);
 
-	// We want to parent dialogs to the display widget, except if we were fullscreen,
-	// since it's going to get destroyed by the surfaceless call above.
-	QWidget* dialog_parent = was_fullscreen ? static_cast<QWidget*>(this) : getDisplayContainer();
+	// We need to switch out of exclusive fullscreen before we can display our popup.
+	// However, we do not want to switch back to render-to-main, the window might have generated this event.
+	if (was_fullscreen)
+	{
+		g_emu_thread->setFullscreen(false, false);
+		while (QtHost::IsVMValid() && g_emu_thread->isFullscreen())
+			QApplication::processEvents(QEventLoop::ExcludeUserInputEvents, 1);
+	}
+
+	// Now we'll either have a borderless window, or a regular window (if we were exclusive fullscreen).
+	QWidget* dialog_parent = getDisplayContainer();
 
 	return VMLock(dialog_parent, was_paused, was_fullscreen);
 }
@@ -2933,7 +2606,8 @@ MainWindow::VMLock::VMLock(VMLock&& lock)
 MainWindow::VMLock::~VMLock()
 {
 	if (m_was_fullscreen)
-		g_emu_thread->setSurfaceless(false);
+		g_emu_thread->setFullscreen(true, true);
+
 	if (!m_was_paused)
 		g_emu_thread->setVMPaused(false);
 }

@@ -18,8 +18,8 @@
 #include "GS/GSVector.h"
 #include "GS/Renderers/Common/GSDevice.h"
 #include "GS/Renderers/DX12/GSTexture12.h"
-#include "common/D3D12/ShaderCache.h"
-#include "common/D3D12/StreamBuffer.h"
+#include "GS/Renderers/DX12/D3D12ShaderCache.h"
+#include "GS/Renderers/DX12/D3D12StreamBuffer.h"
 #include "common/HashCombine.h"
 #include <array>
 #include <unordered_map>
@@ -51,16 +51,16 @@ public:
 			u32 key;
 		};
 
+		GSHWDrawConfig::BlendState bs;
 		GSHWDrawConfig::VSSelector vs;
-		GSHWDrawConfig::GSSelector gs;
 		GSHWDrawConfig::DepthStencilSelector dss;
 		GSHWDrawConfig::ColorMaskSelector cms;
-		GSHWDrawConfig::BlendState bs;
+		u8 pad;
 
-		__fi bool operator==(const PipelineSelector& p) const { return (memcmp(this, &p, sizeof(p)) == 0); }
-		__fi bool operator!=(const PipelineSelector& p) const { return (memcmp(this, &p, sizeof(p)) != 0); }
+		__fi bool operator==(const PipelineSelector& p) const { return BitEqual(*this, p); }
+		__fi bool operator!=(const PipelineSelector& p) const { return !BitEqual(*this, p); }
 
-		__fi PipelineSelector() { memset(this, 0, sizeof(*this)); }
+		__fi PipelineSelector() { std::memset(this, 0, sizeof(*this)); }
 	};
 	static_assert(sizeof(PipelineSelector) == 24, "Pipeline selector is 24 bytes");
 
@@ -69,7 +69,7 @@ public:
 		std::size_t operator()(const PipelineSelector& e) const noexcept
 		{
 			std::size_t hash = 0;
-			HashCombine(hash, e.vs.key, e.gs.key, e.ps.key_hi, e.ps.key_lo, e.dss.key, e.cms.key, e.bs.key, e.key);
+			HashCombine(hash, e.vs.key, e.ps.key_hi, e.ps.key_lo, e.dss.key, e.cms.key, e.bs.key, e.key);
 			return hash;
 		}
 	};
@@ -124,9 +124,10 @@ public:
 
 		TFX_ROOT_SIGNATURE_PARAM_VS_CBV = 0,
 		TFX_ROOT_SIGNATURE_PARAM_PS_CBV = 1,
-		TFX_ROOT_SIGNATURE_PARAM_PS_TEXTURES = 2,
-		TFX_ROOT_SIGNATURE_PARAM_PS_SAMPLERS = 3,
-		TFX_ROOT_SIGNATURE_PARAM_PS_RT_TEXTURES = 4,
+		TFX_ROOT_SIGNATURE_PARAM_VS_SRV = 2,
+		TFX_ROOT_SIGNATURE_PARAM_PS_TEXTURES = 3,
+		TFX_ROOT_SIGNATURE_PARAM_PS_SAMPLERS = 4,
+		TFX_ROOT_SIGNATURE_PARAM_PS_RT_TEXTURES = 5,
 
 		UTILITY_ROOT_SIGNATURE_PARAM_PUSH_CONSTANTS = 0,
 		UTILITY_ROOT_SIGNATURE_PARAM_PS_TEXTURES = 1,
@@ -138,23 +139,30 @@ public:
 	};
 
 private:
+	ComPtr<IDXGIFactory5> m_dxgi_factory;
+	ComPtr<IDXGISwapChain1> m_swap_chain;
+	std::vector<std::unique_ptr<GSTexture12>> m_swap_chain_buffers;
+	u32 m_current_swap_chain_buffer = 0;
+
+	bool m_allow_tearing_supported = false;
+	bool m_using_allow_tearing = false;
+	bool m_is_exclusive_fullscreen = false;
+	bool m_device_lost = false;
+
 	ComPtr<ID3D12RootSignature> m_tfx_root_signature;
 	ComPtr<ID3D12RootSignature> m_utility_root_signature;
 
-	D3D12::StreamBuffer m_vertex_stream_buffer;
-	D3D12::StreamBuffer m_index_stream_buffer;
-	D3D12::StreamBuffer m_vertex_constant_buffer;
-	D3D12::StreamBuffer m_pixel_constant_buffer;
+	D3D12StreamBuffer m_vertex_stream_buffer;
+	D3D12StreamBuffer m_index_stream_buffer;
+	D3D12StreamBuffer m_vertex_constant_buffer;
+	D3D12StreamBuffer m_pixel_constant_buffer;
+	ComPtr<ID3D12Resource> m_expand_index_buffer;
+	ComPtr<D3D12MA::Allocation> m_expand_index_buffer_allocation;
 
-	ComPtr<D3D12MA::Allocation> m_readback_staging_allocation;
-	ComPtr<ID3D12Resource> m_readback_staging_buffer;
-	void* m_readback_staging_buffer_map = nullptr;
-	u32 m_readback_staging_buffer_size = 0;
+	D3D12DescriptorHandle m_point_sampler_cpu;
+	D3D12DescriptorHandle m_linear_sampler_cpu;
 
-	D3D12::DescriptorHandle m_point_sampler_cpu;
-	D3D12::DescriptorHandle m_linear_sampler_cpu;
-
-	std::unordered_map<u32, D3D12::DescriptorHandle> m_samplers;
+	std::unordered_map<u32, D3D12DescriptorHandle> m_samplers;
 
 	std::array<ComPtr<ID3D12PipelineState>, static_cast<int>(ShaderConvert::Count)> m_convert{};
 	std::array<ComPtr<ID3D12PipelineState>, static_cast<int>(PresentShader::Count)> m_present{};
@@ -166,10 +174,11 @@ private:
 	std::array<std::array<ComPtr<ID3D12PipelineState>, 2>, 2> m_date_image_setup_pipelines{}; // [depth][datm]
 	ComPtr<ID3D12PipelineState> m_fxaa_pipeline;
 	ComPtr<ID3D12PipelineState> m_shadeboost_pipeline;
+	ComPtr<ID3D12PipelineState> m_imgui_pipeline;
 
 	std::unordered_map<u32, ComPtr<ID3DBlob>> m_tfx_vertex_shaders;
-	std::unordered_map<u32, ComPtr<ID3DBlob>> m_tfx_geometry_shaders;
-	std::unordered_map<GSHWDrawConfig::PSSelector, ComPtr<ID3DBlob>, GSHWDrawConfig::PSSelectorHash> m_tfx_pixel_shaders;
+	std::unordered_map<GSHWDrawConfig::PSSelector, ComPtr<ID3DBlob>, GSHWDrawConfig::PSSelectorHash>
+		m_tfx_pixel_shaders;
 	std::unordered_map<PipelineSelector, ComPtr<ID3D12PipelineState>, PipelineSelectorHash> m_tfx_pipelines;
 
 	ComPtr<ID3D12RootSignature> m_cas_root_signature;
@@ -179,28 +188,37 @@ private:
 	GSHWDrawConfig::VSConstantBuffer m_vs_cb_cache;
 	GSHWDrawConfig::PSConstantBuffer m_ps_cb_cache;
 
-	D3D12::ShaderCache m_shader_cache;
+	D3D12ShaderCache m_shader_cache;
 	ComPtr<ID3DBlob> m_convert_vs;
 	std::string m_tfx_source;
 
-	void LookupNativeFormat(GSTexture::Format format, DXGI_FORMAT* d3d_format, DXGI_FORMAT* srv_format, DXGI_FORMAT* rtv_format, DXGI_FORMAT* dsv_format) const;
+	void LookupNativeFormat(GSTexture::Format format, DXGI_FORMAT* d3d_format, DXGI_FORMAT* srv_format,
+		DXGI_FORMAT* rtv_format, DXGI_FORMAT* dsv_format) const;
 
-	GSTexture* CreateSurface(GSTexture::Type type, int width, int height, int levels, GSTexture::Format format) override;
+	bool CreateSwapChain();
+	bool CreateSwapChainRTV();
+	void DestroySwapChainRTVs();
+	void DestroySwapChain();
+
+	GSTexture* CreateSurface(
+		GSTexture::Type type, int width, int height, int levels, GSTexture::Format format) override;
 
 	void DoMerge(GSTexture* sTex[3], GSVector4* sRect, GSTexture* dTex, GSVector4* dRect, const GSRegPMODE& PMODE,
-		const GSRegEXTBUF& EXTBUF, const GSVector4& c) final;
-	void DoInterlace(GSTexture* sTex, GSTexture* dTex, int shader, bool linear, float yoffset = 0, int bufIdx = 0) final;
+		const GSRegEXTBUF& EXTBUF, u32 c, const bool linear) final;
+	void DoInterlace(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect,
+		ShaderInterlace shader, bool linear, const InterlaceConstantBuffer& cb) final;
 	void DoShadeBoost(GSTexture* sTex, GSTexture* dTex, const float params[4]) final;
 	void DoFXAA(GSTexture* sTex, GSTexture* dTex) final;
 
-	bool DoCAS(GSTexture* sTex, GSTexture* dTex, bool sharpen_only, const std::array<u32, NUM_CAS_CONSTANTS>& constants) final;
+	bool DoCAS(
+		GSTexture* sTex, GSTexture* dTex, bool sharpen_only, const std::array<u32, NUM_CAS_CONSTANTS>& constants) final;
 
-	bool GetSampler(D3D12::DescriptorHandle* cpu_handle, GSHWDrawConfig::SamplerSelector ss);
+	bool GetSampler(D3D12DescriptorHandle* cpu_handle, GSHWDrawConfig::SamplerSelector ss);
 	void ClearSamplerCache() final;
-	bool GetTextureGroupDescriptors(D3D12::DescriptorHandle* gpu_handle, const D3D12::DescriptorHandle* cpu_handles, u32 count);
+	bool GetTextureGroupDescriptors(
+		D3D12DescriptorHandle* gpu_handle, const D3D12DescriptorHandle* cpu_handles, u32 count);
 
 	const ID3DBlob* GetTFXVertexShader(GSHWDrawConfig::VSSelector sel);
-	const ID3DBlob* GetTFXGeometryShader(GSHWDrawConfig::GSSelector sel);
 	const ID3DBlob* GetTFXPixelShader(const GSHWDrawConfig::PSSelector& sel);
 	ComPtr<ID3D12PipelineState> CreateTFXPipeline(const PipelineSelector& p);
 	const ID3D12PipelineState* GetTFXPipeline(const PipelineSelector& p);
@@ -220,10 +238,8 @@ private:
 	bool CompilePostProcessingPipelines();
 	bool CompileCASPipelines();
 
-	bool CheckStagingBufferSize(u32 required_size);
-	bool MapStagingBuffer(u32 size_to_read);
-	void UnmapStagingBuffer();
-	void DestroyStagingBuffer();
+	bool CompileImGuiPipeline();
+	void RenderImGui();
 
 	void DestroyResources();
 
@@ -233,11 +249,27 @@ public:
 
 	__fi static GSDevice12* GetInstance() { return static_cast<GSDevice12*>(g_gs_device.get()); }
 
+	RenderAPI GetRenderAPI() const override;
+	bool HasSurface() const override;
+
 	bool Create() override;
 	void Destroy() override;
 
-	void ResetAPIState() override;
-	void RestoreAPIState() override;
+	bool UpdateWindow() override;
+	void ResizeWindow(s32 new_window_width, s32 new_window_height, float new_window_scale) override;
+	bool SupportsExclusiveFullscreen() const override;
+	void DestroySurface() override;
+	std::string GetDriverInfo() const override;
+
+	bool GetHostRefreshRate(float* refresh_rate) override;
+
+	void SetVSync(VsyncMode mode) override;
+
+	PresentResult BeginPresent(bool frame_skip) override;
+	void EndPresent() override;
+
+	bool SetGPUTimingEnabled(bool enabled) override;
+	float GetAndResetAccumulatedGPUTime() override;
 
 	void PushDebugGroup(const char* fmt, ...) override;
 	void PopDebugGroup() override;
@@ -247,14 +279,7 @@ public:
 	void DrawIndexedPrimitive();
 	void DrawIndexedPrimitive(int offset, int count);
 
-	void ClearRenderTarget(GSTexture* t, const GSVector4& c) override;
-	void ClearRenderTarget(GSTexture* t, u32 c) override;
-	void InvalidateRenderTarget(GSTexture* t) override;
-	void ClearDepth(GSTexture* t) override;
-	void ClearStencil(GSTexture* t, u8 c) override;
-
-	bool DownloadTexture(GSTexture* src, const GSVector4i& rect, GSTexture::GSMap& out_map) override;
-	void DownloadTextureComplete() override;
+	std::unique_ptr<GSDownloadTexture> CreateDownloadTexture(u32 width, u32 height, GSTexture::Format format) override;
 
 	void CopyRect(GSTexture* sTex, GSTexture* dTex, const GSVector4i& r, u32 destX, u32 destY) override;
 
@@ -264,19 +289,25 @@ public:
 		bool green, bool blue, bool alpha) override;
 	void PresentRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect,
 		PresentShader shader, float shaderTime, bool linear) override;
-	void UpdateCLUTTexture(GSTexture* sTex, u32 offsetX, u32 offsetY, GSTexture* dTex, u32 dOffset, u32 dSize) override;
+	void UpdateCLUTTexture(
+		GSTexture* sTex, float sScale, u32 offsetX, u32 offsetY, GSTexture* dTex, u32 dOffset, u32 dSize) override;
+	void ConvertToIndexedTexture(GSTexture* sTex, float sScale, u32 offsetX, u32 offsetY, u32 SBW, u32 SPSM,
+		GSTexture* dTex, u32 DBW, u32 DPSM) override;
 
-	void BeginRenderPassForStretchRect(GSTexture12* dTex, const GSVector4i& dtex_rc, const GSVector4i& dst_rc);
+	void DrawMultiStretchRects(
+		const MultiStretchRect* rects, u32 num_rects, GSTexture* dTex, ShaderConvert shader) override;
+	void DoMultiStretchRects(const MultiStretchRect* rects, u32 num_rects, GSTexture12* dTex, ShaderConvert shader);
+
+	void BeginRenderPassForStretchRect(
+		GSTexture12* dTex, const GSVector4i& dtex_rc, const GSVector4i& dst_rc, bool allow_discard = true);
 	void DoStretchRect(GSTexture12* sTex, const GSVector4& sRect, GSTexture12* dTex, const GSVector4& dRect,
-		const ID3D12PipelineState* pipeline, bool linear);
+		const ID3D12PipelineState* pipeline, bool linear, bool allow_discard);
 	void DrawStretchRect(const GSVector4& sRect, const GSVector4& dRect, const GSVector2i& ds);
 
 	void SetupDATE(GSTexture* rt, GSTexture* ds, bool datm, const GSVector4i& bbox);
 	GSTexture12* SetupPrimitiveTrackingDATE(GSHWDrawConfig& config, PipelineSelector& pipe);
 
 	void IASetVertexBuffer(const void* vertex, size_t stride, size_t count);
-	bool IAMapVertexBuffer(void** vertex, size_t stride, size_t count);
-	void IAUnmapVertexBuffer();
 	void IASetIndexBuffer(const void* index, size_t count);
 
 	void PSSetShaderResource(int i, GSTexture* sr, bool check_state);
@@ -290,12 +321,14 @@ public:
 
 	void RenderHW(GSHWDrawConfig& config) override;
 	void UpdateHWPipelineSelector(GSHWDrawConfig& config);
+	void UploadHWDrawVerticesAndIndices(const GSHWDrawConfig& config);
 
 public:
 	/// Ends any render pass, executes the command buffer, and invalidates cached state.
 	void ExecuteCommandList(bool wait_for_completion);
 	void ExecuteCommandList(bool wait_for_completion, const char* reason, ...);
 	void ExecuteCommandListAndRestartRenderPass(bool wait_for_completion, const char* reason);
+	void ExecuteCommandListForReadback();
 
 	/// Set dirty flags on everything to force re-bind at next draw time.
 	void InvalidateCachedState();
@@ -311,14 +344,14 @@ public:
 	void SetStencilRef(u8 ref);
 
 	void SetUtilityRootSignature();
-	void SetUtilityTexture(GSTexture* tex, const D3D12::DescriptorHandle& sampler);
+	void SetUtilityTexture(GSTexture* tex, const D3D12DescriptorHandle& sampler);
 	void SetUtilityPushConstants(const void* data, u32 size);
 	void UnbindTexture(GSTexture12* tex);
 
 	// Assumes that the previous level has been transitioned to PS resource,
 	// and the current level has been transitioned to RT.
-	void RenderTextureMipmap(const D3D12::Texture& texture,
-		u32 dst_level, u32 dst_width, u32 dst_height, u32 src_level, u32 src_width, u32 src_height);
+	void RenderTextureMipmap(GSTexture12* texture, u32 dst_level, u32 dst_width, u32 dst_height, u32 src_level,
+		u32 src_width, u32 src_height);
 
 	// Ends a render pass if we're currently in one.
 	// When Bind() is next called, the pass will be restarted.
@@ -331,7 +364,7 @@ public:
 		D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depth_end = D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_NO_ACCESS,
 		D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE stencil_begin = D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_NO_ACCESS,
 		D3D12_RENDER_PASS_ENDING_ACCESS_TYPE stencil_end = D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_NO_ACCESS,
-		const GSVector4& clear_color = GSVector4::zero(), float clear_depth = 0.0f, u8 clear_stencil = 0);
+		const u32 clear_color = 0, float clear_depth = 0.0f, u8 clear_stencil = 0);
 	void EndRenderPass();
 
 	void SetViewport(const D3D12_VIEWPORT& viewport);
@@ -349,27 +382,30 @@ private:
 
 		DIRTY_FLAG_VS_CONSTANT_BUFFER_BINDING = (1 << 5),
 		DIRTY_FLAG_PS_CONSTANT_BUFFER_BINDING = (1 << 6),
-		DIRTY_FLAG_TEXTURES_DESCRIPTOR_TABLE = (1 << 7),
-		DIRTY_FLAG_SAMPLERS_DESCRIPTOR_TABLE = (1 << 8),
-		DIRTY_FLAG_TEXTURES_DESCRIPTOR_TABLE_2 = (1 << 9),
+		DIRTY_FLAG_VS_VERTEX_BUFFER_BINDING = (1 << 7),
+		DIRTY_FLAG_TEXTURES_DESCRIPTOR_TABLE = (1 << 8),
+		DIRTY_FLAG_SAMPLERS_DESCRIPTOR_TABLE = (1 << 9),
+		DIRTY_FLAG_TEXTURES_DESCRIPTOR_TABLE_2 = (1 << 10),
 
-		DIRTY_FLAG_VERTEX_BUFFER = (1 << 10),
-		DIRTY_FLAG_INDEX_BUFFER = (1 << 11),
-		DIRTY_FLAG_PRIMITIVE_TOPOLOGY = (1 << 12),
-		DIRTY_FLAG_VIEWPORT = (1 << 13),
-		DIRTY_FLAG_SCISSOR = (1 << 14),
-		DIRTY_FLAG_RENDER_TARGET = (1 << 15),
-		DIRTY_FLAG_PIPELINE = (1 << 16),
-		DIRTY_FLAG_BLEND_CONSTANTS = (1 << 17),
-		DIRTY_FLAG_STENCIL_REF = (1 << 18),
+		DIRTY_FLAG_VERTEX_BUFFER = (1 << 11),
+		DIRTY_FLAG_INDEX_BUFFER = (1 << 12),
+		DIRTY_FLAG_PRIMITIVE_TOPOLOGY = (1 << 13),
+		DIRTY_FLAG_VIEWPORT = (1 << 14),
+		DIRTY_FLAG_SCISSOR = (1 << 15),
+		DIRTY_FLAG_RENDER_TARGET = (1 << 16),
+		DIRTY_FLAG_PIPELINE = (1 << 17),
+		DIRTY_FLAG_BLEND_CONSTANTS = (1 << 18),
+		DIRTY_FLAG_STENCIL_REF = (1 << 19),
 
 		DIRTY_BASE_STATE = DIRTY_FLAG_VS_CONSTANT_BUFFER_BINDING | DIRTY_FLAG_PS_CONSTANT_BUFFER_BINDING |
-						   DIRTY_FLAG_TEXTURES_DESCRIPTOR_TABLE | DIRTY_FLAG_SAMPLERS_DESCRIPTOR_TABLE | DIRTY_FLAG_TEXTURES_DESCRIPTOR_TABLE_2 |
+						   DIRTY_FLAG_VS_VERTEX_BUFFER_BINDING | DIRTY_FLAG_TEXTURES_DESCRIPTOR_TABLE |
+						   DIRTY_FLAG_SAMPLERS_DESCRIPTOR_TABLE | DIRTY_FLAG_TEXTURES_DESCRIPTOR_TABLE_2 |
 						   DIRTY_FLAG_VERTEX_BUFFER | DIRTY_FLAG_INDEX_BUFFER | DIRTY_FLAG_PRIMITIVE_TOPOLOGY |
-						   DIRTY_FLAG_VIEWPORT | DIRTY_FLAG_SCISSOR | DIRTY_FLAG_RENDER_TARGET |
-						   DIRTY_FLAG_PIPELINE | DIRTY_FLAG_BLEND_CONSTANTS | DIRTY_FLAG_STENCIL_REF,
+						   DIRTY_FLAG_VIEWPORT | DIRTY_FLAG_SCISSOR | DIRTY_FLAG_RENDER_TARGET | DIRTY_FLAG_PIPELINE |
+						   DIRTY_FLAG_BLEND_CONSTANTS | DIRTY_FLAG_STENCIL_REF,
 
-		DIRTY_TFX_STATE = DIRTY_BASE_STATE | DIRTY_FLAG_TFX_TEXTURES | DIRTY_FLAG_TFX_SAMPLERS | DIRTY_FLAG_TFX_RT_TEXTURES,
+		DIRTY_TFX_STATE =
+			DIRTY_BASE_STATE | DIRTY_FLAG_TFX_TEXTURES | DIRTY_FLAG_TFX_SAMPLERS | DIRTY_FLAG_TFX_RT_TEXTURES,
 		DIRTY_UTILITY_STATE = DIRTY_BASE_STATE,
 		DIRTY_CONSTANT_BUFFER_STATE = DIRTY_FLAG_VS_CONSTANT_BUFFER | DIRTY_FLAG_PS_CONSTANT_BUFFER,
 	};
@@ -404,22 +440,22 @@ private:
 	bool m_in_render_pass = false;
 
 	std::array<D3D12_GPU_VIRTUAL_ADDRESS, NUM_TFX_CONSTANT_BUFFERS> m_tfx_constant_buffers{};
-	std::array<D3D12::DescriptorHandle, NUM_TOTAL_TFX_TEXTURES> m_tfx_textures{};
-	D3D12::DescriptorHandle m_tfx_sampler;
+	std::array<D3D12DescriptorHandle, NUM_TOTAL_TFX_TEXTURES> m_tfx_textures{};
+	D3D12DescriptorHandle m_tfx_sampler;
 	u32 m_tfx_sampler_sel = 0;
-	D3D12::DescriptorHandle m_tfx_textures_handle_gpu;
-	D3D12::DescriptorHandle m_tfx_samplers_handle_gpu;
-	D3D12::DescriptorHandle m_tfx_rt_textures_handle_gpu;
+	D3D12DescriptorHandle m_tfx_textures_handle_gpu;
+	D3D12DescriptorHandle m_tfx_samplers_handle_gpu;
+	D3D12DescriptorHandle m_tfx_rt_textures_handle_gpu;
 
-	D3D12::DescriptorHandle m_utility_texture_cpu;
-	D3D12::DescriptorHandle m_utility_texture_gpu;
-	D3D12::DescriptorHandle m_utility_sampler_cpu;
-	D3D12::DescriptorHandle m_utility_sampler_gpu;
+	D3D12DescriptorHandle m_utility_texture_cpu;
+	D3D12DescriptorHandle m_utility_texture_gpu;
+	D3D12DescriptorHandle m_utility_sampler_cpu;
+	D3D12DescriptorHandle m_utility_sampler_gpu;
 
 	RootSignature m_current_root_signature = RootSignature::Undefined;
 	const ID3D12PipelineState* m_current_pipeline = nullptr;
 
-	D3D12::Texture m_null_texture;
+	std::unique_ptr<GSTexture12> m_null_texture;
 
 	// current pipeline selector - we save this in the struct to avoid re-zeroing it every draw
 	PipelineSelector m_pipeline_selector = {};

@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2021  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023 PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -14,36 +14,33 @@
  */
 
 #include "PrecompiledHeader.h"
+
+#include "CDVD/CDVD.h"
+#include "CDVD/Ps1CD.h"
+#include "CDVD/CDVD_internal.h"
+#include "CDVD/IsoReader.h"
+#include "CDVD/IsoFileFormats.h"
+#include "GS.h"
+#include "Elfheader.h"
+#include "ps2/BiosTools.h"
+#include "Recording/InputRecording.h"
+#include "Host.h"
 #include "R3000A.h"
 #include "Common.h"
 #include "IopHw.h"
 #include "IopDma.h"
+#include "VMManager.h"
+#include "Sio.h"
 
-#include <cctype>
-#include <ctime>
-#include <memory>
-
+#include "common/Error.h"
 #include "common/FileSystem.h"
 #include "common/Path.h"
 #include "common/StringUtil.h"
 #include "common/Threading.h"
 
-#include "Ps1CD.h"
-#include "CDVD.h"
-#include "CDVD_internal.h"
-#include "IsoFileFormats.h"
-
-#include "GS.h" // for gsVideoMode
-#include "Elfheader.h"
-#include "ps2/BiosTools.h"
-#include "Recording/InputRecording.h"
-#include "VMManager.h"
-
-// This typically reflects the Sony-assigned serial code for the Disc, if one exists.
-//  (examples:  SLUS-2113, etc).
-// If the disc is homebrew then it probably won't have a valid serial; in which case
-// this string will be empty.
-std::string DiscSerial;
+#include <cctype>
+#include <ctime>
+#include <memory>
 
 cdvdStruct cdvd;
 
@@ -58,6 +55,7 @@ static __fi void SetSCMDResultSize(u8 size)
 	cdvd.SCMDResultC = size;
 	cdvd.SCMDResultP = 0;
 	cdvd.sDataIn &= ~0x40;
+	memset(cdvd.SCMDResult, 0, size);
 }
 
 static void CDVDSECTORREADY_INT(u32 eCycle)
@@ -386,82 +384,135 @@ s32 cdvdWriteConfig(const u8* config)
 	return 0;
 }
 
-// Sets ElfCRC to the CRC of the game bound to the CDVD source.
-static __fi ElfObject* loadElf(std::string filename, bool isPSXElf)
+static bool cdvdUncheckedLoadDiscElf(ElfObject* elfo, IsoReader& isor, const std::string_view& elfpath, bool isPSXElf, Error* error)
 {
-	if (StringUtil::StartsWith(filename, "host:"))
+	// Strip out cdrom: prefix, and any leading slashes.
+	size_t start_pos = (elfpath[5] == '0') ? 7 : 6;
+	while (start_pos < elfpath.size() && (elfpath[start_pos] == '\\' || elfpath[start_pos] == '/'))
+		start_pos++;
+
+	// Strip out any version information. Some games use ;2 (MLB2k6), others put multiple versions in
+	// (Syphon Filter Omega Strain). The PS2 BIOS appears to ignore the suffix entirely, so we'll do
+	// the same, and hope that no games actually have multiple ELFs with different versions.
+	// Previous notes:
+	//   Mimic PS2 behavior!
+	//   Much trial-and-error with changing the ISOFS and BOOT2 contents of an image have shown that
+	//   the PS2 BIOS performs the peculiar task of *ignoring* the version info from the parsed BOOT2
+	//   filename *and* the ISOFS, when loading the game's ELF image.  What this means is:
+	//
+	//     1. a valid PS2 ELF can have any version (ISOFS), and the version need not match the one in SYSTEM.CNF.
+	//     2. the version info on the file in the BOOT2 parameter of SYSTEM.CNF can be missing, 10 chars long,
+	//        or anything else.  Its all ignored.
+	//     3. Games loading their own files do *not* exhibit this behavior; likely due to using newer IOP modules
+	//        or lower level filesystem APIs (fortunately that doesn't affect us).
+	//
+	size_t length = elfpath.length() - start_pos;
+	const size_t semi_pos = elfpath.find(';', start_pos);
+	if (semi_pos != std::string::npos)
+		length = semi_pos - start_pos;
+
+	std::string iso_filename(elfpath.substr(start_pos, length));
+	DevCon.WriteLn(fmt::format("cvdLoadElf(): '{}' -> '{}' in ISO.", elfpath, iso_filename));
+	if (iso_filename.empty())
 	{
-		std::string host_filename(filename.substr(5));
-		s64 host_size = FileSystem::GetPathFileSize(host_filename.c_str());
-		return new ElfObject(std::move(host_filename), static_cast<u32>(std::max<s64>(host_size, 0)), isPSXElf);
+		Error::SetString(error, "ISO filename is empty.");
+		return false;
 	}
 
-	// Mimic PS2 behavior!
-	// Much trial-and-error with changing the ISOFS and BOOT2 contents of an image have shown that
-	// the PS2 BIOS performs the peculiar task of *ignoring* the version info from the parsed BOOT2
-	// filename *and* the ISOFS, when loading the game's ELF image.  What this means is:
-	//
-	//   1. a valid PS2 ELF can have any version (ISOFS), and the version need not match the one in SYSTEM.CNF.
-	//   2. the version info on the file in the BOOT2 parameter of SYSTEM.CNF can be missing, 10 chars long,
-	//      or anything else.  Its all ignored.
-	//   3. Games loading their own files do *not* exhibit this behavior; likely due to using newer IOP modules
-	//      or lower level filesystem APIs (fortunately that doesn't affect us).
-	//
-	// FIXME: Properly mimicing this behavior is troublesome since we need to add support for "ignoring"
-	// version information when doing file searches.  I'll add this later.  For now, assuming a ;1 should
-	// be sufficient (no known games have their ELF binary as anything but version ;1)
-	const std::string::size_type semi_pos = filename.rfind(';');
-	if (semi_pos != std::string::npos && std::string_view(filename).substr(semi_pos) != ";1")
-	{
-		Console.WriteLn(Color_Blue, "(LoadELF) Non-conforming version suffix (%s) detected and replaced.", filename.c_str());
-		filename.erase(semi_pos);
-		filename += ";1";
-	}
-
-	IsoFSCDVD isofs;
-	IsoFile file(isofs, filename);
-	return new ElfObject(std::move(filename), file, isPSXElf);
+	return elfo->OpenIsoFile(std::move(iso_filename), isor, isPSXElf, error);
 }
 
-static __fi void _reloadElfInfo(std::string elfpath)
+bool cdvdLoadElf(ElfObject* elfo, const std::string_view& elfpath, bool isPSXElf, Error* error)
 {
-	// Now's a good time to reload the ELF info...
-	if (elfpath == LastELF)
-		return;
+	if (StringUtil::StartsWith(elfpath, "host:"))
+	{
+		std::string host_filename(elfpath.substr(5));
+		return elfo->OpenFile(host_filename, isPSXElf, error);
+	}
+	else if (StringUtil::StartsWith(elfpath, "cdrom:") || StringUtil::StartsWith(elfpath, "cdrom0:"))
+	{
+		IsoReader isor;
+		if (!isor.Open(error))
+			return false;
 
-	std::unique_ptr<ElfObject> elfptr(loadElf(elfpath, false));
-	elfptr->loadHeaders();
-	ElfCRC = elfptr->getCRC();
-	ElfEntry = elfptr->header.e_entry;
-	ElfTextRange = elfptr->getTextRange();
-	LastELF = std::move(elfpath);
+		return cdvdLoadDiscElf(elfo, isor, elfpath, isPSXElf, error);
+	}
+	else
+	{
+		Console.Error(fmt::format("cdvdLoadElf(): Unknown device in ELF path '{}'", elfpath));
+		return false;
+	}
+}
 
-	Console.WriteLn(Color_StrongBlue, "ELF (%s) Game CRC = 0x%08X, EntryPoint = 0x%08X", LastELF.c_str(), ElfCRC, ElfEntry);
+bool cdvdLoadDiscElf(ElfObject* elfo, IsoReader& isor, const std::string_view& elfpath, bool isPSXElf, Error* error)
+{
+	if (!StringUtil::StartsWith(elfpath, "cdrom:") && !StringUtil::StartsWith(elfpath, "cdrom0:"))
+		return false;
 
-	// Note: Do not load game database info here.  This code is generic and called from
-	// BIOS key encryption as well as eeloadReplaceOSDSYS.  The first is actually still executing
-	// BIOS code, and patches and cheats should not be applied yet.  (they are applied when
-	// eeGameStarting is invoked, which is when the VM starts executing the actual game ELF
-	// binary).
+	return cdvdUncheckedLoadDiscElf(elfo, isor, elfpath, isPSXElf, error);
 }
 
 u32 cdvdGetElfCRC(const std::string& path)
 {
-	try
-	{
-		// Yay for write-after-read here. Isn't our ELF parser great....
-		const s64 host_size = FileSystem::GetPathFileSize(path.c_str());
-		if (host_size <= 0)
-			return 0;
-
-		std::unique_ptr<ElfObject> elfptr(std::make_unique<ElfObject>(path, static_cast<u32>(std::max<s64>(host_size, 0)), false));
-		elfptr->loadHeaders();
-		return elfptr->getCRC();
-	}
-	catch ([[maybe_unused]] Exception::FileNotFound& e)
-	{
+	ElfObject elfo;
+	if (!elfo.OpenFile(path, false, nullptr))
 		return 0;
+
+	return elfo.GetCRC();
+}
+
+static CDVDDiscType GetPS2ElfName(IsoReader& isor, std::string* name, std::string* version, Error* error)
+{
+	CDVDDiscType retype = CDVDDiscType::Other;
+	name->clear();
+	version->clear();
+
+	std::vector<u8> data;
+	if (!isor.ReadFile("SYSTEM.CNF", &data, error))
+		return CDVDDiscType::Other;
+
+	const std::vector<std::string_view> lines =
+		StringUtil::SplitString(std::string_view(reinterpret_cast<const char*>(data.data()), data.size()), '\n');
+	for (size_t lineno = 0; lineno < lines.size(); lineno++)
+	{
+		const std::string_view line = StringUtil::StripWhitespace(lines[lineno]);
+		std::string_view key, value;
+		if (!StringUtil::ParseAssignmentString(line, &key, &value))
+			continue;
+
+		// Some games have a character on the last line of the file, don't print the error in those cases.
+		if (value.empty() && (lineno == (lines.size() - 1)))
+		{
+			Console.Warning("(SYSTEM.CNF) Unusual or malformed entry in SYSTEM.CNF ignored:");
+			Console.Indent().WriteLn(std::string(line));
+			continue;
+		}
+
+		if (key == "BOOT2")
+		{
+			DevCon.WriteLn(Color_StrongBlue, fmt::format("(SYSTEM.CNF) Detected PS2 Disc = {}", value));
+			*name = value;
+			retype = CDVDDiscType::PS2Disc;
+		}
+		else if (key == "BOOT")
+		{
+			DevCon.WriteLn(Color_StrongBlue, fmt::format("(SYSTEM.CNF) Detected PSX/PSone Disc = {}", value));
+			*name = value;
+			retype = CDVDDiscType::PS1Disc;
+		}
+		else if (key == "VMODE")
+		{
+			DevCon.WriteLn(Color_Blue, fmt::format("(SYSTEM.CNF) Disc region type = {}", value));
+		}
+		else if (key == "VER")
+		{
+			DevCon.WriteLn(Color_Blue, fmt::format("(SYSTEM.CNF) Software version = {}", value));
+			*version = value;
+		}
 	}
+
+	Error::SetString(error, "Disc image is *not* a PlayStation or PS2 game");
+	return retype;
 }
 
 static std::string ExecutablePathToSerial(const std::string& path)
@@ -476,7 +527,7 @@ static std::string ExecutablePathToSerial(const std::string& path)
 	else
 	{
 		// cdrom:SCES_123.45;1
-		pos = serial.rfind(':');
+		pos = path.rfind(':');
 		if (pos != std::string::npos)
 			serial = path.substr(pos + 1);
 		else
@@ -490,8 +541,11 @@ static std::string ExecutablePathToSerial(const std::string& path)
 
 	// check that it matches our expected format.
 	// this maintains the old behavior of PCSX2.
-	if (!StringUtil::WildcardMatch(serial.c_str(), "????_???.??*"))
+	if (!StringUtil::WildcardMatch(serial.c_str(), "????_???.??*") &&
+		!StringUtil::WildcardMatch(serial.c_str(), "????""-???.??*")) // double quote because trigraphs
+	{
 		serial.clear();
+	}
 
 	// SCES_123.45 -> SCES-12345
 	for (std::string::size_type pos = 0; pos < serial.size();)
@@ -513,59 +567,57 @@ static std::string ExecutablePathToSerial(const std::string& path)
 	return serial;
 }
 
-void cdvdReloadElfInfo(std::string elfoverride)
+void cdvdGetDiscInfo(std::string* out_serial, std::string* out_elf_path, std::string* out_version, u32* out_crc,
+	CDVDDiscType* out_disc_type)
 {
-	// called from context of executing VM code (recompilers), so we need to trap exceptions
-	// and route them through the VM's exception handler.  (needed for non-SEH platforms, such
-	// as Linux/GCC)
-	DevCon.WriteLn(Color_Green, "Reload ELF");
-	try
-	{
-		std::string elfpath;
-		u32 discType = GetPS2ElfName(elfpath);
-		DiscSerial = ExecutablePathToSerial(elfpath);
+	Error error;
+	IsoReader isor;
 
-		// Use the serial from the disc (if any), and the ELF CRC of the override.
-		if (!elfoverride.empty())
+	std::string elfpath, version;
+	CDVDDiscType disc_type = CDVDDiscType::Other;
+	if (!isor.Open(&error) || (disc_type = GetPS2ElfName(isor, &elfpath, &version, &error)) == CDVDDiscType::Other)
+		Console.Error(fmt::format("Failed to get ELF name: {}", error.GetDescription()));
+
+	// Don't bother parsing it if we don't need the CRC.
+	if (out_crc)
+	{
+		u32 crc = 0;
+
+		if (disc_type == CDVDDiscType::PS2Disc || disc_type == CDVDDiscType::PS1Disc)
 		{
-			_reloadElfInfo(std::move(elfoverride));
-			return;
+			ElfObject elfo;
+			const bool isPSXElf = (disc_type == CDVDDiscType::PS1Disc);
+			if (!cdvdLoadDiscElf(&elfo, isor, elfpath, isPSXElf, &error))
+				Console.Error(fmt::format("Failed to load ELF info for {}: {}", elfpath, error.GetDescription()));
+			else
+				crc = elfo.GetCRC();
 		}
 
-		if (discType == 1)
-		{
-			// PCSX2 currently only recognizes *.elf executables in proper PS2 format.
-			// To support different PSX titles in the console title and for savestates, this code bypasses all the detection,
-			// simply using the exe name, stripped of problematic characters.
-			return;
-		}
-
-		// Isn't a disc we recognize?
-		if (discType == 0)
-			return;
-
-		// Recognized and PS2 (BOOT2).  Good job, user.
-		_reloadElfInfo(std::move(elfpath));
+		*out_crc = crc;
 	}
-	catch ([[maybe_unused]] Exception::FileNotFound& e)
+
+	if (out_serial)
 	{
-		Console.Error("Failed to load ELF info");
-		LastELF.clear();
-		DiscSerial.clear();
-		ElfCRC = 0;
-		ElfEntry = 0;
-		ElfTextRange = {};
-		return;
+		if (disc_type != CDVDDiscType::Other)
+			*out_serial = ExecutablePathToSerial(elfpath);
+		else
+			out_serial->clear();
 	}
+	if (out_elf_path)
+		*out_elf_path = std::move(elfpath);
+	if (out_version)
+		*out_version = std::move(version);
+	if (out_disc_type)
+		*out_disc_type = disc_type;
 }
 
 void cdvdReadKey(u8, u16, u32 arg2, u8* key)
 {
+	const std::string DiscSerial = VMManager::GetDiscSerial();
+
 	s32 numbers = 0, letters = 0;
 	u32 key_0_3;
 	u8 key_4, key_14;
-
-	cdvdReloadElfInfo();
 
 	// clear key values
 	memset(key, 0, 16);
@@ -667,6 +719,9 @@ static void cdvdUpdateReady(u8 NewReadyStatus)
 
 s32 cdvdCtrlTrayOpen()
 {
+	if (cdvd.Status & CDVD_STATUS_TRAY_OPEN)
+		return 0x80;
+
 	DevCon.WriteLn(Color_Green, "Open virtual disk tray");
 
 	// If we switch using a source change we need to pretend it's a new disc
@@ -677,32 +732,27 @@ s32 cdvdCtrlTrayOpen()
 	}
 
 	cdvdDetectDisk();
-
-	DiscSwapTimerSeconds = cdvd.RTC.second; // remember the PS2 time when this happened
 	cdvdUpdateStatus(CDVD_STATUS_TRAY_OPEN);
 	cdvdUpdateReady(0);
 	cdvd.Spinning = false;
 	cdvdSetIrq(1 << Irq_Eject);
-
-	if (cdvd.Type > 0 || CDVDsys_GetSourceType() == CDVD_SourceType::NoDisc)
-	{
-		cdvd.Tray.cdvdActionSeconds = 3;
-		cdvd.Tray.trayState = CDVD_DISC_EJECT;
-		DevCon.WriteLn(Color_Green, "Simulating ejected media");
-	}
 
 	return 0; // needs to be 0 for success according to homebrew test "CDVD"
 }
 
 s32 cdvdCtrlTrayClose()
 {
+	if (!(cdvd.Status & CDVD_STATUS_TRAY_OPEN))
+		return 0x80;
+
 	DevCon.WriteLn(Color_Green, "Close virtual disk tray");
 
-	if (!g_GameStarted && g_SkipBiosHack)
+	if (VMManager::Internal::IsFastBootInProgress())
 	{
 		DevCon.WriteLn(Color_Green, "Media already loaded (fast boot)");
 		cdvdUpdateReady(CDVD_DRIVE_READY);
 		cdvdUpdateStatus(CDVD_STATUS_PAUSE);
+		cdvd.Spinning = true;
 		cdvd.Tray.trayState = CDVD_DISC_ENGAGED;
 		cdvd.Tray.cdvdActionSeconds = 0;
 	}
@@ -710,7 +760,8 @@ s32 cdvdCtrlTrayClose()
 	{
 		DevCon.WriteLn(Color_Green, "Detecting media");
 		cdvdUpdateReady(CDVD_DRIVE_BUSY);
-		cdvdUpdateStatus(CDVD_STATUS_SEEK);
+		cdvdUpdateStatus(CDVD_STATUS_STOP);
+		cdvd.Spinning = false;
 		cdvd.Tray.trayState = CDVD_DISC_DETECTING;
 		cdvd.Tray.cdvdActionSeconds = 3;
 	}
@@ -853,14 +904,14 @@ static uint cdvdBlockReadTime(CDVD_MODE_TYPE mode)
 
 void cdvdReset()
 {
-	memzero(cdvd);
+	std::memset(&cdvd, 0, sizeof(cdvd));
 
 	cdvd.Type = CDVD_TYPE_NODISC;
 	cdvd.Spinning = false;
 
 	cdvd.sDataIn = 0x40;
 	cdvdUpdateReady(CDVD_DRIVE_READY);
-	cdvdUpdateStatus(CDVD_STATUS_PAUSE);
+	cdvdUpdateStatus(CDVD_STATUS_TRAY_OPEN);
 	cdvd.Speed = 4;
 	cdvd.BlockSize = 2064;
 	cdvd.Action = cdvdAction_None;
@@ -900,25 +951,17 @@ void cdvdReset()
 		cdvd.RTC.year = (u8)(curtime.tm_year - 100); // offset from 2000
 	}
 
-	g_GameStarted = false;
-	g_GameLoading = false;
-	g_SkipBiosHack = EmuConfig.UseBOOT2Injection;
-
 	cdvdCtrlTrayClose();
 }
 
-struct Freeze_v10Compat
+bool SaveStateBase::cdvdFreeze()
 {
-	u8 Action;
-	u32 SeekToSector;
-	u32 ReadTime;
-	bool Spinning;
-};
+	if (!FreezeTag("cdvd"))
+		return false;
 
-void SaveStateBase::cdvdFreeze()
-{
-	FreezeTag("cdvd");
 	Freeze(cdvd);
+	if (!IsOkay())
+		return false;
 
 	if (IsLoading())
 	{
@@ -929,6 +972,8 @@ void SaveStateBase::cdvdFreeze()
 		if (cdvd.Reading)
 			cdvd.RErr = DoCDVDreadTrack(cdvd.Readed ? cdvd.Sector : cdvd.SeekToSector, cdvd.ReadMode);
 	}
+
+	return true;
 }
 
 void cdvdNewDiskCB()
@@ -937,7 +982,7 @@ void cdvdNewDiskCB()
 	cdvdDetectDisk();
 
 	// If not ejected but we've swapped source pretend it got ejected
-	if ((g_GameStarted || !g_SkipBiosHack) && cdvd.Tray.trayState != CDVD_DISC_EJECT)
+	if (!VMManager::Internal::IsFastBootInProgress() && cdvd.Tray.trayState != CDVD_DISC_EJECT)
 	{
 		DevCon.WriteLn(Color_Green, "Ejecting media");
 		cdvdUpdateStatus(CDVD_STATUS_TRAY_OPEN);
@@ -1437,28 +1482,34 @@ void cdvdUpdateTrayState()
 		{
 			switch (cdvd.Tray.trayState)
 			{
+				case CDVD_DISC_OPEN:
+					cdvdCtrlTrayOpen();
+					if (cdvd.Type > 0 || CDVDsys_GetSourceType() == CDVD_SourceType::NoDisc)
+					{
+						cdvd.Tray.cdvdActionSeconds = 3;
+						cdvd.Tray.trayState = CDVD_DISC_EJECT;
+						DevCon.WriteLn(Color_Green, "Simulating ejected media");
+					}
+
+				break;
 				case CDVD_DISC_EJECT:
 					cdvdCtrlTrayClose();
 					break;
 				case CDVD_DISC_DETECTING:
 					DevCon.WriteLn(Color_Green, "Seeking new disc");
 					cdvd.Tray.trayState = CDVD_DISC_SEEKING;
+					cdvdUpdateStatus(CDVD_STATUS_SEEK);
 					cdvd.Tray.cdvdActionSeconds = 2;
-					cdvd.Spinning = true;
 					break;
 				case CDVD_DISC_SEEKING:
+					cdvd.Spinning = true;
 				case CDVD_DISC_ENGAGED:
 					cdvd.Tray.trayState = CDVD_DISC_ENGAGED;
 					cdvdUpdateReady(CDVD_DRIVE_READY);
+					cdvdUpdateStatus(CDVD_STATUS_PAUSE);
 					if (CDVDsys_GetSourceType() != CDVD_SourceType::NoDisc)
 					{
-						DevCon.WriteLn(Color_Green, "Media ready to read");
-						cdvdUpdateStatus(CDVD_STATUS_PAUSE);
-					}
-					else
-					{
-						cdvd.Spinning = false;
-						cdvdUpdateStatus(CDVD_STATUS_STOP);
+						DevCon.WriteLn(Color_Green, "Media ready to use");
 					}
 					break;
 			}
@@ -1474,6 +1525,7 @@ void cdvdVsync()
 	cdvd.RTCcount = 0;
 
 	cdvdUpdateTrayState();
+	AutoEject::CountDownTicks();
 
 	cdvd.RTC.second++;
 	if (cdvd.RTC.second < 60)
@@ -1770,7 +1822,7 @@ static void cdvdWrite04(u8 rt)
 			cdvd.SCMDParamC = 0;
 			cdvdUpdateStatus(CDVD_STATUS_STOP);
 			cdvd.Spinning = false;
-			memzero(cdvd.SCMDResult);
+			std::memset(cdvd.SCMDResult, 0, sizeof(cdvd.SCMDResult));
 			cdvdSetIrq();
 			break;
 
@@ -2283,7 +2335,7 @@ static void cdvdWrite16(u8 rt) // SCOMMAND
 		CDVD_LOG("cdvdWrite16: SCMD %s (%x) (ParamP = %x)", sCmdName[rt], rt, cdvd.SCMDParamP);
 
 		cdvd.sCommand = rt;
-		memzero(cdvd.SCMDResult);
+		std::memset(cdvd.SCMDResult, 0, sizeof(cdvd.SCMDResult));
 
 		switch (rt)
 		{
@@ -2340,8 +2392,8 @@ static void cdvdWrite16(u8 rt) // SCOMMAND
 
 					default:
 						SetSCMDResultSize(1);
-						cdvd.SCMDResult[0] = 0x80;
-						Console.Warning("*Unknown Mecacon Command param[0]=%02X", cdvd.SCMDParam[0]);
+						cdvd.SCMDResult[0] = 0x81;
+						Console.Warning("*Unknown Mecacon Command param Test2 subparams - param[0]=%02X", cdvd.SCMDParam[0]);
 						break;
 				}
 				break;
@@ -2357,7 +2409,7 @@ static void cdvdWrite16(u8 rt) // SCOMMAND
 
 			case 0x06: // CdTrayCtrl  (1:1)
 				SetSCMDResultSize(1);
-				//Console.Warning( "CdTrayCtrl, param = %d", cdvd.Param[0]);
+				//Console.Warning( "CdTrayCtrl, param = %d", cdvd.SCMDParam[0]);
 				if (cdvd.SCMDParam[0] == 0)
 					cdvd.SCMDResult[0] = cdvdCtrlTrayOpen();
 				else
@@ -2440,8 +2492,8 @@ static void cdvdWrite16(u8 rt) // SCOMMAND
 
 
 			case 0x0F: // sceCdPowerOff (0:1)- Call74 from Xcdvdman
-				Console.WriteLn(Color_StrongBlack, "sceCdPowerOff called. Resetting VM.");
-				VMManager::Reset();
+				Console.WriteLn(Color_StrongBlack, "sceCdPowerOff called. Shutting down VM.");
+				Host::RequestVMShutdown(false, false, false);
 				break;
 
 			case 0x12: // sceCdReadILinkId (0:9)
@@ -2563,22 +2615,25 @@ static void cdvdWrite16(u8 rt) // SCOMMAND
 				//			break;
 
 			case 0x27: // GetPS1BootParam (0:13) - called only by China region PS2 models
+				{
+					// Return Disc Serial which is passed to PS1DRV and later used to find matching config.
+					SetSCMDResultSize(13);
 
-				// Return Disc Serial which is passed to PS1DRV and later used to find matching config.
-				SetSCMDResultSize(13);
-				cdvd.SCMDResult[0] = 0;
-				cdvd.SCMDResult[1] = DiscSerial[0];
-				cdvd.SCMDResult[2] = DiscSerial[1];
-				cdvd.SCMDResult[3] = DiscSerial[2];
-				cdvd.SCMDResult[4] = DiscSerial[3];
-				cdvd.SCMDResult[5] = DiscSerial[4];
-				cdvd.SCMDResult[6] = DiscSerial[5];
-				cdvd.SCMDResult[7] = DiscSerial[6];
-				cdvd.SCMDResult[8] = DiscSerial[7];
-				cdvd.SCMDResult[9] = DiscSerial[9]; // Skipping dot here is required.
-				cdvd.SCMDResult[10] = DiscSerial[10];
-				cdvd.SCMDResult[11] = DiscSerial[11];
-				cdvd.SCMDResult[12] = DiscSerial[12];
+					const std::string DiscSerial = VMManager::GetDiscSerial();
+					cdvd.SCMDResult[0] = 0;
+					cdvd.SCMDResult[1] = DiscSerial[0];
+					cdvd.SCMDResult[2] = DiscSerial[1];
+					cdvd.SCMDResult[3] = DiscSerial[2];
+					cdvd.SCMDResult[4] = DiscSerial[3];
+					cdvd.SCMDResult[5] = DiscSerial[4];
+					cdvd.SCMDResult[6] = DiscSerial[5];
+					cdvd.SCMDResult[7] = DiscSerial[6];
+					cdvd.SCMDResult[8] = DiscSerial[7];
+					cdvd.SCMDResult[9] = DiscSerial[9]; // Skipping dot here is required.
+					cdvd.SCMDResult[10] = DiscSerial[10];
+					cdvd.SCMDResult[11] = DiscSerial[11];
+					cdvd.SCMDResult[12] = DiscSerial[12];
+				}
 				break;
 
 				//		case 0x28: // cdvdman_call150 (1:1) - In V10 Bios
@@ -2906,9 +2961,8 @@ static void cdvdWrite16(u8 rt) // SCOMMAND
 				break;
 
 			default:
-				// fake a 'correct' command
 				SetSCMDResultSize(1); //in:0
-				cdvd.SCMDResult[0] = 0; // 0 complete ; 1 busy ; 0x80 error
+				cdvd.SCMDResult[0] = 0x80; // 0 complete ; 1 busy ; 0x80 error
 				Console.WriteLn("SCMD Unknown %x", rt);
 				break;
 		} // end switch

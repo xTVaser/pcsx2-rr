@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2020  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -27,10 +27,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#include <unistd.h>
-#ifdef __linux__
-#include <sys/ioctl.h>
-#endif
 #endif
 
 #include "sockets.h"
@@ -160,13 +156,12 @@ SocketAdapter::SocketAdapter()
 {
 	bool foundAdapter;
 
-#ifdef _WIN32
-	IP_ADAPTER_ADDRESSES adapter;
-	std::unique_ptr<IP_ADAPTER_ADDRESSES[]> buffer;
+	AdapterUtils::Adapter adapter;
+	AdapterUtils::AdapterBuffer buffer;
 
 	if (strcmp(EmuConfig.DEV9.EthDevice.c_str(), "Auto") != 0)
 	{
-		foundAdapter = AdapterUtils::GetWin32Adapter(EmuConfig.DEV9.EthDevice, &adapter, &buffer);
+		foundAdapter = AdapterUtils::GetAdapter(EmuConfig.DEV9.EthDevice, &adapter, &buffer);
 
 		if (!foundAdapter)
 		{
@@ -185,7 +180,7 @@ SocketAdapter::SocketAdapter()
 	}
 	else
 	{
-		foundAdapter = AdapterUtils::GetWin32AdapterAuto(&adapter, &buffer);
+		foundAdapter = AdapterUtils::GetAdapterAuto(&adapter, &buffer);
 		adapterIP = {};
 
 		if (!foundAdapter)
@@ -194,42 +189,6 @@ SocketAdapter::SocketAdapter()
 			return;
 		}
 	}
-#elif defined(__POSIX__)
-	ifaddrs adapter;
-	ifaddrs* buffer;
-
-	if (strcmp(EmuConfig.DEV9.EthDevice.c_str(), "Auto") != 0)
-	{
-		foundAdapter = AdapterUtils::GetIfAdapter(EmuConfig.DEV9.EthDevice, &adapter, &buffer);
-
-		if (!foundAdapter)
-		{
-			Console.Error("DEV9: Socket: Failed to Get Adapter");
-			return;
-		}
-
-		std::optional<IP_Address> adIP = AdapterUtils::GetAdapterIP(&adapter);
-		if (adIP.has_value())
-			adapterIP = adIP.value();
-		else
-		{
-			Console.Error("DEV9: Socket: Failed To Get Adapter IP");
-			freeifaddrs(buffer);
-			return;
-		}
-	}
-	else
-	{
-		foundAdapter = AdapterUtils::GetIfAdapterAuto(&adapter, &buffer);
-		adapterIP = {0};
-
-		if (!foundAdapter)
-		{
-			Console.Error("DEV9: Socket: Auto Selection Failed, Check You Connection or Manually Specify Adapter");
-			return;
-		}
-	}
-#endif
 
 	//For DHCP, we need to override some settings
 	//DNS settings as per direct adapters
@@ -239,42 +198,25 @@ SocketAdapter::SocketAdapter()
 	const IP_Address gateway = internalIP;
 
 	InitInternalServer(&adapter, true, ps2IP, subnet, gateway);
-#ifdef __POSIX__
-	freeifaddrs(buffer);
-#endif
 
-	u8 hostMAC[6];
-	u8 newMAC[6];
-
-#ifdef _WIN32
-	memcpy(hostMAC, adapter.PhysicalAddress, 6);
-#elif defined(__linux__)
-	struct ifreq ifr;
-	int fd = socket(AF_INET, SOCK_DGRAM, 0);
-	strcpy(ifr.ifr_name, adapter.ifa_name);
-	if (0 == ioctl(fd, SIOCGIFHWADDR, &ifr))
-		memcpy(hostMAC, ifr.ifr_hwaddr.sa_data, 6);
-	else
+	std::optional<MAC_Address> adMAC = AdapterUtils::GetAdapterMAC(&adapter);
+	if (adMAC.has_value())
 	{
-		memcpy(hostMAC, ps2MAC, 6);
-		Console.Error("Could not get MAC address for adapter: %s", adapter.ifa_name);
+		MAC_Address hostMAC = adMAC.value();
+		MAC_Address newMAC = ps2MAC;
+
+		//Lets take the hosts last 2 bytes to make it unique on Xlink
+		newMAC.bytes[5] = hostMAC.bytes[4];
+		newMAC.bytes[4] = hostMAC.bytes[5];
+
+		SetMACAddress(&newMAC);
 	}
-	::close(fd);
-#else
-	memcpy(hostMAC, ps2MAC, 6);
-	Console.Error("Could not get MAC address for adapter, OS not supported");
-#endif
-	memcpy(newMAC, ps2MAC, 6);
-
-	//Lets take the hosts last 2 bytes to make it unique on Xlink
-	newMAC[5] = hostMAC[4];
-	newMAC[4] = hostMAC[5];
-
-	SetMACAddress(newMAC);
+	else
+		Console.Error("DEV9: Socket: Failed to get MAC address for adapter");
 
 #ifdef _WIN32
 	/* Use the MAKEWORD(lowbyte, highbyte) macro declared in Windef.h */
-	WORD wVersionRequested = MAKEWORD(2, 2);
+	const WORD wVersionRequested = MAKEWORD(2, 2);
 
 	WSADATA wsaData{0};
 	const int err = WSAStartup(wVersionRequested, &wsaData);
@@ -326,9 +268,9 @@ bool SocketAdapter::recv(NetPacket* pkt)
 				ipPkt->sourceIP = session->destIP;
 
 				EthernetFrame frame(ipPkt);
-				memcpy(frame.sourceMAC, internalMAC, 6);
-				memcpy(frame.destinationMAC, ps2MAC, 6);
-				frame.protocol = (u16)EtherType::IPv4;
+				frame.sourceMAC = internalMAC;
+				frame.destinationMAC = ps2MAC;
+				frame.protocol = static_cast<u16>(EtherType::IPv4);
 
 				frame.WritePacket(pkt);
 				InspectRecv(pkt);
@@ -352,8 +294,6 @@ bool SocketAdapter::send(NetPacket* pkt)
 	InspectSend(pkt);
 	if (NetAdapter::send(pkt))
 		return true;
-
-	bool result = false;
 
 	EthernetFrame frame(pkt);
 
@@ -384,17 +324,17 @@ bool SocketAdapter::send(NetPacket* pkt)
 					//it's trying to resolve the virtual gateway's mac addr
 					{
 						ARP_Packet* arpRet = new ARP_Packet(6, 4);
-						memcpy(arpRet->targetHardwareAddress.get(), arpPkt.senderHardwareAddress.get(), 6);
-						memcpy(arpRet->senderHardwareAddress.get(), internalMAC, 6);
-						memcpy(arpRet->targetProtocolAddress.get(), arpPkt.senderProtocolAddress.get(), 4);
-						memcpy(arpRet->senderProtocolAddress.get(), arpPkt.targetProtocolAddress.get(), 4);
+						*(MAC_Address*)arpRet->targetHardwareAddress.get() = *(MAC_Address*)arpPkt.senderHardwareAddress.get();
+						*(MAC_Address*)arpRet->senderHardwareAddress.get() = internalMAC;
+						*(IP_Address*)arpRet->targetProtocolAddress.get() = *(IP_Address*)arpPkt.senderProtocolAddress.get();
+						*(IP_Address*)arpRet->senderProtocolAddress.get() = *(IP_Address*)arpPkt.targetProtocolAddress.get();
 						arpRet->op = 2,
 						arpRet->protocol = arpPkt.protocol;
 						arpRet->hardwareType = arpPkt.hardwareType;
 
 						EthernetFrame* retARP = new EthernetFrame(arpRet);
-						memcpy(retARP->destinationMAC, ps2MAC, 6);
-						memcpy(retARP->sourceMAC, internalMAC, 6);
+						retARP->destinationMAC = ps2MAC;
+						retARP->sourceMAC = internalMAC;
 						retARP->protocol = (u16)EtherType::ARP;
 
 						vRecBuffer.Enqueue(retARP);
@@ -408,7 +348,7 @@ bool SocketAdapter::send(NetPacket* pkt)
 			return false;
 	}
 
-	return result;
+	return false;
 }
 
 void SocketAdapter::reset()
@@ -431,36 +371,21 @@ void SocketAdapter::reset()
 void SocketAdapter::reloadSettings()
 {
 	bool foundAdapter = false;
-#ifdef _WIN32
-	IP_ADAPTER_ADDRESSES adapter;
-	std::unique_ptr<IP_ADAPTER_ADDRESSES[]> buffer;
+
+	AdapterUtils::Adapter adapter;
+	AdapterUtils::AdapterBuffer buffer;
 
 	if (strcmp(EmuConfig.DEV9.EthDevice.c_str(), "Auto") != 0)
-		foundAdapter = AdapterUtils::GetWin32Adapter(EmuConfig.DEV9.EthDevice, &adapter, &buffer);
+		foundAdapter = AdapterUtils::GetAdapter(EmuConfig.DEV9.EthDevice, &adapter, &buffer);
 	else
-		foundAdapter = AdapterUtils::GetWin32AdapterAuto(&adapter, &buffer);
-
-#elif defined(__POSIX__)
-	ifaddrs adapter;
-	ifaddrs* buffer;
-
-	if (strcmp(EmuConfig.DEV9.EthDevice.c_str(), "Auto") != 0)
-		foundAdapter = AdapterUtils::GetIfAdapter(EmuConfig.DEV9.EthDevice, &adapter, &buffer);
-	else
-		foundAdapter = AdapterUtils::GetIfAdapterAuto(&adapter, &buffer);
-#endif
+		foundAdapter = AdapterUtils::GetAdapterAuto(&adapter, &buffer);
 
 	const IP_Address ps2IP = {{{internalIP.bytes[0], internalIP.bytes[1], internalIP.bytes[2], 100}}};
 	const IP_Address subnet{{{255, 255, 255, 0}}};
 	const IP_Address gateway = internalIP;
 
 	if (foundAdapter)
-	{
 		ReloadInternalServer(&adapter, true, ps2IP, subnet, gateway);
-#ifdef __POSIX__
-		freeifaddrs(buffer);
-#endif
-	}
 	else
 	{
 		pxAssert(false);
@@ -537,7 +462,7 @@ bool SocketAdapter::SendTCP(ConnectionKey Key, IP_Packet* ipPkt)
 	Key.ps2Port = tcp.sourcePort;
 	Key.srvPort = tcp.destinationPort;
 
-	int res = SendFromConnection(Key, ipPkt);
+	const int res = SendFromConnection(Key, ipPkt);
 	if (res == 1)
 		return true;
 	else if (res == 0)
@@ -572,7 +497,7 @@ bool SocketAdapter::SendUDP(ConnectionKey Key, IP_Packet* ipPkt)
 	{
 		UDP_Session* s = nullptr;
 
-		if (udp.sourcePort == udp.destinationPort || //Used for LAN games that assume the destination port
+		if (abs(udp.sourcePort - udp.destinationPort) <= 10 || //Used for games that assume the destination/source port
 			ipPkt->destinationIP == dhcpServer.broadcastIP || //Broadcast packets
 			ipPkt->destinationIP == IP_Address{{{255, 255, 255, 255}}} || //Limited Broadcast packets
 			(ipPkt->destinationIP.bytes[0] & 0xF0) == 0xE0) //Multicast address start with 0b1110
@@ -591,7 +516,7 @@ bool SocketAdapter::SendUDP(ConnectionKey Key, IP_Packet* ipPkt)
 				fKey.ps2Port = udp.sourcePort;
 				fKey.srvPort = 0;
 
-				Console.WriteLn("DEV9: Socket: Creating New UDPFixedPort with port %d", udp.destinationPort);
+				Console.WriteLn("DEV9: Socket: Creating New UDPFixedPort with port %d", udp.sourcePort);
 
 				fPort = new UDP_FixedPort(fKey, adapterIP, udp.sourcePort);
 				fPort->AddConnectionClosedHandler([&](BaseSession* session) { HandleFixedPortClosed(session); });
@@ -603,7 +528,7 @@ bool SocketAdapter::SendUDP(ConnectionKey Key, IP_Packet* ipPkt)
 				fixedUDPPorts.Add(udp.sourcePort, fPort);
 			}
 
-			Console.WriteLn("DEV9: Socket: Creating New UDP Connection from FixedPort %d", udp.destinationPort);
+			Console.WriteLn("DEV9: Socket: Creating New UDP Connection from FixedPort %d to %d", udp.sourcePort, udp.destinationPort);
 			s = fPort->NewClientSession(Key,
 				ipPkt->destinationIP == dhcpServer.broadcastIP || ipPkt->destinationIP == IP_Address{{{255, 255, 255, 255}}},
 				(ipPkt->destinationIP.bytes[0] & 0xF0) == 0xE0);
@@ -634,7 +559,7 @@ int SocketAdapter::SendFromConnection(ConnectionKey Key, IP_Packet* ipPkt)
 
 void SocketAdapter::HandleConnectionClosed(BaseSession* sender)
 {
-	ConnectionKey key = sender->key;
+	const ConnectionKey key = sender->key;
 	connections.Remove(key);
 	//Note, we delete something that is calling us
 	//this is probably going to cause issues

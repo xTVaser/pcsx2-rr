@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2020  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023  PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -36,6 +36,8 @@
 
 #include <wil/com.h>
 #include <wil/resource.h>
+
+#include "DEV9/PacketReader/MAC_Address.h"
 
 //=============
 // TAP IOCTLs
@@ -206,7 +208,7 @@ AdapterOptions TAPAdapter::GetAdapterOptions()
 	return AdapterOptions::None;
 }
 
-static int TAPGetMACAddress(HANDLE handle, u8* addr)
+static int TAPGetMACAddress(HANDLE handle, PacketReader::MAC_Address* addr)
 {
 	DWORD len = 0;
 
@@ -251,7 +253,7 @@ HANDLE TAPOpen(const std::string& device_guid)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	BOOL bret = DeviceIoControl(handle.get(), TAP_IOCTL_GET_VERSION,
+	const BOOL bret = DeviceIoControl(handle.get(), TAP_IOCTL_GET_VERSION,
 		&version, sizeof(version),
 		&version, sizeof(version), (LPDWORD)&version_len, NULL);
 
@@ -398,14 +400,13 @@ bool TAPGetWin32Adapter(const std::string& name, PIP_ADAPTER_ADDRESSES adapter, 
 	//Note that we append to the collection during iteration
 	for (size_t vi = 0; vi < searchList.size(); vi++)
 	{
-		int targetIndex = searchList[vi];
-
 		for (ULONG i = 0; i < table->NumEntries; i++)
 		{
+			int targetIndex = searchList[vi];
 			MIB_IFSTACK_ROW row = table->Table[i];
 			if (row.LowerLayerInterfaceIndex == targetIndex)
 			{
-				PIP_ADAPTER_ADDRESSES potentialAdapter = FindAdapterViaIndex(AdapterInfoReduced.get(), row.HigherLayerInterfaceIndex);
+				const PIP_ADAPTER_ADDRESSES potentialAdapter = FindAdapterViaIndex(AdapterInfoReduced.get(), row.HigherLayerInterfaceIndex);
 				if (potentialAdapter != nullptr)
 				{
 					Console.WriteLn(fmt::format("DEV9: {} is possible bridge (Check 1 passed)", StringUtil::WideStringToUTF8String(potentialAdapter->Description)));
@@ -551,17 +552,17 @@ TAPAdapter::TAPAdapter()
 
 	cancel = CreateEvent(NULL, TRUE, FALSE, NULL);
 
-	u8 hostMAC[6];
-	u8 newMAC[6];
+	PacketReader::MAC_Address hostMAC;
+	PacketReader::MAC_Address newMAC;
 
-	TAPGetMACAddress(htap, hostMAC);
-	memcpy(newMAC, ps2MAC, 6);
+	TAPGetMACAddress(htap, &hostMAC);
+	newMAC = ps2MAC;
 
 	//Lets take the hosts last 2 bytes to make it unique on Xlink
-	newMAC[5] = hostMAC[4];
-	newMAC[4] = hostMAC[5];
+	newMAC.bytes[5] = hostMAC.bytes[4];
+	newMAC.bytes[4] = hostMAC.bytes[5];
 
-	SetMACAddress(newMAC);
+	SetMACAddress(&newMAC);
 
 	IP_ADAPTER_ADDRESSES adapter;
 	std::unique_ptr<IP_ADAPTER_ADDRESSES[]> buffer;
@@ -596,7 +597,7 @@ bool TAPAdapter::recv(NetPacket* pkt)
 
 	if (!result)
 	{
-		DWORD dwError = GetLastError();
+		const DWORD dwError = GetLastError();
 		if (dwError == ERROR_IO_PENDING)
 		{
 			HANDLE readHandles[]{read.hEvent, cancel};
@@ -637,7 +638,7 @@ bool TAPAdapter::send(NetPacket* pkt)
 
 	if (!result)
 	{
-		DWORD dwError = GetLastError();
+		const DWORD dwError = GetLastError();
 		if (dwError == ERROR_IO_PENDING)
 		{
 			WaitForSingleObject(write.hEvent, INFINITE);
