@@ -1,15 +1,78 @@
-name: 🏭 Release Pipeline
+# Whenever a commit is pushed to master (ideally via a pull-request!)
+# this action will create the next release, which means:
+# 1. tag master with the proper version
+# 2. create a new draft release (pre-released if a nightly build)
+# 3. add release notes
+
+name: 🏭 Create Release
 
 on:
   push:
-    tags:
-      - v*
+    branches:
+      - master
+  # TODO - future work
+  # workflow_dispatch:
+  #   inputs:
+  #     isStable:
+  #       description: 'Should it be a stable release?'
+  #       required: true
+  #       default: 'false'
+  #     versionTag:
+  #       description: 'The version to tag with'
+  #       required: true
+
+permissions:
+  contents: write
 
 jobs:
+  cut-release:
+    if: github.repository == 'PCSX2/pcsx2'
+    runs-on: ubuntu-latest
+    name: "Create Tag and Release"
+    steps:
+      - uses: actions/checkout@v3
+
+      # Docs - https://github.com/mathieudutour/github-tag-action
+      - name: Bump Version and Push Tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          tag_prefix: v
+          default_bump: patch
+
+      # TODO - we could do this and remove the node.js script, but auto-generated notes only work
+      # with PRs -- not commits (determine how much we care).
+      # - name: Create Draft Release
+      #   run: |
+      #     echo "Creating release with tag - ${{ steps.tag_version.outputs.new_tag }}"
+      #     gh release create ${{ steps.tag_version.outputs.new_tag }} --draft --generate-notes -title ${{ steps.tag_version.outputs.new_tag }}
+
+      - name: Generate Release Notes
+        env:
+          OWNER: PCSX2
+          REPO: pcsx2
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_SHA: ${{ github.SHA }}
+        run: |
+          cd ./.github/workflows/scripts/releases/generate-release-notes
+          npm ci
+          node index.js
+          mv ./release-notes.md ${GITHUB_WORKSPACE}/release-notes.md
+
+      - name: Create a GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: steps.tag_version.outputs.new_tag
+        with:
+          body_path: ./release-notes.md
+          draft: true
+          prerelease: true
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
   # Build Everything
   # Linux
   build_linux_qt:
     if: github.repository == 'PCSX2/pcsx2'
+    needs:
+      - cut-release
     name: "Linux"
     uses: ./.github/workflows/linux_build_qt.yml
     with:
@@ -18,8 +81,11 @@ jobs:
       cmakeflags: ""
       buildAppImage: true
     secrets: inherit
+
   build_linux_flatpak:
     if: github.repository == 'PCSX2/pcsx2'
+    needs:
+      - cut-release
     name: "Linux"
     uses: ./.github/workflows/linux_build_flatpak.yml
     with:
@@ -33,6 +99,8 @@ jobs:
   # Windows
   build_windows_qt:
     if: github.repository == 'PCSX2/pcsx2'
+    needs:
+      - cut-release
     name: "Windows"
     uses: ./.github/workflows/windows_build_qt.yml
     with:
@@ -45,6 +113,8 @@ jobs:
   # MacOS
   build_macos_qt:
     if: github.repository == 'PCSX2/pcsx2'
+    needs:
+      - cut-release
     name: "MacOS"
     uses: ./.github/workflows/macos_build.yml
     with:
@@ -98,9 +168,6 @@ jobs:
           gh release upload "${TAG_VAL}" ${{ github.WORKSPACE }}/ci-artifacts/out/*  --repo PCSX2/pcsx2 --clobber
 
       - name: Publish Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.BOT_PAT }}
         run: |
           TAG_VAL=$(echo ${{ github.REF }} | awk -F'refs/tags/' '{print $2}')
           gh release edit ${TAG_VAL} --draft=false --repo PCSX2/pcsx2
-
