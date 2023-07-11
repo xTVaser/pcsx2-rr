@@ -175,7 +175,7 @@ jobs:
 
       - name: Publish Release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           TAG_VAL=$(git tag --points-at HEAD)
           echo "TAG_VAL=${TAG_VAL}"
