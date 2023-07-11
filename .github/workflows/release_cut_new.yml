@@ -169,7 +169,7 @@ jobs:
           echo "TAG_VAL=${TAG_VAL}"
           gh release list --repo xTVaser/pcsx2-rr
           mkdir -p ${{ github.WORKSPACE }}/ci-artifacts/out
-          python ./.github/workflows/scripts/releases/rename-release-assets.py
+          TAG_VAL=${TAG_VAL} python ./.github/workflows/scripts/releases/rename-release-assets.py
           ls ${{ github.WORKSPACE }}/ci-artifacts/out
           gh release upload "${TAG_VAL}" ${{ github.WORKSPACE }}/ci-artifacts/out/*  --repo xTVaser/pcsx2-rr --clobber
 
