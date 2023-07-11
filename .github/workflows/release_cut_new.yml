@@ -161,10 +161,10 @@ jobs:
           SCAN_DIR: ${{ github.WORKSPACE }}/ci-artifacts
           OUT_DIR: ${{ github.WORKSPACE }}/ci-artifacts/out
         run: |
+          export TAG_VAL=$(git tag --points-at HEAD)
+          echo "TAG_VAL=${TAG_VAL}"
           gh release list --repo xTVaser/pcsx2-rr
           mkdir -p ${{ github.WORKSPACE }}/ci-artifacts/out
-          export TAG_VAL=$(git tag --points-at HEAD)
-          echo $TAG_VAL
           python ./.github/workflows/scripts/releases/rename-release-assets.py
           ls ${{ github.WORKSPACE }}/ci-artifacts/out
           gh release upload "${TAG_VAL}" ${{ github.WORKSPACE }}/ci-artifacts/out/*  --repo xTVaser/pcsx2-rr --clobber
@@ -172,4 +172,5 @@ jobs:
       - name: Publish Release
         run: |
           TAG_VAL=$(git tag --points-at HEAD)
+          echo "TAG_VAL=${TAG_VAL}"
           gh release edit ${TAG_VAL} --draft=false --repo xTVaser/pcsx2-rr
