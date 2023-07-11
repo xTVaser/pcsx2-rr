@@ -161,7 +161,7 @@ jobs:
           SCAN_DIR: ${{ github.WORKSPACE }}/ci-artifacts
           OUT_DIR: ${{ github.WORKSPACE }}/ci-artifacts/out
         run: |
-          export TAG_VAL=$(git tag --points-at HEAD)
+          TAG_VAL=$(git tag --points-at HEAD)
           echo "TAG_VAL=${TAG_VAL}"
           gh release list --repo xTVaser/pcsx2-rr
           mkdir -p ${{ github.WORKSPACE }}/ci-artifacts/out
