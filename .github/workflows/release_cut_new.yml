@@ -10,6 +10,7 @@ on:
   push:
     branches:
       - master
+      - v/release-changes
   # TODO - future work
   # workflow_dispatch:
   #   inputs:
@@ -26,7 +27,7 @@ permissions:
 
 jobs:
   cut-release:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     runs-on: ubuntu-latest
     name: "Create Tag and Release"
     steps:
@@ -49,8 +50,8 @@ jobs:
 
       - name: Generate Release Notes
         env:
-          OWNER: PCSX2
-          REPO: pcsx2
+          OWNER: xTVaser
+          REPO: pcsx2-rr
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMIT_SHA: ${{ github.SHA }}
         run: |
@@ -70,7 +71,7 @@ jobs:
   # Build Everything
   # Linux
   build_linux_qt:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     needs:
       - cut-release
     name: "Linux"
@@ -83,7 +84,7 @@ jobs:
     secrets: inherit
 
   build_linux_flatpak:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     needs:
       - cut-release
     name: "Linux"
@@ -98,7 +99,7 @@ jobs:
 
   # Windows
   build_windows_qt:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     needs:
       - cut-release
     name: "Windows"
@@ -112,7 +113,7 @@ jobs:
 
   # MacOS
   build_macos_qt:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     needs:
       - cut-release
     name: "MacOS"
@@ -123,7 +124,7 @@ jobs:
 
   # Upload the Artifacts
   upload_artifacts:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     needs:
       - build_linux_flatpak
       - build_linux_qt
@@ -160,14 +161,14 @@ jobs:
           SCAN_DIR: ${{ github.WORKSPACE }}/ci-artifacts
           OUT_DIR: ${{ github.WORKSPACE }}/ci-artifacts/out
         run: |
-          gh release list --repo PCSX2/pcsx2
+          gh release list --repo xTVaser/pcsx2-rr
           mkdir -p ${{ github.WORKSPACE }}/ci-artifacts/out
           python ./.github/workflows/scripts/releases/rename-release-assets.py
           ls ${{ github.WORKSPACE }}/ci-artifacts/out
           TAG_VAL=$(echo ${{ github.REF }} | awk -F'refs/tags/' '{print $2}')
-          gh release upload "${TAG_VAL}" ${{ github.WORKSPACE }}/ci-artifacts/out/*  --repo PCSX2/pcsx2 --clobber
+          gh release upload "${TAG_VAL}" ${{ github.WORKSPACE }}/ci-artifacts/out/*  --repo xTVaser/pcsx2-rr --clobber
 
       - name: Publish Release
         run: |
           TAG_VAL=$(echo ${{ github.REF }} | awk -F'refs/tags/' '{print $2}')
-          gh release edit ${TAG_VAL} --draft=false --repo PCSX2/pcsx2
+          gh release edit ${TAG_VAL} --draft=false --repo xTVaser/pcsx2-rr
