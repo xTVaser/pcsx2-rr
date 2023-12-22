@@ -5,7 +5,7 @@ on: pull_request_target
 
 jobs:
   triage:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/labeler@v5
