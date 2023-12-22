@@ -544,6 +544,8 @@ REG_END2
 
 	// output will be Cd, Cs is discarded
 	__forceinline bool IsCdOutput() const { return (C == 2 && D != 1 && FIX == 0x00); }
+	__forceinline bool IsUsingCs() const { return (A == 0 || B == 0 || D == 0); }
+	__forceinline bool IsUsingAs() const { return (A != B && C == 0); }
 
 	__forceinline bool IsBlack() const { return ((C == 2 && FIX == 0) || (A == 2 && A == B)) && D == 2; }
 REG_END2
@@ -792,6 +794,7 @@ REG_END2
 	__forceinline bool DoFirstPass() const { return !ATE || ATST != ATST_NEVER; } // not all pixels fail automatically
 	__forceinline bool DoSecondPass() const { return ATE && ATST != ATST_ALWAYS && AFAIL != AFAIL_KEEP; } // pixels may fail, write fb/z
 	__forceinline bool NoSecondPass() const { return ATE && ATST != ATST_ALWAYS && AFAIL == AFAIL_KEEP; } // pixels may fail, no output
+	__forceinline u32 GetAFAIL(u32 fpsm) const { return (AFAIL == AFAIL_RGB_ONLY && (fpsm & 0xF) != 0) ? AFAIL_FB_ONLY : AFAIL; } // FB Only when not 32bit Framebuffer
 REG_END2
 
 REG64_(GIFReg, TEX0)

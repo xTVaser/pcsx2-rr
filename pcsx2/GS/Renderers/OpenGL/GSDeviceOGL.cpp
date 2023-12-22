@@ -339,7 +339,7 @@ bool GSDeviceOGL::Create()
 	}
 
 	// these all share the same vertex shader
-	const auto convert_glsl = Host::ReadResourceFileToString("shaders/opengl/convert.glsl");
+	const std::optional<std::string> convert_glsl = ReadShaderSource("shaders/opengl/convert.glsl");
 	if (!convert_glsl.has_value())
 	{
 		Host::ReportErrorAsync("GS", "Failed to read shaders/opengl/convert.glsl.");
@@ -401,7 +401,7 @@ bool GSDeviceOGL::Create()
 		GL_PUSH("GSDeviceOGL::Present");
 
 		// these all share the same vertex shader
-		const auto shader = Host::ReadResourceFileToString("shaders/opengl/present.glsl");
+		const std::optional<std::string> shader = ReadShaderSource("shaders/opengl/present.glsl");
 		if (!shader.has_value())
 		{
 			Host::ReportErrorAsync("GS", "Failed to read shaders/opengl/present.glsl.");
@@ -437,7 +437,7 @@ bool GSDeviceOGL::Create()
 	{
 		GL_PUSH("GSDeviceOGL::Merge");
 
-		const auto shader = Host::ReadResourceFileToString("shaders/opengl/merge.glsl");
+		const std::optional<std::string> shader = ReadShaderSource("shaders/opengl/merge.glsl");
 		if (!shader.has_value())
 		{
 			Host::ReportErrorAsync("GS", "Failed to read shaders/opengl/merge.glsl.");
@@ -460,7 +460,7 @@ bool GSDeviceOGL::Create()
 	{
 		GL_PUSH("GSDeviceOGL::Interlace");
 
-		const auto shader = Host::ReadResourceFileToString("shaders/opengl/interlace.glsl");
+		const std::optional<std::string> shader = ReadShaderSource("shaders/opengl/interlace.glsl");
 		if (!shader.has_value())
 		{
 			Host::ReportErrorAsync("GS", "Failed to read shaders/opengl/interlace.glsl.");
@@ -588,8 +588,8 @@ bool GSDeviceOGL::CreateTextureFX()
 {
 	GL_PUSH("GSDeviceOGL::CreateTextureFX");
 
-	auto vertex_shader = Host::ReadResourceFileToString("shaders/opengl/tfx_vgs.glsl");
-	auto fragment_shader = Host::ReadResourceFileToString("shaders/opengl/tfx_fs.glsl");
+	std::optional<std::string> vertex_shader = ReadShaderSource("shaders/opengl/tfx_vgs.glsl");
+	std::optional<std::string> fragment_shader = ReadShaderSource("shaders/opengl/tfx_fs.glsl");
 	if (!vertex_shader.has_value() || !fragment_shader.has_value())
 	{
 		Host::ReportErrorAsync("GS", "Failed to read shaders/opengl/tfx_{vgs,fs}.glsl.");
@@ -891,8 +891,9 @@ bool GSDeviceOGL::UpdateWindow()
 void GSDeviceOGL::ResizeWindow(s32 new_window_width, s32 new_window_height, float new_window_scale)
 {
 	m_window_info.surface_scale = new_window_scale;
-	if (m_window_info.surface_width == static_cast<u32>(new_window_width) &&
-		m_window_info.surface_height == static_cast<u32>(new_window_height))
+	if (m_window_info.type == WindowInfo::Type::Surfaceless ||
+		(m_window_info.surface_width == static_cast<u32>(new_window_width) &&
+			m_window_info.surface_height == static_cast<u32>(new_window_height)))
 	{
 		return;
 	}
@@ -1350,7 +1351,7 @@ std::string GSDeviceOGL::GetPSSource(const PSSelector& sel)
 		+ fmt::format("#define PS_ADJT {}\n", sel.adjt)
 		+ fmt::format("#define PS_AEM_FMT {}\n", sel.aem_fmt)
 		+ fmt::format("#define PS_PAL_FMT {}\n", sel.pal_fmt)
-		+ fmt::format("#define PS_DFMT {}\n", sel.dfmt)
+		+ fmt::format("#define PS_DST_FMT {}\n", sel.dst_fmt)
 		+ fmt::format("#define PS_DEPTH_FMT {}\n", sel.depth_fmt)
 		+ fmt::format("#define PS_CHANNEL_FETCH {}\n", sel.channel)
 		+ fmt::format("#define PS_URBAN_CHAOS_HLE {}\n", sel.urban_chaos_hle)
@@ -1378,6 +1379,7 @@ std::string GSDeviceOGL::GetPSSource(const PSSelector& sel)
 		+ fmt::format("#define PS_BLEND_D {}\n", sel.blend_d)
 		+ fmt::format("#define PS_IIP {}\n", sel.iip)
 		+ fmt::format("#define PS_SHUFFLE {}\n", sel.shuffle)
+		+ fmt::format("#define PS_SHUFFLE_SAME {}\n", sel.shuffle_same)
 		+ fmt::format("#define PS_READ_BA {}\n", sel.read_ba)
 		+ fmt::format("#define PS_READ16_SRC {}\n", sel.real16src)
 		+ fmt::format("#define PS_WRITE_RG {}\n", sel.write_rg)
@@ -1454,7 +1456,7 @@ void GSDeviceOGL::StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture
 {
 	pxAssert(dTex->IsDepthStencil() == HasDepthOutput(shader));
 	pxAssert(linear ? SupportsBilinear(shader) : SupportsNearest(shader));
-	StretchRect(sTex, sRect, dTex, dRect, m_convert.ps[(int)shader], linear);
+	StretchRect(sTex, sRect, dTex, dRect, m_convert.ps[(int)shader], false, OMColorMaskSelector(ShaderConvertWriteMask(shader)), linear);
 }
 
 void GSDeviceOGL::StretchRect(GSTexture* sTex, const GSVector4& sRect, GSTexture* dTex, const GSVector4& dRect, const GLProgram& ps, bool linear)
@@ -1634,7 +1636,7 @@ void GSDeviceOGL::DrawMultiStretchRects(
 {
 	IASetVAO(m_vao);
 	IASetPrimitiveTopology(GL_TRIANGLE_STRIP);
-	OMSetDepthStencilState(m_convert.dss);
+	OMSetDepthStencilState(HasDepthOutput(shader) ? m_convert.dss_write : m_convert.dss);
 	OMSetBlendState(false);
 	OMSetColorMaskState();
 	if (!dTex->IsDepthStencil())
@@ -1794,22 +1796,15 @@ void GSDeviceOGL::DoInterlace(GSTexture* sTex, const GSVector4& sRect, GSTexture
 
 bool GSDeviceOGL::CompileFXAAProgram()
 {
-	// Needs ARB_gpu_shader5 for gather.
-	if (!GLAD_GL_ARB_gpu_shader5)
-	{
-		Console.Warning("FXAA is not supported with the current GPU");
-		return true;
-	}
-
 	const std::string_view fxaa_macro = "#define FXAA_GLSL_130 1\n";
-	std::optional<std::string> shader = Host::ReadResourceFileToString("shaders/common/fxaa.fx");
+	const std::optional<std::string> shader = ReadShaderSource("shaders/common/fxaa.fx");
 	if (!shader.has_value())
 	{
 		Console.Error("Failed to read fxaa.fs");
 		return false;
 	}
 
-	const std::string ps(GetShaderSource("ps_main", GL_FRAGMENT_SHADER, shader->c_str(), fxaa_macro));
+	const std::string ps(GetShaderSource("main", GL_FRAGMENT_SHADER, shader->c_str(), fxaa_macro));
 	std::optional<GLProgram> prog = m_shader_cache.GetProgram(m_convert.vs, ps);
 	if (!prog.has_value())
 	{
@@ -1840,7 +1835,7 @@ void GSDeviceOGL::DoFXAA(GSTexture* sTex, GSTexture* dTex)
 
 bool GSDeviceOGL::CompileShadeBoostProgram()
 {
-	const auto shader = Host::ReadResourceFileToString("shaders/opengl/shadeboost.glsl");
+	const std::optional<std::string> shader = ReadShaderSource("shaders/opengl/shadeboost.glsl");
 	if (!shader.has_value())
 	{
 		Host::ReportErrorAsync("GS", "Failed to read shaders/opengl/shadeboost.glsl.");
@@ -1980,7 +1975,7 @@ void GSDeviceOGL::ClearSamplerCache()
 
 bool GSDeviceOGL::CreateCASPrograms()
 {
-	std::optional<std::string> cas_source(Host::ReadResourceFileToString("shaders/opengl/cas.glsl"));
+	std::optional<std::string> cas_source = ReadShaderSource("shaders/opengl/cas.glsl");
 	if (!cas_source.has_value() || !GetCASShaderSource(&cas_source.value()))
 	{
 		m_features.cas_sharpening = false;
@@ -2033,7 +2028,7 @@ bool GSDeviceOGL::DoCAS(GSTexture* sTex, GSTexture* dTex, bool sharpen_only, con
 
 bool GSDeviceOGL::CreateImGuiProgram()
 {
-	std::optional<std::string> glsl = Host::ReadResourceFileToString("shaders/opengl/imgui.glsl");
+	const std::optional<std::string> glsl = ReadShaderSource("shaders/opengl/imgui.glsl");
 	if (!glsl.has_value())
 	{
 		Console.Error("Failed to read imgui.glsl");
@@ -2236,7 +2231,7 @@ void GSDeviceOGL::OMSetBlendState(bool enable, GLenum src_factor, GLenum dst_fac
 		if (is_constant && GLState::bf != constant)
 		{
 			GLState::bf = constant;
-			const float bf = (float)constant / 128.0f;
+			const float bf = static_cast<float>(constant) / 128.0f;
 			glBlendColor(bf, bf, bf, bf);
 		}
 

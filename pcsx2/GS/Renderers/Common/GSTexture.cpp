@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2021 PCSX2 Dev Team
+ *  Copyright (C) 2002-2023 PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -17,14 +17,32 @@
 #include "GS/Renderers/Common/GSTexture.h"
 #include "GS/Renderers/Common/GSDevice.h"
 #include "GS/GSPng.h"
-#include "common/Align.h"
+#include "common/BitUtils.h"
 #include "common/StringUtil.h"
+#include <bit>
 #include <bitset>
 
 GSTexture::GSTexture() = default;
 
 bool GSTexture::Save(const std::string& fn)
 {
+	// Depth textures need special treatment - we have a stencil component.
+	// Just re-use the existing conversion shader instead.
+	if (m_format == Format::DepthStencil)
+	{
+		GSTexture* temp = g_gs_device->CreateRenderTarget(GetWidth(), GetHeight(), Format::Color, false);
+		if (!temp)
+		{
+			Console.Error("Failed to allocate %dx%d texture for depth conversion", GetWidth(), GetHeight());
+			return false;
+		}
+
+		g_gs_device->StretchRect(this, GSVector4::cxpr(0.0f, 0.0f, 1.0f, 1.0f), temp, GSVector4(GetRect()), ShaderConvert::FLOAT32_TO_RGBA8, false);
+		const bool res = temp->Save(fn);
+		g_gs_device->Recycle(temp);
+		return res;
+	}
+
 #ifdef PCSX2_DEVBUILD
 	GSPng::Format format = GSPng::RGB_A_PNG;
 #else
@@ -164,7 +182,7 @@ u32 GSDownloadTexture::GetBufferSize(u32 width, u32 height, GSTexture::Format fo
 	const u32 bw = (width + (block_size - 1)) / block_size;
 	const u32 bh = (height + (block_size - 1)) / block_size;
 
-	pxAssert(Common::IsPow2(pitch_align));
+	pxAssert(std::has_single_bit(pitch_align));
 	const u32 pitch = Common::AlignUpPow2(bw * bytes_per_block, pitch_align);
 	return (pitch * bh);
 }
@@ -175,7 +193,7 @@ u32 GSDownloadTexture::GetTransferPitch(u32 width, u32 pitch_align) const
 	const u32 bytes_per_block = GSTexture::GetCompressedBytesPerBlock(m_format);
 	const u32 bw = (width + (block_size - 1)) / block_size;
 
-	pxAssert(Common::IsPow2(pitch_align));
+	pxAssert(std::has_single_bit(pitch_align));
 	return Common::AlignUpPow2(bw * bytes_per_block, pitch_align);
 }
 

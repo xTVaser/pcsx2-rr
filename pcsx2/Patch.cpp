@@ -17,6 +17,7 @@
 
 #define _PC_ // disables MIPS opcode macros.
 
+#include "common/Assertions.h"
 #include "common/ByteSwap.h"
 #include "common/FileSystem.h"
 #include "common/Path.h"
@@ -33,11 +34,11 @@
 
 #include "IconsFontAwesome5.h"
 #include "fmt/format.h"
-#include "gsl/span"
 
 #include <algorithm>
 #include <cstring>
 #include <memory>
+#include <span>
 #include <sstream>
 #include <vector>
 
@@ -148,17 +149,22 @@ namespace Patch
 
 	static void TrimPatchLine(std::string& buffer);
 	static int PatchTableExecute(PatchGroup* group, const std::string_view& lhs, const std::string_view& rhs,
-		const gsl::span<const PatchTextTable>& Table);
+		const std::span<const PatchTextTable>& Table);
 	static void LoadPatchLine(PatchGroup* group, const std::string_view& line);
 	static u32 LoadPatchesFromString(PatchList* patch_list, const std::string& patch_file);
 	static bool OpenPatchesZip();
 	static std::string GetPnachTemplate(
-		const std::string_view& serial, u32 crc, bool include_serial, bool add_wildcard);
-	static std::vector<std::string> FindPatchFilesOnDisk(const std::string_view& serial, u32 crc, bool cheats);
+		const std::string_view& serial, u32 crc, bool include_serial, bool add_wildcard, bool all_crcs);
+	static std::vector<std::string> FindPatchFilesOnDisk(
+		const std::string_view& serial, u32 crc, bool cheats, bool all_crcs);
+
+	static bool ContainsPatchName(const PatchInfoList& patches, const std::string_view patchName);
+	static bool ContainsPatchName(const PatchList& patches, const std::string_view patchName);
 
 	template <typename F>
 	static void EnumeratePnachFiles(const std::string_view& serial, u32 crc, bool cheats, bool for_ui, const F& f);
 
+	static bool PatchStringHasUnlabelledPatch(const std::string& pnach_data);
 	static void ExtractPatchInfo(PatchInfoList* dst, const std::string& pnach_data, u32* num_unlabelled_patches);
 	static void ReloadEnabledLists();
 	static u32 EnablePatches(const PatchList& patches, const EnablePatchList& enable_list);
@@ -213,8 +219,15 @@ void Patch::TrimPatchLine(std::string& buffer)
 		buffer.erase(pos);
 }
 
+bool Patch::ContainsPatchName(const PatchList& patch_list, const std::string_view patch_name)
+{
+	return std::find_if(patch_list.begin(), patch_list.end(), [&patch_name](const PatchGroup& patch) {
+		return patch.name == patch_name;
+	}) != patch_list.end();
+}
+
 int Patch::PatchTableExecute(PatchGroup* group, const std::string_view& lhs, const std::string_view& rhs,
-	const gsl::span<const PatchTextTable>& Table)
+	const std::span<const PatchTextTable>& Table)
 {
 	int i = 0;
 
@@ -265,7 +278,15 @@ u32 Patch::LoadPatchesFromString(PatchList* patch_list, const std::string& patch
 
 			if (!current_patch_group.name.empty() || !current_patch_group.patches.empty())
 			{
-				patch_list->push_back(std::move(current_patch_group));
+				// Don't show patches with duplicate names, prefer the first loaded.
+				if (!ContainsPatchName(*patch_list, current_patch_group.name))
+				{
+					patch_list->push_back(std::move(current_patch_group));
+				}
+				else
+				{
+					Console.WriteLn(Color_Gray, fmt::format("Patch: Skipped loading patch '{}' since a patch with a duplicate name was already loaded.", current_patch_group.name));
+				}
 				current_patch_group = {};
 			}
 
@@ -297,7 +318,7 @@ bool Patch::OpenPatchesZip()
 		if (!warning_shown)
 		{
 			Host::AddIconOSDMessage("PatchesZipOpenWarning", ICON_FA_MICROCHIP,
-				fmt::format(TRANSLATE_SV("Patch", "Failed to open {}. Built-in game patches are not available."),
+				fmt::format(TRANSLATE_FS("Patch", "Failed to open {}. Built-in game patches are not available."),
 					PATCHES_ZIP_NAME),
 				Host::OSD_ERROR_DURATION);
 			warning_shown = true;
@@ -313,20 +334,23 @@ bool Patch::OpenPatchesZip()
 	return true;
 }
 
-std::string Patch::GetPnachTemplate(const std::string_view& serial, u32 crc, bool include_serial, bool add_wildcard)
+std::string Patch::GetPnachTemplate(const std::string_view& serial, u32 crc, bool include_serial, bool add_wildcard, bool all_crcs)
 {
-	if (include_serial)
+	pxAssert(!all_crcs || (include_serial && add_wildcard));
+	if (all_crcs)
+		return fmt::format("{}_*.pnach", serial);
+	else if (include_serial)
 		return fmt::format("{}_{:08X}{}.pnach", serial, crc, add_wildcard ? "*" : "");
 	else
 		return fmt::format("{:08X}{}.pnach", crc, add_wildcard ? "*" : "");
 }
 
-std::vector<std::string> Patch::FindPatchFilesOnDisk(const std::string_view& serial, u32 crc, bool cheats)
+std::vector<std::string> Patch::FindPatchFilesOnDisk(const std::string_view& serial, u32 crc, bool cheats, bool all_crcs)
 {
 	FileSystem::FindResultsArray files;
 	FileSystem::FindFiles(cheats ? EmuFolders::Cheats.c_str() : EmuFolders::Patches.c_str(),
-		GetPnachTemplate(serial, crc, true, true).c_str(), FILESYSTEM_FIND_FILES | FILESYSTEM_FIND_HIDDEN_FILES,
-		&files);
+		GetPnachTemplate(serial, crc, true, true, all_crcs).c_str(),
+		FILESYSTEM_FIND_FILES | FILESYSTEM_FIND_HIDDEN_FILES, &files);
 
 	std::vector<std::string> ret;
 	ret.reserve(files.size());
@@ -336,7 +360,7 @@ std::vector<std::string> Patch::FindPatchFilesOnDisk(const std::string_view& ser
 
 	// and patches without serials
 	FileSystem::FindFiles(cheats ? EmuFolders::Cheats.c_str() : EmuFolders::Patches.c_str(),
-		GetPnachTemplate(serial, crc, false, true).c_str(), FILESYSTEM_FIND_FILES | FILESYSTEM_FIND_HIDDEN_FILES,
+		GetPnachTemplate(serial, crc, false, true, false).c_str(), FILESYSTEM_FIND_FILES | FILESYSTEM_FIND_HIDDEN_FILES,
 		&files);
 	ret.reserve(ret.size() + files.size());
 	for (FILESYSTEM_FIND_DATA& fd : files)
@@ -345,40 +369,88 @@ std::vector<std::string> Patch::FindPatchFilesOnDisk(const std::string_view& ser
 	return ret;
 }
 
+bool Patch::ContainsPatchName(const PatchInfoList& patches, const std::string_view patchName)
+{
+	return std::find_if(patches.begin(), patches.end(), [&patchName](const PatchInfo& patch) {
+		return patch.name == patchName;
+	}) != patches.end();
+}
+
 template <typename F>
 void Patch::EnumeratePnachFiles(const std::string_view& serial, u32 crc, bool cheats, bool for_ui, const F& f)
 {
 	// Prefer files on disk over the zip.
 	std::vector<std::string> disk_patch_files;
-	if (for_ui || !Achievements::ChallengeModeActive())
-		disk_patch_files = FindPatchFilesOnDisk(serial, crc, cheats);
+	if (for_ui || !Achievements::IsHardcoreModeActive())
+		disk_patch_files = FindPatchFilesOnDisk(serial, crc, cheats, for_ui);
 
+	bool unlabeled_patch_found = false;
 	if (!disk_patch_files.empty())
 	{
 		for (const std::string& file : disk_patch_files)
 		{
 			std::optional<std::string> contents = FileSystem::ReadFileToString(file.c_str());
 			if (contents.has_value())
-				f(std::move(file), std::move(contents.value()));
-		}
+			{
+				// Catch if unlabeled patches are being loaded so we can disable ZIP patches to prevent conflicts.
+				if (PatchStringHasUnlabelledPatch(contents.value()))
+				{
+					unlabeled_patch_found = true;
+					Console.WriteLn(fmt::format("Patch: Disabling any bundled '{}' patches due to unlabeled patch being loaded. (To avoid conflicts)", PATCHES_ZIP_NAME));
+				}
 
-		return;
+				f(std::move(file), std::move(contents.value()));
+			}
+		}
 	}
 
 	// Otherwise fall back to the zip.
-	if (cheats || !OpenPatchesZip())
+	if (cheats || unlabeled_patch_found || !OpenPatchesZip())
 		return;
 
 	// Prefer filename with serial.
-	std::string zip_filename = GetPnachTemplate(serial, crc, true, false);
+	std::string zip_filename = GetPnachTemplate(serial, crc, true, false, false);
 	std::optional<std::string> pnach_data(ReadFileInZipToString(s_patches_zip, zip_filename.c_str()));
 	if (!pnach_data.has_value())
 	{
-		zip_filename = GetPnachTemplate(serial, crc, false, false);
+		zip_filename = GetPnachTemplate(serial, crc, false, false, false);
 		pnach_data = ReadFileInZipToString(s_patches_zip, zip_filename.c_str());
 	}
 	if (pnach_data.has_value())
 		f(std::move(zip_filename), std::move(pnach_data.value()));
+}
+
+bool Patch::PatchStringHasUnlabelledPatch(const std::string& pnach_data)
+{
+	std::istringstream ss(pnach_data);
+	std::string line;
+	bool foundPatch = false, foundLabel = false;
+
+	while (std::getline(ss, line))
+	{
+		TrimPatchLine(line);
+		if (line.empty())
+			continue;
+
+		if (line.length() > 2 && line.front() == '[' && line.back() == ']')
+		{
+			if (!foundPatch)
+				return false;
+			foundLabel = true;
+			continue;
+		}
+
+		std::string_view key, value;
+		StringUtil::ParseAssignmentString(line, &key, &value);
+		if (key == "patch")
+		{
+			if (!foundLabel)
+				return true;
+
+			foundPatch = true;
+		}
+	}
+	return false;
 }
 
 void Patch::ExtractPatchInfo(PatchInfoList* dst, const std::string& pnach_data, u32* num_unlabelled_patches)
@@ -398,7 +470,19 @@ void Patch::ExtractPatchInfo(PatchInfoList* dst, const std::string& pnach_data, 
 		{
 			if (has_patch)
 			{
-				dst->push_back(std::move(current_patch));
+				if (std::none_of(dst->begin(), dst->end(),
+						[&current_patch](const PatchInfo& pi) { return (pi.name == current_patch.name); }))
+				{
+					// Don't show patches with duplicate names, prefer the first loaded.
+					if (!ContainsPatchName(*dst, current_patch.name))
+					{
+						dst->push_back(std::move(current_patch));
+					}
+					else
+					{
+						Console.WriteLn(Color_Gray, fmt::format("Patch: Skipped reading patch '{}' since a patch with a duplicate name was already loaded.", current_patch.name));
+					}
+				}
 				current_patch = {};
 			}
 
@@ -422,8 +506,12 @@ void Patch::ExtractPatchInfo(PatchInfoList* dst, const std::string& pnach_data, 
 	}
 
 	// Last one.
-	if (!current_patch.name.empty())
+	if (!current_patch.name.empty() && std::none_of(dst->begin(), dst->end(), [&current_patch](const PatchInfo& pi) {
+			return (pi.name == current_patch.name);
+		}))
+	{
 		dst->push_back(std::move(current_patch));
+	}
 }
 
 std::string_view Patch::PatchInfo::GetNamePart() const
@@ -459,9 +547,14 @@ Patch::PatchInfoList Patch::GetPatchInfo(const std::string_view& serial, u32 crc
 	return ret;
 }
 
+std::string Patch::GetPnachFilename(const std::string_view& serial, u32 crc, bool cheats)
+{
+	return Path::Combine(cheats ? EmuFolders::Cheats : EmuFolders::Patches, GetPnachTemplate(serial, crc, true, false, false));
+}
+
 void Patch::ReloadEnabledLists()
 {
-	if (EmuConfig.EnableCheats && !Achievements::ChallengeModeActive())
+	if (EmuConfig.EnableCheats && !Achievements::IsHardcoreModeActive())
 		s_enabled_cheats = Host::GetStringListSetting(CHEATS_CONFIG_SECTION, PATCH_ENABLE_CONFIG_KEY);
 	else
 		s_enabled_cheats = {};
@@ -580,20 +673,20 @@ void Patch::UpdateActivePatches(bool reload_enabled_list, bool verbose, bool ver
 	{
 		gp_count = EnablePatches(s_gamedb_patches, EnablePatchList());
 		if (gp_count > 0)
-			fmt::format_to(std::back_inserter(message), TRANSLATE_SV("Patch", "{} GameDB patches"), gp_count);
+			fmt::format_to(std::back_inserter(message), TRANSLATE_FS("Patch", "{} GameDB patches"), gp_count);
 	}
 
 	const u32 p_count = EnablePatches(s_game_patches, s_enabled_patches);
 	if (p_count > 0)
 	{
-		fmt::format_to(std::back_inserter(message), TRANSLATE_SV("Patch", "{}{} game patches"),
+		fmt::format_to(std::back_inserter(message), TRANSLATE_FS("Patch", "{}{} game patches"),
 			message.empty() ? "" : ", ", p_count);
 	}
 
 	const u32 c_count = EmuConfig.EnableCheats ? EnablePatches(s_cheat_patches, s_enabled_cheats) : 0;
 	if (c_count > 0)
 	{
-		fmt::format_to(std::back_inserter(message), TRANSLATE_SV("Patch", "{}{} cheat patches"),
+		fmt::format_to(std::back_inserter(message), TRANSLATE_FS("Patch", "{}{} cheat patches"),
 			message.empty() ? "" : ", ", c_count);
 	}
 
@@ -605,12 +698,12 @@ void Patch::UpdateActivePatches(bool reload_enabled_list, bool verbose, bool ver
 		if (!message.empty())
 		{
 			Host::AddIconOSDMessage("LoadPatches", ICON_FA_FILE_CODE,
-				fmt::format(TRANSLATE_SV("Patch", "{} are active."), message), Host::OSD_INFO_DURATION);
+				fmt::format(TRANSLATE_FS("Patch", "{} are active."), message), Host::OSD_INFO_DURATION);
 		}
 		else
 		{
 			Host::AddIconOSDMessage("LoadPatches", ICON_FA_FILE_CODE,
-				TRANSLATE_STR(
+				TRANSLATE_SV(
 					"Patch", "No cheats or patches (widescreen, compatibility or others) are found / enabled."),
 				Host::OSD_INFO_DURATION);
 		}

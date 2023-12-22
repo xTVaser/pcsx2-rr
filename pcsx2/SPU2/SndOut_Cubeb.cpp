@@ -20,6 +20,7 @@
 #include "Host.h"
 #include "IconsFontAwesome5.h"
 
+#include "common/Assertions.h"
 #include "common/Console.h"
 #include "common/StringUtil.h"
 #include "common/RedtapeWindows.h"
@@ -136,6 +137,9 @@ public:
 
 	bool Init() override
 	{
+		if (stream)
+			pxFailRel("Cubeb stream already open in Init()");
+
 #ifdef _WIN32
 		const HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 		m_COMInitializedByUs = SUCCEEDED(hr);
@@ -292,7 +296,7 @@ public:
 				{
 					Host::AddIconOSDMessage("CubebDeviceNotFound", ICON_FA_VOLUME_MUTE,
 						fmt::format(
-							TRANSLATE_SV("SPU2", "Requested audio output device '{}' not found, using default."),
+							TRANSLATE_FS("SPU2", "Requested audio output device '{}' not found, using default."),
 							selected_device_name),
 						Host::OSD_WARNING_DURATION);
 				}

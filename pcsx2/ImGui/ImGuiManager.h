@@ -1,5 +1,5 @@
 /*  PCSX2 - PS2 Emulator for PCs
- *  Copyright (C) 2002-2023  PCSX2 Dev Team
+ *  Copyright (C) 2002-2023 PCSX2 Dev Team
  *
  *  PCSX2 is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU Lesser General Public License as published by the Free Software Found-
@@ -18,6 +18,7 @@
 #include "common/Pcsx2Defs.h"
 
 #include <string>
+#include <vector>
 
 struct ImFont;
 
@@ -27,10 +28,7 @@ enum class GenericInputBinding : u8;
 namespace ImGuiManager
 {
 	/// Sets the path to the font to use. Empty string means to use the default.
-	void SetFontPath(std::string path);
-
-	/// Sets the glyph range to use when loading fonts.
-	void SetFontRange(const u16* range);
+	void SetFontPathAndRange(std::string path, std::vector<u16> range);
 
 	/// Initializes ImGui, creates fonts, etc.
 	bool Initialize();
@@ -40,6 +38,10 @@ namespace ImGuiManager
 
 	/// Frees all ImGui resources.
 	void Shutdown(bool clear_state);
+
+	/// Returns the size of the display window. Can be safely called from any thread.
+	float GetWindowWidth();
+	float GetWindowHeight();
 
 	/// Updates internal state when the window is size.
 	void WindowResized();
@@ -102,6 +104,14 @@ namespace ImGuiManager
 
 	/// Called on the CPU thread when any input event fires. Allows imgui to take over controller navigation.
 	bool ProcessGenericInputEvent(GenericInputBinding key, float value);
+
+	/// Sets an image and scale for a software cursor. Software cursors can be used for things like crosshairs.
+	void SetSoftwareCursor(u32 index, std::string image_path, float image_scale, u32 multiply_color = 0xFFFFFF);
+	bool HasSoftwareCursor(u32 index);
+	void ClearSoftwareCursor(u32 index);
+
+	/// Sets the position of a software cursor, used when we have relative coordinates such as controllers.
+	void SetSoftwareCursorPosition(u32 index, float pos_x, float pos_y);
 } // namespace ImGuiManager
 
 namespace Host

@@ -72,7 +72,8 @@ public:
 	void SelectAt(QPoint pos);
 	u128 GetSelectedSegment();
 	void InsertAtCurrentSelection(const QString& text);
-	void KeyPress(int key, QChar keychar);
+	// Returns true if the keypress was handled
+	bool KeyPress(int key, QChar keychar);
 
 	MemoryViewType GetViewType()
 	{
@@ -114,7 +115,7 @@ public slots:
 	void gotoAddress(u32 address);
 
 signals:
-	void gotoInDisasm(u32 address);
+	void gotoInDisasm(u32 address, bool should_set_focus = true);
 	void VMUpdate();
 
 private:

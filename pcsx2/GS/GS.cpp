@@ -58,6 +58,7 @@
 #include "common/Console.h"
 #include "common/FileSystem.h"
 #include "common/Path.h"
+#include "common/SmallString.h"
 #include "common/StringUtil.h"
 
 #include "fmt/format.h"
@@ -202,6 +203,7 @@ static bool OpenGSRenderer(GSRendererType renderer, u8* basemem)
 
 	g_gs_renderer->SetRegsMem(basemem);
 	g_gs_renderer->ResetPCRTC();
+	g_gs_renderer->UpdateRenderFixes();
 	g_perfmon.Reset();
 	return true;
 }
@@ -239,7 +241,6 @@ bool GSreopen(bool recreate_device, bool recreate_renderer, const Pcsx2Config::G
 	}
 
 	u8* basemem = g_gs_renderer->GetRegsMem();
-	const u32 gamecrc = g_gs_renderer->GetGameCRC();
 
 	freezeData fd = {};
 	std::unique_ptr<u8[]> fd_data;
@@ -264,7 +265,7 @@ bool GSreopen(bool recreate_device, bool recreate_renderer, const Pcsx2Config::G
 	else
 	{
 		// Make sure nothing is left over.
-		g_gs_renderer->PurgeTextureCache();
+		g_gs_renderer->PurgeTextureCache(true, true, true);
 		g_gs_renderer->PurgePool();
 	}
 
@@ -309,8 +310,6 @@ bool GSreopen(bool recreate_device, bool recreate_renderer, const Pcsx2Config::G
 			Console.Error("(GSreopen) Failed to defrost");
 			return false;
 		}
-
-		g_gs_renderer->SetGameCRC(gamecrc);
 	}
 
 	if (!capture_filename.empty())
@@ -357,6 +356,17 @@ void GSclose()
 void GSreset(bool hardware_reset)
 {
 	g_gs_renderer->Reset(hardware_reset);
+
+	// Restart video capture if it's been started.
+	// Otherwise we get a buildup of audio frames from the CPU thread.
+	if (hardware_reset && GSCapture::IsCapturing())
+	{
+		std::string next_filename = GSCapture::GetNextCaptureFileName();
+		const GSVector2i size = GSCapture::GetSize();
+		Console.Warning(fmt::format("Restarting video capture to {}.", next_filename));
+		g_gs_renderer->EndCapture();
+		g_gs_renderer->BeginCapture(std::move(next_filename), size);
+	}
 }
 
 void GSgifSoftReset(u32 mask)
@@ -493,9 +503,16 @@ void GSThrottlePresentation()
 	Threading::SleepUntil(s_next_manual_present_time);
 }
 
-void GSSetGameCRC(u32 crc)
+void GSGameChanged()
 {
-	g_gs_renderer->SetGameCRC(crc);
+	if (GSConfig.UseHardwareRenderer())
+		GSTextureReplacements::GameChanged();
+}
+
+bool GSHasDisplayWindow()
+{
+	pxAssert(g_gs_device);
+	return (g_gs_device->GetWindowInfo().type != WindowInfo::Type::Surfaceless);
 }
 
 void GSResizeDisplayWindow(int width, int height, float scale)
@@ -603,7 +620,7 @@ void GSgetInternalResolution(int* width, int* height)
 	*height = res.y;
 }
 
-void GSgetStats(std::string& info)
+void GSgetStats(SmallStringBase& info)
 {
 	GSPerfMon& pm = g_perfmon;
 	const char* api_name = GSDevice::RenderAPIToString(g_gs_device->GetRenderAPI());
@@ -611,7 +628,7 @@ void GSgetStats(std::string& info)
 	{
 		const double fps = GetVerticalFrequency();
 		const double fillrate = pm.Get(GSPerfMon::Fillrate);
-		fmt::format_to(std::back_inserter(info), "{} SW | {} S | {} P | {} D | {:.2f} U | {:.2f} D | {:.2f} mpps",
+		info.fmt("{} SW | {} S | {} P | {} D | {:.2f} U | {:.2f} D | {:.2f} mpps",
 			api_name,
 			(int)pm.Get(GSPerfMon::SyncPoint),
 			(int)pm.Get(GSPerfMon::Prim),
@@ -626,7 +643,7 @@ void GSgetStats(std::string& info)
 	}
 	else
 	{
-		fmt::format_to(std::back_inserter(info), "{} HW | {} P | {} D | {} DC | {} B | {} RP | {} RB | {} TC | {} TU",
+		info.fmt("{} HW | {} P | {} D | {} DC | {} B | {} RP | {} RB | {} TC | {} TU",
 			api_name,
 			(int)pm.Get(GSPerfMon::Prim),
 			(int)pm.Get(GSPerfMon::Draw),
@@ -639,7 +656,7 @@ void GSgetStats(std::string& info)
 	}
 }
 
-void GSgetMemoryStats(std::string& info)
+void GSgetMemoryStats(SmallStringBase& info)
 {
 	if (!g_texture_cache)
 		return;
@@ -720,7 +737,7 @@ void GSUpdateConfig(const Pcsx2Config::GSOptions& new_config)
 		GSConfig.BeforeDrawFunctionId != old_config.BeforeDrawFunctionId ||
 		GSConfig.MoveHandlerFunctionId != old_config.MoveHandlerFunctionId)
 	{
-		g_gs_renderer->UpdateCRCHacks();
+		g_gs_renderer->UpdateRenderFixes();
 	}
 
 	// renderer-specific options (e.g. auto flush, TC offset)
@@ -743,7 +760,7 @@ void GSUpdateConfig(const Pcsx2Config::GSOptions& new_config)
 	{
 		if (GSConfig.UserHacks_ReadTCOnClose)
 			g_gs_renderer->ReadbackTextureCache();
-		g_gs_renderer->PurgeTextureCache();
+		g_gs_renderer->PurgeTextureCache(true, true, true);
 		g_gs_renderer->PurgePool();
 	}
 
@@ -760,7 +777,7 @@ void GSUpdateConfig(const Pcsx2Config::GSOptions& new_config)
 	if (GSConfig.LoadTextureReplacements != old_config.LoadTextureReplacements ||
 		GSConfig.DumpReplaceableTextures != old_config.DumpReplaceableTextures)
 	{
-		g_gs_renderer->PurgeTextureCache();
+		g_gs_renderer->PurgeTextureCache(true, false, true);
 	}
 
 	if (GSConfig.OsdShowGPU != old_config.OsdShowGPU)
@@ -770,7 +787,7 @@ void GSUpdateConfig(const Pcsx2Config::GSOptions& new_config)
 	}
 }
 
-void GSSwitchRenderer(GSRendererType new_renderer)
+void GSSwitchRenderer(GSRendererType new_renderer, GSInterlaceMode new_interlace)
 {
 	if (new_renderer == GSRendererType::Auto)
 		new_renderer = GSUtil::GetPreferredRenderer();
@@ -781,6 +798,8 @@ void GSSwitchRenderer(GSRendererType new_renderer)
 	const bool is_software_switch = (new_renderer == GSRendererType::SW || GSConfig.Renderer == GSRendererType::SW);
 	const Pcsx2Config::GSOptions old_config(GSConfig);
 	GSConfig.Renderer = new_renderer;
+	GSConfig.InterlaceMode = new_interlace;
+
 	if (!GSreopen(!is_software_switch, true, old_config))
 		pxFailRel("Failed to reopen GS for renderer switch.");
 }
@@ -931,7 +950,7 @@ std::pair<u8, u8> GSGetRGBA8AlphaMinMax(const void* data, u32 width, u32 height,
 			const u8* rptr = ptr;
 			for (u32 c = 0; c < width; c += 4)
 			{
-				const GSVector4i v = GSVector4i::load<true>(rptr);
+				const GSVector4i v = GSVector4i::load<false>(rptr);
 				rptr += sizeof(GSVector4i);
 				minc = minc.min_u32(v);
 				maxc = maxc.max_u32(v);
@@ -956,13 +975,13 @@ std::pair<u8, u8> GSGetRGBA8AlphaMinMax(const void* data, u32 width, u32 height,
 			const u8* rptr = ptr;
 			for (u32 c = 0; c < aligned_width; c += 4)
 			{
-				const GSVector4i v = GSVector4i::load<true>(rptr);
+				const GSVector4i v = GSVector4i::load<false>(rptr);
 				rptr += sizeof(GSVector4i);
 				minc = minc.min_u32(v);
 				maxc = maxc.max_u32(v);
 			}
 
-			const GSVector4i v = GSVector4i::load<true>(rptr);
+			const GSVector4i v = GSVector4i::load<false>(rptr);
 			minc = minc.min_u32(v | last_mask_or);
 			maxc = maxc.max_u32(v & last_mask_and);
 
@@ -978,12 +997,27 @@ static void HotkeyAdjustUpscaleMultiplier(s32 delta)
 {
 	const u32 new_multiplier = static_cast<u32>(std::clamp(static_cast<s32>(EmuConfig.GS.UpscaleMultiplier) + delta, 1, 8));
 	Host::AddKeyedOSDMessage("UpscaleMultiplierChanged",
-		fmt::format(TRANSLATE_SV("GS", "Upscale multiplier set to {}x."), new_multiplier), Host::OSD_QUICK_DURATION);
+		fmt::format(TRANSLATE_FS("GS", "Upscale multiplier set to {}x."), new_multiplier), Host::OSD_QUICK_DURATION);
 	EmuConfig.GS.UpscaleMultiplier = new_multiplier;
 
 	// this is pretty slow. we only really need to flush the TC and recompile shaders.
 	// TODO(Stenzek): Make it faster at some point in the future.
 	MTGS::ApplySettings();
+}
+
+static void HotkeyToggleOSD()
+{
+	GSConfig.OsdShowMessages ^= EmuConfig.GS.OsdShowMessages;
+	GSConfig.OsdShowSpeed ^= EmuConfig.GS.OsdShowSpeed;
+	GSConfig.OsdShowFPS ^= EmuConfig.GS.OsdShowFPS;
+	GSConfig.OsdShowCPU ^= EmuConfig.GS.OsdShowCPU;
+	GSConfig.OsdShowGPU ^= EmuConfig.GS.OsdShowGPU;
+	GSConfig.OsdShowResolution ^= EmuConfig.GS.OsdShowResolution;
+	GSConfig.OsdShowGSStats ^= EmuConfig.GS.OsdShowGSStats;
+	GSConfig.OsdShowIndicators ^= EmuConfig.GS.OsdShowIndicators;
+	GSConfig.OsdShowSettings ^= EmuConfig.GS.OsdShowSettings;
+	GSConfig.OsdShowInputs ^= EmuConfig.GS.OsdShowInputs;
+	GSConfig.OsdShowFrameTimes ^= EmuConfig.GS.OsdShowFrameTimes;
 }
 
 BEGIN_HOTKEY_LIST(g_gs_hotkeys){"Screenshot", TRANSLATE_NOOP("Hotkeys", "Graphics"),
@@ -1048,6 +1082,11 @@ BEGIN_HOTKEY_LIST(g_gs_hotkeys){"Screenshot", TRANSLATE_NOOP("Hotkeys", "Graphic
 			if (!pressed)
 				HotkeyAdjustUpscaleMultiplier(-1);
 		}},
+	{"ToggleOSD", TRANSLATE_NOOP("Hotkeys", "Graphics"), TRANSLATE_NOOP("Hotkeys", "Toggle On-Screen Display"),
+		[](s32 pressed) {
+			if (!pressed)
+				HotkeyToggleOSD();
+		}},
 	{"CycleAspectRatio", TRANSLATE_NOOP("Hotkeys", "Graphics"), TRANSLATE_NOOP("Hotkeys", "Cycle Aspect Ratio"),
 		[](s32 pressed) {
 			if (pressed)
@@ -1057,7 +1096,7 @@ BEGIN_HOTKEY_LIST(g_gs_hotkeys){"Screenshot", TRANSLATE_NOOP("Hotkeys", "Graphic
 			EmuConfig.CurrentAspectRatio = static_cast<AspectRatioType>(
 				(static_cast<int>(EmuConfig.CurrentAspectRatio) + 1) % static_cast<int>(AspectRatioType::MaxCount));
 			Host::AddKeyedOSDMessage("CycleAspectRatio",
-				fmt::format(TRANSLATE_SV("Hotkeys", "Aspect ratio set to '{}'."),
+				fmt::format(TRANSLATE_FS("Hotkeys", "Aspect ratio set to '{}'."),
 					Pcsx2Config::GSOptions::AspectRatioNames[static_cast<int>(EmuConfig.CurrentAspectRatio)]),
 				Host::OSD_QUICK_DURATION);
 		}},
@@ -1073,14 +1112,14 @@ BEGIN_HOTKEY_LIST(g_gs_hotkeys){"Screenshot", TRANSLATE_NOOP("Hotkeys", "Graphic
 			const HWMipmapLevel new_level =
 				static_cast<HWMipmapLevel>(((static_cast<s32>(EmuConfig.GS.HWMipmap) + 2) % CYCLE_COUNT) - 1);
 			Host::AddKeyedOSDMessage("CycleMipmapMode",
-				fmt::format(TRANSLATE_SV("Hotkeys", "Hardware mipmapping set to '{}'."),
+				fmt::format(TRANSLATE_FS("Hotkeys", "Hardware mipmapping set to '{}'."),
 					option_names[static_cast<s32>(new_level) + 1]),
 				Host::OSD_QUICK_DURATION);
 			EmuConfig.GS.HWMipmap = new_level;
 
 			MTGS::RunOnGSThread([new_level]() {
 				GSConfig.HWMipmap = new_level;
-				g_gs_renderer->PurgeTextureCache();
+				g_gs_renderer->PurgeTextureCache(true, false, true);
 				g_gs_renderer->PurgePool();
 			});
 		}},
@@ -1106,7 +1145,7 @@ BEGIN_HOTKEY_LIST(g_gs_hotkeys){"Screenshot", TRANSLATE_NOOP("Hotkeys", "Graphic
 				(static_cast<s32>(EmuConfig.GS.InterlaceMode) + 1) % static_cast<s32>(GSInterlaceMode::Count));
 			Host::AddKeyedOSDMessage("CycleInterlaceMode",
 				fmt::format(
-					TRANSLATE_SV("Hotkeys", "Deinterlace mode set to '{}'."), option_names[static_cast<s32>(new_mode)]),
+					TRANSLATE_FS("Hotkeys", "Deinterlace mode set to '{}'."), option_names[static_cast<s32>(new_mode)]),
 				Host::OSD_QUICK_DURATION);
 			EmuConfig.GS.InterlaceMode = new_mode;
 
@@ -1152,7 +1191,13 @@ BEGIN_HOTKEY_LIST(g_gs_hotkeys){"Screenshot", TRANSLATE_NOOP("Hotkeys", "Graphic
 				{
 					Host::AddKeyedOSDMessage("ReloadTextureReplacements",
 						TRANSLATE_STR("Hotkeys", "Reloading texture replacements..."), Host::OSD_INFO_DURATION);
-					MTGS::RunOnGSThread([]() { GSTextureReplacements::ReloadReplacementMap(); });
+					MTGS::RunOnGSThread([]() {
+						if (!g_gs_renderer)
+							return;
+
+						GSTextureReplacements::ReloadReplacementMap();
+						g_gs_renderer->PurgeTextureCache(true, false, true);
+					});
 				}
 			}
 		}},

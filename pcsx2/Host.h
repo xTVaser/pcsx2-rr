@@ -40,16 +40,6 @@ namespace Host
 	static constexpr float OSD_INFO_DURATION = 5.0f;
 	static constexpr float OSD_QUICK_DURATION = 2.5f;
 
-	/// Reads a file from the resources directory of the application.
-	/// This may be outside of the "normal" filesystem on platforms such as Mac.
-	std::optional<std::vector<u8>> ReadResourceFile(const char* filename);
-
-	/// Reads a resource file file from the resources directory as a string.
-	std::optional<std::string> ReadResourceFileToString(const char* filename);
-
-	/// Returns the modified time of a resource.
-	std::optional<std::time_t> GetResourceFileTimestamp(const char* filename);
-
 	/// Returns a localized version of the specified string within the specified context.
 	/// The pointer is guaranteed to be valid until the next language change.
 	const char* TranslateToCString(const std::string_view& context, const std::string_view& msg);
@@ -108,6 +98,9 @@ namespace Host
 
 	/// Requests shut down of the current virtual machine.
 	void RequestVMShutdown(bool allow_confirm, bool allow_save_state, bool default_save_state);
+
+	/// Returns the user agent to use for HTTP requests.
+	std::string GetHTTPUserAgent();
 
 	/// Base setting retrieval, bypasses layers.
 	std::string GetBaseStringSettingValue(const char* section, const char* key, const char* default_value = "");
@@ -181,6 +174,7 @@ namespace Host
 #define TRANSLATE(context, msg) Host::TranslateToCString(context, msg)
 #define TRANSLATE_SV(context, msg) Host::TranslateToStringView(context, msg)
 #define TRANSLATE_STR(context, msg) Host::TranslateToString(context, msg)
+#define TRANSLATE_FS(context, msg) fmt::runtime(Host::TranslateToStringView(context, msg))
 
 // Does not translate the string at runtime, but allows the UI to in its own way.
 #define TRANSLATE_NOOP(context, msg) msg

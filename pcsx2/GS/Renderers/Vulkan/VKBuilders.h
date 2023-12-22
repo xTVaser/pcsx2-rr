@@ -17,10 +17,26 @@
 
 #include "GS/Renderers/Vulkan/VKLoader.h"
 
+#include "common/StringUtil.h"
+
 #include <array>
+#include <cstdarg>
+#include <string_view>
+
+#ifdef _DEBUG
+#define ENABLE_VULKAN_DEBUG_OBJECTS 1
+#endif
+
+#define LOG_VULKAN_ERROR(res, ...) ::Vulkan::LogVulkanResult(__func__, res, __VA_ARGS__)
 
 namespace Vulkan
 {
+	// Adds a structure to a chain.
+	void AddPointerToChain(void* head, const void* ptr);
+
+	const char* VkResultToString(VkResult res);
+	void LogVulkanResult(const char* func_name, VkResult res, const char* msg, ...);
+
 	class DescriptorSetLayoutBuilder
 	{
 	public:
@@ -32,6 +48,7 @@ namespace Vulkan
 		DescriptorSetLayoutBuilder();
 
 		void Clear();
+		void SetPushFlag();
 
 		VkDescriptorSetLayout Create(VkDevice device);
 
@@ -114,6 +131,9 @@ namespace Vulkan
 			VkBlendOp op, VkBlendFactor alpha_src_factor, VkBlendFactor alpha_dst_factor, VkBlendOp alpha_op,
 			VkColorComponentFlags write_mask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
 											   VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
+		void SetColorWriteMask(
+			u32 attachment, VkColorComponentFlags write_mask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+															   VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT);
 		void AddBlendFlags(u32 flags);
 		void ClearBlendAttachments();
 
@@ -190,7 +210,7 @@ namespace Vulkan
 
 		VkSpecializationInfo m_si;
 		std::array<VkSpecializationMapEntry, MAX_SPECIALIZATION_CONSTANTS> m_smap_entries;
-		std::array<u8, SPECIALIZATION_CONSTANT_SIZE* MAX_SPECIALIZATION_CONSTANTS> m_smap_constants;
+		std::array<u8, SPECIALIZATION_CONSTANT_SIZE * MAX_SPECIALIZATION_CONSTANTS> m_smap_constants;
 	};
 
 	class SamplerBuilder
@@ -229,6 +249,8 @@ namespace Vulkan
 		void Clear();
 
 		void Update(VkDevice device, bool clear = true);
+		void PushUpdate(VkCommandBuffer cmdbuf, VkPipelineBindPoint bind_point, VkPipelineLayout layout, u32 set,
+			bool clear = true);
 
 		void AddImageDescriptorWrite(VkDescriptorSet set, u32 binding, VkImageView view,
 			VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -329,4 +351,72 @@ namespace Vulkan
 		VkBufferViewCreateInfo m_ci;
 	};
 
+
+#ifdef ENABLE_VULKAN_DEBUG_OBJECTS
+
+	// Provides a compile-time mapping between a Vulkan-type into its matching VkObjectType
+	template <typename T>
+	struct VkObjectTypeMap;
+
+	// clang-format off
+	template<> struct VkObjectTypeMap<VkInstance                > { using type = VkInstance; static constexpr VkObjectType value = VK_OBJECT_TYPE_INSTANCE; };
+	template<> struct VkObjectTypeMap<VkPhysicalDevice          > { using type = VkPhysicalDevice; static constexpr VkObjectType value = VK_OBJECT_TYPE_PHYSICAL_DEVICE; };
+	template<> struct VkObjectTypeMap<VkDevice                  > { using type = VkDevice; static constexpr VkObjectType value = VK_OBJECT_TYPE_DEVICE; };
+	template<> struct VkObjectTypeMap<VkQueue                   > { using type = VkQueue; static constexpr VkObjectType value = VK_OBJECT_TYPE_QUEUE; };
+	template<> struct VkObjectTypeMap<VkSemaphore               > { using type = VkSemaphore; static constexpr VkObjectType value = VK_OBJECT_TYPE_SEMAPHORE; };
+	template<> struct VkObjectTypeMap<VkCommandBuffer           > { using type = VkCommandBuffer; static constexpr VkObjectType value = VK_OBJECT_TYPE_COMMAND_BUFFER; };
+	template<> struct VkObjectTypeMap<VkFence                   > { using type = VkFence; static constexpr VkObjectType value = VK_OBJECT_TYPE_FENCE; };
+	template<> struct VkObjectTypeMap<VkDeviceMemory            > { using type = VkDeviceMemory; static constexpr VkObjectType value = VK_OBJECT_TYPE_DEVICE_MEMORY; };
+	template<> struct VkObjectTypeMap<VkBuffer                  > { using type = VkBuffer; static constexpr VkObjectType value = VK_OBJECT_TYPE_BUFFER; };
+	template<> struct VkObjectTypeMap<VkImage                   > { using type = VkImage; static constexpr VkObjectType value = VK_OBJECT_TYPE_IMAGE; };
+	template<> struct VkObjectTypeMap<VkEvent                   > { using type = VkEvent; static constexpr VkObjectType value = VK_OBJECT_TYPE_EVENT; };
+	template<> struct VkObjectTypeMap<VkQueryPool               > { using type = VkQueryPool; static constexpr VkObjectType value = VK_OBJECT_TYPE_QUERY_POOL; };
+	template<> struct VkObjectTypeMap<VkBufferView              > { using type = VkBufferView; static constexpr VkObjectType value = VK_OBJECT_TYPE_BUFFER_VIEW; };
+	template<> struct VkObjectTypeMap<VkImageView               > { using type = VkImageView; static constexpr VkObjectType value = VK_OBJECT_TYPE_IMAGE_VIEW; };
+	template<> struct VkObjectTypeMap<VkShaderModule            > { using type = VkShaderModule; static constexpr VkObjectType value = VK_OBJECT_TYPE_SHADER_MODULE; };
+	template<> struct VkObjectTypeMap<VkPipelineCache           > { using type = VkPipelineCache; static constexpr VkObjectType value = VK_OBJECT_TYPE_PIPELINE_CACHE; };
+	template<> struct VkObjectTypeMap<VkPipelineLayout          > { using type = VkPipelineLayout; static constexpr VkObjectType value = VK_OBJECT_TYPE_PIPELINE_LAYOUT; };
+	template<> struct VkObjectTypeMap<VkRenderPass              > { using type = VkRenderPass; static constexpr VkObjectType value = VK_OBJECT_TYPE_RENDER_PASS; };
+	template<> struct VkObjectTypeMap<VkPipeline                > { using type = VkPipeline; static constexpr VkObjectType value = VK_OBJECT_TYPE_PIPELINE; };
+	template<> struct VkObjectTypeMap<VkDescriptorSetLayout     > { using type = VkDescriptorSetLayout; static constexpr VkObjectType value = VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT; };
+	template<> struct VkObjectTypeMap<VkSampler                 > { using type = VkSampler; static constexpr VkObjectType value = VK_OBJECT_TYPE_SAMPLER; };
+	template<> struct VkObjectTypeMap<VkDescriptorPool          > { using type = VkDescriptorPool; static constexpr VkObjectType value = VK_OBJECT_TYPE_DESCRIPTOR_POOL; };
+	template<> struct VkObjectTypeMap<VkDescriptorSet           > { using type = VkDescriptorSet; static constexpr VkObjectType value = VK_OBJECT_TYPE_DESCRIPTOR_SET; };
+	template<> struct VkObjectTypeMap<VkFramebuffer             > { using type = VkFramebuffer; static constexpr VkObjectType value = VK_OBJECT_TYPE_FRAMEBUFFER; };
+	template<> struct VkObjectTypeMap<VkCommandPool             > { using type = VkCommandPool; static constexpr VkObjectType value = VK_OBJECT_TYPE_COMMAND_POOL; };
+	template<> struct VkObjectTypeMap<VkDescriptorUpdateTemplate> { using type = VkDescriptorUpdateTemplate; static constexpr VkObjectType value = VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE; };
+	template<> struct VkObjectTypeMap<VkSurfaceKHR              > { using type = VkSurfaceKHR; static constexpr VkObjectType value = VK_OBJECT_TYPE_SURFACE_KHR; };
+	template<> struct VkObjectTypeMap<VkSwapchainKHR            > { using type = VkSwapchainKHR; static constexpr VkObjectType value = VK_OBJECT_TYPE_SWAPCHAIN_KHR; };
+	template<> struct VkObjectTypeMap<VkDebugUtilsMessengerEXT  > { using type = VkDebugUtilsMessengerEXT; static constexpr VkObjectType value = VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT; };
+	// clang-format on
+
+#endif
+
+	static inline void SetObjectName(
+		VkDevice device, void* object_handle, VkObjectType object_type, const char* format, va_list ap)
+	{
+#ifdef ENABLE_VULKAN_DEBUG_OBJECTS
+		if (!vkSetDebugUtilsObjectNameEXT)
+		{
+			return;
+		}
+
+		const std::string str(StringUtil::StdStringFromFormatV(format, ap));
+		const VkDebugUtilsObjectNameInfoEXT nameInfo{VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT, nullptr,
+			object_type, reinterpret_cast<uint64_t>(object_handle), str.c_str()};
+		vkSetDebugUtilsObjectNameEXT(device, &nameInfo);
+#endif
+	}
+
+	template <typename T>
+	static inline void SetObjectName(VkDevice device, T object_handle, const char* format, ...)
+	{
+#ifdef ENABLE_VULKAN_DEBUG_OBJECTS
+		std::va_list ap;
+		va_start(ap, format);
+		SetObjectName(device, reinterpret_cast<void*>((typename VkObjectTypeMap<T>::type)object_handle),
+			VkObjectTypeMap<T>::value, format, ap);
+		va_end(ap);
+#endif
+	}
 } // namespace Vulkan

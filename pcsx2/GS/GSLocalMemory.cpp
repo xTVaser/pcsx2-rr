@@ -205,10 +205,10 @@ GSLocalMemory::GSLocalMemory()
 
 	for (psm_t& psm : m_psm)
 		psm.fmt = 3;
-	m_psm[PSMCT32].fmt = m_psm[PSMZ32].fmt = 0;
-	m_psm[PSMCT24].fmt = m_psm[PSMZ24].fmt = 1;
-	m_psm[PSMCT16].fmt = m_psm[PSMZ16].fmt = 2;
-	m_psm[PSMCT16S].fmt = m_psm[PSMZ16S].fmt = 2;
+	m_psm[PSMCT32].fmt = m_psm[PSMZ32].fmt = PSM_FMT_32;
+	m_psm[PSMCT24].fmt = m_psm[PSMZ24].fmt = PSM_FMT_24;
+	m_psm[PSMCT16].fmt = m_psm[PSMZ16].fmt = PSM_FMT_16;
+	m_psm[PSMCT16S].fmt = m_psm[PSMZ16S].fmt = PSM_FMT_16;
 
 
 	m_psm[PSGPU24].bs = GSVector2i(16, 8);
@@ -485,6 +485,12 @@ u32 GSLocalMemory::GetEndBlockAddress(u32 bp, u32 bw, u32 psm, GSVector4i rect)
 	return result;
 }
 
+u32 GSLocalMemory::GetUnwrappedEndBlockAddress(u32 bp, u32 bw, u32 psm, GSVector4i rect)
+{
+	const u32 result = GetEndBlockAddress(bp, bw, psm, rect);
+	return (result < bp) ? (result + MAX_BLOCKS) : result;
+}
+
 GSVector4i GSLocalMemory::GetRectForPageOffset(u32 base_bp, u32 offset_bp, u32 bw, u32 psm)
 {
 	pxAssert((base_bp % BLOCKS_PER_PAGE) == 0 && (offset_bp % BLOCKS_PER_PAGE) == 0);
@@ -494,6 +500,63 @@ GSVector4i GSLocalMemory::GetRectForPageOffset(u32 base_bp, u32 offset_bp, u32 b
 	const u32 valid_bw = std::max(1U, bw);
 	const GSVector2i page_offset_xy = GSVector2i(page_offset % valid_bw, page_offset / std::max(1U, valid_bw));
 	return GSVector4i(pgs * page_offset_xy).xyxy() + GSVector4i::loadh(pgs);
+}
+
+bool GSLocalMemory::HasOverlap(const u32 src_bp, const u32 src_bw, const u32 src_psm, const GSVector4i src_rect
+							, const u32 dst_bp, const u32 dst_bw, const u32 dst_psm, const GSVector4i dst_rect)
+{
+	const u32 src_start_bp = GSLocalMemory::GetStartBlockAddress(src_bp, src_bw, src_psm, src_rect) & ~(BLOCKS_PER_PAGE - 1);
+	const u32 dst_start_bp = GSLocalMemory::GetStartBlockAddress(dst_bp, dst_bw, dst_psm, dst_rect) & ~(BLOCKS_PER_PAGE - 1);
+
+	u32 src_end_bp = ((GSLocalMemory::GetEndBlockAddress(src_bp, src_bw, src_psm, src_rect) + 1) + (BLOCKS_PER_PAGE - 1)) & ~(BLOCKS_PER_PAGE - 1);
+	u32 dst_end_bp = ((GSLocalMemory::GetEndBlockAddress(dst_bp, dst_bw, dst_psm, dst_rect) + 1) + (BLOCKS_PER_PAGE - 1)) & ~(BLOCKS_PER_PAGE - 1);
+	
+	if (src_start_bp == src_end_bp)
+	{
+		src_end_bp = (src_end_bp + BLOCKS_PER_PAGE) & ~(MAX_BLOCKS - 1);
+	}
+
+	if (dst_start_bp == dst_end_bp)
+	{
+		dst_end_bp = (dst_end_bp + BLOCKS_PER_PAGE) & ~(MAX_BLOCKS - 1);
+	}
+
+	// Source has wrapped, 2 separate checks.
+	if (src_end_bp <= src_start_bp)
+	{
+		// Destination has also wrapped, so they *have* to overlap.
+		if (dst_end_bp <= dst_start_bp)
+		{
+			return true;
+		}
+		else
+		{
+			if (dst_end_bp > src_start_bp)
+				return true;
+
+			if (dst_start_bp < src_end_bp)
+				return true;
+		}
+	}
+	else // No wrapping on source.
+	{
+		// Destination wraps.
+		if (dst_end_bp <= dst_start_bp)
+		{
+			if (src_end_bp > dst_start_bp)
+				return true;
+
+			if (src_start_bp < dst_end_bp)
+				return true;
+		}
+		else
+		{
+			if (dst_start_bp < src_end_bp && dst_end_bp > src_start_bp)
+				return true;
+		}
+	}
+
+	return false;
 }
 
 ///////////////////
@@ -674,10 +737,7 @@ GSOffset::PageLooper GSOffset::pageLooperForRect(const GSVector4i& rect) const
 	//   e.g. if bp is 1 on PSMCT32, the top left tile uses page 1 if the rect covers the bottom right block, and uses page 0 if the rect covers any block other than the bottom right
 	// - Center tiles (ones that aren't first or last) cover all blocks that the first and last do in a row
 	//   Therefore, if the first tile in a row touches the higher of its two pages, subsequent non-last tiles will at least touch the higher of their pages as well (and same for center to last, etc)
-	//   Therefore, with the exception of row covering two pages in a z swizzle (which could touch e.g. pages 1 and 3 but not 2), all rows touch contiguous pages
-	//   For now, we won't deal with that case as it's rare (only possible with a thin, unaligned rect on an unaligned bp on a z swizzle), and the worst issue looping too many pages could cause is unneccessary cache invalidation
-	//   If code is added later to deal with the case, you'll need to change loopPagesWithBreak's block deduplication code, as it currently works by forcing the page number to increase monotonically which could cause blocks to be missed if e.g. the first row touches 1 and 3, and the second row touches 2 and 4
-	// - Based on the above assumption, we calculate the range of pages a row could touch with full coverage, then add one to the start if the first tile doesn't touch its lower page, and subtract one from the end if the last tile doesn't touch its upper page
+	// - Based on the above, we calculate the range of pages a row could touch with full coverage, then add one to the start if the first tile doesn't touch its lower page, and subtract one from the end if the last tile doesn't touch its upper page
 	// - This is done separately for the first and last rows in the y axis, as they may not have the same coverage as a row in the middle
 
 	PageLooper out;

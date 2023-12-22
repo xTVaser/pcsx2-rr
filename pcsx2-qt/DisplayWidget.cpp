@@ -20,7 +20,6 @@
 #include "QtHost.h"
 #include "QtUtils.h"
 
-#include "pcsx2/GS/GSIntrin.h" // _BitScanForward
 #include "pcsx2/ImGui/ImGuiManager.h"
 
 #include "common/Assertions.h"
@@ -32,6 +31,8 @@
 #include <QtGui/QScreen>
 #include <QtGui/QWindow>
 #include <QtGui/QWindowStateChangeEvent>
+
+#include <bit>
 #include <cmath>
 
 #if defined(_WIN32)
@@ -123,7 +124,6 @@ void DisplayWidget::updateRelativeMode(bool enabled)
 		QCursor::setPos(m_relative_mouse_start_pos);
 		releaseMouse();
 	}
-
 }
 
 void DisplayWidget::updateCursor(bool hidden)
@@ -148,7 +148,9 @@ void DisplayWidget::handleCloseEvent(QCloseEvent* event)
 {
 	// Closing the separate widget will either cancel the close, or trigger shutdown.
 	// In the latter case, it's going to destroy us, so don't let Qt do it first.
-	if (QtHost::IsVMValid())
+	// Treat a close event while fullscreen as an exit, that way ALT+F4 closes PCSX2,
+	// rather than just the game.
+	if (QtHost::IsVMValid() && !isActuallyFullscreen())
 	{
 		QMetaObject::invokeMethod(g_main_window, "requestShutdown", Q_ARG(bool, true),
 			Q_ARG(bool, true), Q_ARG(bool, false));
@@ -160,6 +162,27 @@ void DisplayWidget::handleCloseEvent(QCloseEvent* event)
 
 	// Cancel the event from closing the window.
 	event->ignore();
+}
+
+void DisplayWidget::destroy()
+{
+	m_destroying = true;
+
+#ifdef __APPLE__
+	// See Qt documentation, entire application is in full screen state, and the main
+	// window will get reopened fullscreen instead of windowed if we don't close the
+	// fullscreen window first.
+	if (isActuallyFullscreen())
+		close();
+#endif
+	deleteLater();
+}
+
+bool DisplayWidget::isActuallyFullscreen() const
+{
+	// I hate you QtWayland... have to check the parent, not ourselves.
+	QWidget* container = qobject_cast<QWidget*>(parent());
+	return container ? container->isFullScreen() : isFullScreen();
 }
 
 void DisplayWidget::updateCenterPos()
@@ -205,7 +228,7 @@ bool DisplayWidget::event(QEvent* event)
 		case QEvent::KeyRelease:
 		{
 			const QKeyEvent* key_event = static_cast<QKeyEvent*>(event);
-			
+
 			// Forward text input to imgui.
 			if (ImGuiManager::WantsTextInput() && key_event->type() == QEvent::KeyPress)
 			{
@@ -301,11 +324,12 @@ bool DisplayWidget::event(QEvent* event)
 		case QEvent::MouseButtonDblClick:
 		case QEvent::MouseButtonRelease:
 		{
-			unsigned long button_index;
-			if (_BitScanForward(&button_index, static_cast<u32>(static_cast<const QMouseEvent*>(event)->button())))
+			if (const u32 button_mask = static_cast<u32>(static_cast<const QMouseEvent*>(event)->button()))
 			{
-				Host::RunOnCPUThread([button_index, pressed = (event->type() != QEvent::MouseButtonRelease)]() {
-					InputManager::InvokeEvents(InputManager::MakePointerButtonKey(0, button_index), static_cast<float>(pressed));
+				Host::RunOnCPUThread([button_index = std::countr_zero(button_mask),
+										 pressed = (event->type() != QEvent::MouseButtonRelease)]() {
+					InputManager::InvokeEvents(
+						InputManager::MakePointerButtonKey(0, button_index), static_cast<float>(pressed));
 				});
 			}
 
@@ -367,6 +391,9 @@ bool DisplayWidget::event(QEvent* event)
 
 		case QEvent::Close:
 		{
+			if (m_destroying)
+				return QWidget::event(event);
+
 			handleCloseEvent(static_cast<QCloseEvent*>(event));
 			return true;
 		}

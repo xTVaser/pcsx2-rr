@@ -184,6 +184,10 @@
      <property name="title">
       <string>Input Recording</string>
      </property>
+     <property name="icon">
+      <iconset theme="keyboard-line">
+       <normaloff>.</normaloff>.</iconset>
+     </property>
      <addaction name="actionInputRecNew"/>
      <addaction name="actionInputRecPlay"/>
      <addaction name="actionInputRecStop"/>
@@ -197,8 +201,11 @@
     <addaction name="actionOpenDataDirectory"/>
     <addaction name="actionCoverDownloader"/>
     <addaction name="separator"/>
-    <addaction name="actionToggleSoftwareRendering"/>
+    <addaction name="actionEditCheats"/>
+    <addaction name="actionEditPatches"/>
     <addaction name="actionReloadPatches"/>
+    <addaction name="separator"/>
+    <addaction name="actionToggleSoftwareRendering"/>
     <addaction name="menuInput_Recording"/>
     <addaction name="actionToolsVideoCapture"/>
     <addaction name="separator"/>
@@ -274,7 +281,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string comment="In Toolbar">Start &amp;File...</string>
+    <string comment="In Toolbar">Start File</string>
    </property>
   </action>
   <action name="actionStartDisc">
@@ -292,7 +299,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string comment="In Toolbar">Start &amp;Disc...</string>
+    <string comment="In Toolbar">Start Disc</string>
    </property>
   </action>
   <action name="actionStartBios">
@@ -310,7 +317,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string comment="In Toolbar">Start &amp;BIOS</string>
+    <string comment="In Toolbar">Start BIOS</string>
    </property>
   </action>
   <action name="actionScanForNewGames">
@@ -346,7 +353,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string comment="In Toolbar">Shut &amp;Down</string>
+    <string comment="In Toolbar">Shut Down</string>
    </property>
   </action>
   <action name="actionPowerOffWithoutSaving">
@@ -373,7 +380,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string comment="In Toolbar">&amp;Reset</string>
+    <string comment="In Toolbar">Reset</string>
    </property>
   </action>
   <action name="actionPause">
@@ -397,7 +404,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string comment="In Toolbar">&amp;Pause</string>
+    <string comment="In Toolbar">Pause</string>
    </property>
   </action>
   <action name="actionToolbarLoadState">
@@ -406,7 +413,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string comment="In Toolbar">&amp;Load State</string>
+    <string comment="In Toolbar">Load State</string>
    </property>
   </action>
   <action name="actionToolbarSaveState">
@@ -415,7 +422,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string comment="In Toolbar">&amp;Save State</string>
+    <string comment="In Toolbar">Save State</string>
    </property>
   </action>
   <action name="actionExit">
@@ -460,7 +467,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string comment="In Toolbar">&amp;Controllers</string>
+    <string comment="In Toolbar">Controllers</string>
    </property>
   </action>
   <action name="actionHotkeySettings">
@@ -635,7 +642,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string comment="In Toolbar">&amp;Settings</string>
+    <string comment="In Toolbar">Settings</string>
    </property>
    <property name="menuRole">
     <enum>QAction::PreferencesRole</enum>
@@ -681,7 +688,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string comment="In Toolbar">&amp;Screenshot</string>
+    <string comment="In Toolbar">Screenshot</string>
    </property>
   </action>
   <action name="actionMemoryCardSettings">
@@ -860,6 +867,10 @@
    </property>
   </action>
   <action name="actionToggleSoftwareRendering">
+   <property name="icon">
+    <iconset theme="brush-line">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
     <string>Toggle Software Rendering</string>
    </property>
@@ -874,6 +885,10 @@
    </property>
   </action>
   <action name="actionReloadPatches">
+   <property name="icon">
+    <iconset theme="refresh-line">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
     <string>Reload Cheats/Patches</string>
    </property>
@@ -911,6 +926,10 @@
    </property>
   </action>
   <action name="actionSaveGSDump">
+   <property name="icon">
+    <iconset theme="save-3-line">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
     <string>Save Single Frame GS Dump</string>
    </property>
@@ -1046,6 +1065,16 @@
    </property>
    <property name="text">
     <string>Video Capture</string>
+   </property>
+  </action>
+  <action name="actionEditCheats">
+   <property name="text">
+    <string>Edit Cheats...</string>
+   </property>
+  </action>
+  <action name="actionEditPatches">
+   <property name="text">
+    <string>Edit Patches...</string>
    </property>
   </action>
  </widget>

@@ -33,12 +33,10 @@ enum class InputSourceType : u32
 {
 	Keyboard,
 	Pointer,
+	SDL,
 #ifdef _WIN32
 	DInput,
 	XInput,
-#endif
-#ifdef SDL_BUILD
-	SDL,
 #endif
 	Count,
 };
@@ -170,6 +168,10 @@ namespace InputManager
 	static constexpr u32 MAX_POINTER_DEVICES = 1;
 	static constexpr u32 MAX_POINTER_BUTTONS = 3;
 
+	/// Maximum number of software cursors. We allocate an extra two for USB devices with
+	/// positioning data from the controller instead of a mouse.
+	static constexpr u32 MAX_SOFTWARE_CURSORS = MAX_POINTER_BUTTONS + 2;
+
 	/// Returns a pointer to the external input source class, if present.
 	InputSource* GetInputSourceInterface(InputSourceType type);
 
@@ -194,6 +196,9 @@ namespace InputManager
 	/// Converts a key code from an identifier to a human-readable string.
 	std::optional<std::string> ConvertHostKeyboardCodeToString(u32 code);
 
+	/// Converts a key code from an identifier to an icon which can be drawn.
+	const char* ConvertHostKeyboardCodeToIcon(u32 code);
+
 	/// Creates a key for a host-specific key code.
 	InputBindingKey MakeHostKeyboardKey(u32 key_code);
 
@@ -212,6 +217,9 @@ namespace InputManager
 
 	/// Converts a chord of binding keys to a string.
 	std::string ConvertInputBindingKeysToString(InputBindingInfo::Type binding_type, const InputBindingKey* keys, size_t num_keys);
+
+	/// Represents a binding with icon fonts, if available.
+	bool PrettifyInputBinding(std::string& binding);
 
 	/// Returns a list of all hotkeys.
 	std::vector<const HotkeyInfo*> GetHotkeyList();
@@ -287,6 +295,9 @@ namespace InputManager
 	/// Updates relative pointer position. Can call from the UI thread, use when host supports relative coordinate reporting.
 	void UpdatePointerRelativeDelta(u32 index, InputPointerAxis axis, float d, bool raw_input = false);
 
+	/// Updates host mouse mode (relative/cursor hiding).
+	void UpdateHostMouseMode();
+
 	/// Called when a new input device is connected.
 	void OnInputDeviceConnected(const std::string_view& identifier, const std::string_view& device_name);
 
@@ -305,6 +316,6 @@ namespace Host
 	/// Called when an input device is disconnected.
 	void OnInputDeviceDisconnected(const std::string_view& identifier);
 
-	/// Enables relative mouse mode in the host.
-	void SetRelativeMouseMode(bool enabled);
+	/// Enables relative mouse mode in the host, and/or hides the cursor.
+	void SetMouseMode(bool relative_mode, bool hide_cursor);
 } // namespace Host

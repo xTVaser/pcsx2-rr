@@ -15,10 +15,10 @@
 
 #include "PrecompiledHeader.h"
 
-#include "GS/Renderers/Vulkan/VKShaderCache.h"
-#include "GS/Renderers/Vulkan/VKContext.h"
-#include "GS/Renderers/Vulkan/VKUtil.h"
 #include "GS/GS.h"
+#include "GS/Renderers/Vulkan/GSDeviceVK.h"
+#include "GS/Renderers/Vulkan/VKBuilders.h"
+#include "GS/Renderers/Vulkan/VKShaderCache.h"
 
 #include "Config.h"
 #include "ShaderCacheVersion.h"
@@ -44,28 +44,29 @@
 
 std::unique_ptr<VKShaderCache> g_vulkan_shader_cache;
 
-namespace {
+namespace
+{
 #pragma pack(push, 4)
-struct VK_PIPELINE_CACHE_HEADER
-{
-	u32 header_length;
-	u32 header_version;
-	u32 vendor_id;
-	u32 device_id;
-	u8 uuid[VK_UUID_SIZE];
-};
+	struct VK_PIPELINE_CACHE_HEADER
+	{
+		u32 header_length;
+		u32 header_version;
+		u32 vendor_id;
+		u32 device_id;
+		u8 uuid[VK_UUID_SIZE];
+	};
 
-struct CacheIndexEntry
-{
-	u64 source_hash_low;
-	u64 source_hash_high;
-	u32 source_length;
-	u32 shader_type;
-	u32 file_offset;
-	u32 blob_size;
-};
+	struct CacheIndexEntry
+	{
+		u64 source_hash_low;
+		u64 source_hash_high;
+		u32 source_length;
+		u32 shader_type;
+		u32 file_offset;
+		u32 blob_size;
+	};
 #pragma pack(pop)
-}
+} // namespace
 
 static bool ValidatePipelineCacheHeader(const VK_PIPELINE_CACHE_HEADER& header)
 {
@@ -81,21 +82,21 @@ static bool ValidatePipelineCacheHeader(const VK_PIPELINE_CACHE_HEADER& header)
 		return false;
 	}
 
-	if (header.vendor_id != g_vulkan_context->GetDeviceProperties().vendorID)
+	if (header.vendor_id != GSDeviceVK::GetInstance()->GetDeviceProperties().vendorID)
 	{
 		Console.Error("Pipeline cache failed validation: Incorrect vendor ID (file: 0x%X, device: 0x%X)",
-			header.vendor_id, g_vulkan_context->GetDeviceProperties().vendorID);
+			header.vendor_id, GSDeviceVK::GetInstance()->GetDeviceProperties().vendorID);
 		return false;
 	}
 
-	if (header.device_id != g_vulkan_context->GetDeviceProperties().deviceID)
+	if (header.device_id != GSDeviceVK::GetInstance()->GetDeviceProperties().deviceID)
 	{
 		Console.Error("Pipeline cache failed validation: Incorrect device ID (file: 0x%X, device: 0x%X)",
-			header.device_id, g_vulkan_context->GetDeviceProperties().deviceID);
+			header.device_id, GSDeviceVK::GetInstance()->GetDeviceProperties().deviceID);
 		return false;
 	}
 
-	if (std::memcmp(header.uuid, g_vulkan_context->GetDeviceProperties().pipelineCacheUUID, VK_UUID_SIZE) != 0)
+	if (std::memcmp(header.uuid, GSDeviceVK::GetInstance()->GetDeviceProperties().pipelineCacheUUID, VK_UUID_SIZE) != 0)
 	{
 		Console.Error("Pipeline cache failed validation: Incorrect UUID");
 		return false;
@@ -108,9 +109,9 @@ static void FillPipelineCacheHeader(VK_PIPELINE_CACHE_HEADER* header)
 {
 	header->header_length = sizeof(VK_PIPELINE_CACHE_HEADER);
 	header->header_version = VK_PIPELINE_CACHE_HEADER_VERSION_ONE;
-	header->vendor_id = g_vulkan_context->GetDeviceProperties().vendorID;
-	header->device_id = g_vulkan_context->GetDeviceProperties().deviceID;
-	std::memcpy(header->uuid, g_vulkan_context->GetDeviceProperties().pipelineCacheUUID, VK_UUID_SIZE);
+	header->vendor_id = GSDeviceVK::GetInstance()->GetDeviceProperties().vendorID;
+	header->device_id = GSDeviceVK::GetInstance()->GetDeviceProperties().deviceID;
+	std::memcpy(header->uuid, GSDeviceVK::GetInstance()->GetDeviceProperties().pipelineCacheUUID, VK_UUID_SIZE);
 }
 
 static unsigned s_next_bad_shader_id = 1;
@@ -152,7 +153,7 @@ std::optional<VKShaderCache::SPIRVCodeVector> VKShaderCache::CompileShaderToSPV(
 	int pass_source_code_length = static_cast<int>(source.size());
 	shader->setStringsWithLengths(&pass_source_code, &pass_source_code_length, 1);
 
-	auto DumpBadShader = [&](const char* msg) {
+	auto DumpBadShader = [&shader, &source, &program](const char* msg) {
 		const std::string filename =
 			Path::Combine(EmuFolders::Logs, fmt::format("pcsx2_bad_shader_{}.txt", s_next_bad_shader_id++));
 		Console.Error("CompileShaderToSPV: %s, writing to %s", msg, filename.c_str());
@@ -243,12 +244,11 @@ bool VKShaderCache::CacheIndexKey::operator!=(const CacheIndexKey& key) const
 			source_length != key.source_length || shader_type != key.shader_type);
 }
 
-bool VKShaderCache::Create()
+void VKShaderCache::Create()
 {
 	pxAssert(!g_vulkan_shader_cache);
 	g_vulkan_shader_cache.reset(new VKShaderCache());
 	g_vulkan_shader_cache->Open();
-	return true;
 }
 
 void VKShaderCache::Destroy()
@@ -433,7 +433,7 @@ bool VKShaderCache::CreateNewPipelineCache()
 	}
 
 	const VkPipelineCacheCreateInfo ci{VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO, nullptr, 0, 0, nullptr};
-	VkResult res = vkCreatePipelineCache(g_vulkan_context->GetDevice(), &ci, nullptr, &m_pipeline_cache);
+	VkResult res = vkCreatePipelineCache(GSDeviceVK::GetInstance()->GetDevice(), &ci, nullptr, &m_pipeline_cache);
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkCreatePipelineCache() failed: ");
@@ -463,7 +463,7 @@ bool VKShaderCache::ReadExistingPipelineCache()
 
 	const VkPipelineCacheCreateInfo ci{
 		VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO, nullptr, 0, data->size(), data->data()};
-	VkResult res = vkCreatePipelineCache(g_vulkan_context->GetDevice(), &ci, nullptr, &m_pipeline_cache);
+	VkResult res = vkCreatePipelineCache(GSDeviceVK::GetInstance()->GetDevice(), &ci, nullptr, &m_pipeline_cache);
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkCreatePipelineCache() failed: ");
@@ -479,7 +479,8 @@ bool VKShaderCache::FlushPipelineCache()
 		return false;
 
 	size_t data_size;
-	VkResult res = vkGetPipelineCacheData(g_vulkan_context->GetDevice(), m_pipeline_cache, &data_size, nullptr);
+	VkResult res =
+		vkGetPipelineCacheData(GSDeviceVK::GetInstance()->GetDevice(), m_pipeline_cache, &data_size, nullptr);
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkGetPipelineCacheData() failed: ");
@@ -487,7 +488,7 @@ bool VKShaderCache::FlushPipelineCache()
 	}
 
 	std::vector<u8> data(data_size);
-	res = vkGetPipelineCacheData(g_vulkan_context->GetDevice(), m_pipeline_cache, &data_size, data.data());
+	res = vkGetPipelineCacheData(GSDeviceVK::GetInstance()->GetDevice(), m_pipeline_cache, &data_size, data.data());
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkGetPipelineCacheData() (2) failed: ");
@@ -521,7 +522,7 @@ void VKShaderCache::ClosePipelineCache()
 	if (m_pipeline_cache == VK_NULL_HANDLE)
 		return;
 
-	vkDestroyPipelineCache(g_vulkan_context->GetDevice(), m_pipeline_cache, nullptr);
+	vkDestroyPipelineCache(GSDeviceVK::GetInstance()->GetDevice(), m_pipeline_cache, nullptr);
 	m_pipeline_cache = VK_NULL_HANDLE;
 }
 
@@ -596,7 +597,7 @@ VkShaderModule VKShaderCache::GetShaderModule(u32 type, std::string_view shader_
 		VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, nullptr, 0, spv->size() * sizeof(SPIRVCodeType), spv->data()};
 
 	VkShaderModule mod;
-	VkResult res = vkCreateShaderModule(g_vulkan_context->GetDevice(), &ci, nullptr, &mod);
+	VkResult res = vkCreateShaderModule(GSDeviceVK::GetInstance()->GetDevice(), &ci, nullptr, &mod);
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkCreateShaderModule() failed: ");

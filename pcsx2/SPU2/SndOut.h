@@ -15,9 +15,8 @@
 
 #pragma once
 
+#include <span>
 #include <vector>
-
-#include "gsl/span"
 
 // Number of stereo samples per SndOut block.
 // All drivers must work in units of this size when communicating with
@@ -305,6 +304,7 @@ namespace SndBuffer
 {
 	void UpdateTempoChangeAsyncMixing();
 	bool Init(const char* modname);
+	bool IsOpen();
 	void Cleanup();
 	void Write(StereoOut16 Sample);
 	void ClearContents();
@@ -347,4 +347,4 @@ public:
 	virtual int GetEmptySampleCount() = 0;
 };
 
-gsl::span<SndOutModule*> GetSndOutModules();
+std::span<SndOutModule*> GetSndOutModules();

@@ -142,6 +142,12 @@
     <ClCompile Include="Assertions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TextureDecompress.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SmallString.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AlignedMalloc.h">
@@ -196,9 +202,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="emitter\legacy_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MathUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Path.h">
@@ -267,13 +270,10 @@
     <ClInclude Include="SettingsWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Align.h">
+    <ClInclude Include="BitUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WindowInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BitCast.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StringUtil.h">
@@ -352,6 +352,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureDecompress.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SmallString.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

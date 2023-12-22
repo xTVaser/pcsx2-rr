@@ -30,6 +30,8 @@
 #include "USB/qemu-usb/USBinternal.h"
 #include "USB/usb-mic/usb-mic-singstar.h"
 #include "USB/usb-mic/audiodev.h"
+#include "USB/usb-mic/audiodev-noop.h"
+#include "USB/usb-mic/audiodev-cubeb.h"
 #include "USB/usb-mic/audio.h"
 #include "USB/USB.h"
 #include "Host.h"
@@ -765,7 +767,7 @@ namespace usb_mic
 				if (!s->audsrc[i]->Start())
 				{
 					Host::AddOSDMessage(
-						fmt::format(TRANSLATE_SV("USB", "USB-Mic: Failed to start player {} audio stream."), i + 1),
+						fmt::format(TRANSLATE_FS("USB", "USB-Mic: Failed to start player {} audio stream."), i + 1),
 						Host::OSD_ERROR_DURATION);
 					goto fail;
 				}
@@ -846,7 +848,7 @@ namespace usb_mic
 		// TODO: Reload devices.
 	}
 
-	gsl::span<const SettingInfo> SingstarDevice::Settings(u32 subtype) const
+	std::span<const SettingInfo> SingstarDevice::Settings(u32 subtype) const
 	{
 		static constexpr const SettingInfo info[] = {
 			{SettingInfo::Type::StringList, "player1_device_name", TRANSLATE_NOOP("USB", "Player 1 Device"),
@@ -857,7 +859,7 @@ namespace usb_mic
 				nullptr, nullptr, &AudioDevice::GetInputDeviceList},
 			{SettingInfo::Type::Integer, "input_latency", TRANSLATE_NOOP("USB", "Input Latency"),
 				TRANSLATE_NOOP("USB", "Specifies the latency to the host input device."),
-				AudioDevice::DEFAULT_LATENCY_STR, "1", "1000", "1", "%dms", nullptr, nullptr, 1.0f},
+				AudioDevice::DEFAULT_LATENCY_STR, "1", "1000", "1", TRANSLATE_NOOP("USB", "%dms"), nullptr, nullptr, 1.0f},
 		};
 		return info;
 	}
@@ -872,7 +874,7 @@ namespace usb_mic
 		return TRANSLATE_NOOP("USB", "Logitech USB Mic");
 	}
 
-	gsl::span<const SettingInfo> LogitechMicDevice::Settings(u32 subtype) const
+	std::span<const SettingInfo> LogitechMicDevice::Settings(u32 subtype) const
 	{
 		static constexpr const SettingInfo info[] = {
 			{SettingInfo::Type::StringList, "input_device_name", TRANSLATE_NOOP("USB", "Input Device"),
@@ -880,21 +882,16 @@ namespace usb_mic
 				nullptr, &AudioDevice::GetInputDeviceList},
 			{SettingInfo::Type::Integer, "input_latency", TRANSLATE_NOOP("USB", "Input Latency"),
 				TRANSLATE_NOOP("USB", "Specifies the latency to the host input device."),
-				AudioDevice::DEFAULT_LATENCY_STR, "1", "1000", "1", "%dms", nullptr, nullptr, 1.0f},
+				AudioDevice::DEFAULT_LATENCY_STR, "1", "1000", "1", TRANSLATE_NOOP("USB", "%dms"), nullptr, nullptr, 1.0f},
 		};
 		return info;
 	}
 } // namespace usb_mic
 
-#include "USB/usb-mic/audiodev-noop.h"
-
 std::unique_ptr<AudioDevice> AudioDevice::CreateNoopDevice(u32 port, AudioDir dir, u32 channels)
 {
 	return std::make_unique<usb_mic::audiodev_noop::NoopAudioDevice>(port, dir, channels);
 }
-
-#ifdef SPU2X_CUBEB
-#include "USB/usb-mic/audiodev-cubeb.h"
 
 std::unique_ptr<AudioDevice> AudioDevice::CreateDevice(u32 port, AudioDir dir, u32 channels, std::string devname, s32 latency)
 {
@@ -910,23 +907,3 @@ std::vector<std::pair<std::string, std::string>> AudioDevice::GetOutputDeviceLis
 {
 	return usb_mic::audiodev_cubeb::CubebAudioDevice::GetDeviceList(false);
 }
-
-#else
-
-std::unique_ptr<AudioDevice> AudioDevice::CreateDevice(u32 port, AudioDir dir, u32 channels, std::string devname, s32 latency)
-{
-	Console.Warning("Cubeb is unavailable, creating a noop audio device.");
-	return CreateNoopDevice(port, dir, channels);
-}
-
-std::vector<std::pair<std::string, std::string>> AudioDevice::GetInputDeviceList()
-{
-	return {};
-}
-
-std::vector<std::pair<std::string, std::string>> AudioDevice::GetOutputDeviceList()
-{
-	return {};
-}
-
-#endif

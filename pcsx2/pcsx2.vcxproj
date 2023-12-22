@@ -20,8 +20,8 @@
   <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(SolutionDir)common\vsprops\common.props" />
-    <Import Project="$(SolutionDir)common\vsprops\CommonLibrary.props" />
     <Import Project="$(SolutionDir)common\vsprops\GenerateSCMVersion.props" />
+    <Import Project="$(SolutionDir)common\vsprops\SDL2Compile.props" />
     <Import Condition="$(Configuration.Contains(Debug))" Project="$(SolutionDir)common\vsprops\CodeGen_Debug.props" />
     <Import Condition="$(Configuration.Contains(Devel))" Project="$(SolutionDir)common\vsprops\CodeGen_Devel.props" />
     <Import Condition="$(Configuration.Contains(Release))" Project="$(SolutionDir)common\vsprops\CodeGen_Release.props" />
@@ -30,7 +30,6 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <TargetName>pcsx2</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -39,13 +38,14 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\wil\include</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\xz\xz\src\liblzma\api</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\lz4\lz4\lib</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\libpng</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\libchdr\libchdr\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\libchdr\include</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\cubeb\include</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\imgui\include</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\simpleini\include</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\sdl2\include;$(SolutionDir)3rdparty\sdl2\SDL\include</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\libzip;$(SolutionDir)3rdparty\libzip\libzip\lib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\libzip\msvc;$(SolutionDir)3rdparty\libzip\lib</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\zstd\zstd\lib</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\cpuinfo\include</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(SolutionDir)3rdparty\rapidyaml\rapidyaml\src</AdditionalIncludeDirectories>
@@ -65,14 +65,20 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>PrecompiledHeader.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>PrecompiledHeader.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
-      <PreprocessorDefinitions>ZIP_STATIC;LZMA_API_STATIC;ST_NO_EXCEPTION_HANDLING;ENABLE_DISCORD_PRESENCE;ENABLE_RAINTEGRATION;ENABLE_ACHIEVEMENTS;ENABLE_OPENGL;ENABLE_VULKAN;SPU2X_CUBEB;SDL_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LZMA_API_STATIC;LZ4LIB_VISIBILITY=;ST_NO_EXCEPTION_HANDLING;ENABLE_RAINTEGRATION;ENABLE_OPENGL;ENABLE_VULKAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Platform)'=='x64'">XBYAK_NO_EXCEPTION;ZYCORE_STATIC_DEFINE;ZYDIS_STATIC_DEFINE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="..\bin\resources\shaders\opengl\imgui.glsl" />
+    <None Include="..\bin\resources\shaders\opengl\present.glsl" />
     <None Include="..\bin\resources\shaders\vulkan\convert.glsl" />
+    <None Include="..\bin\resources\shaders\vulkan\imgui.glsl" />
     <None Include="..\bin\resources\shaders\vulkan\interlace.glsl" />
     <None Include="..\bin\resources\shaders\vulkan\merge.glsl" />
+    <None Include="..\bin\resources\shaders\vulkan\present.glsl" />
+    <None Include="..\bin\resources\shaders\vulkan\shadeboost.glsl" />
     <None Include="..\bin\resources\shaders\vulkan\tfx.glsl" />
     <None Include="..\bin\resources\shaders\opengl\convert.glsl" />
     <None Include="..\bin\resources\shaders\opengl\interlace.glsl" />
@@ -86,6 +92,8 @@
     <None Include="..\bin\resources\shaders\dx11\merge.fx" />
     <None Include="..\bin\resources\shaders\dx11\shadeboost.fx" />
     <None Include="..\bin\resources\shaders\dx11\tfx.fx" />
+    <None Include="..\bin\resources\shaders\dx11\imgui.fx" />
+    <None Include="..\bin\resources\shaders\dx11\present.fx" />
     <None Include="GS\Renderers\Vulkan\VKEntryPoints.inl" />
     <None Include="Docs\License.txt" />
     <None Include="ps2\eeHwTraceLog.inl" />
@@ -115,6 +123,7 @@
     <ClCompile Include="CDVD\CsoFileReader.cpp" />
     <ClCompile Include="CDVD\GzippedFileReader.cpp" />
     <ClCompile Include="CDVD\IsoReader.cpp" />
+    <ClCompile Include="CDVD\IsoHasher.cpp" />
     <ClCompile Include="CDVD\OutputIsoFile.cpp" />
     <ClCompile Include="CDVD\ThreadedFileReader.cpp" />
     <ClCompile Include="CDVD\Linux\DriveUtility.cpp">
@@ -182,7 +191,6 @@
     <ClCompile Include="GameList.cpp" />
     <ClCompile Include="GS\Renderers\DX11\D3D11ShaderCache.cpp" />
     <ClCompile Include="GS\Renderers\DX12\D3D12Builders.cpp" />
-    <ClCompile Include="GS\Renderers\DX12\D3D12Context.cpp" />
     <ClCompile Include="GS\Renderers\DX12\D3D12DescriptorHeapManager.cpp" />
     <ClCompile Include="GS\Renderers\DX12\D3D12ShaderCache.cpp" />
     <ClCompile Include="GS\Renderers\DX12\D3D12StreamBuffer.cpp" />
@@ -192,12 +200,10 @@
     <ClCompile Include="GS\Renderers\OpenGL\GLShaderCache.cpp" />
     <ClCompile Include="GS\Renderers\OpenGL\GLStreamBuffer.cpp" />
     <ClCompile Include="GS\Renderers\Vulkan\VKBuilders.cpp" />
-    <ClCompile Include="GS\Renderers\Vulkan\VKContext.cpp" />
     <ClCompile Include="GS\Renderers\Vulkan\VKLoader.cpp" />
     <ClCompile Include="GS\Renderers\Vulkan\VKShaderCache.cpp" />
     <ClCompile Include="GS\Renderers\Vulkan\VKStreamBuffer.cpp" />
     <ClCompile Include="GS\Renderers\Vulkan\VKSwapChain.cpp" />
-    <ClCompile Include="GS\Renderers\Vulkan\VKUtil.cpp" />
     <ClCompile Include="GS\Renderers\Vulkan\vk_mem_alloc.cpp" />
     <ClCompile Include="Hotkeys.cpp" />
     <ClCompile Include="ImGui\FullscreenUI.cpp" />
@@ -225,21 +231,26 @@
     <ClCompile Include="IopGte.cpp" />
     <ClCompile Include="LayeredSettingsInterface.cpp" />
     <ClCompile Include="LogSink.cpp" />
-    <ClCompile Include="MemoryCardProtocol.cpp" />
-    <ClCompile Include="MultitapProtocol.cpp" />
-    <ClCompile Include="PAD\Host\KeyStatus.cpp" />
-    <ClCompile Include="PAD\Host\PAD.cpp" />
-    <ClCompile Include="PAD\Host\StateManagement.cpp" />
     <ClCompile Include="PINE.cpp" />
     <ClCompile Include="FW.cpp" />
-    <ClCompile Include="MemoryCardFile.cpp" />
-    <ClCompile Include="MemoryCardFolder.cpp" />
     <ClCompile Include="PerformanceMetrics.cpp" />
     <ClCompile Include="Recording\InputRecording.cpp" />
     <ClCompile Include="Recording\InputRecordingControls.cpp" />
     <ClCompile Include="Recording\InputRecordingFile.cpp" />
     <ClCompile Include="Recording\PadData.cpp" />
     <ClCompile Include="Recording\Utilities\InputRecordingLogger.cpp" />
+    <ClCompile Include="SIO\Memcard\MemoryCardFile.cpp" />
+    <ClCompile Include="SIO\Memcard\MemoryCardFolder.cpp" />
+    <ClCompile Include="SIO\Memcard\MemoryCardProtocol.cpp" />
+    <ClCompile Include="SIO\Multitap\MultitapProtocol.cpp" />
+    <ClCompile Include="SIO\Pad\PadBase.cpp" />
+    <ClCompile Include="SIO\Pad\Pad.cpp" />
+    <ClCompile Include="SIO\Pad\PadDualshock2.cpp" />
+    <ClCompile Include="SIO\Pad\PadGuitar.cpp" />
+    <ClCompile Include="SIO\Pad\PadNotConnected.cpp" />
+    <ClCompile Include="SIO\Sio.cpp" />
+    <ClCompile Include="SIO\Sio0.cpp" />
+    <ClCompile Include="SIO\Sio2.cpp" />
     <ClCompile Include="SPU2\Debug.cpp" />
     <ClCompile Include="SPU2\Dma.cpp" />
     <ClCompile Include="SPU2\DplIIdecoder.cpp" />
@@ -254,6 +265,7 @@
     <ClCompile Include="SPU2\Mixer.cpp" />
     <ClCompile Include="SPU2\ReadInput.cpp" />
     <ClCompile Include="SPU2\Reverb.cpp" />
+    <ClCompile Include="SPU2\ReverbResample.cpp" />
     <ClCompile Include="SPU2\spu2.cpp" />
     <ClCompile Include="IPU\IPUdma.cpp" />
     <ClCompile Include="IPU\IPUdither.cpp" />
@@ -274,7 +286,6 @@
     <ClCompile Include="GS\GSBlock.cpp" />
     <ClCompile Include="GS\GSCapture.cpp" />
     <ClCompile Include="GS\GSClut.cpp" />
-    <ClCompile Include="GS\GSCrc.cpp" />
     <ClCompile Include="GS\Renderers\Common\GSDevice.cpp" />
     <ClCompile Include="GS\Renderers\DX11\GSDevice11.cpp" />
     <ClCompile Include="GS\Renderers\OpenGL\GSDeviceOGL.cpp" />
@@ -308,7 +319,6 @@
     <ClCompile Include="GS\Renderers\OpenGL\GSTextureOGL.cpp" />
     <ClCompile Include="GS\Renderers\HW\GSTextureCache.cpp" />
     <ClCompile Include="GS\Renderers\SW\GSTextureCacheSW.cpp" />
-    <ClCompile Include="GS\Renderers\DX11\GSTextureFX11.cpp" />
     <ClCompile Include="GS\Renderers\SW\GSTextureSW.cpp" />
     <ClCompile Include="GS\GSUtil.cpp" />
     <ClCompile Include="GS\GSVector.cpp" />
@@ -344,7 +354,6 @@
     <ClCompile Include="USB\usb-pad\usb-turntable.cpp" />
     <ClCompile Include="USB\usb-printer\usb-printer.cpp" />
     <ClCompile Include="USB\USB.cpp" />
-    <ClCompile Include="VirtualMemory.cpp" />
     <ClCompile Include="VMManager.cpp" />
     <ClCompile Include="windows\Optimus.cpp" />
     <ClCompile Include="Pcsx2Config.cpp" />
@@ -402,7 +411,7 @@
     <ClCompile Include="x86\iMMI.cpp" />
     <ClCompile Include="x86\iR5900Misc.cpp" />
     <ClCompile Include="x86\ir5900tables.cpp" />
-    <ClCompile Include="x86\ix86-32\iR5900-32.cpp" />
+    <ClCompile Include="x86\ix86-32\iR5900.cpp" />
     <ClCompile Include="x86\ix86-32\iR5900Arit.cpp" />
     <ClCompile Include="x86\ix86-32\iR5900AritImm.cpp" />
     <ClCompile Include="x86\ix86-32\iR5900Branch.cpp" />
@@ -427,7 +436,6 @@
     <ClCompile Include="R3000A.cpp" />
     <ClCompile Include="R3000AInterpreter.cpp" />
     <ClCompile Include="R3000AOpcodeTables.cpp" />
-    <ClCompile Include="Sio.cpp" />
     <ClCompile Include="x86\iR3000A.cpp" />
     <ClCompile Include="x86\iR3000Atables.cpp" />
     <ClCompile Include="IopHw.cpp" />
@@ -465,7 +473,7 @@
     <ClCompile Include="rdebug\deci2_ttyp.cpp">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="x86\ix86-32\iCore-32.cpp" />
+    <ClCompile Include="x86\ix86-32\iCore.cpp" />
     <ClCompile Include="x86\iCore.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -479,6 +487,7 @@
     <ClInclude Include="CDVD\ChdFileReader.h" />
     <ClInclude Include="CDVD\GzippedFileReader.h" />
     <ClInclude Include="CDVD\IsoReader.h" />
+    <ClInclude Include="CDVD\IsoHasher.h" />
     <ClInclude Include="CDVD\ThreadedFileReader.h" />
     <ClInclude Include="CDVD\zlib_indexed.h" />
     <ClInclude Include="DebugTools\Breakpoints.h" />
@@ -535,7 +544,6 @@
     <ClInclude Include="GameList.h" />
     <ClInclude Include="GS\Renderers\DX11\D3D11ShaderCache.h" />
     <ClInclude Include="GS\Renderers\DX12\D3D12Builders.h" />
-    <ClInclude Include="GS\Renderers\DX12\D3D12Context.h" />
     <ClInclude Include="GS\Renderers\DX12\D3D12DescriptorHeapManager.h" />
     <ClInclude Include="GS\Renderers\DX12\D3D12ShaderCache.h" />
     <ClInclude Include="GS\Renderers\DX12\D3D12StreamBuffer.h" />
@@ -546,14 +554,13 @@
     <ClInclude Include="GS\Renderers\OpenGL\GLShaderCache.h" />
     <ClInclude Include="GS\Renderers\OpenGL\GLStreamBuffer.h" />
     <ClInclude Include="GS\Renderers\Vulkan\VKBuilders.h" />
-    <ClInclude Include="GS\Renderers\Vulkan\VKContext.h" />
     <ClInclude Include="GS\Renderers\Vulkan\VKEntryPoints.h" />
     <ClInclude Include="GS\Renderers\Vulkan\VKLoader.h" />
     <ClInclude Include="GS\Renderers\Vulkan\VKShaderCache.h" />
     <ClInclude Include="GS\Renderers\Vulkan\VKStreamBuffer.h" />
     <ClInclude Include="GS\Renderers\Vulkan\VKSwapChain.h" />
-    <ClInclude Include="GS\Renderers\Vulkan\VKUtil.h" />
     <ClInclude Include="ImGui\FullscreenUI.h" />
+    <ClInclude Include="ImGui\ImGuiAnimated.h" />
     <ClInclude Include="ImGui\ImGuiFullscreen.h" />
     <ClInclude Include="ImGui\ImGuiManager.h" />
     <ClInclude Include="ImGui\ImGuiOverlays.h" />
@@ -577,16 +584,8 @@
     <ClInclude Include="IPU\mpeg2_vlc.h" />
     <ClInclude Include="LayeredSettingsInterface.h" />
     <ClInclude Include="LogSink.h" />
-    <ClInclude Include="MemoryCardProtocol.h" />
-    <ClInclude Include="MultitapProtocol.h" />
-    <ClInclude Include="PAD\Host\Global.h" />
-    <ClInclude Include="PAD\Host\KeyStatus.h" />
-    <ClInclude Include="PAD\Host\PAD.h" />
-    <ClInclude Include="PAD\Host\StateManagement.h" />
     <ClInclude Include="PINE.h" />
     <ClInclude Include="FW.h" />
-    <ClInclude Include="MemoryCardFile.h" />
-    <ClInclude Include="MemoryCardFolder.h" />
     <ClInclude Include="PerformanceMetrics.h" />
     <ClInclude Include="Recording\InputRecording.h" />
     <ClInclude Include="Recording\InputRecordingControls.h" />
@@ -594,7 +593,20 @@
     <ClInclude Include="Recording\PadData.h" />
     <ClInclude Include="Recording\Utilities\InputRecordingLogger.h" />
     <ClInclude Include="ShaderCacheVersion.h" />
-    <ClInclude Include="SioTypes.h" />
+    <ClInclude Include="SIO\Memcard\MemoryCardFile.h" />
+    <ClInclude Include="SIO\Memcard\MemoryCardFolder.h" />
+    <ClInclude Include="SIO\Memcard\MemoryCardProtocol.h" />
+    <ClInclude Include="SIO\Multitap\MultitapProtocol.h" />
+    <ClInclude Include="SIO\Pad\PadBase.h" />
+    <ClInclude Include="SIO\Pad\Pad.h" />
+    <ClInclude Include="SIO\Pad\PadDualshock2.h" />
+    <ClInclude Include="SIO\Pad\PadGuitar.h" />
+    <ClInclude Include="SIO\Pad\PadNotConnected.h" />
+    <ClInclude Include="SIO\Pad\PadTypes.h" />
+    <ClInclude Include="SIO\Sio.h" />
+    <ClInclude Include="SIO\Sio0.h" />
+    <ClInclude Include="SIO\Sio2.h" />
+    <ClInclude Include="SIO\SioTypes.h" />
     <ClInclude Include="SPU2\Debug.h" />
     <ClInclude Include="SPU2\Dma.h" />
     <ClInclude Include="SPU2\Global.h" />
@@ -609,13 +621,11 @@
     <ClInclude Include="GS\GS.h" />
     <ClInclude Include="GS\GSExtra.h" />
     <ClInclude Include="GS\GSGL.h" />
-    <ClInclude Include="GS\GSIntrin.h" />
     <ClInclude Include="GS\GSRegs.h" />
     <ClInclude Include="GS\GSAlignedClass.h" />
     <ClInclude Include="GS\GSBlock.h" />
     <ClInclude Include="GS\GSCapture.h" />
     <ClInclude Include="GS\GSClut.h" />
-    <ClInclude Include="GS\GSCrc.h" />
     <ClInclude Include="GS\Renderers\Common\GSDevice.h" />
     <ClInclude Include="GS\Renderers\DX11\GSDevice11.h" />
     <ClInclude Include="GS\Renderers\OpenGL\GSDeviceOGL.h" />
@@ -715,7 +725,6 @@
     <ClInclude Include="ps2\HwInternal.h" />
     <ClInclude Include="Cache.h" />
     <ClInclude Include="Memory.h" />
-    <ClInclude Include="VirtualMemory.h" />
     <ClInclude Include="VMManager.h" />
     <ClInclude Include="vtlb.h" />
     <ClInclude Include="MTVU.h" />
@@ -759,7 +768,6 @@
     <ClInclude Include="IopDma.h" />
     <ClInclude Include="IopMem.h" />
     <ClInclude Include="R3000A.h" />
-    <ClInclude Include="Sio.h" />
     <ClInclude Include="x86\iR3000A.h" />
     <ClInclude Include="IopHw.h" />
     <ClInclude Include="ps2\Iop\IopHw_Internal.h" />
@@ -806,10 +814,7 @@
     <ProjectReference Include="$(SolutionDir)3rdparty\fmt\fmt.vcxproj">
       <Project>{449ad25e-424a-4714-babc-68706cdcc33b}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)3rdparty\libjpeg\libjpeg.vcxproj">
-      <Project>{bc236261-77e8-4567-8d09-45cd02965eb6}</Project>
-    </ProjectReference>
-    <ProjectReference Include="$(SolutionDir)3rdparty\libpng\projects\vstudio\libpng\libpng.vcxproj">
+    <ProjectReference Include="$(SolutionDir)3rdparty\libpng\libpng.vcxproj">
       <Project>{d6973076-9317-4ef2-a0b8-b7a18ac0713e}</Project>
     </ProjectReference>
     <ProjectReference Include="$(SolutionDir)3rdparty\soundtouch\SoundTouch.vcxproj">
@@ -851,14 +856,14 @@
     <ProjectReference Include="..\3rdparty\cpuinfo\cpuinfo.vcxproj">
       <Project>{7e183337-a7e9-460c-9d3d-568bc9f9bcc1}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\3rdparty\lz4\lz4.vcxproj">
+      <Project>{39098635-446a-4fc3-9b1c-8609d94598a8}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\3rdparty\rainterface\rainterface.vcxproj">
       <Project>{95dd0a0c-d14d-4cff-a593-820ef26efcc8}</Project>
     </ProjectReference>
     <ProjectReference Include="..\3rdparty\rcheevos\rcheevos.vcxproj">
       <Project>{6d5b5ad9-1525-459b-939f-a5e1082af6b3}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\3rdparty\sdl2\SDL.vcxproj">
-      <Project>{812b4434-fd6b-4cb2-8865-5fd8eb34b046}</Project>
     </ProjectReference>
     <ProjectReference Include="..\common\common.vcxproj">
       <Project>{4639972e-424e-4e13-8b07-ca403c481346}</Project>
@@ -870,6 +875,7 @@
   <ItemGroup>
     <Natvis Include="GS\GS.natvis" />
   </ItemGroup>
+  <Import Condition="$(Configuration.Contains(Debug)) Or $(Configuration.Contains(Devel))" Project="$(SolutionDir)3rdparty\winpixeventruntime\WinPixEventRuntime.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

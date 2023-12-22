@@ -15,6 +15,7 @@
 
 #include "pcsx2/Achievements.h"
 #include "pcsx2/GS.h"
+#include "pcsx2/GameList.h"
 #include "pcsx2/Host.h"
 #include "pcsx2/ImGui/ImGuiManager.h"
 #include "pcsx2/Input/InputManager.h"
@@ -39,21 +40,6 @@ bool Host::RequestResetSettings(bool folders, bool core, bool controllers, bool 
 
 void Host::SetDefaultUISettings(SettingsInterface& si)
 {
-}
-
-std::optional<std::vector<u8>> Host::ReadResourceFile(const char* filename)
-{
-	return std::nullopt;
-}
-
-std::optional<std::string> Host::ReadResourceFileToString(const char* filename)
-{
-	return std::nullopt;
-}
-
-std::optional<std::time_t> Host::GetResourceFileTimestamp(const char* filename)
-{
-	return std::nullopt;
 }
 
 void Host::ReportErrorAsync(const std::string_view& title, const std::string_view& message)
@@ -95,7 +81,7 @@ void Host::OnInputDeviceDisconnected(const std::string_view& identifier)
 {
 }
 
-void Host::SetRelativeMouseMode(bool enabled)
+void Host::SetMouseMode(bool relative_mode, bool hide_cursor)
 {
 }
 
@@ -210,11 +196,25 @@ s32 Host::Internal::GetTranslatedStringImpl(
 	return static_cast<s32>(msg.size());
 }
 
-#ifdef ENABLE_ACHIEVEMENTS
+void Host::OnAchievementsLoginRequested(Achievements::LoginRequestReason reason)
+{
+}
+
+void Host::OnAchievementsLoginSuccess(const char* username, u32 points, u32 sc_points, u32 unread_messages)
+{
+}
+
 void Host::OnAchievementsRefreshed()
 {
 }
-#endif
+
+void Host::OnAchievementsHardcoreModeChanged(bool enabled)
+{
+}
+
+void Host::OnCoverDownloaderOpenRequested()
+{
+}
 
 std::optional<u32> InputManager::ConvertHostKeyboardStringToCode(const std::string_view& str)
 {
@@ -224,6 +224,11 @@ std::optional<u32> InputManager::ConvertHostKeyboardStringToCode(const std::stri
 std::optional<std::string> InputManager::ConvertHostKeyboardCodeToString(u32 code)
 {
 	return std::nullopt;
+}
+
+const char* InputManager::ConvertHostKeyboardCodeToIcon(u32 code)
+{
+	return nullptr;
 }
 
 BEGIN_HOTKEY_LIST(g_host_hotkeys)

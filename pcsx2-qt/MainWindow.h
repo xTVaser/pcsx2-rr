@@ -24,8 +24,8 @@
 #include <optional>
 
 #include "Tools/InputRecording/InputRecordingViewer.h"
-#include "Settings/ControllerSettingsDialog.h"
-#include "Settings/SettingsDialog.h"
+#include "Settings/ControllerSettingsWindow.h"
+#include "Settings/SettingsWindow.h"
 #include "Debugger/DebuggerWindow.h"
 #include "ui_MainWindow.h"
 
@@ -35,9 +35,14 @@ class AutoUpdaterDialog;
 class DisplayWidget;
 class DisplayContainer;
 class GameListWidget;
-class ControllerSettingsDialog;
+class ControllerSettingsWindow;
 
 class EmuThread;
+
+namespace Achievements
+{
+	enum class LoginRequestReason;
+}
 
 namespace GameList
 {
@@ -114,6 +119,7 @@ public Q_SLOTS:
 	void reportError(const QString& title, const QString& message);
 	bool confirmMessage(const QString& title, const QString& message);
 	void runOnUIThread(const std::function<void()>& func);
+	void requestReset();
 	bool requestShutdown(bool allow_confirm = true, bool allow_save_to_state = true, bool default_save_to_state = true);
 	void requestExit(bool allow_confirm = true);
 	void checkForSettingChanges();
@@ -124,7 +130,7 @@ private Q_SLOTS:
 
 	std::optional<WindowInfo> acquireRenderWindow(bool recreate_window, bool fullscreen, bool render_to_main, bool surfaceless);
 	void displayResizeRequested(qint32 width, qint32 height);
-	void relativeMouseModeRequested(bool enabled);
+	void mouseModeRequested(bool relative_mode, bool hide_cursor);
 	void releaseRenderWindow();
 	void focusDisplayWidget();
 
@@ -145,6 +151,8 @@ private Q_SLOTS:
 	void onChangeDiscMenuAboutToHide();
 	void onLoadStateMenuAboutToShow();
 	void onSaveStateMenuAboutToShow();
+	void onStartFullscreenUITriggered();
+	void onFullscreenUIStateChange(bool running);
 	void onViewToolbarActionToggled(bool checked);
 	void onViewLockToolbarActionToggled(bool checked);
 	void onViewStatusBarActionToggled(bool checked);
@@ -158,7 +166,9 @@ private Q_SLOTS:
 	void onAboutActionTriggered();
 	void onToolsOpenDataDirectoryTriggered();
 	void onToolsCoverDownloaderTriggered();
+	void onToolsEditCheatsPatchesTriggered(bool cheats);
 	void updateTheme();
+	void reloadThemeSpecificImages();
 	void updateLanguage();
 	void onScreenshotActionTriggered();
 	void onSaveGSDumpActionTriggered();
@@ -186,9 +196,14 @@ private Q_SLOTS:
 	void onCaptureStarted(const QString& filename);
 	void onCaptureStopped();
 
+	void onAchievementsLoginRequested(Achievements::LoginRequestReason reason);
+	void onAchievementsLoginSucceeded(const QString& display_name, quint32 points, quint32 sc_points, quint32 unread_messages);
+	void onAchievementsHardcoreModeChanged(bool enabled);
+
 protected:
 	void showEvent(QShowEvent* event) override;
 	void closeEvent(QCloseEvent* event) override;
+	void changeEvent(QEvent* event) override;
 	void dragEnterEvent(QDragEnterEvent* event) override;
 	void dropEvent(QDropEvent* event) override;
 
@@ -204,6 +219,7 @@ private:
 	void connectSignals();
 	void recreate();
 	void recreateSettings();
+	void destroySubWindows();
 
 	void registerForDeviceNotifications();
 	void unregisterForDeviceNotifications();
@@ -213,6 +229,7 @@ private:
 
 	void updateEmulationActions(bool starting, bool running, bool stopping);
 	void updateDisplayRelatedActions(bool has_surface, bool render_to_main, bool fullscreen);
+	void updateGameDependentActions();
 	void updateStatusBarWidgetVisibility();
 	void updateWindowTitle();
 	void updateWindowState(bool force_visible = false);
@@ -227,6 +244,8 @@ private:
 	void switchToGameListView();
 	void switchToEmulationView();
 
+	bool shouldAbortForMemcardBusy(const VMLock& lock);
+
 	QWidget* getContentParent();
 	QWidget* getDisplayContainer() const;
 	void saveDisplayWindowGeometryToConfig();
@@ -235,7 +254,7 @@ private:
 	void destroyDisplayWidget(bool show_game_list);
 	void updateDisplayWidgetCursor();
 
-	SettingsDialog* getSettingsDialog();
+	SettingsWindow* getSettingsWindow();
 	void doSettings(const char* category = nullptr);
 
 	InputRecordingViewer* getInputRecordingViewer();
@@ -243,8 +262,7 @@ private:
 
 	DebuggerWindow* getDebuggerWindow();
 
-	ControllerSettingsDialog* getControllerSettingsDialog();
-	void doControllerSettings(ControllerSettingsDialog::Category category = ControllerSettingsDialog::Category::Count);
+	void doControllerSettings(ControllerSettingsWindow::Category category = ControllerSettingsWindow::Category::Count);
 
 	QString getDiscDevicePath(const QString& title);
 
@@ -258,7 +276,6 @@ private:
 	void loadSaveStateFile(const QString& filename, const QString& state_filename);
 	void populateLoadStateMenu(QMenu* menu, const QString& filename, const QString& serial, quint32 crc);
 	void populateSaveStateMenu(QMenu* menu, const QString& serial, quint32 crc);
-	void updateSaveStateMenusEnableState(bool enable);
 	void doStartFile(std::optional<CDVD_SourceType> source, const QString& path);
 	void doDiscChange(CDVD_SourceType source, const QString& path);
 
@@ -268,9 +285,9 @@ private:
 	DisplayWidget* m_display_widget = nullptr;
 	DisplayContainer* m_display_container = nullptr;
 
-	SettingsDialog* m_settings_dialog = nullptr;
+	SettingsWindow* m_settings_window = nullptr;
+	ControllerSettingsWindow* m_controller_settings_window = nullptr;
 	InputRecordingViewer* m_input_recording_viewer = nullptr;
-	ControllerSettingsDialog* m_controller_settings_dialog = nullptr;
 	AutoUpdaterDialog* m_auto_updater_dialog = nullptr;
 
 	DebuggerWindow* m_debugger_window = nullptr;
@@ -293,9 +310,11 @@ private:
 
 	bool m_display_created = false;
 	bool m_relative_mouse_mode = false;
+	bool m_hide_mouse_cursor = false;
 	bool m_was_paused_on_surface_loss = false;
 	bool m_was_disc_change_request = false;
 	bool m_is_closing = false;
+	bool m_is_temporarily_windowed = false;
 
 	QString m_last_fps_status;
 

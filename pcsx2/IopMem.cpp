@@ -23,42 +23,27 @@
 #include "DEV9/DEV9.h"
 #include "IopHw.h"
 
-uptr *psxMemWLUT = NULL;
-const uptr *psxMemRLUT = NULL;
+uptr *psxMemWLUT = nullptr;
+const uptr *psxMemRLUT = nullptr;
 
-IopVM_MemoryAllocMess* iopMem = NULL;
+IopVM_MemoryAllocMess* iopMem = nullptr;
 
 alignas(__pagesize) u8 iopHw[Ps2MemSize::IopHardware];
 
-// --------------------------------------------------------------------------------------
-//  iopMemoryReserve
-// --------------------------------------------------------------------------------------
-iopMemoryReserve::iopMemoryReserve()
-	: _parent("IOP Main Memory (2mb)")
+void iopMemAlloc()
 {
-}
-
-iopMemoryReserve::~iopMemoryReserve()
-{
-	Release();
-}
-
-void iopMemoryReserve::Assign(VirtualMemoryManagerPtr allocator)
-{
+	// TODO: Move to memmap
 	psxMemWLUT = (uptr*)_aligned_malloc(0x2000 * sizeof(uptr) * 2, 16);
 	if (!psxMemWLUT)
 		pxFailRel("Failed to allocate IOP memory lookup table");
 
 	psxMemRLUT = psxMemWLUT + 0x2000; //(uptr*)_aligned_malloc(0x10000 * sizeof(uptr),16);
 
-	VtlbMemoryReserve::Assign(std::move(allocator), HostMemoryMap::IOPmemOffset, sizeof(*iopMem));
-	iopMem = reinterpret_cast<IopVM_MemoryAllocMess*>(GetPtr());
+	iopMem = reinterpret_cast<IopVM_MemoryAllocMess*>(SysMemory::GetIOPMem());
 }
 
-void iopMemoryReserve::Release()
+void iopMemRelease()
 {
-	_parent::Release();
-
 	safe_aligned_free(psxMemWLUT);
 	psxMemRLUT = nullptr;
 	iopMem = nullptr;
@@ -66,10 +51,8 @@ void iopMemoryReserve::Release()
 
 // Note!  Resetting the IOP's memory state is dependent on having *all* psx memory allocated,
 // which is performed by MemInit and PsxMemInit()
-void iopMemoryReserve::Reset()
+void iopMemReset()
 {
-	_parent::Reset();
-
 	pxAssert( iopMem );
 
 	DbgCon.WriteLn("IOP resetting main memory...");
@@ -121,6 +104,8 @@ void iopMemoryReserve::Reset()
 	// this one looks like an old hack for some special write-only memory area,
 	// but leaving it in for reference (air)
 	//for (i=0; i<0x0008; i++) psxMemWLUT[i + 0xbfc0] = (uptr)&psR[i << 16];
+
+	std::memset(iopMem, 0, sizeof(*iopMem));
 }
 
 u8 iopMemRead8(u32 mem)

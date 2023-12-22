@@ -47,7 +47,7 @@ void Error::SetErrno(int err)
 
 #ifdef _MSC_VER
 	char buf[128];
-	if (strerror_s(buf, sizeof(buf), err) != 0)
+	if (strerror_s(buf, sizeof(buf), err) == 0)
 		m_description = fmt::format("errno {}: {}", err, buf);
 	else
 		m_description = fmt::format("errno {}: <Could not get error message>", err);
@@ -88,7 +88,7 @@ void Error::SetWin32(unsigned long err)
 	if (r > 0)
 		m_description = fmt::format("Win32 Error {}: {}", err, std::string_view(buf, r));
 	else
-		m_description = fmt::format("Win32 Error {}: <Could not resolve system error ID>");
+		m_description = fmt::format("Win32 Error {}: <Could not resolve system error ID>", err);
 }
 
 void Error::SetWin32(Error* errptr, unsigned long err)
@@ -106,7 +106,7 @@ void Error::SetHResult(long err)
 	if (r > 0)
 		m_description = fmt::format("HRESULT {:08X}: {}", err, std::string_view(buf, r));
 	else
-		m_description = fmt::format("HRESULT {:08X}: <Could not resolve system error ID>");
+		m_description = fmt::format("HRESULT {:08X}: <Could not resolve system error ID>", err);
 }
 
 void Error::SetHResult(Error* errptr, long err)

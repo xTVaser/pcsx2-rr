@@ -25,7 +25,7 @@
 #include "Host.h"
 #include "IconsFontAwesome5.h"
 #include "common/Assertions.h"
-#include "common/Align.h"
+#include "common/BitUtils.h"
 #include "common/DynamicLibrary.h"
 #include "common/Path.h"
 #include "common/StringUtil.h"
@@ -35,6 +35,11 @@
 #include <condition_variable>
 #include <mutex>
 #include <string>
+
+#ifdef __clang__
+// We're using deprecated fields because we're targeting multiple ffmpeg versions.
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
 
 extern "C" {
 #include "libavcodec/avcodec.h"
@@ -49,8 +54,6 @@ extern "C" {
 #include "libswresample/swresample.h"
 #include "libswresample/version.h"
 }
-
-#include <mutex>
 
 // Compatibility with both ffmpeg 4.x and 5.x.
 #if (LIBAVFORMAT_VERSION_MAJOR < 59)
@@ -95,6 +98,7 @@ extern "C" {
 	X(av_strerror) \
 	X(av_reduce) \
 	X(av_dict_parse_string) \
+	X(av_dict_get) \
 	X(av_dict_free) \
 	X(av_opt_set_int) \
 	X(av_opt_set_sample_fmt) \
@@ -288,7 +292,7 @@ bool GSCapture::LoadFFmpeg(bool report_errors)
 						"  libavcodec: {}\n"
 						"  libavformat: {}\n"
 						"  libavutil: {}\n"
-						"  libswscale: {}\n",
+						"  libswscale: {}\n"
 				"  libswresample: {}\n", LIBAVCODEC_VERSION_MAJOR, LIBAVFORMAT_VERSION_MAJOR, LIBAVUTIL_VERSION_MAJOR,
 				LIBSWSCALE_VERSION_MAJOR, LIBSWRESAMPLE_VERSION_MAJOR));
 	}
@@ -408,8 +412,14 @@ bool GSCapture::BeginCapture(float fps, GSVector2i recommendedResolution, float 
 					fmt::format("Video codec {} not found, using default.", GSConfig.VideoCaptureCodec), Host::OSD_ERROR_DURATION);
 			}
 		}
+
+		// FFmpeg decides whether mp4, mkv, etc should use h264 or mpeg4 as their default codec by whether x264 was enabled
+		// But there's a lot of other h264 encoders (e.g. hardware encoders) we may want to use instead
+		if (!vcodec && wrap_avformat_query_codec(output_format, AV_CODEC_ID_H264, FF_COMPLIANCE_NORMAL))
+			vcodec = wrap_avcodec_find_encoder(AV_CODEC_ID_H264);
 		if (!vcodec)
 			vcodec = wrap_avcodec_find_encoder(output_format->video_codec);
+
 		if (!vcodec)
 		{
 			Host::AddIconOSDMessage("GSCaptureError", ICON_FA_CAMERA, "Failed to find video encoder.", Host::OSD_ERROR_DURATION);
@@ -528,6 +538,8 @@ bool GSCapture::BeginCapture(float fps, GSVector2i recommendedResolution, float 
 		if (output_format->flags & AVFMT_GLOBALHEADER)
 			s_video_codec_context->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
+		bool has_pixel_format_override = wrap_av_dict_get(s_video_codec_arguments, "pixel_format", nullptr, 0);
+
 		res = wrap_avcodec_open2(s_video_codec_context, vcodec, &s_video_codec_arguments);
 		if (res < 0)
 		{
@@ -535,6 +547,10 @@ bool GSCapture::BeginCapture(float fps, GSVector2i recommendedResolution, float 
 			InternalEndCapture(lock);
 			return false;
 		}
+
+		// If the user overrode the pixel format, get that now
+		if (has_pixel_format_override)
+			sw_pix_fmt = s_video_codec_context->pix_fmt;
 
 		s_converted_video_frame = wrap_av_frame_alloc();
 		s_hw_video_frame = IsUsingHardwareVideoEncoding() ? wrap_av_frame_alloc() : nullptr;
@@ -1114,7 +1130,7 @@ bool GSCapture::ProcessAudioPackets(s64 video_pts)
 			else
 			{
 				// Direct copy - optimal.
-				std::memcpy(s_converted_audio_frame->data[0] + s_audio_frame_pos * s_audio_frame_bps,
+				std::memcpy(s_converted_audio_frame->data[0] + s_audio_frame_pos * s_audio_frame_bps * AUDIO_CHANNELS,
 					&s_audio_buffer[s_audio_buffer_read_pos * AUDIO_CHANNELS], this_batch * sizeof(s16) * AUDIO_CHANNELS);
 			}
 		}

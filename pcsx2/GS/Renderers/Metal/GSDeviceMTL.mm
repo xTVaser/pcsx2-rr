@@ -673,7 +673,7 @@ MRCOwned<id<MTLFunction>> GSDeviceMTL::LoadShader(NSString* name)
 	{
 		NSString* msg = [NSString stringWithFormat:@"Failed to load shader %@: %@", name, [err localizedDescription]];
 		Console.Error("%s", [msg UTF8String]);
-		pxFailRel("Failed to load shader, check the log for more details.");
+		pxFailRel([msg UTF8String]);
 	}
 	return fn;
 }
@@ -689,7 +689,7 @@ MRCOwned<id<MTLRenderPipelineState>> GSDeviceMTL::MakePipeline(MTLRenderPipeline
 	{
 		NSString* msg = [NSString stringWithFormat:@"Failed to create pipeline %@: %@", name, [err localizedDescription]];
 		Console.Error("%s", [msg UTF8String]);
-		pxFailRel("Failed to create pipeline, check the log for more details.");
+		pxFailRel([msg UTF8String]);
 	}
 	return res;
 }
@@ -709,7 +709,7 @@ MRCOwned<id<MTLComputePipelineState>> GSDeviceMTL::MakeComputePipeline(id<MTLFun
 	{
 		NSString* msg = [NSString stringWithFormat:@"Failed to create pipeline %@: %@", name, [err localizedDescription]];
 		Console.Error("%s", [msg UTF8String]);
-		pxFailRel("Failed to create pipeline, check the log for more details.");
+		pxFailRel([msg UTF8String]);
 	}
 	return res;
 }
@@ -907,7 +907,7 @@ bool GSDeviceMTL::Create()
 	m_features.prefer_new_textures = true;
 	m_features.dxt_textures = true;
 	m_features.bptc_textures = true;
-	m_features.framebuffer_fetch = m_dev.features.framebuffer_fetch;
+	m_features.framebuffer_fetch = m_dev.features.framebuffer_fetch && !GSConfig.DisableFramebufferFetch;
 	m_features.dual_source_blend = true;
 	m_features.clip_control = true;
 	m_features.stencil_buffer = true;
@@ -1117,14 +1117,23 @@ bool GSDeviceMTL::Create()
 			case ShaderConvert::RGBA_TO_8I: // Yes really
 			case ShaderConvert::TRANSPARENCY_FILTER:
 			case ShaderConvert::FLOAT32_TO_RGBA8:
+			case ShaderConvert::FLOAT32_TO_RGB8:
 			case ShaderConvert::FLOAT16_TO_RGB5A1:
 			case ShaderConvert::YUV:
 				pdesc.colorAttachments[0].pixelFormat = ConvertPixelFormat(GSTexture::Format::Color);
 				pdesc.depthAttachmentPixelFormat = MTLPixelFormatInvalid;
 				break;
 		}
+		const u32 scmask = ShaderConvertWriteMask(conv);
+		MTLColorWriteMask mask = MTLColorWriteMaskNone;
+		if (scmask & 1) mask |= MTLColorWriteMaskRed;
+		if (scmask & 2) mask |= MTLColorWriteMaskGreen;
+		if (scmask & 4) mask |= MTLColorWriteMaskBlue;
+		if (scmask & 8) mask |= MTLColorWriteMaskAlpha;
+		pdesc.colorAttachments[0].writeMask = mask;
 		m_convert_pipeline[i] = MakePipeline(pdesc, vs_convert, LoadShader(name), name);
 	}
+	pdesc.colorAttachments[0].writeMask = MTLColorWriteMaskAll;
 	pdesc.depthAttachmentPixelFormat = MTLPixelFormatInvalid;
 	for (size_t i = 0; i < std::size(m_present_pipeline); i++)
 	{
@@ -1224,8 +1233,12 @@ std::string GSDeviceMTL::GetDriverInfo() const
 void GSDeviceMTL::ResizeWindow(s32 new_window_width, s32 new_window_height, float new_window_scale)
 {
 	m_window_info.surface_scale = new_window_scale;
-	if (m_window_info.surface_width == static_cast<u32>(new_window_width) && m_window_info.surface_height == static_cast<u32>(new_window_height))
+	if (!m_layer ||
+		(m_window_info.surface_width == static_cast<u32>(new_window_width) && m_window_info.surface_height == static_cast<u32>(new_window_height)))
+	{
 		return;
+	}
+
 	m_window_info.surface_width = new_window_width;
 	m_window_info.surface_height = new_window_height;
 	@autoreleasepool
@@ -1779,7 +1792,7 @@ void GSDeviceMTL::MRESetHWPipelineState(GSHWDrawConfig::VSSelector vssel, GSHWDr
 		setFnConstantB(m_fn_constants, pssel.iip,                GSMTLConstantIndex_IIP);
 		setFnConstantI(m_fn_constants, pssel.aem_fmt,            GSMTLConstantIndex_PS_AEM_FMT);
 		setFnConstantI(m_fn_constants, pssel.pal_fmt,            GSMTLConstantIndex_PS_PAL_FMT);
-		setFnConstantI(m_fn_constants, pssel.dfmt,               GSMTLConstantIndex_PS_DFMT);
+		setFnConstantI(m_fn_constants, pssel.dst_fmt,            GSMTLConstantIndex_PS_DST_FMT);
 		setFnConstantI(m_fn_constants, pssel.depth_fmt,          GSMTLConstantIndex_PS_DEPTH_FMT);
 		setFnConstantB(m_fn_constants, pssel.aem,                GSMTLConstantIndex_PS_AEM);
 		setFnConstantB(m_fn_constants, pssel.fba,                GSMTLConstantIndex_PS_FBA);
@@ -1794,6 +1807,7 @@ void GSDeviceMTL::MRESetHWPipelineState(GSHWDrawConfig::VSSelector vssel, GSHWDr
 		setFnConstantB(m_fn_constants, pssel.adjt,               GSMTLConstantIndex_PS_ADJT);
 		setFnConstantB(m_fn_constants, pssel.ltf,                GSMTLConstantIndex_PS_LTF);
 		setFnConstantB(m_fn_constants, pssel.shuffle,            GSMTLConstantIndex_PS_SHUFFLE);
+		setFnConstantB(m_fn_constants, pssel.shuffle_same,       GSMTLConstantIndex_PS_SHUFFLE_SAME);
 		setFnConstantB(m_fn_constants, pssel.read_ba,            GSMTLConstantIndex_PS_READ_BA);
 		setFnConstantB(m_fn_constants, pssel.real16src,          GSMTLConstantIndex_PS_READ16_SRC);
 		setFnConstantB(m_fn_constants, pssel.write_rg,           GSMTLConstantIndex_PS_WRITE_RG);
@@ -2039,6 +2053,18 @@ static id<MTLTexture> getTexture(GSTexture* tex)
 	return tex ? static_cast<GSTextureMTL*>(tex)->GetTexture() : nil;
 }
 
+static bool usesStencil(GSHWDrawConfig::DestinationAlphaMode dstalpha)
+{
+	switch (dstalpha)
+	{
+		case GSHWDrawConfig::DestinationAlphaMode::Stencil:
+		case GSHWDrawConfig::DestinationAlphaMode::StencilOne:
+			return true;
+		default:
+			return false;
+	}
+}
+
 void GSDeviceMTL::MREInitHWDraw(GSHWDrawConfig& config, const Map& verts)
 {
 	MRESetScissor(config.scissor);
@@ -2132,8 +2158,6 @@ void GSDeviceMTL::RenderHW(GSHWDrawConfig& config)
 	}
 
 	// Try to reduce render pass restarts
-	if (!stencil && config.depth.key == DepthStencilSelector::NoDepth().key && (m_current_render.color_target != rt || m_current_render.depth_target != config.ds))
-		config.ds = nullptr;
 	if (!config.ds && m_current_render.color_target == rt && stencil == m_current_render.stencil_target && m_current_render.depth_target != config.tex)
 		config.ds = m_current_render.depth_target;
 	if (!rt && config.ds == m_current_render.depth_target && m_current_render.color_target != config.tex)
@@ -2151,6 +2175,8 @@ void GSDeviceMTL::RenderHW(GSHWDrawConfig& config)
 	BeginRenderPass(@"RenderHW", rt, MTLLoadActionLoad, config.ds, MTLLoadActionLoad, stencil, MTLLoadActionLoad);
 	id<MTLRenderCommandEncoder> mtlenc = m_current_render.encoder;
 	FlushDebugEntries(mtlenc);
+	if (usesStencil(config.destination_alpha))
+		[mtlenc setStencilReferenceValue:1];
 	MREInitHWDraw(config, allocation);
 	if (config.require_one_barrier || config.require_full_barrier)
 		MRESetTexture(config.rt, GSMTLTextureIndexRenderTarget);
@@ -2407,6 +2433,8 @@ void GSDeviceMTL::RenderImGui(ImDrawData* data)
 		{
 			if (cmd.UserCallback)
 				[NSException raise:@"Unimplemented" format:@"UserCallback not implemented"];
+			if (!cmd.ElemCount)
+				continue;
 
 			simd::float4 clip_rect = (ToSimd(cmd.ClipRect) - clip_off.xyxy) * clip_scale.xyxy;
 			simd::float2 clip_min = clip_rect.xy;

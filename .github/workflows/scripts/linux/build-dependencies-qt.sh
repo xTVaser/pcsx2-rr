@@ -4,27 +4,29 @@ set -e
 
 INSTALLDIR="$HOME/deps"
 NPROCS="$(getconf _NPROCESSORS_ONLN)"
-SDL=SDL2-2.28.1
-QT=6.5.0
+SDL=SDL2-2.28.5
+QT=6.6.1
 LIBBACKTRACE=ad106d5fdd5d960bd33fae1c48a351af567fd075
 
 mkdir -p deps-build
 cd deps-build
 
 cat > SHASUMS <<EOF
-4977ceba5c0054dbe6c2f114641aced43ce3bf2b41ea64b6a372d6ba129cb15d  $SDL.tar.gz
+332cb37d0be20cb9541739c61f79bae5a477427d79ae85e352089afdaf6666e4  $SDL.tar.gz
 fd6f417fe9e3a071cf1424a5152d926a34c4a3c5070745470be6cf12a404ed79  $LIBBACKTRACE.zip
-fde1aa7b4fbe64ec1b4fc576a57f4688ad1453d2fab59cbadd948a10a6eaf5ef  qtbase-everywhere-src-$QT.tar.xz
-64ca7e61f44d51e28bcbb4e0509299b53a9a7e38879e00a7fe91643196067a4f  qtsvg-everywhere-src-$QT.tar.xz
-49c33d96b0a44988be954269b8ce3d1a495b439726e03a6be7c0d50a686369c4  qttools-everywhere-src-$QT.tar.xz
-fc85d0fd8393f518653ccada1014177a56df6e73f30f3b64eea0c2e4a0067a3d  qttranslations-everywhere-src-$QT.tar.xz
-ccc57fa277fc5f1c1c2c4733eae80a60996b67a067233c47809e542aa31759a3  qtwayland-everywhere-src-$QT.tar.xz
+450c5b4677b2fe40ed07954d7f0f40690068e80a94c9df86c2c905ccd59d02f7  qtbase-everywhere-src-$QT.tar.xz
+ac4ed08950072e375be662cfa64fdb447dd6e935cf29c56a4128d1500492188f  qtimageformats-everywhere-src-$QT.tar.xz
+248deb56d26a463cf3162f530358ccf90cfb654bbf518bb35ddf81b205e09228  qtsvg-everywhere-src-$QT.tar.xz
+4939105a7345ab4e19e7caee8654a836e65bd41910359623e0f233f3aff0914a  qttools-everywhere-src-$QT.tar.xz
+668702e822ad7150b27e7caa2158595fd9b3b77ffbc8262e6509872a3920ee88  qttranslations-everywhere-src-$QT.tar.xz
+66cc2d632dc07fc6cc4e35247f48b7c1753276ccbf86e86d7b24d799725568b1  qtwayland-everywhere-src-$QT.tar.xz
 EOF
 
 curl -L \
 	-O "https://libsdl.org/release/$SDL.tar.gz" \
 	-O "https://github.com/ianlancetaylor/libbacktrace/archive/$LIBBACKTRACE.zip" \
 	-O "https://download.qt.io/official_releases/qt/${QT%.*}/$QT/submodules/qtbase-everywhere-src-$QT.tar.xz" \
+	-O "https://download.qt.io/official_releases/qt/${QT%.*}/$QT/submodules/qtimageformats-everywhere-src-$QT.tar.xz" \
 	-O "https://download.qt.io/official_releases/qt/${QT%.*}/$QT/submodules/qtsvg-everywhere-src-$QT.tar.xz" \
 	-O "https://download.qt.io/official_releases/qt/${QT%.*}/$QT/submodules/qttools-everywhere-src-$QT.tar.xz" \
 	-O "https://download.qt.io/official_releases/qt/${QT%.*}/$QT/submodules/qttranslations-everywhere-src-$QT.tar.xz" \
@@ -35,7 +37,7 @@ shasum -a 256 --check SHASUMS
 echo "Building SDL..."
 tar xf "$SDL.tar.gz"
 cd "$SDL"
-./configure --prefix "$INSTALLDIR" --disable-dbus --without-x --disable-video-opengl --disable-video-opengles --disable-video-vulkan --disable-wayland-shared --disable-ime --disable-oss --disable-alsa --disable-jack --disable-esd --disable-pipewire --disable-pulseaudio --disable-arts --disable-nas --disable-sndio --disable-fusionsound --disable-diskaudio
+./configure --prefix "$INSTALLDIR" --enable-dbus --without-x --disable-video-opengl --disable-video-opengles --disable-video-vulkan --disable-wayland-shared --disable-ime --disable-oss --disable-alsa --disable-jack --disable-esd --disable-pipewire --disable-pulseaudio --disable-arts --disable-nas --disable-sndio --disable-fusionsound --disable-diskaudio
 make "-j$NPROCS"
 make install
 cd ..
@@ -58,7 +60,7 @@ tar xf "qtbase-everywhere-src-$QT.tar.xz"
 cd "qtbase-everywhere-src-$QT"
 mkdir build
 cd build
-../configure -prefix "$INSTALLDIR" -release -no-dbus -gui -widgets -fontconfig -qt-doubleconversion -ssl -openssl-runtime -opengl desktop -qpa xcb,wayland -xkbcommon -- -DFEATURE_dbus=OFF -DFEATURE_icu=OFF -DFEATURE_printsupport=OFF -DFEATURE_sql=OFF
+../configure -prefix "$INSTALLDIR" -release -dbus-linked -gui -widgets -fontconfig -qt-doubleconversion -ssl -openssl-runtime -opengl desktop -qpa xcb,wayland -xkbcommon -- -DFEATURE_dbus=ON -DFEATURE_icu=OFF -DFEATURE_printsupport=OFF -DFEATURE_sql=OFF
 cmake --build . --parallel
 cmake --install .
 cd ../../
@@ -66,6 +68,16 @@ cd ../../
 echo "Building Qt SVG..."
 tar xf "qtsvg-everywhere-src-$QT.tar.xz"
 cd "qtsvg-everywhere-src-$QT"
+mkdir build
+cd build
+cmake -G Ninja -DCMAKE_PREFIX_PATH="$INSTALLDIR" -DCMAKE_INSTALL_PREFIX="$INSTALLDIR" -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --parallel
+cmake --install .
+cd ../../
+
+echo "Building Qt Image Formats..."
+tar xf "qtimageformats-everywhere-src-$QT.tar.xz"
+cd "qtimageformats-everywhere-src-$QT"
 mkdir build
 cd build
 cmake -G Ninja -DCMAKE_PREFIX_PATH="$INSTALLDIR" -DCMAKE_INSTALL_PREFIX="$INSTALLDIR" -DCMAKE_BUILD_TYPE=Release ..

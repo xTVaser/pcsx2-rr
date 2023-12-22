@@ -15,9 +15,8 @@
 
 #pragma once
 
-#include "GS/GS.h"
 #include "GS/Renderers/Common/GSTexture.h"
-#include "GS/Renderers/Vulkan/VKContext.h"
+#include "GS/GS.h"
 #include "GS/Renderers/Vulkan/VKLoader.h"
 
 #include <limits>
@@ -77,8 +76,8 @@ public:
 	void OverrideImageLayout(Layout new_layout);
 
 	void TransitionToLayout(VkCommandBuffer command_buffer, Layout new_layout);
-	void TransitionSubresourcesToLayout(VkCommandBuffer command_buffer, int start_level, int num_levels,
-		Layout old_layout, Layout new_layout);
+	void TransitionSubresourcesToLayout(
+		VkCommandBuffer command_buffer, int start_level, int num_levels, Layout old_layout, Layout new_layout);
 
 	/// Framebuffers are lazily allocated.
 	VkFramebuffer GetFramebuffer(bool feedback_loop);
@@ -86,7 +85,7 @@ public:
 	VkFramebuffer GetLinkedFramebuffer(GSTextureVK* depth_texture, bool feedback_loop);
 
 	// Call when the texture is bound to the pipeline, or read from in a copy.
-	__fi void SetUsedThisCommandBuffer() { m_use_fence_counter = g_vulkan_context->GetCurrentFenceCounter(); }
+	__fi void SetUseFenceCounter(u64 counter) { m_use_fence_counter = counter; }
 
 private:
 	GSTextureVK(Type type, Format format, int width, int height, int levels, VkImage image, VmaAllocation allocation,

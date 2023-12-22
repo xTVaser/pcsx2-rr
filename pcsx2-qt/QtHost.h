@@ -41,11 +41,17 @@ struct VMBootParameters;
 
 enum class CDVD_SourceType : uint8_t;
 
+namespace Achievements
+{
+	enum class LoginRequestReason;
+}
+
 Q_DECLARE_METATYPE(std::shared_ptr<VMBootParameters>);
 Q_DECLARE_METATYPE(std::optional<bool>);
 Q_DECLARE_METATYPE(GSRendererType);
 Q_DECLARE_METATYPE(InputBindingKey);
 Q_DECLARE_METATYPE(CDVD_SourceType);
+Q_DECLARE_METATYPE(Achievements::LoginRequestReason);
 
 class EmuThread : public QThread
 {
@@ -100,6 +106,8 @@ public Q_SLOTS:
 	void toggleSoftwareRendering();
 	void switchRenderer(GSRendererType renderer);
 	void changeDisc(CDVD_SourceType source, const QString& path);
+	void setELFOverride(const QString& path);
+	void changeGSDump(const QString& path);
 	void reloadPatches();
 	void reloadInputSources();
 	void reloadInputBindings();
@@ -119,7 +127,8 @@ Q_SIGNALS:
 	std::optional<WindowInfo> onAcquireRenderWindowRequested(bool recreate_window, bool fullscreen, bool render_to_main, bool surfaceless);
 	void onResizeRenderWindowRequested(qint32 width, qint32 height);
 	void onReleaseRenderWindowRequested();
-	void onRelativeMouseModeRequested(bool enabled);
+	void onMouseModeRequested(bool relative_mode, bool hide_cursor);
+	void onFullscreenUIStateChange(bool running);
 
 	/// Called when the VM is starting initialization, but has not been completed yet.
 	void onVMStarting();
@@ -155,8 +164,20 @@ Q_SIGNALS:
 	/// just signifies that the save has started, not necessarily completed.
 	void onSaveStateSaved(const QString& path);
 
+	/// Called when achievements login is requested.
+	void onAchievementsLoginRequested(Achievements::LoginRequestReason reason);
+
+	/// Called when achievements login succeeds. Also happens on startup.
+	void onAchievementsLoginSucceeded(const QString& display_name, quint32 points, quint32 sc_points, quint32 unread_messages);
+
 	/// Called when achievements are reloaded/refreshed (e.g. game change, login, option change).
-	void onAchievementsRefreshed(quint32 id, const QString& game_info_string, quint32 total, quint32 points);
+	void onAchievementsRefreshed(quint32 id, const QString& game_info_string);
+
+	/// Called when hardcore mode is enabled or disabled.
+	void onAchievementsHardcoreModeChanged(bool enabled);
+
+	/// Called when cover download is requested.
+	void onCoverDownloaderOpenRequested();
 
 	/// Called when video capture starts/stops.
 	void onCaptureStarted(const QString& filename);
@@ -173,7 +194,6 @@ private:
 	static constexpr u32 FULLSCREEN_UI_CONTROLLER_POLLING_INTERVAL = 8;
 
 	void destroyVM();
-	void executeVM();
 
 	void createBackgroundControllerPollTimer();
 	void destroyBackgroundControllerPollTimer();
@@ -226,6 +246,9 @@ namespace QtHost
 	/// Sets application theme according to settings.
 	void UpdateApplicationTheme();
 
+	/// Sets the icon theme, based on the current style (light/dark).
+	void SetIconThemeFromStyle();
+
 	/// Sets batch mode (exit after game shutdown).
 	bool InBatchMode();
 
@@ -259,4 +282,7 @@ namespace QtHost
 	/// VM state, safe to access on UI thread.
 	bool IsVMValid();
 	bool IsVMPaused();
+
+	/// Compare strings in the locale of the current UI language
+	int LocaleSensitiveCompare(QStringView lhs, QStringView rhs);
 } // namespace QtHost

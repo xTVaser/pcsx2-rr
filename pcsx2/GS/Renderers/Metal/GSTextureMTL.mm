@@ -17,7 +17,7 @@
 #include "GS/Renderers/Metal/GSTextureMTL.h"
 #include "GS/Renderers/Metal/GSDeviceMTL.h"
 #include "GS/GSPerfMon.h"
-#include "common/Align.h"
+#include "common/BitUtils.h"
 #include "common/Console.h"
 
 #ifdef __APPLE__
@@ -194,8 +194,8 @@ void GSDownloadTextureMTL::CopyFromTexture(
 		GetTransferPitch(use_transfer_pitch ? static_cast<u32>(drc.width()) : m_width, PITCH_ALIGNMENT);
 	GetTransferSize(drc, &copy_offset, &copy_size, &copy_rows);
 
-	m_dev->EndRenderPass();
 	mtlTex->FlushClears();
+	m_dev->EndRenderPass();
 	g_perfmon.Put(GSPerfMon::Readbacks, 1);
 
 	m_copy_cmdbuffer = MRCRetain(m_dev->GetRenderCmdBuf());

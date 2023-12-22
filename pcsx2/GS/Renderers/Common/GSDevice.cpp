@@ -20,7 +20,9 @@
 #include "GS/GS.h"
 #include "Host.h"
 
-#include "common/Align.h"
+#include "common/BitUtils.h"
+#include "common/FileSystem.h"
+#include "common/Path.h"
 #include "common/StringUtil.h"
 
 #include "imgui.h"
@@ -42,6 +44,7 @@ const char* shaderName(ShaderConvert value)
 		case ShaderConvert::FLOAT32_TO_16_BITS:     return "ps_convert_float32_32bits";
 		case ShaderConvert::FLOAT32_TO_32_BITS:     return "ps_convert_float32_32bits";
 		case ShaderConvert::FLOAT32_TO_RGBA8:       return "ps_convert_float32_rgba8";
+		case ShaderConvert::FLOAT32_TO_RGB8:        return "ps_convert_float32_rgba8";
 		case ShaderConvert::FLOAT16_TO_RGB5A1:      return "ps_convert_float16_rgb5a1";
 		case ShaderConvert::RGBA8_TO_FLOAT32:       return "ps_convert_rgba8_float32";
 		case ShaderConvert::RGBA8_TO_FLOAT24:       return "ps_convert_rgba8_float24";
@@ -185,6 +188,11 @@ void GSDevice::GenerateExpansionIndexBuffer(void* buffer)
 		*(idx_buffer++) = base + 2;
 		*(idx_buffer++) = base + 3;
 	}
+}
+
+std::optional<std::string> GSDevice::ReadShaderSource(const char* filename)
+{
+	return FileSystem::ReadFileToString(Path::Combine(EmuFolders::Resources, filename).c_str());
 }
 
 bool GSDevice::Create()
@@ -709,8 +717,8 @@ void GSDevice::SetHWDrawConfigForAlphaPass(GSHWDrawConfig::PSSelector* ps,
 
 bool GSDevice::GetCASShaderSource(std::string* source)
 {
-	std::optional<std::string> ffx_a_source(Host::ReadResourceFileToString("shaders/common/ffx_a.h"));
-	std::optional<std::string> ffx_cas_source(Host::ReadResourceFileToString("shaders/common/ffx_cas.h"));
+	std::optional<std::string> ffx_a_source = ReadShaderSource("shaders/common/ffx_a.h");
+	std::optional<std::string> ffx_cas_source = ReadShaderSource("shaders/common/ffx_cas.h");
 	if (!ffx_a_source.has_value() || !ffx_cas_source.has_value())
 		return false;
 

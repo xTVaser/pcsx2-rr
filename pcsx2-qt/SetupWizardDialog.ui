@@ -147,6 +147,12 @@
          <property name="wordWrap">
           <bool>true</bool>
          </property>
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+         <property name="textInteractionFlags">
+          <enum>Qt::TextBrowserInteraction</enum>
+         </property>
         </widget>
        </item>
        <item>
@@ -298,7 +304,7 @@
          <item>
           <widget class="QPushButton" name="openBiosSearchDirectory">
            <property name="text">
-            <string>Open in Explorer...</string>
+            <string>Open BIOS Folder...</string>
            </property>
           </widget>
          </item>
@@ -371,11 +377,14 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Add</string>
+            <string>Add...</string>
            </property>
            <property name="icon">
             <iconset theme="folder-add-line">
              <normaloff>.</normaloff>.</iconset>
+           </property>
+           <property name="toolButtonStyle">
+            <enum>Qt::ToolButtonTextBesideIcon</enum>
            </property>
           </widget>
          </item>
@@ -393,6 +402,9 @@
            <property name="icon">
             <iconset theme="folder-reduce-line">
              <normaloff>.</normaloff>.</iconset>
+           </property>
+           <property name="toolButtonStyle">
+            <enum>Qt::ToolButtonTextBesideIcon</enum>
            </property>
           </widget>
          </item>

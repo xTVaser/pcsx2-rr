@@ -67,12 +67,8 @@ const int kMaxArgs = 16;
 uptr g_argPtrs[kMaxArgs];
 #define DEBUG_LAUNCHARG 0 // show lots of helpful console messages as the launch arguments are passed to the game
 
-extern SysMainMemory& GetVmMemory();
-
 void cpuReset()
 {
-	GetVmMemory().Reset();
-
 	std::memset(&cpuRegs, 0, sizeof(cpuRegs));
 	std::memset(&fpuRegs, 0, sizeof(fpuRegs));
 	std::memset(&tlb, 0, sizeof(tlb));
@@ -91,8 +87,6 @@ void cpuReset()
 	psxReset();
 	pgifInit();
 
-	hwReset();
-
 	extern void Deci2Reset();		// lazy, no good header for it yet.
 	Deci2Reset();
 
@@ -102,6 +96,8 @@ void cpuReset()
 	g_eeloadMain = 0;
 	g_eeloadExec = 0;
 	g_osdsys_str = 0;
+
+	CBreakPoints::ClearSkipFirst();
 }
 
 __ri void cpuException(u32 code, u32 bd)

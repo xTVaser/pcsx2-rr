@@ -80,22 +80,20 @@ void GSRenderer::Reset(bool hardware_reset)
 		g_gs_device->ClearCurrent();
 
 	GSState::Reset(hardware_reset);
-
-	// Restart video capture if it's been started.
-	// Otherwise we get a buildup of audio frames from the CPU thread.
-	if (hardware_reset && GSCapture::IsCapturing())
-	{
-		std::string next_filename = GSCapture::GetNextCaptureFileName();
-		const GSVector2i size = GSCapture::GetSize();
-		Console.Warning(fmt::format("Restarting video capture to {}.", next_filename));
-		EndCapture();
-		BeginCapture(std::move(next_filename), size);
-	}
 }
 
 void GSRenderer::Destroy()
 {
 	GSCapture::EndCapture();
+}
+
+void GSRenderer::PurgePool()
+{
+	g_gs_device->PurgePool();
+}
+
+void GSRenderer::UpdateRenderFixes()
+{
 }
 
 bool GSRenderer::Merge(int field)
@@ -272,7 +270,7 @@ float GSRenderer::GetModXYOffset()
 {
 	float mod_xy = 0.0f;
 
-	if (GSConfig.UserHacks_HalfPixelOffset == 1)
+	if (GSConfig.UserHacks_HalfPixelOffset == GSHalfPixelOffset::Normal)
 	{
 		mod_xy = GetUpscaleMultiplier();
 		switch (static_cast<int>(std::round(mod_xy)))
@@ -443,7 +441,7 @@ static void CompressAndWriteScreenshot(std::string filename, u32 width, u32 heig
 	if (!GSDumpReplayer::IsRunner())
 	{
 		Host::AddIconOSDMessage(key, ICON_FA_CAMERA,
-			fmt::format(TRANSLATE_SV("GS", "Saving screenshot to '{}'."), Path::GetFileName(filename)), 60.0f);
+			fmt::format(TRANSLATE_FS("GS", "Saving screenshot to '{}'."), Path::GetFileName(filename)), 60.0f);
 	}
 
 	// maybe std::async would be better here.. but it's definitely worth threading, large screenshots take a while to compress.
@@ -455,14 +453,14 @@ static void CompressAndWriteScreenshot(std::string filename, u32 width, u32 heig
 			if (!GSDumpReplayer::IsRunner())
 			{
 				Host::AddIconOSDMessage(std::move(key), ICON_FA_CAMERA,
-					fmt::format(TRANSLATE_SV("GS", "Saved screenshot to '{}'."), Path::GetFileName(filename)),
+					fmt::format(TRANSLATE_FS("GS", "Saved screenshot to '{}'."), Path::GetFileName(filename)),
 					Host::OSD_INFO_DURATION);
 			}
 		}
 		else
 		{
 			Host::AddIconOSDMessage(std::move(key), ICON_FA_CAMERA,
-				fmt::format(TRANSLATE_SV("GS", "Failed to save screenshot to '{}'."), Path::GetFileName(filename),
+				fmt::format(TRANSLATE_FS("GS", "Failed to save screenshot to '{}'."), Path::GetFileName(filename),
 					Host::OSD_ERROR_DURATION));
 		}
 
@@ -670,6 +668,9 @@ void GSRenderer::VSync(u32 field, bool registers_written, bool idle_frame)
 
 		if (!m_dump && m_dump_frames > 0)
 		{
+			if (GSConfig.UserHacks_ReadTCOnClose)
+				ReadbackTextureCache();
+
 			freezeData fd = {0, nullptr};
 			Freeze(&fd, true);
 			fd.data = new u8[fd.size];
@@ -684,34 +685,31 @@ void GSRenderer::VSync(u32 field, bool registers_written, bool idle_frame)
 			std::string_view compression_str;
 			if (GSConfig.GSDumpCompression == GSDumpCompressionMethod::Uncompressed)
 			{
-				m_dump = std::unique_ptr<GSDumpBase>(new GSDumpUncompressed(m_snapshot, VMManager::GetDiscSerial(), m_crc,
-					screenshot_width, screenshot_height,
-					screenshot_pixels.empty() ? nullptr : screenshot_pixels.data(),
-					fd, m_regs));
-				compression_str = "with no compression";
+				m_dump = std::unique_ptr<GSDumpBase>(new GSDumpUncompressed(m_snapshot, VMManager::GetDiscSerial(),
+					VMManager::GetDiscCRC(), screenshot_width, screenshot_height,
+					screenshot_pixels.empty() ? nullptr : screenshot_pixels.data(), fd, m_regs));
+				compression_str = TRANSLATE_SV("GS", "with no compression");
 			}
 			else if (GSConfig.GSDumpCompression == GSDumpCompressionMethod::LZMA)
 			{
-				m_dump = std::unique_ptr<GSDumpBase>(new GSDumpXz(m_snapshot, VMManager::GetDiscSerial(), m_crc,
-					screenshot_width, screenshot_height,
-					screenshot_pixels.empty() ? nullptr : screenshot_pixels.data(),
-					fd, m_regs));
-				compression_str = "with LZMA compression";
+				m_dump = std::unique_ptr<GSDumpBase>(
+					new GSDumpXz(m_snapshot, VMManager::GetDiscSerial(), VMManager::GetDiscCRC(), screenshot_width,
+						screenshot_height, screenshot_pixels.empty() ? nullptr : screenshot_pixels.data(), fd, m_regs));
+				compression_str = TRANSLATE_SV("GS", "with LZMA compression");
 			}
 			else
 			{
-				m_dump = std::unique_ptr<GSDumpBase>(new GSDumpZst(m_snapshot, VMManager::GetDiscSerial(), m_crc,
-					screenshot_width, screenshot_height,
-					screenshot_pixels.empty() ? nullptr : screenshot_pixels.data(),
-					fd, m_regs));
-				compression_str = "with Zstandard compression";
+				m_dump = std::unique_ptr<GSDumpBase>(
+					new GSDumpZst(m_snapshot, VMManager::GetDiscSerial(), VMManager::GetDiscCRC(), screenshot_width,
+						screenshot_height, screenshot_pixels.empty() ? nullptr : screenshot_pixels.data(), fd, m_regs));
+				compression_str = TRANSLATE_SV("GS", "with Zstandard compression");
 			}
 
 			delete[] fd.data;
 
 			Host::AddKeyedOSDMessage("GSDump",
-				fmt::format(TRANSLATE_SV("GS", "Saving {0} GS dump {1} to '{2}'"),
-					(m_dump_frames == 1) ? "single frame" : "multi-frame", compression_str,
+				fmt::format(TRANSLATE_FS("GS", "Saving {0} GS dump {1} to '{2}'"),
+					(m_dump_frames == 1) ? TRANSLATE_SV("GS", "single frame") : TRANSLATE_SV("GS", "multi-frame"), compression_str,
 					Path::GetFileName(m_dump->GetPath())),
 				Host::OSD_INFO_DURATION);
 		}
@@ -742,7 +740,7 @@ void GSRenderer::VSync(u32 field, bool registers_written, bool idle_frame)
 		if (m_dump->VSync(field, last, m_regs))
 		{
 			Host::AddKeyedOSDMessage("GSDump",
-				fmt::format(TRANSLATE_SV("GS", "Saved GS dump to '{}'."), Path::GetFileName(m_dump->GetPath())),
+				fmt::format(TRANSLATE_FS("GS", "Saved GS dump to '{}'."), Path::GetFileName(m_dump->GetPath())),
 				Host::OSD_INFO_DURATION);
 			m_dump.reset();
 		}
@@ -812,7 +810,7 @@ static std::string GSGetBaseFilename()
 	std::string filename;
 
 	// append the game serial and title
-	if (std::string name(VMManager::GetTitle()); !name.empty())
+	if (std::string name(VMManager::GetTitle(true)); !name.empty())
 	{
 		Path::SanitizeFileName(&name);
 		if (name.length() > 219)

@@ -97,6 +97,9 @@ static __fi void ZeroQWC( u128& dest )
 #define psSu64(mem)		(*(u64 *)&eeMem->Scratch[(mem) & 0x3fff])
 #define psSu128(mem)	(*(u128*)&eeMem->Scratch[(mem) & 0x3fff])
 
+extern void memAllocate();
+extern void memReset();
+extern void memRelease();
 
 extern void memSetKernelMode();
 //extern void memSetSupervisorMode();
@@ -123,5 +126,5 @@ static __fi void memRead128(u32 mem, mem128_t& out) { memRead128(mem, &out); }
 static __fi void memWrite128(u32 mem, const mem128_t* val)	{ vtlb_memWrite128(mem, r128_load(val)); }
 static __fi void memWrite128(u32 mem, const mem128_t& val)	{ vtlb_memWrite128(mem, r128_load(&val)); }
 
-
+extern void ba0W16(u32 mem, u16 value);
 extern u16 ba0R16(u32 mem);

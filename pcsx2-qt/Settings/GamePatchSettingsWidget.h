@@ -27,7 +27,7 @@ namespace GameList
 	struct Entry;
 }
 
-class SettingsDialog;
+class SettingsWindow;
 
 class GamePatchDetailsWidget : public QWidget
 {
@@ -35,7 +35,7 @@ class GamePatchDetailsWidget : public QWidget
 
 public:
 	GamePatchDetailsWidget(std::string name, const std::string& author, const std::string& description, bool enabled,
-		SettingsDialog* dialog, QWidget* parent);
+		SettingsWindow* dialog, QWidget* parent);
 	~GamePatchDetailsWidget();
 
 private Q_SLOTS:
@@ -43,7 +43,7 @@ private Q_SLOTS:
 
 private:
 	Ui::GamePatchDetailsWidget m_ui;
-	SettingsDialog* m_dialog;
+	SettingsWindow* m_dialog;
 	std::string m_name;
 };
 
@@ -52,7 +52,7 @@ class GamePatchSettingsWidget : public QWidget
 	Q_OBJECT
 
 public:
-	GamePatchSettingsWidget(const GameList::Entry* entry, SettingsDialog* dialog, QWidget* parent);
+	GamePatchSettingsWidget(SettingsWindow* dialog, QWidget* parent);
 	~GamePatchSettingsWidget();
 
 private Q_SLOTS:
@@ -60,10 +60,8 @@ private Q_SLOTS:
 
 private:
 	void reloadList();
+	void setUnlabeledPatchesWarningVisibility(bool visible);
 
 	Ui::GamePatchSettingsWidget m_ui;
-	SettingsDialog* m_dialog;
-
-	std::string m_serial;
-	u32 m_crc;
+	SettingsWindow* m_dialog;
 };

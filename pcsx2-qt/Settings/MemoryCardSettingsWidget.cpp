@@ -30,9 +30,9 @@
 #include "QtHost.h"
 #include "QtUtils.h"
 #include "SettingWidgetBinder.h"
-#include "SettingsDialog.h"
+#include "SettingsWindow.h"
 
-#include "pcsx2/MemoryCardFile.h"
+#include "pcsx2/SIO/Memcard/MemoryCardFile.h"
 
 static constexpr const char* CONFIG_SECTION = "MemoryCards";
 
@@ -41,7 +41,7 @@ static std::string getSlotFilenameKey(u32 slot)
 	return StringUtil::StdStringFromFormat("Slot%u_Filename", slot + 1);
 }
 
-MemoryCardSettingsWidget::MemoryCardSettingsWidget(SettingsDialog* dialog, QWidget* parent)
+MemoryCardSettingsWidget::MemoryCardSettingsWidget(SettingsWindow* dialog, QWidget* parent)
 	: QWidget(parent)
 	, m_dialog(dialog)
 {
@@ -55,7 +55,6 @@ MemoryCardSettingsWidget::MemoryCardSettingsWidget(SettingsDialog* dialog, QWidg
 
 	SettingWidgetBinder::BindWidgetToFolderSetting(sif, m_ui.directory, m_ui.browse, m_ui.open, m_ui.reset, "Folders",
 		"MemoryCards", Path::Combine(EmuFolders::DataRoot, "memcards"));
-	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.autoEject, "EmuCore", "McdEnableEjection", true);
 	SettingWidgetBinder::BindWidgetToBoolSetting(sif, m_ui.automaticManagement, "EmuCore", "McdFolderAutoManage", true);
 
 	setupAdditionalUi();
@@ -75,9 +74,6 @@ MemoryCardSettingsWidget::MemoryCardSettingsWidget(SettingsDialog* dialog, QWidg
 	connect(m_ui.deleteCard, &QPushButton::clicked, this, &MemoryCardSettingsWidget::deleteCard);
 
 	refresh();
-
-	dialog->registerWidgetHelp(m_ui.autoEject, tr("Auto-eject Memory Cards when loading save states"), tr("Checked"),
-		tr("Avoids broken Memory Card saves. May not work with some games such as Guitar Hero."));
 
 	dialog->registerWidgetHelp(m_ui.automaticManagement, tr("Automatically manage saves based on running game"),
 		tr("Checked"),
@@ -319,7 +315,7 @@ void MemoryCardSettingsWidget::listContextMenuRequested(const QPoint& pos)
 		menu.addSeparator();
 	}
 
-	connect(menu.addAction("Create"), &QAction::triggered, this, &MemoryCardSettingsWidget::createCard);
+	connect(menu.addAction(tr("Create")), &QAction::triggered, this, &MemoryCardSettingsWidget::createCard);
 
 	menu.exec(m_ui.cardList->mapToGlobal(pos));
 }
@@ -442,7 +438,7 @@ void MemoryCardListWidget::mouseMoveEvent(QMouseEvent* event)
 	drag->exec(Qt::CopyAction);
 }
 
-void MemoryCardListWidget::refresh(SettingsDialog* dialog)
+void MemoryCardListWidget::refresh(SettingsWindow* dialog)
 {
 	clear();
 
@@ -481,6 +477,8 @@ MemoryCardSlotWidget::MemoryCardSlotWidget(QWidget* parent)
 {
 	setAcceptDrops(true);
 	setSelectionMode(NoSelection);
+	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
 MemoryCardSlotWidget::~MemoryCardSlotWidget() = default;
@@ -537,4 +535,6 @@ void MemoryCardSlotWidget::setCard(const std::optional<std::string>& name, bool 
 		item->setFont(font);
 		item->setForeground(palette().brush(QPalette::Disabled, QPalette::Text));
 	}
+
+	item->setToolTip(item->text());
 }
