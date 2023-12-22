@@ -63,6 +63,7 @@ jobs:
         shell: bash
         env:
           OS: windows
+          BUILD_CONFIGURATION: ${{ inputs.configuration }}
           BUILD_SYSTEM: ${{ inputs.buildSystem }}
           ARCH: ${{ inputs.platform }}
           SIMD: ${{ inputs.simd }}

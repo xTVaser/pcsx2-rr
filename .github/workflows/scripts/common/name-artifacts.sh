@@ -8,6 +8,7 @@
 
 # Inputs as env-vars
 # OS
+# BUILD_CONFIGURATION
 # BUILD_SYSTEM
 # ARCH
 # SIMD
@@ -32,6 +33,23 @@ fi
 if [[ ! -z "${BUILD_SYSTEM}" ]]; then
   if [[ "${BUILD_SYSTEM}" == "cmake" ]] || [[ "${BUILD_SYSTEM}" == "flatpak" ]]; then
     NAME="${NAME}-${BUILD_SYSTEM}"
+  fi
+fi
+
+# Isolate artifacts produced with different build systems, otherwise they overwrite each other
+# and you have no idea what you got!
+if [[ ! -z "${BUILD_SYSTEM}" ]]; then
+  # differentiate between clang and msvc
+  if [[ "${BUILD_CONFIGURATION,,}" == *"clang"* ]]; then
+      NAME="${NAME}-clang"
+  else
+      NAME="${NAME}-msvc"
+  fi
+  # also differentiate between sse4 and avx2
+  if [[ "${BUILD_CONFIGURATION,,}" == *"avx2"* ]]; then
+      NAME="${NAME}-avx2"
+  else
+      NAME="${NAME}-sse4"
   fi
 fi
 
