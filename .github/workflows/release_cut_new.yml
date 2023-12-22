@@ -26,7 +26,7 @@ permissions:
 
 jobs:
   cut-release:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     name: "Create Tag and Release"
     runs-on: ubuntu-latest
     outputs:
@@ -52,8 +52,8 @@ jobs:
 
       - name: Generate Release Notes
         env:
-          OWNER: PCSX2
-          REPO: pcsx2
+          OWNER: xTVaser
+          REPO: pcsx2-rr
           GITHUB_TOKEN: ${{ github.token }}
           COMMIT_SHA: ${{ github.SHA }}
         run: |
@@ -74,7 +74,7 @@ jobs:
   # Build Everything
   # Linux
   build_linux_qt:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     needs:
       - cut-release
     name: "Linux"
@@ -88,7 +88,7 @@ jobs:
     secrets: inherit
 
   build_linux_flatpak:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     needs:
       - cut-release
     name: "Linux"
@@ -104,7 +104,7 @@ jobs:
 
   # Windows
   build_windows_qt:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     needs:
       - cut-release
     name: "Windows"
@@ -119,7 +119,7 @@ jobs:
 
   # MacOS
   build_macos_qt:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     needs:
       - cut-release
     name: "MacOS"
@@ -131,7 +131,7 @@ jobs:
 
   # Upload the Artifacts
   upload_artifacts:
-    if: github.repository == 'PCSX2/pcsx2'
+    if: github.repository == 'xTVaser/pcsx2-rr'
     needs:
       - cut-release
       - build_linux_flatpak
@@ -170,11 +170,11 @@ jobs:
         run: |
           TAG_VAL=${{needs.cut-release.outputs.new_tag}}
           echo "TAG_VAL=${TAG_VAL}"
-          gh release list --repo PCSX2/pcsx2
+          gh release list --repo xTVaser/pcsx2-rr
           mkdir -p ${{ github.WORKSPACE }}/ci-artifacts/out
           TAG_VAL=${TAG_VAL} python ./.github/workflows/scripts/releases/rename-release-assets.py
           ls ${{ github.WORKSPACE }}/ci-artifacts/out
-          gh release upload "${TAG_VAL}" ${{ github.WORKSPACE }}/ci-artifacts/out/*  --repo PCSX2/pcsx2 --clobber
+          gh release upload "${TAG_VAL}" ${{ github.WORKSPACE }}/ci-artifacts/out/*  --repo xTVaser/pcsx2-rr --clobber
 
       - name: Publish Release
         env:
@@ -182,20 +182,20 @@ jobs:
         run: |
           TAG_VAL=${{needs.cut-release.outputs.new_tag}}
           echo "TAG_VAL=${TAG_VAL}"
-          gh release edit ${TAG_VAL} --draft=false --repo PCSX2/pcsx2
+          gh release edit ${TAG_VAL} --draft=false --repo xTVaser/pcsx2-rr
 
       - uses: actions/setup-node@v4
         with:
           node-version: 16
 
-      - name: Announce Release
-        env:
-          OWNER: PCSX2
-          REPO: pcsx2
-          DISCORD_BUILD_WEBHOOK: ${{ secrets.DISCORD_BUILD_WEBHOOK }}
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          TAG_VAL=${{needs.cut-release.outputs.new_tag}}
-          cd ./.github/workflows/scripts/releases/announce-release
-          npm ci
-          TAG_VAL=${TAG_VAL} node index.js
+      # - name: Announce Release
+      #   env:
+      #     OWNER: xTVaser
+      #     REPO: pcsx2-rr
+      #     DISCORD_BUILD_WEBHOOK: ${{ secrets.DISCORD_BUILD_WEBHOOK }}
+      #     GITHUB_TOKEN: ${{ github.token }}
+      #   run: |
+      #     TAG_VAL=${{needs.cut-release.outputs.new_tag}}
+      #     cd ./.github/workflows/scripts/releases/announce-release
+      #     npm ci
+      #     TAG_VAL=${TAG_VAL} node index.js
