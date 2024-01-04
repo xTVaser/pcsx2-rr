@@ -109,12 +109,18 @@ jobs:
         run: |
           ostree commit --repo=repo --canonical-permissions --branch=screenshots/x86_64 flatpak_app/screenshots
 
+      - name: Prepare artifacts folder
+        # NOTE - 'flatpak-builder' dumps the artifact out in the current directory
+        run: |
+          ls -l
+          mkdir -p "$GITHUB_WORKSPACE"/ci-artifacts/
+          mv "./${{ steps.artifact-metadata.outputs.artifact-name }}.flatpak" "$GITHUB_WORKSPACE"/ci-artifacts/
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifact-metadata.outputs.artifact-name }}
-          # NOTE - 'flatpak-builder' dumps the artifact out in the current directory
-          path: ./${{ steps.artifact-metadata.outputs.artifact-name }}.flatpak
+          path: ci-artifacts
 
       #- name: Validate build directory
       #  run: |
