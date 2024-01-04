@@ -90,9 +90,11 @@ jobs:
           flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest .github/workflows/scripts/linux/flatpak/net.pcsx2.PCSX2.json
 
       - name: Build Flatpak
-        uses: flatpak/flatpak-github-actions/flatpak-builder@v6.3
+        # TODO - based on v6.3, switch back to the main action once change is accepted (or they release a breaking change that uses upload-artifact@v4)
+        uses: xTVaser/flatpak-github-actions/flatpak-builder@64267d4cf01f7955a40128039d0abab17bb48aac
         with:
           bundle: ${{ steps.artifact-metadata.outputs.artifact-name }}.flatpak
+          upload-artifact: false
           manifest-path: .github/workflows/scripts/linux/flatpak/net.pcsx2.PCSX2.json
           arch: x86_64
           build-bundle: true
@@ -106,6 +108,13 @@ jobs:
       - name: Commit screenshots to OSTree
         run: |
           ostree commit --repo=repo --canonical-permissions --branch=screenshots/x86_64 flatpak_app/screenshots
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact-metadata.outputs.artifact-name }}
+          # NOTE - 'flatpak-builder' dumps the artifact out in the current directory
+          path: ./${{ steps.artifact-metadata.outputs.artifact-name }}.flatpak
 
       #- name: Validate build directory
       #  run: |
