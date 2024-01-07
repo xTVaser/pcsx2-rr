@@ -64,13 +64,22 @@ jobs:
           node index.js
           mv ./release-notes.md ${GITHUB_WORKSPACE}/release-notes.md
 
-      - name: Create a GitHub Release
+      - name: Create a GitHub Release (Manual)
+        uses: softprops/action-gh-release@v1
+        if: steps.tag_version.outputs.new_tag && github.event_name == 'workflow_dispatch'
+        with:
+          body_path: ./release-notes.md
+          draft: true
+          prerelease: ${{ inputs.is_prelease == true || inputs.is_prelease == 'true' }}
+          tag_name: ${{ steps.tag_version.outputs.new_tag }}
+
+      - name: Create a GitHub Release (Push)
         uses: softprops/action-gh-release@v1
         if: steps.tag_version.outputs.new_tag
         with:
           body_path: ./release-notes.md
           draft: true
-          prerelease: ${{ inputs.is_prelease == true || inputs.is_prelease == 'true' }}
+          prerelease: true
           tag_name: ${{ steps.tag_version.outputs.new_tag }}
 
   # Build Everything
@@ -165,9 +174,6 @@ jobs:
         working-directory: ./ci-artifacts/
         run: for d in *windows*/; do 7z a "${d}asset.7z" ./$d/*; done
 
-      # Artifact Naming:
-      # MacOS: PCSX2-<tag>-macOS-[additional hyphen seperated tags]
-      # Windows|Linux: PCSX2-<tag>-<windows|linux>-<32bit|64bit>--[additional hyphen seperated tags]
       - name: Name and Upload the Release Assets
         env:
           GITHUB_TOKEN: ${{ github.token }}
