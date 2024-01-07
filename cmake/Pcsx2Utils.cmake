@@ -64,10 +64,12 @@ function(get_git_version_info)
 		# however, if simultaneous builds are pushing tags to the same commit you might get inconsistent results (it's a race)
 		#
 		# The easy solution is, don't do that, but just something to be aware of.
-		if(TAG_RESULT EQUAL 0)
+		if(PCSX2_GIT_TAG_LIST AND TAG_RESULT EQUAL 0)
 			string(REPLACE "\n" ";" PCSX2_GIT_TAG_LIST "${PCSX2_GIT_TAG_LIST}")
-			list(GET PCSX2_GIT_TAG_LIST -1 PCSX2_GIT_TAG)
-			message("Using tag: ${PCSX2_GIT_TAG}")
+			if (PCSX2_GIT_TAG_LIST)
+				list(GET PCSX2_GIT_TAG_LIST -1 PCSX2_GIT_TAG)
+				message("Using tag: ${PCSX2_GIT_TAG}")
+			endif()
 		endif()
 
 		EXECUTE_PROCESS(WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
