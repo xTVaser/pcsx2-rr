@@ -97,6 +97,7 @@ jobs:
       cmakeflags: ""
       buildAppImage: true
       fetchTags: true
+      stableBuild: ${{ inputs.is_prelease == true || inputs.is_prelease == 'true' }}
     secrets: inherit
 
   build_linux_flatpak:
@@ -113,6 +114,7 @@ jobs:
       branch: "stable"
       publish: false
       fetchTags: true
+      stableBuild: true
     secrets: inherit
 
   # Windows
@@ -129,6 +131,7 @@ jobs:
       buildSystem: cmake
       cmakeFlags: -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl
       fetchTags: true
+      stableBuild: ${{ inputs.is_prelease == true || inputs.is_prelease == 'true' }}
     secrets: inherit
 
   # MacOS
@@ -142,6 +145,7 @@ jobs:
       jobName: "MacOS Build"
       artifactPrefixName: "PCSX2-macos-Qt"
       fetchTags: true
+      stableBuild: ${{ inputs.is_prelease == true || inputs.is_prelease == 'true' }}
     secrets: inherit
 
   # Upload the Artifacts
